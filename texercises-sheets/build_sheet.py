@@ -7,6 +7,7 @@
     --style=plain    Latin Modern, pdflatex, exercise titles shown
     --author=By --date=09.09.20 --footer="Exercises AC Circuits"   footer (minion; defaults: By,
                      today, "Exercises <collection title>")
+    --font=cochineal Cochineal with newtxmath instead of Minion 3 (minion style)
     --numerical      print the short solutions as "Numerical Solutions" after the exercises (minion)
 
 Images: TeXercises does not export them. The sheet looks for images/<name> next to the .tex;
@@ -82,7 +83,7 @@ def esc(s):
     return ''.join('\\' + c if c in '&%$#_{}' else c for c in s)
 
 def options(argv):
-    opts = {'short': False, 'numerical': False, 'style': 'minion', 'author': 'By', 'date': None, 'footer': None}
+    opts = {'short': False, 'numerical': False, 'style': 'minion', 'font': 'minion', 'author': 'By', 'date': None, 'footer': None}
     args = []
     for a in argv:
         if a == '--short': opts['short'] = True
@@ -139,7 +140,7 @@ def main():
         L = [r'% !TeX program = lualatex',
              r'\documentclass[10pt,a4paper]{article}',
              rf'\usepackage[{"ngerman" if de else "english"}]{{babel}}',
-             r'\usepackage{texercises-lp}', r'\usepackage{lp-minion}',
+             r'\usepackage{texercises-lp}', r'\usepackage' + ('[cochineal]' if o['font'] == 'cochineal' else '') + '{lp-minion}',
              rf'\lpsetfooter{{{footer}}}{{{esc(date)}}}{{{esc(o["author"])}}}',
              r'\begin{document}',
              rf'\txlang{{{"de" if de else "en"}}}',

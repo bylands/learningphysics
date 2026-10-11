@@ -8,16 +8,26 @@
 % easier to read in exponents and indices; text and quantities in text stay old-style)
 \newif\iflp@osmath
 \DeclareOption{oldstylemath}{\lp@osmathtrue}
+% option cochineal: Cochineal (Michael Sharpe's extension of Crimson Text, a Minion-like Garalde)
+% with its matching math (newtxmath); Cochineal has no semibold, section titles are set bold
+\newif\iflp@coch
+\DeclareOption{cochineal}{\lp@cochtrue}
 \ProcessOptions\relax
 \RequirePackage{iftex}
 \RequireLuaTeX
 \RequirePackage[a4paper,left=2.5cm,right=2.5cm,top=2.5cm,bottom=62bp,footskip=24bp]{geometry}
-\RequirePackage{fontspec}
 \RequirePackage{amsmath}
-\RequirePackage{unicode-math}
 \RequirePackage{enumitem}
 
 % ---------------------------------------------------------------- fonts
+\iflp@coch
+\RequirePackage[osf]{cochineal}
+\RequirePackage[cochineal,vvarbb]{newtxmath}
+\newcommand\lpsemibold{\bfseries}
+\else
+\RequirePackage{fontspec}
+\RequirePackage{unicode-math}
+\newcommand\lpsemibold{\fontseries{sb}\selectfont}
 % Minion 3 by file name (it is installed in ~/Library/Fonts); Medium and Semibold as extra series
 \setmainfont{Minion3}[Extension=.otf, UprightFont=*-Regular, ItalicFont=*-Italic,
   BoldFont=*-Bold, BoldItalicFont=*-BoldItalic,
@@ -38,6 +48,7 @@
 % + = - x < > in Minion; parentheses and brackets stay with Libertinus, which can make them grow
 \setmathfont{Minion3-Regular.otf}[range={"002B,"003D,"2212,"00D7,"003C,"003E}]
 \fi
+\fi
 % quantities in a sentence are set in the text font (old-style figures), in formulas as math
 \sisetup{mode=match, reset-text-family=false, reset-text-series=false, reset-text-shape=false}
 \newcommand\lpfrac[2]{\ensuremath{\frac{\text{#1}}{\text{#2}}}}
@@ -50,7 +61,6 @@
 \setlength\parindent{0pt}
 \setlength\parskip{0pt}
 \frenchspacing
-\newcommand\lpsemibold{\fontseries{sb}\selectfont}
 
 % ---------------------------------------------------------------- page
 \newcommand\lpfooterleft{}
@@ -95,7 +105,8 @@
 % difficulty as stars at the right, as TeXercises marks it (\star)
 \newcommand\lpextitle[3]{{\lpsemibold\href{#1}{#2}}\hfill\lpdifficulty{#3}\par\nobreak}
 \newcommand\lpdifficulty[1]{\ifnum0#1>0 {\color{black!45}\count@=#1\relax
-  \loop\ifnum\count@>0 \,\ensuremath{\bigstar}\advance\count@\m@ne\repeat}\fi}
+  \loop\ifnum\count@>0 \,\lpstar\advance\count@\m@ne\repeat}\fi}
+\iflp@coch\newcommand\lpstar{\ensuremath{\scriptstyle\bigstar}}\else\newcommand\lpstar{\ensuremath{\bigstar}}\fi
 % similar exercises: one small grey line of linked titles
 \newcommand\lpsimilar[1]{\par\vskip 2bp{\fontsize{8bp}{10bp}\selectfont\color{black!55}%
   \textit{\iftxde Ähnlich:\else Similar:\fi}\enspace #1\par}}
