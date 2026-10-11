@@ -20,6 +20,8 @@ Options of `build_sheet.py`: `--style=minion` (default) or `--style=plain` (Lati
 
 Each build writes `<out>-images.txt`: every image the sheet uses, whether it is in `images/`, and the TeXercises page of its exercise. A missing image prints a framed placeholder that links to that page.
 
+`fetch_images.sh <out>-images.txt` gets the missing images through Safari, where you are logged in to TeXercises (from outside CH/DE/AT/LI the site needs the login): a separate Safari window opens each `texercises.com/gallery/image/file/<name>/`, which redirects to a signed download link, and curl saves the file in `images/`. SVG images also get a PDF copy (rendered by Quick Look). Bring a Safari window of the profile where you are logged in to the front before starting it; the new window opens in that profile. Images are not committed (`.gitignore`).
+
 ## What the package does
 
 - `\NewQty[opts]{x}{13.4}[\milli\watt][e-3][\watt]`: `\xO` as given, `\x` in SI (at most 4 figures), `\xX` the number, `\xU` the unit, `\xOX`/`\xOU` number and unit as typed. A factor starting with `e` is a power of ten; any other factor (or `\NewQty*`) multiplies. A decimal comma and an uncertainty such as `3.2(1)` are accepted.
