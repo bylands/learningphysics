@@ -297,10 +297,11 @@
         `$$\\frac{1}{n^2} = ${ft(p.m)} \\;\\Rightarrow\\; n = \\frac{1}{\\sqrt{${ft(p.m)}}} = ${res(ft(v.n))}, \\qquad r' = ${ft(v.n)}\\cdot ${tq(p.r0, 'cm')} = ${res(tq(v.r2, 'cm'))}$$` +
         p$(p.m > 1 ? L('A larger force: the charges must come closer.', 'Eine grössere Kraft: Die Ladungen müssen näher zusammen.') : L('A smaller force: the charges must move apart.', 'Eine kleinere Kraft: Die Ladungen müssen sich voneinander entfernen.'))),
     ],
-    // after: the distance unknown (r' = ?) until the solution shows it; the forces in the titles
+    // after: drawn at the right distance r' (its value unknown, r' = ?, until the solution shows it);
+    // the forces in the titles
     figure: (p, v, view) => {
       const shown = view.show && view.show.size, N = (x) => String(Number(x.toPrecision(3)));
-      return factorFigure({ ...p, n: shown ? v.n : 1, a: 1, b: 1, rl: shown ? `${sv('r')}′ = ${N(v.r2 * 100)} cm` : `${sv('r')}′ = ?`,
+      return factorFigure({ ...p, n: v.n, a: 1, b: 1, rl: shown ? `${sv('r')}′ = ${N(v.r2 * 100)} cm` : `${sv('r')}′ = ?`,
         before: `${L('before', 'vorher')}: F = ${N(p.F)} N`, after: `${L('after', 'nachher')}: F′ = ${N(p.F * p.m)} N` }, v, view);
     },
   };
