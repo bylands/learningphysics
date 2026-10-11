@@ -22,4 +22,4 @@ Images are not in the TeXercises export: put them in `images/<name>` next to the
 - Boxes `\Geg`, `\Ges`, `\Lsg`, `\tcbhighmath[aufgabe|loesung|highlight math]`, lists `abcliste`/`abclist` (counter `abc`), `wf` with `\claim`, `\trueclaim`, `\falseclaim`, difficulty pieces `\pawnB` ... `\kingB`, `\al{...}` (align*).
 - `build_sheet.py` closes a display opened as `align*` and closed as `align` the way it was opened.
 
-tkz-fct function plots need gnuplot and `latexmk -pdf -shell-escape`; without them the curve is left out with a warning.
+Function plots (tkz-fct's `\tkzFct`, TikZ `plot function{...}`) are computed in TeX, so they need neither gnuplot nor `-shell-escape`. The expression is read in gnuplot syntax (`sin` in radians, `x**2`); a TikZ-style `sin(deg(...))` is read as `sin(...)`.

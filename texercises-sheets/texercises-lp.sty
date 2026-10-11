@@ -424,9 +424,58 @@
 \DeclareUnicodeCharacter{221A}{\ensuremath{\surd}}\DeclareUnicodeCharacter{221E}{\ensuremath{\infty}}
 \DeclareUnicodeCharacter{2032}{\ensuremath{'}}
 
-% tkz-fct curves need gnuplot and -shell-escape; without them the curve is left out with a warning
-\let\txlp@pgferror\pgferror
-\def\pgferror#1{\in@{Plot data file}{#1}\ifin@\pgfwarning{#1 (tkz-fct needs gnuplot and -shell-escape)}\else\txlp@pgferror{#1}\fi}
+% Function plots (tkz-fct's \tkzFct, TikZ's plot function{...}) normally call gnuplot through
+% -shell-escape. Here the points are computed in TeX instead (l3fp, gnuplot syntax: sin in
+% radians, x**2), so the plots need neither gnuplot nor -shell-escape.
+\ExplSyntaxOn
+\fp_new_variable:n { x }
+\iow_new:N \g__txlp_plot_iow
+\tl_new:N \l__txlp_plot_tl
+\seq_new:N \l__txlp_plot_seq
+\int_new:N \l__txlp_plot_n_int
+\fp_new:N \l__txlp_plot_a_fp
+\fp_new:N \l__txlp_plot_b_fp
+\cs_new_protected:Npn \__txlp_plot_table:nn #1#2
+  % #1 table file, #2 the gnuplot code TikZ wrote: set samples N; plot [x=a:b] [range] expression
+  {
+    \tl_set:Nn \l__txlp_plot_tl {#2}
+    \regex_extract_once:nVNTF
+      { \A \s* set \s+ samples \s+ (\d+) [^;]* ; \s* plot \s* \[ \s* x \s* = ([^:]+) : ([^\]]+) \] \s* (?: \[ [^\]]* \] \s* )? (.*) \Z }
+      \l__txlp_plot_tl \l__txlp_plot_seq
+      {
+        \int_set:Nn \l__txlp_plot_n_int { \int_max:nn { 2 } { \seq_item:Nn \l__txlp_plot_seq { 2 } } }
+        \fp_set:Nn \l__txlp_plot_a_fp { \seq_item:Nn \l__txlp_plot_seq { 3 } }
+        \fp_set:Nn \l__txlp_plot_b_fp { \seq_item:Nn \l__txlp_plot_seq { 4 } }
+        \tl_set:Nx \l__txlp_plot_tl { \seq_item:Nn \l__txlp_plot_seq { 5 } }
+        \tl_replace_all:Nnn \l__txlp_plot_tl { ** } { ^ }
+        % sin(deg(...)) is TikZ' degree style; gnuplot's sin takes radians already
+        \regex_replace_all:nnN { deg \s* \( } { ( } \l__txlp_plot_tl
+        \iow_open:Nn \g__txlp_plot_iow {#1}
+        \int_step_inline:nnn { 0 } { \l__txlp_plot_n_int - 1 }
+          {
+            \fp_set_variable:nn { x }
+              { \l__txlp_plot_a_fp + ##1 * ( \l__txlp_plot_b_fp - \l__txlp_plot_a_fp ) / ( \l__txlp_plot_n_int - 1 ) }
+            \iow_now:Nx \g__txlp_plot_iow
+              { \fp_eval:n { round( x , 6 ) } \c_space_tl \fp_eval:n { round( \l__txlp_plot_tl , 6 ) } \c_space_tl i }
+          }
+        \iow_close:N \g__txlp_plot_iow
+      }
+      {
+        \msg_warning:nnx { texercises-lp } { plot } { \tl_to_str:N \l__txlp_plot_tl }
+        \iow_open:Nn \g__txlp_plot_iow {#1}
+        \iow_close:N \g__txlp_plot_iow
+      }
+  }
+\cs_generate_variant:Nn \regex_extract_once:nnNTF { nV }
+\msg_new:nnn { texercises-lp } { plot } { This~plot~needs~gnuplot,~it~is~left~out:~#1 }
+\cs_set_protected:Npn \pgf@plotgnuplot [#1] #2
+  {
+    \pgfutilpreparefilename { #1.table }
+    \tl_set_eq:NN \pgf@plottablefile \pgfretval
+    \use:x { \exp_not:N \__txlp_plot_table:nn { \pgf@plottablefile } { \pgfutil@trimspaces@e {#2} } }
+    \pgfplotxyfile { \pgf@plottablefile }
+  }
+\ExplSyntaxOff
 % old circuit drawings close the path with "to (cycle)"; they all start at the origin
 \tikzset{every picture/.append style={execute at begin picture={\coordinate (cycle) at (0,0);}}}
 
