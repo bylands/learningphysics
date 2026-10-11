@@ -14,7 +14,7 @@
     },
     {
       scenario: 'com-sqstick', p: { h: 10, s: 5 },
-      practice: [{ types: ['com-sqstick'] }, { en: 'triangle on a stick, dumbbell', de: 'Dreieck auf einem Stab, Hantel', types: ['com-tristick', 'com-bell'] }],
+      practice: [{ types: ['com-sqstick', 'com-corner', 'com-swatter', 'com-sign'] }, { en: 'two squares, stand, triangle on a stick, dumbbell', de: 'zwei Quadrate, Ständer, Dreieck auf einem Stab, Hantel', types: ['com-stack', 'com-stand', 'com-tristick', 'com-bell'] }],
       name: { en: 'Square on a stick', de: 'Quadrat auf Stab' },
       idea: { en: 'A closed figure first: opposite sides of equal length meet in the middle, so a square’s centre of mass is its centre. Then combine it with the stick.', de: 'Zuerst die geschlossene Figur: Gegenüberliegende gleich lange Seiten treffen sich in der Mitte, also ist der Schwerpunkt eines Quadrats sein Mittelpunkt. Dann mit dem Stab zusammenfassen.' },
     },

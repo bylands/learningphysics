@@ -347,7 +347,7 @@
     fields: (p) => [...(p.mu ? [field('R', '', L('total friction force', 'gesamte Reibungskraft'))] : []), field('res'), field('a'), field('K', '', L('force of the left box on the right box', 'Kraft der linken auf die rechte Kiste'))],
     title: () => L('Pushing two boxes', 'Zwei Kisten schieben'),
     text: (p) => L(`Two boxes with masses of ${kg(p.m1)} (left) and ${kg(p.m2)} (right) stand next to each other on the floor. A force of ${q(p.F, 'N')} pushes the left box horizontally to the right, so that it pushes the right box along. ${p.mu ? `The coefficient of kinetic friction for both boxes is ${num(p.mu, 2)}.` : 'There is no friction.'}`,
-      `Zwei Kisten mit den Massen ${kg(p.m1)} (links) und ${kg(p.m2)} (rechts) stehen nebeneinander auf dem Boden. Eine Kraft von ${q(p.F, 'N')} schiebt die linke Kiste horizontal nach rechts, sodass sie die rechte Kiste mitschiebt. ${p.mu ? `Die Gleitreibungszahl beträgt für beide Kisten ${num(p.mu, 2)}.` : 'Es gibt keine Reibung.'}`),
+      `Zwei Kisten mit den Massen ${kg(p.m1)} (links) und ${kg(p.m2)} (rechts) stehen nebeneinander auf dem Boden. Die linke Kiste wird mit einer Kraft von ${q(p.F, 'N')} horizontal nach rechts geschoben und schiebt dabei die rechte Kiste vor sich her. ${p.mu ? `Die Gleitreibungszahl beträgt für beide Kisten ${num(p.mu, 2)}.` : 'Es gibt keine Reibung.'}`),
     // In the free-body diagram, the boxes are drawn apart, so that each contact force sits on its box.
     scene(p, v, view = {}) {
       const b = floorPair(p, view.task ? 0 : 64), sc = b.sc;
@@ -1076,7 +1076,7 @@
       const FG = p.m * G, base = ['G', 'D'], all = ['G', 'D', 'v', 'a'];
       const forces = step(L('Forces on the skydiver', 'Kräfte auf die Fallschirmspringerin'),
         `<p>${L(`The Earth pulls her down with her weight ${m$(`${T('G')} = ${T('m')}\\,g = ${tq(FG, 'N')}`)}. The air acts against her velocity: she falls down, so the air resistance ${m$(T('D'))} points up.`, `Die Erde zieht sie mit ihrer Gewichtskraft ${m$(`${T('G')} = ${T('m')}\\,g = ${tq(FG, 'N')}`)} nach unten. Die Luft wirkt gegen ihre Geschwindigkeit: Sie fällt nach unten, also zeigt der Luftwiderstand ${m$(T('D'))} nach oben.`)} ` +
-        `${L('There is no other force: nothing pushes her along in the direction of motion. She keeps falling because the Earth pulls her, not because of a “force of motion”.', 'Weitere Kräfte gibt es nicht: Nichts schiebt sie in Bewegungsrichtung an. Sie fällt weiter, weil die Erde sie anzieht, nicht wegen einer „Bewegungskraft“.')}</p>`,
+        `${L('There is no other force: nothing pushes her along in the direction of motion. She keeps falling because the Earth pulls her, not because of a “force of motion”.', 'Weitere Kräfte gibt es nicht: Nichts treibt sie in Bewegungsrichtung an. Sie fällt weiter, weil die Erde sie anzieht, nicht wegen einer „Bewegungskraft“.')}</p>`,
         p.phase === 'terminal' ? [...base, 'v'] : all, ['D', 'v']);
       if (p.phase === 'terminal') {
         return [forces,
@@ -1139,7 +1139,7 @@
       return sized(sc, { G: p.m * G, N: p.m * G, D: p.D });
     },
     hints: () => [
-      L('Which bodies act on her? The Earth, the road (only up: rolling resistance is negligible) and the air. Once she stops pedalling, nothing pushes her forward.', 'Welche Körper wirken auf sie? Die Erde, die Strasse (nur nach oben: der Rollwiderstand ist vernachlässigbar) und die Luft. Sobald sie nicht mehr tritt, schiebt sie nichts nach vorn.'),
+      L('Which bodies act on her? The Earth, the road (only up: rolling resistance is negligible) and the air. Once she stops pedalling, nothing pushes her forward.', 'Welche Körper wirken auf sie? Die Erde, die Strasse (nur nach oben: der Rollwiderstand ist vernachlässigbar) und die Luft. Sobald sie nicht mehr tritt, treibt sie nichts mehr nach vorn an.'),
       L('The air resistance points against her velocity: backwards.', 'Der Luftwiderstand zeigt gegen ihre Geschwindigkeit: nach hinten.'),
       L(`Backwards positive: ${m$(`${T('D')} = ${T('m')}\\,${T('a')}`)}.`, `Nach hinten positiv: ${m$(`${T('D')} = ${T('m')}\\,${T('a')}`)}.`),
     ],
@@ -1147,7 +1147,7 @@
       return [num$('a', L('Her acceleration (backwards: she slows down):', 'Ihre Beschleunigung (nach hinten: sie wird langsamer):'), T('a'), 'a', v.a,
         `\\frac{${T('D')}}{${T('m')}} = \\frac{${tq(p.D, 'N')}}{${tq(p.m, 'kg')}} = ${tq(v.a, 'a')}`, [
           [p.D / (p.m * G), 'mass', L('Divide by her mass, in kilograms, not by her weight.', 'Teile durch ihre Masse, in Kilogramm, nicht durch ihre Gewichtskraft.')],
-          [0, 'motion', L('She does not keep her speed: nothing pushes her forwards, so the air resistance is the net force and slows her down.', 'Sie behält ihre Geschwindigkeit nicht: Nichts schiebt sie nach vorn, also ist der Luftwiderstand die resultierende Kraft und bremst sie ab.')],
+          [0, 'motion', L('She does not keep her speed: nothing pushes her forwards, so the air resistance is the net force and slows her down.', 'Sie behält ihre Geschwindigkeit nicht: Nichts treibt sie nach vorn an, also ist der Luftwiderstand die resultierende Kraft und bremst sie ab.')],
           [(p.m * G - p.D) / p.m, 'other', L('Her weight acts vertically, not along the road: it does not change her speed.', 'Ihre Gewichtskraft wirkt senkrecht, nicht entlang der Strasse: Sie ändert ihre Geschwindigkeit nicht.')],
         ])];
     },
@@ -1155,7 +1155,7 @@
       const FG = p.m * G, base = ['G', 'N', 'D', 'v'], all = [...base, 'a'];
       return [
         step(L('Forces on the cyclist', 'Kräfte auf die Radfahrerin'),
-          `<p>${L(`Her weight ${m$(T('G'))} down, the normal force ${m$(T('N'))} of the road up, and the air resistance ${m$(T('D'))} against her velocity: backwards. Nothing pushes her forward: there is no “force of motion”. She keeps rolling because nothing stops her at once (inertia), not because a force drives her.`, `Ihre Gewichtskraft ${m$(T('G'))} nach unten, die Normalkraft ${m$(T('N'))} der Strasse nach oben und der Luftwiderstand ${m$(T('D'))} gegen ihre Geschwindigkeit: nach hinten. Nichts schiebt sie nach vorn: Es gibt keine „Bewegungskraft“. Sie rollt weiter, weil nichts sie sofort anhält (Trägheit), nicht weil eine Kraft sie antreibt.`)}</p>`,
+          `<p>${L(`Her weight ${m$(T('G'))} down, the normal force ${m$(T('N'))} of the road up, and the air resistance ${m$(T('D'))} against her velocity: backwards. Nothing pushes her forward: there is no “force of motion”. She keeps rolling because nothing stops her at once (inertia), not because a force drives her.`, `Ihre Gewichtskraft ${m$(T('G'))} nach unten, die Normalkraft ${m$(T('N'))} der Strasse nach oben und der Luftwiderstand ${m$(T('D'))} gegen ihre Geschwindigkeit: nach hinten. Nichts treibt sie nach vorn an: Es gibt keine „Bewegungskraft“. Sie rollt weiter, weil nichts sie sofort anhält (Trägheit), nicht weil eine Kraft sie antreibt.`)}</p>`,
           base, ['D', 'v']),
         step(L('Vertical: balance', 'Senkrecht: Gleichgewicht'),
           `<p>${L('She does not move up or down:', 'Sie bewegt sich weder nach oben noch nach unten:')} $$${T('N')} = ${T('m')}\\,g = ${res(v.N, 'N')}$$</p>`, base, ['G', 'N']),

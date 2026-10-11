@@ -92,7 +92,7 @@ function checkChoice(ex, id) {
     });
     if (falls.filter(Boolean).length !== 1 || !falls[p.falls]) fail(`${id}: falls ${falls}, the right one is ${p.falls}`);
     if (it.options[p.falls] !== right[0]) fail(`${id}: the right option is ${right[0].html}`);
-    if (!it.options.some((o) => o.flag === 'tilt')) fail(`${id}: no option for the most tilted block`);
+    if (p.slope == null && !it.options.some((o) => o.flag === 'tilt')) fail(`${id}: no option for the most tilted block`); // on a slope all are tilted alike
   }
 }
 

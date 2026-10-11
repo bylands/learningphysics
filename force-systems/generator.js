@@ -227,7 +227,7 @@
     const FG = (p.m || 0) * FS.G;
     switch (e.flag) {
       case 'motion': return L(`There is no “force of motion” on ${box}: every force comes from a body that pushes or pulls it (or from the Earth). The forces that do act accelerate it; nothing pushes it along in the direction of motion.`,
-        `Auf ${box} wirkt keine „Bewegungskraft“: Jede Kraft kommt von einem Körper, der sie drückt oder zieht (oder von der Erde). Die Kräfte, die wirken, beschleunigen sie; nichts schiebt sie in Bewegungsrichtung an.`);
+        `Auf ${box} wirkt keine „Bewegungskraft“: Jede Kraft kommt von einem Körper, der sie drückt oder zieht (oder von der Erde). Die Kräfte, die wirken, beschleunigen sie; nichts treibt sie in Bewegungsrichtung an.`);
       case 'noFric': return L(`Friction on ${box} is missing: it slides over the surface, so kinetic friction acts against its motion.`, `Die Reibung auf ${box} fehlt: Sie gleitet über die Unterlage, also wirkt die Gleitreibung gegen ihre Bewegung.`);
       case 'noSpring': return L(`The spring force on ${box} is missing: the spring touches it, and ${back}.`, `Die Federkraft auf ${box} fehlt: Die Feder berührt sie, und ${back}.`);
       case 'springDir': return L(`The spring force on ${box} points the wrong way, along the ${pushed ? 'compression' : 'stretch'}. The spring acts back towards its relaxed length: ${back}.`,

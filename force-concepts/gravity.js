@@ -86,12 +86,12 @@
             `Richtig. Beide fallen gleich lange (<i>t</i>) und behalten während dieser Zeit die horizontale Geschwindigkeit <i>v</i>: Beide landen <i>v·t</i> vom Tisch entfernt.`)),
         o(T(`The ${heavy} lands farther from the table, because it has more momentum.`, `${cap(H.nom)} landet weiter weg, weil sie mehr Schwung hat.`), 'impetus',
           T(`After the edge nothing pushes either ball forward, and nothing slows it down: both keep the horizontal speed <i>v</i>, whatever their mass. Both fall for the same time, so they get equally far.`,
-            `Nach der Tischkante schiebt nichts die Kugeln weiter an, und nichts bremst sie: Beide behalten die horizontale Geschwindigkeit <i>v</i>, egal wie schwer sie sind. Beide fallen gleich lange, also kommen sie gleich weit.`)),
+            `Nach der Tischkante treibt nichts die Kugeln weiter an, und nichts bremst sie: Beide behalten die horizontale Geschwindigkeit <i>v</i>, egal wie schwer sie sind. Beide fallen gleich lange, also kommen sie gleich weit.`)),
         o(T(`The ${heavy} lands closer to the table, because it falls faster.`, `${cap(H.nom)} landet näher am Tisch, weil sie schneller fällt.`), 'heavier-faster',
           why.heavier + T(' So both are in the air equally long and get equally far.', ' Also sind beide gleich lange in der Luft und kommen gleich weit.')),
         o(T('Both drop straight down at the edge of the table.', 'Beide fallen an der Tischkante senkrecht hinunter.'), 'active-force',
           T('Nothing has to push the balls forward: they keep their horizontal speed <i>v</i> after the edge (inertia), and move on while they fall.',
-            'Nichts muss die Kugeln vorwärts schieben: Sie behalten nach der Kante ihre horizontale Geschwindigkeit <i>v</i> (Trägheit) und bewegen sich weiter, während sie fallen.')),
+            'Es braucht keine Kraft, die die Kugeln vorwärts treibt: Sie behalten nach der Kante ihre horizontale Geschwindigkeit <i>v</i> (Trägheit) und bewegen sich weiter, während sie fallen.')),
       ]));
     } else {
       questions.push(timeQ);
@@ -149,24 +149,49 @@
   }
 
   // ================================================================ rolloff: launched horizontally
-  const LAUNCH = {
+  // A ball rolling off a table, a toy car driving off a table, a stone thrown from a cliff, water
+  // from a garden hose held level, a crate dropped from a plane. No numbers: the questions are
+  // about the path, the horizontal velocity, the fall time compared with a dropped body, and what
+  // twice the speed changes.
+  // a function: the texts in the current language
+  const launches = () => ({
     table: { obj: 'ball', from: 'the edge of the table', after: 'after it leaves the table',
-      de: ['f', 'Kugel'], deFrom: 'der Tischkante', deAfter: 'nachdem sie den Tisch verlassen hat' },
+      de: ['f', 'Kugel'], gen: 'der Kugel', deFrom: 'der Tischkante', deAfter: 'nachdem sie den Tisch verlassen hat', deLeft: 'des Tisches', deLeftAcc: 'den Tisch', deEdge: 'der Tischkante',
+      twin: T('a second ball', 'eine zweite Kugel'), faster: T('The ball now rolls off the table twice as fast.', 'Die Kugel rollt jetzt doppelt so schnell über die Tischkante.'),
+      title: T('Off the edge', 'Über die Kante'),
+      situation: T('<p>A ball rolls across a horizontal table and off its edge. Air resistance is negligible.</p>', '<p>Eine Kugel rollt über einen horizontalen Tisch und über die Kante hinaus. Der Luftwiderstand ist vernachlässigbar.</p>') },
+    toycar: { obj: 'toy car', from: 'the edge of the table', after: 'after it leaves the table',
+      de: ['n', 'Spielzeugauto'], gen: 'des Spielzeugautos', deFrom: 'der Tischkante', deAfter: 'nachdem es den Tisch verlassen hat', deLeft: 'des Tisches', deLeftAcc: 'den Tisch', deEdge: 'der Tischkante',
+      twin: T('a marble', 'eine Murmel'), faster: T('The toy car now drives off the table twice as fast.', 'Das Spielzeugauto fährt jetzt doppelt so schnell über die Tischkante.'),
+      title: T('Toy car', 'Spielzeugauto'),
+      situation: T('<p>A toy car drives across a horizontal table at constant speed and off its edge. Air resistance is negligible.</p>', '<p>Ein Spielzeugauto fährt mit konstanter Geschwindigkeit über einen horizontalen Tisch und über die Kante hinaus. Der Luftwiderstand ist vernachlässigbar.</p>') },
     cliff: { obj: 'stone', from: 'the top of the cliff', after: 'after it leaves the hand',
-      de: ['m', 'Stein'], deFrom: 'der Klippe', deAfter: 'nachdem er die Hand verlassen hat' },
+      de: ['m', 'Stein'], gen: 'des Steins', deFrom: 'der Klippe', deAfter: 'nachdem er die Hand verlassen hat', deLeft: 'der Hand', deLeftAcc: 'die Hand', deEdge: 'dem Abwurf',
+      twin: T('a second stone', 'einen zweiten Stein'), faster: T('The stone is now thrown twice as fast.', 'Der Stein wird jetzt doppelt so schnell abgeworfen.'),
+      title: T('Thrown from a cliff', 'Von der Klippe'),
+      situation: T('<p>From the top of a high cliff, a stone is thrown horizontally. Air resistance is negligible.</p>', '<p>Von einer hohen Klippe wird ein Stein horizontal abgeworfen. Der Luftwiderstand ist vernachlässigbar.</p>') },
+    hose: { obj: 'drop', from: 'the nozzle', after: 'after it leaves the nozzle',
+      de: ['m', 'Wassertropfen'], gen: 'des Wassertropfens', deFrom: 'der Düse', deAfter: 'nachdem er die Düse verlassen hat', deLeft: 'der Düse', deLeftAcc: 'die Düse', deEdge: 'der Düse',
+      twin: T('a marble', 'eine Murmel'), faster: T('The water now comes out of the nozzle twice as fast.', 'Das Wasser spritzt jetzt doppelt so schnell aus der Düse.'),
+      title: T('Garden hose', 'Gartenschlauch'),
+      situation: T('<p>A gardener holds a garden hose level, so the water leaves the nozzle horizontally. Each drop of water flies on its own; air resistance is negligible.</p>', '<p>Ein Gärtner hält einen Gartenschlauch waagrecht, sodass das Wasser horizontal aus der Düse spritzt. Jeder Wassertropfen fliegt für sich; der Luftwiderstand ist vernachlässigbar.</p>') },
     plane: { obj: 'crate', from: 'the plane', after: 'after it is released',
-      de: ['f', 'Kiste'], deFrom: 'dem Flugzeug', deAfter: 'nachdem sie ausgeklinkt wurde' },
-  };
+      de: ['f', 'Kiste'], gen: 'der Kiste', deFrom: 'dem Flugzeug', deAfter: 'nachdem sie ausgeklinkt wurde', deLeft: 'des Flugzeugs', deLeftAcc: 'das Flugzeug', deEdge: 'dem Ausklinken',
+      faster: T('The plane now flies twice as fast, at the same height.', 'Das Flugzeug fliegt jetzt in derselben Höhe doppelt so schnell.'),
+      title: T('Supply drop', 'Abwurf aus dem Flugzeug'),
+      situation: T('<p>A plane flies horizontally at constant speed above flat ground and drops a supply crate. Air resistance is negligible.</p>', '<p>Ein Flugzeug fliegt mit konstanter Geschwindigkeit horizontal über flachem Boden und klinkt eine Versorgungskiste aus. Der Luftwiderstand ist vernachlässigbar.</p>') },
+  });
 
   // Small picture: the launch site and a path from L to the ground.
   function launchPic(variant, d) {
     const L = [30, 28];
     let s = D.ground(0, 150, 100);
-    if (variant === 'table') s += D.table(0, 35, 36, 100);
+    if (variant === 'table' || variant === 'toycar') s += D.table(0, 35, 36, 100);
     if (variant === 'cliff') s += D.rect(0, 35, 36, 65, 'solid', 0);
     if (variant === 'plane') s += D.plane(26, 22, 0.55);
+    if (variant === 'hose') s += D.person(6, 100, 84, 1, 'hold') + D.rect(24, 26, 8, 4, 'solid', 1);
     s += D.path(d(L[0], L[1], 94), 'opt-path');
-    s += variant === 'plane' ? D.rect(L[0] - 5, L[1] - 4, 10, 8, 'obj', 1) : D.ball(L[0], L[1], 6);
+    s += variant === 'plane' ? D.rect(L[0] - 5, L[1] - 4, 10, 8, 'obj', 1) : variant === 'toycar' ? D.car(L[0] - 10, 35, 18) : D.ball(L[0], L[1], variant === 'hose' ? 3 : 6);
     return D.svg(150, 108, s, T('path', 'Bahn'));
   }
   const PATHS = {
@@ -178,24 +203,25 @@
   };
 
   function rolloff(r, p) {
-    const variant = p.variant || r.pick(['table', 'cliff', 'plane']);
-    const L = LAUNCH[variant], obj = L.obj, N = noun(...L.de);
-    const v = p.v || (variant === 'plane' ? r.pick([40, 50, 60]) : variant === 'cliff' ? r.pick([5, 8, 10]) : r.pick([1, 1.5, 2]));
-    const h = p.h || (variant === 'plane' ? r.pick([80, 125, 180]) : variant === 'cliff' ? r.pick([20, 45]) : r.pick([0.8, 1.25]));
-    const t = Math.sqrt((2 * h) / G);
+    const variant = p.variant || r.pick(['table', 'toycar', 'cliff', 'hose', 'plane']);
+    const L = launches()[variant], obj = L.obj, N = noun(...L.de);
+    const ask = p.ask || r.pick(variant === 'plane' ? ['plane', 'faster'] : ['vx', 'race', 'faster']);
     const FG = F('G');
-    const Er = cap(N.er);
+    const Er = cap(N.er), sein = N.g === 'f' ? 'ihre' : 'seine';
 
     // ---------------------------------------------------------- figure
-    const yG = 215, P0 = variant === 'table' ? [99, 69] : variant === 'cliff' ? [92, 62] : [80, 60];
-    const rad = variant === 'cliff' ? 7 : 11, reach = 220;
+    const yG = 215;
+    const P0 = { table: [99, 69], toycar: [101, 72], cliff: [92, 62], hose: [98, 104], plane: [80, 60] }[variant];
+    const rad = { table: 11, toycar: 8, cliff: 7, hose: 4, plane: 11 }[variant], reach = 220;
     const at = (u) => [P0[0] + reach * u, P0[1] + (yG - rad - P0[1]) * u * u];
-    const body = (x, y) => (variant === 'plane' ? D.rect(x - 9, y - 7, 18, 14, 'obj', 1) + D.line(x - 9, y, x + 9, y, 'thin') : D.ball(x, y, rad));
+    const body = (x, y) => (variant === 'plane' ? D.rect(x - 9, y - 7, 18, 14, 'obj', 1) + D.line(x - 9, y, x + 9, y, 'thin')
+      : variant === 'toycar' ? D.car(x - 17, y + 8, 34) : D.ball(x, y, rad));
     const US = [0.2, 0.4, 0.6, 0.8, 1];
     function figure(o = {}) {
       let s = D.ground(0, 380, yG);
-      if (variant === 'table') s += D.table(10, 80, 100, yG);
+      if (variant === 'table' || variant === 'toycar') s += D.table(10, 80, 100, yG);
       if (variant === 'cliff') s += D.rect(0, 70, 100, yG - 70, 'solid', 0);
+      if (variant === 'hose') s += D.person(52, yG, 150, 1, 'hold') + D.rect(84, 100, 14, 8, 'solid', 1);
       if (o.trace || o.path) s += D.poly(Array.from({ length: 31 }, (z, j) => at(j / 30)), o.path ? 'trace strong' : 'trace');
       if (o.strobe) US.forEach((u) => { const [x, y] = at(u); s += D.ghost(body(x, y)); });
       if (o.horiz) {
@@ -217,17 +243,18 @@
         const [x, y] = at(0.5);
         s += body(x, y) + D.arrow(x, y, x, y + 42, 'f', 'F_G');
       } else s += body(P0[0], P0[1]);
-      if (!o.force && !o.vel && !o.strobe) s += D.arrow(P0[0] + 14, P0[1] - (variant === 'plane' ? 26 : 0), P0[0] + 62, P0[1] - (variant === 'plane' ? 26 : 0), 'v', 'v');
+      const up = variant === 'plane' ? 26 : variant === 'toycar' ? 8 : 0;
+      if (!o.force && !o.vel && !o.strobe) s += D.arrow(P0[0] + 14, P0[1] - up, P0[0] + 62, P0[1] - up, 'v', 'v');
       return D.svg(380, 228, s, T(`A ${obj} launched horizontally from ${L.from}`, `${cap(N.ein)}, horizontal abgeworfen von ${L.deFrom}`));
     }
 
     // ---------------------------------------------------------- questions
     const pic = (k) => launchPic(variant, PATHS[k]);
-    const nothingForward = T(`After it leaves ${L.from}, nothing pushes the ${obj} forward any more — and nothing holds it back either (air resistance is negligible). So its horizontal speed stays <i>v</i> all the way down`,
-      `Nach dem Verlassen ${variant === 'plane' ? 'des Flugzeugs' : variant === 'table' ? 'des Tisches' : 'der Klippe'} schiebt nichts ${N.acc} mehr vorwärts — und nichts bremst ${N.ihn} (Luftwiderstand vernachlässigbar). Also bleibt ${variant === 'cliff' ? 'seine' : 'ihre'} horizontale Geschwindigkeit bis zum Boden <i>v</i>`);
+    const nothingForward = T(`After it leaves ${L.from}, nothing pushes the ${obj} forward any more — and nothing holds it back either (air resistance is negligible). So its horizontal speed stays the same all the way down`,
+      `Nach dem Verlassen ${L.deLeft} treibt nichts ${N.acc} mehr vorwärts — und nichts bremst ${N.ihn} (Luftwiderstand vernachlässigbar). Also bleibt ${sein} horizontale Geschwindigkeit bis zum Boden gleich`);
     const questions = [q(r, 'path', T(`Which path does the ${obj} follow ${L.after}, as seen from the ground?`, `Welche Bahn beschreibt ${N.nom}, ${L.deAfter}, vom Boden aus gesehen?`), [
       o(pic('parabola'), 'ok', T(`Right: it keeps its horizontal speed and at the same time falls faster and faster — a parabola that starts horizontally and gets steeper and steeper.`,
-        `Richtig: ${Er} behält ${variant === 'cliff' ? 'seine' : 'ihre'} horizontale Geschwindigkeit und fällt gleichzeitig immer schneller — eine Parabel, die horizontal beginnt und immer steiler wird.`),
+        `Richtig: ${Er} behält ${sein} horizontale Geschwindigkeit und fällt gleichzeitig immer schneller — eine Parabel, die horizontal beginnt und immer steiler wird.`),
         T('a parabola that starts horizontally and gets steeper', 'eine Parabel, die horizontal beginnt und immer steiler wird')),
       o(pic('cartoon'), 'impetus', T(`${nothingForward}, and it starts falling at once: gravity acts from the first moment.`, `${nothingForward}, und ${N.er} beginnt sofort zu fallen: Die Schwerkraft wirkt vom ersten Moment an.`),
         T('straight ahead, then straight down', 'geradeaus, dann senkrecht hinunter')),
@@ -240,22 +267,46 @@
       o(pic('vertical'), 'active-force', T(`${nothingForward}: it does not need a force to keep moving forward (inertia).`, `${nothingForward}: ${cap(N.er)} braucht keine Kraft, um sich weiter vorwärts zu bewegen (Trägheit).`),
         T('straight down', 'senkrecht hinunter')),
     ], true)];
-    if (variant === 'plane') {
+    const sameTime = T('The time in the air depends only on the height: vertically every body starts with no velocity and falls with the acceleration <i>g</i>, whatever it does horizontally.',
+      'Die Zeit in der Luft hängt nur von der Höhe ab: Vertikal startet jeder Körper ohne Geschwindigkeit und fällt mit der Beschleunigung <i>g</i>, egal was er horizontal tut.');
+    if (ask === 'plane') {
       questions.push(q(r, 'plane', T('The plane keeps flying straight at the same speed. Where is it when the crate hits the ground?', 'Das Flugzeug fliegt geradeaus mit gleicher Geschwindigkeit weiter. Wo ist es, wenn die Kiste am Boden aufschlägt?'), [
         o(T('Directly above the crate.', 'Genau über der Kiste.'), 'ok', T('Right: the crate keeps the horizontal speed of the plane, so it stays below the plane all the way down.', 'Richtig: Die Kiste behält die horizontale Geschwindigkeit des Flugzeugs, also bleibt sie den ganzen Weg nach unten unter dem Flugzeug.')),
         o(T('Ahead of the crate: the crate slowly falls behind.', 'Vor der Kiste: Die Kiste bleibt langsam zurück.'), 'impetus',
           T(`The crate does not lose its horizontal speed: no force acts on it horizontally (air resistance negligible). It moves forward exactly like the plane.`, `Die Kiste verliert ihre horizontale Geschwindigkeit nicht: Horizontal wirkt keine Kraft auf sie (Luftwiderstand vernachlässigbar). Sie bewegt sich genau wie das Flugzeug vorwärts.`)),
         o(T('Far ahead: the crate lands right below the point where it was released.', 'Weit voraus: Die Kiste landet genau unter dem Punkt, wo sie ausgeklinkt wurde.'), 'active-force',
           T('The crate does not need an engine to keep moving forward: it keeps the plane’s horizontal speed (inertia).', 'Die Kiste braucht keinen Motor, um sich weiter vorwärts zu bewegen: Sie behält die horizontale Geschwindigkeit des Flugzeugs (Trägheit).')),
-        o(T('Behind the crate.', 'Hinter der Kiste.'), 'other', T('Nothing pushes the crate forward faster than the plane flies: horizontally, no force acts on it at all.', 'Nichts schiebt die Kiste schneller vorwärts, als das Flugzeug fliegt: Horizontal wirkt gar keine Kraft auf sie.')),
+        o(T('Behind the crate.', 'Hinter der Kiste.'), 'other', T('Nothing drives the crate forward faster than the plane flies: horizontally, no force acts on it at all.', 'Nichts treibt die Kiste schneller vorwärts, als das Flugzeug fliegt: Horizontal wirkt gar keine Kraft auf sie.')),
       ]));
-    } else {
-      questions.push(q(r, 'vx', T(`How does the horizontal part of the ${obj}'s velocity change while it falls?`, `Wie ändert sich der horizontale Anteil der Geschwindigkeit ${variant === 'cliff' ? 'des Steins' : 'der Kugel'}, während ${N.er} fällt?`), [
+    } else if (ask === 'vx') {
+      questions.push(q(r, 'vx', T(`How does the horizontal part of the ${obj}'s velocity change while it falls?`, `Wie ändert sich der horizontale Anteil der Geschwindigkeit ${L.gen}, während ${N.er} fällt?`), [
         o(T(`It stays the same.`, 'Er bleibt gleich.'), 'ok', T(`Right: horizontally no force acts on the ${obj}, so the horizontal part of its velocity does not change.`, `Richtig: Horizontal wirkt keine Kraft auf ${N.acc}, also ändert sich der horizontale Anteil der Geschwindigkeit nicht.`)),
         o(T(`It slowly decreases as the push wears off.`, 'Er nimmt langsam ab, weil der Schwung nachlässt.'), 'impetus', T(`The push is not stored in the ${obj}. ${nothingForward}.`, `Der Stoss wird nicht in ${N.dat} gespeichert. ${nothingForward}.`)),
-        o(T(`It drops to zero right after ${L.from}.`, `Er fällt direkt nach ${variant === 'table' ? 'der Tischkante' : 'dem Abwurf'} auf null.`), 'active-force', `${nothingForward}.`),
+        o(T(`It drops to zero right after ${L.from}.`, `Er fällt direkt nach ${L.deEdge} auf null.`), 'active-force', `${nothingForward}.`),
         o(T(`It increases, because gravity speeds the ${obj} up.`, `Er nimmt zu, weil die Schwerkraft ${N.acc} schneller macht.`), 'other',
           T(`Gravity points straight down: it only changes the vertical part of the velocity. The horizontal part stays the same.`, `Die Schwerkraft zeigt senkrecht nach unten: Sie ändert nur den vertikalen Anteil der Geschwindigkeit. Der horizontale Anteil bleibt gleich.`)),
+      ]));
+    } else if (ask === 'race') {
+      questions.push(q(r, 'race', T(`At the moment the ${obj} leaves ${L.from}, ${L.twin} is simply dropped from the same height. Which one reaches the ground first?`,
+        `Im selben Moment, in dem ${N.nom} ${L.deLeftAcc} verlässt, lässt jemand ${L.twin} aus derselben Höhe einfach fallen. Was kommt zuerst am Boden an?`), [
+        o(T('Both at the same time.', 'Beide gleichzeitig.'), 'ok', `${T('Right.', 'Richtig.')} ${sameTime}`),
+        o(T('The dropped one: its way down is shorter.', 'Der fallen gelassene Körper: Sein Weg nach unten ist kürzer.'), 'other',
+          T(`The ${obj}'s path is longer, but it covers the extra distance sideways at the same time as it falls. ${sameTime}`, `Die Bahn ${L.gen} ist länger, aber den zusätzlichen Weg seitwärts legt ${N.er} gleichzeitig mit dem Fallen zurück. ${sameTime}`)),
+        o(T(`The dropped one: the ${obj}'s forward motion keeps it up for a while.`, `Der fallen gelassene Körper: Die Vorwärtsbewegung hält ${N.acc} eine Weile oben.`), 'impetus',
+          T(`Nothing holds the ${obj} up: from the first moment only its weight acts, straight down. ${sameTime}`, `Nichts hält ${N.acc} oben: Vom ersten Moment an wirkt nur ${sein} Gewichtskraft, senkrecht nach unten. ${sameTime}`)),
+        o(T(`The ${obj}: it is faster.`, `${cap(N.nom)}: ${Er} ist schneller.`), 'other',
+          T(`Its extra speed is horizontal, so it does not help it down. ${sameTime}`, `${cap(sein)} zusätzliche Geschwindigkeit ist horizontal und hilft nicht nach unten. ${sameTime}`)),
+      ]));
+    } else {
+      questions.push(q(r, 'faster', T(`${L.faster} What changes for the ${obj}?`, `${L.faster} Was ändert sich für ${N.acc}?`), [
+        o(T('It is in the air just as long and lands twice as far away.', `${Er} ist gleich lange in der Luft und landet doppelt so weit entfernt.`), 'ok',
+          T(`Right. ${sameTime} In that same time it moves twice as fast sideways, so it gets twice as far.`, `Richtig. ${sameTime} In derselben Zeit bewegt ${N.er} sich seitwärts doppelt so schnell, also kommt ${N.er} doppelt so weit.`)),
+        o(T('It is in the air longer, because it first flies straight ahead for longer, and lands more than twice as far away.', `${Er} ist länger in der Luft, weil ${N.er} zuerst länger geradeaus fliegt, und landet mehr als doppelt so weit entfernt.`), 'impetus',
+          T(`The ${obj} does not fly straight ahead first: gravity pulls it down from the first moment. ${sameTime}`, `${cap(N.nom)} fliegt nicht zuerst geradeaus: Die Schwerkraft zieht ${N.ihn} vom ersten Moment an nach unten. ${sameTime}`)),
+        o(T('It is in the air for a shorter time and lands about as far away.', `${Er} ist kürzer in der Luft und landet etwa gleich weit entfernt.`), 'other',
+          T(`The extra speed is horizontal: it does not make the ${obj} fall faster. ${sameTime}`, `Die zusätzliche Geschwindigkeit ist horizontal: Sie lässt ${N.acc} nicht schneller fallen. ${sameTime}`)),
+        o(T('It is in the air just as long and lands just as far away.', `${Er} ist gleich lange in der Luft und landet gleich weit entfernt.`), 'other',
+          T(`The fall time is the same, but during it the ${obj} keeps twice the horizontal speed, so it gets twice as far.`, `Die Fallzeit ist gleich, aber während dieser Zeit behält ${N.nom} die doppelte horizontale Geschwindigkeit, also kommt ${N.er} doppelt so weit.`)),
       ]));
     }
 
@@ -263,10 +314,10 @@
     const steps = [
       { title: T('Forces after release', 'Kräfte nach dem Loslassen'), figure: figure({ trace: true, force: true }),
         text: T(`Once the ${obj} has left ${L.from}, nothing touches it (air resistance is negligible). The only force is its weight ${FG}, straight down. There is no forward force: the push that started the motion stopped at the moment of release.`,
-          `Sobald ${N.nom} ${variant === 'plane' ? 'das Flugzeug' : variant === 'table' ? 'den Tisch' : 'die Hand'} verlassen hat, berührt ${N.ihn} nichts mehr (Luftwiderstand vernachlässigbar). Die einzige Kraft ist die Gewichtskraft ${FG}, senkrecht nach unten. Es gibt keine Vorwärtskraft: Der Stoss, der die Bewegung ausgelöst hat, hörte beim Loslassen auf.`) },
+          `Sobald ${N.nom} ${L.deLeftAcc} verlassen hat, berührt ${N.ihn} nichts mehr (Luftwiderstand vernachlässigbar). Die einzige Kraft ist die Gewichtskraft ${FG}, senkrecht nach unten. Es gibt keine Vorwärtskraft: Was die Bewegung ausgelöst hat, wirkt nach dem Loslassen nicht mehr.`) },
       { title: T('Horizontally: no force', 'Horizontal: keine Kraft'), figure: figure({ trace: true, strobe: true, horiz: true }),
-        text: T(`No horizontal force, so the horizontal velocity stays <i>v</i> = ${qty(v, 'm/s')} (first law). In equal time intervals the ${obj} moves equal distances forward.`,
-          `Keine horizontale Kraft, also bleibt die horizontale Geschwindigkeit <i>v</i> = ${qty(v, 'm/s')} (erstes Newtonsches Gesetz). In gleichen Zeitabständen legt ${N.nom} gleiche Strecken vorwärts zurück.`) },
+        text: T(`No horizontal force, so the horizontal velocity stays the same (first law). In equal time intervals the ${obj} moves equal distances forward.`,
+          `Keine horizontale Kraft, also bleibt die horizontale Geschwindigkeit gleich (erstes Newtonsches Gesetz). In gleichen Zeitabständen legt ${N.nom} gleiche Strecken vorwärts zurück.`) },
       { title: T('Vertically: constant force', 'Vertikal: konstante Kraft'), figure: figure({ trace: true, strobe: true, vert: true }),
         text: T(`Vertically, the weight gives a constant acceleration <i>g</i> downward, just as for a dropped ${obj}. The distances fallen in equal time intervals grow like 1 : 3 : 5 : 7 …`,
           `Vertikal bewirkt die Gewichtskraft eine konstante Beschleunigung <i>g</i> nach unten, genau wie beim freien Fall. Die in gleichen Zeitabständen gefallenen Strecken wachsen wie 1 : 3 : 5 : 7 …`) },
@@ -274,34 +325,26 @@
         text: T(`Together: a parabola that starts horizontally and gets steeper and steeper. The velocity arrows keep their horizontal part, while their downward part grows. `,
           `Zusammen: eine Parabel, die horizontal beginnt und immer steiler wird. Die Geschwindigkeitspfeile behalten ihren horizontalen Anteil, während ihr Anteil nach unten wächst. `) +
           (variant === 'plane'
-            ? T(`The crate keeps the plane's horizontal speed, so it stays directly below the plane. It falls for √(2<i>h</i>/<i>g</i>) ≈ ${qty(t, 's')} and lands about ${qty(v * t, 'm')} ahead of the release point.`,
-              `Die Kiste behält die horizontale Geschwindigkeit des Flugzeugs, also bleibt sie genau unter ihm. Sie fällt √(2<i>h</i>/<i>g</i>) ≈ ${qty(t, 's')} lang und landet etwa ${qty(v * t, 'm')} vor dem Abwurfpunkt.`)
-            : T(`It falls for <i>t</i> = √(2<i>h</i>/<i>g</i>) ≈ ${qty(t, 's')} and lands <i>v·t</i> ≈ ${qty(v * t, 'm')} from ${variant === 'table' ? 'the table' : 'the foot of the cliff'}.`,
-              `${Er} fällt <i>t</i> = √(2<i>h</i>/<i>g</i>) ≈ ${qty(t, 's')} lang und landet <i>v·t</i> ≈ ${qty(v * t, 'm')} vom ${variant === 'table' ? 'Tisch' : 'Fuss der Klippe'} entfernt.`)) },
+            ? T('The crate keeps the plane’s horizontal speed, so it stays directly below the plane. ', 'Die Kiste behält die horizontale Geschwindigkeit des Flugzeugs, also bleibt sie genau unter ihm. ')
+            : '') +
+          T(`The ${obj} is in the air just as long as a body dropped from the same height; twice the speed would carry it twice as far in that time.`,
+            `${cap(N.nom)} ist gleich lange in der Luft wie ein Körper, der aus derselben Höhe einfach fallen gelassen wird; mit doppelter Geschwindigkeit käme ${N.er} in dieser Zeit doppelt so weit.`) },
     ];
 
-    const situations = {
-      table: T(`<p>A ball rolls across a horizontal table at <i>v</i> = ${qty(v, 'm/s')} and off its edge. The table is ${qty(h, 'm', 3)} high. Air resistance is negligible.</p>`,
-        `<p>Eine Kugel rollt mit <i>v</i> = ${qty(v, 'm/s')} über einen horizontalen Tisch und über die Kante hinaus. Der Tisch ist ${qty(h, 'm', 3)} hoch. Der Luftwiderstand ist vernachlässigbar.</p>`),
-      cliff: T(`<p>From the top of a ${qty(h, 'm', 3)} high cliff, a stone is thrown horizontally at <i>v</i> = ${qty(v, 'm/s')}. Air resistance is negligible.</p>`,
-        `<p>Von einer ${qty(h, 'm', 3)} hohen Klippe wird ein Stein mit <i>v</i> = ${qty(v, 'm/s')} horizontal abgeworfen. Der Luftwiderstand ist vernachlässigbar.</p>`),
-      plane: T(`<p>A plane flies horizontally at a constant <i>v</i> = ${qty(v, 'm/s')}, ${qty(h, 'm', 3)} above flat ground, and drops a supply crate. Air resistance is negligible.</p>`,
-        `<p>Ein Flugzeug fliegt mit konstant <i>v</i> = ${qty(v, 'm/s')} horizontal, ${qty(h, 'm', 3)} über flachem Boden, und klinkt eine Versorgungskiste aus. Der Luftwiderstand ist vernachlässigbar.</p>`),
-    };
     return {
-      title: { table: T('Off the edge', 'Über die Kante'), cliff: T('Thrown from a cliff', 'Von der Klippe'), plane: T('Supply drop', 'Abwurf aus dem Flugzeug') }[variant],
-      situation: situations[variant],
+      title: L.title,
+      situation: L.situation,
       figure: figure(),
       questions,
       hints: [
-        T(`Look at the ${obj} after it has been released. Which forces act on it now? Is there still anything that pushes it forward?`,
-          `Betrachte ${N.acc} nach dem Loslassen. Welche Kräfte wirken jetzt auf ${N.ihn}? Schiebt ${N.ihn} noch etwas vorwärts?`),
+        T(`Look at the ${obj} after it has been released. Which forces act on it now? Is there still anything that drives it forward?`,
+          `Betrachte ${N.acc} nach dem Loslassen. Welche Kräfte wirken jetzt auf ${N.ihn}? Treibt ${N.ihn} noch etwas vorwärts?`),
         T(`Plan: split the motion into a horizontal and a vertical part, and treat each with Newton's laws on its own.`,
           `Plan: Zerlege die Bewegung in einen horizontalen und einen vertikalen Teil und behandle jeden für sich mit den Newtonschen Gesetzen.`),
         T(`Horizontally: no force → constant velocity (first law). Vertically: constant force ${FG} → constant acceleration <i>g</i>, as in free fall.`,
           `Horizontal: keine Kraft → konstante Geschwindigkeit (erstes Gesetz). Vertikal: konstante Kraft ${FG} → konstante Beschleunigung <i>g</i>, wie im freien Fall.`),
-        T(`So in equal time steps the ${obj} moves equal distances forward and growing distances down (1 : 3 : 5 …). Which path${variant === 'plane' ? ', and which position of the plane,' : ''} fits that?`,
-          `In gleichen Zeitschritten legt ${N.nom} also gleiche Strecken vorwärts und wachsende Strecken nach unten zurück (1 : 3 : 5 …). Welche Bahn${variant === 'plane' ? ' und welche Position des Flugzeugs' : ''} passt dazu?`),
+        T(`So in equal time steps the ${obj} moves equal distances forward and growing distances down (1 : 3 : 5 …). Which path${ask === 'plane' ? ', and which position of the plane,' : ''} fits that?`,
+          `In gleichen Zeitschritten legt ${N.nom} also gleiche Strecken vorwärts und wachsende Strecken nach unten zurück (1 : 3 : 5 …). Welche Bahn${ask === 'plane' ? ' und welche Position des Flugzeugs' : ''} passt dazu?`),
       ],
       steps,
     };
@@ -327,8 +370,9 @@
     // ---------------------------------------------------------- figure
     let P, V, traj;
     if (vertical) {
-      traj = D.path('M120 205 V70 A35 35 0 0 1 190 70 V205', 'trace');
-      P = { rising: [120, 125], top: [155, 35], falling: [190, 125] }[phase];
+      // up and down drawn side by side, joined by a tight turn at the top (not a wide arc)
+      traj = D.path('M146 205 V44 A9 9 0 0 1 164 44 V205', 'trace');
+      P = { rising: [146, 125], top: [155, 35], falling: [164, 125] }[phase];
       V = { rising: [0, -46], top: [0, 0], falling: [0, 46] }[phase];
     } else {
       const y = (x) => 205 - 155 * (1 - ((x - 190) / 150) ** 2);
@@ -343,7 +387,7 @@
       let s = D.ground(10, W - 10, 216) + traj;
       if (o.strobe) {
         const pts = vertical
-          ? [[120, 170, 0, -46], [120, 120, 0, -34], [120, 80, 0, -20], [190, 80, 0, 20], [190, 120, 0, 34], [190, 160, 0, 46]]
+          ? [[146, 170, 0, -46], [146, 120, 0, -34], [146, 80, 0, -20], [164, 80, 0, 20], [164, 120, 0, 34], [164, 160, 0, 46]]
           : [60, 120, 190, 260, 320].map((x) => { const y = 205 - 155 * (1 - ((x - 190) / 150) ** 2); return [x, y, 34, 34 * (2 * 155 * (x - 190)) / 150 ** 2]; });
         pts.forEach(([x, y, vx, vy]) => { s += D.ghost(D.ball(x, y, 8)) + D.arrow(x, y, x + vx, y + vy, 'v'); });
       }
@@ -354,7 +398,8 @@
       }
       if (o.force) s += D.arrow(P[0], P[1], P[0], P[1] + 44, 'f', 'F_G', { at: [P[0] + 8, P[1] + 46], anchor: 'start' });
       if (o.acc) s += D.arrow(P[0] - 22, P[1] + 4, P[0] - 22, P[1] + 40, 'a', 'a = g', { at: [P[0] - 28, P[1] + 38], anchor: 'end' });
-      return D.svg(W, 226, s, T(`A ${obj} in flight at the point P`, `${cap(N.ein)} im Flug im Punkt P`));
+      if (vertical) s += D.words(W / 2, 238, T('up and down drawn side by side', 'Auf- und Abweg nebeneinander gezeichnet'));
+      return D.svg(W, vertical ? 246 : 226, s, T(`A ${obj} in flight at the point P`, `${cap(N.ein)} im Flug im Punkt P`));
     }
 
     // ---------------------------------------------------------- questions

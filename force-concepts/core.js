@@ -283,7 +283,7 @@
     kick: ['A brief kick', 'Ein kurzer Stoss'], circle: ['Leaving a circle', 'Aus dem Kreis'], engine: ['Engine on, engine off', 'Triebwerk an, Triebwerk aus'],
     balance: ['Comparing two forces', 'Zwei Kräfte vergleichen'], thruster: ['Thrust to the side', 'Schub zur Seite'], 'two-forces': ['Two strings', 'Zwei Schnüre'],
     centre: ['Towards the centre', 'Zum Zentrum'], 'rank-elevator': ['Four elevator rides', 'Vier Liftfahrten'],
-    'match-diagrams': ['Free-body diagrams', 'Kräftediagramme'], 'cart-launcher': ['Ball from a moving cart', 'Ball vom fahrenden Wagen'],
+    'match-diagrams': ['Free-body diagrams', 'Kräftediagramme'], 'cart-launcher': ['From a moving vehicle', 'Vom fahrenden Fahrzeug'],
     'pendulum-cut': ['Cutting the pendulum string', 'Pendelschnur durchschneiden'], ramp: ['Up and down the ramp', 'Die Rampe hinauf und hinunter'],
     'tf-throw': ['True or false: thrown up', 'Richtig oder falsch: hochgeworfen'], 'tf-motion': ['True or false: Newton’s laws', 'Richtig oder falsch: Newtonsche Gesetze'],
   };

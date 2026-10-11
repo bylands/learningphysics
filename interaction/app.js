@@ -270,8 +270,9 @@
       idea: def.idea[lang],
       frames: () => {
         const e = FC.build(def.gen, def.params);
-        // The questions as in practice, but read-only; single-choice ones as a list of prompts.
-        const simple = e.questions.every((qu) => qu.type === 'choice');
+        // The questions as in practice, but read-only; single-choice ones without pictures as a list
+        // of prompts (a choice of graphs or diagrams shows its options).
+        const simple = e.questions.every((qu) => qu.type === 'choice' && !qu.pics);
         const task = {
           text: `<div class="step-rule">${ui().task}</div>${e.situation}` + (simple
             ? `<ol class="tq">${e.questions.map((qu) => `<li>${qu.prompt}</li>`).join('')}</ol>`

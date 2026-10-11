@@ -255,7 +255,7 @@
         eq('h', L('The cyclist, horizontally (backwards positive):', 'Die Radfahrerin, waagrecht (nach hinten positiv):'), `${D} = ${ma()}`,
           L('Air resistance is the only horizontal force: it slows her down.', 'Der Luftwiderstand ist die einzige waagrechte Kraft: Er bremst sie ab.'),
           [[`-${D} = ${ma()}`, 'accel', L('Air resistance acts against the velocity, not against the acceleration: she moves forwards, so it points backwards.', 'Der Luftwiderstand wirkt gegen die Geschwindigkeit, nicht gegen die Beschleunigung: Sie fährt vorwärts, also zeigt er nach hinten.')],
-            [`${D} - ${F} = ${ma()}`, 'motion', L('There is no “force of motion”: once she stops pedalling, nothing pushes her forwards.', 'Es gibt keine „Bewegungskraft“: Sobald sie nicht mehr tritt, schiebt sie nichts nach vorn.')],
+            [`${D} - ${F} = ${ma()}`, 'motion', L('There is no “force of motion”: once she stops pedalling, nothing pushes her forwards.', 'Es gibt keine „Bewegungskraft“: Sobald sie nicht mehr tritt, treibt sie nichts mehr nach vorn an.')],
             [`${D} - ${mg()} = ${ma()}`, 'other', L('Her weight acts vertically, not along the road.', 'Ihre Gewichtskraft wirkt senkrecht, nicht entlang der Strasse.')]]),
       ];
     },
@@ -334,7 +334,7 @@
       return [eq('a', L('Her acceleration (backwards):', 'Ihre Beschleunigung (nach hinten):'), a(`\\frac{${D}}{m} = \\frac{${tq(p.D, 'N')}}{${tq(p.m, 'kg')}} = ${tq(v.a, 'a')}`),
         L('The air resistance is the net force: divided by her mass.', 'Der Luftwiderstand ist die resultierende Kraft: geteilt durch ihre Masse.'),
         [[a(`\\frac{${D}}{${mg()}} = \\frac{${tq(p.D, 'N')}}{${tq(p.m * FS.G, 'N')}} = ${FS.texNum(p.D / p.m / FS.G, 3)}\\,\\mathrm{m/s^2}`), 'mass', L('Divide by her mass, in kilograms, not by her weight.', 'Teile durch ihre Masse, in Kilogramm, nicht durch ihre Gewichtskraft.')],
-          [a(`0\\,\\mathrm{m/s^2}`), 'motion', L('Nothing pushes her forwards: the air resistance is the net force, so she slows down.', 'Nichts schiebt sie nach vorn: Der Luftwiderstand ist die resultierende Kraft, also wird sie langsamer.')],
+          [a(`0\\,\\mathrm{m/s^2}`), 'motion', L('Nothing pushes her forwards: the air resistance is the net force, so she slows down.', 'Nichts treibt sie nach vorn an: Der Luftwiderstand ist die resultierende Kraft, also wird sie langsamer.')],
           [a(`\\frac{${mg()} - ${D}}{m} = ${tq((p.m * FS.G - p.D) / p.m, 'a')}`), 'other', L('Her weight acts vertically, not along the road.', 'Ihre Gewichtskraft wirkt senkrecht, nicht entlang der Strasse.')]])];
     },
   };

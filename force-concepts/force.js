@@ -23,7 +23,7 @@
       },
       car: {
         vert: false, dirs: [1], name: 'car', N: noun('n', 'Auto'),
-        X: { sym: FL('drive'), html: F('drive'), what: T('the driving force (the road pushing the wheels forward)', 'die Antriebskraft (die Strasse schiebt die Räder vorwärts)'), dat: 'der Antriebskraft' },
+        X: { sym: FL('drive'), html: F('drive'), what: T('the driving force (the road pushing the wheels forward)', 'die Antriebskraft (die Strasse übt auf die Räder eine Kraft nach vorn aus)'), dat: 'der Antriebskraft' },
         Y: { sym: FL('res'), html: F('res'), what: T('the resistance (air resistance and rolling resistance)', 'der Fahrwiderstand (Luft- und Rollwiderstand)'), dat: 'dem Fahrwiderstand (Luft- und Rollwiderstand)' },
         text: (ph) => T(`A car drives along a straight, level road. ${{ speeding: 'It is speeding up.', constant: 'It drives at constant speed.', slowing: 'It is slowing down, with the engine still pulling a little.' }[ph]}`,
           `Ein Auto fährt auf einer geraden, ebenen Strasse. ${{ speeding: 'Es wird schneller.', constant: 'Es fährt mit konstanter Geschwindigkeit.', slowing: 'Es wird langsamer, wobei der Motor noch etwas zieht.' }[ph]}`),
@@ -52,7 +52,7 @@
       motorboat: {
         vert: false, dirs: [1], name: 'motorboat', k: 1.7, N: noun('n', 'Motorboot'),
         title: T('On the lake', 'Auf dem See'),
-        X: { sym: FL('drive'), html: F('drive'), what: T('the driving force (the water pushes the propeller forward)', 'die Antriebskraft (das Wasser schiebt den Propeller vorwärts)'), dat: 'der Antriebskraft' },
+        X: { sym: FL('drive'), html: F('drive'), what: T('the driving force (the water pushes the propeller forward)', 'die Antriebskraft (das Wasser übt auf den Propeller eine Kraft nach vorn aus)'), dat: 'der Antriebskraft' },
         Y: { sym: FL('res'), html: F('res'), what: T('the water resistance', 'der Wasserwiderstand'), dat: 'dem Wasserwiderstand' },
         cancel: T('the weight and the buoyancy of the water are vertical and cancel', 'Gewichtskraft und Auftrieb im Wasser sind vertikal und heben sich auf'),
         text: (ph) => T(`A motorboat crosses a calm lake in a straight line. ${{ speeding: 'It is speeding up.', constant: 'It moves at constant speed.', slowing: 'It is slowing down, with its engine still running a little.' }[ph]}`,
@@ -76,7 +76,7 @@
       cyclist: {
         vert: false, dirs: [1], name: 'cyclist', k: 1.5, N: noun('m', 'Velofahrer'),
         title: T('By bike', 'Mit dem Velo'),
-        X: { sym: FL('drive'), html: F('drive'), what: T('the driving force (the road pushes the rear wheel forward)', 'die Antriebskraft (die Strasse schiebt das Hinterrad vorwärts)'), dat: 'der Antriebskraft' },
+        X: { sym: FL('drive'), html: F('drive'), what: T('the driving force (the road pushes the rear wheel forward)', 'die Antriebskraft (die Strasse übt auf das Hinterrad eine Kraft nach vorn aus)'), dat: 'der Antriebskraft' },
         Y: { sym: FL('res'), html: F('res'), what: T('the resistance (air resistance and rolling resistance)', 'der Fahrwiderstand (Luft- und Rollwiderstand)'), dat: 'dem Fahrwiderstand (Luft- und Rollwiderstand)' },
         text: (ph) => T(`A cyclist rides along a straight, level road (take the cyclist and the bike together). ${{ speeding: 'The cyclist is speeding up.', constant: 'The cyclist rides at constant speed.', slowing: 'The cyclist is slowing down, while still pedalling gently.' }[ph]}`,
           `Ein Velofahrer fährt auf einer geraden, ebenen Strasse (Velofahrer und Velo zusammen betrachtet). ${{ speeding: 'Er wird schneller.', constant: 'Er fährt mit konstanter Geschwindigkeit.', slowing: 'Er wird langsamer, tritt aber noch leicht in die Pedale.' }[ph]}`),
@@ -108,7 +108,7 @@
       train: {
         vert: false, dirs: [1], name: 'train', k: 1.8, N: noun('m', 'Zug'),
         title: T('On the rails', 'Auf den Schienen'),
-        X: { sym: FL('drive'), html: F('drive'), what: T('the driving force (the rails push the driven wheels forward)', 'die Antriebskraft (die Schienen schieben die angetriebenen Räder vorwärts)'), dat: 'der Antriebskraft' },
+        X: { sym: FL('drive'), html: F('drive'), what: T('the driving force (the rails push the driven wheels forward)', 'die Antriebskraft (die Schienen üben auf die angetriebenen Räder eine Kraft nach vorn aus)'), dat: 'der Antriebskraft' },
         Y: { sym: FL('res'), html: F('res'), what: T('the resistance (air resistance and rolling resistance)', 'der Fahrwiderstand (Luft- und Rollwiderstand)'), dat: 'dem Fahrwiderstand (Luft- und Rollwiderstand)' },
         cancel: T('the weight and the push of the rails are vertical and cancel', 'Gewichtskraft und Normalkraft der Schienen sind vertikal und heben sich auf'),
         text: (ph) => T(`A train runs along a straight, level track. ${{ speeding: 'It is speeding up after leaving a station.', constant: 'It runs at constant speed.', slowing: 'It is slowing down, with the motors still pulling a little.' }[ph]}`,
@@ -312,8 +312,8 @@
       g += D.ball(x + 10 * k, y, 6.5 * k) + `<circle class="win" cx="${D.n(x + 12 * k)}" cy="${D.n(y)}" r="${D.n(3.2 * k)}"/>`;
       return g;
     }
-    const label = probeObj ? T(`Top view: a probe drifting east, pushed ${side} from P on`, `Ansicht von oben: eine Sonde treibt nach Osten und wird ab P nach ${dSide} geschoben`)
-      : T(`Top view: an astronaut drifting east, pushed ${side} by her jet pack from P on`, `Ansicht von oben: eine Astronautin treibt nach Osten und wird ab P von ihrem Düsenrucksack nach ${dSide} geschoben`);
+    const label = probeObj ? T(`Top view: a probe drifting east, pushed ${side} from P on`, `Ansicht von oben: eine Sonde treibt nach Osten und wird ab P nach ${dSide} beschleunigt`)
+      : T(`Top view: an astronaut drifting east, pushed ${side} by her jet pack from P on`, `Ansicht von oben: eine Astronautin treibt nach Osten und wird ab P von ihrem Düsenrucksack nach ${dSide} beschleunigt`);
 
     function figure(o = {}) {
       let g = D.rect(0, 0, 380, 200, 'space', 6) + D.arrow(352, 46, 352, 18, 'ax', 'N', { head: 7, at: [352, 58] });
@@ -402,7 +402,7 @@
           `Weit weg von jedem Planeten und mit abgeschaltetem ${E.word} wirkt keine Kraft: ${cap(N.nom)} bewegt sich geradlinig mit konstanter Geschwindigkeit nach Osten (erstes Newtonsches Gesetz).`) },
       { title: T('From P on: split the motion', 'Ab P: Bewegung zerlegen'), figure: figure({ path: true, forces: true }),
         text: T(`${Eng} pushes with a constant force toward the ${side}. East–west no force acts: the velocity east stays the same. Toward the ${side} the force gives a constant acceleration: the velocity toward the ${side} grows steadily from zero, and the distance grows like <i>t</i>². Together: a parabola, like a ball thrown horizontally — only “falling” to the ${side}.`,
-          `${cap(E.nom)} schiebt mit einer konstanten Kraft nach ${dSide}. In Ost-West-Richtung wirkt keine Kraft: Die Geschwindigkeit nach Osten bleibt gleich. Nach ${dSide} bewirkt die Kraft eine konstante Beschleunigung: Die Geschwindigkeit nach ${dSide} wächst gleichmässig von null an, und die Strecke wächst wie <i>t</i>². Zusammen: eine Parabel, wie bei einem horizontal geworfenen Ball — nur „fällt“ ${N.nom} nach ${dSide}.`) },
+          `${cap(E.nom)} übt eine konstante Kraft nach ${dSide} aus. In Ost-West-Richtung wirkt keine Kraft: Die Geschwindigkeit nach Osten bleibt gleich. Nach ${dSide} bewirkt die Kraft eine konstante Beschleunigung: Die Geschwindigkeit nach ${dSide} wächst gleichmässig von null an, und die Strecke wächst wie <i>t</i>². Zusammen: eine Parabel, wie bei einem horizontal geworfenen Ball — nur „fällt“ ${N.nom} nach ${dSide}.`) },
       { title: T('Speed', 'Betrag der Geschwindigkeit'), figure: figure({ path: true, vel: true }),
         text: T(`The velocity arrows: the part east stays, the part toward the ${side} grows. So the speed √(${vE}² + ${vS}²) increases all the time the ${eng} runs.`,
           `Die Geschwindigkeitspfeile: Der Anteil nach Osten bleibt, der Anteil nach ${dSide} wächst. Also nimmt der Betrag √(${vE}² + ${vS}²) zu, solange ${E.nom} läuft.`) },
@@ -415,9 +415,9 @@
       title: T('Thrust to the side', 'Schub zur Seite'),
       situation: probeObj
         ? T(`<p>A space probe far from any planet drifts east with its engine off. At P its engine is switched on and pushes it with a constant force toward the ${side} (the probe is held so that the force always points ${side}). A little later, at Q, the engine is switched off again. The picture shows the probe from above.</p>`,
-          `<p>Eine Raumsonde treibt weit weg von jedem Planeten mit abgeschaltetem Triebwerk nach Osten. In P wird ihr Triebwerk eingeschaltet und schiebt sie mit einer konstanten Kraft nach ${dSide} (die Sonde wird so ausgerichtet, dass die Kraft immer nach ${dSide} zeigt). Etwas später, in Q, wird das Triebwerk wieder abgeschaltet. Das Bild zeigt die Sonde von oben.</p>`)
+          `<p>Eine Raumsonde treibt weit weg von jedem Planeten mit abgeschaltetem Triebwerk nach Osten. In P wird ihr Triebwerk eingeschaltet und übt eine konstante Kraft nach ${dSide} auf sie aus (die Sonde wird so ausgerichtet, dass die Kraft immer nach ${dSide} zeigt). Etwas später, in Q, wird das Triebwerk wieder abgeschaltet. Das Bild zeigt die Sonde von oben.</p>`)
         : T(`<p>An astronaut in her spacesuit, far from any planet, drifts east with her jet pack off. At P she switches on the side jets of her jet pack, which push her with a constant force toward the ${side} (she keeps facing east, so the force always points ${side}). A little later, at Q, she switches the jet pack off again. The picture shows her from above.</p>`,
-          `<p>Eine Astronautin im Raumanzug treibt weit weg von jedem Planeten mit abgeschaltetem Düsenrucksack nach Osten. In P schaltet sie die seitlichen Düsen ihres Düsenrucksacks ein; sie schieben sie mit einer konstanten Kraft nach ${dSide} (sie blickt weiter nach Osten, sodass die Kraft immer nach ${dSide} zeigt). Etwas später, in Q, schaltet sie den Düsenrucksack wieder ab. Das Bild zeigt sie von oben.</p>`),
+          `<p>Eine Astronautin im Raumanzug treibt weit weg von jedem Planeten mit abgeschaltetem Düsenrucksack nach Osten. In P schaltet sie die seitlichen Düsen ihres Düsenrucksacks ein; sie üben eine konstante Kraft nach ${dSide} auf sie aus (sie blickt weiter nach Osten, sodass die Kraft immer nach ${dSide} zeigt). Etwas später, in Q, schaltet sie den Düsenrucksack wieder ab. Das Bild zeigt sie von oben.</p>`),
       figure: figure(),
       questions,
       hints: [
@@ -487,16 +487,10 @@
     const FBh = `<i>F</i><sub>${big}</sub>`, FSh = `<i>F</i><sub>${3 - big}</sub>`;
     const both = T(`Both forces act at the same time and add as arrows: the net force is the diagonal of the parallelogram they span. The puck starts moving along the net force.`,
       'Beide Kräfte wirken gleichzeitig und addieren sich als Pfeile: Die resultierende Kraft ist die Diagonale des Parallelogramms, das sie aufspannen. Der Puck setzt sich in Richtung der resultierenden Kraft in Bewegung.');
-    const questions = [
-      q(r, 'dir', T('In which direction does the puck start to move?', 'In welche Richtung setzt sich der Puck in Bewegung?'), [
-        o(pic(ar), 'ok', `${T('Right:', 'Richtig:')} ${both}`, T('along the diagonal of the parallelogram of the two forces, closer to the larger one', 'entlang der Diagonale des Kräfteparallelogramms, näher bei der grösseren Kraft')),
-        o(pic(aBig), 'largest-force', T(`${FSh} counts too, not just the larger force. ${both}`, `${FSh} zählt auch, nicht nur die grössere Kraft. ${both}`), T(`along the larger force ${FBh}`, `entlang der grösseren Kraft ${FBh}`)),
-        o(pic(bis), 'other', T(`Exactly halfway between would be right for two equal forces. Here ${FBh} is ${ratio} times as large as ${FSh}, so the net force lies closer to ${FBh}.`,
-          `Genau in der Mitte wäre richtig bei zwei gleich grossen Kräften. Hier ist ${FBh} ${ratio}-mal so gross wie ${FSh}, also liegt die resultierende Kraft näher bei ${FBh}.`),
-          T('exactly halfway between the two forces', 'genau in der Mitte zwischen den beiden Kräften')),
-        o(pic(aSmall), 'other', T(`${both} It lies closer to the larger force, ${FBh}.`, `${both} Sie liegt näher bei der grösseren Kraft ${FBh}.`), T('along the smaller force', 'entlang der kleineren Kraft')),
-      ], true),
-      q(r, 'motion', T('Both strings keep pulling in the same way. How does the puck move?', 'Beide Schnüre ziehen weiter gleich. Wie bewegt sich der Puck?'), [
+    const motion = p.motion || r.pick(['rest', 'cut', 'one']);
+    const cutK = r.pick([1, 2]), FO = `<i>F</i><sub>${3 - cutK}</sub>`;
+    const MOTION = {
+      rest: () => q(r, 'motion', T('Both strings keep pulling in the same way. How does the puck move?', 'Beide Schnüre ziehen weiter gleich. Wie bewegt sich der Puck?'), [
         o(T('In a straight line, faster and faster.', 'Geradlinig, immer schneller.'), 'ok',
           T('Right: a constant net force gives a constant acceleration in its direction. Starting from rest, the puck moves in a straight line and gets faster and faster.',
             'Richtig: Eine konstante resultierende Kraft bewirkt eine konstante Beschleunigung in ihrer Richtung. Aus der Ruhe heraus bewegt sich der Puck geradlinig und wird immer schneller.')),
@@ -508,7 +502,40 @@
         o(T('A short distance, then it stops.', 'Ein kurzes Stück, dann bleibt er stehen.'), 'impetus',
           T('The forces keep acting, so the puck keeps accelerating. It would not even stop if they stopped: on the air table nothing slows it down.',
             'Die Kräfte wirken weiter, also wird der Puck weiter beschleunigt. Er würde nicht einmal anhalten, wenn sie aufhörten: Auf dem Lufttisch bremst ihn nichts.')),
+            ]),
+      cut: () => q(r, 'motion', T('After a while, both strings are released at the same moment. How does the puck move after that?', 'Nach einer Weile werden beide Schnüre im selben Moment losgelassen. Wie bewegt sich der Puck danach?'), [
+        o(T('Straight on in the same direction, at the speed it has reached.', 'Geradeaus in derselben Richtung weiter, mit der erreichten Geschwindigkeit.'), 'ok',
+          T('Right: without any force (friction negligible) the puck keeps its velocity: first law.', 'Richtig: Ohne Kraft (Reibung vernachlässigbar) behält der Puck seine Geschwindigkeit: erstes Newtonsches Gesetz.')),
+        o(T('It slows down and stops after a while.', 'Er wird langsamer und bleibt nach einer Weile stehen.'), 'impetus',
+          T('Nothing slows the puck down on the air table: no force means no change of velocity.', 'Auf dem Lufttisch bremst nichts den Puck: Keine Kraft heisst keine Änderung der Geschwindigkeit.')),
+        o(T('It stops at once.', 'Er bleibt sofort stehen.'), 'active-force',
+          T('A puck needs no force to keep moving: it keeps the velocity it has (first law).', 'Ein Puck braucht keine Kraft, um sich weiterzubewegen: Er behält seine Geschwindigkeit (erstes Newtonsches Gesetz).')),
+        o(T('It keeps getting faster in the same direction.', 'Er wird in derselben Richtung weiter schneller.'), 'other',
+          T('Without a force there is no acceleration: the speed stays as it is.', 'Ohne Kraft gibt es keine Beschleunigung: Die Geschwindigkeit bleibt, wie sie ist.')),
       ]),
+      one: () => q(r, 'motion', T(`After a while, only string ${cutK} is released; ${FO} keeps pulling as before. How does the puck move after that?`, `Nach einer Weile wird nur Schnur ${cutK} losgelassen; ${FO} zieht weiter wie bisher. Wie bewegt sich der Puck danach?`), [
+        o(T(`On a curve that bends more and more toward the direction of ${FO}.`, `Auf einer Kurve, die sich immer mehr in die Richtung von ${FO} biegt.`), 'ok',
+          T(`Right: the puck keeps its velocity, and ${FO} now adds a velocity in its own direction. So the path bends gradually toward ${FO}, like a thrown ball bends toward the ground.`,
+            `Richtig: Der Puck behält seine Geschwindigkeit, und ${FO} fügt nun eine Geschwindigkeit in seiner Richtung hinzu. Die Bahn biegt sich also allmählich zu ${FO} hin, wie ein geworfener Ball zum Boden.`)),
+        o(T(`It turns at once and moves along ${FO}.`, `Er dreht sofort ab und bewegt sich entlang ${FO}.`), 'last-force',
+          T(`A force changes the velocity, it does not replace it: the puck keeps the velocity it has and only gradually gets a part along ${FO}.`, `Eine Kraft ändert die Geschwindigkeit, sie ersetzt sie nicht: Der Puck behält seine Geschwindigkeit und bekommt nur allmählich einen Anteil entlang ${FO}.`)),
+        o(T('Straight on in the same direction, faster and faster.', 'Geradeaus in derselben Richtung, immer schneller.'), 'other',
+          T(`The net force now is ${FO} alone, which points in another direction than the velocity: the path bends toward ${FO}.`, `Die resultierende Kraft ist jetzt ${FO} allein, und sie zeigt in eine andere Richtung als die Geschwindigkeit: Die Bahn biegt sich zu ${FO} hin.`)),
+        o(T('Straight on in the same direction at constant speed.', 'Geradeaus in derselben Richtung mit konstanter Geschwindigkeit.'), 'other',
+          T(`${FO} still acts, so the velocity keeps changing: the path bends toward ${FO}.`, `${FO} wirkt weiter, also ändert sich die Geschwindigkeit weiter: Die Bahn biegt sich zu ${FO} hin.`)),
+      ]),
+    };
+    const motionQ = MOTION[motion]();
+    const questions = [
+      q(r, 'dir', T('In which direction does the puck start to move?', 'In welche Richtung setzt sich der Puck in Bewegung?'), [
+        o(pic(ar), 'ok', `${T('Right:', 'Richtig:')} ${both}`, T('along the diagonal of the parallelogram of the two forces, closer to the larger one', 'entlang der Diagonale des Kräfteparallelogramms, näher bei der grösseren Kraft')),
+        o(pic(aBig), 'largest-force', T(`${FSh} counts too, not just the larger force. ${both}`, `${FSh} zählt auch, nicht nur die grössere Kraft. ${both}`), T(`along the larger force ${FBh}`, `entlang der grösseren Kraft ${FBh}`)),
+        o(pic(bis), 'other', T(`Exactly halfway between would be right for two equal forces. Here ${FBh} is ${ratio} times as large as ${FSh}, so the net force lies closer to ${FBh}.`,
+          `Genau in der Mitte wäre richtig bei zwei gleich grossen Kräften. Hier ist ${FBh} ${ratio}-mal so gross wie ${FSh}, also liegt die resultierende Kraft näher bei ${FBh}.`),
+          T('exactly halfway between the two forces', 'genau in der Mitte zwischen den beiden Kräften')),
+        o(pic(aSmall), 'other', T(`${both} It lies closer to the larger force, ${FBh}.`, `${both} Sie liegt näher bei der grösseren Kraft ${FBh}.`), T('along the smaller force', 'entlang der kleineren Kraft')),
+      ], true),
+      motionQ,
     ];
 
     const steps = [
@@ -520,7 +547,9 @@
           `Zweites Newtonsches Gesetz: Die Beschleunigung <i>a</i> = ${Fnet}/<i>m</i> zeigt in Richtung der resultierenden Kraft. Der Puck startet aus der Ruhe, also bewegt er sich in diese Richtung — nicht entlang der grösseren Kraft und nicht genau in der Mitte.`) },
       { title: T('The motion', 'Die Bewegung'), figure: figure({ parallelogram: true, strobe: true }),
         text: T(`The forces do not change, so neither does the acceleration: the puck moves in a straight line along the net force, faster and faster.`,
-          'Die Kräfte ändern sich nicht, also auch die Beschleunigung nicht: Der Puck bewegt sich geradlinig in Richtung der resultierenden Kraft, immer schneller.') },
+          'Die Kräfte ändern sich nicht, also auch die Beschleunigung nicht: Der Puck bewegt sich geradlinig in Richtung der resultierenden Kraft, immer schneller.') +
+          { rest: '', cut: T(' When both strings are released, no force acts any more: the puck moves on in the same direction at the speed it has reached (first law).', ' Wenn beide Schnüre losgelassen werden, wirkt keine Kraft mehr: Der Puck bewegt sich in derselben Richtung mit der erreichten Geschwindigkeit weiter (erstes Newtonsches Gesetz).'),
+            one: T(` When string ${cutK} is released, ${FO} alone is the net force. It does not replace the velocity, it changes it gradually: the path bends more and more toward ${FO}.`, ` Wenn Schnur ${cutK} losgelassen wird, ist ${FO} allein die resultierende Kraft. Sie ersetzt die Geschwindigkeit nicht, sondern ändert sie allmählich: Die Bahn biegt sich immer mehr zu ${FO} hin.`) }[motion] },
     ];
 
     return {
