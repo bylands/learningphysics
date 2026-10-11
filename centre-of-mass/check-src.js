@@ -32,6 +32,23 @@
     edge: L('the tilt angle measured from the floor instead of from the vertical', 'den Neigungswinkel vom Boden statt von der Senkrechten aus gemessen'),
     middle: L('the weight not at the centre of mass', 'die Gewichtskraft nicht im Schwerpunkt angesetzt'),
   });
+  // what is correct instead (the typical slips in practice, slips.js)
+  const fixes = () => ({
+    length: L('Each piece counts with its mass, here proportional to its length: a piece twice as long pulls the centre of mass twice as strongly.',
+      'Jedes Teil zählt mit seiner Masse, hier proportional zu seiner Länge: Ein doppelt so langes Teil zieht den Schwerpunkt doppelt so stark zu sich.'),
+    updown: L('Stable: the centre of mass lies below the axis and rises when the body is turned. Unstable: it lies above the axis and falls.',
+      'Stabil: Der Schwerpunkt liegt unter der Achse und hebt sich beim Drehen. Labil: Er liegt über der Achse und senkt sich.'),
+    vertical: L('A body is in equilibrium only if its centre of mass lies on the vertical through the axis; otherwise the weight turns it.',
+      'Ein Körper ist nur im Gleichgewicht, wenn sein Schwerpunkt auf der Senkrechten durch die Achse liegt; sonst dreht ihn die Gewichtskraft.'),
+    neutral: L('Neutral equilibrium needs the axis through the centre of mass: then turning neither raises nor lowers it.',
+      'Indifferentes Gleichgewicht braucht eine Achse durch den Schwerpunkt: Dann hebt und senkt er sich beim Drehen nicht.'),
+    tilt: L('A body tips over when the vertical line through its centre of mass leaves the base, not because it stands tilted.',
+      'Ein Körper kippt, wenn die Senkrechte durch seinen Schwerpunkt die Standfläche verlässt, nicht weil er schräg steht.'),
+    edge: L('The tilt angle at which a body tips is measured from the vertical: the line from the edge to the centre of mass must become vertical.',
+      'Der Kippwinkel wird von der Senkrechten aus gemessen: Die Linie von der Kante zum Schwerpunkt muss senkrecht werden.'),
+    middle: L('The weight acts at the centre of mass, not at the middle of the base or of the outline.',
+      'Die Gewichtskraft greift im Schwerpunkt an, nicht in der Mitte der Standfläche oder des Umrisses.'),
+  });
 
   const explain = (ex) => () => `<div class="figs">${ex.solutionFigure()}</div><div class="steps">${ex.solution.join('')}</div>`;
   const plain = (s) => s.replace(/<[^>]*>/g, '').replace(/:$/, '');
@@ -56,6 +73,6 @@
     return scn.choice ? choice(kind, seed) : quantity(kind, seed);
   }
 
-  root.CheckSource = { id: 'cm', objectives: OBJECTIVES, question, concept, concepts };
+  root.CheckSource = { id: 'cm', objectives: OBJECTIVES, question, concept, concepts, fixes };
   if (typeof module !== 'undefined') module.exports = root.CheckSource;
 })(typeof window !== 'undefined' ? window : globalThis);

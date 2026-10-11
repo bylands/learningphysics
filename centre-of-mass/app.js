@@ -39,6 +39,7 @@
   const ui = () => UI[TQ.getLang()];
 
   let ex = null, st = null, tutor = null, checker = null, topics = null;
+  const slips = window.Slips.create({ app: 'cm', concept: window.CheckSource.concept, ideas: () => window.CheckSource.concepts(), fixes: () => window.CheckSource.fixes() });
 
   // ---------------------------------------------------------------- persistence
   function stored(key, fallback) {
@@ -85,7 +86,7 @@
     const e = f.value, near = (y, z, tol) => Math.abs(y - z) <= tol * Math.max(Math.abs(z), 0.01);
     const right = near(x, e, 0.01) || Math.abs(x - e) <= 0.5 * 10 ** -f.dec + 1e-9;
     if (right) return { cls: 'ok', msg: ui().correct };
-    for (const t of f.traps) if (near(x, t.value, 0.01)) return { cls: 'bad', msg: t.why };
+    for (const t of f.traps) if (near(x, t.value, 0.01)) return { cls: 'bad', msg: t.why, flag: t.flag };
     if (e !== 0 && near(-x, e, 0.01)) return { cls: 'warn', msg: ui().sign };
     if (e !== 0 && near(x, e, 0.05)) return { cls: 'warn', msg: ui().close };
     return { cls: 'bad', msg: ui().wrong };
@@ -190,6 +191,7 @@
       const r = judge(parse(raw), f);
       row.className = `field ${r.cls}`;
       row.querySelector('.fb').textContent = r.msg;
+      if (r.flag && !st.revealed) slips.note(r.flag, ex.id);
       if (r.cls !== 'ok') allOk = false;
     });
     return allOk ? true : anyEmpty ? null : false;
@@ -270,6 +272,7 @@
     document.title = ui().title;
     Lang.apply(ui());
     if (topics) topics.relabel();
+    slips.relabel();
   }
 
   // The same exercise (same seed) in the other language, with the answers, hints and solution kept.
@@ -347,9 +350,12 @@
       tutor: (i) => { setMode('tutor'); tutor.open(i); },
     });
     topics.mount($('#levels'));
+    slips.mount();
     applyStatic();
-    Identify.attach($('#comps'), identItems, () => st.ident, (right) => {
+    Identify.attach($('#comps'), identItems, () => st.ident, (right, it) => {
       math($('#comps'));
+      const o = it.options[st.ident[it.key]];
+      if (!right && o && o.flag && !st.revealed) slips.note(o.flag, ex.id);
       if (!right) { st.tries++; updateButtons(); } // a wrong choice counts as an attempt
       else if (!ex.fields.length && !st.solved && Identify.ok(identItems(), st.ident)) check({ preventDefault() {} }); // a choice only: solved
     });

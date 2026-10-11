@@ -80,11 +80,14 @@
 
   // The tutor: the task with what is wanted, then the steps of the solution; then the same for
   // each further exercise of the example (lesson.more).
+  // a choice of graphs or pictures: its options, read-only, so that the task can be read
+  const pics = (ex) => ex.fields.filter((f) => f.type === 'choice' && f.pics && !f.after)
+    .map((f) => `<span class="choices levels small pics tq-pics">${f.options.map((o) => `<label><span>${o[1]}</span></label>`).join('')}</span>`).join('');
   function framesOf(lesson) {
     const scn = byId(lesson.scenario), ex = exercise(scn, lesson.p || make(scn, rng(lesson.seed)));
     const wanted = ex.fields.filter((f) => !f.after).map((f) => (f.type === 'num' ? `${f.what} $${f.sym}$` : f.what.replace(/:$/, ''))).join(', ');
     const first = {
-      text: `<p class="step-rule">${L('The task', 'Die Aufgabe')}</p>${ex.text}<p>${L('Wanted', 'Gesucht')}: ${wanted}</p>`,
+      text: `<p class="step-rule">${L('The task', 'Die Aufgabe')}</p>${ex.text}<p>${L('Wanted', 'Gesucht')}: ${wanted}</p>` + pics(ex),
       figure: ex.figure({ task: true }),
     };
     return [first, ...ex.steps.map((s) => ({ text: s.text, figure: ex.figure({ show: new Set(s.show || []) }) }))];
