@@ -5,8 +5,8 @@
 
     --style=minion   Samuel's layout (default; Minion 3, LuaLaTeX: latexmk -lualatex)
     --style=plain    Latin Modern, pdflatex, exercise titles shown
-    --author=By --date=09.09.20 --footer="Exercises AC Circuits"   footer (minion; defaults: By,
-                     today, "Exercises <collection title>")
+    --author=ByS --date=09/09/2020 --footer="Exercises AC Circuits"   footer (minion; defaults: ByS,
+                     today as dd/mm/yyyy (German sheets dd.mm.yy), "Exercises <collection title>")
     --font=cochineal Cochineal with newtxmath instead of Minion 3 (minion style)
     --font=modern    modern textbook look: Erewhon + Erewhon Math, Fira Sans headings, accent colour
     --numerical      print the short solutions as "Numerical Solutions" after the exercises (minion)
@@ -84,7 +84,7 @@ def esc(s):
     return ''.join('\\' + c if c in '&%$#_{}' else c for c in s)
 
 def options(argv):
-    opts = {'short': False, 'numerical': False, 'style': 'minion', 'font': 'minion', 'author': 'By', 'date': None, 'footer': None}
+    opts = {'short': False, 'numerical': False, 'style': 'minion', 'font': 'minion', 'author': 'ByS', 'date': None, 'footer': None}
     args = []
     for a in argv:
         if a == '--short': opts['short'] = True
@@ -136,7 +136,8 @@ def main():
     elif o['style'] == 'minion':
         # Samuel's sheet layout (lp-minion.sty, LuaLaTeX): numbered exercises with their title
         # (a hidden link to TeXercises) and difficulty, then the full solutions
-        date = o['date'] or datetime.date.today().strftime('%d.%m.%y')
+        # English sheets: dd/mm/yyyy; German sheets: dd.mm.yy
+        date = o['date'] or datetime.date.today().strftime('%d.%m.%y' if de else '%d/%m/%Y')
         footer = esc(o['footer']) if o['footer'] else ('Übungen ' if de else 'Exercises ') + title
         L = [r'% !TeX program = lualatex',
              r'\documentclass[10pt,a4paper]{article}',

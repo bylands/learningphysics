@@ -82,13 +82,16 @@
 \setlength\emergencystretch{1.5em}
 
 % ---------------------------------------------------------------- page
-\newcommand\lpfooterleft{}
-\newcommand\lpfootercenter{}
-\newcommand\lpfooterright{}
-\newcommand\lpsetfooter[3]{\renewcommand\lpfooterleft{#1}\renewcommand\lpfootercenter{#2}\renewcommand\lpfooterright{#3}}
+% \lpsetfooter{text}{date}{signature}: the text on the left; signature and date together on the
+% right ("ByS · 11/10/2026"), where a signed and dated sheet carries them
+\newcommand\lpfootertext{}
+\newcommand\lpfooterdate{}
+\newcommand\lpfootersign{}
+\newcommand\lpsetfooter[3]{\renewcommand\lpfootertext{#1}\renewcommand\lpfooterdate{#2}\renewcommand\lpfootersign{#3}}
+\newcommand\lpsigned{{\upshape\lpfootersign}\ifx\lpfooterdate\@empty\else\enspace\textperiodcentered\enspace\lpfooterdate\fi}
 \def\ps@lp{\let\@oddhead\@empty\let\@evenhead\@empty
   \def\@oddfoot{\fontsize{8bp}{10bp}\selectfont\scshape
-    \rlap{\lpfooterleft}\hfil\lpfootercenter\hfil\llap{\lpfooterright}}%
+    \rlap{\lpfootertext}\hfil\llap{\lpsigned}}%
   \let\@evenfoot\@oddfoot}
 \pagestyle{lp}
 
@@ -160,7 +163,7 @@
 \normalsize
 \def\ps@lp{\let\@oddhead\@empty\let\@evenhead\@empty
   \def\@oddfoot{\sffamily\fontsize{7.5bp}{10bp}\selectfont\color{black!60}%
-    \rlap{\lpfooterleft}\hfil\lpfootercenter\hfil\llap{\lpfooterright\quad{\color{lpaccent}\fontseries{sb}\selectfont\thepage}}}%
+    \rlap{\lpfootertext}\hfil{\color{lpaccent}\fontseries{sb}\selectfont\thepage}\hfil\llap{\lpsigned}}%
   \let\@evenfoot\@oddfoot}
 \pagestyle{lp}
 \renewcommand\lptitle[1]{\par\noindent{\sffamily\fontseries{sb}\selectfont\fontsize{18bp}{22bp}\selectfont
