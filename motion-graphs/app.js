@@ -513,6 +513,7 @@
     sign: () => L('Its sign is wrong.', 'Sein Vorzeichen ist falsch.'),
     average: () => L(`It is constant at the mean value ${BAR[ex.to]}, but ${Q(ex.to)} changes in this piece.`, `Es ist konstant beim Mittelwert ${BAR[ex.to]}, aber ${Q(ex.to)} ändert sich in diesem Stück.`),
     direction: () => L(`${Q(ex.to)} changes the wrong way.`, `${Q(ex.to)} ändert sich in die falsche Richtung.`),
+    curve: () => L(`It is curved, but ${Q(ex.to)} changes linearly here.`, `Es ist gekrümmt, aber ${Q(ex.to)} ändert sich hier linear.`),
   };
   // what the sketch shows in its wrong piece p, and why that is wrong
   function flawWhy(code, p) {
@@ -523,6 +524,8 @@
       case 'sign': return `${L('The sketch has the wrong sign here.', 'Die Skizze hat hier das falsche Vorzeichen.')} ${whyDiff('sign', p)}`;
       case 'average': return L(`The sketch shows the mean value ${fb} = Δ${F}/Δ<i>t</i> for the whole piece. But ${F} is curved here, so ${f} changes steadily: it equals ${fb} only in the middle of the piece.`,
         `Die Skizze zeigt den Mittelwert ${fb} = Δ${F}/Δ<i>t</i> für das ganze Stück. ${F} ist hier aber gekrümmt, also ändert sich ${f} gleichmässig: Es ist nur in der Mitte des Stücks gleich ${fb}.`);
+      case 'curve': return L(`The sketch is curved in this piece, like the ${F}(<i>t</i>) graph. But ${F} is a parabola here, so its slope ${f} changes at a steady rate: the ${f}(<i>t</i>) graph is a straight line.`,
+        `Die Skizze ist in diesem Stück gekrümmt, wie der ${F}(<i>t</i>)-Graph. ${F} ist hier aber eine Parabel, also ändert sich seine Steigung ${f} gleichmässig: Der ${f}(<i>t</i>)-Graph ist eine Gerade.`);
       default: return L(`In the sketch, ${f} ${up ? 'decreases' : 'increases'} in this piece. But ${F} curves ${up ? 'upward' : 'downward'} here: its slope ${up ? 'increases' : 'decreases'}, and so does ${f}.`,
         `In der Skizze nimmt ${f} in diesem Stück ${up ? 'ab' : 'zu'}. ${F} krümmt sich hier aber nach ${up ? 'oben' : 'unten'}: Seine Steigung nimmt ${up ? 'zu' : 'ab'}, und damit auch ${f}.`);
     }
@@ -545,8 +548,8 @@
       return {
         kind: 'error', id: `error-${seed}`, seed, difficulty: 4, flaw: f,
         title: L('Find the error', 'Finde den Fehler'),
-        text: L(`<p>A body moves along a straight line. The first graph shows ${its(e.from)} ${F}(<i>t</i>). A student sketched ${graphOf(e.to)} ${g}(<i>t</i>) below it; one of its five pieces is wrong.</p>`,
-          `<p>Ein Körper bewegt sich auf einer Geraden. Der erste Graph zeigt ${its(e.from)} ${F}(<i>t</i>). Eine Schülerin hat darunter ${graphOf(e.to)} ${g}(<i>t</i>) skizziert; eines der fünf Stücke ist falsch.</p>`),
+        text: L(`<p>A body moves along a straight line. The given graph shows ${its(e.from)} ${F}(<i>t</i>). A student sketched ${graphOf(e.to)} ${g}(<i>t</i>) for it; one of its five pieces is wrong.</p>`,
+          `<p>Ein Körper bewegt sich auf einer Geraden. Der gegebene Graph zeigt ${its(e.from)} ${F}(<i>t</i>). Eine Schülerin hat dazu ${graphOf(e.to)} ${g}(<i>t</i>) skizziert; eines der fünf Stücke ist falsch.</p>`),
         figure: fig(sourceGraph(e), sketch()),
         questions,
         hints: [
@@ -558,7 +561,9 @@
         steps: [
           { title: L('Piece by piece', 'Stück für Stück'), text: `${ruleText()} ${L(`Compare each piece of the sketch with the slope of the ${F}(<i>t</i>) graph.`, `Vergleiche jedes Stück der Skizze mit der Steigung des ${F}(<i>t</i>)-Graphen.`)}`, figure: fig(sourceGraph(e), sketch()) },
           { title: `${piece(i + 1)} (${when(p)})`, text: `${flawWhy(f.code, p)} ${L('Right', 'Richtig')}: ${right(i)}`, figure: fig(sourceGraph(e, { marks }), sketch({ marks })) },
-          { title: L('The right graph', 'Der richtige Graph'), text: L(`The other pieces of the sketch are right. With ${piece(i + 1).toLowerCase()} corrected, ${g}(<i>t</i>) is one connected line again.`, `Die anderen Stücke der Skizze stimmen. Mit korrigiertem ${piece(i + 1)} ist ${g}(<i>t</i>) wieder eine zusammenhängende Linie.`), figure: fig(sourceGraph(e), Plot.answerGraph(e, { marks })) },
+          { title: L('The right graph', 'Der richtige Graph'), text: f.code === 'curve'
+            ? L(`The other pieces of the sketch are right. With ${piece(i + 1).toLowerCase()} corrected, ${g}(<i>t</i>) is straight in every piece where ${F} is a parabola.`, `Die anderen Stücke der Skizze stimmen. Mit korrigiertem ${piece(i + 1)} ist ${g}(<i>t</i>) in jedem Stück gerade, in dem ${F} eine Parabel ist.`)
+            : L(`The other pieces of the sketch are right. With ${piece(i + 1).toLowerCase()} corrected, ${g}(<i>t</i>) is one connected line again.`, `Die anderen Stücke der Skizze stimmen. Mit korrigiertem ${piece(i + 1)} ist ${g}(<i>t</i>) wieder eine zusammenhängende Linie.`), figure: fig(sourceGraph(e), Plot.answerGraph(e, { marks })) },
         ],
         answers: questions.map((q) => q.options.find((o) => o.correct).html),
       };
@@ -634,7 +639,9 @@
   const figOf = (f) => `<div class="figs">${f.startsWith('<div') ? f : `<figure class="fig">${f}</figure>`}</div>`;
   function quizLesson(def) {
     const e = KINDS[def.kind].make(def.seed, def.d);
-    const task = { text: `<p class="step-rule">${L('The task', 'Die Aufgabe')}</p>${e.text}<ol class="tq">${e.questions.map((q) => `<li>${q.prompt}</li>`).join('')}</ol>`, figure: figOf(e.figure) };
+    // a choice of graphs shows its graphs with the question
+    const pics = (q) => (q.pics ? `<div class="qopts pics tq-pics">${q.options.map((o) => `<div class="qopt"><span class="qval">${o.html}</span></div>`).join('')}</div>` : '');
+    const task = { text: `<p class="step-rule">${L('The task', 'Die Aufgabe')}</p>${e.text}<ol class="tq">${e.questions.map((q) => `<li>${q.prompt}${pics(q)}</li>`).join('')}</ol>`, figure: figOf(e.figure) };
     const steps = e.steps.map((x) => ({ text: `<p class="step-rule">${x.title}</p><p>${x.text}</p>`, figure: figOf(x.figure) }));
     const wrongs = (q) => (q.type === 'num' ? q.traps.map((t) => ({ html: `${fmt(t.value)} ${q.unit}`, flag: t.flag, why: t.why })) : q.options.filter((o) => !o.correct))
       .filter((o) => o.flag).map((o) => `<li>${o.html.startsWith('<svg') ? '' : `<i>${o.html}</i> `}<span class="tag">${Concepts.FLAGS[o.flag]()}</span><br>${o.why}</li>`).join('');

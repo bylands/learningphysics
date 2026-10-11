@@ -220,7 +220,9 @@
   ];
   function lesson(def) {
     const e = KINDS[def.kind].make(def.seed, def.d);
-    const task = { text: `<p class="step-rule">${L('The task', 'Die Aufgabe')}</p>${e.text}<ol class="tq">${e.questions.map((q) => `<li>${q.prompt}</li>`).join('')}</ol>`, figure: figOf(e.figure) };
+    // a choice of graphs shows its graphs with the question
+    const pics = (q) => (q.pics ? `<div class="qopts pics tq-pics">${q.options.map((o) => `<div class="qopt"><span class="qval">${o.html}</span></div>`).join('')}</div>` : '');
+    const task = { text: `<p class="step-rule">${L('The task', 'Die Aufgabe')}</p>${e.text}<ol class="tq">${e.questions.map((q) => `<li>${q.prompt}${pics(q)}</li>`).join('')}</ol>`, figure: figOf(e.figure) };
     const steps = e.steps.map((x) => ({ text: `<p class="step-rule">${x.title}</p><p>${x.text}</p>`, figure: figOf(x.figure) }));
     const wrongs = (q) => (q.type === 'num' ? q.traps.map((t) => ({ html: `${fmt(t.value)} ${q.unit}`, flag: t.flag, why: t.why })) : q.options.filter((o) => !o.correct))
       .filter((o) => o.flag).map((o) => `<li>${o.html.startsWith('<svg') ? '' : `<i>${o.html}</i> `}<span class="tag">${Concepts.FLAGS[o.flag]()}</span><br>${o.why}</li>`).join('');

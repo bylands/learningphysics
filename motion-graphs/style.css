@@ -162,3 +162,8 @@ svg .trilab { fill: var(--ink); font: 13px var(--serif); paint-order: stroke; st
 .short li { margin: 4px 0; }
 /* a graph as an answer (a choice of graphs): small, below its number */
 .short svg.cgraph, .tutor-text p > b > svg.cgraph { display: block; width: 100%; max-width: 280px; height: auto; margin-top: 4px; }
+/* the graphs to choose from, shown with the task in a worked example */
+.qopts.pics.tq-pics { margin-top: 8px; font-weight: 400; grid-template-columns: repeat(4, minmax(0, 1fr)); }
+@media (max-width: 640px) { .qopts.pics.tq-pics { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.tq-pics .qopt { cursor: default; }
+.tq-pics .qopt:hover { border-color: var(--line); }

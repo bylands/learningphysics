@@ -254,30 +254,52 @@
   // A student's sketch of the answer with one piece wrong: { piece, code, vals }. The codes:
   // height (the value of G drawn instead of its slope), sign (the slope with the wrong sign),
   // average (the mean slope of a parabola drawn for the whole piece), direction (g changes the
-  // wrong way: its end values swapped). The wrong piece stays on the axis and is at least 1 off
-  // the right one at an end; the reading of the value of G comes up most often.
-  const FLAWS = ['height', 'sign', 'average', 'direction'];
+  // wrong way: its end values swapped), curve (g curved like the parabola of G, though it changes
+  // linearly; the only one that keeps the sketch without jumps, so it comes up in half of them).
+  // The wrong piece stays on the axis and differs from the right one by at least 1 (curve: in
+  // its middle); only its own mistake describes it (a sign error in a sloped piece, say, also
+  // makes g change the wrong way, so it is left out).
+  const FLAWS = ['height', 'sign', 'average', 'direction', 'curve'];
   function flaw(ex, seed) {
     const r = rng(seed ^ 0x1b873593), ax = ex.axes.target, cands = [];
     const onAxis = (v) => [v.y0, v.ym, v.y1].every((y) => y >= ax.lo && y <= ax.hi);
+    const opposite = (x, y) => (x >= 0.5 && y <= -0.5) || (x <= -0.5 && y >= 0.5);
+    // the mistakes that describe a wrong piece v of the right piece c
+    const describes = (v, c, p) => ({
+      sign: ['y0', 'ym', 'y1'].some((k) => opposite(v[k], c[k])),
+      average: sloped(p) && Math.abs(v.y1 - v.y0) < 0.5,
+      direction: sloped(p) && opposite(v.y1 - v.y0, c.y1 - c.y0),
+      curve: sloped(p) && Math.abs(v.ym - (v.y0 + v.y1) / 2) >= 0.5,
+    });
     ex.pieces.forEach((p, i) => {
       const c = ex.answer[i], G = ex.source[i];
+      // the bow of the parabola of G, copied: at least 1 out of the straight line in the middle
+      const bow = Math.sign(G.ym - (G.y0 + G.y1) / 2) * Math.max(1, Math.abs(c.y1 - c.y0) / 4);
       const wrong = {
         height: { ...G },
         sign: mirror(c),
         average: sloped(p) ? flat((c.y0 + c.y1) / 2) : null,
         direction: sloped(p) ? { y0: c.y1, ym: c.ym, y1: c.y0 } : null,
+        curve: sloped(p) && bow ? { y0: c.y0, ym: c.ym + bow, y1: c.y1 } : null,
       };
       // a sketch that two mistakes would explain is left out
       const same = (v, w) => w && Math.abs(v.y0 - w.y0) < 0.5 && Math.abs(v.ym - w.ym) < 0.5 && Math.abs(v.y1 - w.y1) < 0.5;
       for (const code of FLAWS) {
         const v = wrong[code];
-        if (!v || !onAxis(v) || Math.max(Math.abs(v.y0 - c.y0), Math.abs(v.y1 - c.y1)) < 1 || FLAWS.some((o) => o !== code && same(v, wrong[o]))) continue;
+        if (!v || !onAxis(v) || FLAWS.some((o) => o !== code && same(v, wrong[o]))) continue;
+        const off = code === 'curve' ? Math.abs(v.ym - c.ym) : Math.max(Math.abs(v.y0 - c.y0), Math.abs(v.y1 - c.y1));
+        if (off < 1) continue;
+        const d = describes(v, c, p);
+        if (Object.keys(d).some((k) => d[k] && k !== code) || (code !== 'height' && !d[code])) continue;
         cands.push({ piece: i, code, vals: ex.answer.map((x, k) => (k === i ? v : x)) });
       }
     });
-    const heights = cands.filter((x) => x.code === 'height');
-    return heights.length && r.next() < 0.5 ? r.pick(heights) : r.pick(cands);
+    const curves = cands.filter((x) => x.code === 'curve'), heights = cands.filter((x) => x.code === 'height');
+    const u = r.next();
+    if (curves.length && u < 0.5) return r.pick(curves);
+    if (heights.length && u < 0.7) return r.pick(heights);
+    const rest = cands.filter((x) => x.code !== 'curve');
+    return r.pick(rest.length ? rest : cands);
   }
 
   const api = { T, N, TASKS, KINDS, register, rng, BEND, G_AXIS, FLAWS, generate, quiz, flaw, evaluate, copied, readable, g, G, gAt, GAt, len, sloped, rate, area };
