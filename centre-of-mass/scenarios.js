@@ -19,6 +19,8 @@
 
   const TQ = root.TQ, { Pic } = root.Draw;
   const { L, G, tq, q, num, svgSym, pick, rad } = TQ;
+  // the centre of mass: G (centre of gravity) in English textbooks, S (Schwerpunkt) in German ones
+  const cS = () => L('G', 'S');
   const res = (x, u, dec) => `\\htmlClass{result}{${tq(x, u, dec)}}`;
   const step = (rule, text, show = [], hl) => ({ text: (rule ? `<p class="step-rule">${rule}</p>` : '') + text, show, hl: hl || show });
   const exact = (x) => Math.round(x * 1e6) / 1e6;
@@ -192,7 +194,7 @@
     });
     P.dot([0, 0], 'dot', 2.4);
     P.text([0, 0], 'O', 'lbl', 'end', [-6, 12]);
-    const sName = (n) => `S<tspan class="sub" dy="4">${n}</tspan><tspan dy="-4">\u200b</tspan>`;
+    const sName = (n) => `${cS()}<tspan class="sub" dy="4">${n}</tspan><tspan dy="-4">\u200b</tspan>`;
     if (show.has('mids')) {
       parts.forEach((pt, i) => {
         const n = pt.kind === 'seg' ? outward(pt) : [0.7, -0.7], off = [-12 * n[0], 12 * n[1] + 4];
@@ -205,7 +207,7 @@
       P.line(k.A.c, k.B.c, `join${view.hl && view.hl.has(`comb${i}`) ? ' hl' : ''}`, true);
       if (k.S.name) { P.dot(k.S.c, 'dot mid', 3.4); P.text(k.S.c, sName(k.S.name), 'lbl small com-lbl', 'end', [-6, -9]); }
     });
-    if (show.has('S')) P.com(v.S, 'S');
+    if (show.has('S')) P.com(v.S, cS());
     return P.svg();
   }
 
@@ -222,7 +224,7 @@
       },
       fields: fieldsOf,
       title: () => S.title(),
-      text: () => L(`A figure is bent from one piece of uniform wire. Find its centre of mass S: its coordinates in the system drawn, with the origin O.${S.ask.length === 1 ? ` (By symmetry, ${S.ask[0] === 'x' ? 'y' : 'x'}<sub>S</sub> = 0.)` : ''}`,
+      text: () => L(`A figure is bent from one piece of uniform wire. Find its centre of mass G: its coordinates in the system drawn, with the origin O.${S.ask.length === 1 ? ` (By symmetry, ${S.ask[0] === 'x' ? 'y' : 'x'}<sub>G</sub> = 0.)` : ''}`,
         `Eine Figur ist aus einem gleichmässigen Draht gebogen. Bestimme ihren Schwerpunkt S: seine Koordinaten im eingezeichneten System mit dem Ursprung O.${S.ask.length === 1 ? ` (Aus Symmetriegründen ist ${S.ask[0] === 'x' ? 'y' : 'x'}<sub>S</sub> = 0.)` : ''}`),
       figure: (p, v, view) => comFigure(shape, p, v, view),
       hints: (p) => { const hasSquare = S.parts(p).some((pt) => pt.kind === 'square'); return [
@@ -241,7 +243,7 @@
         const out = [step(L('1 · Split into parts', '1 · In Teile zerlegen'),
           `<p>${(parts.some((pt) => pt.kind === 'square') ? L('The figure consists of these parts. Each part’s mass is proportional to its length, so the lengths can stand for the masses. A straight piece has its centre of mass in its middle, a square in its centre:', 'Die Figur besteht aus diesen Teilen. Die Masse jedes Teils ist proportional zu seiner Länge, also können die Längen für die Massen stehen. Ein gerades Stück hat seinen Schwerpunkt in seiner Mitte, ein Quadrat in seinem Mittelpunkt:') : L('The figure consists of these parts. Each part’s mass is proportional to its length, so the lengths can stand for the masses. A straight piece has its centre of mass in its middle:', 'Die Figur besteht aus diesen Teilen. Die Masse jedes Teils ist proportional zu seiner Länge, also können die Längen für die Massen stehen. Ein gerades Stück hat seinen Schwerpunkt in seiner Mitte:'))}</p><ul>${rows}</ul>`,
           ['mids', ...parts.map((x, i) => `part${i}`)], ['mids'])];
-        const ks = combos(parts), sTex = (n) => (n ? `S_{${n}}` : 'S'), mTex = (n) => `m_{${n}}`;
+        const ks = combos(parts), sTex = (n) => (n ? `${cS()}_{${n}}` : cS()), mTex = (n) => `m_{${n}}`;
         ks.forEach((k, i) => {
           const A = k.A.name, B = k.B.name, equal = Math.abs(k.A.m - k.B.m) < 1e-9;
           const shown = ['mids', ...ks.slice(0, i + 1).map((x, j) => `comb${j}`), ...(k.S.name ? [] : ['S'])];
@@ -265,8 +267,8 @@
               `$$a_{${A}} = ${tq(k.D, 'cm', 2)}\\cdot\\frac{${mTex(B)}}{${mTex(A)} + ${mTex(B)}} = ${tq(k.D, 'cm', 2)}\\cdot\\frac{${num(k.B.m, 1)}}{${num(k.A.m + k.B.m, 1)}} = ${tq(k.aA, 'cm', 2)}$$` +
               L(`from $${sTex(A)}$ toward $${sTex(B)}$: ${where}.`, `von $${sTex(A)}$ aus in Richtung $${sTex(B)}$: ${where}.`);
           const more = k.S.name ? L(` Together they count as one part at $${sTex(k.S.name)}$, with the mass $${mTex(k.S.name)} = ${mTex(A)} + ${mTex(B)}$ (length ${q(k.S.m, 'cm', 1)}).`, ` Zusammen zählen sie als ein Teil in $${sTex(k.S.name)}$ mit der Masse $${mTex(k.S.name)} = ${mTex(A)} + ${mTex(B)}$ (Länge ${q(k.S.m, 'cm', 1)}).`)
-            : S.offWire ? `</p><p>${L('S need not lie on the wire.', 'S muss nicht auf dem Draht liegen.')}` : '';
-          out.push(step(L(`${i + 2} · Combine ${sTex(A).replace(/[{}]/g, '')} and ${sTex(B).replace(/[{}]/g, '')}`, `${i + 2} · ${sTex(A).replace(/[{}]/g, '')} und ${sTex(B).replace(/[{}]/g, '')} zusammenfassen`).replace(/S_(\d+)/g, (x, n) => `S${n.replace(/\d/g, (d) => '₀₁₂₃₄₅₆₇₈₉'[d])}`),
+            : S.offWire ? `</p><p>${L('G need not lie on the wire.', 'S muss nicht auf dem Draht liegen.')}` : '';
+          out.push(step(L(`${i + 2} · Combine ${sTex(A).replace(/[{}]/g, '')} and ${sTex(B).replace(/[{}]/g, '')}`, `${i + 2} · ${sTex(A).replace(/[{}]/g, '')} und ${sTex(B).replace(/[{}]/g, '')} zusammenfassen`).replace(/([SG])_(\d+)/g, (x, c, n) => `${c}${n.replace(/\d/g, (d) => '₀₁₂₃₄₅₆₇₈₉'[d])}`),
             `<p>${body}${more}</p>`, shown, [`comb${i}`, ...(k.S.name ? [] : ['S'])]));
         });
         return out;
@@ -300,7 +302,7 @@
       P.surface([-60, 0], [p.w + 50, 0]);
       P.rect([0, 0], [p.w, p.h], 'load', 2);
       P.text([p.w / 2, p.h], kg(p.m), 'lbl mass', 'middle', [0, 16]);
-      P.com([p.w / 2, p.h / 2], show.has('G') ? 'S' : '');
+      P.com([p.w / 2, p.h / 2], show.has('G') ? cS() : '');
       P.arrow([-56 / P.s, p.y], [1, 0], 56, `force k-h${view.task ? '' : ' hl'}`, view.task ? `${svgSym('F')} = ?` : svgSym('F'), [-60, -12]);
       P.dot([p.w, 0], 'dot', 3);
       P.text([p.w, 0], L('edge', 'Kante'), 'lbl small', 'start', [6, 12]);
@@ -352,7 +354,7 @@
       const C = (x, y) => rotCw([x - p.w, y]);
       P.surface([-p.w - 60, 0], [p.h * 0.6, 0]);
       P.poly([C(0, 0), C(p.w, 0), C(p.w, p.h), C(0, p.h)], 'load');
-      P.com(C(p.w / 2, p.h / 2), 'S');
+      P.com(C(p.w / 2, p.h / 2), cS());
       P.dot([0, 0], 'dot', 3); P.text([0, 0], L('edge', 'Kante'), 'lbl small', 'start', [6, 12]);
       if (view.task) {
         P.dim(C(0, p.h), C(p.w, p.h), cm(p.w), 14);
@@ -366,13 +368,13 @@
       return P.svg();
     },
     hints: () => [
-      L('Standing on its edge, the cabinet turns about that edge. Its weight acts at the centre of mass S.', 'Auf der Kante stehend dreht sich der Schrank um diese Kante. Seine Gewichtskraft greift im Schwerpunkt S an.'),
-      L('As long as S is above the base (on the inner side of the edge), the weight turns it back. It falls once S is straight above the edge.', 'Solange S über der Standfläche liegt (innerhalb der Kante), dreht ihn die Gewichtskraft zurück. Er fällt, sobald S senkrecht über der Kante liegt.'),
-      L('Then the line from the edge to S is vertical: tan θ = (w/2) / (h/2) = w/h.', 'Dann ist die Linie von der Kante zu S senkrecht: tan θ = (w/2) / (h/2) = w/h.'),
+      L('Standing on its edge, the cabinet turns about that edge. Its weight acts at the centre of mass G.', 'Auf der Kante stehend dreht sich der Schrank um diese Kante. Seine Gewichtskraft greift im Schwerpunkt S an.'),
+      L('As long as G is above the base (on the inner side of the edge), the weight turns it back. It falls once G is straight above the edge.', 'Solange S über der Standfläche liegt (innerhalb der Kante), dreht ihn die Gewichtskraft zurück. Er fällt, sobald S senkrecht über der Kante liegt.'),
+      L('Then the line from the edge to G is vertical: tan θ = (w/2) / (h/2) = w/h.', 'Dann ist die Linie von der Kante zu S senkrecht: tan θ = (w/2) / (h/2) = w/h.'),
     ],
     steps: (p, v) => [
-      step(L('Tipping point', 'Kipppunkt'), `<p>${L('The weight acts at S. While S is on the inner side of the edge, its torque turns the cabinet back; once S is straight above the edge, the torque is zero, and beyond that the cabinet falls.', 'Die Gewichtskraft greift in S an. Solange S innerhalb der Kante liegt, dreht ihr Drehmoment den Schrank zurück; liegt S senkrecht über der Kante, ist das Drehmoment null, und darüber hinaus fällt der Schrank.')}</p>`, ['S']),
-      step(L('The angle', 'Der Winkel'), `<p>${L('The line from the edge to S is then vertical. In the cabinet, it runs w/2 across and h/2 up, so it leans by θ with', 'Die Linie von der Kante zu S ist dann senkrecht. Im Schrank läuft sie w/2 quer und h/2 hoch, sie ist also um θ geneigt mit')}</p>` +
+      step(L('Tipping point', 'Kipppunkt'), `<p>${L('The weight acts at G. While G is on the inner side of the edge, its torque turns the cabinet back; once G is straight above the edge, the torque is zero, and beyond that the cabinet falls.', 'Die Gewichtskraft greift in S an. Solange S innerhalb der Kante liegt, dreht ihr Drehmoment den Schrank zurück; liegt S senkrecht über der Kante, ist das Drehmoment null, und darüber hinaus fällt der Schrank.')}</p>`, ['S']),
+      step(L('The angle', 'Der Winkel'), `<p>${L('The line from the edge to G is then vertical. In the cabinet, it runs w/2 across and h/2 up, so it leans by θ with', 'Die Linie von der Kante zu S ist dann senkrecht. Im Schrank läuft sie w/2 quer und h/2 hoch, sie ist also um θ geneigt mit')}</p>` +
         `$$\\tan\\theta = \\frac{w/2}{h/2} = \\frac{w}{h} = \\frac{${tq(p.w, 'cm')}}{${tq(p.h, 'cm')}} = ${res(v.tan, '', 2)}\\;\\Rightarrow\\; \\theta = ${tq(v.theta, 'deg', 1)}$$` +
         `<p>${L('A low, wide body is stable: its centre of mass must be lifted far before it is above the edge.', 'Ein niedriger, breiter Körper ist stabil: Sein Schwerpunkt muss weit angehoben werden, bis er über der Kante liegt.')}</p>`, ['S']),
     ],
@@ -399,16 +401,16 @@
     const s = stateOf(p.D);
     // why the option o does not fit, without naming the right one
     const wrong = (o) => ({
-      none: ['notVertical', L('S lies on the vertical through D: in this position, the weight has no lever arm about D and does not turn the board.', 'S liegt auf der Senkrechten durch D: In dieser Lage hat die Gewichtskraft bezüglich D keinen Hebelarm und dreht das Brett nicht.')],
-      neutral: ['neutral', L('Neutral only when the axis passes through S. Turn the board a little in your mind: what does the weight do?', 'Indifferent nur, wenn die Achse durch S geht. Drehe das Brett in Gedanken ein wenig: Was macht die Gewichtskraft?')],
-      stable: ['upDown', L('Stable means: turned a little, the weight turns the board back. That needs S straight below D, and here it is not.', 'Stabil heisst: Ein wenig gedreht, dreht die Gewichtskraft das Brett zurück. Dazu muss S senkrecht unter D liegen, und das tut es hier nicht.')],
-      unstable: ['upDown', L('Unstable means: turned a little, the weight turns the board further away. That needs S straight above D, and here it is not.', 'Labil heisst: Ein wenig gedreht, dreht die Gewichtskraft das Brett weiter weg. Dazu muss S senkrecht über D liegen, und das tut es hier nicht.')],
+      none: ['notVertical', L('G lies on the vertical through D: in this position, the weight has no lever arm about D and does not turn the board.', 'S liegt auf der Senkrechten durch D: In dieser Lage hat die Gewichtskraft bezüglich D keinen Hebelarm und dreht das Brett nicht.')],
+      neutral: ['neutral', L('Neutral only when the axis passes through G. Turn the board a little in your mind: what does the weight do?', 'Indifferent nur, wenn die Achse durch S geht. Drehe das Brett in Gedanken ein wenig: Was macht die Gewichtskraft?')],
+      stable: ['upDown', L('Stable means: turned a little, the weight turns the board back. That needs G straight below D, and here it is not.', 'Stabil heisst: Ein wenig gedreht, dreht die Gewichtskraft das Brett zurück. Dazu muss S senkrecht unter D liegen, und das tut es hier nicht.')],
+      unstable: ['upDown', L('Unstable means: turned a little, the weight turns the board further away. That needs G straight above D, and here it is not.', 'Labil heisst: Ein wenig gedreht, dreht die Gewichtskraft das Brett weiter weg. Dazu muss S senkrecht über D liegen, und das tut es hier nicht.')],
     })[o];
     const value = {
-      stable: L('S lies straight below D. Turned a little, S rises, and the weight turns the board back.', 'S liegt senkrecht unter D. Ein wenig gedreht, hebt sich S, und die Gewichtskraft dreht das Brett zurück.'),
-      unstable: L('S lies straight above D. Turned a little, S drops, and the weight turns the board further away.', 'S liegt senkrecht über D. Ein wenig gedreht, senkt sich S, und die Gewichtskraft dreht das Brett weiter weg.'),
-      neutral: L('The axis passes through S: in every position, the weight has no torque about D.', 'Die Achse geht durch S: In jeder Lage hat die Gewichtskraft bezüglich D kein Drehmoment.'),
-      none: L(`S is not on the vertical through D: the weight turns the board ${turnsWord(p.D)}, until S hangs straight below D.`, `S liegt nicht auf der Senkrechten durch D: Die Gewichtskraft dreht das Brett ${turnsWord(p.D)}, bis S senkrecht unter D hängt.`),
+      stable: L('G lies straight below D. Turned a little, G rises, and the weight turns the board back.', 'S liegt senkrecht unter D. Ein wenig gedreht, hebt sich S, und die Gewichtskraft dreht das Brett zurück.'),
+      unstable: L('G lies straight above D. Turned a little, G drops, and the weight turns the board further away.', 'S liegt senkrecht über D. Ein wenig gedreht, senkt sich S, und die Gewichtskraft dreht das Brett weiter weg.'),
+      neutral: L('The axis passes through G: in every position, the weight has no torque about D.', 'Die Achse geht durch S: In jeder Lage hat die Gewichtskraft bezüglich D kein Drehmoment.'),
+      none: L(`G is not on the vertical through D: the weight turns the board ${turnsWord(p.D)}, until G hangs straight below D.`, `S liegt nicht auf der Senkrechten durch D: Die Gewichtskraft dreht das Brett ${turnsWord(p.D)}, bis S senkrecht unter D hängt.`),
     }[s];
     return {
       key: 'state', what: L('The kind of equilibrium:', 'Die Art des Gleichgewichts:'),
@@ -418,7 +420,7 @@
   }
 
   function boardFigure(p, v, view = {}) {
-    const P = new Pic(3, L('A board that can turn about D, with its centre of mass S', 'Ein um D drehbares Brett mit seinem Schwerpunkt S')), show = view.show || new Set();
+    const P = new Pic(3, L('A board that can turn about D, with its centre of mass G', 'Ein um D drehbares Brett mit seinem Schwerpunkt S')), show = view.show || new Set();
     P.poly([[-1, -1], [1, -1], [1, 1], [-1, 1]].map(([a, b]) => rot([(a * p.w) / 2, (b * p.h) / 2], p.phi)), 'plate');
     if (show.has('G')) {
       // the line of action of the weight: the vertical through S
@@ -429,7 +431,7 @@
     // the turn around D, open at the bottom, where D's label is
     if (show.has('turn') && stateOf(p.D) === 'none') P.turn(p.D, 20, Math.sign(p.D[0]), 'turn hl', p.D[0] > 0 ? 300 : 240);
     P.pivot(p.D);
-    P.com([0, 0], 'S');
+    P.com([0, 0], cS());
     // an axis through S: a ring around the centre of mass, so that both can be seen
     if (stateOf(p.D) === 'neutral') P.circle(p.D, 10 / P.s, 'w', true);
     P.text(p.D, 'D', 'lbl', 'middle', [0, 24]);
@@ -451,29 +453,29 @@
     comps: (p) => [stateItem(p)],
     results: (p) => stateName(stateOf(p.D)),
     title: () => L('Stable or not?', 'Stabil oder nicht?'),
-    text: () => L('A uniform board can turn without friction about a fixed axis through D, perpendicular to the drawing. Its centre of mass S is in its middle. The board is let go at rest in the position drawn. What kind of equilibrium is it in, if any?',
+    text: () => L('A uniform board can turn without friction about a fixed axis through D, perpendicular to the drawing. Its centre of mass G is in its middle. The board is let go at rest in the position drawn. What kind of equilibrium is it in, if any?',
       'Ein gleichmässiges Brett ist reibungsfrei um eine feste Achse durch D drehbar, die senkrecht zur Zeichnung steht. Sein Schwerpunkt S liegt in seiner Mitte. Das Brett wird in der gezeichneten Lage in Ruhe losgelassen. In welchem Gleichgewicht ist es, wenn überhaupt?'),
     figure: boardFigure,
     hints: () => [
-      L('The weight acts at S, straight down. It has no torque about D if its line of action, the vertical through S, passes through D.', 'Die Gewichtskraft greift in S an, senkrecht nach unten. Sie hat bezüglich D kein Drehmoment, wenn ihre Wirkungslinie, die Senkrechte durch S, durch D geht.'),
+      L('The weight acts at G, straight down. It has no torque about D if its line of action, the vertical through G, passes through D.', 'Die Gewichtskraft greift in S an, senkrecht nach unten. Sie hat bezüglich D kein Drehmoment, wenn ihre Wirkungslinie, die Senkrechte durch S, durch D geht.'),
       L('If it has no torque, turn the board a little in your mind: does the weight turn it back, further away, or not at all?', 'Hat sie kein Drehmoment, so drehe das Brett in Gedanken ein wenig: Dreht die Gewichtskraft es zurück, weiter weg oder gar nicht?'),
     ],
     steps(p) {
       const s = stateOf(p.D), a = Math.abs(p.D[0]);
       const body = {
-        none: L(`The vertical through S passes ${cm(a)} ${p.D[0] > 0 ? 'to the left' : 'to the right'} of D: the weight has a lever arm of ${cm(a)} and turns the board ${turnsWord(p.D)}. <b>No equilibrium:</b> the board swings until S hangs straight below D.`,
+        none: L(`The vertical through G passes ${cm(a)} ${p.D[0] > 0 ? 'to the left' : 'to the right'} of D: the weight has a lever arm of ${cm(a)} and turns the board ${turnsWord(p.D)}. <b>No equilibrium:</b> the board swings until G hangs straight below D.`,
           `Die Senkrechte durch S verläuft ${cm(a)} ${p.D[0] > 0 ? 'links' : 'rechts'} von D: Die Gewichtskraft hat einen Hebelarm von ${cm(a)} und dreht das Brett ${turnsWord(p.D)}. <b>Kein Gleichgewicht:</b> Das Brett schwingt, bis S senkrecht unter D hängt.`),
-        stable: L('The vertical through S passes through D: the weight has no torque, and the board stays at rest. S lies below D. Turned a little, S moves up and to the side, and the weight turns the board back: <b>stable equilibrium</b>.',
+        stable: L('The vertical through G passes through D: the weight has no torque, and the board stays at rest. G lies below D. Turned a little, G moves up and to the side, and the weight turns the board back: <b>stable equilibrium</b>.',
           'Die Senkrechte durch S geht durch D: Die Gewichtskraft hat kein Drehmoment, und das Brett bleibt in Ruhe. S liegt unter D. Ein wenig gedreht, bewegt sich S nach oben und zur Seite, und die Gewichtskraft dreht das Brett zurück: <b>stabiles Gleichgewicht</b>.'),
-        unstable: L('The vertical through S passes through D: the weight has no torque, and the board stays at rest. But S lies above D. Turned a little, S moves down and to the side, and the weight turns the board further away: <b>unstable equilibrium</b>.',
+        unstable: L('The vertical through G passes through D: the weight has no torque, and the board stays at rest. But G lies above D. Turned a little, G moves down and to the side, and the weight turns the board further away: <b>unstable equilibrium</b>.',
           'Die Senkrechte durch S geht durch D: Die Gewichtskraft hat kein Drehmoment, und das Brett bleibt in Ruhe. Aber S liegt über D. Ein wenig gedreht, bewegt sich S nach unten und zur Seite, und die Gewichtskraft dreht das Brett weiter weg: <b>labiles Gleichgewicht</b>.'),
-        neutral: L('The axis passes through S: the weight acts at the axis and never has a lever arm. In every position the board stays at rest: <b>neutral equilibrium</b>.',
+        neutral: L('The axis passes through G: the weight acts at the axis and never has a lever arm. In every position the board stays at rest: <b>neutral equilibrium</b>.',
           'Die Achse geht durch S: Die Gewichtskraft greift in der Achse an und hat nie einen Hebelarm. In jeder Lage bleibt das Brett in Ruhe: <b>indifferentes Gleichgewicht</b>.'),
       }[s];
       return [
-        step(L('The weight', 'Die Gewichtskraft'), `<p>${L('The weight acts at the centre of mass S, straight down. Its lever arm about D is the distance from D to the vertical through S.', 'Die Gewichtskraft greift im Schwerpunkt S an, senkrecht nach unten. Ihr Hebelarm bezüglich D ist der Abstand von D zur Senkrechten durch S.')}</p>`, ['G']),
+        step(L('The weight', 'Die Gewichtskraft'), `<p>${L('The weight acts at the centre of mass G, straight down. Its lever arm about D is the distance from D to the vertical through G.', 'Die Gewichtskraft greift im Schwerpunkt S an, senkrecht nach unten. Ihr Hebelarm bezüglich D ist der Abstand von D zur Senkrechten durch S.')}</p>`, ['G']),
         step(L('Equilibrium?', 'Gleichgewicht?'), `<p>${body}</p>`, ['G', 'turn'], ['G', 'turn']),
-        step(L('The rule', 'Die Regel'), `<p>${L('A body on an axis is at rest only when S lies on the vertical through the axis: straight below it (stable), straight above it (unstable) or on the axis (neutral).', 'Ein Körper an einer Achse ist nur in Ruhe, wenn S auf der Senkrechten durch die Achse liegt: senkrecht darunter (stabil), senkrecht darüber (labil) oder auf der Achse (indifferent).')}</p>`, ['G', 'turn'], []),
+        step(L('The rule', 'Die Regel'), `<p>${L('A body on an axis is at rest only when G lies on the vertical through the axis: straight below it (stable), straight above it (unstable) or on the axis (neutral).', 'Ein Körper an einer Achse ist nur in Ruhe, wenn S auf der Senkrechten durch die Achse liegt: senkrecht darunter (stabil), senkrecht darüber (labil) oder auf der Achse (indifferent).')}</p>`, ['G', 'turn'], []),
       ];
     },
   };
@@ -496,8 +498,8 @@
       key: 'falls', what: L('The body that falls over:', 'Der Körper, der umkippt:'),
       options: p.bodies.map((b, i) => (i === p.falls ? { html: LETTERS[i], right: true }
         : { html: LETTERS[i], right: false, flag: i === most ? 'tilt' : undefined,
-          why: i === most ? L(`${LETTERS[i]} is tilted the most, but the vertical through its S still passes inside its edge, under its base: it falls back.`, `${LETTERS[i]} ist am stärksten geneigt, aber die Senkrechte durch seinen Schwerpunkt verläuft noch innerhalb seiner Kante, unter seiner Grundfläche: Er fällt zurück.`)
-            : L(`The vertical through the S of ${LETTERS[i]} passes inside its edge, under its base: it ${p.slope != null ? 'stays standing' : 'falls back'}.`, `Die Senkrechte durch den Schwerpunkt von ${LETTERS[i]} verläuft innerhalb seiner Kante, unter seiner Grundfläche: Er ${p.slope != null ? 'bleibt stehen' : 'fällt zurück'}.`) })),
+          why: i === most ? L(`${LETTERS[i]} is tilted the most, but the vertical through its G still passes inside its edge, under its base: it falls back.`, `${LETTERS[i]} ist am stärksten geneigt, aber die Senkrechte durch seinen Schwerpunkt verläuft noch innerhalb seiner Kante, unter seiner Grundfläche: Er fällt zurück.`)
+            : L(`The vertical through the G of ${LETTERS[i]} passes inside its edge, under its base: it ${p.slope != null ? 'stays standing' : 'falls back'}.`, `Die Senkrechte durch den Schwerpunkt von ${LETTERS[i]} verläuft innerhalb seiner Kante, unter seiner Grundfläche: Er ${p.slope != null ? 'bleibt stehen' : 'fällt zurück'}.`) })),
       value: L(`${LETTERS[p.falls]}: the vertical through its centre of mass passes beyond the edge it ${p.slope != null ? 'would tip over' : 'stands on'}.`, `${LETTERS[p.falls]}: Die Senkrechte durch seinen Schwerpunkt verläuft ausserhalb der Kante, ${p.slope != null ? 'über die er kippen würde' : 'auf der er steht'}.`),
     };
   }
@@ -593,8 +595,8 @@
     steps(p, v) {
       const rows = p.bodies.map((b, i) => {
         const x = v.beyond[i];
-        return `<li>${LETTERS[i]}: ${x > 0 ? L(`the vertical through S passes ${cm(x)} beyond the edge: <b>it falls over</b>.`, `Die Senkrechte durch S verläuft ${cm(x)} ausserhalb der Kante: <b>Er kippt um</b>.`)
-          : L(`the vertical through S passes ${cm(-x)} inside the edge: it ${p.slope != null ? 'stays standing' : 'falls back'}.`, `Die Senkrechte durch S verläuft ${cm(-x)} innerhalb der Kante: Er ${p.slope != null ? 'bleibt stehen' : 'fällt zurück'}.`)}</li>`;
+        return `<li>${LETTERS[i]}: ${x > 0 ? L(`the vertical through G passes ${cm(x)} beyond the edge: <b>it falls over</b>.`, `Die Senkrechte durch S verläuft ${cm(x)} ausserhalb der Kante: <b>Er kippt um</b>.`)
+          : L(`the vertical through G passes ${cm(-x)} inside the edge: it ${p.slope != null ? 'stays standing' : 'falls back'}.`, `Die Senkrechte durch S verläuft ${cm(-x)} innerhalb der Kante: Er ${p.slope != null ? 'bleibt stehen' : 'fällt zurück'}.`)}</li>`;
       }).join('');
       return [
         step(L('The axis', 'Die Drehachse'), `<p>${L('A body tips over its lower edge: that edge is the axis. The weight acts at the centre of mass, straight down. If the vertical through the centre of mass passes inside the edge, under the base, the weight turns the body back onto its base; if it passes beyond the edge, the weight turns it over.', 'Ein Körper kippt über seine untere Kante: Sie ist die Drehachse. Die Gewichtskraft greift im Schwerpunkt an, senkrecht nach unten. Verläuft die Senkrechte durch den Schwerpunkt innerhalb der Kante, unter der Grundfläche, dreht die Gewichtskraft den Körper auf seine Grundfläche zurück; verläuft sie ausserhalb der Kante, kippt sie ihn um.')}</p>`),

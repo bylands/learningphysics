@@ -125,6 +125,9 @@ svg .k-move { color: var(--muted); }
 /* answers that are no numbers: a direction (arrows), a choice, a ranking */
 .field.choice { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; }
 .field.choice .what { margin-right: 4px; }
+/* every answer part on its own row of the grid of fields (ui.css), long options wrapping */
+.fields > .field.choice { grid-column: 1 / -1; }
+.field.choice .choices.levels { flex-wrap: wrap; flex-shrink: 1; }
 .choices.dirs > label > span { font-size: 1.15rem; min-width: 2.2em; text-align: center; }
 .choices { flex-wrap: wrap; }
 /* the nine directions as a compass rose */

@@ -15,7 +15,7 @@
     { id: 'factor', kinds: ['factor', 'factor-mix', 'factor-find'], tutor: 1, topic: 1,
       name: () => L('Predict by what factor the force changes when the charges or their distance change (the inverse square law).',
         'Vorhersagen, um welchen Faktor sich die Kraft ändert, wenn sich die Ladungen oder ihr Abstand ändern (das 1/r²-Gesetz).') },
-    { id: 'vector', kinds: ['line-end', 'which-tri', 'rank', 'right', 'zero-like', 'line-mid', 'which-square', 'nudge-along', 'field-sum'], tutor: 2, topic: 2,
+    { id: 'vector', kinds: ['which-tri', 'rank', 'right', 'zero-like', 'which-square', 'nudge-along', 'field-sum'], tutor: 2, topic: 2,
       name: () => L('Add the forces of several charges as vectors: the net force, its direction, and where it is zero.',
         'Die Kräfte mehrerer Ladungen als Vektoren addieren: die resultierende Kraft, ihre Richtung und wo sie null ist.') },
     { id: 'field', kinds: ['field-strength', 'field-force', 'field-dir', 'field-neg'], tutor: 8, topic: 8,

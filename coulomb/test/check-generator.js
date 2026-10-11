@@ -28,12 +28,16 @@ const LAWS = {
   pair: (p, ex) => { if (!close(si(val(ex, 'F')), (k * Math.abs(p.q1 * p.q2)) / p.r ** 2, 1e-9)) fail('pair F'); if (val(ex, 'kind').value !== (p.q1 * p.q2 < 0 ? 'attract' : 'repel')) fail('pair kind'); },
   'pair-dir': (p, ex) => {
     const F = net(p.qb, p.b, [{ q: p.qa, p: p.a }]);
-    if (val(ex, 'dB').value !== dirOf(F) || val(ex, 'dA').value !== dirOf([-F[0], -F[1]]) || val(ex, 'size').value !== 'eq') fail(`pair-dir ${JSON.stringify(p)}`);
+    if (val(ex, 'dB').value !== dirOf(F) || val(ex, 'dA').value !== dirOf([-F[0], -F[1]]) || val(ex, 'size').value !== (p.chg ? String(p.chg === 'r' ? 1 / p.n ** 2 : p.n) : 'eq')) fail(`pair-dir ${JSON.stringify(p)}`);
   },
   factor: (p, ex) => { if (!close(val(ex, 'f').value, (p.a * p.b) / p.n ** 2)) fail('factor'); },
   'factor-mix': (p, ex) => { const f = (p.a * p.b) / p.n ** 2; if (!close(val(ex, 'f').value, f) || !close(si(val(ex, 'F2')), f * p.F)) fail('factor-mix'); },
-  'factor-find': (p, ex) => { const n = val(ex, 'n').value; if (!close(1 / n ** 2, p.m)) fail('factor-find'); },
-  'line-end': (p, ex) => { const F = net(p.t, [0, 0], [{ q: p.qa, p: [p.xa, 0] }, { q: p.qb, p: [p.xb, 0] }]); if (!close(si(val(ex, 'F')), Math.abs(F[0]), 1e-9) || val(ex, 'dir').value !== dirOf(F)) fail(`line ${JSON.stringify(p)}`); },
+  'factor-find': (p, ex) => { const n = val(ex, 'n').value, r2 = si(val(ex, 'r2')); if (!close(1 / n ** 2, p.m) || !close((p.r0 / r2) ** 2, p.m)) fail('factor-find'); },
+  // charges in units of q, distances in units of d: only the directions count
+  'line-end': (p, ex) => {
+    const one = (qi, xi) => net(p.t, [0, 0], [{ q: qi, p: [xi, 0] }]), F = net(p.t, [0, 0], [{ q: p.qa, p: [p.xa, 0] }, { q: p.qb, p: [p.xb, 0] }]);
+    if (val(ex, 'dA').value !== dirOf(one(p.qa, p.xa)) || val(ex, 'dB').value !== dirOf(one(p.qb, p.xb)) || val(ex, 'dir').value !== dirOf(F)) fail(`line ${JSON.stringify(p)}`);
+  },
   which: (p, ex) => { const t = p.pts[0], F = net(t.s, t.c, p.pts.slice(1).map((x) => ({ q: x.s, p: x.c }))); if (val(ex, 'd').value !== dirOf(F)) fail(`which ${JSON.stringify(p)}: ${val(ex, 'd').value} ≠ ${dirOf(F)}`); if (Math.hypot(...F) > 1e-6 && Math.abs(Math.atan2(F[1], F[0]) * 4 / Math.PI - Math.round(Math.atan2(F[1], F[0]) * 4 / Math.PI)) > 1e-6) fail('which: not one of the eight directions'); },
   rank: (p, ex) => {
     const A = { end: [[1, 0], [2, 0]], mid: [[-1, 0], [1, 0]], right: [[-1, 0], [0, 1]], tri: [[1, 0], [0.5, Math.sqrt(3) / 2]], split: [[-1, 0], [2, 0]], diag: [[1, 0], [1, 1]], far: [[2, 0], [0, 1]] };
@@ -41,7 +45,13 @@ const LAWS = {
     const rk = val(ex, 'rk').value;
     p.keys.forEach((key, i) => { const want = 1 + F.filter((x) => x > F[i] + 1e-9).length; if (rk['ABCD'[i]] !== want) fail(`rank ${key}`); });
   },
-  right: (p, ex) => { const F = net(p.t, [0, 0], [{ q: p.q1, p: [p.x1, 0] }, { q: p.q2, p: [0, p.y2] }]); if (!close(si(val(ex, 'F')), Math.hypot(...F), 1e-9)) fail('right F'); if (val(ex, 'dir').value !== dirOf([Math.sign(F[0]), Math.sign(F[1])])) fail('right dir'); },
+  // the force of charge 1 given: Coulomb's law scaled to it
+  right: (p, ex) => {
+    const F1 = net(p.t, [0, 0], [{ q: p.q1, p: [p.x1, 0] }]), F2 = net(p.t, [0, 0], [{ q: p.q2, p: [0, p.y2] }]), s = p.F1 / Math.hypot(...F1), F = [s * (F1[0] + F2[0]), s * (F1[1] + F2[1])];
+    if (!close(si(val(ex, 'F2')), s * Math.hypot(...F2), 1e-9)) fail('right F2');
+    if (!close(si(val(ex, 'F')), Math.hypot(...F), 1e-9)) fail('right F');
+    if (val(ex, 'dir').value !== dirOf([Math.sign(F[0]), Math.sign(F[1])])) fail('right dir');
+  },
   zero: (p, ex) => {
     const x = si(val(ex, 'x')), region = val(ex, 'region').value, a = Math.abs(p.q1), b = Math.abs(p.q2);
     const pos = region === 'between' ? x : region === 'left' ? -x : p.d + x;
@@ -104,7 +114,9 @@ for (const lang of ['en', 'de']) {
       });
       [ex.title, ex.text, ex.results, ...ex.hints, ...ex.solution, ex.figure(), ex.solutionFigure()].forEach((s, i) => checkText(id, `text ${i}`, s));
       ex.steps.forEach((s, i) => checkText(id, `frame ${i}`, ex.figure({ show: new Set(s.show || []), hl: new Set(s.hl || []) })));
-      if (seed <= 60) { const qz = Coulomb.quiz(ex, seed); if (qz.options.length !== 4 || qz.options.filter((o) => o.correct).length !== 1) fail(`${id}: quiz with ${qz.options.length} options`); }
+      // (a quiz needs a field with at least four answers: the line of three asks only directions)
+      const quizzable = ex.fields.some((f) => f.type === 'num' || f.type === 'rank' || (f.type === 'dir' && f.dirs.length >= 4) || (f.type === 'choice' && f.options.length >= 4));
+      if (seed <= 60 && quizzable) { const qz = Coulomb.quiz(ex, seed); if (qz.options.length !== 4 || qz.options.filter((o) => o.correct).length !== 1) fail(`${id}: quiz with ${qz.options.length} options`); }
     }
     if (seen.size < 3) fail(`${scn.id}: only ${seen.size} different exercises`);
   }
