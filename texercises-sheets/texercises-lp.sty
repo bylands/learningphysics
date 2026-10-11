@@ -109,7 +109,12 @@
   {
     \tl_if_blank:nTF {#3}
       { \__txlp_num:w [#1] {#2} }
-      { \__txlp_SI:w [#1] {#2} {#3} }
+      {
+        % a unit written as \frac{km}{h} only works in math
+        \tl_if_in:nnTF {#3} { \frac }
+          { \__txlp_SI:w [#1, mode=math] {#2} {#3} }
+          { \__txlp_SI:w [#1] {#2} {#3} }
+      }
   }
 \cs_new_protected:Npn \__txlp_prefixed:nnnnn #1#2#3#4#5
   % #1 options, #2 number, #3 unit, #4 power of ten, #5 figures
@@ -405,6 +410,8 @@
           left=2pt,right=2pt,top=1pt,bottom=1pt}}
 
 % ---------------------------------------------------------------- text input
+% (pdflatex; LuaLaTeX reads Unicode directly)
+\ifdefined\directlua\else
 \DeclareUnicodeCharacter{2005}{\ }\DeclareUnicodeCharacter{2009}{\,}\DeclareUnicodeCharacter{202F}{\,}
 \DeclareUnicodeCharacter{200B}{}\DeclareUnicodeCharacter{2002}{\enspace}\DeclareUnicodeCharacter{2003}{\quad}
 \DeclareUnicodeCharacter{03B1}{\ensuremath{\alpha}}\DeclareUnicodeCharacter{03B2}{\ensuremath{\beta}}
@@ -423,6 +430,7 @@
 \DeclareUnicodeCharacter{21D2}{\ensuremath{\Rightarrow}}\DeclareUnicodeCharacter{2260}{\ensuremath{\neq}}
 \DeclareUnicodeCharacter{221A}{\ensuremath{\surd}}\DeclareUnicodeCharacter{221E}{\ensuremath{\infty}}
 \DeclareUnicodeCharacter{2032}{\ensuremath{'}}
+\fi
 
 % Function plots (tkz-fct's \tkzFct, TikZ's plot function{...}) normally call gnuplot through
 % -shell-escape. Here the points are computed in TeX instead (l3fp, gnuplot syntax: sin in

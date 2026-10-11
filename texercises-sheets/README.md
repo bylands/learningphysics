@@ -7,10 +7,15 @@ Compile a TeXercises collection to PDF outside TeXercises (pdflatex, TeX Live 20
 - `test_all.py <export folder> [build dir] [-j N] [--only key,...]`: compiles every exercise of an export on its own (text and solution) and lists the failures.
 - `pilot-electrostatics.json`: a pilot collection (18 exercises, Learning Physics electrostatics apps).
 
+- `lp-minion.sty`: Samuel's sheet layout (LuaLaTeX): Minion 3 with old-style figures, body 10/12 pt, title 14 pt bold small caps, section titles 10 pt semibold small caps, footer 8 pt small caps (text, date, author); exercises numbered with a hanging indent, the short solutions as "Numerical Solutions" in 6 pt, then the full solutions. Measured from "W1 PAe AC Circuits" (A4, 2.5 cm margins, sizes in PostScript points as in Pages). Formulas use Minion letters with Libertinus Math symbols and lining figures (`\usepackage[oldstylemath]{lp-minion}` for old-style figures there too).
+- `latexmkrc`: latexmk runs LuaLaTeX here.
+
 Images are not in the TeXercises export: put them in `images/<name>` next to the .tex, or the sheet prints a placeholder.
 
     python3 build_sheet.py ../texercises-by-2026-10-10 pilot-electrostatics.json pilot.tex
-    latexmk -pdf pilot.tex
+    latexmk pilot.tex
+
+Options of `build_sheet.py`: `--style=minion` (default) or `--style=plain` (Latin Modern, exercise titles, also pdflatex); `--author=By`, `--date=09.09.20`, `--footer="Exercises AC Circuits"` for the footer (defaults: By, today, "Exercises <collection title>"); `--short` for short solutions only.
 
 ## What the package does
 

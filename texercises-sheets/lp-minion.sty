@@ -1,0 +1,100 @@
+% lp-minion.sty -- Samuel Byland's exercise sheet layout (LuaLaTeX), after "W1 PAe AC Circuits":
+% Minion 3, old-style figures; body 10/12 pt; title 14 pt bold small caps; section titles 10 pt
+% semibold small caps; footer 8 pt small caps (left text, date, author); exercises numbered
+% 1., 2., ... with a hanging indent, a)/b) parts indented once more; numerical solutions in 6 pt.
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{lp-minion}[2026/10/11 Learning Physics sheet layout, Minion 3]
+% option oldstylemath: old-style figures in formulas too (default: lining figures in formulas,
+% easier to read in exponents and indices; text and quantities in text stay old-style)
+\newif\iflp@osmath
+\DeclareOption{oldstylemath}{\lp@osmathtrue}
+\ProcessOptions\relax
+\RequirePackage{iftex}
+\RequireLuaTeX
+\RequirePackage[a4paper,left=2.5cm,right=2.5cm,top=2.5cm,bottom=62bp,footskip=24bp]{geometry}
+\RequirePackage{fontspec}
+\RequirePackage{amsmath}
+\RequirePackage{unicode-math}
+\RequirePackage{enumitem}
+
+% ---------------------------------------------------------------- fonts
+% Minion 3 by file name (it is installed in ~/Library/Fonts); Medium and Semibold as extra series
+\setmainfont{Minion3}[Extension=.otf, UprightFont=*-Regular, ItalicFont=*-Italic,
+  BoldFont=*-Bold, BoldItalicFont=*-BoldItalic,
+  FontFace={sb}{n}{*-Semibold}, FontFace={sb}{it}{*-SemiboldItalic},
+  FontFace={mb}{n}{*-Medium}, FontFace={mb}{it}{*-MediumItalic},
+  Numbers=OldStyle, Ligatures=TeX]
+% math: letters, Greek and figures from Minion 3, operators and big symbols from Libertinus Math
+\setmathfont{Libertinus Math}[Scale=MatchLowercase]
+\setmathfont{Minion3-Italic.otf}[range=it/{latin,Latin,greek,Greek}]
+\iflp@osmath\def\lp@mathnum{OldStyle}\else\def\lp@mathnum{Lining}\fi
+\setmathfont{Minion3-Regular.otf}[range={up/{latin,Latin,greek,Greek,num}}, Numbers=\lp@mathnum]
+\setmathfont{Minion3-Bold.otf}[range={bfup/{latin,Latin,greek,Greek,num}}, Numbers=\lp@mathnum]
+% + = - x < > in Minion; parentheses and brackets stay with Libertinus, which can make them grow
+\setmathfont{Minion3-Regular.otf}[range={"002B,"003D,"2212,"00D7,"003C,"003E}]
+% quantities in a sentence are set in the text font (old-style figures), in formulas as math
+\sisetup{mode=match, reset-text-family=false, reset-text-series=false, reset-text-shape=false}
+\newcommand\lpfrac[2]{\ensuremath{\frac{\text{#1}}{\text{#2}}}}
+\sisetup{fraction-command=\lpfrac}
+\renewcommand\normalsize{\fontsize{10bp}{12bp}\selectfont
+  \abovedisplayskip 6bp plus 2bp minus 2bp \belowdisplayskip \abovedisplayskip
+  \abovedisplayshortskip 2pt plus 2pt \belowdisplayshortskip 4pt plus 2pt minus 2pt}
+\normalsize
+\setlength\topskip{10bp}
+\setlength\parindent{0pt}
+\setlength\parskip{0pt}
+\frenchspacing
+\newcommand\lpsemibold{\fontseries{sb}\selectfont}
+
+% ---------------------------------------------------------------- page
+\newcommand\lpfooterleft{}
+\newcommand\lpfootercenter{}
+\newcommand\lpfooterright{}
+\newcommand\lpsetfooter[3]{\renewcommand\lpfooterleft{#1}\renewcommand\lpfootercenter{#2}\renewcommand\lpfooterright{#3}}
+\def\ps@lp{\let\@oddhead\@empty\let\@evenhead\@empty
+  \def\@oddfoot{\fontsize{8bp}{10bp}\selectfont\scshape
+    \rlap{\lpfooterleft}\hfil\lpfootercenter\hfil\llap{\lpfooterright}}%
+  \let\@evenfoot\@oddfoot}
+\pagestyle{lp}
+
+% ---------------------------------------------------------------- headings
+% title 14 pt bold small caps; section 10 pt semibold small caps (sizes in PostScript points, as
+% in Pages). Baselines as measured: title -> section 26, section -> first exercise 16, last line ->
+% next section 24, between exercises 16 (12 + 4)
+\newcommand\lptitle[1]{\par\noindent{\fontsize{14bp}{16bp}\bfseries\scshape #1\par}\addvspace{14bp}}
+\newcommand\lpsection[1]{\par\addvspace{12bp}\noindent{\lpsemibold\scshape #1\par}\nobreak\vskip 4bp\nobreak\@afterheading}
+
+% ---------------------------------------------------------------- exercises
+% 1., 2., ... at the margin, text 18 pt in; 4 pt between exercises; numbering runs on across sections
+\newlist{lpexercises}{enumerate}{1}
+\setlist[lpexercises]{label=\arabic*., leftmargin=18bp, labelwidth=!, labelsep=0pt, align=left,
+  topsep=0pt, partopsep=0pt, itemsep=4bp, parsep=0pt}
+% a), b) parts: one more 18 pt step
+\setlist[enumerate,2]{label=\alph*), leftmargin=18bp, labelsep=0pt, align=left, topsep=2bp, itemsep=0pt, parsep=0pt}
+\renewenvironment{abcliste}
+  {\begin{list}{\alph{abc})}{\usecounter{abc}\setlength\leftmargin{18bp}\setlength\labelwidth{18bp}%
+     \setlength\labelsep{0pt}\setlength\itemsep{0pt}\setlength\parsep{0pt}\setlength\topsep{2bp}%
+     \setlength\partopsep{0pt}\def\makelabel##1{##1\hfil}}}
+  {\end{list}}
+\setlist[itemize]{leftmargin=18bp, topsep=2bp, itemsep=0pt, parsep=0pt}
+
+% figures and tables stay where they are (a sheet is read in order; floats in lists would fail)
+\renewenvironment{figure}[1][]{\par\smallskip\begin{minipage}{\linewidth}\def\@captype{figure}\centering}
+  {\end{minipage}\par\smallskip}
+\renewenvironment{table}[1][]{\par\smallskip\begin{minipage}{\linewidth}\def\@captype{table}\centering}
+  {\end{minipage}\par\smallskip}
+
+% ---------------------------------------------------------------- numerical solutions
+% \begin{lpnumerical} \lpnum{1}{6.7 ms} ... \end{lpnumerical}: 6 pt on 7 pt, label semibold small caps
+\newenvironment{lpnumerical}
+  {\par\addvspace{12bp}\noindent\fontsize{6bp}{7bp}\selectfont
+   {\lpsemibold\scshape\iftxde Numerische Lösungen\else Numerical Solutions\fi}\enspace\ignorespaces}
+  {\par}
+\newcommand\lpnum[2]{\mbox{#1.}~#2\enspace\ignorespaces}
+% the solver part runs inside the paragraph: its line ends and spaces must not print
+\newcommand\lpquietpreamble{\txinpreamble\catcode32=9 \endlinechar=-1 }
+\newcommand\lpendquietpreamble{\txendpreamble\catcode32=10 \endlinechar=13 }
+
+% ---------------------------------------------------------------- TeXercises boxes in the sheet colours
+\tcbset{fonttitle=\lpsemibold\scshape}
+\endinput
