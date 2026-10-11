@@ -531,6 +531,12 @@
       const marks = e.pieces.map((x, k) => (k === i ? 'focus' : ''));
       const right = (k) => describe(e.pieces[k], k).replace(/^<b>[^<]*<\/b>: /, '');
       const area = (s) => Plot.Tut.area(s, p.t0, p.g0, p.t1, p.g1);
+      const areas = (s) => e.pieces.map((x) => Plot.Tut.area(s, x.t0, x.g0, x.t1, x.g1)).join('');
+      // each piece: its area, and the change of the sketch (right or not)
+      const changes = e.pieces.map((x, k) => {
+        const A = window.Motion.area(x), d = f.vals[k].y1 - f.vals[k].y0, ok = Math.abs(A - d) < 0.05;
+        return `${piece(k + 1)}: ${L('area', 'Fläche')} ${sval(A, e.to)}, ${L('sketch', 'Skizze')} ${sval(d, e.to)} ${ok ? '✓' : '✗'}`;
+      }).join('<br>');
       const questions = [
         { type: 'choice', key: 'piece', prompt: L('Which piece of the sketch is wrong?', 'Welches Stück der Skizze ist falsch?'),
           options: e.pieces.map((x, k) => ({ html: `${piece(k + 1)} (${when(x)})`, correct: k === i, flag: null, why: k === i ? '' : `${L(`${piece(k + 1)} is right:`, `${piece(k + 1)} stimmt:`)} ${right(k)}` })) },
@@ -552,6 +558,9 @@
         ],
         steps: [
           { title: L('Piece by piece', 'Stück für Stück'), text: `${ruleText()} ${L(`Compare how much the sketch changes in each piece with the area under the ${g}(<i>t</i>) graph, and its shape with how ${g} changes.`, `Vergleiche, wie stark sich die Skizze in jedem Stück ändert, mit der Fläche unter dem ${g}(<i>t</i>)-Graphen, und ihre Form damit, wie sich ${g} ändert.`)}`, figure: fig(sourceGraph(e), sketch()) },
+          { title: L('The areas', 'Die Flächen'), text: `${L(`The area under ${g} in each piece, and how much the sketch changes there:`, `Die Fläche unter ${g} in jedem Stück und wie stark sich die Skizze dort ändert:`)}<br>${changes}${f.code === 'curve' || f.code === 'bendDir'
+            ? L(`<br>Every piece changes by its area: the mistake is in the shape.`, `<br>Jedes Stück ändert sich um seine Fläche: Der Fehler liegt in der Form.`)
+            : L(`<br>In ${piece(i + 1).toLowerCase()}, the change does not match the area.`, `<br>In ${piece(i + 1)} passt die Änderung nicht zur Fläche.`)}`, figure: fig(sourceGraph(e, { under: areas }), sketch()) },
           { title: `${piece(i + 1)} (${when(p)})`, text: `${flawWhy(f.code, p)} ${L('Right', 'Richtig')}: ${right(i)}`, figure: fig(sourceGraph(e, { marks, under: area }), sketch({ marks })) },
           { title: L('The right graph', 'Der richtige Graph'), text: L(`The other pieces of the sketch change by the right amounts${f.code === 'unsigned' || f.code === 'rect' ? `; after ${piece(i + 1).toLowerCase()} they are only shifted` : ''}. With ${piece(i + 1).toLowerCase()} corrected, the sketch is ${G}(<i>t</i>).`,
             `Die anderen Stücke der Skizze ändern sich um die richtigen Beträge${f.code === 'unsigned' || f.code === 'rect' ? `; nach ${piece(i + 1)} sind sie nur verschoben` : ''}. Mit korrigiertem ${piece(i + 1)} ist die Skizze ${G}(<i>t</i>).`), figure: fig(sourceGraph(e), Plot.answerGraph(e, { marks })) },

@@ -111,7 +111,13 @@
     const clipped = pieces.map(([t0, v0, t1, v1]) => {
       const lo = Math.max(a, t0), hi = Math.min(b, t1);
       return hi > lo ? [lo, Figs.valueAt([[t0, v0], [t1, v1]], lo), hi, Figs.valueAt([[t0, v0], [t1, v1]], hi)] : null;
-    }).filter(Boolean);
+    }).filter(Boolean)
+      // split where v changes sign (at a whole second), so each piece lies on one side of the t axis
+      .flatMap(([t0, v0, t1, v1]) => {
+        if (v0 * v1 >= 0) return [[t0, v0, t1, v1]];
+        const tc = t0 + ((t1 - t0) * v0) / (v0 - v1);
+        return [[t0, v0, tc, 0], [tc, 0, t1, v1]];
+      });
     const fig = (o = {}) => graph('v', { lo: -4, hi: 4, step: 2 }, 10, [{ pts }], { label: L('Velocity against time', 'Geschwindigkeit gegen die Zeit'), marks: [a, b], ...o });
     const rectV = at(a) * (b - a);
     const qs = [numQ('ds', L(`The displacement between ${num(a)} s and ${num(b)} s:`, `Die Ortsänderung zwischen ${num(a)} s und ${num(b)} s:`), L(`What is the displacement Δs between ${num(a)} s and ${num(b)} s?`, `Wie gross ist die Ortsänderung Δs zwischen ${num(a)} s und ${num(b)} s?`),
@@ -127,7 +133,12 @@
           { value: ds, flag: 'unsigned', why: L('That is the displacement. The distance counts every metre, so the area below the axis counts positive too.', 'Das ist die Ortsänderung. Der Weg zählt jeden Meter, also zählt auch die Fläche unter der Achse positiv.') },
         ], L('The areas between the v(t) graph and the t axis, all counted positive.', 'Die Flächen zwischen dem v(t)-Graphen und der t-Achse, alle positiv gezählt.')));
     }
-    const pieceText = clipped.map(([t0, v0, t1, v1]) => `${interval(t0, t1)}: ${v0 === v1 ? `${num(v0)} m/s · ${num(t1 - t0)} s` : `(${num(v0)} + ${num(v1)}) / 2 m/s · ${num(t1 - t0)} s`} = ${sval((v0 + v1) / 2 * (t1 - t0), 'm')}`).join('<br>');
+    const areaOf = ([t0, v0, t1, v1]) => ((v0 + v1) / 2) * (t1 - t0);
+    const areas = clipped.map(areaOf).filter((x) => Math.abs(x) > 1e-9);
+    // the areas added up: with their signs, or all positive
+    const sumText = (abs) => areas.map((x, k) => (abs ? `${k ? ' + ' : ''}${num(Math.abs(x))} m` : k ? ` ${x < 0 ? '−' : '+'} ${num(Math.abs(x))} m` : `${x < 0 ? '−' : ''}${num(Math.abs(x))} m`)).join('');
+    const par = (x) => (x < 0 ? `(${num(x)})` : num(x));
+    const pieceText = clipped.map(([t0, v0, t1, v1]) => `${interval(t0, t1)}: ${v0 === v1 ? `${num(v0)} m/s · ${num(t1 - t0)} s` : `(${num(v0)} + ${par(v1)}) / 2 m/s · ${num(t1 - t0)} s`} = ${sval((v0 + v1) / 2 * (t1 - t0), 'm')}`).join('<br>');
     return finish('area', seed, d, {
       data: { pts, a, b },
       title: L('Distance as an area', 'Weg als Fläche'),
@@ -145,7 +156,8 @@
         step(L('The area', 'Die Fläche'), L(`The change of position between ${num(a)} s and ${num(b)} s is the area between the graph and the t axis (shaded; below the axis negative).`, `Die Ortsänderung zwischen ${num(a)} s und ${num(b)} s ist die Fläche zwischen dem Graphen und der t-Achse (schattiert; unter der Achse negativ).`), fig({ areas: clipped })),
         step(L('Piece by piece', 'Stück für Stück'), pieceText, fig({ areas: clipped })),
         step(L('Result', 'Resultat'), d === 4
-          ? L(`Displacement Δs = ${sval(ds, 'm')} (the areas with their signs). Distance = ${val(dist, 'm')} (all areas positive): the body went forward and back.`, `Ortsänderung Δs = ${sval(ds, 'm')} (die Flächen mit ihren Vorzeichen). Weg = ${val(dist, 'm')} (alle Flächen positiv): Der Körper fuhr vorwärts und zurück.`)
+          ? L(`Displacement: the areas with their signs, Δs = ${sumText(false)} = ${sval(ds, 'm')}.<br>Distance: every area positive, since each metre counts, forward or back: ${sumText(true)} = ${val(dist, 'm')}.`,
+            `Ortsänderung: die Flächen mit ihren Vorzeichen, Δs = ${sumText(false)} = ${sval(ds, 'm')}.<br>Weg: jede Fläche positiv, denn jeder Meter zählt, vorwärts wie rückwärts: ${sumText(true)} = ${val(dist, 'm')}.`)
           : L(`Δs = ${sval(ds, 'm')}. The body only moves forward here, so the distance is the same.`, `Δs = ${sval(ds, 'm')}. Der Körper bewegt sich hier nur vorwärts, also ist der Weg gleich gross.`), fig({ areas: clipped })),
       ],
     });
@@ -240,6 +252,11 @@
         { value: dist / T, flag: 'unsigned', why: L('That is the distance travelled divided by the time, the mean speed. For the mean velocity, the area below the t axis counts negative.', 'Das ist der zurückgelegte Weg geteilt durch die Zeit, das mittlere Tempo. Für die mittlere Geschwindigkeit zählt die Fläche unter der t-Achse negativ.') },
         { value: ds, flag: 'nodt', why: L(`That is the displacement Δs. The mean velocity is the displacement per second: divide by Δt = ${num(T)} s.`, `Das ist die Ortsänderung Δs. Die mittlere Geschwindigkeit ist die Ortsänderung pro Sekunde: Teile durch Δt = ${num(T)} s.`) },
       ], L('v̄ = Δs/Δt: the area under v(t), divided by the time.', 'v̄ = Δs/Δt: die Fläche unter v(t), geteilt durch die Zeit.'));
+    const areaOf = ([t0, v0, t1, v1]) => ((v0 + v1) / 2) * (t1 - t0);
+    const areas = clipped.map(areaOf).filter((x) => Math.abs(x) > 1e-9);
+    // the areas added up: with their signs, or all positive
+    const sumText = (abs) => areas.map((x, k) => (abs ? `${k ? ' + ' : ''}${num(Math.abs(x))} m` : k ? ` ${x < 0 ? '−' : '+'} ${num(Math.abs(x))} m` : `${x < 0 ? '−' : ''}${num(Math.abs(x))} m`)).join('');
+    const par = (x) => (x < 0 ? `(${num(x)})` : num(x));
     const pieceText = clipped.map(([t0, v0, t1, v1]) => `${interval(t0, t1)}: ${sval((v0 + v1) / 2 * (t1 - t0), 'm')}`).join(', ');
     return finish('mean', seed, d, {
       data: { pts, a, b },
