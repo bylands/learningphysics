@@ -567,15 +567,15 @@
   // the drawing tasks v → s and a → v piece by piece: the piece is highlighted in both graphs,
   // with the area under the given graph and the tangents at the ends of the piece drawn.
   const LESSONS = [
-    { name: () => L('Area', 'Fläche'), kind: 'area', d: 4, seed: 1, practice: [{ types: ['area:3'] }, { name: () => L('displacement and distance', 'Verschiebung und Weg'), types: ['area:4'] }],
+    { name: () => L('Area', 'Fläche'), kind: 'area', d: 4, seed: 1, practice: [{ types: ['area:3'] }, { name: () => L('displacement and distance', 'Ortsänderung und Weg'), types: ['area:4'] }],
       idea: () => L('The area under v(t) is the displacement (below the axis negative); counting all areas positive gives the distance travelled.',
-        'Die Fläche unter v(t) ist die Verschiebung (unter der Achse negativ); zählt man alle Flächen positiv, erhält man den zurückgelegten Weg.') },
+        'Die Fläche unter v(t) ist die Ortsänderung (unter der Achse negativ); zählt man alle Flächen positiv, erhält man den zurückgelegten Weg.') },
     { name: () => L('Who is farther?', 'Wer ist weiter weg?'), kind: 'race', d: 4, seed: 1, practice: [{ types: ['race:4'] }],
       idea: () => L('How far a body is from its start is the area under its v(t) graph up to then, not the height of the graph at that time.',
         'Wie weit ein Körper von seinem Start entfernt ist, ist die Fläche unter seinem v(t)-Graphen bis dahin, nicht die Höhe des Graphen zu diesem Zeitpunkt.') },
     { name: () => L('Mean velocity', 'Mittlere Geschwindigkeit'), kind: 'mean', d: 4, seed: 1, practice: [{ types: ['mean:3'] }, { name: () => L('also backwards', 'auch rückwärts'), types: ['mean:4'] }],
       idea: () => L('The mean velocity is the displacement divided by the time, v̄ = Δs/Δt: the height of the rectangle with the same area as under v(t). The mean of the start and end velocities is right only where v(t) is one straight line.',
-        'Die mittlere Geschwindigkeit ist die Verschiebung geteilt durch die Zeit, v̄ = Δs/Δt: die Höhe des Rechtecks mit derselben Fläche wie unter v(t). Der Mittelwert von Anfangs- und Endgeschwindigkeit stimmt nur, wo v(t) eine einzige Gerade ist.') },
+        'Die mittlere Geschwindigkeit ist die Ortsänderung geteilt durch die Zeit, v̄ = Δs/Δt: die Höhe des Rechtecks mit derselben Fläche wie unter v(t). Der Mittelwert von Anfangs- und Endgeschwindigkeit stimmt nur, wo v(t) eine einzige Gerade ist.') },
     { name: 'v → s', task: 'vs', seed: 45, practice: [{ types: ['vs'] }],
       idea: () => L('The change of position in a piece is the area between the velocity graph and the time axis; below the axis it counts negative.',
         'Die Ortsänderung in einem Stück ist die Fläche zwischen dem Geschwindigkeit-Zeit-Graphen und der Zeitachse; unter der Achse zählt sie negativ.') },
@@ -649,7 +649,7 @@
   // for a given question), with four options.
   const OBJECTIVES = [
     { id: 'area', kinds: ['area:3', 'area:4'], tutor: 0, topic: 0,
-      name: () => L('Find the displacement as the area under v(t), counting the area below the t axis as negative.', 'Die Verschiebung als Fläche unter v(t) bestimmen und dabei die Fläche unter der t-Achse negativ zählen.') },
+      name: () => L('Find the displacement as the area under v(t), counting the area below the t axis as negative.', 'Die Ortsänderung als Fläche unter v(t) bestimmen und dabei die Fläche unter der t-Achse negativ zählen.') },
     { id: 'farther', kinds: ['race:4:far', 'race:4:sB'], tutor: 1, topic: 1,
       name: () => L('Decide from v(t) graphs which body is farther from its start at a given time.', 'An v(t)-Graphen entscheiden, welcher Körper zu einem bestimmten Zeitpunkt weiter von seinem Start entfernt ist.') },
     { id: 'mean', kinds: ['mean:3:vm', 'mean:4:vm'], tutor: 2, topic: 2,

@@ -408,9 +408,12 @@
     const sAt = (k) => `${it('s')}(${num(times[k])}&nbsp;s)`;
     const row = (all) => ({ name: '', values: times.map((t, k) => (known.includes(k) || all ? xs[k] : asked.includes(k) ? null : '')) });
     const shown = (k) => known.includes(k) && known.includes(k + 1); // Δs from column k to k + 1 given at the start
-    const dsRow = (all) => ({ head: 'Δ<i>s</i> in m', values: ['', ...gaps.map((g, k) => (all || shown(k) ? dif(g) : ''))] });
-    const ddRow = (all) => ({ head: 'Δ(Δ<i>s</i>) in m', values: ['', '', ...gaps.slice(1).map((g, k) => (all || (shown(k) && shown(k + 1)) ? dif(DD) : ''))] });
+    // all: every value; 'blank': fields for the student to fill in
+    const dsRow = (all) => ({ head: 'Δ<i>s</i> in m', values: ['', ...gaps.map((g, k) => (all === 'blank' ? null : all || shown(k) ? dif(g) : ''))] });
+    const ddRow = (all) => ({ head: 'Δ(Δ<i>s</i>) in m', values: ['', '', ...gaps.slice(1).map((g, k) => (all === 'blank' ? null : all || (shown(k) && shown(k + 1)) ? dif(DD) : ''))] });
     const fig = (o = {}) => table(times, [row(!!o.all), ...(o.rows || [])]);
+    // the task's table, with empty rows for the changes of position and their change
+    const taskFig = () => fig({ rows: [dsRow('blank'), ddRow('blank')] });
     const linear = L(`That continues with the neighbouring change of position, as if the velocity stayed the same. But with the acceleration, Δs changes by Δ(Δs) every ${num(tau)} s.`,
       `Das setzt mit der benachbarten Ortsänderung fort, als bliebe die Geschwindigkeit gleich. Mit der Beschleunigung ändert sich Δs aber alle ${num(tau)} s um Δ(Δs).`);
     const questions = order.map((k) => {
@@ -436,7 +439,7 @@
         { value: DD / tau, flag: 'steps', why: L(`Δ(Δs) = a · (${ts})²: divide by the square of the time step, not by the time step.`, `Δ(Δs) = a · (${ts})²: Teile durch das Quadrat des Zeitschritts, nicht durch den Zeitschritt.`) },
       ] : [
         { value: a / 2, flag: null, why: L('The Δs change by a · (1 s)² from one second to the next: a is that change itself, not half of it.', 'Die Δs ändern sich von einer Sekunde zur nächsten um a · (1 s)²: a ist diese Änderung selbst, nicht die Hälfte davon.') },
-        { value: gaps[b + 1], flag: null, why: L('That is a change of position in one second, a mean velocity. The acceleration is how much it changes from one second to the next, divided by (1 s)².', 'Das ist eine Ortsänderung in einer Sekunde, eine mittlere Geschwindigkeit. Die Beschleunigung ist, um wie viel sie sich von einer Sekunde zur nächsten ändert, geteilt durch (1 s)².') },
+        { value: gaps[b + 1], flag: null, why: L('That is a change of position in one second, which corresponds to a mean velocity. The acceleration is how much it changes from one second to the next, divided by (1 s)².', 'Das ist eine Ortsänderung in einer Sekunde, sie entspricht einer mittleren Geschwindigkeit. Die Beschleunigung ist, um wie viel sie sich von einer Sekunde zur nächsten ändert, geteilt durch (1 s)².') },
       ]),
     ], L(`a = Δ(Δs) / (${ts})².`, `a = Δ(Δs) / (${ts})².`)));
     const tm = times[b + 1];
@@ -484,7 +487,7 @@
         fig({ all: true, rows: [dsRow(true), ddRow(true)] })),
       step(L('The acceleration', 'Die Beschleunigung'),
         tau === 1
-          ? L(`Each Δs is the mean velocity in that second, so Δ(Δs) is how much this velocity grows from one second to the next: Δ(Δs) = a · (1 s)², so a = ${dif(DD)} m / (1 s)² = ${sv(a, 'm/s²')}.`, `Jedes Δs ist die mittlere Geschwindigkeit in dieser Sekunde, also sagt Δ(Δs), um wie viel diese Geschwindigkeit von einer Sekunde zur nächsten zunimmt: Δ(Δs) = a · (1 s)², also a = ${dif(DD)} m / (1 s)² = ${sv(a, 'm/s²')}.`)
+          ? L(`Each Δs corresponds to the mean velocity in that second, so Δ(Δs) is how much this velocity grows from one second to the next: Δ(Δs) = a · (1 s)², so a = ${dif(DD)} m / (1 s)² = ${sv(a, 'm/s²')}.`, `Jedes Δs entspricht der mittleren Geschwindigkeit in dieser Sekunde, also sagt Δ(Δs), um wie viel diese Geschwindigkeit von einer Sekunde zur nächsten zunimmt: Δ(Δs) = a · (1 s)², also a = ${dif(DD)} m / (1 s)² = ${sv(a, 'm/s²')}.`)
           : L(`Each Δs is the mean velocity in its step times ${ts}, and that mean velocity changes by a · ${ts} from one step to the next. So Δ(Δs) = a · (${ts})² = a · ${num(tau * tau)} s²: a = ${dif(DD)} m / ${num(tau * tau)} s² = ${sv(a, 'm/s²')}.`,
             `Jedes Δs ist die mittlere Geschwindigkeit in seinem Schritt mal ${ts}, und diese mittlere Geschwindigkeit ändert sich von einem Schritt zum nächsten um a · ${ts}. Also ist Δ(Δs) = a · (${ts})² = a · ${num(tau * tau)} s²: a = ${dif(DD)} m / ${num(tau * tau)} s² = ${sv(a, 'm/s²')}.`),
         fig({ all: true, rows: [dsRow(true), ddRow(true)] })),
@@ -501,7 +504,7 @@
         title: L('From the table to the graph', 'Von der Tabelle zum Graphen'),
         text: L(`<p>A ${body()} moves along a straight ${car ? 'road' : 'track'} with constant acceleration. The table gives its position every ${ts}.</p>`,
           `<p>Ein Wagen bewegt sich mit konstanter Beschleunigung auf einer geraden ${car ? 'Strasse' : 'Bahn'}. Die Tabelle gibt seinen Ort alle ${ts} an.</p>`),
-        figure: fig(), questions: [G.question],
+        figure: taskFig(), questions: [G.question],
         hints: [hints[0], L(`The Δs change by Δ(Δs) = ${dif(DD)} m from step to step: Δ(Δs) = a · (${ts})².`, `Die Δs ändern sich von Schritt zu Schritt um Δ(Δs) = ${dif(DD)} m: Δ(Δs) = a · (${ts})².`),
           { s: L('s(t) is a parabola through the points of the table.', 's(t) ist eine Parabel durch die Punkte der Tabelle.'), v: L('With constant acceleration, v(t) is a straight line; each Δs/Δt is the velocity in the middle of its step.', 'Bei konstanter Beschleunigung ist v(t) eine Gerade; jedes Δs/Δt ist die Geschwindigkeit in der Mitte seines Schritts.'), a: L('With constant acceleration, a(t) is a horizontal line at the value of a.', 'Bei konstanter Beschleunigung ist a(t) eine waagrechte Gerade beim Wert von a.') }[gq]],
         steps: [steps[0], steps[1], steps[4], graphStep],
@@ -512,7 +515,7 @@
       title: L('Value table with acceleration', 'Wertetabelle mit Beschleunigung'),
       text: L(`<p>A ${body()} moves along a straight ${car ? 'road' : 'track'} with constant acceleration. The table gives its position every ${ts}, with gaps; complete it.</p>`,
         `<p>Ein Wagen bewegt sich mit konstanter Beschleunigung auf einer geraden ${car ? 'Strasse' : 'Bahn'}. Die Tabelle gibt seinen Ort alle ${ts} an, mit Lücken; ergänze sie.</p>`),
-      figure: fig(),
+      figure: taskFig(),
       questions,
       hints,
       steps,
@@ -522,7 +525,7 @@
   // ---------------------------------------------------------------- strobe (C1.3, C1.4)
   // A cart with constant acceleration, one dot per second on a number line from −7 to 7 m:
   // s(t) = s₀ + v₀·t + a·t²/2. The distances moved in successive seconds then change by the same
-  // amount a·(1 s)² each second; each one is the mean velocity in that second, which the cart
+  // amount a·(1 s)² each second; each one corresponds to the mean velocity in that second, which the cart
   // reaches in its middle, so v(t) is the straight line through them. The patterns below keep
   // the positions whole metres. ★2: which s(t) graph fits; ★3: which v(t) graph, and the
   // acceleration.
@@ -612,7 +615,7 @@
       questions.push(numQ('a', L('The acceleration of the cart:', 'Die Beschleunigung des Wagens:'), L('What is the acceleration of the cart?', 'Wie gross ist die Beschleunigung des Wagens?'), it('a'), 'm/s²', acc, [
         { value: -acc, flag: 'sign', why: L(`The distances per second ${acc * dir > 0 ? 'grow' : 'shrink'} in the direction of motion${pat.how === 'turn' ? ' at first' : ''}: work out the sign from how the signed distance changes, from ${sval(gaps[0], 'm')} to ${sval(gaps[1], 'm')}.`,
           `Die Abstände pro Sekunde ${acc * dir > 0 ? 'wachsen' : 'schrumpfen'}${pat.how === 'turn' ? ' zuerst' : ''} in Bewegungsrichtung: Bestimme das Vorzeichen daraus, wie sich der Abstand mit Vorzeichen ändert, von ${sval(gaps[0], 'm')} auf ${sval(gaps[1], 'm')}.`) },
-        { value: gaps[n - 1], flag: null, why: L('That is the distance moved in the last second, a mean velocity. The acceleration is how much this distance changes from one second to the next, per second squared.', 'Das ist der Abstand in der letzten Sekunde, eine mittlere Geschwindigkeit. Die Beschleunigung ist, um wie viel sich dieser Abstand von einer Sekunde zur nächsten ändert, pro Sekunde im Quadrat.') },
+        { value: gaps[n - 1], flag: null, why: L('That is the distance moved in the last second, which corresponds to a mean velocity. The acceleration is how much this distance changes from one second to the next, per second squared.', 'Das ist der Abstand in der letzten Sekunde, er entspricht einer mittleren Geschwindigkeit. Die Beschleunigung ist, um wie viel sich dieser Abstand von einer Sekunde zur nächsten ändert, pro Sekunde im Quadrat.') },
         { value: acc / 2, flag: null, why: L('The distances per second change by a · (1 s)² from one second to the next, so a is that change itself, not half of it.', 'Die Abstände pro Sekunde ändern sich von einer Sekunde zur nächsten um a · (1 s)², also ist a diese Änderung selbst, nicht die Hälfte davon.') },
       ], L('a = (change of the distance per second) / (1 s)².', 'a = (Änderung des Abstands pro Sekunde) / (1 s)².')));
     }
@@ -623,15 +626,15 @@
         `Von einem Punkt zum nächsten fährt der Wagen: ${gapText}. Sie ändern sich jede Sekunde um ${sval(acc, 'm')}: eine konstante Beschleunigung a = ${sval(acc, 'm/s²')}.`), fig()),
       s: step(L('The s(t) graph', 'Der s(t)-Graph'), L('Each dot gives a point (t, s). With constant acceleration, s(t) is a parabola through these points.', 'Jeder Punkt gibt einen Punkt (t, s). Bei konstanter Beschleunigung ist s(t) eine Parabel durch diese Punkte.'),
         sGraph(curve(gaps, x0), { dots: xs.map((x, k) => [k, x]) })),
-      v: step(L('The v(t) graph', 'Der v(t)-Graph'), L(`The distance in each second is the mean velocity in that second, reached in its middle (dots). v(t) is the straight line through them, from ${sval(v0, 'm/s')} at t = 0 with slope a = ${sval(acc, 'm/s²')}. So the cart ${HOW[pat.how]()}.`,
-        `Der Abstand in jeder Sekunde ist die mittlere Geschwindigkeit in dieser Sekunde, erreicht in deren Mitte (Punkte). v(t) ist die Gerade durch sie, von ${sval(v0, 'm/s')} bei t = 0 mit der Steigung a = ${sval(acc, 'm/s²')}. Der Wagen ${HOW[pat.how]()}.`),
+      v: step(L('The v(t) graph', 'Der v(t)-Graph'), L(`The distance in each second corresponds to the mean velocity in that second, reached in its middle (dots). v(t) is the straight line through them, from ${sval(v0, 'm/s')} at t = 0 with slope a = ${sval(acc, 'm/s²')}. So the cart ${HOW[pat.how]()}.`,
+        `Der Abstand in jeder Sekunde entspricht der mittleren Geschwindigkeit in dieser Sekunde, erreicht in deren Mitte (Punkte). v(t) ist die Gerade durch sie, von ${sval(v0, 'm/s')} bei t = 0 mit der Steigung a = ${sval(acc, 'm/s²')}. Der Wagen ${HOW[pat.how]()}.`),
         vGraph(vLine(gaps), { dots: means })),
       a: () => step(L('The a(t) graph', 'Der a(t)-Graph'), L(`The acceleration is the slope of v(t), the same all the time: a(t) is a horizontal line at a = ${sval(acc, 'm/s²')}.`,
         `Die Beschleunigung ist die Steigung von v(t), die ganze Zeit gleich: a(t) ist eine waagrechte Gerade bei a = ${sval(acc, 'm/s²')}.`), A.right()),
     };
     const text = L('<p>A cart moves along a straight track with constant acceleration. The stroboscope picture shows where it is every second, from t = 0 (the numbers above the dots are the times in s).</p>',
       '<p>Ein Wagen bewegt sich mit konstanter Beschleunigung auf einer geraden Bahn. Die Stroboskopaufnahme zeigt, wo er jede Sekunde ist, ab t = 0 (die Zahlen über den Punkten sind die Zeiten in s).</p>');
-    const hint0 = L('The distance between two neighbouring dots is how far the cart moves in one second, its mean velocity in that second: a large distance means fast, a small one slow.', 'Der Abstand zwischen zwei benachbarten Punkten ist, wie weit der Wagen in einer Sekunde fährt, seine mittlere Geschwindigkeit in dieser Sekunde: Ein grosser Abstand bedeutet schnell, ein kleiner langsam.');
+    const hint0 = L('The distance between two neighbouring dots is how far the cart moves in one second, and corresponds to its mean velocity in that second: a large distance means fast, a small one slow.', 'Der Abstand zwischen zwei benachbarten Punkten ist, wie weit der Wagen in einer Sekunde fährt, und entspricht seiner mittleren Geschwindigkeit in dieser Sekunde: Ein grosser Abstand bedeutet schnell, ein kleiner langsam.');
     if (gmode) {
       return finish('strobegraph', seed, d, {
         data: { xs, gaps, acc, v0, graph: gq },

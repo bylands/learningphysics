@@ -69,6 +69,10 @@
   const stepsHtml = (e) => e.steps.map((x) => `<p class="step-rule">${x.title}</p>${figOf(x.figure)}<p>${x.text}</p>`).join('') +
     `<ul class="short">${e.questions.map((q, k) => `<li><span class="qn">${k + 1}</span>${e.answers[k]}</li>`).join('')}</ul>`;
   const solution = () => `<div class="steps">${stepsHtml(ex)}</div>`;
+  // the fields in a table for the values on the way are not checked: Enter there does not check
+  document.addEventListener('keydown', (evt) => {
+    if (evt.key === 'Enter' && evt.target.matches && evt.target.matches('input.scratch')) { evt.preventDefault(); evt.stopPropagation(); }
+  }, true);
 
   // ---------------------------------------------------------------- rendering
   // The exercises of concepts.js are answered by choosing and entering numbers (quiz.js).
@@ -211,8 +215,8 @@
         'In gleichen Zeitschritten hat eine gleichförmige Bewegung gleiche Ortsänderungen Δs. Bei konstanter Beschleunigung ändern sich die Δs von Schritt zu Schritt um gleich viel, Δ(Δs); setzt man dieses Muster fort, füllen sich die Lücken der Tabelle, und Δ(Δs) = a · (Δt)² ergibt die Beschleunigung.') },
     { name: () => L('Stroboscope', 'Stroboskop'), kind: 'strobe', d: 3, seed: 1,
       practice: [{ types: ['strobe:2', 'strobe:3'] }, { name: () => L('picture and graph', 'Bild und Graph'), types: ['strobegraph:2', 'strobegraph:3'] }],
-      idea: () => L('A stroboscope picture is a value table drawn on the line of motion: one dot per second. Equal distances mean a uniform motion; with constant acceleration they change by the same amount each second, and each is the mean velocity in that second.',
-        'Eine Stroboskopaufnahme ist eine Wertetabelle, auf der Bewegungslinie gezeichnet: ein Punkt pro Sekunde. Gleiche Abstände bedeuten eine gleichförmige Bewegung; bei konstanter Beschleunigung ändern sie sich jede Sekunde um gleich viel, und jeder ist die mittlere Geschwindigkeit in dieser Sekunde.') },
+      idea: () => L('A stroboscope picture is a value table drawn on the line of motion: one dot per second. Equal distances mean a uniform motion; with constant acceleration they change by the same amount each second, and each distance corresponds to the mean velocity in that second.',
+        'Eine Stroboskopaufnahme ist eine Wertetabelle, auf der Bewegungslinie gezeichnet: ein Punkt pro Sekunde. Gleiche Abstände bedeuten eine gleichförmige Bewegung; bei konstanter Beschleunigung ändern sie sich jede Sekunde um gleich viel, und jeder Abstand entspricht der mittleren Geschwindigkeit in dieser Sekunde.') },
   ];
   function lesson(def) {
     const e = KINDS[def.kind].make(def.seed, def.d);
@@ -273,9 +277,11 @@
     showScore();
     if (ex) {
       const keep = quizAnswers(), id = ex.id, m = /^([a-z]+)-(\d+)$/.exec(id);
+      const scratch = [...document.querySelectorAll('#q-figure input.scratch')].map((i) => i.value);
       ex = topics.parse(id) || generate(m[1], Number(m[2]));
       ex.id = id;
       render(keep);
+      document.querySelectorAll('#q-figure input.scratch').forEach((i, k) => { i.value = scratch[k] || ''; });
       if ($('#task').hidden) { $('#hints').hidden = true; $('#solution').hidden = true; }
     }
     tutor.relabel(lessons());

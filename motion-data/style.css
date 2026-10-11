@@ -101,7 +101,11 @@ svg .axhead { fill: var(--muted); }
 .vtable td.missing { color: var(--accent); font-size: 0.85rem; }
 .vtable tr.diff th, .vtable tr.diff td { color: var(--muted); font-size: 0.9rem; }
 .vtable tr.diff td { text-align: center; }
-@media (max-width: 560px) { .vtable th, .vtable td { padding: 4px 4px; font-size: 0.85rem; } }
+/* fields in the task's table for the values on the way (not checked) */
+.vtable td.scratch { padding: 2px 3px; }
+.vtable input.scratch { width: 3.6em; box-sizing: border-box; padding: 2px 4px; font: inherit; text-align: center; color: var(--ink); background: transparent; border: 1px dashed var(--line); border-radius: 4px; }
+.vtable input.scratch:focus { outline: 2px solid var(--accent); outline-offset: -1px; border-style: solid; }
+@media (max-width: 560px) { .vtable th, .vtable td { padding: 4px 4px; font-size: 0.85rem; } .vtable td.scratch { padding: 2px 1px; } .vtable input.scratch { width: 2.6em; padding: 2px 1px; } }
 
 /* their worked examples in the tutor */
 .tutor-text .tq { margin: 8px 0; padding-left: 1.4em; font-weight: 600; }

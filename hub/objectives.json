@@ -390,7 +390,7 @@
    {
     "id": "area",
     "en": "Find the displacement as the area under v(t), counting the area below the t axis as negative.",
-    "de": "Die Verschiebung als Fläche unter v(t) bestimmen und dabei die Fläche unter der t-Achse negativ zählen."
+    "de": "Die Ortsänderung als Fläche unter v(t) bestimmen und dabei die Fläche unter der t-Achse negativ zählen."
    },
    {
     "id": "farther",

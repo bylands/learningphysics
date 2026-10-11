@@ -25,7 +25,7 @@
   const FLAGS = {
     nodt: () => L('Δs instead of Δs/Δt', 'Δs statt Δs/Δt'),
     height: () => L('the velocity taken for the distance', 'die Geschwindigkeit für den Weg gehalten'),
-    unsigned: () => L('distance and displacement mixed up', 'Weg und Verschiebung verwechselt'),
+    unsigned: () => L('distance and displacement mixed up', 'Weg und Ortsänderung verwechselt'),
     rect: () => L('a rectangle instead of the trapezoid', 'ein Rechteck statt des Trapezes'),
     ends: () => L('the mean of the velocities at the start and at the end', 'der Mittelwert der Geschwindigkeiten am Anfang und am Ende'),
   };
@@ -114,17 +114,17 @@
     }).filter(Boolean);
     const fig = (o = {}) => graph('v', { lo: -4, hi: 4, step: 2 }, 10, [{ pts }], { label: L('Velocity against time', 'Geschwindigkeit gegen die Zeit'), marks: [a, b], ...o });
     const rectV = at(a) * (b - a);
-    const qs = [numQ('ds', L(`The displacement between ${num(a)} s and ${num(b)} s:`, `Die Verschiebung zwischen ${num(a)} s und ${num(b)} s:`), L(`What is the displacement Δs between ${num(a)} s and ${num(b)} s?`, `Wie gross ist die Verschiebung Δs zwischen ${num(a)} s und ${num(b)} s?`),
+    const qs = [numQ('ds', L(`The displacement between ${num(a)} s and ${num(b)} s:`, `Die Ortsänderung zwischen ${num(a)} s und ${num(b)} s:`), L(`What is the displacement Δs between ${num(a)} s and ${num(b)} s?`, `Wie gross ist die Ortsänderung Δs zwischen ${num(a)} s und ${num(b)} s?`),
       'Δ<i>s</i>', 'm', ds, [
-        { value: dist, flag: 'unsigned', why: L('That is the distance travelled. For the displacement, the area below the t axis counts negative: the body moves backwards there.', 'Das ist der zurückgelegte Weg. Für die Verschiebung zählt die Fläche unter der t-Achse negativ: Dort bewegt sich der Körper rückwärts.') },
-        { value: at(b), flag: 'height', why: L('That is the velocity at the end, read off the graph. The displacement is the area under the v(t) graph.', 'Das ist die Geschwindigkeit am Ende, am Graphen abgelesen. Die Verschiebung ist die Fläche unter dem v(t)-Graphen.') },
+        { value: dist, flag: 'unsigned', why: L('That is the distance travelled. For the displacement, the area below the t axis counts negative: the body moves backwards there.', 'Das ist der zurückgelegte Weg. Für die Ortsänderung zählt die Fläche unter der t-Achse negativ: Dort bewegt sich der Körper rückwärts.') },
+        { value: at(b), flag: 'height', why: L('That is the velocity at the end, read off the graph. The displacement is the area under the v(t) graph.', 'Das ist die Geschwindigkeit am Ende, am Graphen abgelesen. Die Ortsänderung ist die Fläche unter dem v(t)-Graphen.') },
         { value: rectV, flag: 'rect', why: L('That is v at the start times Δt, a rectangle. But v changes: add up the areas piece by piece, trapezoids and triangles included.', 'Das ist v am Anfang mal Δt, ein Rechteck. Aber v ändert sich: Zähle die Flächen Stück für Stück zusammen, Trapeze und Dreiecke eingeschlossen.') },
       ], L('The area between the v(t) graph and the t axis, below the axis negative.', 'Die Fläche zwischen dem v(t)-Graphen und der t-Achse, unter der Achse negativ.'))];
     if (d === 4) {
       qs.push(numQ('dist', L(`The distance travelled between ${num(a)} s and ${num(b)} s:`, `Der zurückgelegte Weg zwischen ${num(a)} s und ${num(b)} s:`), L(`What distance does the body travel between ${num(a)} s and ${num(b)} s?`, `Welchen Weg legt der Körper zwischen ${num(a)} s und ${num(b)} s zurück?`),
         L('distance', 'Weg'), 'm', dist, [
-          { value: Math.abs(ds), flag: 'unsigned', why: L('That is the size of the displacement: forward and backward cancel there. The distance counts every metre, so all areas count positive.', 'Das ist der Betrag der Verschiebung: Dabei heben sich vorwärts und rückwärts auf. Der Weg zählt jeden Meter, also zählen alle Flächen positiv.') },
-          { value: ds, flag: 'unsigned', why: L('That is the displacement. The distance counts every metre, so the area below the axis counts positive too.', 'Das ist die Verschiebung. Der Weg zählt jeden Meter, also zählt auch die Fläche unter der Achse positiv.') },
+          { value: Math.abs(ds), flag: 'unsigned', why: L('That is the size of the displacement: forward and backward cancel there. The distance counts every metre, so all areas count positive.', 'Das ist der Betrag der Ortsänderung: Dabei heben sich vorwärts und rückwärts auf. Der Weg zählt jeden Meter, also zählen alle Flächen positiv.') },
+          { value: ds, flag: 'unsigned', why: L('That is the displacement. The distance counts every metre, so the area below the axis counts positive too.', 'Das ist die Ortsänderung. Der Weg zählt jeden Meter, also zählt auch die Fläche unter der Achse positiv.') },
         ], L('The areas between the v(t) graph and the t axis, all counted positive.', 'Die Flächen zwischen dem v(t)-Graphen und der t-Achse, alle positiv gezählt.')));
     }
     const pieceText = clipped.map(([t0, v0, t1, v1]) => `${interval(t0, t1)}: ${v0 === v1 ? `${num(v0)} m/s · ${num(t1 - t0)} s` : `(${num(v0)} + ${num(v1)}) / 2 m/s · ${num(t1 - t0)} s`} = ${sval((v0 + v1) / 2 * (t1 - t0), 'm')}`).join('<br>');
@@ -137,7 +137,7 @@
       hints: [
         L('In every short time, the body moves v · Δt: the area of a narrow strip under the v(t) graph. So the change of position is the area under the graph.', 'In jeder kurzen Zeit bewegt sich der Körper um v · Δt: die Fläche eines schmalen Streifens unter dem v(t)-Graphen. Die Ortsänderung ist also die Fläche unter dem Graphen.'),
         L(`Split the area between ${num(a)} s and ${num(b)} s into rectangles, triangles and trapezoids.`, `Teile die Fläche zwischen ${num(a)} s und ${num(b)} s in Rechtecke, Dreiecke und Trapeze.`),
-        d === 4 ? L('Below the t axis, the body moves backwards: that area counts negative for the displacement, but positive for the distance.', 'Unter der t-Achse bewegt sich der Körper rückwärts: Diese Fläche zählt für die Verschiebung negativ, für den Weg aber positiv.')
+        d === 4 ? L('Below the t axis, the body moves backwards: that area counts negative for the displacement, but positive for the distance.', 'Unter der t-Achse bewegt sich der Körper rückwärts: Diese Fläche zählt für die Ortsänderung negativ, für den Weg aber positiv.')
           : L('A trapezoid under a sloped piece: (v at the start + v at the end) / 2 · Δt.', 'Ein Trapez unter einem schrägen Stück: (v am Anfang + v am Ende) / 2 · Δt.'),
         L(`Piece by piece: ${clipped.map(([t0, v0, t1, v1]) => sval((v0 + v1) / 2 * (t1 - t0), 'm')).join(', ')}.`, `Stück für Stück: ${clipped.map(([t0, v0, t1, v1]) => sval((v0 + v1) / 2 * (t1 - t0), 'm')).join(', ')}.`),
       ],
@@ -145,7 +145,7 @@
         step(L('The area', 'Die Fläche'), L(`The change of position between ${num(a)} s and ${num(b)} s is the area between the graph and the t axis (shaded; below the axis negative).`, `Die Ortsänderung zwischen ${num(a)} s und ${num(b)} s ist die Fläche zwischen dem Graphen und der t-Achse (schattiert; unter der Achse negativ).`), fig({ areas: clipped })),
         step(L('Piece by piece', 'Stück für Stück'), pieceText, fig({ areas: clipped })),
         step(L('Result', 'Resultat'), d === 4
-          ? L(`Displacement Δs = ${sval(ds, 'm')} (the areas with their signs). Distance = ${val(dist, 'm')} (all areas positive): the body went forward and back.`, `Verschiebung Δs = ${sval(ds, 'm')} (die Flächen mit ihren Vorzeichen). Weg = ${val(dist, 'm')} (alle Flächen positiv): Der Körper fuhr vorwärts und zurück.`)
+          ? L(`Displacement Δs = ${sval(ds, 'm')} (the areas with their signs). Distance = ${val(dist, 'm')} (all areas positive): the body went forward and back.`, `Ortsänderung Δs = ${sval(ds, 'm')} (die Flächen mit ihren Vorzeichen). Weg = ${val(dist, 'm')} (alle Flächen positiv): Der Körper fuhr vorwärts und zurück.`)
           : L(`Δs = ${sval(ds, 'm')}. The body only moves forward here, so the distance is the same.`, `Δs = ${sval(ds, 'm')}. Der Körper bewegt sich hier nur vorwärts, also ist der Weg gleich gross.`), fig({ areas: clipped })),
       ],
     });
@@ -176,10 +176,10 @@
       opt(L('Equally far', 'Gleich weit'), false, null, L('Compare the areas under the two graphs up to that time.', 'Vergleiche die Flächen unter den beiden Graphen bis zu diesem Zeitpunkt.')),
       opt(L('Both are back at the start', 'Beide sind wieder am Start'), false, 'unsigned', L('Only areas above and below the axis that are equal would cancel. Add up the areas with their signs.', 'Nur gleich grosse Flächen über und unter der Achse würden sich aufheben. Zähle die Flächen mit ihren Vorzeichen zusammen.')),
     ]));
-    const q2 = numQ('sB', L(`The displacement of B from 0 to ${num(tq)} s:`, `Die Verschiebung von B von 0 bis ${num(tq)} s:`), L(`What is the displacement of B from 0 to ${num(tq)} s?`, `Wie gross ist die Verschiebung von B von 0 bis ${num(tq)} s?`),
+    const q2 = numQ('sB', L(`The displacement of B from 0 to ${num(tq)} s:`, `Die Ortsänderung von B von 0 bis ${num(tq)} s:`), L(`What is the displacement of B from 0 to ${num(tq)} s?`, `Wie gross ist die Ortsänderung von B von 0 bis ${num(tq)} s?`),
       `Δ${sub('s', 'B')}`, 'm', sB, [
-        { value: integrate(B, 0, tq, true), flag: 'unsigned', why: L('That is the distance travelled: the area below the t axis counts negative for the displacement.', 'Das ist der zurückgelegte Weg: Für die Verschiebung zählt die Fläche unter der t-Achse negativ.') },
-        { value: Figs.valueAt(B, tq), flag: 'height', why: L('That is the velocity at that time. The displacement is the area under the graph.', 'Das ist die Geschwindigkeit zu diesem Zeitpunkt. Die Verschiebung ist die Fläche unter dem Graphen.') },
+        { value: integrate(B, 0, tq, true), flag: 'unsigned', why: L('That is the distance travelled: the area below the t axis counts negative for the displacement.', 'Das ist der zurückgelegte Weg: Für die Ortsänderung zählt die Fläche unter der t-Achse negativ.') },
+        { value: Figs.valueAt(B, tq), flag: 'height', why: L('That is the velocity at that time. The displacement is the area under the graph.', 'Das ist die Geschwindigkeit zu diesem Zeitpunkt. Die Ortsänderung ist die Fläche unter dem Graphen.') },
       ], L('The area under the v(t) graph of B, below the axis negative.', 'Die Fläche unter dem v(t)-Graphen von B, unter der Achse negativ.'));
     return finish('race', seed, 4, {
       data: { A, B, tq, far },
@@ -188,7 +188,7 @@
       figure: two(),
       questions: [q1, q2],
       hints: [
-        L('How far a body is from its start is its displacement: the area under its v(t) graph from t = 0, below the axis negative.', 'Wie weit ein Körper von seinem Start entfernt ist, ist seine Verschiebung: die Fläche unter seinem v(t)-Graphen ab t = 0, unter der Achse negativ.'),
+        L('How far a body is from its start is its displacement: the area under its v(t) graph from t = 0, below the axis negative.', 'Wie weit ein Körper von seinem Start entfernt ist, ist seine Ortsänderung: die Fläche unter seinem v(t)-Graphen ab t = 0, unter der Achse negativ.'),
         L(`The velocity at ${num(tq)} s only says how fast each moves right then, not how far it has come.`, `Die Geschwindigkeit bei ${num(tq)} s sagt nur, wie schnell sich jeder gerade dann bewegt, nicht wie weit er schon gekommen ist.`),
         L(`Add up the areas up to ${num(tq)} s for A and for B, piece by piece.`, `Zähle die Flächen bis ${num(tq)} s für A und für B Stück für Stück zusammen.`),
         L(`Δs_A = ${sval(sA, 'm')}, Δs_B = ${sval(sB, 'm')}.`, `Δs_A = ${sval(sA, 'm')}, Δs_B = ${sval(sB, 'm')}.`),
@@ -228,17 +228,17 @@
     }).filter(Boolean);
     const fig = (o = {}) => graph('v', { lo: -4, hi: 4, step: 2 }, 10, [{ pts }, ...(o.mean ? [{ pts: [[a, vm], [b, vm]], dash: true }] : [])],
       { label: L('Velocity against time', 'Geschwindigkeit gegen die Zeit'), marks: [a, b], ...(o.areas ? { areas: clipped } : {}) });
-    const q1 = numQ('ds', L(`The displacement between ${num(a)} s and ${num(b)} s:`, `Die Verschiebung zwischen ${num(a)} s und ${num(b)} s:`), L(`What is the displacement Δs between ${num(a)} s and ${num(b)} s?`, `Wie gross ist die Verschiebung Δs zwischen ${num(a)} s und ${num(b)} s?`),
+    const q1 = numQ('ds', L(`The displacement between ${num(a)} s and ${num(b)} s:`, `Die Ortsänderung zwischen ${num(a)} s und ${num(b)} s:`), L(`What is the displacement Δs between ${num(a)} s and ${num(b)} s?`, `Wie gross ist die Ortsänderung Δs zwischen ${num(a)} s und ${num(b)} s?`),
       'Δ<i>s</i>', 'm', ds, [
-        { value: dist, flag: 'unsigned', why: L('That is the distance travelled. For the displacement, the area below the t axis counts negative: the body moves backwards there.', 'Das ist der zurückgelegte Weg. Für die Verschiebung zählt die Fläche unter der t-Achse negativ: Dort bewegt sich der Körper rückwärts.') },
+        { value: dist, flag: 'unsigned', why: L('That is the distance travelled. For the displacement, the area below the t axis counts negative: the body moves backwards there.', 'Das ist der zurückgelegte Weg. Für die Ortsänderung zählt die Fläche unter der t-Achse negativ: Dort bewegt sich der Körper rückwärts.') },
         { value: at(a) * T, flag: 'rect', why: L('That is v at the start times Δt, a rectangle. But v changes: add up the areas piece by piece.', 'Das ist v am Anfang mal Δt, ein Rechteck. Aber v ändert sich: Zähle die Flächen Stück für Stück zusammen.') },
       ], L('The area between the v(t) graph and the t axis, below the axis negative.', 'Die Fläche zwischen dem v(t)-Graphen und der t-Achse, unter der Achse negativ.'));
     const q2 = numQ('vm', L(`The mean velocity between ${num(a)} s and ${num(b)} s:`, `Die mittlere Geschwindigkeit zwischen ${num(a)} s und ${num(b)} s:`), L(`What is the mean velocity between ${num(a)} s and ${num(b)} s?`, `Wie gross ist die mittlere Geschwindigkeit zwischen ${num(a)} s und ${num(b)} s?`),
       '<i class="bar">v</i>', 'm/s', vm, [
         { value: ends, flag: 'ends', why: L(`That is the mean of the velocities at ${num(a)} s and at ${num(b)} s. It would be right only if v(t) were one straight line in between; here it bends. The mean velocity is the displacement divided by the time: v̄ = Δs/Δt.`,
-          `Das ist der Mittelwert der Geschwindigkeiten bei ${num(a)} s und bei ${num(b)} s. Er wäre nur richtig, wenn v(t) dazwischen eine einzige Gerade wäre; hier knickt sie. Die mittlere Geschwindigkeit ist die Verschiebung geteilt durch die Zeit: v̄ = Δs/Δt.`) },
+          `Das ist der Mittelwert der Geschwindigkeiten bei ${num(a)} s und bei ${num(b)} s. Er wäre nur richtig, wenn v(t) dazwischen eine einzige Gerade wäre; hier knickt sie. Die mittlere Geschwindigkeit ist die Ortsänderung geteilt durch die Zeit: v̄ = Δs/Δt.`) },
         { value: dist / T, flag: 'unsigned', why: L('That is the distance travelled divided by the time, the mean speed. For the mean velocity, the area below the t axis counts negative.', 'Das ist der zurückgelegte Weg geteilt durch die Zeit, das mittlere Tempo. Für die mittlere Geschwindigkeit zählt die Fläche unter der t-Achse negativ.') },
-        { value: ds, flag: 'nodt', why: L(`That is the displacement Δs. The mean velocity is the displacement per second: divide by Δt = ${num(T)} s.`, `Das ist die Verschiebung Δs. Die mittlere Geschwindigkeit ist die Verschiebung pro Sekunde: Teile durch Δt = ${num(T)} s.`) },
+        { value: ds, flag: 'nodt', why: L(`That is the displacement Δs. The mean velocity is the displacement per second: divide by Δt = ${num(T)} s.`, `Das ist die Ortsänderung Δs. Die mittlere Geschwindigkeit ist die Ortsänderung pro Sekunde: Teile durch Δt = ${num(T)} s.`) },
       ], L('v̄ = Δs/Δt: the area under v(t), divided by the time.', 'v̄ = Δs/Δt: die Fläche unter v(t), geteilt durch die Zeit.'));
     const pieceText = clipped.map(([t0, v0, t1, v1]) => `${interval(t0, t1)}: ${sval((v0 + v1) / 2 * (t1 - t0), 'm')}`).join(', ');
     return finish('mean', seed, d, {
@@ -248,13 +248,13 @@
       figure: fig(),
       questions: [q1, q2],
       hints: [
-        L('The mean velocity is the displacement divided by the time it takes: v̄ = Δs/Δt.', 'Die mittlere Geschwindigkeit ist die Verschiebung geteilt durch die Zeit, die sie dauert: v̄ = Δs/Δt.'),
-        L(`The displacement is the area under the v(t) graph between ${num(a)} s and ${num(b)} s${d === 4 ? ', below the t axis negative' : ''}.`, `Die Verschiebung ist die Fläche unter dem v(t)-Graphen zwischen ${num(a)} s und ${num(b)} s${d === 4 ? ', unter der t-Achse negativ' : ''}.`),
+        L('The mean velocity is the displacement divided by the time it takes: v̄ = Δs/Δt.', 'Die mittlere Geschwindigkeit ist die Ortsänderung geteilt durch die Zeit, die sie dauert: v̄ = Δs/Δt.'),
+        L(`The displacement is the area under the v(t) graph between ${num(a)} s and ${num(b)} s${d === 4 ? ', below the t axis negative' : ''}.`, `Die Ortsänderung ist die Fläche unter dem v(t)-Graphen zwischen ${num(a)} s und ${num(b)} s${d === 4 ? ', unter der t-Achse negativ' : ''}.`),
         L(`v(t) bends in between, so the mean of the velocities at ${num(a)} s and ${num(b)} s is not the mean velocity.`, `v(t) knickt dazwischen, also ist der Mittelwert der Geschwindigkeiten bei ${num(a)} s und ${num(b)} s nicht die mittlere Geschwindigkeit.`),
         L(`Piece by piece: ${pieceText}.`, `Stück für Stück: ${pieceText}.`),
       ],
       steps: [
-        step(L('The displacement', 'Die Verschiebung'), L(`The area between the graph and the t axis from ${num(a)} s to ${num(b)} s, piece by piece: ${pieceText}. Together Δs = ${sval(ds, 'm')}.`,
+        step(L('The displacement', 'Die Ortsänderung'), L(`The area between the graph and the t axis from ${num(a)} s to ${num(b)} s, piece by piece: ${pieceText}. Together Δs = ${sval(ds, 'm')}.`,
           `Die Fläche zwischen dem Graphen und der t-Achse von ${num(a)} s bis ${num(b)} s, Stück für Stück: ${pieceText}. Zusammen Δs = ${sval(ds, 'm')}.`), fig({ areas: true })),
         step(L('The mean velocity', 'Die mittlere Geschwindigkeit'), L(`v̄ = Δs/Δt = ${sval(ds, 'm')} / ${num(T)} s = ${sval(vm, 'm/s')}. A body moving at this constant velocity (dashed) would get just as far in the same time: the rectangle under it has the same area. The mean of the velocities at the ends, ${sval(ends, 'm/s')}, is not the same.`,
           `v̄ = Δs/Δt = ${sval(ds, 'm')} / ${num(T)} s = ${sval(vm, 'm/s')}. Ein Körper mit dieser konstanten Geschwindigkeit (gestrichelt) käme in derselben Zeit gleich weit: Das Rechteck darunter hat dieselbe Fläche. Der Mittelwert der Geschwindigkeiten an den Enden, ${sval(ends, 'm/s')}, ist nicht dasselbe.`), fig({ mean: true })),
