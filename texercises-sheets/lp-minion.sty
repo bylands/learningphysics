@@ -27,12 +27,18 @@
 \iflp@modern
 \RequirePackage{fontspec}
 \RequirePackage{unicode-math}
+% (an older TeX Live without these fonts falls back to TeX Gyre Pagella and its math, and to
+% Latin Modern Sans; the sheet then still compiles)
+\IfFontExistsTF{Erewhon-Regular.otf}{%
 \setmainfont{Erewhon}[Extension=.otf, UprightFont=*-Regular, ItalicFont=*-Italic,
-  BoldFont=*-Bold, BoldItalicFont=*-BoldItalic, SlantedFont=*-RegularSlanted, Ligatures=TeX]
+  BoldFont=*-Bold, BoldItalicFont=*-BoldItalic, SlantedFont=*-RegularSlanted, Ligatures=TeX]}{%
+\setmainfont{TeX Gyre Pagella}[Ligatures=TeX]}
+\IfFontExistsTF{FiraSans-Book.otf}{%
 \setsansfont{FiraSans}[Extension=.otf, UprightFont=*-Book, ItalicFont=*-BookItalic,
   BoldFont=*-SemiBold, BoldItalicFont=*-SemiBoldItalic,
-  FontFace={sb}{n}{*-SemiBold}, FontFace={mb}{n}{*-Medium}, FontFace={mb}{it}{*-MediumItalic}]
-\setmathfont{Erewhon-Math.otf}
+  FontFace={sb}{n}{*-SemiBold}, FontFace={mb}{n}{*-Medium}, FontFace={mb}{it}{*-MediumItalic}]}{%
+\setsansfont{Latin Modern Sans}[FontFace={sb}{n}{* Demi Cond}, FontFace={mb}{n}{* Demi Cond}]}
+\IfFontExistsTF{Erewhon-Math.otf}{\setmathfont{Erewhon-Math.otf}}{\setmathfont{TeX Gyre Pagella Math}}
 \newcommand\lpsemibold{\sffamily\fontseries{sb}\selectfont}
 \else
 \iflp@coch

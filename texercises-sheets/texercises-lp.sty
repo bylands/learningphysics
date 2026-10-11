@@ -135,11 +135,23 @@
 % names whose plain form would replace a LaTeX command that the page itself needs
 \clist_const:Nn \c__txlp_reserved_clist
   { value , par , item , text , label , ref , begin , end , the , relax , left , right , frac , sqrt , cdot , times , hline , quad , phantom }
+% may \<name> itself be defined? not for the reserved names, and not over a TeX primitive
+% (a quantity dp must not replace \dp, the depth of a box, which LaTeX itself uses)
+\prg_new_conditional:Npnn \__txlp_plain_ok:n #1 { TF , T }
+  {
+    \clist_if_in:NnTF \c__txlp_reserved_clist {#1}
+      { \prg_return_false: }
+      {
+        \cs_if_exist:cTF {#1}
+          { \exp_args:Nc \token_if_primitive:NTF {#1} { \prg_return_false: } { \prg_return_true: } }
+          { \prg_return_true: }
+      }
+  }
 % the printed forms; #1 name, #2 SI unit, #3 options
 \cs_new_protected:Npn \__txlp_printers:nnn #1#2#3
   {
     \cs_set:cpn { #1U } { \unit {#2} }
-    \clist_if_in:NnF \c__txlp_reserved_clist {#1}
+    \__txlp_plain_ok:nT {#1}
     { \cs_set_protected:cpn { #1 }
       { \__txlp_print:nnn { round-mode=figures, round-precision=4, exponent-mode=threshold, #3 } { \use:c {#1X} } {#2} } }
     \cs_set_protected:cpn { #1S } ##1
@@ -154,7 +166,7 @@
 \cs_generate_variant:Nn \__txlp_printers:nnn { nVV , nVn }
 \cs_new_protected:Npn \__txlp_given_plain:nnn #1#2#3
   {
-    \clist_if_in:NnF \c__txlp_reserved_clist {#1}
+    \__txlp_plain_ok:nT {#1}
       { \cs_set_protected:cpn {#1} { \__txlp_print:nnn { exponent-mode=threshold, round-mode=figures, round-precision=4, round-pad=false } {#2} {#3} } }
   }
 \cs_generate_variant:Nn \__txlp_given_plain:nnn { nVV }
@@ -181,7 +193,7 @@
         \bool_lazy_and:nnTF
           { ! #1 }
           { \bool_lazy_or_p:nn { \str_if_eq_p:ee { \tl_head:N \l__txlp_fac_tl } { e } } { \str_if_eq_p:ee { \tl_head:N \l__txlp_fac_tl } { E } } }
-          { \__txlp_fpset:Nn \l__txlp_x_tl { \l__txlp_val_tl \l__txlp_fac_tl } }
+          { \__txlp_fpset:Nn \l__txlp_x_tl { ( \l__txlp_val_tl ) * 1 \l__txlp_fac_tl } }
           { \__txlp_fpset:Nn \l__txlp_x_tl { ( \l__txlp_val_tl ) * ( \l__txlp_fac_tl ) } }
       }
     % X keeps 12 figures (no binary-looking tails); \<x> prints at most 4, without padding zeros
@@ -215,7 +227,7 @@
     \__txlp_opts:Nn \l__txlp_opt_tl {#1}
     \IfValueTF {#5} { \tl_set:Nn \l__txlp_u_tl {#5} } { \tl_clear:N \l__txlp_u_tl }
     \__txlp_printers:nVV {#2} \l__txlp_u_tl \l__txlp_opt_tl
-    \clist_if_in:NnF \c__txlp_reserved_clist {#2} { \cs_set_eq:cc { #2O } { #2 } }
+    \__txlp_plain_ok:nT {#2} { \cs_set_eq:cc { #2O } { #2 } }
   }
 % \ConvTo{new}{factor}{old}{unit}
 \NewDocumentCommand \ConvTo { m m m m }

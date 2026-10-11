@@ -10,6 +10,7 @@
     --school="MNG Rämibühl"   school name, left of the signature (empty: none)
     --font=cochineal Cochineal with newtxmath instead of Minion 3 (minion style)
     --font=modern    modern textbook look: Erewhon + Erewhon Math, Fira Sans headings, accent colour
+    --part=exercises the exercises only (minion style; default both: exercises, then solutions)
     --numerical      print the short solutions as "Numerical Solutions" after the exercises (minion)
 
 Images: TeXercises does not export them. The sheet looks for images/<name> next to the .tex;
@@ -22,16 +23,41 @@ The export folder is a TeXercises bundle (exercises/<key>/...); the collection l
 """
 import json, os, re, sys, glob, datetime
 
-def load(export):
+def load(exports):
+    # one export folder, or several joined by os.pathsep (the first that has a key wins)
     by_id, by_key = {}, {}
-    for d in glob.glob(os.path.join(export, 'exercises', '*')):
-        j = json.load(open(os.path.join(d, 'exercise.json')))
-        rd = lambda n: open(os.path.join(d, n)).read() if os.path.exists(os.path.join(d, n)) else ''
-        e = {'meta': j, 'preamble': rd('preamble.tex'), 'text': rd('text.tex'),
-             'solution': rd('solution.tex'), 'short': rd('short_solution.tex'), 'dir': d}
+    dirs = [d for export in exports.split(os.pathsep) for d in sorted(glob.glob(os.path.join(export, 'exercises', '*')))]
+    for d in dirs:
+        if os.path.basename(d) in by_key: continue
+        j = json.load(open(os.path.join(d, 'exercise.json'), encoding='utf-8'))
+        rd = lambda n: open(os.path.join(d, n), encoding='utf-8').read() if os.path.exists(os.path.join(d, n)) else ''
+        e = rename_primitives({'meta': j, 'preamble': rd('preamble.tex'), 'text': rd('text.tex'),
+             'solution': rd('solution.tex'), 'short': rd('short_solution.tex'), 'dir': d})
         by_key[os.path.basename(d)] = e
         if j.get('id'): by_id[j['id']] = e
     return by_id, by_key
+
+# TeX primitives with names an exercise might give a quantity (\NewQty{dp}, then \dp in its text) and
+# that exercises do not use as commands: LaTeX itself needs them, so such a quantity is renamed in its
+# exercise (dp -> txqdp)
+PRIMITIVES = set("""dp ht wd day month year time count dimen skip mark span copy read write mag fam lower raise
+above atop accent badness divide limits toks omit penalty insert indent catcode lccode delcode mskip mkern muskip
+vsize hsize hrule vrule hskip vskip hss vss hfil vfil hfill vfill""".split())  # (not left, over, par, ...: their
+# renaming would also hit \left etc. in the exercise's formulas)
+QTY_DEF = re.compile(r'\\(?:NewQty|SolQty)\*?(?:\[[^\]]*\])?\{([A-Za-z]+)\}|\\ConvTo\{([A-Za-z]+)\}')
+
+
+def rename_primitives(e):
+    """Rename the exercise's quantities named like a TeX primitive, in all its parts."""
+    parts = ('preamble', 'text', 'solution', 'short')
+    names = {a or b for a, b in QTY_DEF.findall(e['preamble'] + e['solution'] + e['text'])} & PRIMITIVES
+    for n in names:
+        for p in parts:
+            # the name in a definition ({dp}) and every use (\dp, \dpX, \dpO, ...)
+            e[p] = re.sub(r'(?<=\{)' + n + r'(?=\})', 'txq' + n, e[p])
+            e[p] = re.sub(r'\\' + n + r'(?=[A-Z]|[^A-Za-z]|$)', lambda m: '\\txq' + n, e[p])
+    return e
+
 
 def images(tex):
     # TeXercises writes #image_path:<name># for its gallery images; they are not in the export,
@@ -85,7 +111,7 @@ def esc(s):
     return ''.join('\\' + c if c in '&%$#_{}' else c for c in s)
 
 def options(argv):
-    opts = {'short': False, 'numerical': False, 'style': 'minion', 'font': 'minion', 'author': 'ByS', 'school': 'MNG Rämibühl', 'date': None, 'footer': None}
+    opts = {'short': False, 'numerical': False, 'style': 'minion', 'font': 'minion', 'author': 'ByS', 'school': 'MNG Rämibühl', 'date': None, 'footer': None, 'part': 'both'}
     args = []
     for a in argv:
         if a == '--short': opts['short'] = True
@@ -178,9 +204,10 @@ def main():
             for n, e in nums:
                 L += [r'{\lpquietpreamble', e['preamble'], r'\lpendquietpreamble' + rf'\lpnum{{{n}}}{{{e["short"].strip()}}}}}']
             L.append(r'\end{lpnumerical}')
-        L += [r'\newpage', rf'\lptitle{{{title}}}', rf'\lpsection{{{"Lösungen" if de else "Solutions"}}}']
-        heads = {}
-        L += listed([(n, head(it, e) + quiet(e, body(e))) for n, (it, e) in enumerate(items, 1)], 'lpsol')
+        if o['part'] == 'both':
+            L += [r'\newpage', rf'\lptitle{{{title}}}', rf'\lpsection{{{"Lösungen" if de else "Solutions"}}}']
+            heads = {}
+            L += listed([(n, head(it, e) + quiet(e, body(e))) for n, (it, e) in enumerate(items, 1)], 'lpsol')
     else:
         sys.exit(f'unknown style {o["style"]} (minion, plain)')
     L.append(r'\end{document}')
