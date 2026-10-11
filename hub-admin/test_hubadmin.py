@@ -4,8 +4,12 @@ Checks the reading of the hub page, the cleaning of a configuration and of sets 
 objectives, and those saved before there were objectives), the names a set
 may have (and that no app or set clashes with a service nginx passes on), the atomic write, the password (in the crossword app's format) and sessions, and the
 service end to end: login, rate limit, the API with and without a session, and that saves reach
-apps.json and sets.json.
+apps.json and sets.json. The exercise sheets: which exercises a set gets, the upload of a TeXercises
+export (only the teacher's exercises kept, nothing written outside its folder), and the sheet routes
+(public sheet, solutions only when logged in; a PDF only where LaTeX is installed).
 """
+import io
+import zipfile
 import hashlib
 import json
 import re
@@ -21,6 +25,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
 import hubadmin as H  # noqa: E402
+from sheets import sheets as S  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent
 
@@ -187,6 +192,72 @@ class Unit(unittest.TestCase):
             self.assertFalse(a.valid_session(s))
 
 
+def export_zip(exercises):
+    """A TeXercises export as bytes: {key: creator}, plus a file trying to leave its folder."""
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, "w") as z:
+        for key, creator in exercises.items():
+            z.writestr(f"bundle/exercises/{key}/exercise.json", json.dumps({"title": key, "language": "ENG", "info": {"creator": creator}}))
+            z.writestr(f"bundle/exercises/{key}/text.tex", "Text of " + key)
+            z.writestr(f"bundle/exercises/{key}/notes.txt", "not kept")
+        z.writestr("bundle/exercises/../../evil/exercise.json", "{}")
+    return buf.getvalue()
+
+
+class Sheets(unittest.TestCase):
+    POOL = {
+        "coulomb": {"objectives": {"factor": ["a1", "a2", "a3"], "vector": ["a2", "a4"]},
+                    "exercises": {"a1": {"lang": "en"}, "a2": {"lang": "de"}, "a3": {"lang": "de"}, "a4": {"lang": "en"}}},
+        "photons": {"objectives": {}, "exercises": {"p1": {"lang": "en"}, "p2": {"lang": "en"}, "p3": {"lang": "en"}, "p4": {"lang": "en"}}},
+    }
+
+    def test_choose(self):
+        have = {k: Path(k) for k in ("a1", "a2", "a3", "a4", "p1", "p2", "p3", "p4")}
+        s = {"apps": [{"id": "coulomb", "objectives": ["vector", "factor"]}, {"id": "photons"}, {"id": "nope"}]}
+        # per objective the first two not taken yet, in the set's order of objectives; an app with no
+        # objectives in the pool gives its first three
+        self.assertEqual(S.choose(s, self.POOL, have), [("coulomb", "a2"), ("coulomb", "a4"), ("coulomb", "a1"), ("coulomb", "a3"),
+                                                        ("photons", "p1"), ("photons", "p2"), ("photons", "p3")])
+        # the set's language first
+        s = {"lang": "de", "apps": [{"id": "coulomb", "objectives": ["factor"]}]}
+        self.assertEqual(S.choose(s, self.POOL, have), [("coulomb", "a2"), ("coulomb", "a3")])
+        # only exercises that are there; no objectives in the set: all of the app's
+        self.assertEqual(S.choose({"apps": [{"id": "coulomb"}]}, self.POOL, {"a3": Path("a3"), "a4": Path("a4")}),
+                         [("coulomb", "a3"), ("coulomb", "a4")])
+        coll = S.collection("3a", S.choose(s, self.POOL, have), {"coulomb": "Point Charges"})
+        self.assertEqual(coll, {"title": "3a", "items": [{"exercise": "a2"}, {"exercise": "a3"}],
+                                "containers": [{"first": 1, "title": "Point Charges"}]})
+
+    def test_store_export(self):
+        with tempfile.TemporaryDirectory() as d:
+            export = Path(d) / "data" / "texercises"
+            export.parent.mkdir()
+            n = S.store_export(export_zip({"e1-mine": "by", "e2-other": "pw", "e3-mine": "by"}), export, "by")
+            self.assertEqual(n, {"exercises": 2, "skipped": 1})
+            self.assertEqual(sorted(p.name for p in (export / "exercises").iterdir()), ["e1-mine", "e3-mine"])
+            self.assertEqual(sorted(p.name for p in (export / "exercises" / "e1-mine").iterdir()), ["exercise.json", "text.tex"])
+            self.assertFalse((Path(d) / "evil").exists())
+            # a new upload replaces the old one
+            S.store_export(export_zip({"e4-mine": "by"}), export, "by")
+            self.assertEqual([p.name for p in (export / "exercises").iterdir()], ["e4-mine"])
+            with self.assertRaises(ValueError):
+                S.store_export(export_zip({"e5": "pw"}), export, "by")  # none of the teacher's
+            with self.assertRaises(ValueError):
+                S.store_export(b"not a zip", export, "by")
+            self.assertEqual([p.name for p in (export / "exercises").iterdir()], ["e4-mine"])  # kept
+
+    def test_pool_file(self):
+        pool = S.load_pool()
+        objectives = json.loads((ROOT / "hub" / "objectives.json").read_text())
+        for app, entry in pool.items():
+            self.assertIn(app, objectives)
+            known = {o["id"] for o in objectives[app]["objectives"]}
+            for ob, keys in entry["objectives"].items():
+                self.assertIn(ob, known)
+                for k in keys:
+                    self.assertIn(k, entry["exercises"])
+
+
 class Service(unittest.TestCase):
     def setUp(self):
         self.dir = tempfile.TemporaryDirectory()
@@ -326,6 +397,29 @@ class Service(unittest.TestCase):
         self.assertEqual(json.loads(self.sets.read_text())["sets"]["3a"]["apps"], [
             {"id": "electric-field", "modes": ["tutor", "practice", "check"], "objectives": ["sketch", "read"]},
             {"id": "photons", "modes": ["check"]}])
+
+    def test_sheets(self):
+        app = next(a for a, e in S.load_pool().items() if any(e["objectives"].values()))
+        key = next(k for ks in S.load_pool()[app]["objectives"].values() for k in ks)
+        H.write_config(self.sets, {"sets": {"3a": {"title": "Klasse 3a", "apps": [{"id": app, "modes": ["tutor"]}]}}})
+        self.assertEqual(self.req("/api/sheets")[0], 403)
+        self.assertEqual(self.req("/api/texercises", export_zip({key: "by"}), "application/zip")[0], 403)
+        st, headers, _ = self.login()
+        cookie = headers["Set-Cookie"].split(";")[0]
+        st, _, body = self.req("/api/texercises", export_zip({key: "by", "x-other": "pw"}), "application/zip", cookie)
+        self.assertEqual((st, json.loads(body)), (200, {"exercises": 1, "skipped": 1}))
+        st, _, body = self.req("/sheet/3a.json")
+        info = json.loads(body)
+        self.assertGreaterEqual(info["exercises"], 1)
+        self.assertEqual(info["available"], bool(S.lualatex()))
+        state = json.loads(self.req("/api/sheets", cookie=cookie)[2])
+        self.assertEqual(state["sets"][0]["name"], "3a")
+        self.assertEqual(self.req("/sheet/nope.json")[2], b'{"exercises": 0, "available": false}')
+        self.assertEqual(self.req("/sheet/3a-solutions.pdf")[0], 403)  # the solutions: teachers only
+        self.assertEqual(self.req("/sheet/nope.pdf")[0], 404)
+        self.assertEqual(self.req("/sheet/../x.pdf")[0], 404)
+        if not S.lualatex():  # no LaTeX here: a clear answer instead of a sheet
+            self.assertEqual(self.req("/sheet/3a.pdf")[0], 503)
 
     def test_rate_limit(self):
         for _ in range(H.LOGIN_ATTEMPTS):
