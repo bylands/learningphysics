@@ -8,6 +8,7 @@
     --author=By --date=09.09.20 --footer="Exercises AC Circuits"   footer (minion; defaults: By,
                      today, "Exercises <collection title>")
     --font=cochineal Cochineal with newtxmath instead of Minion 3 (minion style)
+    --font=modern    modern textbook look: Erewhon + Erewhon Math, Fira Sans headings, accent colour
     --numerical      print the short solutions as "Numerical Solutions" after the exercises (minion)
 
 Images: TeXercises does not export them. The sheet looks for images/<name> next to the .tex;
@@ -140,7 +141,7 @@ def main():
         L = [r'% !TeX program = lualatex',
              r'\documentclass[10pt,a4paper]{article}',
              rf'\usepackage[{"ngerman" if de else "english"}]{{babel}}',
-             r'\usepackage{texercises-lp}', r'\usepackage' + ('[cochineal]' if o['font'] == 'cochineal' else '') + '{lp-minion}',
+             r'\usepackage{texercises-lp}', r'\usepackage' + ({'cochineal': '[cochineal]', 'modern': '[modern]'}.get(o['font'], '')) + '{lp-minion}',
              rf'\lpsetfooter{{{footer}}}{{{esc(date)}}}{{{esc(o["author"])}}}',
              r'\begin{document}',
              rf'\txlang{{{"de" if de else "en"}}}',

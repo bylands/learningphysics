@@ -12,6 +12,10 @@
 % with its matching math (newtxmath); Cochineal has no semibold, section titles are set bold
 \newif\iflp@coch
 \DeclareOption{cochineal}{\lp@cochtrue}
+% option modern: a modern textbook look, all free fonts: Erewhon (Michael Sharpe's Utopia) with
+% Erewhon Math, headings in Fira Sans, lining figures, one accent colour
+\newif\iflp@modern
+\DeclareOption{modern}{\lp@moderntrue}
 \ProcessOptions\relax
 \RequirePackage{iftex}
 \RequireLuaTeX
@@ -20,6 +24,17 @@
 \RequirePackage{enumitem}
 
 % ---------------------------------------------------------------- fonts
+\iflp@modern
+\RequirePackage{fontspec}
+\RequirePackage{unicode-math}
+\setmainfont{Erewhon}[Extension=.otf, UprightFont=*-Regular, ItalicFont=*-Italic,
+  BoldFont=*-Bold, BoldItalicFont=*-BoldItalic, SlantedFont=*-RegularSlanted, Ligatures=TeX]
+\setsansfont{FiraSans}[Extension=.otf, UprightFont=*-Book, ItalicFont=*-BookItalic,
+  BoldFont=*-SemiBold, BoldItalicFont=*-SemiBoldItalic,
+  FontFace={sb}{n}{*-SemiBold}, FontFace={mb}{n}{*-Medium}, FontFace={mb}{it}{*-MediumItalic}]
+\setmathfont{Erewhon-Math.otf}
+\newcommand\lpsemibold{\sffamily\fontseries{sb}\selectfont}
+\else
 \iflp@coch
 \RequirePackage[osf]{cochineal}
 \RequirePackage[cochineal,vvarbb]{newtxmath}
@@ -49,6 +64,7 @@
 \setmathfont{Minion3-Regular.otf}[range={"002B,"003D,"2212,"00D7,"003C,"003E}]
 \fi
 \fi
+\fi
 % quantities in a sentence are set in the text font (old-style figures), in formulas as math
 \sisetup{mode=match, reset-text-family=false, reset-text-series=false, reset-text-shape=false}
 \newcommand\lpfrac[2]{\ensuremath{\frac{\text{#1}}{\text{#2}}}}
@@ -61,6 +77,9 @@
 \setlength\parindent{0pt}
 \setlength\parskip{0pt}
 \frenchspacing
+% finer line breaking: character protrusion and font expansion, a little emergency stretch
+\RequirePackage{microtype}
+\setlength\emergencystretch{1.5em}
 
 % ---------------------------------------------------------------- page
 \newcommand\lpfooterleft{}
@@ -107,6 +126,7 @@
 \newcommand\lpdifficulty[1]{\ifnum0#1>0 {\color{black!45}\count@=#1\relax
   \loop\ifnum\count@>0 \,\lpstar\advance\count@\m@ne\repeat}\fi}
 \iflp@coch\newcommand\lpstar{\ensuremath{\scriptstyle\bigstar}}\else\newcommand\lpstar{\ensuremath{\bigstar}}\fi
+\definecolor{lpaccent}{rgb}{0,0,0}
 % similar exercises: one small grey line of linked titles
 \newcommand\lpsimilar[1]{\par\vskip 2bp{\fontsize{8bp}{10bp}\selectfont\color{black!55}%
   \textit{\iftxde Ähnlich:\else Similar:\fi}\enspace #1\par}}
@@ -128,4 +148,39 @@
 
 % ---------------------------------------------------------------- TeXercises boxes in the sheet colours
 \tcbset{fonttitle=\lpsemibold\scshape}
+
+% ---------------------------------------------------------------- modern look
+% sans headings in one accent colour (a deep blue), numbers set off in the margin, lining figures,
+% a little more leading for Erewhon's large x-height; same page grid and structure as above
+\iflp@modern
+\definecolor{lpaccent}{RGB}{0,82,147}
+\renewcommand\normalsize{\fontsize{10bp}{13bp}\selectfont
+  \abovedisplayskip 6bp plus 2bp minus 2bp \belowdisplayskip \abovedisplayskip
+  \abovedisplayshortskip 2pt plus 2pt \belowdisplayshortskip 4pt plus 2pt minus 2pt}
+\normalsize
+\def\ps@lp{\let\@oddhead\@empty\let\@evenhead\@empty
+  \def\@oddfoot{\sffamily\fontsize{7.5bp}{10bp}\selectfont\color{black!60}%
+    \rlap{\lpfooterleft}\hfil\lpfootercenter\hfil\llap{\lpfooterright\quad{\color{lpaccent}\fontseries{sb}\selectfont\thepage}}}%
+  \let\@evenfoot\@oddfoot}
+\pagestyle{lp}
+\renewcommand\lptitle[1]{\par\noindent{\sffamily\fontseries{sb}\selectfont\fontsize{18bp}{22bp}\selectfont
+  \color{lpaccent}#1\par}\vskip 5bp{\color{lpaccent}\hrule height 0.6bp}\addvspace{16bp}}
+\renewcommand\lpsection[1]{\par\addvspace{16bp}\noindent{\sffamily\fontseries{sb}\selectfont
+  \fontsize{11bp}{13bp}\selectfont\color{lpaccent}#1\par}\nobreak\vskip 6bp\nobreak\@afterheading}
+\setlist[lpexercises]{label={\sffamily\fontseries{sb}\selectfont\color{lpaccent}\arabic*}, leftmargin=22bp,
+  labelwidth=!, labelsep=0pt, align=left, topsep=0pt, partopsep=0pt, itemsep=9bp, parsep=0pt}
+\renewcommand\lpextitle[3]{{\sffamily\fontseries{mb}\selectfont\href{#1}{#2}}\hfill\lpdifficulty{#3}\par\nobreak\vskip 1bp}
+\renewcommand\lpdifficulty[1]{\ifnum0#1>0 {\color{lpaccent!55}\count@=#1\relax
+  \loop\ifnum\count@>0 \,\lpstar\advance\count@\m@ne\repeat}\fi}
+\renewcommand\lpstar{\ensuremath{\scriptstyle\bigstar}}
+\renewcommand\lpsimilar[1]{\par\vskip 3bp{\sffamily\fontsize{7.5bp}{10bp}\selectfont\color{black!55}%
+  {\color{lpaccent!70}\iftxde Ähnlich\else Similar\fi}\enspace #1\par}}
+\renewenvironment{abcliste}
+  {\begin{list}{{\sffamily\fontseries{mb}\selectfont\color{lpaccent}\alph{abc}}}{\usecounter{abc}%
+     \setlength\leftmargin{16bp}\setlength\labelwidth{16bp}%
+     \setlength\labelsep{0pt}\setlength\itemsep{1bp}\setlength\parsep{0pt}\setlength\topsep{3bp}%
+     \setlength\partopsep{0pt}\def\makelabel##1{##1\hfil}}}
+  {\end{list}}
+\tcbset{fonttitle=\sffamily\fontseries{sb}\selectfont}
+\fi
 \endinput
