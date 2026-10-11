@@ -88,10 +88,12 @@
   // ---------------------------------------------------------------- value table
   // times: [t, …] (s); rows: [{ name, values: [s, null (asked for: shown by its name) or '' (empty)] }].
   // A row with head (HTML) is a row of its own kind (e.g. the differences in a solution), its
-  // values plain numbers or strings; name may be '' for a single body (s instead of s_A).
+  // values plain numbers or strings, or null: a field the student may fill in (unchecked, for
+  // the values on the way); name may be '' for a single body (s instead of s_A).
   function table(times, rows) {
     const sym = (r) => (r.name ? `<i>s</i><sub>${r.name}</sub>` : '<i>s</i>');
-    const cell = (v, r, t) => (v === '' ? '<td></td>' : v == null ? `<td class="missing">${sym(r)}(${num(t)} s)</td>` : `<td>${typeof v === 'number' ? num(v) : v}</td>`);
+    const field = (r, t) => `<td class="scratch"><input type="text" class="scratch" autocomplete="off" spellcheck="false" aria-label="${r.head.replace(/<[^>]*>/g, '')}, ${num(t)} s"></td>`;
+    const cell = (v, r, t) => (v === '' ? '<td></td>' : v == null ? (r.head ? field(r, t) : `<td class="missing">${sym(r)}(${num(t)} s)</td>`) : `<td>${typeof v === 'number' ? num(v) : v}</td>`);
     return `<table class="vtable"><thead><tr><th><i>t</i> in s</th>${times.map((t) => `<th>${num(t)}</th>`).join('')}</tr></thead>` +
       `<tbody>${rows.map((r) => `<tr${r.head ? ' class="diff"' : ''}><th>${r.head || `${sym(r)} in m`}</th>${r.values.map((v, k) => cell(v, r, times[k])).join('')}</tr>`).join('')}</tbody></table>`;
   }
