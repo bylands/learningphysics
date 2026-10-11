@@ -224,7 +224,10 @@
     });
     const q1 = multi('neg', L('In which time intervals is the velocity negative? Choose all.', 'In welchen Zeitintervallen ist die Geschwindigkeit negativ? Wähle alle.'),
       L('In which time interval is the velocity negative?', 'In welchem Zeitintervall ist die Geschwindigkeit negativ?'), options);
-    const negs = pieces.filter((p) => p.v < 0), P = negs.find((p) => Math.min(p.s0, p.s1) >= 0) || negs[0];
+    // the velocity asked for: in an interval that falls above the t axis or rises below it, so its
+    // sign gives nothing away about the first question
+    const negs = pieces.filter((p) => p.v < 0);
+    const P = r.pick([pieces.find((p) => p.v < 0 && Math.min(p.s0, p.s1) >= 0), pieces.find((p) => p.v > 0 && Math.max(p.s0, p.s1) <= 0)]);
     const q2 = numQ('v', L(`The velocity between ${interval(P.t0, P.t1)}:`, `Die Geschwindigkeit zwischen ${interval(P.t0, P.t1)}:`),
       L(`What is the velocity between ${interval(P.t0, P.t1)}?`, `Wie gross ist die Geschwindigkeit zwischen ${interval(P.t0, P.t1)}?`), it('v'), 'm/s', P.v, [
         { value: -P.v, flag: 'sign', why: WHY.sign() },
@@ -258,20 +261,30 @@
   }
 
   // ---------------------------------------------------------------- table (C2.3)
-  // ★2: four vehicles every 5 s; which move backwards all the time, and the velocity of the
-  // uniform one.
+  // ★2: four vehicles every 5 s; which move backwards all the time (one to three of them), and
+  // the velocity of one that moves uniformly, forwards or backwards.
   const table = (seed) => table4(rng(seed), seed);
 
   function table4(r, seed) {
     const times = [0, 5, 10, 15, 20, 25, 30];
     const make = {
+      // backwards all the time: at positive positions, across 0, or at negative ones
       down: () => { const s0 = r.pick([18, 20, 24, 25, 30]), ds = r.pick([-2, -3, -4]); return { kind: 'down', values: times.map((t, k) => s0 + ds * k), back: true, uniform: true }; },
       negdown: () => { const gaps = r.pick([[8, 7, 6, 5, 4, 3], [2, 3, 4, 5, 6, 7], [5, 5, 4, 4, 3, 3]]), s0 = r.pick([0, -2, 3]); let s = s0; return { kind: 'negdown', values: [s0, ...gaps.map((g) => (s -= g))], back: true }; },
+      below: () => { const s0 = r.pick([-2, -4, -5]), ds = r.pick([-3, -4]); return { kind: 'below', values: times.map((t, k) => s0 + ds * k), back: true, uniform: true }; },
+      // not all the time: forwards at negative positions, turning around, or coming to rest
       negup: () => { const s0 = r.pick([-30, -28, -25]), ds = r.pick([3, 4]); return { kind: 'negup', values: times.map((t, k) => s0 + ds * k), back: false, uniform: true }; },
       backforth: () => { const s0 = r.pick([-10, -6]), ds = r.pick([4, 5]); return { kind: 'backforth', values: times.map((t, k) => s0 - ds * Math.min(k, 3) + ds * Math.max(0, k - 3)), back: false }; },
       forthback: () => { const s0 = r.pick([-8, -6]), up = r.pick([6, 5]); return { kind: 'forthback', values: [s0, s0 + up, s0 + 2 * up, s0 + 2 * up - 2, s0 + 2 * up - 4, s0 + 2 * up - 6, s0 + 2 * up - 8], back: false }; },
+      stop: () => { const s0 = r.pick([12, 15, 20]), ds = r.pick([3, 4]), k0 = r.pick([3, 4]); return { kind: 'stop', values: times.map((t, k) => s0 - ds * Math.min(k, k0)), back: false, stop: times[k0] }; },
     };
-    const kinds = r.shuffle(['down', 'negdown', 'negup', r.pick(['backforth', 'forthback'])]);
+    let kinds;
+    for (;;) {
+      const nBack = r.pick([1, 2, 2, 3]);
+      kinds = r.shuffle([...r.shuffle(['down', 'negdown', 'below']).slice(0, nBack), ...r.shuffle(['negup', r.pick(['backforth', 'forthback']), 'stop']).slice(0, 4 - nBack)]);
+      // a uniform one for the velocity, and the trap of negative positions
+      if (kinds.some((k) => ['down', 'below', 'negup'].includes(k)) && kinds.some((k) => ['negup', 'negdown', 'below'].includes(k))) break;
+    }
     const names = ['A', 'B', 'C', 'D'];
     const rows = kinds.map((k, i) => ({ name: names[i], ...make[k]() }));
     const fig = () => tableFig(times, rows.map((x) => ({ name: x.name, values: x.values })));
@@ -286,11 +299,15 @@
         return opt(x.name, false, 'negpos', L(`${x.name}: the positions are negative, but they increase: ${x.name} moves in the positive direction. The direction is in the change of s, not in its sign.`,
           `${x.name}: Die Orte sind negativ, nehmen aber zu: ${x.name} bewegt sich in positiver Richtung. Die Richtung steckt in der Änderung von s, nicht in seinem Vorzeichen.`));
       }
+      if (x.kind === 'stop') {
+        return opt(x.name, false, null, L(`${x.name}: the position decreases until ${num(x.stop)} s and then stays the same: ${x.name} stops, it does not move in the negative direction all the time.`,
+          `${x.name}: Der Ort nimmt bis ${num(x.stop)} s ab und bleibt dann gleich: ${x.name} hält an, bewegt sich also nicht die ganze Zeit in negativer Richtung.`));
+      }
       return opt(x.name, false, allNeg(x) ? 'negpos' : null, L(`${x.name}: the position decreases only for a while and then increases again: ${x.name} turns around.`, `${x.name}: Der Ort nimmt nur eine Zeit lang ab und dann wieder zu: ${x.name} kehrt um.`));
     });
     const q1 = multi('back', L('Which vehicles move in the negative direction all the time? Choose all.', 'Welche Fahrzeuge bewegen sich die ganze Zeit in negativer Richtung? Wähle alle.'),
       L('Which vehicle moves in the negative direction all the time?', 'Welches Fahrzeug bewegt sich die ganze Zeit in negativer Richtung?'), options);
-    const U = rows.find((x) => x.kind === 'down'), v = (U.values[1] - U.values[0]) / 5;
+    const U = r.pick(rows.filter((x) => x.uniform)), v = (U.values[1] - U.values[0]) / 5;
     const q2 = numQ('v', L(`The velocity of ${U.name}:`, `Die Geschwindigkeit von ${U.name}:`), L(`What is the velocity of ${U.name}?`, `Wie gross ist die Geschwindigkeit von ${U.name}?`), sub('v', U.name), 'm/s', v, [
       { value: U.values[1] - U.values[0], flag: 'nodt', why: WHY.nodt() },
       { value: -v, flag: 'sign', why: WHY.sign() },
@@ -306,7 +323,7 @@
       questions: [q1, q2],
       hints: [
         L('A vehicle moves in the negative direction when its position decreases. Look at the changes from one column to the next, not at the signs of the positions.', 'Ein Fahrzeug bewegt sich in negativer Richtung, wenn sein Ort abnimmt. Schau auf die Änderungen von einer Spalte zur nächsten, nicht auf die Vorzeichen der Orte.'),
-        L('"All the time" means: every change must be negative. One increase is enough to rule a vehicle out.', '«Die ganze Zeit» heisst: Jede Änderung muss negativ sein. Eine einzige Zunahme genügt, um ein Fahrzeug auszuschliessen.'),
+        L('"All the time" means: every change must be negative. One increase, or one step without a change, is enough to rule a vehicle out.', '«Die ganze Zeit» heisst: Jede Änderung muss negativ sein. Eine einzige Zunahme oder ein Schritt ohne Änderung genügt, um ein Fahrzeug auszuschliessen.'),
         L(`${U.name} changes by the same amount every 5 s, so it moves uniformly: v = Δs/Δt.`, `${U.name} ändert sich alle 5 s um gleich viel, bewegt sich also gleichförmig: v = Δs/Δt.`),
         L(`${U.name}: Δs = ${num(U.values[1] - U.values[0])} m in Δt = 5 s.`, `${U.name}: Δs = ${num(U.values[1] - U.values[0])} m in Δt = 5 s.`),
       ],

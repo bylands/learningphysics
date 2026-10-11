@@ -151,7 +151,11 @@ for (const task of Object.keys(M.TASKS)) {
     if (!f) { fail(`${tag}: no flaw`); continue; }
     count[f.code] = (count[f.code] || 0) + 1;
     const res = M.evaluate(ex, f.vals), ax = ex.axes.target;
-    res.forEach((r, i) => { if (r.ok !== (i !== f.piece)) fail(`${tag}: piece ${i + 1} judged ${r.ok ? 'right' : 'wrong'} (${f.code} in piece ${f.piece + 1})`); });
+    // a curved piece has the right ends, which is all evaluate() compares
+    if (f.code === 'curve') {
+      const v = f.vals[f.piece], c = ex.answer[f.piece];
+      if (res.some((r) => !r.ok) || v.y0 !== c.y0 || v.y1 !== c.y1 || Math.abs(v.ym - c.ym) < 1) fail(`${tag}: curve not only bent in its middle`);
+    } else res.forEach((r, i) => { if (r.ok !== (i !== f.piece)) fail(`${tag}: piece ${i + 1} judged ${r.ok ? 'right' : 'wrong'} (${f.code} in piece ${f.piece + 1})`); });
     if (FLAW_CODE[f.code] && !res[f.piece].codes.includes(FLAW_CODE[f.code])) fail(`${tag}: ${f.code} not recognised: ${JSON.stringify(res[f.piece].codes)}`);
     if (f.vals.some((v) => [v.y0, v.ym, v.y1].some((y) => y < ax.lo - 1e-9 || y > ax.hi + 1e-9))) fail(`${tag}: sketch off its axis`);
   }
