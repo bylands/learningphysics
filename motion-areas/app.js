@@ -500,6 +500,16 @@
     curve: () => L(`It is a straight line, but ${Q(ex.to)} is a parabola here.`, `Es ist eine Gerade, aber ${Q(ex.to)} ist hier eine Parabel.`),
     bendDir: () => L('It curves the wrong way.', 'Es ist falsch herum gekrümmt.'),
   };
+  // why a mistake c that was chosen does not describe the wrong piece (without naming the right one)
+  function notWhy(c) {
+    const g = Q(ex.from);
+    return `${L('That is not the mistake in this piece:', 'Das ist nicht der Fehler in diesem Stück:')} ${{
+      unsigned: L(`the sign of its change is right (it decreases where ${g} is negative).`, `Das Vorzeichen seiner Änderung stimmt (es nimmt ab, wo ${g} negativ ist).`),
+      rect: L(`its change is not ${g} at the start times Δ<i>t</i>.`, `Seine Änderung ist nicht ${g} am Anfang mal Δ<i>t</i>.`),
+      curve: L('it is not straight where it should be curved.', 'Es ist nicht gerade, wo es gekrümmt sein sollte.'),
+      bendDir: L('more than its curvature is wrong.', 'Falsch ist mehr als nur seine Krümmung.'),
+    }[c]}`;
+  }
   // what the sketch shows in its wrong piece p, and why that is wrong
   function flawWhy(code, p) {
     const g = Q(ex.from), G = Q(ex.to);
@@ -541,7 +551,7 @@
         { type: 'choice', key: 'piece', prompt: L('Which piece of the sketch is wrong?', 'Welches Stück der Skizze ist falsch?'),
           options: e.pieces.map((x, k) => ({ html: `${piece(k + 1)} (${when(x)})`, correct: k === i, flag: null, why: k === i ? '' : `${L(`${piece(k + 1)} is right:`, `${piece(k + 1)} stimmt:`)} ${right(k)}` })) },
         { type: 'choice', key: 'what', prompt: L('What is wrong with it?', 'Was ist daran falsch?'),
-          options: window.Motion.FLAWS.map((c) => ({ html: FLAW_TEXT[c](), correct: c === f.code, flag: null, why: c === f.code ? '' : flawWhy(f.code, p) })) },
+          options: window.Motion.FLAWS.map((c) => ({ html: FLAW_TEXT[c](), correct: c === f.code, flag: null, why: c === f.code ? '' : notWhy(c) })) },
       ];
       return {
         kind: 'error', id: `error-${seed}`, seed, difficulty: 4, flaw: f,

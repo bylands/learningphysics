@@ -347,6 +347,13 @@
     battery: () => L('The potential rises across a battery that the current flows through from + to −.', 'Das Potential steigt über einer Batterie, durch die der Strom von + nach − fliesst.'),
     size: () => L('A jump has the wrong size.', 'Ein Sprung hat die falsche Grösse.'),
   };
+  // why a reason that was chosen does not fit (without naming the right one)
+  const NOT_REASON = {
+    wire: () => L('That is not it: along every wire, the sketch stays at the same potential.', 'Das ist es nicht: Entlang jedes Drahts bleibt die Skizze beim gleichen Potential.'),
+    load: () => L('That is not it: across every lamp, the sketch drops in the direction of the current.', 'Das ist es nicht: Über jeder Lampe sinkt die Skizze in Stromrichtung.'),
+    battery: () => L('That is not it: every battery is drawn the right way round.', 'Das ist es nicht: Jede Batterie ist richtig herum gezeichnet.'),
+    size: () => L('That is not it: the wrong step is not just too big or too small, it goes the wrong way.', 'Das ist es nicht: Der falsche Schritt ist nicht bloss zu gross oder zu klein, er geht in die falsche Richtung.'),
+  };
   function error(r, two) {
     for (let t = 0; t < 200; t++) {
       const c = two ? twoBatteries(r, true) : oneBattery(r, r.pick([2, 3]));
@@ -370,7 +377,7 @@
         text: `<p>${L('A student sketched the potential around the loop, from A in the direction of the current. One step of the sketch is wrong. Which, and what is wrong with it?', 'Eine Schülerin hat das Potential im Kreis herum skizziert, von A aus in Stromrichtung. Ein Schritt der Skizze ist falsch. Welcher, und was ist daran falsch?')}</p>`,
         fields: [
           { type: 'choice', key: 'step', label: L('The wrong step', 'Der falsche Schritt'), options: c.steps.map((x, k) => ({ label: stepName(c, x), ok: k === i, why: k === i ? '' : L(`${stepName(c, x)} is right: ${how(c, x).replace(/^[A-F] → [A-F], /, '')}.`, `${stepName(c, x)} stimmt: ${how(c, x).replace(/^[A-F] → [A-F], /, '')}.`) })) },
-          { type: 'choice', key: 'what', label: L('What is wrong', 'Was falsch ist'), options: reasons.map((x) => ({ label: REASON[x](), ok: x === m, why })) },
+          { type: 'choice', key: 'what', label: L('What is wrong', 'Was falsch ist'), options: reasons.map((x) => ({ label: REASON[x](), ok: x === m, why: x === m ? '' : NOT_REASON[x]() })) },
         ],
         hints: [
           L(`The sketch ends at ${num(end)} V back at A, not at 0 V: it breaks the loop rule, so one of its steps is wrong.`, `Die Skizze endet zurück in A bei ${num(end)} V, nicht bei 0 V: Sie verletzt die Maschenregel, also ist einer ihrer Schritte falsch.`),

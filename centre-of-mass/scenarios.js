@@ -376,17 +376,13 @@
   // The item to choose: the four states, each wrong one with the idea behind it.
   function stateItem(p) {
     const s = stateOf(p.D);
-    const wrong = (o) => {
-      if (s === 'none') return ['notVertical', L(`S is not straight below or above D: the weight has a lever arm about D and turns the board ${turnsWord(p.D)}.`, `S liegt nicht senkrecht unter oder über D: Die Gewichtskraft hat bezüglich D einen Hebelarm und dreht das Brett ${turnsWord(p.D)}.`)];
-      if (o === 'none') {
-        return ['notVertical', s === 'neutral' ? L('The axis passes through S: the weight has no lever arm about D.', 'Die Achse geht durch S: Die Gewichtskraft hat bezüglich D keinen Hebelarm.')
-          : L(`S lies straight ${s === 'stable' ? 'below' : 'above'} D: the line of action of the weight passes through D, so the weight has no torque.`, `S liegt senkrecht ${s === 'stable' ? 'unter' : 'über'} D: Die Wirkungslinie der Gewichtskraft geht durch D, also hat sie kein Drehmoment.`)];
-      }
-      if (s === 'neutral') return ['neutral', L('The axis passes through S: however the board is turned, the weight has no torque about D. That is neutral.', 'Die Achse geht durch S: Wie man das Brett auch dreht, die Gewichtskraft hat bezüglich D kein Drehmoment. Das ist indifferent.')];
-      if (o === 'neutral') return ['neutral', L('Neutral only when the axis passes through S. Turn the board a little in your mind: what does the weight do?', 'Indifferent nur, wenn die Achse durch S geht. Drehe das Brett in Gedanken ein wenig: Was macht die Gewichtskraft?')];
-      return ['upDown', s === 'stable' ? L('S hangs below D: turned a little, the weight turns the board back. That is stable.', 'S hängt unter D: Ein wenig gedreht, dreht die Gewichtskraft das Brett zurück. Das ist stabil.')
-        : L('S is above D: turned a little, the weight turns the board further away. That is unstable.', 'S liegt über D: Ein wenig gedreht, dreht die Gewichtskraft das Brett weiter weg. Das ist labil.')];
-    };
+    // why the option o does not fit, without naming the right one
+    const wrong = (o) => ({
+      none: ['notVertical', L('S lies on the vertical through D: in this position, the weight has no lever arm about D and does not turn the board.', 'S liegt auf der Senkrechten durch D: In dieser Lage hat die Gewichtskraft bezüglich D keinen Hebelarm und dreht das Brett nicht.')],
+      neutral: ['neutral', L('Neutral only when the axis passes through S. Turn the board a little in your mind: what does the weight do?', 'Indifferent nur, wenn die Achse durch S geht. Drehe das Brett in Gedanken ein wenig: Was macht die Gewichtskraft?')],
+      stable: ['upDown', L('Stable means: turned a little, the weight turns the board back. That needs S straight below D, and here it is not.', 'Stabil heisst: Ein wenig gedreht, dreht die Gewichtskraft das Brett zurück. Dazu muss S senkrecht unter D liegen, und das tut es hier nicht.')],
+      unstable: ['upDown', L('Unstable means: turned a little, the weight turns the board further away. That needs S straight above D, and here it is not.', 'Labil heisst: Ein wenig gedreht, dreht die Gewichtskraft das Brett weiter weg. Dazu muss S senkrecht über D liegen, und das tut es hier nicht.')],
+    })[o];
     const value = {
       stable: L('S lies straight below D. Turned a little, S rises, and the weight turns the board back.', 'S liegt senkrecht unter D. Ein wenig gedreht, hebt sich S, und die Gewichtskraft dreht das Brett zurück.'),
       unstable: L('S lies straight above D. Turned a little, S drops, and the weight turns the board further away.', 'S liegt senkrecht über D. Ein wenig gedreht, senkt sich S, und die Gewichtskraft dreht das Brett weiter weg.'),
