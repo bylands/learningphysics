@@ -17,13 +17,19 @@ cards in its order, shows their tags, and lets visitors filter by tag. This serv
     /admin/api/sheets    GET  the state of the exercise sheets (LaTeX, exercises) and the sets
     /admin/api/texercises POST a TeXercises export (zip): its exercises by the teacher are kept for
                          the sheets (hub-data/texercises/), all others are left out
-    /admin/sheet/<set>.pdf            the set's exercise sheet       (logged in only: the sheets are
-    /admin/sheet/<set>-solutions.pdf  the same with the solutions     made and found in the admin panel,
-    /admin/sheet/<set>.json           {"exercises": n, "available"}   not on the set's public page)
+    /admin/sheet/<set>                POST {"action": "create"} makes the set's sheet (both PDFs) and keeps it;
+                                      {"action": "delete"} deletes it
+    /admin/sheet/<set>.pdf            the set's exercise sheet, as made
+    /admin/sheet/<set>-solutions.pdf  the same with the solutions
+    /admin/sheet/<set>.json           {"exercises": n, "available": bool, "made": {...} or null}
+                         (all of them logged in only: sheets are made and found in the admin panel, not
+                         on the set's public page)
     /admin/static/...    the panel's scripts and styles
 
 Exercise sheets (sheets/sheets.py): a set's apps and learning objectives choose exercises from
-sheets/pool.json; build_sheet.py and LuaLaTeX make the PDF, cached in hub-data/sheets/. They need
+sheets/pool.json; build_sheet.py and LuaLaTeX make the PDFs. A sheet is made when the teacher creates
+it and then kept as it is (hub-data/sheets/made/, listed in hub-data/sheets.json) until it is deleted or
+made again, even if the set changes. They need
 LaTeX on the server (see sheets/README.md); without it the panel says so.
 
 A set is opened at learningphysics.ch/<name> (nginx serves the hub page for it, which then shows
@@ -392,6 +398,8 @@ class Admin:
         # exercise sheets: the uploaded exercises and the cached PDFs, next to the sets
         self.texercises = config.parent / "texercises"
         self.sheet_cache = config.parent / "sheets"
+        self.sheets_made_dir = self.sheet_cache / "made"
+        self.sheets_list = config.parent / "sheets.json"
         self.own = own
 
     def stored_hash(self) -> str:
@@ -491,29 +499,71 @@ class Admin:
     def app_names(self) -> Dict[str, str]:
         return {a["id"]: str(a.get("name") or a["id"]) for a in self.apps()}
 
+    def sheets_made(self) -> Dict[str, Dict[str, object]]:
+        """{set name: {"created": time, "title": ..., "exercises": n}} of the sheets made and kept."""
+        data = read_config(self.sheets_list)
+        made = data.get("sheets") if isinstance(data, dict) else None
+        return {n: e for n, e in made.items() if SET_NAME.fullmatch(n) and isinstance(e, dict)} if isinstance(made, dict) else {}
+
     def sheet_info(self, name: str) -> Dict[str, object]:
         sheetlib = sheets_module()
         s = self.sheet_set(name)
-        if sheetlib is None or s is None:
-            return {"exercises": 0, "available": False}
-        n = len(sheetlib.choose(s, sheetlib.load_pool(), sheetlib.available(self.texercises)))
-        return {"exercises": n, "available": bool(n and sheetlib.lualatex())}
+        n = len(sheetlib.choose(s, sheetlib.load_pool(), sheetlib.available(self.texercises))) if sheetlib and s else 0
+        return {"exercises": n, "available": bool(n and sheetlib and sheetlib.lualatex()), "made": self.sheets_made().get(name)}
 
-    def sheet(self, name: str, solutions: bool) -> Tuple[Optional[bytes], str]:
+    def create_sheet(self, name: str) -> Dict[str, object]:
+        """Make the set's sheet, with and without the solutions, and keep it. ValueError: why not."""
         sheetlib = sheets_module()
         s = self.sheet_set(name)
         if s is None:
-            return None, "there is no set of this name"
+            raise ValueError("there is no set of this name")
         if sheetlib is None:
-            return None, "exercise sheets are not installed"
-        return sheetlib.make_pdf(name, s, self.app_names(), self.texercises, self.sheet_cache,
-                                 "both" if solutions else "exercises")
+            raise ValueError("exercise sheets are not installed")
+        pdfs = {}
+        for part, suffix in (("exercises", ""), ("both", "-solutions")):
+            pdf, why = sheetlib.make_pdf(name, s, self.app_names(), self.texercises, self.sheet_cache, part)
+            if pdf is None:
+                raise ValueError(why)
+            pdfs[suffix] = pdf
+        self.sheets_made_dir.mkdir(parents=True, exist_ok=True)
+        for suffix, pdf in pdfs.items():
+            tmp = self.sheets_made_dir / f".{name}{suffix}.tmp"
+            tmp.write_bytes(pdf)
+            os.replace(tmp, self.sheets_made_dir / f"{name}{suffix}.pdf")
+        made = self.sheets_made()
+        made[name] = {"created": int(time.time()), "title": str(s.get("title") or name),
+                      "exercises": len(sheetlib.choose(s, sheetlib.load_pool(), sheetlib.available(self.texercises)))}
+        write_config(self.sheets_list, {"sheets": made})
+        return made[name]
+
+    def delete_sheet(self, name: str) -> bool:
+        """Delete the set's sheet (also of a set that no longer exists). False: there was none."""
+        made = self.sheets_made()
+        found = made.pop(name, None) is not None
+        for suffix in ("", "-solutions"):
+            p = self.sheets_made_dir / f"{name}{suffix}.pdf"
+            if p.exists():
+                p.unlink()
+                found = True
+        if found:
+            write_config(self.sheets_list, {"sheets": made})
+        return found
+
+    def sheet(self, name: str, solutions: bool) -> Optional[bytes]:
+        """The kept PDF of the set's sheet, or None if it has not been made."""
+        if name not in self.sheets_made():
+            return None
+        p = self.sheets_made_dir / f"{name}{'-solutions' if solutions else ''}.pdf"
+        return p.read_bytes() if p.is_file() else None
 
     def sheets_state(self) -> Dict[str, object]:
         sheetlib = sheets_module()
         state = sheetlib.status(self.texercises) if sheetlib else {"latex": False, "exercises": 0, "pool": 0, "in_pool": 0, "uploaded": None}
         sets = self.current_sets().get("sets", {})
         state["sets"] = [{"name": n, "title": s.get("title", n), **self.sheet_info(n)} for n, s in sets.items()]
+        # sheets kept of sets that no longer exist: they can still be opened and deleted
+        state["sets"] += [{"name": n, "title": e.get("title", n), "exercises": 0, "available": False, "made": e, "gone": True}
+                          for n, e in self.sheets_made().items() if n not in sets]
         state["own"] = self.own
         return state
 
@@ -594,7 +644,7 @@ def make_handler(admin: Admin):
                 return
             name, kind = m.group(1), m.group(2)
             solutions = False
-            if kind == "pdf" and name.endswith("-solutions") and admin.sheet_set(name) is None:
+            if kind == "pdf" and name.endswith("-solutions") and name not in admin.sheets_made():
                 name, solutions = name[: -len("-solutions")], True
             if not SET_NAME.fullmatch(name):
                 self.send(404, "Not found", "text/plain; charset=utf-8")
@@ -607,10 +657,10 @@ def make_handler(admin: Admin):
             elif kind == "json":
                 self.json(200, admin.sheet_info(name))
             else:
-                pdf, why = admin.sheet(name, solutions)
+                pdf = admin.sheet(name, solutions)
                 if pdf is None:
-                    self.send(503 if "LaTeX" in why or "installed" in why else 404,
-                              page("Exercise sheet", f'<p class="lead">No exercise sheet: {escape(why)}.</p>'))
+                    self.send(404, page("Exercise sheet", '<p class="lead">This set has no exercise sheet: create it in the '
+                                        '<a href="/admin/#sets">admin panel</a> (Sets → Exercise sheets).</p>'))
                 else:
                     fname = f"{name}-solutions.pdf" if solutions else f"{name}.pdf"
                     self.send(200, pdf, "application/pdf", {"Content-Disposition": f'inline; filename="{fname}"'})
@@ -667,6 +717,34 @@ def make_handler(admin: Admin):
                     self.send(403, login_page(bool(stored), "Wrong password."))
             elif path == "/logout":
                 self.redirect("")
+            elif path.startswith("/sheet/"):
+                # {"action": "create" | "delete"}; JSON only, like the API (no form from another site)
+                name = path[len("/sheet/"):]
+                if not self.logged_in():
+                    self.json(403, {"error": "login"})
+                    return
+                if not SET_NAME.fullmatch(name):
+                    self.json(404, {"error": "not found"})
+                    return
+                if not (self.headers.get("Content-Type") or "").startswith("application/json"):
+                    self.json(415, {"error": "JSON expected"})
+                    return
+                data = self.body()
+                try:
+                    action = json.loads((data or b"{}").decode("utf-8")).get("action")
+                except (ValueError, AttributeError):
+                    action = None
+                try:
+                    if action == "create":
+                        self.json(200, {"made": admin.create_sheet(name)})
+                    elif action == "delete":
+                        self.json(200 if admin.delete_sheet(name) else 404, {"deleted": name})
+                    else:
+                        self.json(400, {"error": "action: create or delete"})
+                except ValueError as e:
+                    self.json(400, {"error": str(e)})
+                except OSError:
+                    self.json(500, {"error": "could not write the sheet"})
             elif path == "/api/texercises":
                 if not self.logged_in():
                     self.json(403, {"error": "login"})
@@ -781,7 +859,7 @@ def panel_page() -> str:
       <div id="set-list" class="setlist"></div>
       <div id="set-edit"></div>
       <h2 class="section">Exercise sheets</h2>
-      <p class="note">Every set gets an exercise sheet (PDF) from your TeXercises exercises: per app and learning objective of the set, the exercises listed for it (sheets/pool.json). The sheets are made here only, for you (logged in); the set's public page does not show them. Upload a TeXercises export (Settings → Export, the .zip) whenever your exercises change: only your own exercises are kept.</p>
+      <p class="note">Every set gets an exercise sheet (PDF) from your TeXercises exercises: per app and learning objective of the set, the exercises listed for it (sheets/pool.json). Create a set's sheet here: it is made once (with and without solutions) and kept as it is until you delete it or create it again, even if the set changes. Sheets are only here, for you (logged in); the set's public page does not show them. Upload a TeXercises export (Settings → Export, the .zip) whenever your exercises change: only your own exercises are kept.</p>
       <div id="sheets" class="sheets"><p class="note">Loading…</p></div>
     </section>
     <section id="view-quizzes">
@@ -1143,7 +1221,7 @@ ADMIN_JS = r"""
 
 SHEETS_JS = r"""
 // exercise sheets: the state (LaTeX on the server, uploaded exercises), the upload of a TeXercises
-// export, and per set the links to its sheet and to the sheet with the solutions
+// export, and per set its sheet: create (both PDFs, kept), open, create again, delete
 (() => {
   const box = document.getElementById('sheets');
   if (!box) return;
@@ -1168,18 +1246,47 @@ SHEETS_JS = r"""
     box.append(form);
     if (!st.sets.length) { box.append(el('p', 'No sets yet.', { className: 'note' })); return; }
     const t = el('table');
-    t.append(el('tr', ''));
-    t.firstChild.append(el('th', 'Set'), el('th', 'Exercises'), el('th', 'Sheet'), el('th', 'With solutions'));
+    const head = el('tr');
+    head.append(el('th', 'Set'), el('th', 'Exercises'), el('th', 'Sheet'), el('th', ''));
+    t.append(head);
     st.sets.forEach((s) => {
       const tr = el('tr');
-      const link = (href, text) => s.available ? el('a', text, { href, target: '_blank', rel: 'noopener' }) : el('span', '–');
-      const td = (child) => { const c = el('td'); c.append(child); return c; };
-      tr.append(td(el('span', `${s.title} (${s.name})`)), td(el('span', String(s.exercises))),
-        td(link(`/admin/sheet/${s.name}.pdf`, 'PDF ↗')), td(link(`/admin/sheet/${s.name}-solutions.pdf`, 'PDF ↗')));
+      const td = (...kids) => { const c = el('td'); c.append(...kids); return c; };
+      const status = el('span', '', { className: 'status' });
+      const act = (action, label, confirmText) => {
+        const b = el('button', label, { type: 'button' });
+        b.addEventListener('click', () => {
+          if (confirmText && !confirm(confirmText)) return;
+          box.querySelectorAll('button').forEach((x) => { x.disabled = true; });
+          status.textContent = action === 'create' ? 'Making the sheet… (up to a minute)' : 'Deleting…';
+          fetch(`/admin/sheet/${s.name}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action }) })
+            .then((r) => r.json().then((d) => ({ ok: r.ok, d })))
+            .then(({ ok, d }) => { if (ok) load(); else { status.textContent = `Error: ${d.error || 'failed'}`; box.querySelectorAll('button').forEach((x) => { x.disabled = false; }); } })
+            .catch(() => { status.textContent = 'Failed.'; box.querySelectorAll('button').forEach((x) => { x.disabled = false; }); });
+        });
+        return b;
+      };
+      let sheet, actions;
+      if (s.made) {
+        const when = new Date(s.made.created * 1000).toLocaleString();
+        sheet = el('span');
+        sheet.append(el('a', 'PDF ↗', { href: `/admin/sheet/${s.name}.pdf`, target: '_blank', rel: 'noopener' }), ' · ',
+          el('a', 'with solutions ↗', { href: `/admin/sheet/${s.name}-solutions.pdf`, target: '_blank', rel: 'noopener' }),
+          ` · made ${when}, ${s.made.exercises} exercises`);
+        actions = el('span');
+        if (!s.gone) actions.append(act('create', 'Create again', 'Make the sheet again from the set as it is now? The current sheet is replaced.'), ' ');
+        actions.append(act('delete', 'Delete', `Delete the exercise sheet of "${s.title}"?`));
+      } else {
+        sheet = el('span', '–');
+        actions = el('span');
+        if (s.available) actions.append(act('create', 'Create'));
+        else actions.append(el('span', s.exercises ? 'LaTeX missing' : 'no exercises for this set', { className: 'note' }));
+      }
+      actions.append(' ', status);
+      tr.append(td(el('span', `${s.title} (${s.name})${s.gone ? ' – set deleted' : ''}`)), td(el('span', String(s.exercises))), td(sheet), td(actions));
       t.append(tr);
     });
     box.append(t);
-    box.append(el('p', 'The first sheet after a change takes up to a minute; after that it is kept.', { className: 'note' }));
   }
   function load() {
     fetch('/admin/api/sheets').then((r) => r.json()).then(show).catch(() => { box.textContent = 'Could not load the state of the sheets.'; });

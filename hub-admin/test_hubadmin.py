@@ -6,7 +6,8 @@ may have (and that no app or set clashes with a service nginx passes on), the at
 service end to end: login, rate limit, the API with and without a session, and that saves reach
 apps.json and sets.json. The exercise sheets: which exercises a set gets, the upload of a TeXercises
 export (only the teacher's exercises kept, nothing written outside its folder), and the sheet routes
-(both sheets only when logged in; a PDF only where LaTeX is installed).
+(only when logged in; a sheet is created, kept and deleted in the admin panel; a PDF only where
+LaTeX is installed).
 """
 import io
 import zipfile
@@ -417,11 +418,38 @@ class Service(unittest.TestCase):
         self.assertEqual(info["available"], bool(S.lualatex()))
         state = json.loads(self.req("/api/sheets", cookie=cookie)[2])
         self.assertEqual(state["sets"][0]["name"], "3a")
-        self.assertEqual(self.req("/sheet/nope.json", cookie=cookie)[2], b'{"exercises": 0, "available": false}')
+        self.assertEqual(json.loads(self.req("/sheet/nope.json", cookie=cookie)[2]), {"exercises": 0, "available": False, "made": None})
         self.assertEqual(self.req("/sheet/nope.pdf", cookie=cookie)[0], 404)
         self.assertEqual(self.req("/sheet/../x.pdf", cookie=cookie)[0], 404)
-        if not S.lualatex():  # no LaTeX here: a clear answer instead of a sheet
-            self.assertEqual(self.req("/sheet/3a.pdf", cookie=cookie)[0], 503)
+        self.assertEqual(self.req("/sheet/3a.pdf", cookie=cookie)[0], 404)  # not made yet
+        create = json.dumps({"action": "create"}).encode()
+        delete = json.dumps({"action": "delete"}).encode()
+        self.assertEqual(self.req("/sheet/3a", create, "application/json")[0], 403)
+        self.assertEqual(self.req("/sheet/3a", create, "text/plain", cookie)[0], 415)
+        self.assertEqual(self.req("/sheet/3a", b'{"action": "x"}', "application/json", cookie)[0], 400)
+        st, _, body = self.req("/sheet/3a", create, "application/json", cookie)
+        if S.lualatex():
+            self.assertEqual(st, 200)
+            st, headers, pdf = self.req("/sheet/3a-solutions.pdf", cookie=cookie)
+            self.assertEqual((st, pdf[:5]), (200, b"%PDF-"))
+            self.assertIsNotNone(json.loads(self.req("/sheet/3a.json", cookie=cookie)[2])["made"])
+        else:  # no LaTeX here: a clear answer instead of a sheet
+            self.assertEqual(st, 400)
+            self.assertIn("LaTeX", json.loads(body)["error"])
+        # a kept sheet, also of a set that no longer exists, can be opened and deleted
+        made = self.admin.sheets_made_dir
+        made.mkdir(parents=True, exist_ok=True)
+        (made / "old.pdf").write_bytes(b"%PDF-old")
+        (made / "old-solutions.pdf").write_bytes(b"%PDF-old-s")
+        H.write_config(self.admin.sheets_list, {"sheets": {**self.admin.sheets_made(), "old": {"created": 1, "title": "Old", "exercises": 3}}})
+        state = json.loads(self.req("/api/sheets", cookie=cookie)[2])
+        self.assertTrue(any(x["name"] == "old" and x.get("gone") for x in state["sets"]))
+        self.assertEqual(self.req("/sheet/old-solutions.pdf", cookie=cookie)[2], b"%PDF-old-s")
+        self.assertEqual(self.req("/sheet/old.pdf")[0], 403)  # not without the login
+        self.assertEqual(self.req("/sheet/old", delete, "application/json", cookie)[0], 200)
+        self.assertEqual(self.req("/sheet/old.pdf", cookie=cookie)[0], 404)
+        self.assertFalse((made / "old.pdf").exists())
+        self.assertEqual(self.req("/sheet/old", delete, "application/json", cookie)[0], 404)  # gone already
 
     def test_rate_limit(self):
         for _ in range(H.LOGIN_ATTEMPTS):
