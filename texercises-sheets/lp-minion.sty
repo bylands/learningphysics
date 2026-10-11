@@ -24,7 +24,12 @@
   FontFace={sb}{n}{*-Semibold}, FontFace={sb}{it}{*-SemiboldItalic},
   FontFace={mb}{n}{*-Medium}, FontFace={mb}{it}{*-MediumItalic},
   Numbers=OldStyle, Ligatures=TeX]
-% math: letters, Greek and figures from Minion 3, operators and big symbols from Libertinus Math
+% math: with Minion Math installed (the OpenType math font made for Minion, typoma.com) that one;
+% otherwise letters, Greek and figures from Minion 3, operators and big symbols from Libertinus Math
+\IfFontExistsTF{Minion Math}{\def\lp@minionmath{1}}{\def\lp@minionmath{0}}
+\ifnum\lp@minionmath=1
+\setmathfont{Minion Math}
+\else
 \setmathfont{Libertinus Math}[Scale=MatchLowercase]
 \setmathfont{Minion3-Italic.otf}[range=it/{latin,Latin,greek,Greek}]
 \iflp@osmath\def\lp@mathnum{OldStyle}\else\def\lp@mathnum{Lining}\fi
@@ -32,6 +37,7 @@
 \setmathfont{Minion3-Bold.otf}[range={bfup/{latin,Latin,greek,Greek,num}}, Numbers=\lp@mathnum]
 % + = - x < > in Minion; parentheses and brackets stay with Libertinus, which can make them grow
 \setmathfont{Minion3-Regular.otf}[range={"002B,"003D,"2212,"00D7,"003C,"003E}]
+\fi
 % quantities in a sentence are set in the text font (old-style figures), in formulas as math
 \sisetup{mode=match, reset-text-family=false, reset-text-series=false, reset-text-shape=false}
 \newcommand\lpfrac[2]{\ensuremath{\frac{\text{#1}}{\text{#2}}}}
@@ -84,6 +90,17 @@
 \renewenvironment{table}[1][]{\par\smallskip\begin{minipage}{\linewidth}\def\@captype{table}\centering}
   {\end{minipage}\par\smallskip}
 
+% ---------------------------------------------------------------- exercise heads
+% \lpextitle{url}{title}{difficulty}: semibold title (a hidden link to the exercise on TeXercises),
+% difficulty as stars at the right, as TeXercises marks it (\star)
+\newcommand\lpextitle[3]{{\lpsemibold\href{#1}{#2}}\hfill\lpdifficulty{#3}\par\nobreak}
+\newcommand\lpdifficulty[1]{\ifnum0#1>0 {\color{black!45}\count@=#1\relax
+  \loop\ifnum\count@>0 \,\ensuremath{\bigstar}\advance\count@\m@ne\repeat}\fi}
+% similar exercises: one small grey line of linked titles
+\newcommand\lpsimilar[1]{\par\vskip 2bp{\fontsize{8bp}{10bp}\selectfont\color{black!55}%
+  \textit{\iftxde Ähnlich:\else Similar:\fi}\enspace #1\par}}
+\newcommand\lpsimilarsep{\enspace\textperiodcentered\enspace\allowbreak}
+
 % ---------------------------------------------------------------- numerical solutions
 % \begin{lpnumerical} \lpnum{1}{6.7 ms} ... \end{lpnumerical}: 6 pt on 7 pt, label semibold small caps
 \newenvironment{lpnumerical}
@@ -94,6 +111,9 @@
 % the solver part runs inside the paragraph: its line ends and spaces must not print
 \newcommand\lpquietpreamble{\txinpreamble\catcode32=9 \endlinechar=-1 }
 \newcommand\lpendquietpreamble{\txendpreamble\catcode32=10 \endlinechar=13 }
+
+% ---------------------------------------------------------------- links (not coloured, not boxed)
+\RequirePackage[hidelinks,pdfusetitle]{hyperref}
 
 % ---------------------------------------------------------------- TeXercises boxes in the sheet colours
 \tcbset{fonttitle=\lpsemibold\scshape}

@@ -8,6 +8,7 @@ Compile a TeXercises collection to PDF outside TeXercises (pdflatex, TeX Live 20
 - `pilot-electrostatics.json`: a pilot collection (18 exercises, Learning Physics electrostatics apps).
 
 - `lp-minion.sty`: Samuel's sheet layout (LuaLaTeX): Minion 3 with old-style figures, body 10/12 pt, title 14 pt bold small caps, section titles 10 pt semibold small caps, footer 8 pt small caps (text, date, author); exercises numbered with a hanging indent, the short solutions as "Numerical Solutions" in 6 pt, then the full solutions. Measured from "W1 PAe AC Circuits" (A4, 2.5 cm margins, sizes in PostScript points as in Pages). Formulas use Minion letters with Libertinus Math symbols and lining figures (`\usepackage[oldstylemath]{lp-minion}` for old-style figures there too).
+  Each exercise starts with its title (semibold, a hidden link to the exercise on TeXercises) and its difficulty as stars (the item's difficulty in the collection, else the exercise's default); "Similar: texercises.com/exercise/..." in an item's additional text becomes one small grey line of linked titles. With Minion Math installed (typoma.com) the formulas use it automatically.
 - `latexmkrc`: latexmk runs LuaLaTeX here.
 
 Images are not in the TeXercises export: put them in `images/<name>` next to the .tex, or the sheet prints a placeholder.
@@ -15,7 +16,9 @@ Images are not in the TeXercises export: put them in `images/<name>` next to the
     python3 build_sheet.py ../texercises-by-2026-10-10 pilot-electrostatics.json pilot.tex
     latexmk pilot.tex
 
-Options of `build_sheet.py`: `--style=minion` (default) or `--style=plain` (Latin Modern, exercise titles, also pdflatex); `--author=By`, `--date=09.09.20`, `--footer="Exercises AC Circuits"` for the footer (defaults: By, today, "Exercises <collection title>"); `--short` for short solutions only.
+Options of `build_sheet.py`: `--style=minion` (default) or `--style=plain` (Latin Modern, exercise titles, also pdflatex); `--author=By`, `--date=09.09.20`, `--footer="Exercises AC Circuits"` for the footer (defaults: By, today, "Exercises <collection title>"); `--short` for short solutions only; `--numerical` adds the short solutions as "Numerical Solutions" after the exercises.
+
+Each build writes `<out>-images.txt`: every image the sheet uses, whether it is in `images/`, and the TeXercises page of its exercise. A missing image prints a framed placeholder that links to that page.
 
 ## What the package does
 

@@ -7,6 +7,10 @@
     --style=plain    Latin Modern, pdflatex, exercise titles shown
     --author=By --date=09.09.20 --footer="Exercises AC Circuits"   footer (minion; defaults: By,
                      today, "Exercises <collection title>")
+    --numerical      print the short solutions as "Numerical Solutions" after the exercises (minion)
+
+Images: TeXercises does not export them. The sheet looks for images/<name> next to the .tex;
+<out>-images.txt lists every image the sheet uses, whether it is there, and its exercise page.
 
 The export folder is a TeXercises bundle (exercises/<key>/...); the collection lists items by
 "exercise" (a key) or "exercise_id". Each exercise runs in its own group, so its \\NewQty and
@@ -51,14 +55,38 @@ def repair(tex):
 def prepare(tex):
     return repair(images(tex))
 
+TEXERCISES = 'https://texercises.com'
+
+def slug_titles(by_key):
+    # /exercise/<slug>/ -> title, for the exercises in the export
+    out = {}
+    for e in by_key.values():
+        m = re.match(r'/exercise/([^/]+)/?', e['meta'].get('info', {}).get('url', ''))
+        if m: out[m.group(1)] = e['meta']['title']
+    return out
+
+def similar(additional, titles, de):
+    # an "additional" text that lists TeXercises links ("Similar: texercises.com/exercise/...")
+    # becomes one quiet line of linked titles; any other additional text is kept as it is
+    slugs = re.findall(r'texercises\.com/exercise/([A-Za-z0-9_-]+)', additional)
+    if not slugs:
+        return [additional] if additional.strip() else []
+    links = [rf'\href{{{TEXERCISES}/exercise/{s}/}}{{{esc(titles.get(s) or s.replace("-", " ").capitalize())}}}'
+             for s in dict.fromkeys(slugs)]
+    return [r'\lpsimilar{' + r'\lpsimilarsep '.join(links) + '}']
+
+def images_used(tex):
+    return re.findall(r'#image_path:([^#]+)#', tex)
+
 def esc(s):
     return ''.join('\\' + c if c in '&%$#_{}' else c for c in s)
 
 def options(argv):
-    opts = {'short': False, 'style': 'minion', 'author': 'By', 'date': None, 'footer': None}
+    opts = {'short': False, 'numerical': False, 'style': 'minion', 'author': 'By', 'date': None, 'footer': None}
     args = []
     for a in argv:
         if a == '--short': opts['short'] = True
+        elif a == '--numerical': opts['numerical'] = True
         elif a.startswith('--') and '=' in a:
             k, v = a[2:].split('=', 1)
             if k not in opts: sys.exit(f'unknown option --{k}')
@@ -104,8 +132,8 @@ def main():
         for n, (it, e) in enumerate(items, 1):
             L += block(n, it, e, body(e), False)
     elif o['style'] == 'minion':
-        # Samuel's sheet layout (lp-minion.sty, LuaLaTeX): numbered exercises without titles,
-        # the short solutions as "Numerical Solutions" in small print, then the full solutions
+        # Samuel's sheet layout (lp-minion.sty, LuaLaTeX): numbered exercises with their title
+        # (a hidden link to TeXercises) and difficulty, then the full solutions
         date = o['date'] or datetime.date.today().strftime('%d.%m.%y')
         footer = esc(o['footer']) if o['footer'] else ('Übungen ' if de else 'Exercises ') + title
         L = [r'% !TeX program = lualatex',
@@ -116,6 +144,11 @@ def main():
              r'\begin{document}',
              rf'\txlang{{{"de" if de else "en"}}}',
              rf'\lptitle{{{title}}}']
+        titles = slug_titles(by_key)
+        def head(it, e):
+            url = TEXERCISES + e['meta'].get('info', {}).get('url', '')
+            diff = it.get('difficulty') or e['meta'].get('default_difficulty') or 0
+            return [rf'\def\txexurl{{{url}}}\lpextitle{{{url}}}{{{esc(e["meta"]["title"])}}}{{{diff}}}']
         def listed(parts, series):
             # parts: (n, lines); sections between the items close and reopen the list
             out, first, open_ = [], True, False
@@ -132,21 +165,33 @@ def main():
         # in a list item the solver part must not print anything, not even a paragraph break
         quiet = lambda e, text: [rf'\txlang{{{lang(e)}}}\lpquietpreamble', e['preamble'],
                                  r'\lpendquietpreamble\relax ' + text.strip()]
-        L += listed([(n, quiet(e, e['text']) + ([it['additional']] if it.get('additional') else []))
+        L += listed([(n, head(it, e) + quiet(e, e['text']) + similar(it.get('additional', ''), titles, de))
                      for n, (it, e) in enumerate(items, 1)], 'lpex')
         nums = [(n, e) for n, (it, e) in enumerate(items, 1) if e['short'].strip()]
-        if nums and not o['short']:
+        if nums and o['numerical'] and not o['short']:
             L.append(r'\begin{lpnumerical}')
             for n, e in nums:
                 L += [r'{\lpquietpreamble', e['preamble'], r'\lpendquietpreamble' + rf'\lpnum{{{n}}}{{{e["short"].strip()}}}}}']
             L.append(r'\end{lpnumerical}')
         L += [r'\newpage', rf'\lptitle{{{title}}}', rf'\lpsection{{{"Lösungen" if de else "Solutions"}}}']
         heads = {}
-        L += listed([(n, quiet(e, body(e))) for n, (it, e) in enumerate(items, 1)], 'lpsol')
+        L += listed([(n, head(it, e) + quiet(e, body(e))) for n, (it, e) in enumerate(items, 1)], 'lpsol')
     else:
         sys.exit(f'unknown style {o["style"]} (minion, plain)')
     L.append(r'\end{document}')
     open(out, 'w').write(prepare('\n'.join(L)) + '\n')
+    # images: TeXercises does not export them; list what the sheet needs and what is missing
+    need = {}
+    for it, e in items:
+        for name in images_used(e['text'] + e['solution']):
+            need.setdefault(name, TEXERCISES + e['meta'].get('info', {}).get('url', ''))
+    imgdir = os.path.join(os.path.dirname(os.path.abspath(out)), 'images')
+    have = lambda n: any(os.path.exists(os.path.join(imgdir, n + x)) for x in ('', '.png', '.pdf', '.jpg', '.jpeg'))
+    missing = {n: u for n, u in need.items() if not have(n)}
+    if need:
+        lst = os.path.splitext(out)[0] + '-images.txt'
+        open(lst, 'w').write(''.join(f'{n}\t{"missing" if n in missing else "ok"}\t{u}\n' for n, u in sorted(need.items())))
+        print(f'images: {len(need)} used, {len(missing)} missing in {imgdir} (list: {lst})')
     print(f'{out}: {len(items)} exercises, style {o["style"]}' + ('' if o['style'] == 'plain' else ' (lualatex)'))
 
 if __name__ == '__main__':

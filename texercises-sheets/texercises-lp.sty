@@ -488,6 +488,14 @@
 \tikzset{every picture/.append style={execute at begin picture={\coordinate (cycle) at (0,0);}}}
 
 % images are not part of the export: a missing file prints a framed placeholder
+% (also tried with .png, .pdf, .jpg; with \txexurl set, the placeholder links to the exercise)
 \let\txlp@includegraphics\includegraphics
-\renewcommand\includegraphics[2][]{\IfFileExists{#2}{\txlp@includegraphics[#1]{#2}}{\fbox{\parbox{0.4\linewidth}{\centering\footnotesize image missing:\\\texttt{\detokenize{#2}}}}}}
+\renewcommand\includegraphics[2][]{%
+  \IfFileExists{#2}{\txlp@includegraphics[#1]{#2}}{%
+  \IfFileExists{#2.pdf}{\txlp@includegraphics[#1]{#2.pdf}}{%
+  \IfFileExists{#2.png}{\txlp@includegraphics[#1]{#2.png}}{%
+  \IfFileExists{#2.jpg}{\txlp@includegraphics[#1]{#2.jpg}}{%
+  \txlp@missing{#2}}}}}}
+\newcommand\txlp@missing[1]{\ifdefined\txexurl\href{\txexurl}{\txlp@missingbox{#1}}\else\txlp@missingbox{#1}\fi}
+\newcommand\txlp@missingbox[1]{\fbox{\parbox{0.4\linewidth}{\centering\footnotesize image missing:\\\texttt{\detokenize{#1}}}}}
 \endinput
