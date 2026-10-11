@@ -83,12 +83,17 @@
 
 % ---------------------------------------------------------------- page
 % \lpsetfooter{text}{date}{signature}: the text on the left; signature and date together on the
-% right ("ByS · 11/10/2026"), where a signed and dated sheet carries them
+% right ("MNG Rämibühl · ByS · 11/10/2026"), where a signed and dated sheet carries them
 \newcommand\lpfootertext{}
 \newcommand\lpfooterdate{}
 \newcommand\lpfootersign{}
 \newcommand\lpsetfooter[3]{\renewcommand\lpfootertext{#1}\renewcommand\lpfooterdate{#2}\renewcommand\lpfootersign{#3}}
-\newcommand\lpsigned{{\upshape\lpfootersign}\ifx\lpfooterdate\@empty\else\enspace\textperiodcentered\enspace\lpfooterdate\fi}
+% \lpsetschool{MNG Rämibühl}: the school, left of the signature
+\newcommand\lpfooterschool{}
+\newcommand\lpsetschool[1]{\renewcommand\lpfooterschool{#1}}
+\newcommand\lpdot{\enspace\textperiodcentered\enspace}
+\newcommand\lpsigned{\ifx\lpfooterschool\@empty\else\lpfooterschool\lpdot\fi
+  {\upshape\lpfootersign}\ifx\lpfooterdate\@empty\else\lpdot\lpfooterdate\fi}
 \def\ps@lp{\let\@oddhead\@empty\let\@evenhead\@empty
   \def\@oddfoot{\fontsize{8bp}{10bp}\selectfont\scshape
     \rlap{\lpfootertext}\hfil\llap{\lpsigned}}%

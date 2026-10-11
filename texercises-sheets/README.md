@@ -16,7 +16,7 @@ Images are not in the TeXercises export: put them in `images/<name>` next to the
     python3 build_sheet.py ../texercises-by-2026-10-10 pilot-electrostatics.json pilot.tex
     latexmk pilot.tex
 
-Options of `build_sheet.py`: `--style=minion` (default) or `--style=plain` (Latin Modern, exercise titles, also pdflatex); `--author=ByS`, `--date=09/09/2020`, `--footer="Exercises AC Circuits"` for the footer (defaults: ByS, today as dd/mm/yyyy on English sheets and dd.mm.yy on German ones, "Exercises <collection title>"); the footer has the text on the left and "ByS · date" on the right; `--short` for short solutions only; `--numerical` adds the short solutions as "Numerical Solutions" after the exercises.
+Options of `build_sheet.py`: `--style=minion` (default) or `--style=plain` (Latin Modern, exercise titles, also pdflatex); `--author=ByS`, `--date=09/09/2020`, `--footer="Exercises AC Circuits"` for the footer (defaults: ByS, today as dd/mm/yyyy on English sheets and dd.mm.yyyy on German ones, "Exercises <collection title>") and `--school="MNG Rämibühl"`; the footer has the text on the left and "MNG Rämibühl · ByS · date" on the right; `--short` for short solutions only; `--numerical` adds the short solutions as "Numerical Solutions" after the exercises.
 
 Each build writes `<out>-images.txt`: every image the sheet uses, whether it is in `images/`, and the TeXercises page of its exercise. A missing image prints a framed placeholder that links to that page.
 
