@@ -45,11 +45,15 @@ svg.mf .faint { opacity: 0.45; }
 svg.mf .c-vel { fill: var(--mf-v); }
 svg.mf .c-field { fill: var(--mf-b); }
 svg.mf .c-efield { fill: var(--mf-e); }
+svg.mf .v-force { stroke: var(--mf-f); fill: none; }
+svg.mf .v-force-head { fill: var(--mf-f); }
+svg.mf .c-force { fill: var(--mf-f); }
 svg.mf .traj { fill: none; stroke: var(--mf-traj); stroke-width: 2.6; stroke-linejoin: round; stroke-linecap: round; }
 svg.mf .traj-head { fill: var(--mf-traj); }
 svg.mf .dimline { stroke: var(--muted); stroke-width: 1.2; fill: none; }
 svg.mf .lbl.small { font-size: 13px; }
 svg.mf .track { fill: none; stroke: var(--ink); stroke-width: 1.8; }
+svg.mf .track.neutral { stroke-dasharray: 6 5; stroke-width: 1.4; opacity: 0.7; }
 svg.mf .plate { fill: var(--muted); }
 svg.mf .strip { fill: color-mix(in srgb, #b87333 30%, var(--card)); stroke: var(--ink); stroke-width: 1.2; }
 
