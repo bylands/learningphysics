@@ -15,7 +15,8 @@
 //   path-circle, speed               a charge flying into a magnetic field: its path; why its speed
 //                                    stays the same (the magnetic force does no work)
 //   radius-compare, tracks           radius and period by ratios; tracks in a bubble chamber
-//   selector, hall                   crossed fields: the velocity selector; the Hall voltage
+//   selector, crossed-dir, hall      crossed fields: the velocity selector; the direction of E or B
+//                                    in it; the Hall voltage
 //   stmts                            which statements are correct?
 (function (root) {
   'use strict';
@@ -107,7 +108,28 @@
     const r = rng(seed * 71 + 41), pt = particle(r, r.pick([1, -1]), { generic: false }), z = Math.abs(pt.z), U = r.pick(pt.m < 1e-29 ? [100, 500, 1500, 5000] : [1000, 5000, 20000, 50000]), Ek = z * U, J = Ek * e0;
     const howE = L(`The field does the work |q|·U on the ${signName(pt.q)} charge: E_kin = |q|·U = ${zText(z)} · ${inV(U)} = ${inEV(Ek)}.`, `Das Feld verrichtet an der ${pt.q > 0 ? 'positiven' : 'negativen'} Ladung die Arbeit |q|·U: E_kin = |q|·U = ${zText(z)} · ${inV(U)} = ${inEV(Ek)}.`);
     const howJ = L(`1 eV = 1.602 · 10<sup>−19</sup> J: ${inEV(Ek)} = ${sci(Ek)} · 1.602 · 10<sup>−19</sup> J = ${sci(J)} J.`, `1 eV = 1.602 · 10<sup>−19</sup> J: ${inEV(Ek)} = ${sci(Ek)} · 1.602 · 10<sup>−19</sup> J = ${sci(J)} J.`);
-    const howK = L('Twice the voltage, twice the energy: ½·m·v² doubles, so v grows by √2.', 'Doppelte Spannung, doppelte Energie: ½·m·v² verdoppelt sich, also wächst v um den Faktor √2.');
+    // (c): what a factor on the voltage does to the energy or the speed, or which voltage gives a
+    // factor on the speed
+    const C = r.pick([['v', 2], ['v', 3], ['v', 4], ['v', 0.5], ['v', 0.25], ['v', 9], ['E', 3], ['E', 0.5], ['U', 2], ['U', 3], ['U', 0.5]]), [ask, n] = C;
+    const OFU = { 2: ['twice the voltage', 'der doppelten Spannung'], 3: ['three times the voltage', 'der dreifachen Spannung'], 4: ['four times the voltage', 'der vierfachen Spannung'], 9: ['nine times the voltage', 'der neunfachen Spannung'], 0.5: ['half the voltage', 'der halben Spannung'], 0.25: ['a quarter of the voltage', 'einem Viertel der Spannung'] };
+    const ofU = () => L(...OFU[n]), sq = (x) => (whole(x) ? frac(x).slice(1) : fac(x).slice(1));
+    let qk, howK, rightK, temptK;
+    if (ask === 'U') {
+      qk = L(`(c) For ${n === 0.5 ? 'half the' : n === 2 ? 'twice the' : 'three times the'} speed, the voltage needed is`, `(c) Für ${n === 0.5 ? 'die halbe' : n === 2 ? 'die doppelte' : 'die dreifache'} Geschwindigkeit braucht es die Spannung`);
+      rightK = n * n;
+      howK = L(`v ∝ √U, so U ∝ v²: ${sq(n)} times the speed needs ${sq(n * n)} times the voltage.`, `v ∝ √U, also U ∝ v²: Die ${sq(n)}-fache Geschwindigkeit braucht die ${sq(n * n)}-fache Spannung.`);
+      temptK = [[n, L(`The energy goes with the square of the speed. ${howK}`, `Die Energie geht mit dem Quadrat der Geschwindigkeit. ${howK}`), 'sqrt'], [Math.sqrt(n), L(`Upside down. ${howK}`, `Umgekehrt. ${howK}`), 'sqrt']];
+    } else if (ask === 'E') {
+      qk = L(`(c) With ${OFU[n][0]}, its kinetic energy would be`, `(c) Mit ${OFU[n][1]} wäre seine kinetische Energie`);
+      rightK = n;
+      howK = L(`E_kin = |q|·U: the energy is proportional to the voltage, ×${sq(n)}.`, `E_kin = |q|·U: Die Energie ist proportional zur Spannung, ×${sq(n)}.`);
+      temptK = [[Math.sqrt(n), L(`The square root belongs to the speed, not to the energy. ${howK}`, `Die Wurzel gehört zur Geschwindigkeit, nicht zur Energie. ${howK}`), 'sqrt'], [n * n, howK, 'other']];
+    } else {
+      qk = L(`(c) With ${OFU[n][0]}, its speed would be`, `(c) Mit ${OFU[n][1]} wäre seine Geschwindigkeit`);
+      rightK = Math.sqrt(n);
+      howK = L(`${cap(OFU[n][0])}: ${sq(n)} times the energy; ½·m·v² changes ×${sq(n)}, so v changes ×${sq(Math.sqrt(n))}.`, `Mit ${OFU[n][1]} die ${sq(n)}-fache Energie: ½·m·v² ändert sich ×${sq(n)}, also ändert sich v ×${sq(Math.sqrt(n))}.`);
+      temptK = [[n, L(`The energy grows with the voltage, the speed only with its square root. ${howK}`, `Die Energie wächst mit der Spannung, die Geschwindigkeit nur mit ihrer Wurzel. ${howK}`), 'sqrt'], [n * n, howK, 'sqrt']];
+    }
     const zWhy = (how) => L(`An alpha particle has the charge 2e. ${how}`, `Ein Alphateilchen hat die Ladung 2e. ${how}`);
     return {
       kind: 'acc', title: L('Acceleration voltage', 'Beschleunigungsspannung'),
@@ -116,10 +138,10 @@
       questions: [
         choice('E', L('(a) its kinetic energy', '(a) seine kinetische Energie'), values(Ek, z === 2 ? [{ value: U, tag: 'charge', why: zWhy(howE) }] : [{ value: U / 2, tag: 'half', why: L(`No ½ here: ½·m·v² is the kinetic energy, |q|·U the work that gives it. ${howE}`, `Hier kein ½: ½·m·v² ist die kinetische Energie, |q|·U die Arbeit, die sie liefert. ${howE}`) }], inEV, howE)),
         choice('J', L('(b) the same energy in joules', '(b) dieselbe Energie in Joule'), values(J, [...(Ek >= 1e3 ? [{ value: J / 1e3, tag: 'unit', why: L(`Mind the prefix: 1 keV = 1000 eV. ${howJ}`, `Achte auf den Vorsatz: 1 keV = 1000 eV. ${howJ}`) }] : []), ...(z === 2 ? [{ value: U * e0, tag: 'charge', why: zWhy(howJ) }] : [])], (x) => `${sci(x)} J`, howJ, [10, 0.1, 2, 0.5])),
-        choice('k', L('(c) With twice the voltage, its speed would be', '(c) Mit der doppelten Spannung wäre seine Geschwindigkeit'), [[Math.SQRT2, ''], [2, 'sqrt'], [4, 'sqrt'], [1, 'other']].map(([x, tag]) => ({ label: fac(x), ok: !tag, tag: tag || undefined, why: tag ? howK : '' }))),
+        choice('k', qk, factors(rightK, temptK, howK)),
       ],
       hints: [L('The field does the work |q|·U: E_kin = |q|·U.', 'Das Feld verrichtet die Arbeit |q|·U: E_kin = |q|·U.'), L('In eV: the charge in e times the voltage in V.', 'In eV: die Ladung in e mal die Spannung in V.'), chargeOf(pt)],
-      solution: [howE, howJ, howK], p: { pt: pt.id, U },
+      solution: [howE, howJ, howK], p: { pt: pt.id, U, c: `${ask}${n}` },
     };
   }
   const CMP = [['p', ['a proton', 'ein Proton'], 1, 1], ['a', ['an alpha particle', 'ein Alphateilchen'], 2, 4], ['d', ['a deuteron', 'ein Deuteron'], 1, 2], ['he', ['a He⁺ ion', 'ein He⁺-Ion'], 1, 4], ['c', ['a C⁶⁺ ion', 'ein C⁶⁺-Ion'], 6, 12]];
@@ -242,15 +264,16 @@
     const howS2 = pa === pb && !flip ? L('The same particle and the same plates: the same side.', 'Dasselbe Teilchen und dieselben Platten: dieselbe Seite.') : howS;
     const row = (n, sym, k) => [n, it(sym), times(k, sym)];
     const pcell = (x) => `${nm(x).replace(/ \(.*\)$/, '').replace(/^(an?|ein) /, '')} (${x[3] > 0 ? '+' : '−'}${Math.abs(x[3]) > 1 ? Math.abs(x[3]) : ''}e)`;
+    // the mass in the table always, needed or not
+    const mcell = (x) => (x[0] === 'e' || x[0] === 'e+' ? '0.00055 u' : `≈ ${x[4]} u`);
     const rows = [
-      [L('particle', 'Teilchen'), pcell(pa), pcell(pb)],
+      [L('particle', 'Teilchen'), pcell(pa), pcell(pb)], [L('mass', 'Masse'), mcell(pa), mcell(pb)],
       row(L('speed', 'Geschwindigkeit'), 'v', f.v), row(L('voltage', 'Spannung'), 'U', f.U), row(L('length of the plates', 'Länge der Platten'), 'L', f.L), row(L('distance between the plates', 'Plattenabstand'), 'd', f.d),
       [L('upper plate', 'obere Platte'), '+', flip ? '−' : '+'],
     ];
-    const masses = pa === pb ? '' : pa[0] === 'e' || pa[0] === 'e+' ? L(' An electron and a positron have the same mass.', ' Ein Elektron und ein Positron haben dieselbe Masse.') : L(` Masses: ${nm(pa).replace(/ \(.*\)$/, '')} about ${pa[4]} u, ${nm(pb).replace(/ \(.*\)$/, '')} about ${pb[4]} u.`, ` Massen: ${nm(pa).replace(/ \(.*\)$/, '')} etwa ${pa[4]} u, ${nm(pb).replace(/ \(.*\)$/, '')} etwa ${pb[4]} u.`);
     return {
       kind: 'path', title: L('Two deflections', 'Zwei Ablenkungen'),
-      text: L(`<p>In two experiments A and B, a charged particle flies horizontally into the field between two plates. The table compares them.${masses}</p>`, `<p>In zwei Versuchen A und B fliegt ein geladenes Teilchen waagrecht in das Feld zwischen zwei Platten. Die Tabelle vergleicht sie.${masses}</p>`) + cmpTable(['A', 'B'], rows),
+      text: L(`<p>In two experiments A and B, a charged particle flies horizontally into the field between two plates. The table compares them.</p>`, `<p>In zwei Versuchen A und B fliegt ein geladenes Teilchen waagrecht in das Feld zwischen zwei Platten. Die Tabelle vergleicht sie.</p>`) + cmpTable(['A', 'B'], rows),
       figs: fig(capFig({ top: 1, q: Math.sign(pa[3]), sym: pa[2], v: true, field: true, label: L('Experiment A', 'Versuch A') })),
       questions: [
         choice('y', L('(a) Compared with A, the deflection by the end of the plates in B is', '(a) Verglichen mit A ist die Ablenkung bis zum Ende der Platten in B'), factors(ky, tempt, how)),
@@ -371,26 +394,32 @@
     }
   }
   function tracks(seed) {
+    // An uncharged particle (no track) comes in from the left and makes four charged ones at the
+    // point: two positive and two negative (charge is conserved), flying forwards, their momenta
+    // across the incoming direction nearly cancelling (momentum is conserved).
     const r = rng(seed * 67 + 37), bz = r.pick([1, -1]), names = ['A', 'B', 'C', 'D'];
     for (;;) {
+      const qs = r.shuffle([1, 1, -1, -1]), dirs = r.shuffle([-55, -20, 20, 55]);
       const ts = names.map((name, i) => {
-        const q = r.pick([1, -1]), R = r.pick([1.6, 2.4, 3.6, 6, 10]), spiral = r.next() < 0.3, a0 = ((i * 90 + r.int(-25, 25)) * Math.PI) / 180;
+        const q = qs[i], spiral = r.next() < 0.3, R = spiral ? r.pick([1.6, 2.4]) : r.pick([1.6, 2.4, 3.6, 6, 10]), a0 = ((dirs[i] + r.int(-12, 12)) * Math.PI) / 180;
         const s = -Math.sign(q * bz); // a positive charge in a field out of the page turns clockwise
         const pts = [[0, 0]];
         let x = 0, y = 0, h = a0, rr = R, len = 0;
-        while (len < (spiral ? 22 : Math.min(4.2, R * 2.6)) && Math.abs(x) < 5.4 && Math.abs(y) < 4.4) { x += 0.06 * Math.cos(h); y += 0.06 * Math.sin(h); h += (s * 0.06) / rr; len += 0.06; if (spiral) rr = Math.max(0.25, rr * 0.994); pts.push([x, y]); }
-        return { name, q, R, spiral, pts };
+        while (len < (spiral ? 22 : Math.min(5.5, R * 2.6)) && x > -2.9 && x < 7.8 && Math.abs(y) < 4.4) { x += 0.06 * Math.cos(h); y += 0.06 * Math.sin(h); h += (s * 0.06) / rr; len += 0.06; if (spiral) rr = Math.max(0.25, rr * 0.994); pts.push([x, y]); }
+        return { name, q, R, a0, spiral, pts };
       });
       const pos = ts.filter((t) => t.q > 0), bigR = Math.max(...ts.map((t) => t.R)), biggest = ts.filter((t) => t.R === bigR), spirals = ts.filter((t) => t.spiral);
-      if (!pos.length || pos.length === 4 || biggest.length !== 1 || spirals.length !== 1 || spirals[0] === biggest[0]) continue;
+      // the momentum p ∝ R (the same charge): across the incoming direction it must nearly cancel
+      const across = ts.reduce((a, t) => a + t.R * Math.sin(t.a0), 0), all = ts.reduce((a, t) => a + t.R, 0);
+      if (biggest.length !== 1 || spirals.length !== 1 || spirals[0] === biggest[0] || Math.abs(across) > 0.12 * all) continue;
       const turn = (q) => (q * bz > 0 ? L('clockwise', 'im Uhrzeigersinn') : L('anticlockwise', 'im Gegenuhrzeigersinn'));
-      const howS = L(`In a field ${dirName([0, 0, bz])}, a positive charge turns ${turn(1)} (right hand), a negative one ${turn(-1)}: positive are ${pos.map((t) => t.name).join(', ')}.`, `In einem Feld, das ${dirName([0, 0, bz])} zeigt, dreht eine positive Ladung ${turn(1)} (rechte Hand), eine negative ${turn(-1)}: positiv sind ${pos.map((t) => t.name).join(', ')}.`);
+      const howS = L(`In a field ${dirName([0, 0, bz])}, a positive charge turns ${turn(1)} (right hand), a negative one ${turn(-1)}: positive are ${pos.map((t) => t.name).join(', ')}. This fits charge conservation: the incoming particle was uncharged, so two are positive and two negative.`, `In einem Feld, das ${dirName([0, 0, bz])} zeigt, dreht eine positive Ladung ${turn(1)} (rechte Hand), eine negative ${turn(-1)}: positiv sind ${pos.map((t) => t.name).join(', ')}. Das passt zur Ladungserhaltung: Das einfallende Teilchen war ungeladen, also sind zwei positiv und zwei negativ.`);
       const howP = L(`r = m·v/(q·B) = p/(q·B): with the same charge, the largest momentum gives the widest, straightest track, ${biggest[0].name}.`, `r = m·v/(q·B) = p/(q·B): Bei gleicher Ladung ergibt der grösste Impuls die weiteste, geradeste Spur, ${biggest[0].name}.`);
       const howSp = L(`The particle of track ${spirals[0].name} loses energy in the liquid of the chamber: it slows down, and r = m·v/(q·B) shrinks. (The magnetic field itself does not slow it down.)`, `Das Teilchen der Spur ${spirals[0].name} verliert in der Flüssigkeit der Kammer Energie: Es wird langsamer, und r = m·v/(q·B) schrumpft. (Das Magnetfeld selbst bremst es nicht ab.)`);
       return {
         kind: 'tracks', title: L('Tracks in a bubble chamber', 'Spuren in einer Blasenkammer'),
-        text: L(`<p>Four charged particles start from the same point in a bubble chamber with a magnetic field ${dirName([0, 0, bz])}. All have a charge of the same size.</p>`, `<p>Vier geladene Teilchen starten im selben Punkt einer Blasenkammer mit einem Magnetfeld, das ${dirName([0, 0, bz])} zeigt. Alle haben eine Ladung vom selben Betrag.</p>`),
-        figs: fig(tracksFig({ bz, tracks: ts })),
+        text: L(`<p>In a bubble chamber with a magnetic field ${dirName([0, 0, bz])}, an uncharged particle (it leaves no track, dashed) comes in from the left. At one point it turns into four charged particles, all with a charge of the same size.</p>`, `<p>In einer Blasenkammer mit einem Magnetfeld, das ${dirName([0, 0, bz])} zeigt, kommt von links ein ungeladenes Teilchen herein (es hinterlässt keine Spur, gestrichelt). In einem Punkt wandelt es sich in vier geladene Teilchen um, alle mit einer Ladung vom selben Betrag.</p>`),
+        figs: fig(tracksFig({ bz, tracks: ts, incoming: true })),
         questions: [
           tiles('pos', L('(a) Which tracks belong to positive particles? Tick all.', '(a) Welche Spuren gehören zu positiven Teilchen? Kreuze alle an.'), ts.map((t) => ({ html: `<span class="dtile"><b>${t.name}</b></span>`, ok: t.q > 0, why: howS })), true),
           tiles('p', L('(b) Which particle has the largest momentum?', '(b) Welches Teilchen hat den grössten Impuls?'), ts.map((t) => ({ html: `<span class="dtile"><b>${t.name}</b></span>`, ok: t === biggest[0], why: howP, tag: t === biggest[0] ? undefined : t.spiral ? 'curl' : 'inverse' }))),
@@ -436,11 +465,57 @@
         choice('sign', L('(d) A particle with a charge of the opposite sign and the speed v = E/B flies', '(d) Ein Teilchen mit einer Ladung umgekehrten Vorzeichens und der Geschwindigkeit v = E/B fliegt'), four('straight', howSame, { up: 'mass', down: 'mass' })),
       ],
       hints: [L('Electric force q·E, magnetic force q·v·B: in which directions do they point?', 'Elektrische Kraft q·E, magnetische Kraft q·v·B: In welche Richtungen zeigen sie?'), L('Straight through when they cancel.', 'Gerade durch, wenn sie sich aufheben.'), L('Only the magnetic force depends on the speed.', 'Nur die magnetische Kraft hängt von der Geschwindigkeit ab.')],
-      solution: [how, howFast, howSame], p: { q, Edown, E, B, who: who[0] },
+      solution: [how, howFast, howSame], solFig: fig(selectorFig({ Edown, bz, q, sym: who[2], forces: true })), p: { q, Edown, E, B, who: who[0] },
     };
   }
   // A strip with a current in a magnetic field: the moving charges are pushed to one edge until the
   // electric field of the charged edges balances the magnetic force.
+  // The velocity selector with one field to find: the particles pass straight through, the
+  // direction of the electric field (and which plate is +) or of the magnetic field is asked.
+  function crossedDir(seed) {
+    const r = rng(seed * 113 + 29), q = r.pick([1, -1]), who = r.pick(FLOCK[q]), askE = r.next() < 0.5, Edown = r.next() < 0.5;
+    const bz = Edown ? -1 : 1, Ey = Edown ? -1 : 1; // balanced: the forces cancel
+    const Fm = force(q, [1, 0, 0], [0, 0, bz]), Fe = [0, q * Ey, 0];
+    const hand = q > 0 ? L('right hand', 'rechte Hand') : L('left hand', 'linke Hand');
+    const opp = L('The electric force must point the other way, so that the two cancel', 'Die elektrische Kraft muss in die Gegenrichtung zeigen, damit sich die beiden aufheben');
+    const opp2 = L('The magnetic force must point the other way, so that the two cancel', 'Die magnetische Kraft muss in die Gegenrichtung zeigen, damit sich die beiden aufheben');
+    const along = q > 0 ? L('a positive charge is pushed along the field', 'eine positive Ladung wird in Feldrichtung gedrückt') : L('a negative charge is pushed against the field', 'eine negative Ladung wird entgegen dem Feld gedrückt');
+    const dir = (w) => dirName(w);
+    let qa, howA, howB, qb;
+    const tile = (d, ok, why, tag) => [cap(dir(d)), ok, why, tag];
+    if (askE) {
+      howA = L(`The ${signName(q)} particles fly to the right in a field ${dir([0, 0, bz])}: ${hand}, the magnetic force points ${dir(Fm)}. ${opp}: ${dir(Fe)}. Since ${along}, the electric field points ${dir([0, Ey, 0])}.`,
+        `Die ${q > 0 ? 'positiven' : 'negativen'} Teilchen fliegen nach rechts in einem Feld, das ${dir([0, 0, bz])} zeigt: ${hand}, die magnetische Kraft zeigt ${dir(Fm)}. ${opp}: ${dir(Fe)}. Da ${along}, zeigt das elektrische Feld ${dir([0, Ey, 0])}.`);
+      howB = L(`The field points from the positive to the negative plate: the ${Edown ? 'upper' : 'lower'} plate is positive.`, `Das Feld zeigt von der positiven zur negativen Platte: Die ${Edown ? 'obere' : 'untere'} Platte ist positiv.`);
+      qa = choice('dir', L('(a) The electric field between the plates points', '(a) Das elektrische Feld zwischen den Platten zeigt'), words(r, [
+        tile([0, Ey, 0], true, howA), tile([0, -Ey, 0], false, howA, q < 0 ? 'sign' : 'hand'),
+        tile([1, 0, 0], false, L(`An electric field along the velocity would only speed the particles up or slow them down; it could not cancel the magnetic force. ${howA}`, `Ein elektrisches Feld in Bewegungsrichtung würde die Teilchen nur schneller oder langsamer machen; es könnte die magnetische Kraft nicht aufheben. ${howA}`), 'perp'),
+        tile([0, 0, bz], false, L(`The electric field of two plates points from one plate to the other. ${howA}`, `Das elektrische Feld zweier Platten zeigt von einer Platte zur anderen. ${howA}`), 'perp')]));
+      qb = choice('plate', L('(b) The positive plate is', '(b) Die positive Platte ist'), words(r, [
+        [L('the upper plate', 'die obere Platte'), Edown, howB, 'other'], [L('the lower plate', 'die untere Platte'), !Edown, howB, 'other']]));
+    } else {
+      howA = L(`The electric field points ${dir([0, Ey, 0])}, and ${along}: the electric force points ${dir(Fe)}. ${opp2}: ${dir(Fm)}. ${cap(hand)}: thumb to the right (the velocity), middle finger ${dir(Fm)} (the force): the index finger, the magnetic field, points ${dir([0, 0, bz])}.`,
+        `Das elektrische Feld zeigt ${dir([0, Ey, 0])}, und ${along}: Die elektrische Kraft zeigt ${dir(Fe)}. ${opp2}: ${dir(Fm)}. ${cap(hand)}: Daumen nach rechts (die Geschwindigkeit), Mittelfinger ${dir(Fm)} (die Kraft): Der Zeigefinger, das Magnetfeld, zeigt ${dir([0, 0, bz])}.`);
+      howB = L(`For a slower particle, the magnetic force q·v·B is smaller than the electric force q·E: it is pushed the way of the electric force, ${dir(Fe)}.`, `Bei einem langsameren Teilchen ist die magnetische Kraft q·v·B kleiner als die elektrische Kraft q·E: Es wird in Richtung der elektrischen Kraft gedrückt, ${dir(Fe)}.`);
+      qa = choice('dir', L('(a) The magnetic field points', '(a) Das Magnetfeld zeigt'), words(r, [
+        tile([0, 0, bz], true, howA), tile([0, 0, -bz], false, howA, 'hand'),
+        tile([0, Ey, 0], false, L(`A magnetic field along the electric one would push the particles out of the page or into it, not up or down. ${howA}`, `Ein Magnetfeld parallel zum elektrischen würde die Teilchen aus der Seite heraus oder in sie hinein drücken, nicht nach oben oder unten. ${howA}`), 'perp'),
+        tile([1, 0, 0], false, L(`A magnetic field along the velocity exerts no force at all. ${howA}`, `Ein Magnetfeld in Bewegungsrichtung übt gar keine Kraft aus. ${howA}`), 'perp')]));
+      const plate = (d) => (d[1] > 0 ? L('towards the upper plate', 'zur oberen Platte') : L('towards the lower plate', 'zur unteren Platte'));
+      qb = choice('slow', L('(b) A slower particle of the same kind is deflected', '(b) Ein langsameres Teilchen derselben Art fliegt'), r.shuffle([
+        [plate(Fe), true, ''], [plate(Fm), false, 'fast'], [L('straight through', 'gerade durch'), false, 'fast'], [L('straight through, but faster', 'gerade durch, aber schneller'), false, 'work']]
+        .map(([label, ok, tag]) => ({ label, ok, why: ok ? '' : howB, tag: ok ? undefined : tag }))));
+    }
+    return {
+      kind: 'selector', title: L('Which way does the field point?', 'Wohin zeigt das Feld?'),
+      text: L(`<p>${cap(who[0])} fly in from the left between two charged plates in a magnetic field and pass straight through. ${askE ? `The magnetic field points ${dir([0, 0, bz])}.` : `The electric field points ${Edown ? 'down' : 'up'}.`}</p>`,
+        `<p>${who[1]} fliegen von links zwischen zwei geladene Platten in einem Magnetfeld und werden nicht abgelenkt. ${askE ? `Das Magnetfeld zeigt ${dir([0, 0, bz])}.` : `Das elektrische Feld zeigt nach ${Edown ? 'unten' : 'oben'}.`}</p>`),
+      figs: fig(selectorFig({ Edown, bz, q, sym: who[2], noE: askE, noB: !askE })),
+      questions: [qa, qb],
+      hints: [L('Straight through: the electric and the magnetic force cancel, so they point in opposite directions.', 'Gerade durch: Die elektrische und die magnetische Kraft heben sich auf, zeigen also in entgegengesetzte Richtungen.'), EFORCE(), RULE()],
+      solution: [howA, howB], solFig: fig(selectorFig({ Edown, bz, q, sym: who[2], forces: true })), p: { q, askE, Edown, who: who[0] },
+    };
+  }
   function hall(seed) {
     const r = rng(seed * 107 + 71), I = r.pick([1, -1]), bz = r.pick([1, -1]), holes = r.next() < 0.25;
     const F = force(1, [I, 0, 0], [0, 0, bz]), gather = F[1] > 0 ? 'upper' : 'lower'; // either kind of carrier: q·v points along I
@@ -472,6 +547,28 @@
     const upperNeg = neg === 'upper', upperAsk = askPos ? !upperNeg : upperNeg;
     const wrongEdge = askPos ? L(`That edge becomes negative, the other one positive. ${how}`, `Dieser Rand wird negativ, der andere positiv. ${how}`)
       : L(`That is where the ${holes ? 'positive carriers' : 'electrons'} would go if they moved the other way. ${how}`, `Dorthin gingen die ${holes ? 'positiven Ladungsträger' : 'Elektronen'}, wenn sie sich in die andere Richtung bewegten. ${how}`);
+    // (b) one of three: when the charge stops growing, the field across the strip, the other carriers
+    const askB = r.pick(['stop', 'field', 'carriers']), posEdge = neg === 'upper' ? 'lower' : 'upper', Edir = [0, posEdge === 'upper' ? -1 : 1, 0];
+    const carriers = holes ? L('positive carriers', 'positiven Ladungsträger') : L('electrons', 'Elektronen');
+    const howField = L(`${cap(edge(posEdge))} becomes positive, ${edge(neg)} negative (${holes ? 'the carriers gather at the positive edge' : 'the electrons gather at the negative edge'}). The field points from + to −: ${dirName(Edir)}. It pushes the moving ${holes ? 'positive carriers' : 'electrons'} back, against the magnetic force.`,
+      `${cap(edge(posEdge))} wird positiv, ${edge(neg)} negativ (${holes ? 'die Ladungsträger sammeln sich am positiven Rand' : 'die Elektronen sammeln sich am negativen Rand'}). Das Feld zeigt von + nach −: ${dirName(Edir)}. Es drückt die bewegten ${holes ? 'positiven Ladungsträger' : 'Elektronen'} zurück, gegen die magnetische Kraft.`);
+    const howCarr = L('Positive carriers move along the current, electrons against it: the magnetic force (thumb along v, right hand for +, left hand for −) pushes both to the same edge. But there they bring the opposite charge, so the Hall voltage is reversed. That is how the Hall effect shows the sign of the moving charges.',
+      'Positive Ladungsträger bewegen sich in Stromrichtung, Elektronen dagegen: Die magnetische Kraft (Daumen in Richtung v, rechte Hand für +, linke Hand für −) drückt beide zum selben Rand. Dort bringen sie aber die entgegengesetzte Ladung, also kehrt sich die Hall-Spannung um. So zeigt der Hall-Effekt das Vorzeichen der bewegten Ladungen.');
+    const qb = askB === 'stop' ? choice('b', L('(b) The charge on the edges stops growing when', '(b) Die Ladung an den Rändern wächst nicht mehr, wenn'), words(r, [
+          [L('the electric force of the charged edges balances the magnetic force', 'die elektrische Kraft der geladenen Ränder der magnetischen Kraft das Gleichgewicht hält'), true, howStop],
+          [L('all the moving charges have gathered at one edge', 'sich alle bewegten Ladungen an einem Rand gesammelt haben'), false, L(`Only a tiny part of them is needed for the field across the strip; the current goes on. ${howStop}`, `Es braucht nur einen winzigen Teil davon für das Feld quer zum Streifen; der Strom fliesst weiter. ${howStop}`), 'balance'],
+          [L('the current in the strip has stopped', 'der Strom im Streifen aufgehört hat'), false, L(`The current goes on flowing along the strip. ${howStop}`, `Der Strom fliesst weiter längs des Streifens. ${howStop}`), 'balance'],
+          [L('the magnetic force has used up the energy of the charges', 'die magnetische Kraft die Energie der Ladungen aufgebraucht hat'), false, L(`The magnetic force does no work. ${howStop}`, `Die magnetische Kraft verrichtet keine Arbeit. ${howStop}`), 'work']]))
+      : askB === 'field' ? choice('b', L('(b) The electric field the charged edges make inside the strip points', '(b) Das elektrische Feld, das die geladenen Ränder im Streifen erzeugen, zeigt'), words(r, [
+        [cap(dirName(Edir)), true, howField], [cap(dirName([0, -Edir[1], 0])), false, howField, 'hallsign'],
+        [cap(dirName([I, 0, 0])), false, L(`The charged edges make a field across the strip, from the positive to the negative edge. ${howField}`, `Die geladenen Ränder erzeugen ein Feld quer zum Streifen, vom positiven zum negativen Rand. ${howField}`), 'perp'],
+        [cap(dirName([-I, 0, 0])), false, L(`The charged edges make a field across the strip, from the positive to the negative edge. ${howField}`, `Die geladenen Ränder erzeugen ein Feld quer zum Streifen, vom positiven zum negativen Rand. ${howField}`), 'perp']]))
+      : choice('b', holes ? L('(b) If the same current were carried by electrons instead, in the same field, the Hall voltage would', '(b) Würde derselbe Strom stattdessen von Elektronen getragen, im selben Feld, würde die Hall-Spannung')
+        : L('(b) If the same current were carried by positive charges instead, in the same field, the Hall voltage would', '(b) Würde derselbe Strom stattdessen von positiven Ladungen getragen, im selben Feld, würde die Hall-Spannung'), words(r, [
+        [L('be reversed: the other edge would be positive', 'sich umkehren: der andere Rand wäre positiv'), true, howCarr],
+        [L('stay the same: the same edge would be positive', 'gleich bleiben: derselbe Rand wäre positiv'), false, howCarr, 'hallsign'],
+        [L('be zero', 'verschwinden'), false, howCarr, 'none'],
+        [L('be twice as large', 'doppelt so gross sein'), false, howCarr, 'other']]));
     return {
       kind: 'hall', title: L('The Hall voltage', 'Die Hall-Spannung'),
       text: (holes ? L(`<p>A strip of a semiconductor carries a current ${it('I')} ${dirName([I, 0, 0])} in a magnetic field ${dirName([0, 0, bz])}. In this semiconductor the current is carried by positive charges.</p>`, `<p>Ein Streifen aus einem Halbleiter führt einen Strom ${it('I')} ${dirName([I, 0, 0])} in einem Magnetfeld, das ${dirName([0, 0, bz])} zeigt. In diesem Halbleiter wird der Strom von positiven Ladungen getragen.</p>`)
@@ -483,15 +580,11 @@
           [cap(edge('lower')), !upperAsk, wrongEdge, 'hallsign'],
           [cap(end), false, L(`The magnetic force is perpendicular to the motion of the charges: across the strip, not along it. ${how}`, `Die magnetische Kraft steht senkrecht zur Bewegung der Ladungen: quer zum Streifen, nicht längs. ${how}`), 'perp'],
           [L('No part: the charges only flow along the strip', 'Kein Teil: Die Ladungen fliessen nur längs des Streifens'), false, L(`The moving charges feel a magnetic force across the strip. ${how}`, `Die bewegten Ladungen spüren eine magnetische Kraft quer zum Streifen. ${how}`), 'none']])),
-        choice('stop', L('(b) The charge on the edges stops growing when', '(b) Die Ladung an den Rändern wächst nicht mehr, wenn'), words(r, [
-          [L('the electric force of the charged edges balances the magnetic force', 'die elektrische Kraft der geladenen Ränder der magnetischen Kraft das Gleichgewicht hält'), true, howStop],
-          [L('all the moving charges have gathered at one edge', 'sich alle bewegten Ladungen an einem Rand gesammelt haben'), false, L(`Only a tiny part of them is needed for the field across the strip; the current goes on. ${howStop}`, `Es braucht nur einen winzigen Teil davon für das Feld quer zum Streifen; der Strom fliesst weiter. ${howStop}`), 'balance'],
-          [L('the current in the strip has stopped', 'der Strom im Streifen aufgehört hat'), false, L(`The current goes on flowing along the strip. ${howStop}`, `Der Strom fliesst weiter längs des Streifens. ${howStop}`), 'balance'],
-          [L('the magnetic force has used up the energy of the charges', 'die magnetische Kraft die Energie der Ladungen aufgebraucht hat'), false, L(`The magnetic force does no work. ${howStop}`, `Die magnetische Kraft verrichtet keine Arbeit. ${howStop}`), 'work']])),
+        qb,
         choice('u', L(`(c) ${askU}, the Hall voltage would be`, `(c) ${askU} wäre die Hall-Spannung`), optsU.map(([x, tag]) => ({ x, label: times2(x), ok: !tag, tag: tag || undefined, why: tag ? howU : '' })).sort((p, q) => p.x - q.x)),
       ],
       hints: [holes ? L('The positive carriers move along the current.', 'Die positiven Ladungsträger bewegen sich in Stromrichtung.') : L('The electrons move against the current.', 'Die Elektronen bewegen sich gegen den Strom.'), RULE(), L('The charged edges make an electric field across the strip, as between two plates.', 'Die geladenen Ränder erzeugen ein elektrisches Feld quer zum Streifen, wie zwischen zwei Platten.')],
-      solution: [how, howStop, howU], solFig: fig(hallFig({ I, bz, edges: upperNeg ? -1 : 1 })), p: { I, bz, holes, askPos, fU },
+      solution: [how, askB === 'stop' ? howStop : askB === 'field' ? howField : howCarr, howU], solFig: fig(hallFig({ I, bz, edges: upperNeg ? -1 : 1 })), p: { I, bz, holes, askPos, fU, askB },
     };
   }
 
@@ -543,7 +636,7 @@
     'deflect-path': [2, deflectPath], 'deflect-compare': [4, deflectCompare],
     'path-circle': [2, pathCircle], speed: [2, speed],
     'radius-compare': [3, radiusCompare], tracks: [3, tracks],
-    selector: [3, selector], hall: [3, hall], stmts: [2, statements],
+    selector: [3, selector], 'crossed-dir': [3, crossedDir], hall: [3, hall], stmts: [2, statements],
   };
   function make(type, seed) {
     const [difficulty, f] = TYPES[type];

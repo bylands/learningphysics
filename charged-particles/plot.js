@@ -4,7 +4,8 @@
 //   pathFig(o)       a trajectory: o = { box: [x0, x1, y0, y1], region: [x0, x1, y0, y1] (the field;
 //                    the whole box by default), bz (+1 ⊙, −1 ⊗), pts (the path), q (the charge drawn
 //                    at the start), sym (a named particle's symbol), name (written top left), small }
-//   tracksFig(o)     a bubble chamber: tracks from a point, named A–D
+//   tracksFig(o)     a bubble chamber: tracks from a point, named A–D (incoming: an uncharged
+//                    particle coming in from the left, dashed, the point further left)
 //   selectorFig(o)   a velocity selector: two plates in a magnetic field, an ion flying in
 //   accelFig(o)      an accelerating voltage: a charge between a plate and a grid
 //   capFig(o)        a charge flying into a capacitor, with its path (pts in units of the plates)
@@ -65,32 +66,43 @@
 
   // ---------------------------------------------------------------- a bubble chamber
   function tracksFig(o) {
-    const W = 340, H = 280, S = 30, cx = W / 2, cy = H / 2, X = (x) => cx + x * S, Y = (y) => cy - y * S;
+    const W = 340, H = 280, S = 30, cx = o.incoming ? 100 : W / 2, cy = H / 2, X = (x) => cx + x * S, Y = (y) => cy - y * S;
     let s = `<rect class="bg chamber" x="0" y="0" width="${W}" height="${H}" rx="12"/>`;
     for (let x = 20; x < W; x += 40) for (let y = 20; y < H; y += 40) s += dotCross(x, y, 4, o.bz > 0, 'v-field faint');
     o.tracks.forEach((t) => {
       s += `<path class="track" d="M${t.pts.map((p) => `${f1(X(p[0]))},${f1(Y(p[1]))}`).join(' L')}"/>`;
       // the name at the point farthest from the start, a little further out
-      const e = t.pts.reduce((a, p) => (Math.hypot(p[0], p[1]) > Math.hypot(a[0], a[1]) ? p : a)), d = Math.hypot(e[0], e[1]) || 1;
-      s += txt(X(e[0] + (0.45 * e[0]) / d), Y(e[1] + (0.45 * e[1]) / d) + 5, t.name, 'lbl');
+      const e = t.pts.reduce((a, p) => (Math.hypot(p[0], p[1]) > Math.hypot(a[0], a[1]) ? p : a)), d = Math.hypot(e[0], e[1]) || 1; // kept inside the frame
+      s += txt(Math.min(W - 12, Math.max(12, X(e[0] + (0.45 * e[0]) / d))), Math.min(H - 8, Math.max(18, Y(e[1] + (0.45 * e[1]) / d) + 5)), t.name, 'lbl');
     });
+    if (o.incoming) s += `<line class="track neutral" x1="0" y1="${cy}" x2="${cx}" y2="${cy}"/>`;
     s += `<circle class="pt" cx="${cx}" cy="${cy}" r="3.5"/>`;
     return svg(W, H, s, L('Tracks in a bubble chamber', 'Spuren in einer Blasenkammer'));
   }
 
   // ---------------------------------------------------------------- a velocity selector
   // Two plates (the upper one + when the field points down), E arrows, the magnetic field, an ion.
+  // noE: the plates without signs or field (E to find); noB: no magnetic field drawn (B to find);
+  // forces: the ion between the plates, with the electric and the magnetic force on it.
   function selectorFig(o) {
-    const W = 340, H = 200, top = 40, bot = 160;
+    const W = 340, H = 200, top = 40, bot = 160, cy = (top + bot) / 2, px = o.forces ? 185 : 26;
     let s = `<rect class="bg" x="0" y="0" width="${W}" height="${H}"/>`;
-    for (let x = 70; x < 330; x += 30) for (let y = 62; y < 150; y += 28) s += dotCross(x, y, 4.5, o.bz > 0, 'v-field faint');
+    if (!o.noB) for (let x = 70; x < 330; x += 30) for (let y = 62; y < 150; y += 28) s += dotCross(x, y, 4.5, o.bz > 0, 'v-field faint');
     s += `<rect class="plate" x="60" y="${top - 8}" width="270" height="8"/><rect class="plate" x="60" y="${bot}" width="270" height="8"/>`;
-    s += txt(46, top + 2, o.Edown ? '+' : '−', 'sign big') + txt(46, bot + 10, o.Edown ? '−' : '+', 'sign big');
-    for (const x of [110, 200, 290]) s += o.Edown ? arrow(x, top + 6, x, top + 40, 'v-efield', 2) : arrow(x, bot - 6, x, bot - 40, 'v-efield', 2);
-    s += txt(300, o.Edown ? top + 28 : bot - 22, `<tspan class="it">E</tspan>`, 'lbl c-efield', 'start');
-    s += particle(26, (top + bot) / 2, 12, o.q, o.sym);
-    s += arrow(40, (top + bot) / 2, 96, (top + bot) / 2, 'v-vel') + txt(70, (top + bot) / 2 - 10, `<tspan class="it">v</tspan>`, 'lbl c-vel');
-    s += txt(W - 6, 16, `<tspan class="it">B</tspan>`, 'lbl c-field', 'end');
+    if (!o.noE) {
+      s += txt(46, top + 2, o.Edown ? '+' : '−', 'sign big') + txt(46, bot + 10, o.Edown ? '−' : '+', 'sign big');
+      for (const x of o.forces ? [90, 300] : [110, 200, 290]) s += o.Edown ? arrow(x, top + 6, x, top + 40, 'v-efield', 2) : arrow(x, bot - 6, x, bot - 40, 'v-efield', 2);
+      s += txt(o.forces ? 308 : 300, o.Edown ? top + 28 : bot - 22, `<tspan class="it">E</tspan>`, 'lbl c-efield', 'start');
+    } else s += txt(300, cy + 5, '<tspan class="it">E</tspan> ?', 'lbl c-efield', 'start');
+    if (o.forces) {
+      // the electric force along E for a positive charge; the magnetic force q·v×B, v to the right
+      const fe = (o.Edown ? -1 : 1) * Math.sign(o.q), fm = -o.bz * Math.sign(o.q), up = (f) => (f > 0 ? -1 : 1);
+      s += arrow(px, cy + up(fe) * 13, px, cy + up(fe) * 50, 'v-force', 2.6) + txt(px - 8, cy + up(fe) * 38 + 5, '<tspan class="it">q</tspan>·<tspan class="it">E</tspan>', 'lbl c-force', 'end');
+      s += arrow(px, cy + up(fm) * 13, px, cy + up(fm) * 50, 'v-force', 2.6) + txt(px - 8, cy + up(fm) * 38 + 5, '<tspan class="it">q</tspan>·<tspan class="it">v</tspan>·<tspan class="it">B</tspan>', 'lbl c-force', 'end');
+    }
+    s += particle(px, cy, 12, o.q, o.sym);
+    s += arrow(px + 14, cy, px + 70, cy, 'v-vel') + txt(px + 44, cy - 10, `<tspan class="it">v</tspan>`, 'lbl c-vel');
+    s += txt(W - 6, 16, o.noB ? '<tspan class="it">B</tspan> ?' : `<tspan class="it">B</tspan>`, 'lbl c-field', 'end');
     return svg(W, H, s, L('A velocity selector: two charged plates in a magnetic field', 'Ein Geschwindigkeitsfilter: zwei geladene Platten in einem Magnetfeld'));
   }
 
