@@ -604,7 +604,7 @@
   "objectives": [
    {
     "id": "accel",
-    "en": "Apply ΔE_kin = |q|·U to a charge accelerated through a voltage, and give its energy in electronvolts.",
+    "en": "Apply ΔE_kin = −q·ΔV to a charge accelerated through a voltage, and give its energy in electronvolts.",
     "de": "ΔE_kin = |q|·U auf eine Ladung anwenden, die mit einer Spannung beschleunigt wird, und ihre Energie in Elektronvolt angeben."
    },
    {

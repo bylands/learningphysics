@@ -4,7 +4,7 @@
 //   pathFig(o)       a trajectory: o = { box: [x0, x1, y0, y1], region: [x0, x1, y0, y1] (the field;
 //                    the whole box by default), bz (+1 ⊙, −1 ⊗), pts (the path), q (the charge drawn
 //                    at the start), sym (a named particle's symbol), name (written top left), small }
-//   tracksFig(o)     a bubble chamber: tracks from a point, named A–D (incoming: an uncharged
+//   tracksFig(o)     a bubble chamber: tracks from a point, named A–D, each in its colour (incoming: an uncharged
 //                    particle coming in from the left, dashed, the point further left)
 //   selectorFig(o)   a velocity selector: two plates in a magnetic field, an ion flying in
 //   accelFig(o)      an accelerating voltage: a charge between a plate and a grid
@@ -69,11 +69,11 @@
     const W = 340, H = 280, S = 30, cx = o.incoming ? 100 : W / 2, cy = H / 2, X = (x) => cx + x * S, Y = (y) => cy - y * S;
     let s = `<rect class="bg chamber" x="0" y="0" width="${W}" height="${H}" rx="12"/>`;
     for (let x = 20; x < W; x += 40) for (let y = 20; y < H; y += 40) s += dotCross(x, y, 4, o.bz > 0, 'v-field faint');
-    o.tracks.forEach((t) => {
-      s += `<path class="track" d="M${t.pts.map((p) => `${f1(X(p[0]))},${f1(Y(p[1]))}`).join(' L')}"/>`;
+    o.tracks.forEach((t, i) => {
+      s += `<path class="track k${i % 4}" d="M${t.pts.map((p) => `${f1(X(p[0]))},${f1(Y(p[1]))}`).join(' L')}"/>`;
       // the name at the point farthest from the start, a little further out
       const e = t.pts.reduce((a, p) => (Math.hypot(p[0], p[1]) > Math.hypot(a[0], a[1]) ? p : a)), d = Math.hypot(e[0], e[1]) || 1; // kept inside the frame
-      s += txt(Math.min(W - 12, Math.max(12, X(e[0] + (0.45 * e[0]) / d))), Math.min(H - 8, Math.max(18, Y(e[1] + (0.45 * e[1]) / d) + 5)), t.name, 'lbl');
+      s += txt(Math.min(W - 12, Math.max(12, X(e[0] + (0.45 * e[0]) / d))), Math.min(H - 8, Math.max(18, Y(e[1] + (0.45 * e[1]) / d) + 5)), t.name, `lbl k${i % 4}`);
     });
     if (o.incoming) s += `<line class="track neutral" x1="0" y1="${cy}" x2="${cx}" y2="${cy}"/>`;
     s += `<circle class="pt" cx="${cx}" cy="${cy}" r="3.5"/>`;
@@ -119,8 +119,8 @@
     s += txt((xa + xb) / 2, yt + 30, '<tspan class="it">E</tspan>', 'lbl c-efield');
     s += particle(xa + 14, cy, o.sym ? 12 : 10, o.q, o.sym);
     s += arrow(xb + 14, cy, xb + 74, cy, 'v-vel') + txt(xb + 44, cy - 10, '<tspan class="it">v</tspan>', 'lbl c-vel');
-    s += `<path class="dimline" d="M${xa - 3} ${yb + 18} H${xb + 2} M${xa - 3} ${yb + 12} v12 M${xb + 2} ${yb + 12} v12"/>` + txt((xa + xb) / 2, yb + 40, '<tspan class="it">U</tspan>', 'lbl');
-    return svg(W, H, s, L('A charge accelerated from a plate to a grid through the voltage U', 'Eine Ladung, die von einer Platte zu einem Gitter mit der Spannung U beschleunigt wird'));
+    s += `<path class="dimline" d="M${xa - 3} ${yb + 18} H${xb + 2} M${xa - 3} ${yb + 12} v12 M${xb + 2} ${yb + 12} v12"/>` + txt((xa + xb) / 2, yb + 40, L('<tspan class="it">ΔV</tspan>', '<tspan class="it">U</tspan>'), 'lbl');
+    return svg(W, H, s, L('A charge accelerated from a plate to a grid through the voltage ΔV', 'Eine Ladung, die von einer Platte zu einem Gitter mit der Spannung U beschleunigt wird'));
   }
 
   // ---------------------------------------------------------------- a charge in a capacitor
@@ -157,7 +157,7 @@
       for (let x = x0 + 22; x < x1 - 10; x += 26) {
         s += txt(x, yt + 15, o.edges > 0 ? '+' : '−', 'sign') + txt(x, yb - 5, o.edges > 0 ? '−' : '+', 'sign');
       }
-      s += `<path class="dimline" d="M${x1 + 16} ${yt} V${yb} M${x1 + 10} ${yt} h12 M${x1 + 10} ${yb} h12"/>` + txt(x1 + 22, cy + 5, '<tspan class="it">U</tspan><tspan class="sub" dy="3">H</tspan>', 'lbl', 'start');
+      s += `<path class="dimline" d="M${x1 + 16} ${yt} V${yb} M${x1 + 10} ${yt} h12 M${x1 + 10} ${yb} h12"/>` + txt(x1 + 22, cy + 5, L('<tspan class="it">ΔV</tspan><tspan class="sub" dy="3">H</tspan>', '<tspan class="it">U</tspan><tspan class="sub" dy="3">H</tspan>'), 'lbl', 'start');
     }
     return svg(W, H, s, L('A metal strip carrying a current in a magnetic field', 'Ein Metallstreifen mit einem Strom in einem Magnetfeld'));
   }

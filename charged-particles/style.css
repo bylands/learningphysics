@@ -53,6 +53,15 @@ svg.mf .traj-head { fill: var(--mf-traj); }
 svg.mf .dimline { stroke: var(--muted); stroke-width: 1.2; fill: none; }
 svg.mf .lbl.small { font-size: 13px; }
 svg.mf .track { fill: none; stroke: var(--ink); stroke-width: 1.8; }
+svg.mf .track.k0 { stroke: #1f5fc4; } svg.mf .track.k1 { stroke: #c0392b; } svg.mf .track.k2 { stroke: #8e44ad; } svg.mf .track.k3 { stroke: #d35400; }
+svg.mf .lbl.k0 { fill: #1f5fc4; } svg.mf .lbl.k1 { fill: #c0392b; } svg.mf .lbl.k2 { fill: #8e44ad; } svg.mf .lbl.k3 { fill: #d35400; }
+@media (prefers-color-scheme: dark) {
+  svg.mf .track.k0 { stroke: #79a8ff; } svg.mf .track.k1 { stroke: #ff7b72; } svg.mf .track.k2 { stroke: #c7a6ff; } svg.mf .track.k3 { stroke: #ffa657; }
+  svg.mf .lbl.k0 { fill: #79a8ff; } svg.mf .lbl.k1 { fill: #ff7b72; } svg.mf .lbl.k2 { fill: #c7a6ff; } svg.mf .lbl.k3 { fill: #ffa657; }
+}
+.dtile b.k0 { color: #1f5fc4; } .dtile b.k1 { color: #c0392b; } .dtile b.k2 { color: #8e44ad; } .dtile b.k3 { color: #d35400; }
+@media (prefers-color-scheme: dark) { .dtile b.k0 { color: #79a8ff; } .dtile b.k1 { color: #ff7b72; } .dtile b.k2 { color: #c7a6ff; } .dtile b.k3 { color: #ffa657; } }
+svg.mf .lbl.k0, svg.mf .lbl.k1, svg.mf .lbl.k2, svg.mf .lbl.k3 { font-weight: 700; }
 svg.mf .track.neutral { stroke-dasharray: 6 5; stroke-width: 1.4; opacity: 0.7; }
 svg.mf .plate { fill: var(--muted); }
 svg.mf .strip { fill: color-mix(in srgb, #b87333 30%, var(--card)); stroke: var(--ink); stroke-width: 1.2; }

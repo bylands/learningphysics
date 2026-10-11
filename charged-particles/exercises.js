@@ -106,7 +106,7 @@
   const zText = (z) => (z === 2 ? '2e' : 'e');
   function accel(seed) {
     const r = rng(seed * 71 + 41), pt = particle(r, r.pick([1, -1]), { generic: false }), z = Math.abs(pt.z), U = r.pick(pt.m < 1e-29 ? [100, 500, 1500, 5000] : [1000, 5000, 20000, 50000]), Ek = z * U, J = Ek * e0;
-    const howE = L(`The field does the work |q|·U on the ${signName(pt.q)} charge: E_kin = |q|·U = ${zText(z)} · ${inV(U)} = ${inEV(Ek)}.`, `Das Feld verrichtet an der ${pt.q > 0 ? 'positiven' : 'negativen'} Ladung die Arbeit |q|·U: E_kin = |q|·U = ${zText(z)} · ${inV(U)} = ${inEV(Ek)}.`);
+    const howE = L(`The field does the work |q·ΔV| on the ${signName(pt.q)} charge: E_kin = |q·ΔV| = ${zText(z)} · ${inV(U)} = ${inEV(Ek)}.`, `Das Feld verrichtet an der ${pt.q > 0 ? 'positiven' : 'negativen'} Ladung die Arbeit |q|·U: E_kin = |q|·U = ${zText(z)} · ${inV(U)} = ${inEV(Ek)}.`);
     const howJ = L(`1 eV = 1.602 · 10<sup>−19</sup> J: ${inEV(Ek)} = ${sci(Ek)} · 1.602 · 10<sup>−19</sup> J = ${sci(J)} J.`, `1 eV = 1.602 · 10<sup>−19</sup> J: ${inEV(Ek)} = ${sci(Ek)} · 1.602 · 10<sup>−19</sup> J = ${sci(J)} J.`);
     // (c): what a factor on the voltage does to the energy or the speed, or which voltage gives a
     // factor on the speed
@@ -117,12 +117,12 @@
     if (ask === 'U') {
       qk = L(`(c) For ${n === 0.5 ? 'half the' : n === 2 ? 'twice the' : 'three times the'} speed, the voltage needed is`, `(c) Für ${n === 0.5 ? 'die halbe' : n === 2 ? 'die doppelte' : 'die dreifache'} Geschwindigkeit braucht es die Spannung`);
       rightK = n * n;
-      howK = L(`v ∝ √U, so U ∝ v²: ${sq(n)} times the speed needs ${sq(n * n)} times the voltage.`, `v ∝ √U, also U ∝ v²: Die ${sq(n)}-fache Geschwindigkeit braucht die ${sq(n * n)}-fache Spannung.`);
+      howK = L(`v ∝ √|ΔV|, so |ΔV| ∝ v²: ${sq(n)} times the speed needs ${sq(n * n)} times the voltage.`, `v ∝ √U, also U ∝ v²: Die ${sq(n)}-fache Geschwindigkeit braucht die ${sq(n * n)}-fache Spannung.`);
       temptK = [[n, L(`The energy goes with the square of the speed. ${howK}`, `Die Energie geht mit dem Quadrat der Geschwindigkeit. ${howK}`), 'sqrt'], [Math.sqrt(n), L(`Upside down. ${howK}`, `Umgekehrt. ${howK}`), 'sqrt']];
     } else if (ask === 'E') {
       qk = L(`(c) With ${OFU[n][0]}, its kinetic energy would be`, `(c) Mit ${OFU[n][1]} wäre seine kinetische Energie`);
       rightK = n;
-      howK = L(`E_kin = |q|·U: the energy is proportional to the voltage, ×${sq(n)}.`, `E_kin = |q|·U: Die Energie ist proportional zur Spannung, ×${sq(n)}.`);
+      howK = L(`E_kin = |q·ΔV|: the energy is proportional to the voltage, ×${sq(n)}.`, `E_kin = |q|·U: Die Energie ist proportional zur Spannung, ×${sq(n)}.`);
       temptK = [[Math.sqrt(n), L(`The square root belongs to the speed, not to the energy. ${howK}`, `Die Wurzel gehört zur Geschwindigkeit, nicht zur Energie. ${howK}`), 'sqrt'], [n * n, howK, 'other']];
     } else {
       qk = L(`(c) With ${OFU[n][0]}, its speed would be`, `(c) Mit ${OFU[n][1]} wäre seine Geschwindigkeit`);
@@ -136,11 +136,11 @@
       text: L(`<p>${cap(pt.name())}, at rest at first, is accelerated through a voltage of ${inV(U)}.</p>`, `<p>${cap(pt.name())}, zuerst in Ruhe, wird mit einer Spannung von ${inV(U)} beschleunigt.</p>`),
       figs: fig(accelFig({ q: pt.q, sym: pt.sym })),
       questions: [
-        choice('E', L('(a) its kinetic energy', '(a) seine kinetische Energie'), values(Ek, z === 2 ? [{ value: U, tag: 'charge', why: zWhy(howE) }] : [{ value: U / 2, tag: 'half', why: L(`No ½ here: ½·m·v² is the kinetic energy, |q|·U the work that gives it. ${howE}`, `Hier kein ½: ½·m·v² ist die kinetische Energie, |q|·U die Arbeit, die sie liefert. ${howE}`) }], inEV, howE)),
+        choice('E', L('(a) its kinetic energy', '(a) seine kinetische Energie'), values(Ek, z === 2 ? [{ value: U, tag: 'charge', why: zWhy(howE) }] : [{ value: U / 2, tag: 'half', why: L(`No ½ here: ½·m·v² is the kinetic energy, |q·ΔV| the work that gives it. ${howE}`, `Hier kein ½: ½·m·v² ist die kinetische Energie, |q|·U die Arbeit, die sie liefert. ${howE}`) }], inEV, howE)),
         choice('J', L('(b) the same energy in joules', '(b) dieselbe Energie in Joule'), values(J, [...(Ek >= 1e3 ? [{ value: J / 1e3, tag: 'unit', why: L(`Mind the prefix: 1 keV = 1000 eV. ${howJ}`, `Achte auf den Vorsatz: 1 keV = 1000 eV. ${howJ}`) }] : []), ...(z === 2 ? [{ value: U * e0, tag: 'charge', why: zWhy(howJ) }] : [])], (x) => `${sci(x)} J`, howJ, [10, 0.1, 2, 0.5])),
         choice('k', qk, factors(rightK, temptK, howK)),
       ],
-      hints: [L('The field does the work |q|·U: E_kin = |q|·U.', 'Das Feld verrichtet die Arbeit |q|·U: E_kin = |q|·U.'), L('In eV: the charge in e times the voltage in V.', 'In eV: die Ladung in e mal die Spannung in V.'), chargeOf(pt)],
+      hints: [L('The field does the work |q·ΔV|: E_kin = |q·ΔV|.', 'Das Feld verrichtet die Arbeit |q|·U: E_kin = |q|·U.'), L('In eV: the charge in e times the voltage in V.', 'In eV: die Ladung in e mal die Spannung in V.'), chargeOf(pt)],
       solution: [howE, howJ, howK], p: { pt: pt.id, U, c: `${ask}${n}` },
     };
   }
@@ -148,8 +148,8 @@
   function accelCompare(seed) {
     const r = rng(seed * 73 + 43), [a, b] = r.shuffle(CMP.slice()).slice(0, 2), U = r.pick([1, 5, 10]) * 1e3;
     const kE = b[2] / a[2], kv = Math.sqrt((b[2] / b[3]) / (a[2] / a[3]));
-    const howE = L(`E_kin = |q|·U: the energy depends only on the charge, not on the mass: ${b[2]}e against ${a[2]}e.`, `E_kin = |q|·U: Die Energie hängt nur von der Ladung ab, nicht von der Masse: ${b[2]}e gegen ${a[2]}e.`);
-    const howV = L(`½·m·v² = |q|·U, so v = √(2·|q|·U/m) ∝ √(q/m): √((${b[2]}/${b[3]}) / (${a[2]}/${a[3]})) = ${nice(kv)}.`, `½·m·v² = |q|·U, also v = √(2·|q|·U/m) ∝ √(q/m): √((${b[2]}/${b[3]}) / (${a[2]}/${a[3]})) = ${nice(kv)}.`);
+    const howE = L(`E_kin = |q·ΔV|: the energy depends only on the charge, not on the mass: ${b[2]}e against ${a[2]}e.`, `E_kin = |q|·U: Die Energie hängt nur von der Ladung ab, nicht von der Masse: ${b[2]}e gegen ${a[2]}e.`);
+    const howV = L(`½·m·v² = |q·ΔV|, so v = √(2·|q·ΔV|/m) ∝ √(q/m): √((${b[2]}/${b[3]}) / (${a[2]}/${a[3]})) = ${nice(kv)}.`, `½·m·v² = |q|·U, also v = √(2·|q|·U/m) ∝ √(q/m): √((${b[2]}/${b[3]}) / (${a[2]}/${a[3]})) = ${nice(kv)}.`);
     const dat = (x) => L(x[1][0], x[1][1].replace(/^ein /, 'einem ')), A = dat(a), B = dat(b);
     return {
       kind: 'acc', title: L('The same voltage', 'Die gleiche Spannung'),
@@ -160,13 +160,13 @@
         choice('v', L(`(b) Compared with ${A}, the speed of ${B} is`, `(b) Verglichen mit ${A} ist die Geschwindigkeit von ${B}`),
           factors(kv, [[kv * kv, L(`The speed goes with the square root of q/m. ${howV}`, `Die Geschwindigkeit geht mit der Wurzel aus q/m. ${howV}`), 'sqrt'], [1 / kv, L(`Upside down: more charge per mass, more speed. ${howV}`, `Gerade umgekehrt: mehr Ladung pro Masse, mehr Geschwindigkeit. ${howV}`), 'other'], [kE, L(`The same energy in a heavier particle is a smaller speed. ${howV}`, `Dieselbe Energie in einem schwereren Teilchen ist eine kleinere Geschwindigkeit. ${howV}`), 'mass']], howV)),
       ],
-      hints: [L('E_kin = |q|·U.', 'E_kin = |q|·U.'), L('½·m·v² = |q|·U, so v = √(2·|q|·U/m).', '½·m·v² = |q|·U, also v = √(2·|q|·U/m).')],
+      hints: [L('E_kin = |q·ΔV|.', 'E_kin = |q|·U.'), L('½·m·v² = |q·ΔV|, so v = √(2·|q·ΔV|/m).', '½·m·v² = |q|·U, also v = √(2·|q|·U/m).')],
       solution: [howE, howV], p: { a: a[0], b: b[0], U },
     };
   }
   function stop(seed) {
     const r = rng(seed * 79 + 47), pt = particle(r, r.pick([1, -1]), { generic: false }), Ek = r.pick([2, 5, 10, 50, 200]) * 1e3, z = Math.abs(pt.z), U = Ek / z;
-    const how = L(`The field must take away all the kinetic energy: |q|·U = E_kin, so U = ${inEV(Ek)} / ${zText(z)} = ${inV(U)}.`, `Das Feld muss die ganze kinetische Energie wegnehmen: |q|·U = E_kin, also U = ${inEV(Ek)} / ${zText(z)} = ${inV(U)}.`);
+    const how = L(`The field must take away all the kinetic energy: |q·ΔV| = E_kin, so |ΔV| = ${inEV(Ek)} / ${zText(z)} = ${inV(U)}.`, `Das Feld muss die ganze kinetische Energie wegnehmen: |q|·U = E_kin, also U = ${inEV(Ek)} / ${zText(z)} = ${inV(U)}.`);
     const howD = pt.q > 0 ? L('A positive particle is slowed down when it moves towards higher potential.', 'Ein positives Teilchen wird abgebremst, wenn es sich zu höherem Potential bewegt.') : L('A negative particle is slowed down when it moves towards lower potential.', 'Ein negatives Teilchen wird abgebremst, wenn es sich zu tieferem Potential bewegt.');
     return {
       kind: 'acc', title: L('Stopping a particle', 'Ein Teilchen abbremsen'),
@@ -175,7 +175,7 @@
         choice('U', L('(a) the voltage', '(a) die Spannung'), values(U, z === 2 ? [{ value: Ek, tag: 'charge', why: L(`An alpha particle has the charge 2e. ${how}`, `Ein Alphateilchen hat die Ladung 2e. ${how}`) }] : [{ value: Ek / 2, tag: 'half', why: how }], inV, how)),
         choice('d', L('(b) The grid must be at', '(b) Das Gitter muss liegen auf'), words(r, [[L('higher potential than the start', 'höherem Potential als der Start'), pt.q > 0, howD, 'sign'], [L('lower potential than the start', 'tieferem Potential als der Start'), pt.q < 0, howD, 'sign']])),
       ],
-      hints: [L('E_kin = |q|·U: an energy in eV divided by the charge in e gives a voltage in V.', 'E_kin = |q|·U: Eine Energie in eV geteilt durch die Ladung in e ergibt eine Spannung in V.'), L('Left to itself, a positive charge moves towards lower potential, a negative one towards higher potential.', 'Sich selbst überlassen, bewegt sich eine positive Ladung zu tieferem Potential, eine negative zu höherem.')],
+      hints: [L('E_kin = |q·ΔV|: an energy in eV divided by the charge in e gives a voltage in V.', 'E_kin = |q|·U: Eine Energie in eV geteilt durch die Ladung in e ergibt eine Spannung in V.'), L('Left to itself, a positive charge moves towards lower potential, a negative one towards higher potential.', 'Sich selbst überlassen, bewegt sich eine positive Ladung zu tieferem Potential, eine negative zu höherem.')],
       solution: [how, howD], p: { pt: pt.id, Ek },
     };
   }
@@ -183,7 +183,7 @@
     const r = rng(seed * 83 + 53), task = r.pick(['ion', 'joule']);
     if (task === 'ion') {
       const [name, z] = r.pick([['Pb²⁺', 2], ['Au³⁺', 3], ['U⁴⁺', 4], ['C⁶⁺', 6]]), Ek = r.pick([12, 30, 60, 120]), U = Ek / z;
-      const how = L(`E_kin = z·e·U, so U = ${Ek} MeV / ${z}e = ${nice(U)} MV.`, `E_kin = z·e·U, also U = ${Ek} MeV / ${z}e = ${nice(U)} MV.`);
+      const how = L(`E_kin = z·e·|ΔV|, so |ΔV| = ${Ek} MeV / ${z}e = ${nice(U)} MV.`, `E_kin = z·e·U, also U = ${Ek} MeV / ${z}e = ${nice(U)} MV.`);
       return {
         kind: 'ev', title: L('The electronvolt', 'Das Elektronvolt'), text: L(`<p>A “${Ek} MeV ${name} ion” has gained its energy through an accelerating voltage, from rest.</p>`, `<p>Ein «${Ek}-MeV-${name}-Ion» hat seine Energie aus der Ruhe durch eine Beschleunigungsspannung erhalten.</p>`), figs: '',
         questions: [choice('U', L('the voltage', 'die Spannung'), values(U, [{ value: Ek, tag: 'charge', why: L(`The ion carries ${z} elementary charges. ${how}`, `Das Ion trägt ${z} Elementarladungen. ${how}`) }, { value: Ek * z, tag: 'charge', why: how }], (x) => `${nice(x)} MV`, how))],
@@ -249,13 +249,13 @@
     if (f.L !== 1) parts.push(L(`the length ${frac(f.L)}, squared ${frac(f.L ** 2)}`, `die Länge ${frac(f.L)}, quadriert ${frac(f.L ** 2)}`));
     if (f.d !== 1) parts.push(L(`the distance ${frac(f.d)}, so ${frac(1 / f.d)}`, `der Abstand ${frac(f.d)}, also ${frac(1 / f.d)}`));
     if (f.v !== 1) parts.push(L(`the speed ${frac(f.v)}, squared in the denominator: ${frac(1 / f.v ** 2)}`, `die Geschwindigkeit ${frac(f.v)}, quadriert im Nenner: ${frac(1 / f.v ** 2)}`));
-    const how = L(`y = |q|·U·L²/(2·m·d·v²): ${parts.join('; ')}. Together: ${frac(ky)}.`, `y = |q|·U·L²/(2·m·d·v²): ${parts.join('; ')}. Zusammen: ${frac(ky)}.`);
+    const how = L(`y = |q·ΔV|·L²/(2·m·d·v²): ${parts.join('; ')}. Together: ${frac(ky)}.`, `y = |q|·U·L²/(2·m·d·v²): ${parts.join('; ')}. Zusammen: ${frac(ky)}.`);
     const base = (zr / mr) * f.U / f.d;
     const tempt = [
       [base * f.L ** 2 / f.v, L('The time between the plates, L/v, is squared: the speed counts squared.', 'Die Zeit zwischen den Platten, L/v, wird quadriert: Die Geschwindigkeit zählt quadratisch.'), 'square'],
       [base * f.L / f.v ** 2, L('The length of the plates counts squared, like the time.', 'Die Länge der Platten zählt quadratisch, wie die Zeit.'), 'square'],
       [zr * f.U * f.L ** 2 / (f.d * f.v ** 2), L('A heavier particle is accelerated less: divide by the mass.', 'Ein schwereres Teilchen wird weniger beschleunigt: durch die Masse teilen.'), 'mass'],
-      [(zr / mr) * f.U * f.L ** 2 * f.d / f.v ** 2, L('E = U/d: a larger distance means a weaker field.', 'E = U/d: Ein grösserer Abstand bedeutet ein schwächeres Feld.'), 'other'],
+      [(zr / mr) * f.U * f.L ** 2 * f.d / f.v ** 2, L('E = |ΔV|/d: a larger distance means a weaker field.', 'E = U/d: Ein grösserer Abstand bedeutet ein schwächeres Feld.'), 'other'],
       [1 / ky, L('Upside down.', 'Gerade umgekehrt.'), 'other'],
     ];
     const howT = L(`Along the plates the speed stays the same: t = L/v, the length ${frac(f.L)}, the speed ${frac(f.v)}: ${frac(kt)}.`, `Längs der Platten bleibt die Geschwindigkeit gleich: t = L/v, die Länge ${frac(f.L)}, die Geschwindigkeit ${frac(f.v)}: ${frac(kt)}.`);
@@ -268,7 +268,7 @@
     const mcell = (x) => (x[0] === 'e' || x[0] === 'e+' ? '0.00055 u' : `≈ ${x[4]} u`);
     const rows = [
       [L('particle', 'Teilchen'), pcell(pa), pcell(pb)], [L('mass', 'Masse'), mcell(pa), mcell(pb)],
-      row(L('speed', 'Geschwindigkeit'), 'v', f.v), row(L('voltage', 'Spannung'), 'U', f.U), row(L('length of the plates', 'Länge der Platten'), 'L', f.L), row(L('distance between the plates', 'Plattenabstand'), 'd', f.d),
+      row(L('speed', 'Geschwindigkeit'), 'v', f.v), row(L('voltage', 'Spannung'), L('ΔV', 'U'), f.U), row(L('length of the plates', 'Länge der Platten'), 'L', f.L), row(L('distance between the plates', 'Plattenabstand'), 'd', f.d),
       [L('upper plate', 'obere Platte'), '+', flip ? '−' : '+'],
     ];
     return {
@@ -280,7 +280,7 @@
         choice('t', L('(b) Compared with A, the time the particle takes to pass the plates in B is', '(b) Verglichen mit A ist die Zeit, die das Teilchen in B für den Weg zwischen den Platten braucht,'), factors(kt, [[f.v / f.L, L('t = L/v: faster means less time.', 't = L/v: schneller bedeutet weniger Zeit.'), 'other'], [f.L / f.v ** 2, L('The speed counts once here, not squared.', 'Die Geschwindigkeit zählt hier einfach, nicht quadratisch.'), 'square']], howT)),
         choice('s', L('(c) Compared with A, the particle in B is deflected', '(c) Verglichen mit A wird das Teilchen in B abgelenkt'), words(r, [[L('to the same side', 'zur selben Seite'), same, howS2, 'sign'], [L('to the other side', 'zur anderen Seite'), !same, howS2, 'sign']])),
       ],
-      hints: [L('Along the plates the speed stays the same: t = L/v. Across them the particle accelerates evenly: a = |q|·E/m with E = U/d.', 'Längs der Platten bleibt die Geschwindigkeit gleich: t = L/v. Quer dazu wird das Teilchen gleichmässig beschleunigt: a = |q|·E/m mit E = U/d.'), L('y = ½·a·t² = |q|·U·L²/(2·m·d·v²): find the factor of each quantity.', 'y = ½·a·t² = |q|·U·L²/(2·m·d·v²): Bestimme den Faktor jeder Grösse.')],
+      hints: [L('Along the plates the speed stays the same: t = L/v. Across them the particle accelerates evenly: a = |q|·E/m with E = |ΔV|/d.', 'Längs der Platten bleibt die Geschwindigkeit gleich: t = L/v. Quer dazu wird das Teilchen gleichmässig beschleunigt: a = |q|·E/m mit E = U/d.'), L('y = ½·a·t² = |q·ΔV|·L²/(2·m·d·v²): find the factor of each quantity.', 'y = ½·a·t² = |q|·U·L²/(2·m·d·v²): Bestimme den Faktor jeder Grösse.')],
       solution: [how, howT, howS2], p: { a: pa[0], b: pb[0], f: [f.v, f.U, f.L, f.d].join(','), flip },
     };
   }
@@ -421,8 +421,8 @@
         text: L(`<p>In a bubble chamber with a magnetic field ${dirName([0, 0, bz])}, an uncharged particle (it leaves no track, dashed) comes in from the left. At one point it turns into four charged particles, all with a charge of the same size.</p>`, `<p>In einer Blasenkammer mit einem Magnetfeld, das ${dirName([0, 0, bz])} zeigt, kommt von links ein ungeladenes Teilchen herein (es hinterlässt keine Spur, gestrichelt). In einem Punkt wandelt es sich in vier geladene Teilchen um, alle mit einer Ladung vom selben Betrag.</p>`),
         figs: fig(tracksFig({ bz, tracks: ts, incoming: true })),
         questions: [
-          tiles('pos', L('(a) Which tracks belong to positive particles? Tick all.', '(a) Welche Spuren gehören zu positiven Teilchen? Kreuze alle an.'), ts.map((t) => ({ html: `<span class="dtile"><b>${t.name}</b></span>`, ok: t.q > 0, why: howS })), true),
-          tiles('p', L('(b) Which particle has the largest momentum?', '(b) Welches Teilchen hat den grössten Impuls?'), ts.map((t) => ({ html: `<span class="dtile"><b>${t.name}</b></span>`, ok: t === biggest[0], why: howP, tag: t === biggest[0] ? undefined : t.spiral ? 'curl' : 'inverse' }))),
+          tiles('pos', L('(a) Which tracks belong to positive particles? Tick all.', '(a) Welche Spuren gehören zu positiven Teilchen? Kreuze alle an.'), ts.map((t) => ({ html: `<span class="dtile"><b class="k${names.indexOf(t.name)}">${t.name}</b></span>`, ok: t.q > 0, why: howS })), true),
+          tiles('p', L('(b) Which particle has the largest momentum?', '(b) Welches Teilchen hat den grössten Impuls?'), ts.map((t) => ({ html: `<span class="dtile"><b class="k${names.indexOf(t.name)}">${t.name}</b></span>`, ok: t === biggest[0], why: howP, tag: t === biggest[0] ? undefined : t.spiral ? 'curl' : 'inverse' }))),
           choice('sp', L(`(c) Track ${spirals[0].name} gets tighter and tighter because`, `(c) Spur ${spirals[0].name} wird immer enger, weil`), words(r, [
             [L('the particle slows down', 'das Teilchen langsamer wird'), true, howSp],
             [L('the field is stronger in the middle', 'das Feld in der Mitte stärker ist'), false, howSp, 'other'],
@@ -527,16 +527,16 @@
         `Die positiven Ladungsträger bewegen sich in Stromrichtung, ${dirName(vdir)}. Rechte Hand: Daumen ${dirName(vdir)}, Zeigefinger ${dirName([0, 0, bz])}: Die Kraft zeigt ${dirName(F)}. Sie sammeln sich am ${gather === 'upper' ? 'oberen' : 'unteren'} Rand, der positiv wird; der ${neg === 'upper' ? 'obere' : 'untere'} Rand, wo sie fehlen, wird negativ.`)
       : L(`The electrons move against the current, ${dirName(vdir)}. Left hand (negative charge): thumb ${dirName(vdir)}, index finger ${dirName([0, 0, bz])}: the force points ${dirName(F)}. The electrons gather at ${edge(gather)}, which becomes negative; the other edge, short of electrons, becomes positive.`,
         `Die Elektronen bewegen sich gegen den Strom, ${dirName(vdir)}. Linke Hand (negative Ladung): Daumen ${dirName(vdir)}, Zeigefinger ${dirName([0, 0, bz])}: Die Kraft zeigt ${dirName(F)}. Die Elektronen sammeln sich am ${gather === 'upper' ? 'oberen' : 'unteren'} Rand, der negativ wird; der andere Rand, wo Elektronen fehlen, wird positiv.`);
-    const howStop = L('The charged edges make an electric field across the strip, which pushes the moving charges back. The charge grows until the electric force e·E balances the magnetic force e·v·B: then the charges pass straight along the strip, as in a velocity selector. So E = v·B, and the Hall voltage is U<sub>H</sub> = E·d = v·B·d (d: the width of the strip).',
+    const howStop = L('The charged edges make an electric field across the strip, which pushes the moving charges back. The charge grows until the electric force e·E balances the magnetic force e·v·B: then the charges pass straight along the strip, as in a velocity selector. So E = v·B, and the Hall voltage is ΔV<sub>H</sub> = E·d = v·B·d (d: the width of the strip).',
       'Die geladenen Ränder erzeugen ein elektrisches Feld quer zum Streifen, das die bewegten Ladungen zurückdrückt. Die Ladung wächst, bis die elektrische Kraft e·E der magnetischen Kraft e·v·B das Gleichgewicht hält: Dann fliessen die Ladungen gerade längs des Streifens, wie im Geschwindigkeitsfilter. Also E = v·B, und die Hall-Spannung ist U<sub>H</sub> = E·d = v·B·d (d: die Breite des Streifens).');
     // (c) how U_H = v·B·d changes: [the change asked, the factor, the reason]; v grows with the
     // current in the same strip (I = n·e·v·A)
     const CHANGE = [
-      [L('In a field twice as strong (the same current)', 'In einem doppelt so starken Feld (derselbe Strom)'), 2, L('U<sub>H</sub> = v·B·d: the same current means the same drift speed v; twice the field, twice the Hall voltage.', 'U<sub>H</sub> = v·B·d: Derselbe Strom bedeutet dieselbe Driftgeschwindigkeit v; doppeltes Feld, doppelte Hall-Spannung.')],
-      [L('In a field three times as strong (the same current)', 'In einem dreimal so starken Feld (derselbe Strom)'), 3, L('U<sub>H</sub> = v·B·d: the same current means the same drift speed v; three times the field, three times the Hall voltage.', 'U<sub>H</sub> = v·B·d: Derselbe Strom bedeutet dieselbe Driftgeschwindigkeit v; dreifaches Feld, dreifache Hall-Spannung.')],
-      [L('In a field half as strong (the same current)', 'In einem halb so starken Feld (derselbe Strom)'), 0.5, L('U<sub>H</sub> = v·B·d: the same current means the same drift speed v; half the field, half the Hall voltage.', 'U<sub>H</sub> = v·B·d: Derselbe Strom bedeutet dieselbe Driftgeschwindigkeit v; halbes Feld, halbe Hall-Spannung.')],
-      [L('With twice the current (the same field)', 'Mit doppelt so grossem Strom (dasselbe Feld)'), 2, L('U<sub>H</sub> = v·B·d: in the same strip, twice the current means the charges drift twice as fast; the same field, so twice the Hall voltage.', 'U<sub>H</sub> = v·B·d: Im selben Streifen bedeutet ein doppelt so grosser Strom, dass die Ladungen doppelt so schnell driften; dasselbe Feld, also doppelte Hall-Spannung.')],
-      [L('With twice the current in a field twice as strong', 'Mit doppelt so grossem Strom in einem doppelt so starken Feld'), 4, L('U<sub>H</sub> = v·B·d: twice the current means twice the drift speed v, and the field is twice as strong too: 2·2 = 4 times the Hall voltage.', 'U<sub>H</sub> = v·B·d: Doppelter Strom bedeutet doppelte Driftgeschwindigkeit v, und auch das Feld ist doppelt so stark: 2·2 = 4-mal die Hall-Spannung.')],
+      [L('In a field twice as strong (the same current)', 'In einem doppelt so starken Feld (derselbe Strom)'), 2, L('ΔV<sub>H</sub> = v·B·d: the same current means the same drift speed v; twice the field, twice the Hall voltage.', 'U<sub>H</sub> = v·B·d: Derselbe Strom bedeutet dieselbe Driftgeschwindigkeit v; doppeltes Feld, doppelte Hall-Spannung.')],
+      [L('In a field three times as strong (the same current)', 'In einem dreimal so starken Feld (derselbe Strom)'), 3, L('ΔV<sub>H</sub> = v·B·d: the same current means the same drift speed v; three times the field, three times the Hall voltage.', 'U<sub>H</sub> = v·B·d: Derselbe Strom bedeutet dieselbe Driftgeschwindigkeit v; dreifaches Feld, dreifache Hall-Spannung.')],
+      [L('In a field half as strong (the same current)', 'In einem halb so starken Feld (derselbe Strom)'), 0.5, L('ΔV<sub>H</sub> = v·B·d: the same current means the same drift speed v; half the field, half the Hall voltage.', 'U<sub>H</sub> = v·B·d: Derselbe Strom bedeutet dieselbe Driftgeschwindigkeit v; halbes Feld, halbe Hall-Spannung.')],
+      [L('With twice the current (the same field)', 'Mit doppelt so grossem Strom (dasselbe Feld)'), 2, L('ΔV<sub>H</sub> = v·B·d: in the same strip, twice the current means the charges drift twice as fast; the same field, so twice the Hall voltage.', 'U<sub>H</sub> = v·B·d: Im selben Streifen bedeutet ein doppelt so grosser Strom, dass die Ladungen doppelt so schnell driften; dasselbe Feld, also doppelte Hall-Spannung.')],
+      [L('With twice the current in a field twice as strong', 'Mit doppelt so grossem Strom in einem doppelt so starken Feld'), 4, L('ΔV<sub>H</sub> = v·B·d: twice the current means twice the drift speed v, and the field is twice as strong too: 2·2 = 4 times the Hall voltage.', 'U<sub>H</sub> = v·B·d: Doppelter Strom bedeutet doppelte Driftgeschwindigkeit v, und auch das Feld ist doppelt so stark: 2·2 = 4-mal die Hall-Spannung.')],
     ];
     const [askU, fU, howU] = r.pick(CHANGE);
     const optsU = [[fU, ''], [1, 'same'], [1 / fU, 'inverse'], [fU === 4 ? 2 : fU * fU, 'other']];
@@ -592,7 +592,7 @@
   const BANK = [
     [() => L('An electron accelerated through 1 V gains 1 eV.', 'Ein Elektron, das 1 V durchläuft, gewinnt 1 eV.'), true, () => L('That is the definition of the electronvolt.', 'Das ist die Definition des Elektronvolts.')],
     [() => L('An alpha particle accelerated through 1 kV gains 1 keV.', 'Ein Alphateilchen, das 1 kV durchläuft, gewinnt 1 keV.'), false, () => L('Its charge is 2e: it gains 2 keV.', 'Seine Ladung ist 2e: Es gewinnt 2 keV.')],
-    [() => L('Through the same voltage, a proton and an electron gain the same kinetic energy.', 'Mit derselben Spannung gewinnen ein Proton und ein Elektron dieselbe kinetische Energie.'), true, () => L('E_kin = |q|·U, and both have |q| = e.', 'E_kin = |q|·U, und beide haben |q| = e.')],
+    [() => L('Through the same voltage, a proton and an electron gain the same kinetic energy.', 'Mit derselben Spannung gewinnen ein Proton und ein Elektron dieselbe kinetische Energie.'), true, () => L('E_kin = |q·ΔV|, and both have |q| = e.', 'E_kin = |q|·U, und beide haben |q| = e.')],
     [() => L('Through the same voltage, a proton and an electron reach the same speed.', 'Mit derselben Spannung erreichen ein Proton und ein Elektron dieselbe Geschwindigkeit.'), false, () => L('Same energy, much smaller mass: the electron is about 43 times faster.', 'Gleiche Energie, viel kleinere Masse: Das Elektron ist etwa 43-mal schneller.')],
     [() => L('Doubling the accelerating voltage doubles the speed.', 'Verdoppelt man die Beschleunigungsspannung, verdoppelt sich die Geschwindigkeit.'), false, () => L('It doubles the energy: v grows by √2.', 'Sie verdoppelt die Energie: v wächst um den Faktor √2.')],
     [() => L('The electronvolt is a unit of energy.', 'Das Elektronvolt ist eine Einheit der Energie.'), true, () => L('1 eV = 1.602 · 10<sup>−19</sup> J.', '1 eV = 1.602 · 10<sup>−19</sup> J.')],
@@ -624,7 +624,7 @@
         kind: 'stmts', title: L('Which statements are correct?', 'Welche Aussagen sind richtig?'),
         text: L('<p>Tick all the statements that are correct.</p>', '<p>Kreuze alle richtigen Aussagen an.</p>'), figs: '',
         questions: [{ type: 'multi', key: 's', label: L('Which statements are correct?', 'Welche Aussagen sind richtig?'), statements: pick.map(([h, ok, why]) => ({ html: h(), ok, why: why() })) }],
-        hints: [L('E_kin = |q|·U.', 'E_kin = |q|·U.'), PERP(), L('r = m·v/(q·B) and T = 2π·m/(q·B).', 'r = m·v/(q·B) und T = 2π·m/(q·B).')],
+        hints: [L('E_kin = |q·ΔV|.', 'E_kin = |q|·U.'), PERP(), L('r = m·v/(q·B) and T = 2π·m/(q·B).', 'r = m·v/(q·B) und T = 2π·m/(q·B).')],
         solution: pick.map(([h, ok, why]) => `${ok ? '✓' : '✗'} ${h()} ${why()}`), p: { s: pick.map((s) => BANK.indexOf(s)) },
       };
     }
