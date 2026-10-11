@@ -84,12 +84,15 @@
 
   // The tutor: the frames that introduce the idea (lesson.intro), then the task with what is
   // wanted, then the steps of its solution.
+  // a choice of graphs or pictures: its options, read-only, so that the task can be read
+  const pics = (ex) => ex.fields.filter((f) => f.type === 'choice' && f.pics && !f.after)
+    .map((f) => `<span class="choices levels small pics tq-pics">${f.options.map((o) => `<label><span>${o[1]}</span></label>`).join('')}</span>`).join('');
   function tutorial(lesson) {
     const scn = byId(lesson.scenario), ex = exercise(scn, lesson.p);
     const wanted = ex.fields.map((f) => (f.type === 'num' ? `${f.what} $${f.sym}$` : f.what.replace(/:$/, ''))).join(', ');
     const intro = (lesson.intro || []).map((fr) => ({ text: `<p class="step-rule">${fr.title()}</p>${fr.text()}`, figure: fr.figure() }));
     const task = {
-      text: `<p class="step-rule">${L('An exercise', 'Eine Aufgabe')}</p>${ex.text}<p>${L('Wanted', 'Gesucht')}: ${wanted}</p>`,
+      text: `<p class="step-rule">${L('An exercise', 'Eine Aufgabe')}</p>${ex.text}<p>${L('Wanted', 'Gesucht')}: ${wanted}</p>` + pics(ex),
       figure: ex.figure({ task: true }) || ex.solutionFigure(),
     };
     return { frames: [...intro, task, ...ex.steps.map((s) => ({ text: s.text, figure: ex.figure({ show: new Set(s.show || []) }) }))] };
