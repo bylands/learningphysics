@@ -278,12 +278,14 @@
       forthback: () => { const s0 = r.pick([-8, -6]), up = r.pick([6, 5]); return { kind: 'forthback', values: [s0, s0 + up, s0 + 2 * up, s0 + 2 * up - 2, s0 + 2 * up - 4, s0 + 2 * up - 6, s0 + 2 * up - 8], back: false }; },
       stop: () => { const s0 = r.pick([12, 15, 20]), ds = r.pick([3, 4]), k0 = r.pick([3, 4]); return { kind: 'stop', values: times.map((t, k) => s0 - ds * Math.min(k, k0)), back: false, stop: times[k0] }; },
     };
+    // the velocity asked for: forwards (negup) or backwards (down, below), half of the time each
+    const forward = r.next() < 0.5, ask = forward ? ['negup'] : ['down', 'below'];
     let kinds;
     for (;;) {
       const nBack = r.pick([1, 2, 2, 3]);
       kinds = r.shuffle([...r.shuffle(['down', 'negdown', 'below']).slice(0, nBack), ...r.shuffle(['negup', r.pick(['backforth', 'forthback']), 'stop']).slice(0, 4 - nBack)]);
       // a uniform one for the velocity, and the trap of negative positions
-      if (kinds.some((k) => ['down', 'below', 'negup'].includes(k)) && kinds.some((k) => ['negup', 'negdown', 'below'].includes(k))) break;
+      if (kinds.some((k) => ask.includes(k)) && kinds.some((k) => ['negup', 'negdown', 'below'].includes(k))) break;
     }
     const names = ['A', 'B', 'C', 'D'];
     const rows = kinds.map((k, i) => ({ name: names[i], ...make[k]() }));
@@ -307,7 +309,7 @@
     });
     const q1 = multi('back', L('Which vehicles move in the negative direction all the time? Choose all.', 'Welche Fahrzeuge bewegen sich die ganze Zeit in negativer Richtung? Wähle alle.'),
       L('Which vehicle moves in the negative direction all the time?', 'Welches Fahrzeug bewegt sich die ganze Zeit in negativer Richtung?'), options);
-    const U = r.pick(rows.filter((x) => x.uniform)), v = (U.values[1] - U.values[0]) / 5;
+    const U = r.pick(rows.filter((x) => ask.includes(x.kind))), v = (U.values[1] - U.values[0]) / 5;
     const q2 = numQ('v', L(`The velocity of ${U.name}:`, `Die Geschwindigkeit von ${U.name}:`), L(`What is the velocity of ${U.name}?`, `Wie gross ist die Geschwindigkeit von ${U.name}?`), sub('v', U.name), 'm/s', v, [
       { value: U.values[1] - U.values[0], flag: 'nodt', why: WHY.nodt() },
       { value: -v, flag: 'sign', why: WHY.sign() },

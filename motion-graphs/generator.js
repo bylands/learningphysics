@@ -255,11 +255,13 @@
   // height (the value of G drawn instead of its slope), sign (the slope with the wrong sign),
   // average (the mean slope of a parabola drawn for the whole piece), direction (g changes the
   // wrong way: its end values swapped), curve (g curved like the parabola of G, though it changes
-  // linearly; the only one that keeps the sketch without jumps, so it comes up in half of them).
+  // linearly), value (the first or last piece starts or ends at the wrong value). In the first
+  // and the last piece, direction and value keep the end that joins the next piece, so the
+  // sketch has no jump either; with curve, these come up in seven of ten sketches.
   // The wrong piece stays on the axis and differs from the right one by at least 1 (curve: in
   // its middle); only its own mistake describes it (a sign error in a sloped piece, say, also
   // makes g change the wrong way, so it is left out).
-  const FLAWS = ['height', 'sign', 'average', 'direction', 'curve'];
+  const FLAWS = ['height', 'sign', 'average', 'direction', 'curve', 'value'];
   function flaw(ex, seed) {
     const r = rng(seed ^ 0x1b873593), ax = ex.axes.target, cands = [];
     const onAxis = (v) => [v.y0, v.ym, v.y1].every((y) => y >= ax.lo && y <= ax.hi);
@@ -293,12 +295,34 @@
         if (Object.keys(d).some((k) => d[k] && k !== code) || (code !== 'height' && !d[code])) continue;
         cands.push({ piece: i, code, vals: ex.answer.map((x, k) => (k === i ? v : x)) });
       }
+      // the first or the last piece, still joined to its neighbour: its free end wrong
+      if (i !== 0 && i !== ex.pieces.length - 1) return;
+      const free = i === 0 ? 'y0' : 'y1', joint = i === 0 ? 'y1' : 'y0';
+      const edge = (code, y) => {
+        const v = { [joint]: c[joint], [free]: y };
+        v.ym = (v.y0 + v.y1) / 2;
+        if (!onAxis(v) || Math.abs(y - c[free]) < 1) return;
+        const d = describes(v, c, p);
+        // value: the end only; the right shape (constant or sloped), or steeper the same way
+        if (code === 'value' && (Object.values(d).some(Boolean) || (!sloped(p) ? false : Math.sign(v.y1 - v.y0) !== Math.sign(c.y1 - c.y0)))) return;
+        if (code === 'direction' && Object.keys(d).some((k) => d[k] && k !== 'direction')) return;
+        cands.push({ piece: i, code, edge: true, vals: ex.answer.map((x, k) => (k === i ? v : x)) });
+      };
+      if (sloped(p)) {
+        edge('direction', 2 * c[joint] - c[free]);
+        edge('value', c[free] + (c[free] - c[joint]));
+      } else {
+        edge('value', c[free] + 2);
+        edge('value', c[free] - 2);
+      }
     });
-    const curves = cands.filter((x) => x.code === 'curve'), heights = cands.filter((x) => x.code === 'height');
-    const u = r.next();
-    if (curves.length && u < 0.5) return r.pick(curves);
-    if (heights.length && u < 0.7) return r.pick(heights);
-    const rest = cands.filter((x) => x.code !== 'curve');
+    // seven of ten without a jump: the curve, or the first or last piece wrong at its free end
+    const curves = cands.filter((x) => x.code === 'curve'), edges = cands.filter((x) => x.edge);
+    const heights = cands.filter((x) => x.code === 'height'), u = r.next();
+    if (edges.length && u < 0.35) return r.pick(edges);
+    if (curves.length && u < 0.7) return r.pick(curves);
+    if (heights.length && u < 0.8) return r.pick(heights);
+    const rest = cands.filter((x) => x.code !== 'curve' && !x.edge);
     return r.pick(rest.length ? rest : cands);
   }
 
