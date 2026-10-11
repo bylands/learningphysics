@@ -516,6 +516,18 @@
     curve: () => L(`It is curved, but ${Q(ex.to)} changes linearly here.`, `Es ist gekrümmt, aber ${Q(ex.to)} ändert sich hier linear.`),
     value: () => L(`It starts or ends at the wrong value: not the slope of ${Q(ex.from)} there.`, `Es beginnt oder endet beim falschen Wert: nicht bei der Steigung von ${Q(ex.from)} dort.`),
   };
+  // why a mistake c that was chosen does not describe the wrong piece (without naming the right one)
+  function notWhy(c) {
+    const F = Q(ex.from), f = Q(ex.to);
+    return `${L('That is not the mistake in this piece:', 'Das ist nicht der Fehler in diesem Stück:')} ${{
+      height: L(`it does not show the value of ${F}.`, `Es zeigt nicht den Wert von ${F}.`),
+      sign: L('its sign is right.', 'Sein Vorzeichen stimmt.'),
+      average: L('it is not constant at the mean value.', 'Es ist nicht konstant beim Mittelwert.'),
+      direction: L(`${f} does not change the wrong way.`, `${f} ändert sich nicht in die falsche Richtung.`),
+      curve: L('it is not curved where it should be straight.', 'Es ist nicht gekrümmt, wo es gerade sein sollte.'),
+      value: L('it is not just a wrong value at the start or the end.', 'Es ist nicht bloss ein falscher Wert am Anfang oder am Ende.'),
+    }[c]}`;
+  }
   // what the sketch shows in its wrong piece p, and why that is wrong
   function flawWhy(code, p) {
     const F = Q(ex.from), f = Q(ex.to), fb = BAR[ex.to], up = p.g1 > p.g0;
@@ -549,7 +561,7 @@
         { type: 'choice', key: 'piece', prompt: L('Which piece of the sketch is wrong?', 'Welches Stück der Skizze ist falsch?'),
           options: e.pieces.map((x, k) => ({ html: `${piece(k + 1)} (${when(x)})`, correct: k === i, flag: null, why: k === i ? '' : `${L(`${piece(k + 1)} is right:`, `${piece(k + 1)} stimmt:`)} ${right(k)}` })) },
         { type: 'choice', key: 'what', prompt: L('What is wrong with it?', 'Was ist daran falsch?'),
-          options: window.Motion.FLAWS.map((c) => ({ html: FLAW_TEXT[c](), correct: c === f.code, flag: null, why: c === f.code ? '' : flawWhy(f.code, p) })) },
+          options: window.Motion.FLAWS.map((c) => ({ html: FLAW_TEXT[c](), correct: c === f.code, flag: null, why: c === f.code ? '' : notWhy(c) })) },
       ];
       return {
         kind: 'error', id: `error-${seed}`, seed, difficulty: 4, flaw: f,

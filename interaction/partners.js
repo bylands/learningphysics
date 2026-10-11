@@ -572,8 +572,8 @@
       // the pairs in the order of the list (not shuffled)
       { type: 'choice', key: 'wrong', prompt: T(`Which of ${who}'s pairs is wrong?`, `Welches Paar von ${who} ist falsch?`), pics: false, options: lines.map((x, i) => (x.wrong
         ? o(pairText(x, i), 'ok', `${T('Right.', 'Richtig.')} ${sameBody}`)
-        : o(pairText(x, i), x.code, T(`Pair ${i + 1} is right: ${fx(x.a)} ↔ ${fx(x.b)} — the same two bodies, swapped.${x.code === 'mass-wins' ? ' However small one body is, it pulls the Earth just as hard as the Earth pulls it.' : ''} The wrong one is pair ${k}. ${sameBody}`,
-          `Paar ${i + 1} stimmt: dieselben zwei Körper, vertauscht. ${x.code === 'mass-wins' ? 'Wie klein ein Körper auch ist, er zieht die Erde genauso stark an wie die Erde ihn. ' : ''}Falsch ist Paar ${k}. ${sameBody}`)))) },
+        : o(pairText(x, i), x.code, T(`Pair ${i + 1} is right: ${fx(x.a)} ↔ ${fx(x.b)} — the same two bodies, swapped.${x.code === 'mass-wins' ? ' However small one body is, it pulls the Earth just as hard as the Earth pulls it.' : ''}`,
+          `Paar ${i + 1} stimmt: dieselben zwei Körper, vertauscht.${x.code === 'mass-wins' ? ' Wie klein ein Körper auch ist, er zieht die Erde genauso stark an wie die Erde ihn.' : ''}`)))) },
       q(r, 'why', T(`What is wrong with pair ${k}?`, `Was ist an Paar ${k} falsch?`), [
         o(T(`Both forces act on ${body}; partners act on two different bodies.`, `Beide Kräfte wirken auf ${body}; Kraft und Gegenkraft wirken auf zwei verschiedene Körper.`), 'ok', `${T('Right.', 'Richtig.')} ${sameBody} ${real}`),
         o(T('Nothing: the two forces are equally large and opposite, so they are partners.', 'Nichts: Die beiden Kräfte sind gleich gross und entgegengesetzt, also sind sie Kraft und Gegenkraft.'), 'pair-confusion',

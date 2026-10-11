@@ -75,10 +75,10 @@
     const matching = match('net', T('Match each case with the direction of the net force on the cabin.', 'Ordne jedem Fall die Richtung der resultierenden Kraft auf die Kabine zu.'),
       cs.map(([d, s], i) => {
         const right = idOf(acc[i]), vel = idOf(d), wrong = {};
-        if (vel !== right) wrong[vel] = { code: 'active-force', why: T(`Case ${LETTERS[i]}: the net force does not point the way the cabin moves, but the way it accelerates: ${accWord(acc[i])}.`, `Fall ${LETTERS[i]}: Die resultierende Kraft zeigt nicht in Bewegungsrichtung, sondern in Richtung der Beschleunigung: ${accWord(acc[i])}.`) };
+        if (vel !== right) wrong[vel] = { code: 'active-force', why: T(`Case ${LETTERS[i]}: the net force does not point the way the cabin moves, but the way it accelerates.`, `Fall ${LETTERS[i]}: Die resultierende Kraft zeigt nicht in Bewegungsrichtung, sondern in Richtung der Beschleunigung.`) };
         return {
           label: `<b>${LETTERS[i]}</b> ${describe(cs[i])}`, name: LETTERS[i], answer: right, wrong,
-          other: T(`Case ${LETTERS[i]} (${describe(cs[i])}): the acceleration is ${accWord(acc[i])} — and the net force points like the acceleration.`, `Fall ${LETTERS[i]} (${describe(cs[i])}): Die Beschleunigung ist ${accWord(acc[i])} — und die resultierende Kraft zeigt wie die Beschleunigung.`),
+          other: T(`Case ${LETTERS[i]} (${describe(cs[i])}): find the acceleration first (speeding up, slowing down or steady?); the net force points like the acceleration.`, `Fall ${LETTERS[i]} (${describe(cs[i])}): Bestimme zuerst die Beschleunigung (wird schneller, langsamer oder gleich schnell?); die resultierende Kraft zeigt wie die Beschleunigung.`),
           why: T(`Case ${LETTERS[i]} (${describe(cs[i])}): the acceleration is ${accWord(acc[i])}, so the net force is ${accWord(acc[i])} too.`, `Fall ${LETTERS[i]} (${describe(cs[i])}): Die Beschleunigung ist ${accWord(acc[i])}, also auch die resultierende Kraft.`),
         };
       }), choices);
@@ -208,7 +208,7 @@
       const s = S[k], wrong = {};
       for (const [dk, w] of Object.entries(s.wrong)) if (keys.includes(dk)) wrong[dk] = w;
       return { label: s.text, name: s.name, answer: s.key, why: `${cap(T(DIAG[s.key].en, DIAG[s.key].de))}: ${s.why}`, wrong,
-        other: T(`This diagram does not fit. ${s.why}`, `Dieses Diagramm passt nicht. ${s.why}`) };
+        other: T('This diagram does not fit. Go through the forces: the weight, and one force from everything that touches the body.', 'Dieses Diagramm passt nicht. Geh die Kräfte durch: die Gewichtskraft und je eine Kraft von allem, was den Körper berührt.') };
     });
 
     const listed = (fn) => picks.map((k) => `<li><b>${S[k].name}</b>: ${fn(S[k])}</li>`).join('');
