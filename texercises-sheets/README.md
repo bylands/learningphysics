@@ -1,12 +1,25 @@
 # TeXercises sheets as LaTeX
 
-Compile a TeXercises collection to PDF outside TeXercises.
+Compile a TeXercises collection to PDF outside TeXercises (pdflatex, TeX Live 2026).
 
-- `texercises-lp.sty`: the TeXercises solver macros (\NewQty, \SolQty, \ConvTo, boxes, constants, units), rebuilt from the TeXercises cheatsheet.
+- `texercises-lp.sty`: the TeXercises solver macros (\NewQty, \SolQty, \ConvTo, boxes, constants, material values, units), rebuilt from the TeXercises cheatsheet.
 - `build_sheet.py <export folder> <collection.json> <out.tex> [--short]`: writes the sheet, exercises first, then solutions.
+- `test_all.py <export folder> [build dir] [-j N] [--only key,...]`: compiles every exercise of an export on its own (text and solution) and lists the failures.
 - `pilot-electrostatics.json`: a pilot collection (18 exercises, Learning Physics electrostatics apps).
 
 Images are not in the TeXercises export: put them in `images/<name>` next to the .tex, or the sheet prints a placeholder.
 
     python3 build_sheet.py ../texercises-by-2026-10-10 pilot-electrostatics.json pilot.tex
     latexmk -pdf pilot.tex
+
+## What the package does
+
+- `\NewQty[opts]{x}{13.4}[\milli\watt][e-3][\watt]`: `\xO` as given, `\x` in SI (at most 4 figures), `\xX` the number, `\xU` the unit, `\xOX`/`\xOU` number and unit as typed. A factor starting with `e` is a power of ten; any other factor (or `\NewQty*`) multiplies. A decimal comma and an uncertainty such as `3.2(1)` are accepted.
+- `\SolQty[opts]{x}[formula]{xfp expression}[unit]`: `\x` (4 figures), `\xS{n}`, `\xP{p}{n}` (prefix 10^p), `\xQ`, `\xI`, `\xF`, `\xX`, `\xU`, `\xO`. `scientific-notation=false` gives fixed notation. Parentheses the author left open (or closed once too often) are balanced.
+- Quantities are local to the group they are defined in, so exercises do not leak names into each other. A few names that would replace LaTeX commands the page needs (`value`, `par`, ...) keep the LaTeX meaning; a quantity `S` keeps siunitx' `\SI`.
+- Unit macros work on their own too (`\m`, `\ohm`, as in TeXercises), plus the TeXercises shortcuts (`\kmph`, `\mps`, ...).
+- Constants `\ncg`, `\nce`, ... and the older `\ncgn` (bare number). Material values `\cWa`, `\RKu`, `\aKo`, `\TfWa`, ... (first two letters of the German name) from a school table; `\Waerme{...}`/`\Dichte{...}` print a short note outside the solver part.
+- Boxes `\Geg`, `\Ges`, `\Lsg`, `\tcbhighmath[aufgabe|loesung|highlight math]`, lists `abcliste`/`abclist` (counter `abc`), `wf` with `\claim`, `\trueclaim`, `\falseclaim`, difficulty pieces `\pawnB` ... `\kingB`, `\al{...}` (align*).
+- `build_sheet.py` closes a display opened as `align*` and closed as `align` the way it was opened.
+
+tkz-fct function plots need gnuplot and `latexmk -pdf -shell-escape`; without them the curve is left out with a warning.

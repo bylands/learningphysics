@@ -26,6 +26,26 @@ def images(tex):
     # so they point to images/<name> (put the files there, or the package prints a placeholder)
     return re.sub(r'#image_path:([^#]+)#', r'images/\1', tex)
 
+MATH_ENVS = {'align', 'align*', 'equation', 'equation*', 'gather', 'gather*', 'multline', 'multline*', 'eqnarray', 'eqnarray*'}
+
+def repair(tex):
+    # a display opened as align* and closed as align (and the like) stops LaTeX; close it as opened
+    out, stack, pos = [], [], 0
+    for m in re.finditer(r'\\(begin|end)\{([A-Za-z*]+)\}', tex):
+        kind, env = m.groups()
+        if kind == 'begin':
+            stack.append(env)
+        elif stack:
+            top = stack.pop()
+            if top != env and top in MATH_ENVS and env in MATH_ENVS:
+                out.append(tex[pos:m.start()] + '\\end{' + top + '}')
+                pos = m.end()
+    out.append(tex[pos:])
+    return ''.join(out)
+
+def prepare(tex):
+    return repair(images(tex))
+
 def esc(s):
     return ''.join('\\' + c if c in '&%$#_{}' else c for c in s)
 
@@ -53,7 +73,7 @@ def main():
     def block(n, it, e, body, with_extra):
         lang = 'de' if e['meta']['language'] == 'GER' else 'en'
         out = [rf'\subsection*{{{n}.\ {esc(e["meta"]["title"])}}}', r'\begingroup', rf'\txlang{{{lang}}}',
-               e['preamble'], body]
+               r'\txinpreamble', e['preamble'], r'\txendpreamble', body]
         if with_extra and it.get('additional'):
             out.append(it['additional'])
         out.append(r'\endgroup')
@@ -65,7 +85,7 @@ def main():
     for n, (it, e) in enumerate(items, 1):
         L += block(n, it, e, (e['short'] if short else e['solution']) or e['short'], False)
     L.append(r'\end{document}')
-    open(out, 'w').write(images('\n'.join(L)) + '\n')
+    open(out, 'w').write(prepare('\n'.join(L)) + '\n')
     print(f'{out}: {len(items)} exercises')
 
 if __name__ == '__main__':
