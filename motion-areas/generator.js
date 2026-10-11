@@ -288,8 +288,12 @@
       }
     });
     if (!cands.length) return null;
-    const unsigned = cands.filter((x) => x.code === 'unsigned');
-    return unsigned.length && r.next() < 0.5 ? r.pick(unsigned) : r.pick(cands);
+    // mostly a mistake in the area (its sign, or a rectangle instead of a trapezoid), sometimes one
+    // in the shape
+    const unsigned = cands.filter((x) => x.code === 'unsigned'), rect = cands.filter((x) => x.code === 'rect'), u = r.next();
+    if (unsigned.length && u < 0.45) return r.pick(unsigned);
+    if (rect.length && u < 0.75) return r.pick(rect);
+    return r.pick(cands);
   }
 
   const api = { T, N, TASKS, KINDS, register, rng, BEND, MID_STEP, G_AXIS, FLAWS, generate, quiz, flaw, evaluate, copied, g, G, gAt, GAt, len, sloped, rate, area, bend };
