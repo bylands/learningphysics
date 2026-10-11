@@ -21,10 +21,10 @@
       idea: { en: 'Without numbers: compare the new force with the old one, and everything that stays the same cancels.', de: 'Ohne Zahlen: Vergleiche die neue Kraft mit der alten, und alles Gleichbleibende kürzt sich.' },
     },
     {
-      scenario: 'line-end', p: { mid: false, t: 2e-6, qa: -3e-6, qb: 4e-6, xa: 0.1, xb: 0.3 },
+      scenario: 'line-end', p: { mid: false, t: 1, qa: -3, qb: 4, xa: 1, xb: 2 },
       practice: [{ types: ['line-end'] }, { en: 'the charge in the middle', de: 'die Ladung in der Mitte', types: ['line-mid'] }],
       name: { en: 'Three in a line', de: 'Drei auf einer Geraden' },
-      idea: { en: 'Each charge exerts its own force, as if the others were not there; the net force is their sum (superposition).', de: 'Jede Ladung übt ihre eigene Kraft aus, als ob die anderen nicht da wären; die resultierende Kraft ist ihre Summe (Superposition).' },
+      idea: { en: 'Each charge exerts its own force, as if the others were not there; the net force is their sum (superposition). In units of F₀ = k q²/d², no calculation is needed to see which force wins.', de: 'Jede Ladung übt ihre eigene Kraft aus, als ob die anderen nicht da wären; die resultierende Kraft ist ihre Summe (Superposition). In Einheiten von F₀ = k q²/d² sieht man ohne Rechnung, welche Kraft gewinnt.' },
     },
     {
       scenario: 'which-tri', p: { shape: 'tri', scaleF: 1.96, pts: [{ c: [0, 1.4 * h * 2 / 3], s: 1 }, { c: [-0.7, -1.4 * h / 3], s: -1 }, { c: [0.7, -1.4 * h / 3], s: 1 }] },
@@ -39,10 +39,10 @@
       idea: { en: 'Measure the forces in units of F₀ = k q²/d²: at twice the distance a quarter, and add them as arrows.', de: 'Miss die Kräfte in Einheiten von F₀ = k q²/d²: im doppelten Abstand ein Viertel, und addiere sie als Pfeile.' },
     },
     {
-      scenario: 'right', p: { t: 2e-6, q1: 3e-6, q2: -4e-6, x1: 0.3, y2: 0.3 },
+      scenario: 'right', p: { t: 2e-6, q1: 3e-6, q2: -4e-6, x1: 0.2, y2: 0.2, F1: 0.6 },
       practice: [{ types: ['right'] }, { en: 'different distances', de: 'verschiedene Abstände', types: ['right-dist'] }],
       name: { en: 'At a right angle', de: 'Im rechten Winkel' },
-      idea: { en: 'Perpendicular forces add like the sides of a rectangle: the net force is its diagonal (Pythagoras), its angle from tan α.', de: 'Senkrechte Kräfte addieren sich wie die Seiten eines Rechtecks: Die resultierende Kraft ist seine Diagonale (Pythagoras), ihr Winkel folgt aus tan α.' },
+      idea: { en: 'One force is given, the other follows from the ratio of the charges and distances. Perpendicular forces add like the sides of a rectangle: the net force is its diagonal (Pythagoras).', de: 'Eine Kraft ist gegeben, die andere folgt aus dem Verhältnis der Ladungen und Abstände. Senkrechte Kräfte addieren sich wie die Seiten eines Rechtecks: Die resultierende Kraft ist seine Diagonale (Pythagoras).' },
     },
     {
       scenario: 'zero-like', p: { q1: 1e-6, q2: 4e-6, d: 0.6, like: true },

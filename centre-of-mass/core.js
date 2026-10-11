@@ -18,8 +18,8 @@
     G: { en: ['F', 'g'], de: ['F', 'G'] },
     x: { en: ['x', ''], de: ['x', ''] },
     y: { en: ['y', ''], de: ['y', ''] },
-    xS: { en: ['x', 'S'], de: ['x', 'S'] },
-    yS: { en: ['y', 'S'], de: ['y', 'S'] },
+    xS: { en: ['x', 'G'], de: ['x', 'S'] },
+    yS: { en: ['y', 'G'], de: ['y', 'S'] },
     tanTheta: { en: ['tan θ', ''], de: ['tan θ', ''] },
   };
   const TEX_LETTER = { 'tan θ': '\\tan\\theta' };
