@@ -14,7 +14,17 @@ cards in its order, shows their tags, and lets visitors filter by tag. This serv
                                "labels": {key: {"en": name, "de": name}}}      saves apps.json
     /admin/api/sets      GET  the apps with their modes, and the sets
                          POST {"sets": {name: set}}                          saves sets.json
+    /admin/api/sheets    GET  the state of the exercise sheets (LaTeX, exercises) and the sets
+    /admin/api/texercises POST a TeXercises export (zip): its exercises by the teacher are kept for
+                         the sheets (hub-data/texercises/), all others are left out
+    /admin/sheet/<set>.pdf            the set's exercise sheet (public, like the set's page)
+    /admin/sheet/<set>-solutions.pdf  the same with the solutions (logged in only)
+    /admin/sheet/<set>.json           {"exercises": n, "available": bool}: whether there is a sheet
     /admin/static/...    the panel's scripts and styles
+
+Exercise sheets (sheets/sheets.py): a set's apps and learning objectives choose exercises from
+sheets/pool.json; build_sheet.py and LuaLaTeX make the PDF, cached in hub-data/sheets/. They need
+LaTeX on the server (see sheets/README.md); without it the hub page shows no sheet links.
 
 A set is opened at learningphysics.ch/<name> (nginx serves the hub page for it, which then shows
 only the set's apps; see hub/index.html and shared/sets.js, which applies the set in the apps):
@@ -69,7 +79,30 @@ from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 from urllib.parse import parse_qs
 
+# the exercise sheets (sheets/ next to this file, sent by deploy.sh); the panel works without them.
+# The service restarts only when this file changes, so sheets.py is read again when it changes.
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+_SHEETS = {"mod": None, "mtime": None}
+
+
+def sheets_module():
+    path = Path(__file__).resolve().parent / "sheets" / "sheets.py"
+    try:
+        mtime = path.stat().st_mtime
+    except OSError:
+        return None
+    if _SHEETS["mtime"] != mtime:
+        try:
+            import importlib
+            from sheets import sheets as mod
+            _SHEETS["mod"], _SHEETS["mtime"] = (importlib.reload(mod) if _SHEETS["mod"] else mod), mtime
+        except Exception:  # broken or missing: no sheets
+            _SHEETS["mod"], _SHEETS["mtime"] = None, mtime
+    return _SHEETS["mod"]
+
 COOKIE = "hub_admin"
+OWN_CREATOR = "by"  # the teacher's creator code on TeXercises: only their exercises go on sheets
+SET_NAME = re.compile(r"[a-z0-9][a-z0-9-]{0,39}")
 SESSION_DAYS = 30
 MAX_BODY = 256 * 1024
 MAX_TAGS = 8  # per app
@@ -82,6 +115,7 @@ MAX_EXAMPLES, MAX_STAGES, MAX_OBJECTIVES = 100, 300, 50  # per app in a set
 # nginx serves itself, and some kept free
 RESERVED = {"admin", "api", "apps", "crosswords", "electric-circuits", "hub", "hub-admin", "hub-data", "index", "katex",
             "lang", "millionaire", "objectives", "privacy", "set", "sets", "static", "www"}
+MAX_UPLOAD = 64 * 1024 * 1024  # a TeXercises export
 LOGIN_ATTEMPTS, LOGIN_WINDOW = 10, 15 * 60  # failed logins per address and window (s)
 
 
@@ -350,10 +384,15 @@ def write_config(path: Path, config: Dict[str, object]) -> None:
 
 # ---------------------------------------------------------------------- the service
 class Admin:
-    def __init__(self, password_file: Path, hub: Path, config: Path, sets: Optional[Path] = None) -> None:
+    def __init__(self, password_file: Path, hub: Path, config: Path, sets: Optional[Path] = None,
+                 own: str = OWN_CREATOR) -> None:
         self.password_file, self.hub, self.config = password_file, hub, config
         self.sets = sets or config.parent / "sets.json"
         self.failures: Dict[str, List[float]] = {}
+        # exercise sheets: the uploaded exercises and the cached PDFs, next to the sets
+        self.texercises = config.parent / "texercises"
+        self.sheet_cache = config.parent / "sheets"
+        self.own = own
 
     def stored_hash(self) -> str:
         """Read on every use, so a new password takes effect without a restart."""
@@ -443,6 +482,47 @@ class Admin:
         write_config(self.sets, sets)
         return {"apps": apps, **sets}
 
+    # ------------------------------------------------------------------ exercise sheets
+    def sheet_set(self, name: str) -> Optional[Dict[str, object]]:
+        cur = self.current_sets()
+        s = cur.get("sets", {}).get(name)
+        return s if isinstance(s, dict) else None
+
+    def app_names(self) -> Dict[str, str]:
+        return {a["id"]: str(a.get("name") or a["id"]) for a in self.apps()}
+
+    def sheet_info(self, name: str) -> Dict[str, object]:
+        sheetlib = sheets_module()
+        s = self.sheet_set(name)
+        if sheetlib is None or s is None:
+            return {"exercises": 0, "available": False}
+        n = len(sheetlib.choose(s, sheetlib.load_pool(), sheetlib.available(self.texercises)))
+        return {"exercises": n, "available": bool(n and sheetlib.lualatex())}
+
+    def sheet(self, name: str, solutions: bool) -> Tuple[Optional[bytes], str]:
+        sheetlib = sheets_module()
+        s = self.sheet_set(name)
+        if s is None:
+            return None, "there is no set of this name"
+        if sheetlib is None:
+            return None, "exercise sheets are not installed"
+        return sheetlib.make_pdf(name, s, self.app_names(), self.texercises, self.sheet_cache,
+                                 "both" if solutions else "exercises")
+
+    def sheets_state(self) -> Dict[str, object]:
+        sheetlib = sheets_module()
+        state = sheetlib.status(self.texercises) if sheetlib else {"latex": False, "exercises": 0, "pool": 0, "in_pool": 0, "uploaded": None}
+        sets = self.current_sets().get("sets", {})
+        state["sets"] = [{"name": n, "title": s.get("title", n), **self.sheet_info(n)} for n, s in sets.items()]
+        state["own"] = self.own
+        return state
+
+    def store_texercises(self, data: bytes) -> Dict[str, int]:
+        sheetlib = sheets_module()
+        if sheetlib is None:
+            raise ValueError("exercise sheets are not installed")
+        return sheetlib.store_export(data, self.texercises, self.own)
+
 
 API = ("/api/config", "/api/sets")
 
@@ -506,6 +586,32 @@ def make_handler(admin: Admin):
                     (f"; Max-Age={SESSION_DAYS * 86400}" if cookie else "; Max-Age=0")
             self.send(HTTPStatus.SEE_OTHER, "", headers=headers)
 
+        def sheet_route(self, rest: str) -> None:
+            """<set>.json, <set>.pdf, <set>-solutions.pdf"""
+            m = re.fullmatch(r"([a-z0-9][a-z0-9-]{0,48})\.(pdf|json)", rest)
+            if not m:
+                self.send(404, "Not found", "text/plain; charset=utf-8")
+                return
+            name, kind = m.group(1), m.group(2)
+            solutions = False
+            if kind == "pdf" and name.endswith("-solutions") and admin.sheet_set(name) is None:
+                name, solutions = name[: -len("-solutions")], True
+            if not SET_NAME.fullmatch(name):
+                self.send(404, "Not found", "text/plain; charset=utf-8")
+            elif kind == "json":
+                self.json(200, admin.sheet_info(name))
+            elif solutions and not self.logged_in():
+                self.send(403, page("Solutions", '<p class="lead">The sheet with the solutions is for teachers: '
+                                    '<a href="/admin/">log in</a>, then open the link again.</p>'))
+            else:
+                pdf, why = admin.sheet(name, solutions)
+                if pdf is None:
+                    self.send(503 if "LaTeX" in why or "installed" in why else 404,
+                              page("Exercise sheet", f'<p class="lead">No exercise sheet: {escape(why)}.</p>'))
+                else:
+                    fname = f"{name}-solutions.pdf" if solutions else f"{name}.pdf"
+                    self.send(200, pdf, "application/pdf", {"Content-Disposition": f'inline; filename="{fname}"'})
+
         # -------------------------------------------------------------- routes
         def do_HEAD(self) -> None:
             self.do_GET()
@@ -520,6 +626,15 @@ def make_handler(admin: Admin):
                 self.send(200, DRAG_JS, "text/javascript; charset=utf-8")
             elif path == "/static/sets.js":
                 self.send(200, SETS_JS, "text/javascript; charset=utf-8")
+            elif path == "/static/sheets.js":
+                self.send(200, SHEETS_JS, "text/javascript; charset=utf-8")
+            elif path.startswith("/sheet/"):
+                self.sheet_route(path[len("/sheet/"):])
+            elif path == "/api/sheets":
+                if not self.logged_in():
+                    self.json(403, {"error": "login"})
+                else:
+                    self.json(200, admin.sheets_state())
             elif path == "/static/admin.css":
                 self.send(200, ADMIN_CSS, "text/css; charset=utf-8")
             elif path in API:
@@ -549,6 +664,23 @@ def make_handler(admin: Admin):
                     self.send(403, login_page(bool(stored), "Wrong password."))
             elif path == "/logout":
                 self.redirect("")
+            elif path == "/api/texercises":
+                if not self.logged_in():
+                    self.json(403, {"error": "login"})
+                    return
+                try:
+                    n = int(self.headers.get("Content-Length") or 0)
+                except ValueError:
+                    n = -1
+                if n <= 0 or n > MAX_UPLOAD:
+                    self.json(413, {"error": "the file is too large (at most 64 MB)"})
+                    return
+                try:
+                    self.json(200, admin.store_texercises(self.rfile.read(n)))
+                except ValueError as e:
+                    self.json(400, {"error": str(e)})
+                except OSError:
+                    self.json(500, {"error": "could not store the exercises"})
             elif path in API:
                 # JSON only: a form on another site cannot send it (and the cookie is SameSite=Strict)
                 if not self.logged_in():
@@ -587,7 +719,7 @@ def page(title: str, body: str, script: bool = False) -> str:
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
   <link rel="stylesheet" href="/admin/static/admin.css">
-  {'<script defer src="/admin/static/drag.js"></script><script defer src="/admin/static/admin.js"></script><script defer src="/admin/static/sets.js"></script>' if script else ''}
+  {'<script defer src="/admin/static/drag.js"></script><script defer src="/admin/static/admin.js"></script><script defer src="/admin/static/sets.js"></script><script defer src="/admin/static/sheets.js"></script>' if script else ''}
 </head>
 <body>
   <header class="wrap">
@@ -645,6 +777,9 @@ def panel_page() -> str:
       </div>
       <div id="set-list" class="setlist"></div>
       <div id="set-edit"></div>
+      <h2 class="section">Exercise sheets</h2>
+      <p class="note">Every set gets an exercise sheet (PDF) from your TeXercises exercises: per app and learning objective of the set, the exercises listed for it (sheets/pool.json). The set's page links to the sheet; the sheet with the solutions is only for you (logged in). Upload a TeXercises export (Settings → Export, the .zip) whenever your exercises change: only your own exercises are kept.</p>
+      <div id="sheets" class="sheets"><p class="note">Loading…</p></div>
     </section>
     <section id="view-quizzes">
       <p class="lead">Live classroom quizzes: students join on their phones, the teacher screen runs on the projector.</p>
@@ -675,6 +810,9 @@ def panel_page() -> str:
 
 
 ADMIN_CSS = """
+.sheets table { border-collapse: collapse; margin: 8px 0 12px; }
+.sheets td, .sheets th { text-align: left; padding: 3px 12px 3px 0; }
+.sheets .upload { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin: 8px 0; }
 :root { --bg: #f6f5f1; --card: #fff; --ink: #1f2328; --muted: #646b73; --line: #d9d6ce; --accent: #2b59c3; --accent-ink: #fff; --ok: #1d7a3e; --bad: #b3261e; --chip: #eef2fb; color-scheme: light; }
 @media (prefers-color-scheme: dark) { :root { --bg: #15171a; --card: #1e2125; --ink: #e6e3dc; --muted: #9aa0a6; --line: #3a3e44; --accent: #7aa2ff; --accent-ink: #0d1320; --ok: #7fd49a; --bad: #ff8a80; --chip: #26304a; color-scheme: dark; } }
 * { box-sizing: border-box; }
@@ -999,6 +1137,53 @@ ADMIN_JS = r"""
 })();
 """
 
+
+SHEETS_JS = r"""
+// exercise sheets: the state (LaTeX on the server, uploaded exercises), the upload of a TeXercises
+// export, and per set the links to its sheet and to the sheet with the solutions
+(() => {
+  const box = document.getElementById('sheets');
+  if (!box) return;
+  const el = (tag, text, attrs) => { const e = document.createElement(tag); if (text) e.textContent = text; Object.assign(e, attrs || {}); return e; };
+  function show(st) {
+    box.replaceChildren();
+    const up = st.uploaded ? new Date(st.uploaded * 1000).toLocaleString() : 'never';
+    box.append(el('p', `LaTeX on the server: ${st.latex ? 'yes' : 'no (see hub-admin/sheets/README.md)'} · exercises: ${st.exercises} (export uploaded: ${up}) · in the pool: ${st.in_pool} of ${st.pool}`, { className: 'note' }));
+    const form = el('div', '', { className: 'upload' });
+    const file = el('input', '', { type: 'file', accept: ".zip,.tgz,application/zip,application/gzip" });
+    const btn = el('button', 'Upload export', { type: 'button' });
+    const msg = el('span', '', { className: 'status' });
+    btn.addEventListener('click', () => {
+      if (!file.files[0]) { msg.textContent = 'Choose the .zip first.'; return; }
+      msg.textContent = 'Uploading…';
+      fetch('/admin/api/texercises', { method: 'POST', headers: { 'Content-Type': 'application/zip' }, body: file.files[0] })
+        .then((r) => r.json().then((d) => ({ ok: r.ok, d })))
+        .then(({ ok, d }) => { msg.textContent = ok ? `Kept ${d.exercises} of your exercises (${d.skipped} by others left out).` : `Error: ${d.error}`; if (ok) load(); })
+        .catch(() => { msg.textContent = 'The upload failed.'; });
+    });
+    form.append(el('label', 'TeXercises export: '), file, btn, msg);
+    box.append(form);
+    if (!st.sets.length) { box.append(el('p', 'No sets yet.', { className: 'note' })); return; }
+    const t = el('table');
+    t.append(el('tr', ''));
+    t.firstChild.append(el('th', 'Set'), el('th', 'Exercises'), el('th', 'Sheet'), el('th', 'With solutions'));
+    st.sets.forEach((s) => {
+      const tr = el('tr');
+      const link = (href, text) => s.available ? el('a', text, { href, target: '_blank', rel: 'noopener' }) : el('span', '–');
+      const td = (child) => { const c = el('td'); c.append(child); return c; };
+      tr.append(td(el('span', `${s.title} (${s.name})`)), td(el('span', String(s.exercises))),
+        td(link(`/admin/sheet/${s.name}.pdf`, 'PDF ↗')), td(link(`/admin/sheet/${s.name}-solutions.pdf`, 'PDF ↗')));
+      t.append(tr);
+    });
+    box.append(t);
+    box.append(el('p', 'The first sheet after a change takes up to a minute; after that it is kept.', { className: 'note' }));
+  }
+  function load() {
+    fetch('/admin/api/sheets').then((r) => r.json()).then(show).catch(() => { box.textContent = 'Could not load the state of the sheets.'; });
+  }
+  load();
+})();
+"""
 
 SETS_JS = r"""
 // The sets of the admin panel, and the switch between its views (#quizzes, the first, and #games:

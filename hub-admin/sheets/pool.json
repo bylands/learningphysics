@@ -1,0 +1,3875 @@
+{
+ "_about": "Built by build_pool.py: for every app, its exercises and the objectives each practises. Review and edit by hand: move a key between objectives, or delete it.",
+ "apps": {
+  "bulb-brightness": {
+   "objectives": {
+    "current": [
+     "e19627-junctions",
+     "e19631-power-of-light-bulbs",
+     "e22714-currents-and-voltages-in-a-circuit",
+     "circuit-trainer-09-internal-resistance"
+    ],
+    "power": [
+     "e22725-brightness",
+     "e19631-power-of-light-bulbs",
+     "e18080-light-bulb-1",
+     "e18088-light-bulb-2",
+     "e18133-flashlight",
+     "e18409-internal-resistance"
+    ],
+    "change": [
+     "e18135-characteristics-of-a-light-bulb"
+    ]
+   },
+   "exercises": {
+    "e19631-power-of-light-bulbs": {
+     "source": "export",
+     "title": "Power of Light Bulbs",
+     "lang": "en",
+     "difficulty": 2,
+     "images": false,
+     "url": "/exercise/power-of-light-bulbs/"
+    },
+    "e19627-junctions": {
+     "source": "export",
+     "title": "Junctions",
+     "lang": "en",
+     "difficulty": 1,
+     "images": false,
+     "url": "/exercise/junctions/"
+    },
+    "e18080-light-bulb-1": {
+     "source": "export",
+     "title": "Light Bulb",
+     "lang": "en",
+     "difficulty": 1,
+     "images": false,
+     "url": "/exercise/light-bulb-1/"
+    },
+    "e18088-light-bulb-2": {
+     "source": "export",
+     "title": "Light Bulb",
+     "lang": "en",
+     "difficulty": 2,
+     "images": false,
+     "url": "/exercise/light-bulb-2/"
+    },
+    "e18133-flashlight": {
+     "source": "export",
+     "title": "Flashlight",
+     "lang": "en",
+     "difficulty": 2,
+     "images": false,
+     "url": "/exercise/flashlight/"
+    },
+    "e22725-brightness": {
+     "source": "export",
+     "title": "Brightness",
+     "lang": "en",
+     "difficulty": 2,
+     "images": true,
+     "url": "/exercise/brightness/"
+    },
+    "e18409-internal-resistance": {
+     "source": "export",
+     "title": "Internal Resistance",
+     "lang": "en",
+     "difficulty": 1,
+     "images": false,
+     "url": "/exercise/internal-resistance/"
+    },
+    "e24456-switch-on-current-of-a-light-bulb": {
+     "source": "export",
+     "title": "Switch-On Current of a Light Bulb",
+     "lang": "en",
+     "difficulty": 3,
+     "images": false,
+     "url": "/exercise/switch-on-current-of-a-light-bulb/"
+    },
+    "circuit-trainer-09-internal-resistance": {
+     "source": "drafts",
+     "title": "The Resistance inside a Battery",
+     "lang": "en",
+     "difficulty": 3,
+     "images": false,
+     "url": ""
+    },
+    "circuit-trainer-04-fairy-lights": {
+     "source": "drafts",
+     "title": "Fairy Lights",
+     "lang": "en",
+     "difficulty": 2,
+     "images": false,
+     "url": ""
+    },
+    "e22714-currents-and-voltages-in-a-circuit": {
+     "source": "export",
+     "title": "Currents and Voltages in a Circuit",
+     "lang": "en",
+     "difficulty": 2,
+     "images": true,
+     "url": "/exercise/currents-and-voltages-in-a-circuit/"
+    },
+    "e18135-characteristics-of-a-light-bulb": {
+     "source": "export",
+     "title": "Characteristics of a Light Bulb",
+     "lang": "en",
+     "difficulty": 4,
+     "images": true,
+     "url": "/exercise/characteristics-of-a-light-bulb/"
+    }
+   }
+  },
+  "circuit-trainer": {
+   "objectives": {
+    "divide": [
+     "e19486-partial-voltages-in-rc-circuit",
+     "e18405-voltmeter",
+     "circuit-trainer-08-temperature-sensor",
+     "e19544-rlc-series-circuit",
+     "circuit-trainer-03-extension-cable",
+     "e18135-characteristics-of-a-light-bulb"
+    ],
+    "combine": [
+     "circuit-trainer-10-ammeter-voltmeter",
+     "e18131-three-resistors",
+     "e19060-half-life-for-capacitors-in-parallel-and",
+     "circuit-trainer-05-car-lights",
+     "circuit-trainer-07-hair-dryer",
+     "e18123-resistors-in-parallel"
+    ],
+    "backwards": [
+     "e18122-resistors-in-series",
+     "e18090-flat-cable",
+     "e19054-photo-flash",
+     "e24456-switch-on-current-of-a-light-bulb"
+    ],
+    "meters": [
+     "circuit-trainer-10-ammeter-voltmeter",
+     "e18405-voltmeter",
+     "e18403-ammeter",
+     "circuit-trainer-09-internal-resistance",
+     "e18404-range-extension",
+     "e24455-choice-of-material"
+    ]
+   },
+   "exercises": {
+    "circuit-trainer-10-ammeter-voltmeter": {
+     "source": "drafts",
+     "title": "Building an Ammeter and a Voltmeter",
+     "lang": "en",
+     "difficulty": 4,
+     "images": false,
+     "url": ""
+    },
+    "e18405-voltmeter": {
+     "source": "export",
+     "title": "Voltmeter",
+     "lang": "en",
+     "difficulty": 3,
+     "images": false,
+     "url": "/exercise/voltmeter/"
+    },
+    "circuit-trainer-05-car-lights": {
+     "source": "drafts",
+     "title": "A Car on a Winter Evening",
+     "lang": "en",
+     "difficulty": 2,
+     "images": false,
+     "url": ""
+    },
+    "circuit-trainer-07-hair-dryer": {
+     "source": "drafts",
+     "title": "A Hair Dryer with Two Settings",
+     "lang": "en",
+     "difficulty": 3,
+     "images": false,
+     "url": ""
+    },
+    "circuit-trainer-09-internal-resistance": {
+     "source": "drafts",
+     "title": "The Resistance inside a Battery",
+     "lang": "en",
+     "difficulty": 3,
+     "images": false,
+     "url": ""
+    },
+    "circuit-trainer-08-temperature-sensor": {
+     "source": "drafts",
+     "title": "A Temperature Sensor",
+     "lang": "en",
+     "difficulty": 3,
+     "images": false,
+     "url": ""
+    },
+    "circuit-trainer-03-extension-cable": {
+     "source": "drafts",
+     "title": "A Long Extension Cable",
+     "lang": "en",
+     "difficulty": 2,
+     "images": false,
+     "url": ""
+    },
+    "circuit-trainer-06-kitchen-fuse": {
+     "source": "drafts",
+     "title": "Will the Fuse Blow?",
+     "lang": "en",
+     "difficulty": 3,
+     "images": false,
+     "url": ""
+    },
+    "e19486-partial-voltages-in-rc-circuit": {
+     "source": "export",
+     "title": "Partial Voltages in RC Circuit",
+     "lang": "en",
+     "difficulty": 3,
+     "images": false,
+     "url": "/exercise/partial-voltages-in-rc-circuit/"
+    },
+    "e18131-three-resistors": {
+     "source": "export",
+     "title": "Three Resistors",
+     "lang": "en",
+     "difficulty": 1,
+     "images": false,
+     "url": "/exercise/three-resistors/"
+    },
+    "e19060-half-life-for-capacitors-in-parallel-and": {
+     "source": "export",
+     "title": "Half-Life for Capacitors in Parallel and in Series",
+     "lang": "en",
+     "difficulty": 2,
+     "images": false,
+     "url": "/exercise/half-life-for-capacitors-in-parallel-and-in-series/"
+    },
+    "e18403-ammeter": {
+     "source": "export",
+     "title": "Ammeter",
+     "lang": "en",
+     "difficulty": 2,
+     "images": false,
+     "url": "/exercise/ammeter/"
+    },
+    "circuit-trainer-01-led-resistor": {
+     "source": "drafts",
+     "title": "A Resistor for an LED",
+     "lang": "en",
+     "difficulty": 1,
+     "images": false,
+     "url": ""
+    },
+    "circuit-trainer-02-live-wire": {
+     "source": "drafts",
+     "title": "Touching a Live Wire",
+     "lang": "en",
+     "difficulty": 1,
+     "images": false,
+     "url": ""
+    },
+    "e18123-resistors-in-parallel": {
+     "source": "export",
+     "title": "Resistors in Parallel",
+     "lang": "en",
+     "difficulty": 2,
+     "images": false,
+     "url": "/exercise/resistors-in-parallel/"
+    },
+    "e18404-range-extension": {
+     "source": "export",
+     "title": "Range Extension",
+     "lang": "en",
+     "difficulty": 3,
+     "images": false,
+     "url": "/exercise/range-extension/"
+    },
+    "e19544-rlc-series-circuit": {
+     "source": "export",
+     "title": "RLC Series Circuit",
+     "lang": "en",
+     "difficulty": 3,
+     "images": false,
+     "url": "/exercise/rlc-series-circuit/"
+    },
+    "e18122-resistors-in-series": {
+     "source": "export",
+     "title": "Resistors in Series",
+     "lang": "en",
+     "difficulty": 1,
+     "images": false,
+     "url": "/exercise/resistors-in-series/"
+    },
+    "e24455-choice-of-material": {
+     "source": "export",
+     "title": "Choice of Material",
+     "lang": "en",
+     "difficulty": 1,
+     "images": false,
+     "url": "/exercise/choice-of-material/"
+    },
+    "e18090-flat-cable": {
+     "source": "export",
+     "title": "Flat Cable",
+     "lang": "en",
+     "difficulty": 1,
+     "images": false,
+     "url": "/exercise/flat-cable/"
+    },
+    "e19054-photo-flash": {
+     "source": "export",
+     "title": "Photo Flash",
+     "lang": "en",
+     "difficulty": 3,
+     "images": false,
+     "url": "/exercise/photo-flash/"
+    },
+    "e24456-switch-on-current-of-a-light-bulb": {
+     "source": "export",
+     "title": "Switch-On Current of a Light Bulb",
+     "lang": "en",
+     "difficulty": 3,
+     "images": false,
+     "url": "/exercise/switch-on-current-of-a-light-bulb/"
+    },
+    "e18135-characteristics-of-a-light-bulb": {
+     "source": "export",
+     "title": "Characteristics of a Light Bulb",
+     "lang": "en",
+     "difficulty": 4,
+     "images": true,
+     "url": "/exercise/characteristics-of-a-light-bulb/"
+    }
+   }
+  },
+  "potential-circuit": {
+   "objectives": {
+    "track": [],
+    "rules": [
+     "e24450-old-and-new-batteries",
+     "e22714-currents-and-voltages-in-a-circuit"
+    ],
+    "voltage": [],
+    "error": []
+   },
+   "exercises": {
+    "e24450-old-and-new-batteries": {
+     "source": "export",
+     "title": "Old and New Batteries",
+     "lang": "en",
+     "difficulty": 4,
+     "images": false,
+     "url": "/exercise/old-and-new-batteries/"
+    },
+    "e22714-currents-and-voltages-in-a-circuit": {
+     "source": "export",
+     "title": "Currents and Voltages in a Circuit",
+     "lang": "en",
+     "difficulty": 2,
+     "images": true,
+     "url": "/exercise/currents-and-voltages-in-a-circuit/"
+    }
+   }
+  },
+  "capacitors": {
+   "objectives": {
+    "combine": [
+     "e19060-half-life-for-capacitors-in-parallel-and",
+     "e22856-l-in-series-to-r-and-c",
+     "e24290-rc-series-circuit-1",
+     "e19006-rc-glied-im-gleich-und-wechselstromkreis",
+     "e19486-partial-voltages-in-rc-circuit",
+     "e23105-capacitor-circuit-2"
+    ],
+    "sketch": [
+     "e19061-charging-voltage",
+     "e19050-charging-current",
+     "e19063-capacitor-voltage-while-discharging",
+     "e19054-photo-flash",
+     "e19006-rc-glied-im-gleich-und-wechselstromkreis",
+     "e19049-discharging-capacitor"
+    ],
+    "tau": [
+     "e19006-rc-glied-im-gleich-und-wechselstromkreis",
+     "e19053-half-life-and-time-constant",
+     "e19061-charging-voltage",
+     "e19060-half-life-for-capacitors-in-parallel-and",
+     "e19023-rc-kreis-2",
+     "e19050-charging-current"
+    ]
+   },
+   "exercises": {
+    "e19060-half-life-for-capacitors-in-parallel-and": {
+     "source": "export",
+     "title": "Half-Life for Capacitors in Parallel and in Series",
+     "lang": "en",
+     "difficulty": 2,
+     "images": false,
+     "url": "/exercise/half-life-for-capacitors-in-parallel-and-in-series/"
+    },
+    "e19050-charging-current": {
+     "source": "export",
+     "title": "Charging Current",
+     "lang": "en",
+     "difficulty": 3,
+     "images": false,
+     "url": "/exercise/charging-current/"
+    },
+    "e19006-rc-glied-im-gleich-und-wechselstromkreis": {
+     "source": "export",
+     "title": "RC-Glied im Gleich- und Wechselstromkreis",
+     "lang": "de",
+     "difficulty": 4,
+     "images": false,
+     "url": "/exercise/rc-glied-im-gleich-und-wechselstromkreis-1/"
+    },
+    "e19063-capacitor-voltage-while-discharging": {
+     "source": "export",
+     "title": "Capacitor Voltage while Discharging",
+     "lang": "en",
+     "difficulty": 1,
+     "images": false,
+     "url": "/exercise/capacitor-voltage-while-discharging/"
+    },
+    "e19054-photo-flash": {
+     "source": "export",
+     "title": "Photo Flash",
+     "lang": "en",
+     "difficulty": 3,
+     "images": false,
+     "url": "/exercise/photo-flash/"
+    },
+    "e19023-rc-kreis-2": {
+     "source": "export",
+     "title": "RC-Kreis",
+     "lang": "de",
+     "difficulty": 4,
+     "images": false,
+     "url": "/exercise/rc-kreis-2/"
+    },
+    "e19486-partial-voltages-in-rc-circuit": {
+     "source": "export",
+     "title": "Partial Voltages in RC Circuit",
+     "lang": "en",
+     "difficulty": 3,
+     "images": false,
+     "url": "/exercise/partial-voltages-in-rc-circuit/"
+    },
+    "e19061-charging-voltage": {
+     "source": "export",
+     "title": "Charging Voltage",
+     "lang": "en",
+     "difficulty": 4,
+     "images": true,
+     "url": "/exercise/charging-voltage/"
+    },
+    "e19062-current-in-rc-circuit": {
+     "source": "export",
+     "title": "Current in RC Circuit",
+     "lang": "en",
+     "difficulty": 2,
+     "images": false,
+     "url": "/exercise/current-in-rc-circuit/"
+    },
+    "e24290-rc-series-circuit-1": {
+     "source": "export",
+     "title": "RC series circuit",
+     "lang": "en",
+     "difficulty": 3,
+     "images": false,
+     "url": "/exercise/rc-series-circuit-1/"
+    },
+    "e19563-rc-series-circuit": {
+     "source": "export",
+     "title": "RC Series Circuit",
+     "lang": "en",
+     "difficulty": 2,
+     "images": false,
+     "url": "/exercise/rc-series-circuit/"
+    },
+    "e19049-discharging-capacitor": {
+     "source": "export",
+     "title": "Discharging Capacitor",
+     "lang": "en",
+     "difficulty": 2,
+     "images": false,
+     "url": "/exercise/discharging-capacitor/"
+    },
+    "e19053-half-life-and-time-constant": {
+     "source": "export",
+     "title": "Half-Life and Time Constant",
+     "lang": "en",
+     "difficulty": 1,
+     "images": false,
+     "url": "/exercise/half-life-and-time-constant/"
+    },
+    "e19064-timer-circuit": {
+     "source": "export",
+     "title": "Timer Circuit",
+     "lang": "en",
+     "difficulty": 1,
+     "images": false,
+     "url": "/exercise/timer-circuit/"
+    },
+    "e22856-l-in-series-to-r-and-c": {
+     "source": "export",
+     "title": "L in series to R and C",
+     "lang": "en",
+     "difficulty": 3,
+     "images": true,
+     "url": "/exercise/l-in-series-to-r-and-c/"
+    },
+    "e23105-capacitor-circuit-2": {
+     "source": "export",
+     "title": "Capacitor circuit",
+     "lang": "en",
+     "difficulty": 1,
+     "images": false,
+     "url": "/exercise/capacitor-circuit-2/"
+    }
+   }
+  },
+  "impedance": {
+   "objectives": {
+    "elements": [
+     "e19480-lcr-series-circuit",
+     "e19481-lcr-parallel-circuit",
+     "e24290-rc-series-circuit-1",
+     "e24291-rl-parallel-circuit",
+     "impedance-01-tweeter-capacitor",
+     "e22857-resistance-and-reactance-in-a-series-cir"
+    ],
+    "limits": [
+     "e22876-low-pass-filter",
+     "e22922-low-pass-filter-ViI4WBsSMl-cloned",
+     "impedance-01-tweeter-capacitor",
+     "impedance-07-loudspeaker-datasheet",
+     "impedance-04-body-fat-scale"
+    ],
+    "resonance": [
+     "impedance-09-quartz-crystal",
+     "impedance-03-tuning-a-radio",
+     "impedance-05-metal-detector",
+     "e19632-resonance-frequency",
+     "impedance-07-loudspeaker-datasheet",
+     "impedance-02-guitar-pickup"
+    ]
+   },
+   "exercises": {
+    "impedance-01-tweeter-capacitor": {
+     "source": "drafts",
+     "title": "A Tweeter and its Capacitor",
+     "lang": "en",
+     "difficulty": 2,
+     "images": false,
+     "url": ""
+    },
+    "impedance-07-loudspeaker-datasheet": {
+     "source": "drafts",
+     "title": "A Loudspeaker's Datasheet",
+     "lang": "en",
+     "difficulty": 4,
+     "images": false,
+     "url": ""
+    },
+    "impedance-09-quartz-crystal": {
+     "source": "drafts",
+     "title": "A Quartz Crystal",
+     "lang": "en",
+     "difficulty": 5,
+     "images": false,
+     "url": ""
+    },
+    "impedance-03-tuning-a-radio": {
+     "source": "drafts",
+     "title": "Tuning a Radio",
+     "lang": "en",
+     "difficulty": 3,
+     "images": false,
+     "url": ""
+    },
+    "impedance-05-metal-detector": {
+     "source": "drafts",
+     "title": "A Metal Detector",
+     "lang": "en",
+     "difficulty": 3,
+     "images": false,
+     "url": ""
+    },
+    "impedance-02-guitar-pickup": {
+     "source": "drafts",
+     "title": "An Electric Guitar and its Cable",
+     "lang": "en",
+     "difficulty": 3,
+     "images": false,
+     "url": ""
+    },
+    "impedance-06-wireless-charger": {
+     "source": "drafts",
+     "title": "A Wireless Charger",
+     "lang": "en",
+     "difficulty": 4,
+     "images": false,
+     "url": ""
+    },
+    "e19632-resonance-frequency": {
+     "source": "export",
+     "title": "Resonance Frequency",
+     "lang": "en",
+     "difficulty": 2,
+     "images": false,
+     "url": "/exercise/resonance-frequency/"
+    },
+    "impedance-08-contactless-card": {
+     "source": "drafts",
+     "title": "A Contactless Card",
+     "lang": "en",
+     "difficulty": 4,
+     "images": false,
+     "url": ""
+    },
+    "impedance-04-body-fat-scale": {
+     "source": "drafts",
+     "title": "A Body-Fat Scale",
+     "lang": "en",
+     "difficulty": 3,
+     "images": false,
+     "url": ""
+    },
+    "e19480-lcr-series-circuit": {
+     "source": "export",
+     "title": "LCR Series Circuit",
+     "lang": "en",
+     "difficulty": 4,
+     "images": false,
+     "url": "/exercise/lcr-series-circuit/"
+    },
+    "e19481-lcr-parallel-circuit": {
+     "source": "export",
+     "title": "LCR Parallel Circuit",
+     "lang": "en",
+     "difficulty": 4,
+     "images": false,
+     "url": "/exercise/lcr-parallel-circuit/"
+    },
+    "e24290-rc-series-circuit-1": {
+     "source": "export",
+     "title": "RC series circuit",
+     "lang": "en",
+     "difficulty": 3,
+     "images": false,
+     "url": "/exercise/rc-series-circuit-1/"
+    },
+    "e24291-rl-parallel-circuit": {
+     "source": "export",
+     "title": "RL parallel circuit",
+     "lang": "en",
+     "difficulty": 3,
+     "images": false,
+     "url": "/exercise/rl-parallel-circuit/"
+    },
+    "e22857-resistance-and-reactance-in-a-series-cir": {
+     "source": "export",
+     "title": "Resistance and Reactance in a Series Circuit",
+     "lang": "en",
+     "difficulty": 3,
+     "images": false,
+     "url": "/exercise/resistance-and-reactance-in-a-series-circuit/"
+    },
+    "e22876-low-pass-filter": {
+     "source": "export",
+     "title": "Low Pass Filter",
+     "lang": "en",
+     "difficulty": 3,
+     "images": false,
+     "url": "/exercise/low-pass-filter/"
+    },
+    "e22922-low-pass-filter-ViI4WBsSMl-cloned": {
+     "source": "export",
+     "title": "Low Pass Filter",
+     "lang": "en",
+     "difficulty": 3,
+     "images": false,
+     "url": "/exercise/low-pass-filter-ViI4WBsSMl-cloned/"
+    },
+    "e19539-ac-motor": {
+     "source": "export",
+     "title": "AC Motor",
+     "lang": "en",
+     "difficulty": 1,
+     "images": false,
+     "url": "/exercise/ac-motor/"
+    },
+    "e19541-capacitive-and-inductive-reactance": {
+     "source": "export",
+     "title": "Capacitive and Inductive Reactance",
+     "lang": "en",
+     "difficulty": 2,
+     "images": false,
+     "url": "/exercise/capacitive-and-inductive-reactance/"
+    }
+   }
+  },
+  "rl-switch": {
+   "objectives": {
+    "keep": [],
+    "after": [],
+    "steady": []
+   },
+   "exercises": {}
+  },
+  "torque": {
+   "objectives": {
+    "arm": [
+     "torque-04-bergauf-treten",
+     "torque-06-turmdrehkran",
+     "torque-02-radmutter",
+     "torque-11-brecheisen",
+     "torque-08-hammer-balancieren",
+     "torque-01-brandschutztuer"
+    ],
+    "rank": [],
+    "weight": [
+     "torque-10-kipptest-bus",
+     "torque-08-hammer-balancieren",
+     "torque-07-einkaufstasche",
+     "torque-12-schubkarre"
+    ],
+    "balance": [
+     "torque-06-turmdrehkran",
+     "torque-03-wippe",
+     "torque-08-hammer-balancieren",
+     "torque-04-bergauf-treten",
+     "torque-02-radmutter",
+     "torque-11-brecheisen"
+    ]
+   },
+   "exercises": {
+    "torque-08-hammer-balancieren": {
+     "source": "drafts",
+     "title": "Einen Hammer balancieren",
+     "lang": "de",
+     "difficulty": 3,
+     "images": false,
+     "url": ""
+    },
+    "torque-06-turmdrehkran": {
+     "source": "drafts",
+     "title": "Ein Turmdrehkran",
+     "lang": "de",
+     "difficulty": 3,
+     "images": false,
+     "url": ""
+    },
+    "torque-04-bergauf-treten": {
+     "source": "drafts",
+     "title": "Bergauf treten",
+     "lang": "de",
+     "difficulty": 2,
+     "images": false,
+     "url": ""
+    },
+    "torque-02-radmutter": {
+     "source": "drafts",
+     "title": "Eine festsitzende Radmutter",
+     "lang": "de",
+     "difficulty": 2,
+     "images": false,
+     "url": ""
+    },
+    "torque-11-brecheisen": {
+     "source": "drafts",
+     "title": "Ein Brecheisen",
+     "lang": "de",
+     "difficulty": 2,
+     "images": false,
+     "url": ""
+    },
+    "torque-10-kipptest-bus": {
+     "source": "drafts",
+     "title": "Der Kipptest eines Busses",
+     "lang": "de",
+     "difficulty": 4,
+     "images": false,
+     "url": ""
+    },
+    "torque-03-wippe": {
+     "source": "drafts",
+     "title": "Wippe mit Elternteil",
+     "lang": "de",
+     "difficulty": 2,
+     "images": false,
+     "url": ""
+    },
+    "torque-01-brandschutztuer": {
+     "source": "drafts",
+     "title": "Eine schwere Tür öffnen",
+     "lang": "de",
+     "difficulty": 1,
+     "images": false,
+     "url": ""
+    },
+    "torque-07-einkaufstasche": {
+     "source": "drafts",
+     "title": "Eine Einkaufstasche halten",
+     "lang": "de",
+     "difficulty": 3,
+     "images": false,
+     "url": ""
+    },
+    "torque-13-seilwinde": {
+     "source": "drafts",
+     "title": "Eine Seilwinde",
+     "lang": "de",
+     "difficulty": 2,
+     "images": false,
+     "url": ""
+    },
+    "torque-16-leiter": {
+     "source": "drafts",
+     "title": "Eine Leiter an der Wand",
+     "lang": "de",
+     "difficulty": 4,
+     "images": false,
+     "url": ""
+    },
+    "torque-12-schubkarre": {
+     "source": "drafts",
+     "title": "Eine Schubkarre",
+     "lang": "de",
+     "difficulty": 2,
+     "images": false,
+     "url": ""
+    },
+    "torque-05-brett-tragen": {
+     "source": "drafts",
+     "title": "Ein Brett tragen",
+     "lang": "de",
+     "difficulty": 3,
+     "images": false,
+     "url": ""
+    },
+    "torque-14-mobile": {
+     "source": "drafts",
+     "title": "Ein Mobile",
+     "lang": "de",
+     "difficulty": 3,
+     "images": false,
+     "url": ""
+    }
+   }
+  },
+  "centre-of-mass": {
+   "objectives": {
+    "locate": [],
+    "stability": [],
+    "tipping": [
+     "torque-10-kipptest-bus"
+    ]
+   },
+   "exercises": {
+    "torque-10-kipptest-bus": {
+     "source": "drafts",
+     "title": "Der Kipptest eines Busses",
+     "lang": "de",
+     "difficulty": 4,
+     "images": false,
+     "url": ""
+    }
+   }
+  },
+  "coulomb": {
+   "objectives": {
+    "direction": [
+     "coulomb-06-hydrogen-molecule-ion",
+     "coulomb-08-two-electrons-one-nucleus",
+     "electric-potential-09-repelled-by-a-sphere",
+     "e17320-vanishing-field",
+     "coulomb-10-coulombs-law-backwards",
+     "e17531-electron-repelled-from-sphere"
+    ],
+    "factor": [
+     "electric-field-08-by-what-factor",
+     "e10733-percentage-change-to-force-between-point",
+     "e10732-halving-force-between-point-charges",
+     "coulomb-01-hydrogen-atom",
+     "coulomb-02-protons-in-a-nucleus",
+     "electric-potential-09-repelled-by-a-sphere"
+    ],
+    "vector": [
+     "e19409-point-charges-in-square",
+     "e19431-adding-field-vectors",
+     "e22774-electrostatic-force-vectors",
+     "e10735-forces-between-three-point-charges-2d",
+     "e17529-potential-in-triangle",
+     "e10729-forces-between-three-point-charges-1d"
+    ],
+    "field": [
+     "e22850-electric-field-of-charged-ring",
+     "e19431-adding-field-vectors",
+     "e22945-charged-wire-1",
+     "e17319-flying-electron-1",
+     "e17320-vanishing-field",
+     "e17317-field-between-point-charges"
+    ]
+   },
+   "exercises": {
+    "coulomb-06-hydrogen-molecule-ion": {
+     "source": "drafts",
+     "title": "The Hydrogen Molecule Ion",
+     "lang": "en",
+     "difficulty": 3,
+     "images": false,
+     "url": ""
+    },
+    "coulomb-08-two-electrons-one-nucleus": {
+     "source": "drafts",
+     "title": "Two Electrons, One Nucleus",
+     "lang": "en",
+     "difficulty": 4,
+     "images": false,
+     "url": ""
+    },
+    "coulomb-01-hydrogen-atom": {
+     "source": "drafts",
+     "title": "The Hydrogen Atom",
+     "lang": "en",
+     "difficulty": 1,
+     "images": false,
+     "url": ""
+    },
+    "e19431-adding-field-vectors": {
+     "source": "export",
+     "title": "Adding Field Vectors",
+     "lang": "en",
+     "difficulty": 2,
+     "images": false,
+     "url": "/exercise/adding-field-vectors/"
+    },
+    "coulomb-09-quarks-in-a-proton": {
+     "source": "drafts",
+     "title": "Quarks in a Proton",
+     "lang": "en",
+     "difficulty": 4,
+     "images": false,
+     "url": ""
+    },
+    "e17320-vanishing-field": {
+     "source": "export",
+     "title": "Vanishing Field",
+     "lang": "en",
+     "difficulty": 2,
+     "images": false,
+     "url": "/exercise/vanishing-field/"
+    },
+    "coulomb-10-coulombs-law-backwards": {
+     "source": "drafts",
+     "title": "Coulomb's Law Backwards",
+     "lang": "en",
+     "difficulty": 2,
+     "images": false,
+     "url": ""
+    },
+    "coulomb-02-protons-in-a-nucleus": {
+     "source": "drafts",
+     "title": "Two Protons in a Nucleus",
+     "lang": "en",
+     "difficulty": 2,
+     "images": false,
+     "url": ""
+    },
+    "electric-field-08-by-what-factor": {
+     "source": "drafts",
+     "title": "By What Factor?",
+     "lang": "en",
+     "difficulty": 2,
+     "images": false,
+     "url": ""
+    },
+    "e22850-electric-field-of-charged-ring": {
+     "source": "export",
+     "title": "Electric Field of Charged Ring",
+     "lang": "en",
+     "difficulty": 4,
+     "images": false,
+     "url": "/exercise/electric-field-of-charged-ring/"
+    },
+    "coulomb-03-ions-in-a-crystal": {
+     "source": "drafts",
+     "title": "Ions in a Crystal",
+     "lang": "en",
+     "difficulty": 2,
+     "images": false,
+     "url": ""
+    },
+    "e17324-two-point-charges-1": {
+     "source": "export",
+     "title": "Two Point Charges",
+     "lang": "en",
+     "difficulty": 2,
+     "images": false,
+     "url": "/exercise/two-point-charges-1/"
+    },
+    "coulomb-04-rutherford-experiment": {
+     "source": "drafts",
+     "title": "Rutherford's Experiment",
+     "lang": "en",
+     "difficulty": 2,
+     "images": false,
+     "url": ""
+    },
+    "coulomb-07-nuclear-fission": {
+     "source": "drafts",
+     "title": "Nuclear Fission",
+     "lang": "en",
+     "difficulty": 3,
+     "images": false,
+     "url": ""
+    },
+    "electric-potential-09-repelled-by-a-sphere": {
+     "source": "drafts",
+     "title": "Repelled by a Charged Sphere",
+     "lang": "en",
+     "difficulty": 4,
+     "images": false,
+     "url": ""
+    },
+    "e17531-electron-repelled-from-sphere": {
+     "source": "export",
+     "title": "Electron Repelled from Sphere",
+     "lang": "en",
+     "difficulty": 3,
+     "images": false,
+     "url": "/exercise/electron-repelled-from-sphere/"
+    },
+    "e10733-percentage-change-to-force-between-point": {
+     "source": "export",
+     "title": "Percentage Change to Force Between Point Charges",
+     "lang": "en",
+     "difficulty": 2,
+     "images": false,
+     "url": "/exercise/percentage-change-to-force-between-point-charges/"
+    },
+    "e10732-halving-force-between-point-charges": {
+     "source": "export",
+     "title": "Halving Force Between Point Charges",
+     "lang": "en",
+     "difficulty": 1,
+     "images": false,
+     "url": "/exercise/halving-force-between-point-charges/"
+    },
+    "e17529-potential-in-triangle": {
+     "source": "export",
+     "title": "Potential in Triangle",
+     "lang": "en",
+     "difficulty": 4,
+     "images": false,
+     "url": "/exercise/potential-in-triangle/"
+    },
+    "e22945-charged-wire-1": {
+     "source": "export",
+     "title": "Charged Wire",
+     "lang": "en",
+     "difficulty": 4,
+     "images": true,
+     "url": "/exercise/charged-wire-1/"
+    },
+    "e17319-flying-electron-1": {
+     "source": "export",
+     "title": "Flying Electron",
+     "lang": "en",
+     "difficulty": 1,
+     "images": false,
+     "url": "/exercise/flying-electron-1/"
+    },
+    "e17317-field-between-point-charges": {
+     "source": "export",
+     "title": "Field Between Point Charges",
+     "lang": "en",
+     "difficulty": 1,
+     "images": false,
+     "url": "/exercise/field-between-point-charges/"
+    },
+    "e22774-electrostatic-force-vectors": {
+     "source": "export",
+     "title": "Electrostatic force vectors",
+     "lang": "en",
+     "difficulty": 2,
+     "images": true,
+     "url": "/exercise/electrostatic-force-vectors/"
+    },
+    "e19409-point-charges-in-square": {
+     "source": "export",
+     "title": "Point Charges in Square",
+     "lang": "en",
+     "difficulty": 2,
+     "images": true,
+     "url": "/exercise/point-charges-in-square/"
+    },
+    "e10735-forces-between-three-point-charges-2d": {
+     "source": "export",
+     "title": "Forces Between Three Point Charges (2D)",
+     "lang": "en",
+     "difficulty": 3,
+     "images": true,
+     "url": "/exercise/forces-between-three-point-charges-2d/"
+    },
+    "e10729-forces-between-three-point-charges-1d": {
+     "source": "export",
+     "title": "Forces Between Three Point Charges (1D)",
+     "lang": "en",
+     "difficulty": 3,
+     "images": true,
+     "url": "/exercise/forces-between-three-point-charges-1d/"
+    }
+   }
+  },
+  "coe": {
+   "objectives": {
+    "forms": [
+     "e19876-potential-energy-for-mass-on-spring-1",
+     "oscillations-10-energy-shares",
+     "energy-conservation-09-flipperkasten",
+     "energy-conservation-02-springbrunnen",
+     "energy-conservation-03-achterbahn",
+     "energy-conservation-08-steinschleuder"
+    ],
+    "balance": [
+     "energy-conservation-02-springbrunnen",
+     "energy-conservation-06-skispringen",
+     "energy-conservation-01-crashtest",
+     "energy-conservation-03-achterbahn",
+     "energy-conservation-04-stabhochsprung",
+     "energy-conservation-05-durch-ein-tal"
+    ],
+    "path": [
+     "energy-conservation-06-skispringen",
+     "energy-conservation-02-springbrunnen",
+     "energy-conservation-03-achterbahn",
+     "energy-conservation-04-stabhochsprung",
+     "energy-conservation-05-durch-ein-tal",
+     "energy-conservation-07-seilschaukel"
+    ],
+    "turn": [
+     "oscillations-10-energy-shares",
+     "oscillations-05-baby-bouncer"
+    ],
+    "error": []
+   },
+   "exercises": {
+    "energy-conservation-02-springbrunnen": {
+     "source": "drafts",
+     "title": "Ein Springbrunnen",
+     "lang": "de",
+     "difficulty": 2,
+     "images": false,
+     "url": ""
+    },
+    "energy-conservation-06-skispringen": {
+     "source": "drafts",
+     "title": "Skispringen",
+     "lang": "de",
+     "difficulty": 3,
+     "images": false,
+     "url": ""
+    },
+    "energy-conservation-09-flipperkasten": {
+     "source": "drafts",
+     "title": "Ein Flipperkasten",
+     "lang": "de",
+     "difficulty": 3,
+     "images": false,
+     "url": ""
+    },
+    "energy-conservation-03-achterbahn": {
+     "source": "drafts",
+     "title": "Eine Achterbahn",
+     "lang": "de",
+     "difficulty": 2,
+     "images": false,
+     "url": ""
+    },
+    "energy-conservation-08-steinschleuder": {
+     "source": "drafts",
+     "title": "Eine Steinschleuder",
+     "lang": "de",
+     "difficulty": 3,
+     "images": false,
+     "url": ""
+    },
+    "energy-conservation-04-stabhochsprung": {
+     "source": "drafts",
+     "title": "Stabhochsprung",
+     "lang": "de",
+     "difficulty": 2,
+     "images": false,
+     "url": ""
+    },
+    "energy-conservation-05-durch-ein-tal": {
+     "source": "drafts",
+     "title": "Durch ein Tal rollen",
+     "lang": "de",
+     "difficulty": 3,
+     "images": false,
+     "url": ""
+    },
+    "energy-conservation-07-seilschaukel": {
+     "source": "drafts",
+     "title": "Eine Seilschaukel über dem See",
+     "lang": "de",
+     "difficulty": 3,
+     "images": false,
+     "url": ""
+    },
+    "energy-conservation-10-trampolin": {
+     "source": "drafts",
+     "title": "Ein Trampolin",
+     "lang": "de",
+     "difficulty": 4,
+     "images": false,
+     "url": ""
+    },
+    "energy-conservation-01-crashtest": {
+     "source": "drafts",
+     "title": "Ein Crashtest",
+     "lang": "de",
+     "difficulty": 1,
+     "images": false,
+     "url": ""
+    },
+    "e19876-potential-energy-for-mass-on-spring-1": {
+     "source": "export",
+     "title": "Potential Energy for Mass on Spring",
+     "lang": "en",
+     "difficulty": 3,
+     "images": false,
+     "url": "/exercise/potential-energy-for-mass-on-spring-1/"
+    },
+    "oscillations-10-energy-shares": {
+     "source": "drafts",
+     "title": "Kinetic and Potential Energy in an Oscillation",
+     "lang": "en",
+     "difficulty": 3,
+     "images": false,
+     "url": ""
+    },
+    "e19802-conservation-of-energy-for-mass-on-sprin": {
+     "source": "export",
+     "title": "Conservation of Energy for Mass on Spring",
+     "lang": "en",
+     "difficulty": 2,
+     "images": false,
+     "url": "/exercise/conservation-of-energy-for-mass-on-spring/"
+    },
+    "e22930-potential-energy-for-mass-on-spring": {
+     "source": "export",
+     "title": "Potential Energy for Mass on Spring",
+     "lang": "en",
+     "difficulty": 3,
+     "images": false,
+     "url": "/exercise/potential-energy-for-mass-on-spring/"
+    },
+    "oscillations-05-baby-bouncer": {
+     "source": "drafts",
+     "title": "A Baby Bouncer",
+     "lang": "en",
+     "difficulty": 3,
+     "images": false,
+     "url": ""
+    }
+   }
+  },
+  "force-concepts": {
+   "objectives": {
+    "first": [
+     "force-concepts-01-vier-kugeln-vom-tisch",
+     "force-systems-07-fallschirmspringerin",
+     "e18952-senke",
+     "force-systems-11-schlitten-ziehen",
+     "e18575-acceleration-ramp"
+    ],
+    "balanced": [
+     "force-systems-07-fallschirmspringerin",
+     "e18963-luftwiderstand"
+    ],
+    "second": [
+     "force-systems-07-fallschirmspringerin",
+     "force-systems-01-waage-im-lift",
+     "force-systems-04-notbremsung",
+     "force-systems-11-schlitten-ziehen",
+     "force-systems-02-hafenkran",
+     "force-systems-03-kiste-auf-lastwagen"
+    ],
+    "centre": [
+     "e18952-senke"
+    ]
+   },
+   "exercises": {
+    "force-concepts-01-vier-kugeln-vom-tisch": {
+     "source": "drafts",
+     "title": "Vier Kugeln vom Tisch",
+     "lang": "de",
+     "difficulty": 3,
+     "images": false,
+     "url": ""
+    },
+    "force-systems-07-fallschirmspringerin": {
+     "source": "drafts",
+     "title": "Eine Fallschirmspringerin",
+     "lang": "de",
+     "difficulty": 3,
+     "images": false,
+     "url": ""
+    },
+    "e18952-senke": {
+     "source": "export",
+     "title": "Senke",
+     "lang": "de",
+     "difficulty": 3,
+     "images": false,
+     "url": "/exercise/senke/"
+    },
+    "force-systems-11-schlitten-ziehen": {
+     "source": "drafts",
+     "title": "Einen Schlitten ziehen",
+     "lang": "de",
+     "difficulty": 4,
+     "images": false,
+     "url": ""
+    },
+    "e18963-luftwiderstand": {
+     "source": "export",
+     "title": "Luftwiderstand",
+     "lang": "de",
+     "difficulty": 3,
+     "images": false,
+     "url": "/exercise/luftwiderstand/"
+    },
+    "force-systems-01-waage-im-lift": {
+     "source": "drafts",
+     "title": "Eine Waage im Lift",
+     "lang": "de",
+     "difficulty": 2,
+     "images": false,
+     "url": ""
+    },
+    "force-systems-04-notbremsung": {
+     "source": "drafts",
+     "title": "Notbremsung",
+     "lang": "de",
+     "difficulty": 2,
+     "images": false,
+     "url": ""
+    },
+    "force-systems-02-hafenkran": {
+     "source": "drafts",
+     "title": "Ein Kran hebt einen Container",
+     "lang": "de",
+     "difficulty": 2,
+     "images": false,
+     "url": ""
+    },
+    "force-systems-03-kiste-auf-lastwagen": {
+     "source": "drafts",
+     "title": "Eine Kiste auf dem Lastwagen",
+     "lang": "de",
+     "difficulty": 2,
+     "images": false,
+     "url": ""
+    },
+    "force-systems-05-abschleppen": {
+     "source": "drafts",
+     "title": "Abschleppen",
+     "lang": "de",
+     "difficulty": 3,
+     "images": false,
+     "url": ""
+    },
+    "force-systems-06-gueterzug": {
+     "source": "drafts",
+     "title": "Ein Güterzug",
+     "lang": "de",
+     "difficulty": 3,
+     "images": false,
+     "url": ""
+    },
+    "force-systems-08-raketenstart": {
+     "source": "drafts",
+     "title": "Raketenstart",
+     "lang": "de",
+     "difficulty": 3,
+     "images": false,
+     "url": ""
+    },
+    "force-systems-09-parkhausrampe": {
+     "source": "drafts",
+     "title": "Auf der Rampe geparkt",
+     "lang": "de",
+     "difficulty": 3,
+     "images": false,
+     "url": ""
+    },
+    "force-systems-10-skipiste": {
+     "source": "drafts",
+     "title": "Die Piste hinunter",
+     "lang": "de",
+     "difficulty": 4,
+     "images": false,
+     "url": ""
+    },
+    "e18575-acceleration-ramp": {
+     "source": "export",
+     "title": "Acceleration Ramp",
+     "lang": "en",
+     "difficulty": 3,
+     "images": true,
+     "url": "/exercise/acceleration-ramp/"
+    }
+   }
+  },
+  "interaction": {
+   "objectives": {
+    "equal": [],
+    "partner": [],
+    "normal": [
+     "force-systems-01-waage-im-lift"
+    ]
+   },
+   "exercises": {
+    "force-systems-01-waage-im-lift": {
+     "source": "drafts",
+     "title": "Eine Waage im Lift",
+     "lang": "de",
+     "difficulty": 2,
+     "images": false,
+     "url": ""
+    }
+   }
+  },
+  "force-systems": {
+   "objectives": {
+    "forces": [],
+    "slope": [
+     "force-systems-10-skipiste",
+     "force-systems-09-parkhausrampe"
+    ],
+    "system": [
+     "force-systems-12-lift-gegengewicht",
+     "force-systems-02-hafenkran",
+     "force-systems-05-abschleppen",
+     "torque-15-kranausleger",
+     "torque-13-seilwinde",
+     "force-systems-11-schlitten-ziehen"
+    ],
+    "law": [
+     "force-systems-07-fallschirmspringerin",
+     "force-systems-02-hafenkran",
+     "e18575-acceleration-ramp",
+     "force-systems-05-abschleppen",
+     "force-systems-12-lift-gegengewicht",
+     "force-systems-01-waage-im-lift"
+    ],
+    "spring": [
+     "force-systems-07-fallschirmspringerin",
+     "torque-09-sprungbrett"
+    ],
+    "drag": [
+     "force-systems-07-fallschirmspringerin",
+     "force-systems-10-skipiste",
+     "force-systems-06-gueterzug",
+     "force-systems-08-raketenstart",
+     "force-concepts-01-vier-kugeln-vom-tisch"
+    ],
+    "error": []
+   },
+   "exercises": {
+    "force-systems-07-fallschirmspringerin": {
+     "source": "drafts",
+     "title": "Eine Fallschirmspringerin",
+     "lang": "de",
+     "difficulty": 3,
+     "images": false,
+     "url": ""
+    },
+    "force-systems-02-hafenkran": {
+     "source": "drafts",
+     "title": "Ein Kran hebt einen Container",
+     "lang": "de",
+     "difficulty": 2,
+     "images": false,
+     "url": ""
+    },
+    "force-systems-12-lift-gegengewicht": {
+     "source": "drafts",
+     "title": "Lift und Gegengewicht",
+     "lang": "de",
+     "difficulty": 4,
+     "images": false,
+     "url": ""
+    },
+    "force-systems-05-abschleppen": {
+     "source": "drafts",
+     "title": "Abschleppen",
+     "lang": "de",
+     "difficulty": 3,
+     "images": false,
+     "url": ""
+    },
+    "force-systems-10-skipiste": {
+     "source": "drafts",
+     "title": "Die Piste hinunter",
+     "lang": "de",
+     "difficulty": 4,
+     "images": false,
+     "url": ""
+    },
+    "force-systems-11-schlitten-ziehen": {
+     "source": "drafts",
+     "title": "Einen Schlitten ziehen",
+     "lang": "de",
+     "difficulty": 4,
+     "images": false,
+     "url": ""
+    },
+    "force-systems-09-parkhausrampe": {
+     "source": "drafts",
+     "title": "Auf der Rampe geparkt",
+     "lang": "de",
+     "difficulty": 3,
+     "images": false,
+     "url": ""
+    },
+    "force-systems-01-waage-im-lift": {
+     "source": "drafts",
+     "title": "Eine Waage im Lift",
+     "lang": "de",
+     "difficulty": 2,
+     "images": false,
+     "url": ""
+    },
+    "force-systems-06-gueterzug": {
+     "source": "drafts",
+     "title": "Ein Güterzug",
+     "lang": "de",
+     "difficulty": 3,
+     "images": false,
+     "url": ""
+    },
+    "force-systems-08-raketenstart": {
+     "source": "drafts",
+     "title": "Raketenstart",
+     "lang": "de",
+     "difficulty": 3,
+     "images": false,
+     "url": ""
+    },
+    "force-systems-03-kiste-auf-lastwagen": {
+     "source": "drafts",
+     "title": "Eine Kiste auf dem Lastwagen",
+     "lang": "de",
+     "difficulty": 2,
+     "images": false,
+     "url": ""
+    },
+    "torque-15-kranausleger": {
+     "source": "drafts",
+     "title": "Ein Kranausleger",
+     "lang": "de",
+     "difficulty": 3,
+     "images": false,
+     "url": ""
+    },
+    "torque-13-seilwinde": {
+     "source": "drafts",
+     "title": "Eine Seilwinde",
+     "lang": "de",
+     "difficulty": 2,
+     "images": false,
+     "url": ""
+    },
+    "force-systems-04-notbremsung": {
+     "source": "drafts",
+     "title": "Notbremsung",
+     "lang": "de",
+     "difficulty": 2,
+     "images": false,
+     "url": ""
+    },
+    "torque-09-sprungbrett": {
+     "source": "drafts",
+     "title": "Ein Sprungbrett",
+     "lang": "de",
+     "difficulty": 4,
+     "images": false,
+     "url": ""
+    },
+    "force-concepts-01-vier-kugeln-vom-tisch": {
+     "source": "drafts",
+     "title": "Vier Kugeln vom Tisch",
+     "lang": "de",
+     "difficulty": 3,
+     "images": false,
+     "url": ""
+    },
+    "e18575-acceleration-ramp": {
+     "source": "export",
+     "title": "Acceleration Ramp",
+     "lang": "en",
+     "difficulty": 3,
+     "images": true,
+     "url": "/exercise/acceleration-ramp/"
+    }
+   }
+  },
+  "induction-match": {
+   "objectives": {
+    "flux": [
+     "induction-match-01-falling-magnet",
+     "e19310-faradays-law-with-graphs",
+     "e23791-flux-through-circular-loop",
+     "e19275-unit-of-magnetic-flux",
+     "e19274-faradays-law",
+     "e19315-numerical-calculation-of-magnetic-flux"
+    ],
+    "slope": [
+     "e23794-self-induced-emf-for-linear-decrease",
+     "e19318-rotor-blades",
+     "e19316-rectangular-coil",
+     "e19294-train",
+     "e19292-moving-rod",
+     "induction-match-01-falling-magnet"
+    ],
+    "change": [
+     "e19313-force-on-loop-of-wire",
+     "e23791-flux-through-circular-loop",
+     "e19297-deforming-loop",
+     "e19298-deforming-loop-1",
+     "e19299-deforming-loop-2",
+     "e19319-lenzs-law"
+    ],
+    "lenz": [
+     "e19319-lenzs-law",
+     "e23793-current-direction",
+     "induction-match-01-falling-magnet",
+     "induction-match-02-magnetic-brake",
+     "induction-match-05-bicycle-dynamo",
+     "e19343-advanced-rl-circuit"
+    ]
+   },
+   "exercises": {
+    "induction-match-01-falling-magnet": {
+     "source": "drafts",
+     "title": "A Magnet Falls through a Coil",
+     "lang": "en",
+     "difficulty": 3,
+     "images": false,
+     "url": ""
+    },
+    "e23791-flux-through-circular-loop": {
+     "source": "export",
+     "title": "Flux through circular loop",
+     "lang": "en",
+     "difficulty": 1,
+     "images": false,
+     "url": "/exercise/flux-through-circular-loop/"
+    },
+    "induction-match-02-magnetic-brake": {
+     "source": "drafts",
+     "title": "The Magnetic Brake of a Drop Tower",
+     "lang": "en",
+     "difficulty": 3,
+     "images": false,
+     "url": ""
+    },
+    "induction-match-05-bicycle-dynamo": {
+     "source": "drafts",
+     "title": "A Bicycle Dynamo",
+     "lang": "en",
+     "difficulty": 2,
+     "images": false,
+     "url": ""
+    },
+    "induction-match-03-guitar-pickup": {
+     "source": "drafts",
+     "title": "A Guitar Pickup",
+     "lang": "en",
+     "difficulty": 2,
+     "images": false,
+     "url": ""
+    },
+    "e19274-faradays-law": {
+     "source": "export",
+     "title": "Faraday's Law",
+     "lang": "en",
+     "difficulty": 4,
+     "images": false,
+     "url": "/exercise/faradays-law/"
+    },
+    "e19319-lenzs-law": {
+     "source": "export",
+     "title": "Lenz's Law",
+     "lang": "en",
+     "difficulty": 2,
+     "images": true,
+     "url": "/exercise/lenzs-law/"
+    },
+    "e19318-rotor-blades": {
+     "source": "export",
+     "title": "Rotor Blades",
+     "lang": "en",
+     "difficulty": 2,
+     "images": false,
+     "url": "/exercise/rotor-blades/"
+    },
+    "e19313-force-on-loop-of-wire": {
+     "source": "export",
+     "title": "Force on Loop of Wire",
+     "lang": "en",
+     "difficulty": 2,
+     "images": false,
+     "url": "/exercise/force-on-loop-of-wire/"
+    },
+    "e19297-deforming-loop": {
+     "source": "export",
+     "title": "Deforming Loop",
+     "lang": "en",
+     "difficulty": 2,
+     "images": false,
+     "url": "/exercise/deforming-loop/"
+    },
+    "e19298-deforming-loop-1": {
+     "source": "export",
+     "title": "Deforming Loop",
+     "lang": "en",
+     "difficulty": 2,
+     "images": false,
+     "url": "/exercise/deforming-loop-1/"
+    },
+    "e19299-deforming-loop-2": {
+     "source": "export",
+     "title": "Deforming Loop",
+     "lang": "en",
+     "difficulty": 2,
+     "images": false,
+     "url": "/exercise/deforming-loop-2/"
+    },
+    "e23789-induction-in-moving-wire": {
+     "source": "export",
+     "title": "Induction in moving wire",
+     "lang": "en",
+     "difficulty": 1,
+     "images": false,
+     "url": "/exercise/induction-in-moving-wire/"
+    },
+    "induction-match-04-induction-hob": {
+     "source": "drafts",
+     "title": "An Induction Hob",
+     "lang": "en",
+     "difficulty": 2,
+     "images": false,
+     "url": ""
+    },
+    "e19294-train": {
+     "source": "export",
+     "title": "Train",
+     "lang": "en",
+     "difficulty": 2,
+     "images": false,
+     "url": "/exercise/train/"
+    },
+    "e19292-moving-rod": {
+     "source": "export",
+     "title": "Moving Rod",
+     "lang": "en",
+     "difficulty": 2,
+     "images": true,
+     "url": "/exercise/moving-rod/"
+    },
+    "e19316-rectangular-coil": {
+     "source": "export",
+     "title": "Rectangular Coil",
+     "lang": "en",
+     "difficulty": 2,
+     "images": true,
+     "url": "/exercise/rectangular-coil/"
+    },
+    "e19275-unit-of-magnetic-flux": {
+     "source": "export",
+     "title": "Unit of Magnetic Flux",
+     "lang": "en",
+     "difficulty": 1,
+     "images": false,
+     "url": "/exercise/unit-of-magnetic-flux/"
+    },
+    "e19315-numerical-calculation-of-magnetic-flux": {
+     "source": "export",
+     "title": "Numerical Calculation of Magnetic Flux",
+     "lang": "en",
+     "difficulty": 6,
+     "images": false,
+     "url": "/exercise/numerical-calculation-of-magnetic-flux/"
+    },
+    "e23794-self-induced-emf-for-linear-decrease": {
+     "source": "export",
+     "title": "Self-induced emf for linear decrease",
+     "lang": "en",
+     "difficulty": 2,
+     "images": false,
+     "url": "/exercise/self-induced-emf-for-linear-decrease/"
+    },
+    "e23793-current-direction": {
+     "source": "export",
+     "title": "Current direction",
+     "lang": "en",
+     "difficulty": 2,
+     "images": true,
+     "url": "/exercise/current-direction/"
+    },
+    "e19310-faradays-law-with-graphs": {
+     "source": "export",
+     "title": "Faraday's Law with Graphs",
+     "lang": "en",
+     "difficulty": 2,
+     "images": true,
+     "url": "/exercise/faradays-law-with-graphs/"
+    },
+    "e19343-advanced-rl-circuit": {
+     "source": "export",
+     "title": "Advanced RL Circuit",
+     "lang": "en",
+     "difficulty": 4,
+     "images": true,
+     "url": "/exercise/advanced-rl-circuit/"
+    }
+   }
+  },
+  "motion-data": {
+   "objectives": {
+    "instant": [],
+    "convert": [],
+    "uniform": []
+   },
+   "exercises": {}
+  },
+  "motion-graphs": {
+   "objectives": {
+    "slope": [
+     "e18962-beschleunigung-und-strecke-im-vt-diagram",
+     "e19017-beschleunigung-im-vt-diagramm"
+    ],
+    "negative": [
+     "e18962-beschleunigung-und-strecke-im-vt-diagram"
+    ],
+    "sketch": [],
+    "uniform": []
+   },
+   "exercises": {
+    "e18962-beschleunigung-und-strecke-im-vt-diagram": {
+     "source": "export",
+     "title": "Beschleunigung und Strecke im v(t)-Diagramm",
+     "lang": "de",
+     "difficulty": 1,
+     "images": true,
+     "url": "/exercise/beschleunigung-und-strecke-im-vt-diagramm/"
+    },
+    "e19017-beschleunigung-im-vt-diagramm": {
+     "source": "export",
+     "title": "Beschleunigung im v(t)-Diagramm",
+     "lang": "de",
+     "difficulty": 1,
+     "images": true,
+     "url": "/exercise/beschleunigung-im-vt-diagramm/"
+    }
+   }
+  },
+  "motion-areas": {
+   "objectives": {
+    "area": [
+     "e18962-beschleunigung-und-strecke-im-vt-diagram",
+     "e20438-velocity-for-simple-harmonic-oscillation"
+    ],
+    "farther": [],
+    "mean": [],
+    "sketch": []
+   },
+   "exercises": {
+    "e18962-beschleunigung-und-strecke-im-vt-diagram": {
+     "source": "export",
+     "title": "Beschleunigung und Strecke im v(t)-Diagramm",
+     "lang": "de",
+     "difficulty": 1,
+     "images": true,
+     "url": "/exercise/beschleunigung-und-strecke-im-vt-diagramm/"
+    },
+    "e20438-velocity-for-simple-harmonic-oscillation": {
+     "source": "export",
+     "title": "Velocity for Simple Harmonic Oscillation",
+     "lang": "en",
+     "difficulty": 1,
+     "images": false,
+     "url": "/exercise/velocity-for-simple-harmonic-oscillation/"
+    }
+   }
+  },
+  "oscillations": {
+   "objectives": {
+    "circle": [
+     "e19019-gedampftes-federpendel-1"
+    ],
+    "harmonic": [
+     "e19804-differential-equation-for-damped-oscilla",
+     "e19788-characteristic-equation",
+     "e23039-damped-oscillation-general-solution-1",
+     "oscillations-09-amplitude-period-phase",
+     "e23038-damped-oscillation-general-solution",
+     "e20531-coupled-mathematical-pendula"
+    ],
+    "extremes": [
+     "oscillations-01-tuning-fork",
+     "oscillations-06-swaying-skyscraper",
+     "oscillations-08-atoms-in-a-crystal",
+     "oscillations-05-baby-bouncer",
+     "e19785-maximum-velocity-and-acceleration",
+     "oscillations-03-salt-on-a-loudspeaker"
+    ],
+    "lc": [
+     "e19866-lc-oscillator-1",
+     "e19792-lc-oscillator",
+     "e19908-damped-lc-oscillator",
+     "e19803-conservation-of-energy-in-lc-circuit",
+     "e19905-low-damping",
+     "e19904-resonance-for-mechanical-oscillator"
+    ]
+   },
+   "exercises": {
+    "oscillations-01-tuning-fork": {
+     "source": "drafts",
+     "title": "A Tuning Fork",
+     "lang": "en",
+     "difficulty": 2,
+     "images": false,
+     "url": ""
+    },
+    "oscillations-06-swaying-skyscraper": {
+     "source": "drafts",
+     "title": "A Swaying Skyscraper",
+     "lang": "en",
+     "difficulty": 3,
+     "images": false,
+     "url": ""
+    },
+    "oscillations-08-atoms-in-a-crystal": {
+     "source": "drafts",
+     "title": "Atoms in a Crystal",
+     "lang": "en",
+     "difficulty": 4,
+     "images": false,
+     "url": ""
+    },
+    "oscillations-05-baby-bouncer": {
+     "source": "drafts",
+     "title": "A Baby Bouncer",
+     "lang": "en",
+     "difficulty": 3,
+     "images": false,
+     "url": ""
+    },
+    "oscillations-03-salt-on-a-loudspeaker": {
+     "source": "drafts",
+     "title": "Salt on a Loudspeaker",
+     "lang": "en",
+     "difficulty": 3,
+     "images": false,
+     "url": ""
+    },
+    "oscillations-04-earthquake": {
+     "source": "drafts",
+     "title": "An Earthquake",
+     "lang": "en",
+     "difficulty": 3,
+     "images": false,
+     "url": ""
+    },
+    "oscillations-07-tide-in-a-harbour": {
+     "source": "drafts",
+     "title": "The Tide in a Harbour",
+     "lang": "en",
+     "difficulty": 4,
+     "images": false,
+     "url": ""
+    },
+    "oscillations-09-amplitude-period-phase": {
+     "source": "drafts",
+     "title": "Amplitude, Period and Phase from a Graph",
+     "lang": "en",
+     "difficulty": 3,
+     "images": false,
+     "url": ""
+    },
+    "oscillations-02-bouncing-ball": {
+     "source": "drafts",
+     "title": "A Bouncing Ball",
+     "lang": "en",
+     "difficulty": 3,
+     "images": false,
+     "url": ""
+    },
+    "e19785-maximum-velocity-and-acceleration": {
+     "source": "export",
+     "title": "Maximum Velocity and Acceleration",
+     "lang": "en",
+     "difficulty": 1,
+     "images": false,
+     "url": "/exercise/maximum-velocity-and-acceleration/"
+    },
+    "e19904-resonance-for-mechanical-oscillator": {
+     "source": "export",
+     "title": "Resonance for Mechanical Oscillator",
+     "lang": "en",
+     "difficulty": 2,
+     "images": false,
+     "url": "/exercise/resonance-for-mechanical-oscillator/"
+    },
+    "oscillations-10-energy-shares": {
+     "source": "drafts",
+     "title": "Kinetic and Potential Energy in an Oscillation",
+     "lang": "en",
+     "difficulty": 3,
+     "images": false,
+     "url": ""
+    },
+    "e19866-lc-oscillator-1": {
+     "source": "export",
+     "title": "LC Oscillator",
+     "lang": "en",
+     "difficulty": 3,
+     "images": true,
+     "url": "/exercise/lc-oscillator-1/"
+    },
+    "e19792-lc-oscillator": {
+     "source": "export",
+     "title": "LC Oscillator",
+     "lang": "en",
+     "difficulty": 2,
+     "images": false,
+     "url": "/exercise/lc-oscillator/"
+    },
+    "e19905-low-damping": {
+     "source": "export",
+     "title": "Low Damping",
+     "lang": "en",
+     "difficulty": 2,
+     "images": false,
+     "url": "/exercise/low-damping/"
+    },
+    "e19803-conservation-of-energy-in-lc-circuit": {
+     "source": "export",
+     "title": "Conservation of Energy in LC Circuit",
+     "lang": "en",
+     "difficulty": 2,
+     "images": false,
+     "url": "/exercise/conservation-of-energy-in-lc-circuit/"
+    },
+    "e19804-differential-equation-for-damped-oscilla": {
+     "source": "export",
+     "title": "Differential Equation for Damped Oscillation",
+     "lang": "en",
+     "difficulty": 3,
+     "images": false,
+     "url": "/exercise/differential-equation-for-damped-oscillation/"
+    },
+    "e19788-characteristic-equation": {
+     "source": "export",
+     "title": "Characteristic Equation",
+     "lang": "en",
+     "difficulty": 3,
+     "images": false,
+     "url": "/exercise/characteristic-equation/"
+    },
+    "e23039-damped-oscillation-general-solution-1": {
+     "source": "export",
+     "title": "Damped Oscillation (general solution)",
+     "lang": "en",
+     "difficulty": 2,
+     "images": false,
+     "url": "/exercise/damped-oscillation-general-solution-1/"
+    },
+    "e23038-damped-oscillation-general-solution": {
+     "source": "export",
+     "title": "Damped Oscillation (general solution)",
+     "lang": "en",
+     "difficulty": 2,
+     "images": false,
+     "url": "/exercise/damped-oscillation-general-solution/"
+    },
+    "e20531-coupled-mathematical-pendula": {
+     "source": "export",
+     "title": "Coupled Mathematical Pendula",
+     "lang": "en",
+     "difficulty": 2,
+     "images": false,
+     "url": "/exercise/coupled-mathematical-pendula/"
+    },
+    "e19908-damped-lc-oscillator": {
+     "source": "export",
+     "title": "Damped LC Oscillator",
+     "lang": "en",
+     "difficulty": 2,
+     "images": false,
+     "url": "/exercise/damped-lc-oscillator/"
+    },
+    "e19019-gedampftes-federpendel-1": {
+     "source": "export",
+     "title": "Gedämpftes Federpendel",
+     "lang": "de",
+     "difficulty": 3,
+     "images": true,
+     "url": "/exercise/gedampftes-federpendel-1/"
+    }
+   }
+  },
+  "cyclic-processes": {
+   "objectives": {
+    "states": [],
+    "identify": [],
+    "sketch": [],
+    "error": []
+   },
+   "exercises": {}
+  },
+  "wave-propagation": {
+   "objectives": {
+    "medium": [
+     "e20014-guitar-string-1",
+     "wave-propagation-02-rope-wall-ring",
+     "e23217-steel-string",
+     "e20005-wave-on-a-rope",
+     "wave-propagation-04-harbour-wall",
+     "wave-propagation-03-cable-fault"
+    ],
+    "reflect": [
+     "wave-propagation-04-harbour-wall",
+     "wave-propagation-02-rope-wall-ring",
+     "wave-propagation-03-cable-fault",
+     "e20057-wave-reflection",
+     "e22231-schiffswrack",
+     "e22232-a-scan"
+    ],
+    "superpose": [
+     "wave-propagation-04-harbour-wall",
+     "e20055-triangle-superposition",
+     "wave-propagation-05-slinky-pulses",
+     "e20057-wave-reflection",
+     "e23399-wavelength-of-a-helium-neon-laser"
+    ],
+    "standing": [
+     "wave-propagation-04-harbour-wall",
+     "wave-propagation-03-cable-fault",
+     "e20014-guitar-string-1",
+     "e20015-pan-flute",
+     "e20009-harmonic-waves",
+     "e20010-harmonic-waves-1"
+    ]
+   },
+   "exercises": {
+    "wave-propagation-02-rope-wall-ring": {
+     "source": "drafts",
+     "title": "A Rope on a Wall or a Ring",
+     "lang": "en",
+     "difficulty": 2,
+     "images": false,
+     "url": ""
+    },
+    "wave-propagation-04-harbour-wall": {
+     "source": "drafts",
+     "title": "A Wave at the Harbour Wall",
+     "lang": "en",
+     "difficulty": 3,
+     "images": false,
+     "url": ""
+    },
+    "wave-propagation-03-cable-fault": {
+     "source": "drafts",
+     "title": "Finding a Break in a Cable",
+     "lang": "en",
+     "difficulty": 3,
+     "images": false,
+     "url": ""
+    },
+    "e20014-guitar-string-1": {
+     "source": "export",
+     "title": "Guitar String",
+     "lang": "en",
+     "difficulty": 2,
+     "images": false,
+     "url": "/exercise/guitar-string-1/"
+    },
+    "wave-propagation-05-slinky-pulses": {
+     "source": "drafts",
+     "title": "Two Pulses on a Slinky",
+     "lang": "en",
+     "difficulty": 3,
+     "images": false,
+     "url": ""
+    },
+    "wave-propagation-01-stadium-wave": {
+     "source": "drafts",
+     "title": "The Stadium Wave",
+     "lang": "en",
+     "difficulty": 2,
+     "images": false,
+     "url": ""
+    },
+    "e23217-steel-string": {
+     "source": "export",
+     "title": "Steel string",
+     "lang": "en",
+     "difficulty": 2,
+     "images": false,
+     "url": "/exercise/steel-string/"
+    },
+    "e20005-wave-on-a-rope": {
+     "source": "export",
+     "title": "Wave on a Rope",
+     "lang": "en",
+     "difficulty": 1,
+     "images": false,
+     "url": "/exercise/wave-on-a-rope/"
+    },
+    "e20067-harmonic-wave-function": {
+     "source": "export",
+     "title": "Harmonic Wave Function",
+     "lang": "en",
+     "difficulty": 2,
+     "images": false,
+     "url": "/exercise/harmonic-wave-function/"
+    },
+    "wave-propagation-06-stop-and-go-wave": {
+     "source": "drafts",
+     "title": "A Stop-and-Go Wave",
+     "lang": "en",
+     "difficulty": 4,
+     "images": false,
+     "url": ""
+    },
+    "e20057-wave-reflection": {
+     "source": "export",
+     "title": "Wave Reflection",
+     "lang": "en",
+     "difficulty": 2,
+     "images": true,
+     "url": "/exercise/wave-reflection/"
+    },
+    "e20009-harmonic-waves": {
+     "source": "export",
+     "title": "Harmonic Waves",
+     "lang": "en",
+     "difficulty": 1,
+     "images": false,
+     "url": "/exercise/harmonic-waves/"
+    },
+    "e20010-harmonic-waves-1": {
+     "source": "export",
+     "title": "Harmonic Waves",
+     "lang": "en",
+     "difficulty": 1,
+     "images": false,
+     "url": "/exercise/harmonic-waves-1/"
+    },
+    "e20015-pan-flute": {
+     "source": "export",
+     "title": "Pan Flute",
+     "lang": "en",
+     "difficulty": 2,
+     "images": false,
+     "url": "/exercise/pan-flute/"
+    },
+    "e22231-schiffswrack": {
+     "source": "export",
+     "title": "Schiffswrack",
+     "lang": "de",
+     "difficulty": 1,
+     "images": false,
+     "url": "/exercise/schiffswrack/"
+    },
+    "e22232-a-scan": {
+     "source": "export",
+     "title": "A-Scan",
+     "lang": "de",
+     "difficulty": 3,
+     "images": false,
+     "url": "/exercise/a-scan/"
+    },
+    "e20055-triangle-superposition": {
+     "source": "export",
+     "title": "Triangle Superposition",
+     "lang": "en",
+     "difficulty": 1,
+     "images": true,
+     "url": "/exercise/triangle-superposition/"
+    },
+    "e23399-wavelength-of-a-helium-neon-laser": {
+     "source": "export",
+     "title": "Wavelength of a Helium-Neon laser",
+     "lang": "en",
+     "difficulty": 1,
+     "images": false,
+     "url": "/exercise/wavelength-of-a-helium-neon-laser/"
+    }
+   }
+  },
+  "interference": {
+   "objectives": {
+    "huygens": [
+     "e20402-suppressed-maximum",
+     "e18961-beugung-von-weissem-licht",
+     "e18859-beugung-von-mikrowellen",
+     "e20419-beugung-von-mikrowellen-CwNqPdO50S-clone",
+     "e20381-microwave-diffraction",
+     "e20401-single-slit"
+    ],
+    "maxima": [
+     "e20402-suppressed-maximum",
+     "e18961-beugung-von-weissem-licht",
+     "e20396-double-slit",
+     "e23399-wavelength-of-a-helium-neon-laser",
+     "e20382-he-ne-laser",
+     "e20383-sodium-vapour-lamp"
+    ],
+    "changes": [
+     "e20402-suppressed-maximum",
+     "e20423-interference-patterns",
+     "e20381-microwave-diffraction",
+     "e23399-wavelength-of-a-helium-neon-laser",
+     "e18859-beugung-von-mikrowellen",
+     "e20382-he-ne-laser"
+    ],
+    "resolve": [
+     "e23403-james-webb-telescope-1",
+     "e23404-headlights",
+     "e20384-hot-air-balloon",
+     "e20385-un-dimanche-apres-midi-a-la-grande-jatte",
+     "e20424-satellite-dish"
+    ]
+   },
+   "exercises": {
+    "e20402-suppressed-maximum": {
+     "source": "export",
+     "title": "Suppressed Maximum",
+     "lang": "en",
+     "difficulty": 2,
+     "images": false,
+     "url": "/exercise/suppressed-maximum/"
+    },
+    "e18961-beugung-von-weissem-licht": {
+     "source": "export",
+     "title": "Beugung von weissem Licht",
+     "lang": "de",
+     "difficulty": 1,
+     "images": false,
+     "url": "/exercise/beugung-von-weissem-licht/"
+    },
+    "e20381-microwave-diffraction": {
+     "source": "export",
+     "title": "Microwave Diffraction",
+     "lang": "en",
+     "difficulty": 2,
+     "images": false,
+     "url": "/exercise/microwave-diffraction/"
+    },
+    "e23399-wavelength-of-a-helium-neon-laser": {
+     "source": "export",
+     "title": "Wavelength of a Helium-Neon laser",
+     "lang": "en",
+     "difficulty": 1,
+     "images": false,
+     "url": "/exercise/wavelength-of-a-helium-neon-laser/"
+    },
+    "e18859-beugung-von-mikrowellen": {
+     "source": "export",
+     "title": "Beugung von Mikrowellen",
+     "lang": "de",
+     "difficulty": 2,
+     "images": true,
+     "url": "/exercise/beugung-von-mikrowellen/"
+    },
+    "e20419-beugung-von-mikrowellen-CwNqPdO50S-clone": {
+     "source": "export",
+     "title": "Beugung von Mikrowellen",
+     "lang": "de",
+     "difficulty": 2,
+     "images": true,
+     "url": "/exercise/beugung-von-mikrowellen-CwNqPdO50S-cloned/"
+    },
+    "e20382-he-ne-laser": {
+     "source": "export",
+     "title": "He-Ne Laser",
+     "lang": "en",
+     "difficulty": 2,
+     "images": false,
+     "url": "/exercise/he-ne-laser/"
+    },
+    "e20383-sodium-vapour-lamp": {
+     "source": "export",
+     "title": "Sodium-Vapour Lamp",
+     "lang": "en",
+     "difficulty": 1,
+     "images": false,
+     "url": "/exercise/sodium-vapour-lamp/"
+    },
+    "e20398-spectral-lines": {
+     "source": "export",
+     "title": "Spectral Lines",
+     "lang": "en",
+     "difficulty": 2,
+     "images": false,
+     "url": "/exercise/spectral-lines/"
+    },
+    "e23400-track-spacing-for-a-compact-disc-cd": {
+     "source": "export",
+     "title": "Track spacing for a compact disc (CD)",
+     "lang": "en",
+     "difficulty": 1,
+     "images": false,
+     "url": "/exercise/track-spacing-for-a-compact-disc-cd/"
+    },
+    "e20401-single-slit": {
+     "source": "export",
+     "title": "Single Slit",
+     "lang": "en",
+     "difficulty": 2,
+     "images": false,
+     "url": "/exercise/single-slit/"
+    },
+    "e20396-double-slit": {
+     "source": "export",
+     "title": "Double Slit",
+     "lang": "en",
+     "difficulty": 1,
+     "images": false,
+     "url": "/exercise/double-slit/"
+    },
+    "e23403-james-webb-telescope-1": {
+     "source": "export",
+     "title": "James Webb Telescope",
+     "lang": "en",
+     "difficulty": 1,
+     "images": false,
+     "url": "/exercise/james-webb-telescope-1/"
+    },
+    "e23404-headlights": {
+     "source": "export",
+     "title": "Headlights",
+     "lang": "en",
+     "difficulty": 2,
+     "images": false,
+     "url": "/exercise/headlights/"
+    },
+    "e20423-interference-patterns": {
+     "source": "export",
+     "title": "Interference Patterns",
+     "lang": "en",
+     "difficulty": 1,
+     "images": true,
+     "url": "/exercise/interference-patterns/"
+    },
+    "e20384-hot-air-balloon": {
+     "source": "export",
+     "title": "Hot-Air Balloon",
+     "lang": "en",
+     "difficulty": 2,
+     "images": false,
+     "url": "/exercise/hot-air-balloon/"
+    },
+    "e20385-un-dimanche-apres-midi-a-la-grande-jatte": {
+     "source": "export",
+     "title": "Un dimanche après-midi à la Grande Jatte",
+     "lang": "en",
+     "difficulty": 2,
+     "images": false,
+     "url": "/exercise/un-dimanche-apres-midi-a-la-grande-jatte/"
+    },
+    "e20424-satellite-dish": {
+     "source": "export",
+     "title": "Satellite Dish",
+     "lang": "en",
+     "difficulty": 1,
+     "images": false,
+     "url": "/exercise/satellite-dish/"
+    }
+   }
+  },
+  "electric-field": {
+   "objectives": {
+    "sketch": [
+     "e23028-equipotentials-in-field-of-electric-dipo",
+     "e22848-field-line-image-for-an-electric-dipole",
+     "e17336-electric-field-lines",
+     "e17488-equipotentials-of-two-positive-point-cha",
+     "e22975-dipole-in-field-of-point-charge",
+     "e22980-dipole-in-field-of-charged-wire"
+    ],
+    "read": [
+     "e22848-field-line-image-for-an-electric-dipole",
+     "electric-field-07-bent-jet-of-water",
+     "electric-field-02-inkjet-printer",
+     "electric-field-03-thundercloud",
+     "electric-field-08-by-what-factor",
+     "electric-field-09-two-capacitors"
+    ],
+    "dipole": [
+     "e22852-point-dipole",
+     "e23028-equipotentials-in-field-of-electric-dipo",
+     "e22975-dipole-in-field-of-point-charge",
+     "e22980-dipole-in-field-of-charged-wire",
+     "e22848-field-line-image-for-an-electric-dipole",
+     "e17334-water-molecule"
+    ],
+    "equi": [
+     "e23028-equipotentials-in-field-of-electric-dipo",
+     "e17488-equipotentials-of-two-positive-point-cha",
+     "e23026-potential-difference-in-field-of-point-c",
+     "e23029-potential-difference-in-field-of-charged",
+     "e23050-potential-difference-in-field-of-point-c",
+     "e23051-potential-difference-in-field-of-charged"
+    ],
+    "error": []
+   },
+   "exercises": {
+    "e23028-equipotentials-in-field-of-electric-dipo": {
+     "source": "export",
+     "title": "Equipotentials in field of electric dipole",
+     "lang": "en",
+     "difficulty": 1,
+     "images": false,
+     "url": "/exercise/equipotentials-in-field-of-electric-dipole/"
+    },
+    "e22848-field-line-image-for-an-electric-dipole": {
+     "source": "export",
+     "title": "Field Line Image for an Electric Dipole",
+     "lang": "en",
+     "difficulty": 1,
+     "images": false,
+     "url": "/exercise/field-line-image-for-an-electric-dipole/"
+    },
+    "electric-field-07-bent-jet-of-water": {
+     "source": "drafts",
+     "title": "A Jet of Water and a Charged Rod",
+     "lang": "en",
+     "difficulty": 3,
+     "images": false,
+     "url": ""
+    },
+    "e17488-equipotentials-of-two-positive-point-cha": {
+     "source": "export",
+     "title": "Equipotentials of Two Positive Point Charges",
+     "lang": "en",
+     "difficulty": 1,
+     "images": false,
+     "url": "/exercise/equipotentials-of-two-positive-point-charges/"
+    },
+    "electric-field-02-inkjet-printer": {
+     "source": "drafts",
+     "title": "An Inkjet Printer",
+     "lang": "en",
+     "difficulty": 4,
+     "images": false,
+     "url": ""
+    },
+    "electric-field-03-thundercloud": {
+     "source": "drafts",
+     "title": "Under a Thundercloud",
+     "lang": "en",
+     "difficulty": 2,
+     "images": false,
+     "url": ""
+    },
+    "electric-field-08-by-what-factor": {
+     "source": "drafts",
+     "title": "By What Factor?",
+     "lang": "en",
+     "difficulty": 2,
+     "images": false,
+     "url": ""
+    },
+    "electric-field-09-two-capacitors": {
+     "source": "drafts",
+     "title": "Two Capacitors Compared",
+     "lang": "en",
+     "difficulty": 3,
+     "images": false,
+     "url": ""
+    },
+    "e22852-point-dipole": {
+     "source": "export",
+     "title": "Point Dipole",
+     "lang": "en",
+     "difficulty": 2,
+     "images": false,
+     "url": "/exercise/point-dipole/"
+    },
+    "e17334-water-molecule": {
+     "source": "export",
+     "title": "Water Molecule",
+     "lang": "en",
+     "difficulty": 2,
+     "images": false,
+     "url": "/exercise/water-molecule/"
+    },
+    "electric-field-01-millikan-oil-drop": {
+     "source": "drafts",
+     "title": "Millikan's Oil Drop",
+     "lang": "en",
+     "difficulty": 3,
+     "images": false,
+     "url": ""
+    },
+    "electric-field-04-lightning-strikes-a-car": {
+     "source": "drafts",
+     "title": "Lightning Strikes a Car",
+     "lang": "en",
+     "difficulty": 2,
+     "images": false,
+     "url": ""
+    },
+    "electric-field-05-electrostatic-precipitator": {
+     "source": "drafts",
+     "title": "An Electrostatic Precipitator",
+     "lang": "en",
+     "difficulty": 3,
+     "images": false,
+     "url": ""
+    },
+    "electric-field-06-laser-printer": {
+     "source": "drafts",
+     "title": "A Laser Printer",
+     "lang": "en",
+     "difficulty": 2,
+     "images": false,
+     "url": ""
+    },
+    "e22975-dipole-in-field-of-point-charge": {
+     "source": "export",
+     "title": "Dipole in Field of Point Charge",
+     "lang": "en",
+     "difficulty": 3,
+     "images": true,
+     "url": "/exercise/dipole-in-field-of-point-charge/"
+    },
+    "e22980-dipole-in-field-of-charged-wire": {
+     "source": "export",
+     "title": "Dipole in Field of Charged Wire",
+     "lang": "en",
+     "difficulty": 3,
+     "images": true,
+     "url": "/exercise/dipole-in-field-of-charged-wire/"
+    },
+    "e17336-electric-field-lines": {
+     "source": "export",
+     "title": "Electric Field Lines",
+     "lang": "en",
+     "difficulty": 1,
+     "images": true,
+     "url": "/exercise/electric-field-lines/"
+    },
+    "e23026-potential-difference-in-field-of-point-c": {
+     "source": "export",
+     "title": "Potential difference in field of point charge",
+     "lang": "en",
+     "difficulty": 3,
+     "images": false,
+     "url": "/exercise/potential-difference-in-field-of-point-charge/"
+    },
+    "e23029-potential-difference-in-field-of-charged": {
+     "source": "export",
+     "title": "Potential difference in field of charged wire",
+     "lang": "en",
+     "difficulty": 3,
+     "images": false,
+     "url": "/exercise/potential-difference-in-field-of-charged-wire/"
+    },
+    "e23050-potential-difference-in-field-of-point-c": {
+     "source": "export",
+     "title": "Potential Difference in Field of Point Charge",
+     "lang": "en",
+     "difficulty": 2,
+     "images": false,
+     "url": "/exercise/potential-difference-in-field-of-point-charge-1/"
+    },
+    "e23051-potential-difference-in-field-of-charged": {
+     "source": "export",
+     "title": "Potential Difference in Field of Charged Wire",
+     "lang": "en",
+     "difficulty": 2,
+     "images": false,
+     "url": "/exercise/potential-difference-in-field-of-charged-wire-1/"
+    }
+   }
+  },
+  "electric-potential": {
+   "objectives": {
+    "quantities": [
+     "e17471-electric-vs-gravitational-potential-ener",
+     "electric-potential-08-rutherford-closest-approach",
+     "e23047-potential-energy-of-a-proton",
+     "e17519-repelling-particles",
+     "electric-potential-09-repelled-by-a-sphere",
+     "e17534-proton-between-two-point-charges"
+    ],
+    "uniform": [
+     "e17520-protons-in-uniform-field",
+     "e17705-maximising-energy",
+     "e23025-voltage-in-uniform-field",
+     "electric-potential-06-nerve-cell-membrane",
+     "e17638-dielectric-material",
+     "e23030-potential-difference-in-field-of-charged"
+    ],
+    "point": [
+     "e23026-potential-difference-in-field-of-point-c",
+     "e23050-potential-difference-in-field-of-point-c",
+     "e17534-proton-between-two-point-charges",
+     "e17488-equipotentials-of-two-positive-point-cha",
+     "electric-potential-08-rutherford-closest-approach",
+     "electric-potential-09-repelled-by-a-sphere"
+    ],
+    "energy": [
+     "electric-potential-08-rutherford-closest-approach",
+     "e17471-electric-vs-gravitational-potential-ener",
+     "electric-potential-06-nerve-cell-membrane",
+     "e23047-potential-energy-of-a-proton",
+     "e23026-potential-difference-in-field-of-point-c",
+     "e23050-potential-difference-in-field-of-point-c"
+    ]
+   },
+   "exercises": {
+    "electric-potential-08-rutherford-closest-approach": {
+     "source": "drafts",
+     "title": "Rutherford's Experiment: Closest Approach",
+     "lang": "en",
+     "difficulty": 4,
+     "images": false,
+     "url": ""
+    },
+    "electric-potential-09-repelled-by-a-sphere": {
+     "source": "drafts",
+     "title": "Repelled by a Charged Sphere",
+     "lang": "en",
+     "difficulty": 4,
+     "images": false,
+     "url": ""
+    },
+    "e17471-electric-vs-gravitational-potential-ener": {
+     "source": "export",
+     "title": "Electric vs. Gravitational Potential Energy",
+     "lang": "en",
+     "difficulty": 2,
+     "images": false,
+     "url": "/exercise/electric-vs-gravitational-potential-energy/"
+    },
+    "electric-potential-06-nerve-cell-membrane": {
+     "source": "drafts",
+     "title": "The Membrane of a Nerve Cell",
+     "lang": "en",
+     "difficulty": 3,
+     "images": false,
+     "url": ""
+    },
+    "e17534-proton-between-two-point-charges": {
+     "source": "export",
+     "title": "Proton Between Two Point Charges",
+     "lang": "en",
+     "difficulty": 2,
+     "images": false,
+     "url": "/exercise/proton-between-two-point-charges/"
+    },
+    "electric-potential-05-van-de-graaff": {
+     "source": "drafts",
+     "title": "A Van de Graaff Generator",
+     "lang": "en",
+     "difficulty": 3,
+     "images": false,
+     "url": ""
+    },
+    "e23047-potential-energy-of-a-proton": {
+     "source": "export",
+     "title": "Potential Energy of a Proton",
+     "lang": "en",
+     "difficulty": 1,
+     "images": false,
+     "url": "/exercise/potential-energy-of-a-proton/"
+    },
+    "e17520-protons-in-uniform-field": {
+     "source": "export",
+     "title": "Protons in Uniform Field",
+     "lang": "en",
+     "difficulty": 3,
+     "images": false,
+     "url": "/exercise/protons-in-uniform-field/"
+    },
+    "e17705-maximising-energy": {
+     "source": "export",
+     "title": "Maximising Energy",
+     "lang": "en",
+     "difficulty": 1,
+     "images": false,
+     "url": "/exercise/maximising-energy/"
+    },
+    "e23026-potential-difference-in-field-of-point-c": {
+     "source": "export",
+     "title": "Potential difference in field of point charge",
+     "lang": "en",
+     "difficulty": 3,
+     "images": false,
+     "url": "/exercise/potential-difference-in-field-of-point-charge/"
+    },
+    "e23050-potential-difference-in-field-of-point-c": {
+     "source": "export",
+     "title": "Potential Difference in Field of Point Charge",
+     "lang": "en",
+     "difficulty": 2,
+     "images": false,
+     "url": "/exercise/potential-difference-in-field-of-point-charge-1/"
+    },
+    "electric-potential-01-x-ray-tube": {
+     "source": "drafts",
+     "title": "An X-Ray Tube",
+     "lang": "en",
+     "difficulty": 3,
+     "images": false,
+     "url": ""
+    },
+    "electric-potential-02-electron-gun": {
+     "source": "drafts",
+     "title": "An Electron Gun",
+     "lang": "en",
+     "difficulty": 2,
+     "images": false,
+     "url": ""
+    },
+    "electric-potential-03-ion-thruster": {
+     "source": "drafts",
+     "title": "The Ion Thruster of Dawn",
+     "lang": "en",
+     "difficulty": 4,
+     "images": false,
+     "url": ""
+    },
+    "e23025-voltage-in-uniform-field": {
+     "source": "export",
+     "title": "Voltage in uniform field",
+     "lang": "en",
+     "difficulty": 1,
+     "images": false,
+     "url": "/exercise/voltage-in-uniform-field/"
+    },
+    "e17488-equipotentials-of-two-positive-point-cha": {
+     "source": "export",
+     "title": "Equipotentials of Two Positive Point Charges",
+     "lang": "en",
+     "difficulty": 1,
+     "images": false,
+     "url": "/exercise/equipotentials-of-two-positive-point-charges/"
+    },
+    "e17519-repelling-particles": {
+     "source": "export",
+     "title": "Repelling Particles",
+     "lang": "en",
+     "difficulty": 3,
+     "images": false,
+     "url": "/exercise/repelling-particles/"
+    },
+    "e17638-dielectric-material": {
+     "source": "export",
+     "title": "Dielectric Material",
+     "lang": "en",
+     "difficulty": 1,
+     "images": false,
+     "url": "/exercise/dielectric-material/"
+    },
+    "e23030-potential-difference-in-field-of-charged": {
+     "source": "export",
+     "title": "Potential difference in field of charged plate",
+     "lang": "en",
+     "difficulty": 3,
+     "images": false,
+     "url": "/exercise/potential-difference-in-field-of-charged-plate/"
+    }
+   }
+  },
+  "magnetic-forces": {
+   "objectives": {
+    "lines": [
+     "magnetic-forces-01-aurora",
+     "e23736-helmholtz-coil-force",
+     "magnetic-forces-07-cosmic-rays",
+     "magnetic-forces-09-two-moving-charges",
+     "e18719-magnetic-force-on-charged-particles",
+     "magnetic-forces-05-particle-detector"
+    ],
+    "wire": [
+     "e23736-helmholtz-coil-force",
+     "e19196-parallel-currents",
+     "e18571-floating-wire",
+     "e19199-force-between-parallel-wires",
+     "e19207-coil-from-a-wire",
+     "e19291-falling-wire"
+    ],
+    "charge": [
+     "e18714-acceleration-of-charged-particles-in-mag",
+     "magnetic-forces-09-two-moving-charges",
+     "magnetic-forces-01-aurora",
+     "e18713-direction-of-magnetic-force-on-particles",
+     "e19316-rectangular-coil",
+     "e18715-ions-in-salt-solution"
+    ],
+    "coil": [
+     "e23736-helmholtz-coil-force",
+     "e19316-rectangular-coil",
+     "e18578-torque-on-coils",
+     "e23793-current-direction",
+     "e19200-short-coil",
+     "e19205-helmholtz-coil"
+    ],
+    "pair": [
+     "e19196-parallel-currents",
+     "e23736-helmholtz-coil-force",
+     "e19199-force-between-parallel-wires",
+     "magnetic-forces-09-two-moving-charges",
+     "magnetic-forces-06-short-circuit-cables"
+    ],
+    "error": []
+   },
+   "exercises": {
+    "e23736-helmholtz-coil-force": {
+     "source": "export",
+     "title": "Helmholtz coil force",
+     "lang": "en",
+     "difficulty": 2,
+     "images": false,
+     "url": "/exercise/helmholtz-coil-force/"
+    },
+    "magnetic-forces-01-aurora": {
+     "source": "drafts",
+     "title": "The Aurora",
+     "lang": "en",
+     "difficulty": 2,
+     "images": false,
+     "url": ""
+    },
+    "magnetic-forces-07-cosmic-rays": {
+     "source": "drafts",
+     "title": "Cosmic Rays and the Earth's Field",
+     "lang": "en",
+     "difficulty": 3,
+     "images": false,
+     "url": ""
+    },
+    "magnetic-forces-09-two-moving-charges": {
+     "source": "drafts",
+     "title": "Two Moving Charges",
+     "lang": "en",
+     "difficulty": 4,
+     "images": false,
+     "url": ""
+    },
+    "e19196-parallel-currents": {
+     "source": "export",
+     "title": "Parallel Currents",
+     "lang": "en",
+     "difficulty": 2,
+     "images": false,
+     "url": "/exercise/parallel-currents/"
+    },
+    "magnetic-forces-05-particle-detector": {
+     "source": "drafts",
+     "title": "A Particle Detector",
+     "lang": "en",
+     "difficulty": 3,
+     "images": false,
+     "url": ""
+    },
+    "magnetic-forces-04-fine-beam-tube": {
+     "source": "drafts",
+     "title": "The Fine-Beam Tube",
+     "lang": "en",
+     "difficulty": 3,
+     "images": false,
+     "url": ""
+    },
+    "e19199-force-between-parallel-wires": {
+     "source": "export",
+     "title": "Force Between Parallel Wires",
+     "lang": "en",
+     "difficulty": 2,
+     "images": false,
+     "url": "/exercise/force-between-parallel-wires/"
+    },
+    "e19207-coil-from-a-wire": {
+     "source": "export",
+     "title": "Coil From a Wire",
+     "lang": "en",
+     "difficulty": 2,
+     "images": false,
+     "url": "/exercise/coil-from-a-wire/"
+    },
+    "e18577-magnetic-swing": {
+     "source": "export",
+     "title": "Magnetic Swing",
+     "lang": "en",
+     "difficulty": 3,
+     "images": false,
+     "url": "/exercise/magnetic-swing/"
+    },
+    "e23789-induction-in-moving-wire": {
+     "source": "export",
+     "title": "Induction in moving wire",
+     "lang": "en",
+     "difficulty": 1,
+     "images": false,
+     "url": "/exercise/induction-in-moving-wire/"
+    },
+    "magnetic-forces-03-cyclotron": {
+     "source": "drafts",
+     "title": "A Cyclotron",
+     "lang": "en",
+     "difficulty": 4,
+     "images": false,
+     "url": ""
+    },
+    "magnetic-forces-08-radius-and-period": {
+     "source": "drafts",
+     "title": "Radius and Period of an Alpha Particle",
+     "lang": "en",
+     "difficulty": 3,
+     "images": false,
+     "url": ""
+    },
+    "e18568-voice-coil": {
+     "source": "export",
+     "title": "Voice Coil",
+     "lang": "en",
+     "difficulty": 2,
+     "images": false,
+     "url": "/exercise/voice-coil/"
+    },
+    "e18719-magnetic-force-on-charged-particles": {
+     "source": "export",
+     "title": "Magnetic Force on Charged Particles",
+     "lang": "en",
+     "difficulty": 1,
+     "images": false,
+     "url": "/exercise/magnetic-force-on-charged-particles/"
+    },
+    "e18571-floating-wire": {
+     "source": "export",
+     "title": "Floating Wire",
+     "lang": "en",
+     "difficulty": 2,
+     "images": false,
+     "url": "/exercise/floating-wire/"
+    },
+    "e19316-rectangular-coil": {
+     "source": "export",
+     "title": "Rectangular Coil",
+     "lang": "en",
+     "difficulty": 2,
+     "images": true,
+     "url": "/exercise/rectangular-coil/"
+    },
+    "e23793-current-direction": {
+     "source": "export",
+     "title": "Current direction",
+     "lang": "en",
+     "difficulty": 2,
+     "images": true,
+     "url": "/exercise/current-direction/"
+    },
+    "e19291-falling-wire": {
+     "source": "export",
+     "title": "Falling Wire",
+     "lang": "en",
+     "difficulty": 2,
+     "images": false,
+     "url": "/exercise/falling-wire/"
+    },
+    "e18578-torque-on-coils": {
+     "source": "export",
+     "title": "Torque on Coils",
+     "lang": "en",
+     "difficulty": 2,
+     "images": false,
+     "url": "/exercise/torque-on-coils/"
+    },
+    "e19200-short-coil": {
+     "source": "export",
+     "title": "Short Coil",
+     "lang": "en",
+     "difficulty": 3,
+     "images": false,
+     "url": "/exercise/short-coil/"
+    },
+    "e18715-ions-in-salt-solution": {
+     "source": "export",
+     "title": "Ions in Salt Solution",
+     "lang": "en",
+     "difficulty": 1,
+     "images": false,
+     "url": "/exercise/ions-in-salt-solution/"
+    },
+    "magnetic-forces-06-short-circuit-cables": {
+     "source": "drafts",
+     "title": "A Short Circuit between Two Cables",
+     "lang": "en",
+     "difficulty": 3,
+     "images": false,
+     "url": ""
+    },
+    "e19205-helmholtz-coil": {
+     "source": "export",
+     "title": "Helmholtz Coil",
+     "lang": "en",
+     "difficulty": 2,
+     "images": false,
+     "url": "/exercise/helmholtz-coil/"
+    },
+    "e18713-direction-of-magnetic-force-on-particles": {
+     "source": "export",
+     "title": "Direction of Magnetic Force on Particles",
+     "lang": "en",
+     "difficulty": 1,
+     "images": true,
+     "url": "/exercise/direction-of-magnetic-force-on-particles/"
+    },
+    "e18714-acceleration-of-charged-particles-in-mag": {
+     "source": "export",
+     "title": "Acceleration of Charged Particles in Magnetic Field",
+     "lang": "en",
+     "difficulty": 1,
+     "images": true,
+     "url": "/exercise/acceleration-of-charged-particles-in-magnetic-field/"
+    }
+   }
+  },
+  "charged-particles": {
+   "objectives": {
+    "accel": [
+     "e23054-acceleration-voltage",
+     "e17475-voltage-increase",
+     "e23055-accelerated-electron",
+     "e23438-mass-of-an-electron",
+     "e23437-crossed-fields",
+     "e22072-electrons-in-crossed-fields"
+    ],
+    "work": [
+     "magnetic-forces-04-fine-beam-tube",
+     "magnetic-forces-01-aurora"
+    ],
+    "radius": [
+     "e23410-cyclotron-radius",
+     "magnetic-forces-03-cyclotron",
+     "e18712-proton-cyclotron",
+     "e23450-cyclotron",
+     "magnetic-forces-02-mass-spectrometer",
+     "e18709-particle-accelerator"
+    ],
+    "crossed": [
+     "e18728-hall-coefficient",
+     "e23437-crossed-fields",
+     "e23431-hall-voltage",
+     "e22072-electrons-in-crossed-fields",
+     "e18589-velocity-selector",
+     "e23432-bismuth-1"
+    ]
+   },
+   "exercises": {
+    "e23438-mass-of-an-electron": {
+     "source": "export",
+     "title": "Mass of an electron",
+     "lang": "en",
+     "difficulty": 3,
+     "images": false,
+     "url": "/exercise/mass-of-an-electron/"
+    },
+    "e23437-crossed-fields": {
+     "source": "export",
+     "title": "Crossed Fields",
+     "lang": "en",
+     "difficulty": 1,
+     "images": false,
+     "url": "/exercise/crossed-fields/"
+    },
+    "e22072-electrons-in-crossed-fields": {
+     "source": "export",
+     "title": "Electrons in Crossed Fields",
+     "lang": "en",
+     "difficulty": 2,
+     "images": false,
+     "url": "/exercise/electrons-in-crossed-fields/"
+    },
+    "magnetic-forces-03-cyclotron": {
+     "source": "drafts",
+     "title": "A Cyclotron",
+     "lang": "en",
+     "difficulty": 4,
+     "images": false,
+     "url": ""
+    },
+    "e23054-acceleration-voltage": {
+     "source": "export",
+     "title": "Acceleration voltage",
+     "lang": "en",
+     "difficulty": 1,
+     "images": false,
+     "url": "/exercise/acceleration-voltage/"
+    },
+    "e17475-voltage-increase": {
+     "source": "export",
+     "title": "Voltage Increase",
+     "lang": "en",
+     "difficulty": 2,
+     "images": false,
+     "url": "/exercise/voltage-increase/"
+    },
+    "e23410-cyclotron-radius": {
+     "source": "export",
+     "title": "Cyclotron radius",
+     "lang": "en",
+     "difficulty": 1,
+     "images": false,
+     "url": "/exercise/cyclotron-radius/"
+    },
+    "e18712-proton-cyclotron": {
+     "source": "export",
+     "title": "Proton Cyclotron",
+     "lang": "en",
+     "difficulty": 1,
+     "images": false,
+     "url": "/exercise/proton-cyclotron/"
+    },
+    "e23450-cyclotron": {
+     "source": "export",
+     "title": "Cyclotron",
+     "lang": "en",
+     "difficulty": 1,
+     "images": false,
+     "url": "/exercise/cyclotron/"
+    },
+    "magnetic-forces-02-mass-spectrometer": {
+     "source": "drafts",
+     "title": "A Mass Spectrometer",
+     "lang": "en",
+     "difficulty": 3,
+     "images": false,
+     "url": ""
+    },
+    "e18709-particle-accelerator": {
+     "source": "export",
+     "title": "Particle Accelerator",
+     "lang": "en",
+     "difficulty": 1,
+     "images": false,
+     "url": "/exercise/particle-accelerator/"
+    },
+    "e18728-hall-coefficient": {
+     "source": "export",
+     "title": "Hall Coefficient",
+     "lang": "en",
+     "difficulty": 2,
+     "images": false,
+     "url": "/exercise/hall-coefficient/"
+    },
+    "e23431-hall-voltage": {
+     "source": "export",
+     "title": "Hall voltage",
+     "lang": "en",
+     "difficulty": 1,
+     "images": false,
+     "url": "/exercise/hall-voltage/"
+    },
+    "e18589-velocity-selector": {
+     "source": "export",
+     "title": "Velocity Selector",
+     "lang": "en",
+     "difficulty": 1,
+     "images": false,
+     "url": "/exercise/velocity-selector/"
+    },
+    "e18707-mass-spectrometer": {
+     "source": "export",
+     "title": "Mass Spectrometer",
+     "lang": "en",
+     "difficulty": 2,
+     "images": false,
+     "url": "/exercise/mass-spectrometer/"
+    },
+    "e23055-accelerated-electron": {
+     "source": "export",
+     "title": "Accelerated electron",
+     "lang": "en",
+     "difficulty": 1,
+     "images": false,
+     "url": "/exercise/accelerated-electron/"
+    },
+    "e23432-bismuth-1": {
+     "source": "export",
+     "title": "Bismuth",
+     "lang": "en",
+     "difficulty": 1,
+     "images": false,
+     "url": "/exercise/bismuth-1/"
+    },
+    "magnetic-forces-04-fine-beam-tube": {
+     "source": "drafts",
+     "title": "The Fine-Beam Tube",
+     "lang": "en",
+     "difficulty": 3,
+     "images": false,
+     "url": ""
+    },
+    "magnetic-forces-01-aurora": {
+     "source": "drafts",
+     "title": "The Aurora",
+     "lang": "en",
+     "difficulty": 2,
+     "images": false,
+     "url": ""
+    }
+   }
+  },
+  "em-waves": {
+   "objectives": {
+    "dirs": [
+     "e20388-poynting-vector"
+    ],
+    "speed": [
+     "e20811-microwaves-and-visible-light-in-water",
+     "e20346-microwaves-in-water",
+     "e20347-microwaves-in-water-1",
+     "em-waves-01-microwave-oven",
+     "e20339-light-in-water",
+     "em-waves-05-mars-rover"
+    ],
+    "spectrum": [
+     "em-waves-01-microwave-oven",
+     "e20811-microwaves-and-visible-light-in-water",
+     "em-waves-14-standing-microwave",
+     "e20346-microwaves-in-water",
+     "e20347-microwaves-in-water-1",
+     "e20341-radio-transmitter"
+    ]
+   },
+   "exercises": {
+    "em-waves-01-microwave-oven": {
+     "source": "drafts",
+     "title": "The Speed of Light in a Microwave Oven",
+     "lang": "en",
+     "difficulty": 3,
+     "images": false,
+     "url": ""
+    },
+    "e20811-microwaves-and-visible-light-in-water": {
+     "source": "export",
+     "title": "Microwaves and Visible Light in Water",
+     "lang": "en",
+     "difficulty": 1,
+     "images": false,
+     "url": "/exercise/microwaves-and-visible-light-in-water/"
+    },
+    "e20346-microwaves-in-water": {
+     "source": "export",
+     "title": "Microwaves in Water",
+     "lang": "en",
+     "difficulty": 1,
+     "images": false,
+     "url": "/exercise/microwaves-in-water/"
+    },
+    "e20347-microwaves-in-water-1": {
+     "source": "export",
+     "title": "Microwaves in Water",
+     "lang": "en",
+     "difficulty": 1,
+     "images": false,
+     "url": "/exercise/microwaves-in-water-1/"
+    },
+    "em-waves-14-standing-microwave": {
+     "source": "drafts",
+     "title": "A Standing Microwave",
+     "lang": "en",
+     "difficulty": 3,
+     "images": false,
+     "url": ""
+    },
+    "em-waves-05-mars-rover": {
+     "source": "drafts",
+     "title": "Driving a Rover on Mars",
+     "lang": "en",
+     "difficulty": 2,
+     "images": false,
+     "url": ""
+    },
+    "em-waves-08-moon-and-radar-echo": {
+     "source": "drafts",
+     "title": "Echoes from the Moon and from an Aeroplane",
+     "lang": "en",
+     "difficulty": 2,
+     "images": false,
+     "url": ""
+    },
+    "em-waves-12-fields-of-sunlight-and-radio": {
+     "source": "drafts",
+     "title": "How Strong are the Fields?",
+     "lang": "en",
+     "difficulty": 3,
+     "images": false,
+     "url": ""
+    },
+    "em-waves-02-fm-band": {
+     "source": "drafts",
+     "title": "The FM Band",
+     "lang": "en",
+     "difficulty": 3,
+     "images": false,
+     "url": ""
+    },
+    "e20388-poynting-vector": {
+     "source": "export",
+     "title": "Poynting Vector",
+     "lang": "en",
+     "difficulty": 2,
+     "images": false,
+     "url": "/exercise/poynting-vector/"
+    },
+    "e20339-light-in-water": {
+     "source": "export",
+     "title": "Light in Water",
+     "lang": "en",
+     "difficulty": 1,
+     "images": false,
+     "url": "/exercise/light-in-water/"
+    },
+    "e20341-radio-transmitter": {
+     "source": "export",
+     "title": "Radio Transmitter",
+     "lang": "en",
+     "difficulty": 1,
+     "images": false,
+     "url": "/exercise/radio-transmitter/"
+    },
+    "e21179-infrarotstrahlung": {
+     "source": "export",
+     "title": "Infrarotstrahlung",
+     "lang": "de",
+     "difficulty": 2,
+     "images": false,
+     "url": "/exercise/infrarotstrahlung/"
+    },
+    "em-waves-03-phone-mast": {
+     "source": "drafts",
+     "title": "A Mobile Phone Mast",
+     "lang": "en",
+     "difficulty": 3,
+     "images": false,
+     "url": ""
+    }
+   }
+  },
+  "photons": {
+   "objectives": {
+    "wave": [
+     "e21443-kupferplatte",
+     "e20503-maximum-kinetic-energy"
+    ],
+    "einstein": [
+     "e20549-work-function",
+     "photons-04-night-vision",
+     "e20550-stopping-voltage",
+     "e21445-gegenspannung",
+     "e21446-photozelle",
+     "e23444-threshold-frequency-and-cut-off-waveleng"
+    ],
+    "threshold": [
+     "e23444-threshold-frequency-and-cut-off-waveleng",
+     "e20549-work-function",
+     "photons-04-night-vision",
+     "e21446-photozelle",
+     "e20548-tungsten-plate",
+     "photons-03-solar-cell"
+    ],
+    "rate": [
+     "photons-01-laser-pointer",
+     "photons-09-infrared-remote-control",
+     "photons-11-reading-an-x-ray-spectrum",
+     "e20552-radio-station",
+     "photons-05-solar-sail-ikaros",
+     "photons-10-momentum-of-light"
+    ]
+   },
+   "exercises": {
+    "photons-04-night-vision": {
+     "source": "drafts",
+     "title": "A Night-Vision Device",
+     "lang": "en",
+     "difficulty": 3,
+     "images": false,
+     "url": ""
+    },
+    "e20549-work-function": {
+     "source": "export",
+     "title": "Work Function",
+     "lang": "en",
+     "difficulty": 2,
+     "images": false,
+     "url": "/exercise/work-function/"
+    },
+    "e21446-photozelle": {
+     "source": "export",
+     "title": "Photozelle",
+     "lang": "de",
+     "difficulty": 2,
+     "images": false,
+     "url": "/exercise/photozelle/"
+    },
+    "photons-01-laser-pointer": {
+     "source": "drafts",
+     "title": "A Laser Pointer in the Eye",
+     "lang": "en",
+     "difficulty": 2,
+     "images": false,
+     "url": ""
+    },
+    "photons-09-infrared-remote-control": {
+     "source": "drafts",
+     "title": "Photons from a Remote Control",
+     "lang": "en",
+     "difficulty": 2,
+     "images": false,
+     "url": ""
+    },
+    "photons-11-reading-an-x-ray-spectrum": {
+     "source": "drafts",
+     "title": "Reading an X-Ray Spectrum",
+     "lang": "en",
+     "difficulty": 3,
+     "images": false,
+     "url": ""
+    },
+    "e23444-threshold-frequency-and-cut-off-waveleng": {
+     "source": "export",
+     "title": "Threshold frequency and cut-off wavelength",
+     "lang": "en",
+     "difficulty": 1,
+     "images": false,
+     "url": "/exercise/threshold-frequency-and-cut-off-wavelength/"
+    },
+    "photons-03-solar-cell": {
+     "source": "drafts",
+     "title": "A Silicon Solar Cell",
+     "lang": "en",
+     "difficulty": 3,
+     "images": false,
+     "url": ""
+    },
+    "photons-05-solar-sail-ikaros": {
+     "source": "drafts",
+     "title": "The Solar Sail IKAROS",
+     "lang": "en",
+     "difficulty": 3,
+     "images": false,
+     "url": ""
+    },
+    "photons-10-momentum-of-light": {
+     "source": "drafts",
+     "title": "The Momentum of Light",
+     "lang": "en",
+     "difficulty": 2,
+     "images": false,
+     "url": ""
+    },
+    "e20550-stopping-voltage": {
+     "source": "export",
+     "title": "Stopping Voltage",
+     "lang": "en",
+     "difficulty": 2,
+     "images": false,
+     "url": "/exercise/stopping-voltage/"
+    },
+    "e21445-gegenspannung": {
+     "source": "export",
+     "title": "Gegenspannung",
+     "lang": "de",
+     "difficulty": 2,
+     "images": false,
+     "url": "/exercise/gegenspannung/"
+    },
+    "photons-02-sunburn": {
+     "source": "drafts",
+     "title": "Sunburn, but not from a Heater",
+     "lang": "en",
+     "difficulty": 2,
+     "images": false,
+     "url": ""
+    },
+    "photons-06-dental-x-rays": {
+     "source": "drafts",
+     "title": "X-Rays at the Dentist",
+     "lang": "en",
+     "difficulty": 2,
+     "images": false,
+     "url": ""
+    },
+    "e20548-tungsten-plate": {
+     "source": "export",
+     "title": "Tungsten Plate",
+     "lang": "en",
+     "difficulty": 1,
+     "images": false,
+     "url": "/exercise/tungsten-plate/"
+    },
+    "e20552-radio-station": {
+     "source": "export",
+     "title": "Radio Station",
+     "lang": "en",
+     "difficulty": 2,
+     "images": false,
+     "url": "/exercise/radio-station/"
+    },
+    "e21443-kupferplatte": {
+     "source": "export",
+     "title": "Kupferplatte",
+     "lang": "de",
+     "difficulty": 2,
+     "images": false,
+     "url": "/exercise/kupferplatte/"
+    },
+    "e20503-maximum-kinetic-energy": {
+     "source": "export",
+     "title": "Maximum Kinetic Energy",
+     "lang": "en",
+     "difficulty": 2,
+     "images": false,
+     "url": "/exercise/maximum-kinetic-energy/"
+    }
+   }
+  },
+  "matter-waves": {
+   "objectives": {
+    "debroglie": [
+     "e20570-de-broglie-wavelength",
+     "e21477-de-broglie-wellenlange",
+     "matter-waves-01-football",
+     "matter-waves-07-electrons-through-150-volts",
+     "matter-waves-08-big-and-small-particles",
+     "matter-waves-09-electrons-diffracted-by-graphite"
+    ],
+    "box": [
+     "e20582-ball-in-a-box",
+     "e21554-ball-in-box",
+     "e23595-electron-in-a-box",
+     "e21557-nichtstationarer-zustand",
+     "e20602-photon-emission",
+     "e21555-photonenemission"
+    ],
+    "psi": [
+     "e20643-ground-state-statistics",
+     "e23596-expectation-value-and-uncertainty",
+     "e21642-elektron-im-grundzustand",
+     "e20598-position-operator",
+     "e21656-erwartungswert-von-uberlagerung",
+     "e20597-superposition-state"
+    ]
+   },
+   "exercises": {
+    "matter-waves-11-electron-and-grain-of-dust": {
+     "source": "drafts",
+     "title": "An Electron and a Grain of Dust",
+     "lang": "en",
+     "difficulty": 2,
+     "images": false,
+     "url": ""
+    },
+    "matter-waves-12-uncertainty-at-a-single-slit": {
+     "source": "drafts",
+     "title": "Uncertainty at a Single Slit",
+     "lang": "en",
+     "difficulty": 3,
+     "images": false,
+     "url": ""
+    },
+    "e20582-ball-in-a-box": {
+     "source": "export",
+     "title": "Ball in a Box",
+     "lang": "en",
+     "difficulty": 2,
+     "images": false,
+     "url": "/exercise/ball-in-a-box/"
+    },
+    "matter-waves-01-football": {
+     "source": "drafts",
+     "title": "A Football through the Goal",
+     "lang": "en",
+     "difficulty": 1,
+     "images": false,
+     "url": ""
+    },
+    "matter-waves-07-electrons-through-150-volts": {
+     "source": "drafts",
+     "title": "Electrons Through 150 Volts",
+     "lang": "en",
+     "difficulty": 1,
+     "images": false,
+     "url": ""
+    },
+    "matter-waves-08-big-and-small-particles": {
+     "source": "drafts",
+     "title": "Big and Small Particles",
+     "lang": "en",
+     "difficulty": 2,
+     "images": false,
+     "url": ""
+    },
+    "matter-waves-09-electrons-diffracted-by-graphite": {
+     "source": "drafts",
+     "title": "Electrons Diffracted by Graphite",
+     "lang": "en",
+     "difficulty": 4,
+     "images": false,
+     "url": ""
+    },
+    "e21554-ball-in-box": {
+     "source": "export",
+     "title": "Ball in Box",
+     "lang": "de",
+     "difficulty": 2,
+     "images": false,
+     "url": "/exercise/ball-in-box/"
+    },
+    "e21557-nichtstationarer-zustand": {
+     "source": "export",
+     "title": "Nichtstationärer Zustand",
+     "lang": "de",
+     "difficulty": 2,
+     "images": false,
+     "url": "/exercise/nichtstationarer-zustand/"
+    },
+    "matter-waves-10-electrons-at-a-double-slit": {
+     "source": "drafts",
+     "title": "Electrons at a Double Slit",
+     "lang": "en",
+     "difficulty": 3,
+     "images": false,
+     "url": ""
+    },
+    "e23596-expectation-value-and-uncertainty": {
+     "source": "export",
+     "title": "Expectation value and uncertainty",
+     "lang": "en",
+     "difficulty": 2,
+     "images": false,
+     "url": "/exercise/expectation-value-and-uncertainty/"
+    },
+    "e21656-erwartungswert-von-uberlagerung": {
+     "source": "export",
+     "title": "Erwartungswert von Überlagerung",
+     "lang": "de",
+     "difficulty": 2,
+     "images": false,
+     "url": "/exercise/erwartungswert-von-uberlagerung/"
+    },
+    "e20597-superposition-state": {
+     "source": "export",
+     "title": "Superposition State",
+     "lang": "en",
+     "difficulty": 2,
+     "images": false,
+     "url": "/exercise/superposition-state/"
+    },
+    "e20604-non-stationary-state": {
+     "source": "export",
+     "title": "Non-Stationary State",
+     "lang": "en",
+     "difficulty": 2,
+     "images": false,
+     "url": "/exercise/non-stationary-state/"
+    },
+    "e20629-momentum-of-stationary-states": {
+     "source": "export",
+     "title": "Momentum of Stationary States",
+     "lang": "en",
+     "difficulty": 3,
+     "images": false,
+     "url": "/exercise/momentum-of-stationary-states/"
+    },
+    "e21558-uberlagerungszustand": {
+     "source": "export",
+     "title": "Überlagerungszustand",
+     "lang": "de",
+     "difficulty": 2,
+     "images": false,
+     "url": "/exercise/uberlagerungszustand/"
+    },
+    "e21642-elektron-im-grundzustand": {
+     "source": "export",
+     "title": "Elektron im Grundzustand",
+     "lang": "de",
+     "difficulty": 4,
+     "images": false,
+     "url": "/exercise/elektron-im-grundzustand/"
+    },
+    "e20598-position-operator": {
+     "source": "export",
+     "title": "Position Operator",
+     "lang": "en",
+     "difficulty": 3,
+     "images": false,
+     "url": "/exercise/position-operator/"
+    },
+    "e20570-de-broglie-wavelength": {
+     "source": "export",
+     "title": "de Broglie Wavelength",
+     "lang": "en",
+     "difficulty": 1,
+     "images": false,
+     "url": "/exercise/de-broglie-wavelength/"
+    },
+    "e21477-de-broglie-wellenlange": {
+     "source": "export",
+     "title": "de Broglie-Wellenlänge",
+     "lang": "de",
+     "difficulty": 1,
+     "images": false,
+     "url": "/exercise/de-broglie-wellenlange/"
+    },
+    "e23595-electron-in-a-box": {
+     "source": "export",
+     "title": "Electron in a box",
+     "lang": "en",
+     "difficulty": 1,
+     "images": false,
+     "url": "/exercise/electron-in-a-box/"
+    },
+    "e20643-ground-state-statistics": {
+     "source": "export",
+     "title": "Ground State Statistics",
+     "lang": "en",
+     "difficulty": 3,
+     "images": false,
+     "url": "/exercise/ground-state-statistics/"
+    },
+    "e20602-photon-emission": {
+     "source": "export",
+     "title": "Photon Emission",
+     "lang": "en",
+     "difficulty": 2,
+     "images": false,
+     "url": "/exercise/photon-emission/"
+    },
+    "e21555-photonenemission": {
+     "source": "export",
+     "title": "Photonenemission",
+     "lang": "de",
+     "difficulty": 2,
+     "images": false,
+     "url": "/exercise/photonenemission/"
+    }
+   }
+  }
+ }
+}
