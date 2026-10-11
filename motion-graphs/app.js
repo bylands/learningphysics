@@ -514,6 +514,7 @@
     average: () => L(`It is constant at the mean value ${BAR[ex.to]}, but ${Q(ex.to)} changes in this piece.`, `Es ist konstant beim Mittelwert ${BAR[ex.to]}, aber ${Q(ex.to)} ändert sich in diesem Stück.`),
     direction: () => L(`${Q(ex.to)} changes the wrong way.`, `${Q(ex.to)} ändert sich in die falsche Richtung.`),
     curve: () => L(`It is curved, but ${Q(ex.to)} changes linearly here.`, `Es ist gekrümmt, aber ${Q(ex.to)} ändert sich hier linear.`),
+    value: () => L(`It starts or ends at the wrong value: not the slope of ${Q(ex.from)} there.`, `Es beginnt oder endet beim falschen Wert: nicht bei der Steigung von ${Q(ex.from)} dort.`),
   };
   // what the sketch shows in its wrong piece p, and why that is wrong
   function flawWhy(code, p) {
@@ -524,6 +525,11 @@
       case 'sign': return `${L('The sketch has the wrong sign here.', 'Die Skizze hat hier das falsche Vorzeichen.')} ${whyDiff('sign', p)}`;
       case 'average': return L(`The sketch shows the mean value ${fb} = Δ${F}/Δ<i>t</i> for the whole piece. But ${F} is curved here, so ${f} changes steadily: it equals ${fb} only in the middle of the piece.`,
         `Die Skizze zeigt den Mittelwert ${fb} = Δ${F}/Δ<i>t</i> für das ganze Stück. ${F} ist hier aber gekrümmt, also ändert sich ${f} gleichmässig: Es ist nur in der Mitte des Stücks gleich ${fb}.`);
+      case 'value': {
+        const first = p.t0 === 0, t = first ? p.t0 : p.t1, y = first ? p.g0 : p.g1;
+        return L(`The sketch ${first ? 'starts' : 'ends'} at the wrong value. At ${fmt(t)} s, the tangent to the ${F}(<i>t</i>) graph has the slope ${val(y, ex.to)}, so ${f}(${fmt(t)} s) = ${val(y, ex.to)}.${sloped(p) ? '' : ` In this piece ${F} is a straight line, so ${f} is constant.`}`,
+          `Die Skizze ${first ? 'beginnt' : 'endet'} beim falschen Wert. Bei ${fmt(t)} s hat die Tangente an den ${F}(<i>t</i>)-Graphen die Steigung ${val(y, ex.to)}, also ist ${f}(${fmt(t)} s) = ${val(y, ex.to)}.${sloped(p) ? '' : ` In diesem Stück ist ${F} eine Gerade, also ist ${f} konstant.`}`);
+      }
       case 'curve': return L(`The sketch is curved in this piece, like the ${F}(<i>t</i>) graph. But ${F} is a parabola here, so its slope ${f} changes at a steady rate: the ${f}(<i>t</i>) graph is a straight line.`,
         `Die Skizze ist in diesem Stück gekrümmt, wie der ${F}(<i>t</i>)-Graph. ${F} ist hier aber eine Parabel, also ändert sich seine Steigung ${f} gleichmässig: Der ${f}(<i>t</i>)-Graph ist eine Gerade.`);
       default: return L(`In the sketch, ${f} ${up ? 'decreases' : 'increases'} in this piece. But ${F} curves ${up ? 'upward' : 'downward'} here: its slope ${up ? 'increases' : 'decreases'}, and so does ${f}.`,
@@ -563,6 +569,7 @@
           { title: `${piece(i + 1)} (${when(p)})`, text: `${flawWhy(f.code, p)} ${L('Right', 'Richtig')}: ${right(i)}`, figure: fig(sourceGraph(e, { marks }), sketch({ marks })) },
           { title: L('The right graph', 'Der richtige Graph'), text: f.code === 'curve'
             ? L(`The other pieces of the sketch are right. With ${piece(i + 1).toLowerCase()} corrected, ${g}(<i>t</i>) is straight in every piece where ${F} is a parabola.`, `Die anderen Stücke der Skizze stimmen. Mit korrigiertem ${piece(i + 1)} ist ${g}(<i>t</i>) in jedem Stück gerade, in dem ${F} eine Parabel ist.`)
+            : f.edge ? L(`The other pieces of the sketch are right. The wrong piece joined its neighbour without a jump: a sketch in one line can still be wrong, so check every piece, the first and the last included.`, `Die anderen Stücke der Skizze stimmen. Das falsche Stück schloss ohne Sprung an seinen Nachbarn an: Auch eine zusammenhängende Skizze kann falsch sein, also prüfe jedes Stück, auch das erste und das letzte.`)
             : L(`The other pieces of the sketch are right. With ${piece(i + 1).toLowerCase()} corrected, ${g}(<i>t</i>) is one connected line again.`, `Die anderen Stücke der Skizze stimmen. Mit korrigiertem ${piece(i + 1)} ist ${g}(<i>t</i>) wieder eine zusammenhängende Linie.`), figure: fig(sourceGraph(e), Plot.answerGraph(e, { marks })) },
         ],
         answers: questions.map((q) => q.options.find((o) => o.correct).html),
