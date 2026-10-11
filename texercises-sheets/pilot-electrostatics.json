@@ -1,0 +1,141 @@
+{
+  "title": "Pilot: Electrostatics (Learning Physics set)",
+  "description": "Selected by objective coverage, textbook share and difficulty mix.",
+  "kind": "sheet",
+  "is_private": true,
+  "tags": [
+    "learningphysics",
+    "pilot"
+  ],
+  "layout_defaults": {},
+  "items": [
+    {
+      "exercise_id": 10731,
+      "difficulty": 1,
+      "additional": "\\par\\smallskip{\\footnotesize Similar: texercises.com/exercise/halving-force-between-point-charges/; texercises.com/exercise/force-between-point-charges/; texercises.com/exercise/field-between-point-charges/}",
+      "additional_position": 1
+    },
+    {
+      "exercise_id": 22774,
+      "difficulty": 2,
+      "additional": "\\par\\smallskip{\\footnotesize Similar: texercises.com/exercise/point-charges-in-square/; texercises.com/exercise/forces-between-three-point-charges-1d/; texercises.com/exercise/two-point-charges/}",
+      "additional_position": 1
+    },
+    {
+      "exercise_id": 10733,
+      "difficulty": 2,
+      "additional": "\\par\\smallskip{\\footnotesize Similar: texercises.com/exercise/halving-force-between-point-charges/; texercises.com/exercise/force-between-point-charges/; texercises.com/exercise/two-point-charges/}",
+      "additional_position": 1
+    },
+    {
+      "exercise_id": 17316,
+      "difficulty": 2,
+      "additional": "\\par\\smallskip{\\footnotesize Similar: texercises.com/exercise/milllikan-experiment/; texercises.com/exercise/flying-electron-1/; texercises.com/exercise/charged-wire/}",
+      "additional_position": 1
+    },
+    {
+      "exercise_id": 17335,
+      "difficulty": 2,
+      "additional": "\\par\\smallskip{\\footnotesize Similar: texercises.com/exercise/flying-electron-1/; texercises.com/exercise/charged-wire/; texercises.com/exercise/force-on-test-charge/}",
+      "additional_position": 1
+    },
+    {
+      "exercise_id": 10735,
+      "difficulty": 3,
+      "additional": "\\par\\smallskip{\\footnotesize Similar: texercises.com/exercise/forces-between-three-point-charges-1d/; texercises.com/exercise/point-charges-in-square/; texercises.com/exercise/two-point-charges/}",
+      "additional_position": 1
+    },
+    {
+      "exercise_id": 17324,
+      "difficulty": 2,
+      "additional": "\\par\\smallskip{\\footnotesize Similar: texercises.com/exercise/vanishing-field/; texercises.com/exercise/adding-field-vectors/; texercises.com/exercise/superposition-of-uniform-fields/}",
+      "additional_position": 1
+    },
+    {
+      "exercise_id": 10753,
+      "difficulty": 2,
+      "additional": "\\par\\smallskip{\\footnotesize Similar: texercises.com/exercise/force-between-point-charges/; texercises.com/exercise/attraction-between-charged-balls/; texercises.com/exercise/force-between-two-charges/}",
+      "additional_position": 1
+    },
+    {
+      "exercise_id": 22848,
+      "difficulty": 1,
+      "additional": "\\par\\smallskip{\\footnotesize Similar: texercises.com/exercise/equipotentials-in-field-of-electric-dipole/; texercises.com/exercise/point-dipole/}",
+      "additional_position": 1
+    },
+    {
+      "exercise_id": 17336,
+      "difficulty": 1,
+      "additional": "\\par\\smallskip{\\footnotesize Similar: texercises.com/exercise/field-between-point-charges/; texercises.com/exercise/dipole-in-field-of-point-charge/; texercises.com/exercise/vanishing-field/}",
+      "additional_position": 1
+    },
+    {
+      "exercise_id": 17488,
+      "difficulty": 1,
+      "additional": "\\par\\smallskip{\\footnotesize Similar: texercises.com/exercise/equipotentials-in-field-of-electric-dipole/; texercises.com/exercise/field-between-point-charges/}",
+      "additional_position": 1
+    },
+    {
+      "exercise_id": 17315,
+      "difficulty": 1,
+      "additional": "",
+      "additional_position": 1
+    },
+    {
+      "exercise_id": 22905,
+      "difficulty": 2,
+      "additional": "\\par\\smallskip{\\footnotesize Similar: texercises.com/exercise/dipole-in-field-of-point-charge/; texercises.com/exercise/dipole-in-field-of-charged-wire/; texercises.com/exercise/torque-on-coil/}",
+      "additional_position": 1
+    },
+    {
+      "exercise_id": 23024,
+      "difficulty": 1,
+      "additional": "\\par\\smallskip{\\footnotesize Similar: texercises.com/exercise/potential-in-electric-field/; texercises.com/exercise/potential-energy-of-proton/; texercises.com/exercise/potential-difference/}",
+      "additional_position": 1
+    },
+    {
+      "exercise_id": 17530,
+      "difficulty": 2,
+      "additional": "\\par\\smallskip{\\footnotesize Similar: texercises.com/exercise/voltage-in-uniform-field/; texercises.com/exercise/voltage-in-uniform-field-1/; texercises.com/exercise/protons-in-uniform-field/}",
+      "additional_position": 1
+    },
+    {
+      "exercise_id": 17534,
+      "difficulty": 2,
+      "additional": "\\par\\smallskip{\\footnotesize Similar: texercises.com/exercise/potential-difference-in-field-of-point-charge-1/; texercises.com/exercise/potential-difference-in-field-of-point-charge/; texercises.com/exercise/acceleration-voltage/}",
+      "additional_position": 1
+    },
+    {
+      "exercise_id": 17471,
+      "difficulty": 2,
+      "additional": "\\par\\smallskip{\\footnotesize Similar: texercises.com/exercise/gravitational-potential/; texercises.com/exercise/work-done-on-charged-particle/; texercises.com/exercise/potential-energy-of-a-proton/}",
+      "additional_position": 1
+    },
+    {
+      "exercise_id": 17489,
+      "difficulty": 3,
+      "additional": "\\par\\smallskip{\\footnotesize Similar: texercises.com/exercise/hydrogen-atom-1/; texercises.com/exercise/repelling-particles/; texercises.com/exercise/gold-atom/}",
+      "additional_position": 1
+    }
+  ],
+  "containers": [
+    {
+      "title": "Point Charges",
+      "pretext": "",
+      "first": 1,
+      "last": 8
+    },
+    {
+      "title": "Field Lines and Equipotentials",
+      "pretext": "",
+      "first": 9,
+      "last": 13
+    },
+    {
+      "title": "Electric Potential",
+      "pretext": "",
+      "first": 14,
+      "last": 18
+    }
+  ]
+}

@@ -1,0 +1,194 @@
+% texercises-lp.sty -- a rebuild of the TeXercises solver macros, from the TeXercises cheatsheet,
+% so that exercises exported from TeXercises compile outside TeXercises.
+% Not the original package: output can differ in details (rounding, box layout).
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{texercises-lp}[2026/10/11 TeXercises macros, rebuilt]
+\RequirePackage{amsmath,amssymb,xfp,siunitx,graphicx,xcolor,tikz,ulem,enumitem,multicol}
+\RequirePackage[version=4]{mhchem}
+\RequirePackage{tcolorbox}\tcbuselibrary{most}
+\RequirePackage{circuitikz}
+\IfFileExists{tkz-fct.sty}{\RequirePackage{tkz-fct}}{}
+\normalem
+\usetikzlibrary{arrows.meta,calc,decorations.pathmorphing,patterns}
+
+% \qty: siunitx' \qty{value}{unit}, or physics-style \qty( ... ) for big parentheses
+\ExplSyntaxOn
+\AtBeginDocument
+  {
+    \cs_gset_eq:NN \__txlp_siqty:w \qty
+    \RenewDocumentCommand \qty { } { \peek_charcode:NTF ( { \__txlp_paren:w } { \__txlp_siqty:w } }
+  }
+\cs_new:Npn \__txlp_paren:w (#1) { \left( #1 \right) }
+\ExplSyntaxOff
+\providecommand\abs[1]{\left|#1\right|}
+\providecommand\dd[1]{\mathrm{d}#1}
+\providecommand\dv[2]{\frac{\mathrm{d}#1}{\mathrm{d}#2}}
+\sisetup{per-mode=symbol,output-decimal-marker={.},exponent-product=\cdot,separate-uncertainty=true}
+
+% ---------------------------------------------------------------- language
+\newif\iftxde
+\newcommand\txlang[1]{\def\@tmp{#1}\def\@de{de}\ifx\@tmp\@de\txdetrue\else\txdefalse\fi}
+\newcommand\DuSie[2]{#2}
+\newcommand\txGiven{\iftxde Gegeben\else Given\fi}
+\newcommand\txWanted{\iftxde Gesucht\else Wanted\fi}
+\newcommand\txSolution{\iftxde Lösung\else Solution\fi}
+
+% ---------------------------------------------------------------- quantities
+\ExplSyntaxOn
+\fp_new:N \l__txlp_fp
+\tl_new:N \l__txlp_x_tl
+\tl_new:N \l__txlp_u_tl
+% a quantity <name>: X (SI number), U (SI unit), O (as given), F (formula), and the printed forms
+\cs_new_protected:Npn \__txlp_define:nnnn #1#2#3#4
+  % #1 name, #2 SI number (expanded), #3 SI unit, #4 formula
+  {
+    \cs_gset:cpn { #1X } { #2 }
+    \cs_gset:cpn { #1U } { \unit{#3} }
+    \cs_gset:cpn { #1F } { #4 }
+    \cs_gset_protected:cpn { #1 }  { \SI[round-mode=figures,round-precision=4,exponent-mode=threshold,exponent-thresholds=-3:3]{#2}{#3} }
+    \cs_gset_protected:cpn { #1S } ##1 { \SI[round-mode=figures,round-precision=##1,exponent-mode=threshold,exponent-thresholds=-3:3]{#2}{#3} }
+    \cs_gset_protected:cpn { #1Q } { \SI[round-mode=figures,round-precision=4,exponent-mode=fixed,fixed-exponent=0]{#2}{#3} }
+    \cs_gset_protected:cpn { #1I } { \SI[round-mode=places,round-precision=0]{#2}{#3} }
+    \cs_gset_protected:cpn { #1P } ##1##2 { \__txlp_prefixed:nnnn {#2} {#3} {##1} {##2} }
+  }
+\cs_new_protected:Npn \__txlp_prefixed:nnnn #1#2#3#4
+  {
+    \SI[round-mode=figures,round-precision=#4,exponent-mode=fixed,fixed-exponent=0]
+      { \fp_eval:n { (#1) / 10^(#3) } }
+      { \__txlp_prefix:n {#3} #2 }
+  }
+\cs_new:Npn \__txlp_prefix:n #1
+  {
+    \int_case:nnF {#1}
+      { {-15}{\femto} {-12}{\pico} {-9}{\nano} {-6}{\micro} {-3}{\milli} {-2}{\centi} {-1}{\deci}
+        {0}{} {3}{\kilo} {6}{\mega} {9}{\giga} {12}{\tera} }
+      { }
+  }
+% \NewQty{name}{value}[unit][factor][SI unit]; * = factor multiplies instead of a power of ten
+\NewDocumentCommand \NewQty { s m m o o o }
+  {
+    \IfNoValueTF {#5}
+      { \tl_set:Nx \l__txlp_x_tl { \fp_eval:n {#3} } \tl_set:Nn \l__txlp_u_tl {#4} }
+      {
+        \IfBooleanTF {#1}
+          { \tl_set:Nx \l__txlp_x_tl { \fp_eval:n { (#3) * (#5) } } }
+          { \tl_set:Nx \l__txlp_x_tl { \fp_eval:n { #3 #5 } } }
+        \IfNoValueTF {#6} { \tl_set:Nn \l__txlp_u_tl {#4} } { \tl_set:Nn \l__txlp_u_tl {#6} }
+      }
+    \IfNoValueTF {#4} { \tl_clear:N \l__txlp_u_tl } { }
+    \exp_args:NnV \__txlp_define_given:nnnn {#2} \l__txlp_x_tl {#3} {#4}
+    \exp_args:NnV \__txlp_define_u:nnn {#2} \l__txlp_u_tl { }
+  }
+\cs_new_protected:Npn \__txlp_define_given:nnnn #1#2#3#4
+  {
+    \cs_gset:cpn { #1X } { #2 }
+    \cs_gset_protected:cpn { #1O } { \IfNoValueTF {#4} { \num{#3} } { \SI{#3}{#4} } }
+    \cs_gset:cpn { #1F } { #1 }
+  }
+\cs_new_protected:Npn \__txlp_define_u:nnn #1#2#3
+  {
+    \cs_gset:cpn { #1U } { \unit{#2} }
+    \cs_gset_protected:cpn { #1 } { \SI[exponent-mode=threshold,exponent-thresholds=-3:3]{ \use:c{#1X} }{#2} }
+    \cs_gset_protected:cpn { #1S } ##1 { \SI[round-mode=figures,round-precision=##1,exponent-mode=threshold,exponent-thresholds=-3:3]{ \use:c{#1X} }{#2} }
+    \cs_gset_protected:cpn { #1Q } { \SI[round-mode=figures,round-precision=4]{ \use:c{#1X} }{#2} }
+    \cs_gset_protected:cpn { #1I } { \SI[round-mode=places,round-precision=0]{ \use:c{#1X} }{#2} }
+    \cs_gset_protected:cpn { #1P } ##1##2 { \__txlp_prefixed:nnnn { \use:c{#1X} } {#2} {##1} {##2} }
+  }
+% \SolQty{name}[formula]{xfp expression}[SI unit]
+\NewDocumentCommand \SolQty { m o m o }
+  {
+    \tl_set:Nx \l__txlp_x_tl { \fp_eval:n {#3} }
+    \exp_args:NnV \__txlp_define:nnnn {#1} \l__txlp_x_tl { \IfNoValueTF{#4}{}{#4} } { \IfNoValueTF{#2}{#1}{#2} }
+  }
+% \ConvTo{new}{factor}{old}{unit}
+\NewDocumentCommand \ConvTo { m m m m }
+  {
+    \tl_set:Nx \l__txlp_x_tl { \fp_eval:n { \use:c{#3X} * (#2) } }
+    \exp_args:NnV \__txlp_define:nnnn {#1} \l__txlp_x_tl {#4} { \use:c{#3F} }
+  }
+\ExplSyntaxOff
+
+% ---------------------------------------------------------------- constants (CODATA 2018)
+\NewQty{ncg}{9.81}[\meter\per\second\squared]
+\NewQty{ncG}{6.674e-11}[\newton\meter\squared\per\kilogram\squared]
+\NewQty{ncme}{9.109e-31}[\kilogram]
+\NewQty{ncmp}{1.673e-27}[\kilogram]
+\NewQty{ncmn}{1.675e-27}[\kilogram]
+\NewQty{nce}{1.602e-19}[\coulomb]
+\NewQty{nceps}{8.854e-12}[\ampere\second\per\volt\per\meter]
+\NewQty{ncepsO}{8.854e-12}[\ampere\second\per\volt\per\meter]
+\NewQty{ncmuo}{1.257e-6}[\volt\second\per\ampere\per\meter]
+\NewQty{ncNA}{6.022e23}[\per\mole]
+\NewQty{ncc}{2.998e8}[\meter\per\second]
+\NewQty{nch}{6.626e-34}[\joule\second]
+\NewQty{nchbar}{1.055e-34}[\joule\second]
+\NewQty{ncu}{1.661e-27}[\kilogram]
+\NewQty{ncpo}{1.013e5}[\pascal]
+\NewQty{nck}{1.381e-23}[\joule\per\kelvin]
+\NewQty{nckc}{8.988e9}[\newton\meter\squared\per\coulomb\squared]
+\NewQty{ncR}{8.314}[\joule\per\mole\per\kelvin]
+\NewQty{ncS}{5.670e-8}[\watt\per\meter\squared\per\kelvin\tothe{4}]
+\NewQty{ncb}{2.898e-3}[\meter\kelvin]
+\NewQty{ncJS}{1361}[\watt\per\meter\squared]
+\NewQty{MSun}{1.989e30}[\kilogram]   \NewQty{rSun}{6.96e8}[\meter]
+\NewQty{MEar}{5.972e24}[\kilogram]   \NewQty{rEar}{6.371e6}[\meter]
+\NewQty{MMoo}{7.342e22}[\kilogram]   \NewQty{rMoo}{1.737e6}[\meter]
+\NewQty{MMer}{3.301e23}[\kilogram]   \NewQty{rMer}{2.440e6}[\meter]
+\NewQty{MVen}{4.867e24}[\kilogram]   \NewQty{rVen}{6.052e6}[\meter]
+\NewQty{MMar}{6.417e23}[\kilogram]   \NewQty{rMar}{3.390e6}[\meter]
+\NewQty{MJup}{1.898e27}[\kilogram]   \NewQty{rJup}{6.991e7}[\meter]
+\NewQty{MSat}{5.683e26}[\kilogram]   \NewQty{rSat}{5.823e7}[\meter]
+\NewQty{MUra}{8.681e25}[\kilogram]   \NewQty{rUra}{2.536e7}[\meter]
+\NewQty{MNep}{1.024e26}[\kilogram]   \NewQty{rNep}{2.462e7}[\meter]
+\NewQty{MPlu}{1.303e22}[\kilogram]   \NewQty{rPlu}{1.188e6}[\meter]
+\newcommand\clight{\ncc}
+\newcommand\Waerme[1]{\par\emph{(\iftxde Stoffwerte\else material values\fi: #1)}\par}
+\newcommand\Dichte[1]{\emph{(\iftxde Dichte\else density\fi: #1)}}
+
+% ---------------------------------------------------------------- units (abbreviations used in exercises)
+\DeclareSIUnit\mps{\meter\per\second}      \DeclareSIUnit\cmps{\centi\meter\per\second}
+\DeclareSIUnit\kmps{\kilo\meter\per\second} \DeclareSIUnit\kmph{\kilo\meter\per\hour}
+\DeclareSIUnit\mpss{\meter\per\second\squared} \DeclareSIUnit\mpsq{\meter\per\second\squared}
+\DeclareSIUnit\cmpsq{\centi\meter\per\second\squared} \DeclareSIUnit\kmpsq{\kilo\meter\per\second\squared}
+\DeclareSIUnit\Npkg{\newton\per\kilogram} \DeclareSIUnit\Nmqpkgq{\newton\meter\squared\per\kilogram\squared}
+\DeclareSIUnit\mkpkgsq{\meter\cubed\per\kilogram\per\second\squared}
+\DeclareSIUnit\radps{\radian\per\second} \DeclareSIUnit\radpsq{\radian\per\second\squared}
+\DeclareSIUnit\radqpsq{\radian\squared\per\second\squared}
+\DeclareSIUnit\rpss{\per\second\squared} \DeclareSIUnit\rps{\per\second}
+\DeclareSIUnit\Npm{\newton\per\meter} \DeclareSIUnit\Npcm{\newton\per\centi\meter} \DeclareSIUnit\Npmm{\newton\per\milli\meter}
+\DeclareSIUnit\kgmps{\kilogram\meter\per\second} \DeclareSIUnit\kgpmk{\kilogram\per\meter\cubed}
+\DeclareSIUnit\kgpcm{\kilogram\per\centi\meter\cubed} \DeclareSIUnit\gpcmk{\gram\per\centi\meter\cubed}
+\DeclareSIUnit\Wpqmkv{\watt\per\meter\squared\per\kelvin\tothe{4}} \DeclareSIUnit\Wpmq{\watt\per\meter\squared}
+\DeclareSIUnit\mTps{\milli\tesla\per\second} \DeclareSIUnit\CpVm{\coulomb\per\volt\per\meter}
+\DeclareSIUnit\vmps{\meter\per\second}
+\DeclareSIUnit\atomicmassunit{u}
+
+% ---------------------------------------------------------------- layout helpers
+\newlist{abcliste}{enumerate}{1}\setlist[abcliste]{label=\alph*),leftmargin=*}
+\newlist{abclist}{enumerate}{1}\setlist[abclist]{label=\alph*),leftmargin=*}
+\newcommand\abc{\item}
+\newcommand\ssc[2]{#1_{\text{#2}}}
+\newcommand\result[1]{\ensuremath{\uuline{#1}}}
+\newcommand\pq[2]{\SI{#1}{#2}}
+\newcommand\ds{\displaystyle}
+\newcommand\mustbe{\overset{!}{=}}
+\newcommand\alphaarrow{\xrightarrow{\alpha}} \newcommand\betaarrow{\xrightarrow{\beta}}
+\newcommand\betamarrow{\xrightarrow{\beta^-}} \newcommand\betaparrow{\xrightarrow{\beta^+}}
+\newcommand\gammaarrow{\xrightarrow{\gamma}}
+\NewDocumentCommand\isotope{O{}O{}m}{\ensuremath{{}^{#1}_{#2}\mathrm{#3}}}
+\newcommand\toPercent[2][2]{\num[round-mode=figures,round-precision=#1]{\fpeval{100*\csname #2X\endcsname}}\,\%}
+\newcommand\claim[1]{\item #1 \hfill $\square$ \iftxde wahr\else true\fi\quad $\square$ \iftxde falsch\else false\fi}
+\newcommand\trueclaim[1]{\item #1 \hfill \textbf{\iftxde wahr\else true\fi}}
+\newcommand\falseclaim[1]{\item #1 \hfill \textbf{\iftxde falsch\else false\fi}}
+\newcommand\nprv[1]{#1}   % "not in preview": kept in print
+\newcommand\Korrekturhinweise[1]{}
+\newcommand\Geg[1]{\begin{tcolorbox}[colback=white,colframe=black!40,title=\txGiven,fonttitle=\small\bfseries,coltitle=black,colbacktitle=black!8]\vspace{-1ex}\begin{align*}#1\end{align*}\end{tcolorbox}}
+\newcommand\Ges[2]{\begin{tcolorbox}[colback=white,colframe=black!40,title=\txWanted,fonttitle=\small\bfseries,coltitle=black,colbacktitle=black!8]#1, \quad $#2$\end{tcolorbox}}
+\newcommand\Lsg[1]{\begin{tcolorbox}[colback=green!4,colframe=green!45!black,title=\txSolution,fonttitle=\small\bfseries]\vspace{-1ex}\begin{align*}#1\end{align*}\end{tcolorbox}}
+\newtcbox{\highmathbox}[1][]{on line,colback=white,boxrule=0.4pt,#1}
+\newcommand\tcbhighmath[2][]{\highmathbox{$\displaystyle #2$}}
+
+% images are not part of the export: a missing file prints a framed placeholder
+\let\txlp@includegraphics\includegraphics
+\renewcommand\includegraphics[2][]{\IfFileExists{#2}{\txlp@includegraphics[#1]{#2}}{\fbox{\parbox{0.4\linewidth}{\centering\footnotesize image missing:\\\texttt{\detokenize{#2}}}}}}
+\endinput
