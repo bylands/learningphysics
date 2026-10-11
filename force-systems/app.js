@@ -51,6 +51,7 @@
   const ui = () => UI[FS.getLang()];
 
   let ex = null, st = null, tutor = null, checker = null, topics = null;
+  const slips = window.Slips.create({ app: 'fs', concept: window.CheckSource.concept, ideas: () => window.CheckSource.concepts(), fixes: () => window.CheckSource.fixes() });
 
   // ---------------------------------------------------------------- persistence
   function stored(key, fallback) {
@@ -218,6 +219,17 @@
     $('#reveal-note').hidden = canReveal() || st.revealed;
   }
 
+  // A wrong cell of the table of forces as a typical slip: a force in the direction of motion,
+  // friction, a spring force or air resistance left out, air resistance on a body at rest.
+  function tableSlip(box) {
+    if (st.revealed) return;
+    const k = ex.forces.kinds[box.dataset.j].kind, scn = window.Forces.SCENARIOS.find((x) => x.id === ex.scenario);
+    const still = !!(scn && scn.still);
+    const flag = box.checked ? (k === 's' && !still ? 'motion' : k === 'd' && still ? 'dragRest' : null)
+      : { r: 'noFric', f: 'noSpring', d: 'noDrag' }[k];
+    if (flag) slips.note(flag, ex.id);
+  }
+
   // Marks the table of forces; true if it is right (or there is none).
   function feedback() {
     if (!ex.forces) return true;
@@ -225,7 +237,7 @@
     document.querySelectorAll('#ftable input').forEach((box) => {
       const right = box.checked === ex.forces.table[box.dataset.i][box.dataset.j];
       box.closest('td').className = right ? 'ok' : 'bad';
-      if (!right) wrongCells++;
+      if (!right) { wrongCells++; tableSlip(box); }
     });
     $('#ftable-fb').className = `table-fb ${wrongCells ? 'bad' : 'ok'}`;
     $('#ftable-fb').textContent = wrongCells ? ui().tableBad(wrongCells) : ui().tableOk;
@@ -306,6 +318,7 @@
     document.title = ui().title;
     Lang.apply(ui());
     if (topics) topics.relabel();
+    slips.relabel();
   }
 
   // The same exercise (same seed) in the other language, with the answers, hints and solution kept.
@@ -389,8 +402,11 @@
       tutor: (i) => { setMode('tutor'); tutor.open(i); },
     });
     topics.mount($('#levels'));
-    const picked = (el, items) => (right) => {
+    slips.mount();
+    const picked = (el) => (right, it) => {
       math(el);
+      const o = it.options[st.ident[it.key]];
+      if (!right && o && o.flag && !st.revealed) slips.note(o.flag, ex.id);
       if (right) drawTicked(); // a component appears in the drawing
       else { st.tries++; updateButtons(); } // a wrong choice counts as an attempt
       if (right && choiceOnly() && !st.solved && allIdentified()) check({ preventDefault() {} }); // a choice only: solved

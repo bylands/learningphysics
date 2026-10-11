@@ -61,6 +61,40 @@
     dragRest: L('air resistance drawn on a body at rest', 'Luftwiderstand auf einen ruhenden Körper eingezeichnet'),
     dragSize: L('air resistance larger or smaller than the weight, against what the motion shows', 'Luftwiderstand grösser oder kleiner als die Gewichtskraft, anders als es die Bewegung zeigt'),
   });
+  // what is correct instead (the typical slips in practice, slips.js)
+  const fixes = () => ({
+    normal: L('The normal force is whatever the surface must push so that the body does not sink in or lift off: equal to the weight only on a level surface with no other vertical forces.',
+      'Die Normalkraft ist so gross, wie die Unterlage drücken muss, damit der Körper weder einsinkt noch abhebt: gleich der Gewichtskraft nur auf ebener Unterlage ohne weitere senkrechte Kräfte.'),
+    rope: L('The rope force equals a hanging weight only if that body does not accelerate; otherwise it follows from Newton’s second law for that body.',
+      'Die Seilkraft ist nur gleich einer hängenden Gewichtskraft, wenn dieser Körper nicht beschleunigt; sonst folgt sie aus dem zweiten Newtonschen Gesetz für ihn.'),
+    motion: L('Motion needs no force to keep it going: draw only forces exerted by a body (or the Earth) on the system.',
+      'Bewegung braucht keine Kraft, die sie aufrechterhält: Nur Kräfte einzeichnen, die ein Körper (oder die Erde) auf das System ausübt.'),
+    friction: L('Wherever a body slides on a rough surface, or would slide, friction acts along the surface.',
+      'Wo ein Körper auf rauer Unterlage gleitet oder gleiten würde, wirkt Reibung entlang der Unterlage.'),
+    comp: L('On a slope, the component along the slope is m g sin α and the one perpendicular to it m g cos α.',
+      'Am Hang ist die Komponente entlang des Hangs m g sin α und die senkrechte dazu m g cos α.'),
+    slope: L('On a slope, the weight has a component down the slope, m g sin α: it belongs in the equation along the slope.',
+      'Am Hang hat die Gewichtskraft eine Komponente hangabwärts, m g sin α: Sie gehört in die Gleichung entlang des Hangs.'),
+    internal: L('Forces between parts of the system cancel in pairs: for the whole system, count only the external forces.',
+      'Kräfte zwischen Teilen des Systems heben sich paarweise auf: Beim ganzen System nur die äusseren Kräfte zählen.'),
+    mass: L('In F = m a, m is the mass of the system the forces act on.', 'In F = m a ist m die Masse des Systems, auf das die Kräfte wirken.'),
+    pass: L('A force is not passed on whole: the front body also needs part of it to accelerate itself.',
+      'Eine Kraft wird nicht ganz weitergegeben: Der vordere Körper braucht einen Teil davon, um sich selbst zu beschleunigen.'),
+    balance: L('If the body accelerates, the forces are not balanced: their sum is m a.', 'Wenn der Körper beschleunigt, sind die Kräfte nicht im Gleichgewicht: Ihre Summe ist m a.'),
+    stretch: L('A spring pulls or pushes back towards its relaxed length: a stretched spring pulls, a compressed one pushes.',
+      'Eine Feder zieht oder drückt zurück zu ihrer entspannten Länge: Eine gedehnte Feder zieht, eine gestauchte drückt.'),
+    hooke: L('F = k Δx with Δx the change in length from the relaxed length, not the length itself.',
+      'F = k Δx mit Δx der Längenänderung gegenüber der entspannten Länge, nicht der Länge selbst.'),
+    accel: L('Air resistance always points against the velocity, whatever the acceleration.', 'Der Luftwiderstand zeigt immer gegen die Geschwindigkeit, wie auch immer die Beschleunigung ist.'),
+    terminal: L('Air resistance equals the weight only at constant (terminal) velocity; while the speed changes, it is smaller or larger.',
+      'Der Luftwiderstand ist nur bei konstanter Geschwindigkeit (Endgeschwindigkeit) gleich der Gewichtskraft; solange sich die Geschwindigkeit ändert, ist er kleiner oder grösser.'),
+    noDrag: L('Anything moving through the air feels air resistance against its velocity.', 'Alles, was sich durch die Luft bewegt, erfährt Luftwiderstand gegen seine Geschwindigkeit.'),
+    noSpring: L('A stretched or compressed spring attached to the body exerts a force on it.', 'Eine gedehnte oder gestauchte Feder, die am Körper befestigt ist, übt eine Kraft auf ihn aus.'),
+    dragDir: L('Air resistance points against the velocity, never along it.', 'Der Luftwiderstand zeigt gegen die Geschwindigkeit, nie in ihre Richtung.'),
+    dragRest: L('A body at rest feels no air resistance.', 'Ein ruhender Körper erfährt keinen Luftwiderstand.'),
+    dragSize: L('Speeding up: air resistance smaller than the weight; slowing down: larger; constant speed: equal.',
+      'Wird er schneller, ist der Luftwiderstand kleiner als die Gewichtskraft; wird er langsamer, grösser; bei konstanter Geschwindigkeit gleich.'),
+  });
 
   const ONE = ['rest-up', 'rest-angle', 'pull-friction', 'incline-pull'], TWO = ['push-pair', 'rope-pair', 'atwood', 'table-pulley', 'incline-pulley'];
   const SPRING = ['spring-hang', 'spring-floor'], DRAG = ['drag-fall', 'drag-bike'];
@@ -228,6 +262,6 @@
     return error(seed);
   }
 
-  root.CheckSource = { id: 'fs', objectives: OBJECTIVES, question, concept, concepts };
+  root.CheckSource = { id: 'fs', objectives: OBJECTIVES, question, concept, concepts, fixes };
   if (typeof module !== 'undefined') module.exports = root.CheckSource;
 })(typeof window !== 'undefined' ? window : globalThis);
