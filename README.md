@@ -8,7 +8,7 @@ Besides its folder, a new app needs its card on the hub page (`hub/index.html`),
 
 ## Exercise sheets
 
-Every set gets an exercise sheet as a PDF from the teacher's TeXercises exercises (a link on the set's page; the version with solutions only for the logged-in teacher). The admin panel's service makes it with LaTeX on the server; see `hub-admin/sheets/README.md` (setup, and `pool.json`, which says which exercises practise which learning objective).
+Every set gets an exercise sheet as a PDF from the teacher's TeXercises exercises, with and without solutions, in the admin panel only (Sets → Exercise sheets). The admin panel's service makes it with LaTeX on the server; see `hub-admin/sheets/README.md` (setup, and `pool.json`, which says which exercises practise which learning objective).
 
 ## Tests and deployment
 

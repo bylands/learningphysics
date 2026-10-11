@@ -248,8 +248,6 @@
     .set-page .tools, .set-page #legend:empty { display: none; }
     .set-page:not(.set-ready) main.apps { visibility: hidden; }
     .set-title { font-family: var(--serif); font-size: 1.5rem; margin: 6px 0 0; }
-    .set-sheets { margin: 4px 0 0; font-size: 0.95rem; color: var(--muted); }
-    .set-sheets a { color: var(--accent); }
 
     .filter {
       display: flex;
@@ -343,7 +341,6 @@
     </div>
     <p data-i18n="tagline">Interactive exercises for physics lessons.</p>
     <h2 id="set-title" class="set-title" hidden></h2>
-    <p id="set-sheets" class="set-sheets" hidden><a id="sheet-ex" target="_blank" rel="noopener"></a> · <a id="sheet-sol" target="_blank" rel="noopener"></a></p>
     <p id="legend" class="legend"></p>
   </header>
 
@@ -1055,28 +1052,8 @@
         return fold([EN.get(c)[0], (DE[idOf(c)] || [''])[0], ...tagsOf(c).flatMap((k) => [k, (labels[k] || {}).en, (labels[k] || {}).de])].filter(Boolean).join(' '));
       };
 
-      // the set's exercise sheet (made by the admin panel's service from the teacher's TeXercises
-      // exercises, see hub-admin/sheets/): shown once the service says there is one
-      function sheetTexts() {
-        document.getElementById('sheet-ex').textContent = L('Exercise sheet (PDF)', 'Aufgabenblatt (PDF)');
-        document.getElementById('sheet-sol').textContent = L('with solutions, for teachers', 'mit Lösungen, für Lehrpersonen');
-      }
-      function showSheets() {
-        fetch(`/admin/sheet/${setName}.json`, { cache: 'no-cache' })
-          .then((r) => (r.ok ? r.json() : null))
-          .then((d) => {
-            if (!d || !d.available) return;
-            document.getElementById('sheet-ex').href = `/admin/sheet/${setName}.pdf`;
-            document.getElementById('sheet-sol').href = `/admin/sheet/${setName}-solutions.pdf`;
-            sheetTexts();
-            document.getElementById('set-sheets').hidden = false;
-          })
-          .catch(() => { /* no sheets: no links */ });
-      }
-
       function texts() {
         Lang.apply(UI[Lang.get()]);
-        if (setName) sheetTexts();
         if (set === false) document.getElementById('none').innerHTML = L('There is no set of this name. <a href="/">All apps</a>', 'Eine Zusammenstellung mit diesem Namen gibt es nicht. <a href="/">Alle Apps</a>');
         search.placeholder = UI[Lang.get()].placeholder;
         funnel.title = UI[Lang.get()].filters;
@@ -1222,7 +1199,6 @@
         try { if (s) sessionStorage.setItem('lp-set', JSON.stringify({ name: setName, set: s })); else sessionStorage.removeItem('lp-set'); } catch (e) { /* storage unavailable */ }
         if ((s && s.lang) !== Lang.fixed()) { Lang.fix(s && s.lang); tags(); }
         texts();
-        if (s) showSheets();
         document.documentElement.classList.add('set-ready');
       }
 
