@@ -129,6 +129,27 @@
     bell: { difficulty: 5, make: (r) => { const s1 = pick(r, [2, 3, 4, 5]), s2 = s1 + pick(r, [1, 2, 3, 4]); return { s1, s2, c: pick(r, [4, 5, 6, 8, 10, 12]) }; },
       parts: (p) => [{ kind: 'square', c: [p.s1 / 2, 0], s: p.s1 }, seg([p.s1, 0], [p.s1 + p.c, 0]), { kind: 'square', c: [p.s1 + p.c + p.s2 / 2, 0], s: p.s2 }],
       title: () => L('A dumbbell of wire', 'Eine Hantel aus Draht'), ask: ['x'] },
+    // a square on a stick, held at its bottom left corner (the origin at the foot of the stick)
+    corner: { difficulty: 4, make: (r) => ({ h: pick(r, [6, 8, 10, 12, 16, 20]), s: pick(r, [2, 3, 4, 5, 6, 8]) }),
+      parts: (p) => [seg([0, 0], [0, p.h]), { kind: 'square', c: [p.s / 2, p.h + p.s / 2], s: p.s }],
+      title: () => L('A square held at its corner', 'Ein Quadrat an der Ecke gehalten'), ask: ['x', 'y'], offWire: true },
+    // a fly swatter: a handle and a square at its end (the origin at the end of the handle)
+    swatter: { difficulty: 4, make: (r) => ({ c: pick(r, [6, 8, 10, 12, 15, 16, 20]), s: pick(r, [2, 3, 4, 5, 6, 8]) }),
+      parts: (p) => [seg([0, 0], [p.c, 0]), { kind: 'square', c: [p.c + p.s / 2, 0], s: p.s }],
+      title: () => L('A fly swatter of wire', 'Eine Fliegenklatsche aus Draht'), ask: ['x'] },
+    // a sign on a post: a rectangle a wide and b high on a stick (the top side first, so that its
+    // width is labelled above the sign)
+    sign: { difficulty: 4, make: (r) => { const a = pick(r, [4, 6, 8, 10, 12]), b = pick(r, [2, 3, 4, 5, 6]); return a === b ? null : { h: pick(r, [6, 8, 10, 12, 15, 16, 20]), a, b }; },
+      parts: (p) => [seg([0, 0], [0, p.h]), seg([-p.a / 2, p.h + p.b], [p.a / 2, p.h + p.b]), seg([-p.a / 2, p.h], [p.a / 2, p.h]), seg([-p.a / 2, p.h], [-p.a / 2, p.h + p.b]), seg([p.a / 2, p.h], [p.a / 2, p.h + p.b])],
+      title: () => L('A sign on a post', 'Ein Schild auf einem Pfosten'), ask: ['y'] },
+    // two squares on a stick, the smaller on top
+    stack: { difficulty: 5, make: (r) => { const s2 = pick(r, [2, 3, 4]), s1 = s2 + pick(r, [1, 2, 3, 4]); return { h: pick(r, [6, 8, 10, 12, 15, 16]), s1, s2 }; },
+      parts: (p) => [seg([0, 0], [0, p.h]), { kind: 'square', c: [0, p.h + p.s1 / 2], s: p.s1 }, { kind: 'square', c: [0, p.h + p.s1 + p.s2 / 2], s: p.s2 }],
+      title: () => L('Two squares on a stick', 'Zwei Quadrate auf einem Stab'), ask: ['y'] },
+    // a square on a stand: a foot bar, a stick and a square (the origin in the middle of the foot)
+    stand: { difficulty: 5, make: (r) => ({ f: pick(r, [3, 4, 5, 6, 8]), h: pick(r, [6, 8, 10, 12, 15, 16, 20]), s: pick(r, [2, 3, 4, 5, 6]) }),
+      parts: (p) => [seg([-p.f, 0], [p.f, 0]), seg([0, 0], [0, p.h]), { kind: 'square', c: [0, p.h + p.s / 2], s: p.s }],
+      title: () => L('A square on a stand', 'Ein Quadrat auf einem Ständer'), ask: ['y'] },
   };
 
   function comFigure(shape, p, v, view = {}) {
@@ -465,56 +486,93 @@
   // zero. A choice only.
   const beyond = (b) => exact(b.sy * Math.sin(rad(b.th)) - (b.w / 2) * Math.cos(rad(b.th)));
   const LETTERS = ['A', 'B', 'C', 'D'];
-  const blockWord = (i) => L(`block ${LETTERS[i]}`, `Klotz ${LETTERS[i]}`);
+  const blockWord = (i) => L(`body ${LETTERS[i]}`, `Körper ${LETTERS[i]}`);
   // the most tilted block, which must not be the one that falls
   const mostTilted = (p) => p.bodies.reduce((m, b, i) => (b.th > p.bodies[m].th ? i : m), 0);
 
   function fallItem(p) {
-    const most = mostTilted(p);
+    const most = p.slope != null ? -1 : mostTilted(p);
     return {
-      key: 'falls', what: L('The block that falls over:', 'Der Klotz, der umkippt:'),
+      key: 'falls', what: L('The body that falls over:', 'Der Körper, der umkippt:'),
       options: p.bodies.map((b, i) => (i === p.falls ? { html: LETTERS[i], right: true }
         : { html: LETTERS[i], right: false, flag: i === most ? 'tilt' : undefined,
-          why: i === most ? L(`${LETTERS[i]} is tilted the most, but the vertical through its S still meets the floor inside its edge, under its base: it falls back.`, `${LETTERS[i]} ist am stärksten geneigt, aber die Senkrechte durch seinen Schwerpunkt trifft den Boden noch innerhalb seiner Kante, unter seiner Grundfläche: Er fällt zurück.`)
-            : L(`The vertical through the S of ${LETTERS[i]} meets the floor inside its edge, under its base: it falls back.`, `Die Senkrechte durch den Schwerpunkt von ${LETTERS[i]} trifft den Boden innerhalb seiner Kante, unter seiner Grundfläche: Er fällt zurück.`) })),
-      value: L(`${LETTERS[p.falls]}: the vertical through its centre of mass passes beyond the edge it stands on.`, `${LETTERS[p.falls]}: Die Senkrechte durch seinen Schwerpunkt verläuft ausserhalb der Kante, auf der er steht.`),
+          why: i === most ? L(`${LETTERS[i]} is tilted the most, but the vertical through its S still passes inside its edge, under its base: it falls back.`, `${LETTERS[i]} ist am stärksten geneigt, aber die Senkrechte durch seinen Schwerpunkt verläuft noch innerhalb seiner Kante, unter seiner Grundfläche: Er fällt zurück.`)
+            : L(`The vertical through the S of ${LETTERS[i]} passes inside its edge, under its base: it ${p.slope != null ? 'stays standing' : 'falls back'}.`, `Die Senkrechte durch den Schwerpunkt von ${LETTERS[i]} verläuft innerhalb seiner Kante, unter seiner Grundfläche: Er ${p.slope != null ? 'bleibt stehen' : 'fällt zurück'}.`) })),
+      value: L(`${LETTERS[p.falls]}: the vertical through its centre of mass passes beyond the edge it ${p.slope != null ? 'would tip over' : 'stands on'}.`, `${LETTERS[p.falls]}: Die Senkrechte durch seinen Schwerpunkt verläuft ausserhalb der Kante, ${p.slope != null ? 'über die er kippen würde' : 'auf der er steht'}.`),
     };
   }
 
+  // The outline of a body, from its bottom right edge: x to the left (negative), y up. A box, a
+  // triangular prism (apex at the top) or a trapezoid prism (top w2 wide); S in the middle of its
+  // width, sy above the base.
+  function outline(b) {
+    if (b.shape === 'tri') return [[0, 0], [-b.w, 0], [-b.w / 2, b.h]];
+    if (b.shape === 'trap') return [[0, 0], [-b.w, 0], [-(b.w + b.w2) / 2, b.h], [-(b.w - b.w2) / 2, b.h]];
+    return [[0, 0], [-b.w, 0], [-b.w, b.h], [0, b.h]];
+  }
+
   function blocksFigure(p, v, view = {}) {
-    const P = new Pic(1.6, L('Four blocks tilted onto an edge, with their centres of mass', 'Vier auf eine Kante gekippte Klötze mit ihren Schwerpunkten')), show = view.show || new Set();
-    let x0 = 0;
+    const slope = p.slope != null;
+    const P = new Pic(1.6, slope ? L('Four bodies standing on a slope, with their centres of mass', 'Vier Körper auf einer schiefen Ebene mit ihren Schwerpunkten')
+      : L('Four bodies tilted onto an edge, with their centres of mass', 'Vier auf eine Kante gekippte Körper mit ihren Schwerpunkten')), show = view.show || new Set();
+    let x0 = 0, along = 0;
     const floor = [];
+    const ts = rad(slope ? p.slope : 0), dir = [Math.cos(ts), -Math.sin(ts)];
+    // on the slope: the surface through the origin, going down to the right
+    const ground = (x) => (slope ? -Math.tan(ts) * x : 0);
     p.bodies.forEach((b, i) => {
-      const t = rad(b.th), c = Math.cos(t), s = Math.sin(t), E = [x0 + b.w * c, 0];
-      // a point of the block, from its bottom right edge: x to the left (negative), y up
-      const C = (x, y) => [E[0] + x * c + y * s, -x * s + y * c];
+      const t = rad(b.th), c = Math.cos(t), s = Math.sin(t);
+      const E = slope ? [(along + b.w) * dir[0], (along + b.w) * dir[1]] : [x0 + b.w * c, 0];
+      const C = (x, y) => [E[0] + x * c + y * s, E[1] - x * s + y * c];
       const S = C(-b.w / 2, b.sy);
-      P.poly([C(0, 0), C(-b.w, 0), C(-b.w, b.h), C(0, b.h)], 'load');
-      if (show.has('S')) P.line(S, [S[0], 0], i === p.falls || (view.hl && view.hl.has(`b${i}`)) ? 'arm hl' : 'action', true);
+      P.poly(outline(b).map(([x, y]) => C(x, y)), 'load');
+      if (show.has('S')) P.line(S, [S[0], ground(S[0])], i === p.falls || (view.hl && view.hl.has(`b${i}`)) ? 'arm hl' : 'action', true);
       P.com(S, '');
       P.dot(E, 'dot', 2.6);
-      P.text([E[0] - (b.w * c) / 2, 0], LETTERS[i], 'lbl', 'middle', [0, 22]);
+      const mid = C(-b.w / 2, 0);
+      P.text(slope ? mid : [E[0] - (b.w * c) / 2, 0], LETTERS[i], 'lbl', 'middle', slope ? [8, 22] : [0, 22]);
       floor.push(x0 - 8, E[0] + b.h * s + 8);
       x0 = E[0] + Math.max(b.h * s, 0) + 22;
+      along += b.w + 22;
     });
-    P.surface([Math.min(...floor), 0], [Math.max(...floor), 0]);
+    if (slope) {
+      const end = along + 10;
+      P.surface([-10 * dir[0], -10 * dir[1]], [end * dir[0], end * dir[1]]);
+      P.line([end * dir[0], end * dir[1]], [-10 * dir[0], end * dir[1]], 'action', true);
+      P.text([end * dir[0] - 64, end * dir[1]], `${num(p.slope, 0)}°`, 'lbl small', 'middle', [0, -4]);
+    } else P.surface([Math.min(...floor), 0], [Math.max(...floor), 0]);
     return P.svg();
   }
 
   const tips = {
     id: 'tips', family: 'tipping', difficulty: 2, choice: true,
     make(r) {
-      const falls = Math.floor(r() * 4);
-      const bodies = LETTERS.map((x, i) => {
-        const w = pick(r, [20, 30, 40]), h = pick(r, [40, 50, 60, 80]), sy = exact(h / pick(r, [2, 2, 3]));
-        // the tilt at which S is straight above the edge, and a tilt clearly beyond or before it
-        const crit = deg(Math.atan(w / 2 / sy));
-        return { w, h, sy, th: Math.round(i === falls ? crit + pick(r, [6, 8, 10, 12]) : crit - pick(r, [6, 8, 10, 14])) };
-      });
-      if (bodies.some((b) => b.th < 4 || b.th > 60)) return null;
-      const p = { bodies, falls };
-      return mostTilted(p) === falls ? null : p;
+      const falls = Math.floor(r() * 4), slope = r() < 0.5 ? pick(r, [20, 25, 30, 35]) : null;
+      // a body: a box (maybe weighted at the bottom), a triangular or a trapezoid prism
+      const body = () => {
+        const shape = pick(r, ['box', 'box', 'tri', 'trap']), w = pick(r, [20, 30, 40]), h = pick(r, [40, 50, 60, 80]);
+        if (shape === 'tri') return { shape, w, h, sy: exact(h / 3) };
+        if (shape === 'trap') { const w2 = w / 2; return { shape, w, w2, h, sy: exact((h * (w + 2 * w2)) / (3 * (w + w2))) }; }
+        return { shape, w, h, sy: exact(h / pick(r, [2, 2, 3])) };
+      };
+      const crit = (b) => deg(Math.atan(b.w / 2 / b.sy));
+      let bodies;
+      if (slope == null) {
+        // each tilted by its own angle: clearly beyond, or before, the tilt where S is above the edge
+        bodies = LETTERS.map((x, i) => { const b = body(); return { ...b, th: Math.round(i === falls ? crit(b) + pick(r, [6, 8, 10, 12]) : crit(b) - pick(r, [6, 8, 10, 14])) }; });
+        if (bodies.some((b) => b.th < 4 || b.th > 60)) return null;
+      } else {
+        // all on one slope: the one that falls tips at a smaller angle, the others at a larger one
+        bodies = [];
+        for (let i = 0; i < 4; i++) {
+          let b = null;
+          for (let k = 0; k < 40 && !b; k++) { const c = body(), cr = crit(c); if (i === falls ? cr < slope - 4 : cr > slope + 4) b = c; }
+          if (!b) return null;
+          bodies.push({ ...b, th: slope });
+        }
+      }
+      const p = { bodies, falls, ...(slope != null ? { slope } : {}) };
+      return slope == null && mostTilted(p) === falls ? null : p;
     },
     solve: (p) => ({ beyond: p.bodies.map(beyond) }),
     traps: [],
@@ -522,28 +580,31 @@
     comps: (p) => [fallItem(p)],
     results: (p) => blockWord(p.falls),
     title: () => L('Which one falls over?', 'Welcher kippt um?'),
-    text: () => L('Four blocks are tilted onto one of their bottom edges and let go. Their centres of mass are marked; some blocks are weighted at the bottom, so that it lies lower than the middle. Which block falls over? The others fall back onto their base.',
-      'Vier Klötze werden auf eine ihrer unteren Kanten gekippt und losgelassen. Ihre Schwerpunkte sind eingezeichnet; einige Klötze sind unten beschwert, sodass er tiefer als die Mitte liegt. Welcher Klotz kippt um? Die anderen fallen auf ihre Grundfläche zurück.'),
+    text: (p) => (p.slope != null
+      ? L(`Four bodies stand on a slope of ${p.slope}°; it is rough, so they do not slide. Their centres of mass are marked. Which body tips over? The others stay standing.`,
+        `Vier Körper stehen auf einer schiefen Ebene mit ${p.slope}° Neigung; sie ist rau, sodass sie nicht rutschen. Ihre Schwerpunkte sind eingezeichnet. Welcher Körper kippt um? Die anderen bleiben stehen.`)
+      : L('Four bodies are tilted onto one of their bottom edges and let go. Their centres of mass are marked; some are weighted at the bottom or narrower at the top, so that it lies lower than the middle. Which body falls over? The others fall back onto their base.',
+        'Vier Körper werden auf eine ihrer unteren Kanten gekippt und losgelassen. Ihre Schwerpunkte sind eingezeichnet; einige sind unten beschwert oder oben schmaler, sodass er tiefer als die Mitte liegt. Welcher Körper kippt um? Die anderen fallen auf ihre Grundfläche zurück.')),
     figure: blocksFigure,
     hints: () => [
       L('The weight acts at the centre of mass, straight down. Draw the vertical through each centre of mass.', 'Die Gewichtskraft greift im Schwerpunkt an, senkrecht nach unten. Zeichne die Senkrechte durch jeden Schwerpunkt.'),
-      L('A tilted block stands on its edge only. If the vertical through its centre of mass meets the floor inside the edge, under its base, the weight turns it back; beyond the edge, it turns it over.', 'Ein gekippter Klotz steht nur auf seiner Kante. Trifft die Senkrechte durch seinen Schwerpunkt den Boden innerhalb der Kante, unter seiner Grundfläche, dreht ihn die Gewichtskraft zurück; ausserhalb der Kante kippt sie ihn um.'),
+      L('Each body would tip over its lower edge. If the vertical through its centre of mass passes inside that edge, under its base, the weight turns it back; beyond the edge, it turns it over.', 'Jeder Körper würde über seine untere Kante kippen. Verläuft die Senkrechte durch seinen Schwerpunkt innerhalb dieser Kante, unter seiner Grundfläche, dreht ihn die Gewichtskraft zurück; ausserhalb der Kante kippt sie ihn um.'),
     ],
     steps(p, v) {
       const rows = p.bodies.map((b, i) => {
         const x = v.beyond[i];
         return `<li>${LETTERS[i]}: ${x > 0 ? L(`the vertical through S passes ${cm(x)} beyond the edge: <b>it falls over</b>.`, `Die Senkrechte durch S verläuft ${cm(x)} ausserhalb der Kante: <b>Er kippt um</b>.`)
-          : L(`the vertical through S meets the floor ${cm(-x)} inside the edge: it falls back.`, `Die Senkrechte durch S trifft den Boden ${cm(-x)} innerhalb der Kante: Er fällt zurück.`)}</li>`;
+          : L(`the vertical through S passes ${cm(-x)} inside the edge: it ${p.slope != null ? 'stays standing' : 'falls back'}.`, `Die Senkrechte durch S verläuft ${cm(-x)} innerhalb der Kante: Er ${p.slope != null ? 'bleibt stehen' : 'fällt zurück'}.`)}</li>`;
       }).join('');
       return [
-        step(L('The axis', 'Die Drehachse'), `<p>${L('A tilted block stands on its edge only: that edge is the axis. The weight acts at the centre of mass, straight down. If the vertical through the centre of mass meets the floor inside the edge, under the base, the weight turns the block back onto its base; if it passes beyond the edge, the weight turns it over.', 'Ein gekippter Klotz steht nur auf seiner Kante: Sie ist die Drehachse. Die Gewichtskraft greift im Schwerpunkt an, senkrecht nach unten. Trifft die Senkrechte durch den Schwerpunkt den Boden innerhalb der Kante, unter der Grundfläche, dreht die Gewichtskraft den Klotz auf seine Grundfläche zurück; verläuft sie ausserhalb der Kante, kippt sie ihn um.')}</p>`),
-        step(L('The blocks', 'Die Klötze'), `<ul>${rows}</ul><p>${L('How far a block is tilted does not settle it alone: a wide block, or one with a low centre of mass, can be tilted further.', 'Wie weit ein Klotz geneigt ist, entscheidet nicht allein: Ein breiter Klotz oder einer mit tiefem Schwerpunkt lässt sich weiter neigen.')}</p>`, ['S'], ['S']),
+        step(L('The axis', 'Die Drehachse'), `<p>${L('A body tips over its lower edge: that edge is the axis. The weight acts at the centre of mass, straight down. If the vertical through the centre of mass passes inside the edge, under the base, the weight turns the body back onto its base; if it passes beyond the edge, the weight turns it over.', 'Ein Körper kippt über seine untere Kante: Sie ist die Drehachse. Die Gewichtskraft greift im Schwerpunkt an, senkrecht nach unten. Verläuft die Senkrechte durch den Schwerpunkt innerhalb der Kante, unter der Grundfläche, dreht die Gewichtskraft den Körper auf seine Grundfläche zurück; verläuft sie ausserhalb der Kante, kippt sie ihn um.')}</p>`),
+        step(L('The bodies', 'Die Körper'), `<ul>${rows}</ul><p>${L('How far a body is tilted does not settle it alone: a wide body, or one with a low centre of mass, can be tilted further.', 'Wie weit ein Körper geneigt ist, entscheidet nicht allein: Ein breiter Körper oder einer mit tiefem Schwerpunkt lässt sich weiter neigen.')}</p>`, ['S'], ['S']),
       ];
     },
   };
 
   const SCENARIOS = [
-    com('L'), com('T'), com('U'), com('E'), com('tri'), com('iso'), com('house'), com('sqstick'), com('tristick'), com('bell'),
+    com('L'), com('T'), com('U'), com('E'), com('tri'), com('iso'), com('house'), com('sqstick'), com('corner'), com('swatter'), com('sign'), com('stack'), com('stand'), com('tristick'), com('bell'),
     stability, tips, tilt, tip,
   ];
 
