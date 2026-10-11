@@ -10,6 +10,10 @@ to that app). An exercise belongs to an app if its title, text, solution, tags o
 match the app's pattern (or it is a draft of the app); it practises an objective if it matches the
 objective's patterns. Per objective the best few are kept, preferring drafts of the app, exercises
 without images and those that compile (--fails: keys that do not, as test_all.py lists them).
+With data/exercise-objectives.csv (each export exercise and the objectives it practises, read from
+its text by another pass) and data/candidate-objectives.csv (exercises that practise no objective but
+fit an app, placement extend:<app>), both passes count: an exercise both name for an objective comes
+first, then those only the reading pass names, then those only the keywords find.
 Only keys, titles and objectives go into pool.json; the exercises themselves never enter this
 (public) repository: the server gets them from the export uploaded in the admin panel.
 """
@@ -210,6 +214,25 @@ def draft_apps():
     return owner
 
 
+def reading_pass():
+    """(export id -> {(app, objective)}, export id -> {app}) from data/, if it is there."""
+    import csv
+    objs, apps = {}, {}
+    f = os.path.join(HERE, 'data', 'exercise-objectives.csv')
+    if os.path.exists(f):
+        for r in csv.DictReader(open(f, encoding='utf-8')):
+            pairs = {tuple(o.split(':', 1)) for o in r.get('objectives', '').split() if ':' in o}
+            if pairs:
+                objs[int(r['exercise_id'])] = pairs
+    f = os.path.join(HERE, 'data', 'candidate-objectives.csv')
+    if os.path.exists(f):
+        for r in csv.DictReader(open(f, encoding='utf-8')):
+            if r.get('placement', '').startswith('extend:'):
+                for i in r.get('exercise_ids', '').split():
+                    apps.setdefault(int(i), set()).add(r['placement'][len('extend:'):])
+    return objs, apps
+
+
 def main():
     args = sys.argv[1:]
     fails = set()
@@ -220,6 +243,7 @@ def main():
     export = args[0]
     objectives = json.load(open(os.path.join(ROOT, 'hub', 'objectives.json'), encoding='utf-8'))
     owner = draft_apps()
+    read_objs, read_apps = reading_pass()
     pool = {}
     for key, meta, source, d in exercises(export):
         text = read(d, 'text.tex')
@@ -229,19 +253,24 @@ def main():
         if key in fails:
             continue
         images = '#image_path:' in text
+        eid = meta.get('id') if source == 'export' else None
+        said = {o for a, o in read_objs.get(eid, set()) if a}  # (app, objective) pairs, below per app
         for app, (gate, objs) in RULES.items():
-            mine = owner.get(key) == app
+            told = {o for a, o in read_objs.get(eid, set()) if a == app}
+            fits = app in read_apps.get(eid, set())
+            mine = owner.get(key) == app or bool(told) or fits
             if not mine and (not re.search(gate, hay, re.I | re.S)
                              or not SUBS.get(app, set()) & set(meta.get('subbranches', []))):
                 continue
             hits = {}
             for ob, pat in objs.items():
                 n = len(re.findall(pat, hay, re.I)) + 3 * len(re.findall(pat, title, re.I))
+                n = min(n, 6) + (20 if ob in told else 0)  # the reading pass outweighs keywords
                 if n:
                     hits[ob] = n
             if not hits and not mine:
                 continue
-            score = sum(min(n, 6) for n in hits.values()) + (6 if mine else 0) - (4 if images else 0)
+            score = sum(min(n, 6) for n in hits.values()) + 10 * len(told) + (6 if mine else 0) - (4 if images else 0)
             pool.setdefault(app, []).append({
                 'key': key, 'source': source, 'title': meta.get('title', ''),
                 'lang': 'de' if meta.get('language') == 'GER' else 'en',

@@ -12,114 +12,135 @@ edit `pool.json`). ★ difficulty, 🖼 has an image (not in the export: a place
   - The Resistance inside a Battery (en, ★★★) `circuit-trainer-09-internal-resistance`
 - **power**: Rank the brightness of bulbs by their power ΔV · I.
   - Brightness (en, ★★ 🖼) `e22725-brightness`
-  - Power of Light Bulbs (en, ★★) `e19631-power-of-light-bulbs`
   - Light Bulb (en, ★) `e18080-light-bulb-1`
-  - Light Bulb (en, ★★) `e18088-light-bulb-2`
-  - Flashlight (en, ★★) `e18133-flashlight`
-  - Internal Resistance (en, ★) `e18409-internal-resistance`
+  - Power Rating for Resistor (en, ★★) `e18089-power-rating-for-resistor`
+  - Power of Light Bulbs (en, ★) `e22504-power-of-light-bulbs-1`
+  - Power of Light Bulbs (en, ★★) `e19631-power-of-light-bulbs`
+  - Solar Panel (en, ★★) `e18084-solar-panel`
 - **change**: Predict how the brightness changes when a bulb is added, removed or short-circuited, in series or in parallel.
+  - Brightness (en, ★★ 🖼) `e22725-brightness`
   - Characteristics of a Light Bulb (en, ★★★★ 🖼) `e18135-characteristics-of-a-light-bulb`
-- *for the app as a whole:* Switch-On Current of a Light Bulb `e24456-switch-on-current-of-a-light-bulb`; Fairy Lights `circuit-trainer-04-fairy-lights`
+- *for the app as a whole:* Light Bulb `e18088-light-bulb-2`; Current Increase `e18091-current-increase`; Flashlight `e18133-flashlight`; Electric Motor `e18134-electric-motor`; E-Scooter `e18852-e-scooter`; Furnace `e19667-furnace`; Household Electricity `e18078-household-electricity`; Rechargeable Battery `e18079-rechargeable-battery`
 
 ## circuit-trainer
 
 - **divide**: Split the voltage in series in the ratio of the resistances, and the current in parallel in the inverse ratio.
-  - Partial Voltages in RC Circuit (en, ★★★) `e19486-partial-voltages-in-rc-circuit`
   - Voltmeter (en, ★★★) `e18405-voltmeter`
-  - A Temperature Sensor (en, ★★★) `circuit-trainer-08-temperature-sensor`
-  - RLC Series Circuit (en, ★★★) `e19544-rlc-series-circuit`
-  - A Long Extension Cable (en, ★★) `circuit-trainer-03-extension-cable`
-  - Characteristics of a Light Bulb (en, ★★★★ 🖼) `e18135-characteristics-of-a-light-bulb`
+  - Parallel Branches (en, ★★) `e24405-parallel-branches`
+  - Three Branches with a Twist (en, ★★★) `e24406-three-branches-with-a-twist`
+  - Parallel Resistors (en, ★) `e24403-parallel-resistors`
+  - Parallel Pair between Two Series Resistors (en, ★★) `e24407-parallel-pair-between-two-series-resisto`
+  - Branch with Two Series Resistors (en, ★★) `e24408-branch-with-two-series-resistors`
 - **combine**: Reduce groups of resistors to one equivalent resistance and work out every current and voltage step by step.
-  - Building an Ammeter and a Voltmeter (en, ★★★★) `circuit-trainer-10-ammeter-voltmeter`
-  - Three Resistors (en, ★) `e18131-three-resistors`
-  - Half-Life for Capacitors in Parallel and in Series (en, ★★) `e19060-half-life-for-capacitors-in-parallel-and`
-  - A Car on a Winter Evening (en, ★★) `circuit-trainer-05-car-lights`
-  - A Hair Dryer with Two Settings (en, ★★★) `circuit-trainer-07-hair-dryer`
-  - Resistors in Parallel (en, ★★) `e18123-resistors-in-parallel`
+  - Three Resistors in Parallel (en, ★★★) `e24415-three-resistors-in-parallel`
+  - Voltmeter (en, ★★★) `e18405-voltmeter`
+  - Diagonal Resistor (en, ★★★) `e24409-diagonal-resistor`
+  - Three Branches with a Twist (en, ★★★) `e24406-three-branches-with-a-twist`
+  - Unknown Series Resistor (en, ★★★) `e24416-unknown-series-resistor`
+  - Parallel Resistors (en, ★) `e24403-parallel-resistors`
 - **backwards**: Find an unknown resistance from measured currents and voltages.
-  - Resistors in Series (en, ★) `e18122-resistors-in-series`
-  - Flat Cable (en, ★) `e18090-flat-cable`
-  - Photo Flash (en, ★★★) `e19054-photo-flash`
-  - Switch-On Current of a Light Bulb (en, ★★★) `e24456-switch-on-current-of-a-light-bulb`
+  - Three Resistors in Parallel (en, ★★★) `e24415-three-resistors-in-parallel`
+  - Three Branches with a Twist (en, ★★★) `e24406-three-branches-with-a-twist`
+  - Parallel Pair between Two Series Resistors (en, ★★) `e24407-parallel-pair-between-two-series-resisto`
+  - Diagonal Resistor (en, ★★★) `e24409-diagonal-resistor`
+  - Unknown Series Resistor (en, ★★★) `e24416-unknown-series-resistor`
+  - Parallel Resistors (en, ★) `e24403-parallel-resistors`
 - **meters**: Place an ammeter (in series) and a voltmeter (in parallel) correctly and read what an ideal meter shows in a circuit.
-  - Building an Ammeter and a Voltmeter (en, ★★★★) `circuit-trainer-10-ammeter-voltmeter`
   - Voltmeter (en, ★★★) `e18405-voltmeter`
   - Ammeter (en, ★★) `e18403-ammeter`
-  - The Resistance inside a Battery (en, ★★★) `circuit-trainer-09-internal-resistance`
+  - Voltmeter (en, ★) `e22516-voltmeter-1`
   - Range Extension (en, ★★★) `e18404-range-extension`
-  - Choice of Material (en, ★) `e24455-choice-of-material`
-- *for the app as a whole:* Will the Fuse Blow? `circuit-trainer-06-kitchen-fuse`; A Resistor for an LED `circuit-trainer-01-led-resistor`; Touching a Live Wire `circuit-trainer-02-live-wire`
+  - Old Voltmeter (en, ★★★ 🖼) `e22786-old-voltmeter`
+  - Ammeter (en, ★) `e22515-ammeter-1`
+- *for the app as a whole:* Two Parallel Pairs in Series `e24414-two-parallel-pairs-in-series`; Series Resistors `e24402-series-resistors`; Light Bulb in Resistor Circuits `e24410-light-bulb-in-resistor-circuits`; Resistors in Series `e18122-resistors-in-series`
 
 ## potential-circuit
 
 - **track**: Track the potential around a circuit: it rises across a source from − to +, drops across a load in the direction of the current and stays the same along a wire.
-  - (none found)
-- **rules**: Apply the loop rule (around a loop the rises add up to the drops) and the junction rule (the currents into a junction add up to the currents out of it).
-  - Old and New Batteries (en, ★★★★) `e24450-old-and-new-batteries`
+  - Potential Along a Series Circuit (en, ★) `e24443-potential-along-a-series-circuit`
+  - Multi-Branch Circuit (en, ★★) `e24445-multi-branch-circuit`
   - Currents and Voltages in a Circuit (en, ★★ 🖼) `e22714-currents-and-voltages-in-a-circuit`
+  - Opposing Batteries (en, ★) `e24444-opposing-batteries`
+  - Potential in Circuit (en, ★ 🖼) `e22503-potential-in-circuit`
+- **rules**: Apply the loop rule (around a loop the rises add up to the drops) and the junction rule (the currents into a junction add up to the currents out of it).
+  - Potential Along a Series Circuit (en, ★) `e24443-potential-along-a-series-circuit`
+  - Multi-Branch Circuit (en, ★★) `e24445-multi-branch-circuit`
+  - Currents and Voltages in a Circuit (en, ★★ 🖼) `e22714-currents-and-voltages-in-a-circuit`
+  - Opposing Batteries (en, ★) `e24444-opposing-batteries`
+  - Old and New Batteries (en, ★★★★) `e24450-old-and-new-batteries`
+  - Fuse (en, ★) `e18121-fuse`
 - **voltage**: Find the voltage between any two points as the difference of their potentials.
-  - (none found)
+  - Multi-Branch Circuit (en, ★★) `e24445-multi-branch-circuit`
+  - Potential Along a Series Circuit (en, ★) `e24443-potential-along-a-series-circuit`
+  - Currents and Voltages in a Circuit (en, ★★ 🖼) `e22714-currents-and-voltages-in-a-circuit`
+  - Potential Difference (en, ★) `e22524-potential-difference`
 - **error**: Find the wrong step in a sketch of the potential around a circuit.
   - (none found)
+- *for the app as a whole:* Junctions `e19627-junctions`; Power of Light Bulbs `e19631-power-of-light-bulbs`; Old and New Battery `e22522-old-and-new-battery`; Three Light Bulbs `e22505-three-light-bulbs`
 
 ## capacitors
 
 - **combine**: Combine capacitors in series and in parallel: in parallel the capacitances add, in series their reciprocals add (the rules of resistors, swapped).
   - Half-Life for Capacitors in Parallel and in Series (en, ★★) `e19060-half-life-for-capacitors-in-parallel-and`
-  - L in series to R and C (en, ★★★ 🖼) `e22856-l-in-series-to-r-and-c`
-  - RC series circuit (en, ★★★) `e24290-rc-series-circuit-1`
-  - RC-Glied im Gleich- und Wechselstromkreis (de, ★★★★) `e19006-rc-glied-im-gleich-und-wechselstromkreis`
-  - Partial Voltages in RC Circuit (en, ★★★) `e19486-partial-voltages-in-rc-circuit`
   - Capacitor circuit (en, ★) `e23105-capacitor-circuit-2`
+  - Capacitor Circuit (en, ★) `e17644-capacitor-circuit`
+  - Partially Filled Capacitor (en, ★★) `e17660-partially-filled-capacitor`
+  - Fill Level (en, ★★★) `e17703-fill-level`
+  - Static Voltmeter (en, ★★★) `e17706-static-voltmeter`
 - **sketch**: Sketch the voltage and the current against time while a capacitor charges or discharges.
-  - Charging Voltage (en, ★★★★ 🖼) `e19061-charging-voltage`
+  - RC-Glied im Gleich- und Wechselstromkreis (de, ★★★★) `e19006-rc-glied-im-gleich-und-wechselstromkreis`
+  - RC-Kreis (de, ★★★★) `e19023-rc-kreis-2`
+  - Half-Life for Capacitors in Parallel and in Series (en, ★★) `e19060-half-life-for-capacitors-in-parallel-and`
   - Charging Current (en, ★★★) `e19050-charging-current`
   - Capacitor Voltage while Discharging (en, ★) `e19063-capacitor-voltage-while-discharging`
-  - Photo Flash (en, ★★★) `e19054-photo-flash`
-  - RC-Glied im Gleich- und Wechselstromkreis (de, ★★★★) `e19006-rc-glied-im-gleich-und-wechselstromkreis`
   - Discharging Capacitor (en, ★★) `e19049-discharging-capacitor`
 - **tau**: Read the time constant τ = R·C or the half-life from a graph, and predict what a change of R or C does.
   - RC-Glied im Gleich- und Wechselstromkreis (de, ★★★★) `e19006-rc-glied-im-gleich-und-wechselstromkreis`
-  - Half-Life and Time Constant (en, ★) `e19053-half-life-and-time-constant`
-  - Charging Voltage (en, ★★★★ 🖼) `e19061-charging-voltage`
-  - Half-Life for Capacitors in Parallel and in Series (en, ★★) `e19060-half-life-for-capacitors-in-parallel-and`
   - RC-Kreis (de, ★★★★) `e19023-rc-kreis-2`
+  - Half-Life for Capacitors in Parallel and in Series (en, ★★) `e19060-half-life-for-capacitors-in-parallel-and`
   - Charging Current (en, ★★★) `e19050-charging-current`
-- *for the app as a whole:* Current in RC Circuit `e19062-current-in-rc-circuit`; RC Series Circuit `e19563-rc-series-circuit`; Timer Circuit `e19064-timer-circuit`
+  - Capacitor Voltage while Discharging (en, ★) `e19063-capacitor-voltage-while-discharging`
+  - Photo Flash (en, ★★★) `e19054-photo-flash`
+- *for the app as a whole:* Charging Voltage `e19061-charging-voltage`; Current in RC Circuit `e19062-current-in-rc-circuit`; Timer Circuit `e19064-timer-circuit`; Three Capacitors `e17702-three-capacitors`
 
 ## impedance
 
 - **elements**: Sketch the impedance of a resistor, a coil and a capacitor against the angular frequency, and state how the current is shifted against the voltage in each.
   - LCR Series Circuit (en, ★★★★) `e19480-lcr-series-circuit`
   - LCR Parallel Circuit (en, ★★★★) `e19481-lcr-parallel-circuit`
-  - RC series circuit (en, ★★★) `e24290-rc-series-circuit-1`
-  - RL parallel circuit (en, ★★★) `e24291-rl-parallel-circuit`
-  - A Tweeter and its Capacitor (en, ★★) `impedance-01-tweeter-capacitor`
-  - Resistance and Reactance in a Series Circuit (en, ★★★) `e22857-resistance-and-reactance-in-a-series-cir`
+  - Capacitive Reactance (en, ★★★) `e22835-capacitive-reactance`
+  - Inductive Reactance (en, ★★★) `e22839-inductive-reactance`
+  - AC Voltage and Current Diagram (en, ★ 🖼) `e19498-ac-voltage-and-current-diagram`
+  - Capacitor Circuit (en, ★) `e19542-capacitor-circuit-1`
 - **limits**: Use the reactances ωL and 1/(ωC) to predict what a circuit does for small and for large frequencies: block, short-circuit, or leave only R.
+  - Maximum and Asymptotic Behaviour of Parallel Impedance (en, ★★★) `e19482-maximum-and-asymptotic-behaviour-of-para`
   - Low Pass Filter (en, ★★★) `e22876-low-pass-filter`
   - Low Pass Filter (en, ★★★) `e22922-low-pass-filter-ViI4WBsSMl-cloned`
+  - L in series to R and C (en, ★★★ 🖼) `e22856-l-in-series-to-r-and-c`
   - A Tweeter and its Capacitor (en, ★★) `impedance-01-tweeter-capacitor`
   - A Loudspeaker's Datasheet (en, ★★★★) `impedance-07-loudspeaker-datasheet`
-  - A Body-Fat Scale (en, ★★★) `impedance-04-body-fat-scale`
 - **resonance**: Identify the resonance as the minimum of the impedance of a series RLC circuit and the maximum of a parallel one.
-  - A Quartz Crystal (en, ★★★★★) `impedance-09-quartz-crystal`
+  - Maximum and Asymptotic Behaviour of Parallel Impedance (en, ★★★) `e19482-maximum-and-asymptotic-behaviour-of-para`
+  - Resonance Frequency (en, ★★) `e19632-resonance-frequency`
+  - Radio Receiver (en, ★) `e22858-radio-receiver`
   - Tuning a Radio (en, ★★★) `impedance-03-tuning-a-radio`
   - A Metal Detector (en, ★★★) `impedance-05-metal-detector`
-  - Resonance Frequency (en, ★★) `e19632-resonance-frequency`
-  - A Loudspeaker's Datasheet (en, ★★★★) `impedance-07-loudspeaker-datasheet`
-  - An Electric Guitar and its Cable (en, ★★★) `impedance-02-guitar-pickup`
-- *for the app as a whole:* A Wireless Charger `impedance-06-wireless-charger`; A Contactless Card `impedance-08-contactless-card`; AC Motor `e19539-ac-motor`; Capacitive and Inductive Reactance `e19541-capacitive-and-inductive-reactance`
+  - A Quartz Crystal (en, ★★★★★) `impedance-09-quartz-crystal`
+- *for the app as a whole:* Partial Voltages in RC Circuit `e19486-partial-voltages-in-rc-circuit`; Partial Currents in Parallel Circuit `e19488-partial-currents-in-parallel-circuit`
 
 ## rl-switch
 
 - **keep**: Use that the current through an inductor cannot jump: right after switching, it keeps the value it had before.
-  - (none found)
+  - Advanced RL Circuit (en, ★★★★ 🖼) `e19343-advanced-rl-circuit`
+  - Voltage Peak (en, ★★) `e19314-voltage-peak`
+  - Making and Breaking Current (en, ★★★ 🖼) `e19309-making-and-breaking-current`
 - **after**: Find the currents right after a switch closes or opens: the inductor current is kept, the others follow from Kirchhoff’s rules.
-  - (none found)
+  - Advanced RL Circuit (en, ★★★★ 🖼) `e19343-advanced-rl-circuit`
+  - Voltage Peak (en, ★★) `e19314-voltage-peak`
 - **steady**: Find the steady currents long after a switch was set: the inductor then acts like a wire.
-  - (none found)
+  - Advanced RL Circuit (en, ★★★★ 🖼) `e19343-advanced-rl-circuit`
+  - Making and Breaking Current (en, ★★★ 🖼) `e19309-making-and-breaking-current`
+- *for the app as a whole:* Inductivity of a Coil `e19305-inductivity-of-a-coil`; Self-Induced EMF `e19306-self-induced-emf`; Breaking Current `e19307-breaking-current`; Compact Muon Solenoid `e19320-compact-muon-solenoid`; Electric and Magnetic Energy `e19321-electric-and-magnetic-energy`; Energy Density `e19322-energy-density`; Self-induced emf for linear decrease `e23794-self-induced-emf-for-linear-decrease`; Energy stored in magnetic coil `e23795-energy-stored-in-magnetic-coil`; Magnetic energy density `e23796-magnetic-energy-density`
 
 ## torque
 
@@ -133,8 +154,8 @@ edit `pool.json`). ★ difficulty, 🖼 has an image (not in the export: a place
 - **rank**: Rank the torques of forces drawn to scale.
   - (none found)
 - **weight**: Place the weight of a body at its centre of mass.
-  - Der Kipptest eines Busses (de, ★★★★) `torque-10-kipptest-bus`
   - Einen Hammer balancieren (de, ★★★) `torque-08-hammer-balancieren`
+  - Der Kipptest eines Busses (de, ★★★★) `torque-10-kipptest-bus`
   - Eine Einkaufstasche halten (de, ★★★) `torque-07-einkaufstasche`
   - Eine Schubkarre (de, ★★) `torque-12-schubkarre`
 - **balance**: Apply both conditions of equilibrium, zero net force and zero net torque, including the force at the pivot.
@@ -158,44 +179,43 @@ edit `pool.json`). ★ difficulty, 🖼 has an image (not in the export: a place
 ## coulomb
 
 - **direction**: Find the direction of the Coulomb force: along the line through the two charges, like charges repelling, unlike charges attracting, and the two forces equal and opposite.
-  - The Hydrogen Molecule Ion (en, ★★★) `coulomb-06-hydrogen-molecule-ion`
-  - Two Electrons, One Nucleus (en, ★★★★) `coulomb-08-two-electrons-one-nucleus`
-  - Repelled by a Charged Sphere (en, ★★★★) `electric-potential-09-repelled-by-a-sphere`
-  - Vanishing Field (en, ★★) `e17320-vanishing-field`
-  - Coulomb's Law Backwards (en, ★★) `coulomb-10-coulombs-law-backwards`
-  - Electron Repelled from Sphere (en, ★★★) `e17531-electron-repelled-from-sphere`
-- **factor**: Predict by what factor the force changes when the charges or their distance change (the inverse square law).
-  - By What Factor? (en, ★★) `electric-field-08-by-what-factor`
-  - Percentage Change to Force Between Point Charges (en, ★★) `e10733-percentage-change-to-force-between-point`
-  - Halving Force Between Point Charges (en, ★) `e10732-halving-force-between-point-charges`
-  - The Hydrogen Atom (en, ★) `coulomb-01-hydrogen-atom`
-  - Two Protons in a Nucleus (en, ★★) `coulomb-02-protons-in-a-nucleus`
-  - Repelled by a Charged Sphere (en, ★★★★) `electric-potential-09-repelled-by-a-sphere`
-- **vector**: Add the forces of several charges as vectors: the net force, its direction, and where it is zero.
-  - Point Charges in Square (en, ★★ 🖼) `e19409-point-charges-in-square`
-  - Adding Field Vectors (en, ★★) `e19431-adding-field-vectors`
   - Electrostatic force vectors (en, ★★ 🖼) `e22774-electrostatic-force-vectors`
-  - Forces Between Three Point Charges (2D) (en, ★★★ 🖼) `e10735-forces-between-three-point-charges-2d`
-  - Potential in Triangle (en, ★★★★) `e17529-potential-in-triangle`
+  - Point Charges in Square (en, ★★ 🖼) `e19409-point-charges-in-square`
   - Forces Between Three Point Charges (1D) (en, ★★★ 🖼) `e10729-forces-between-three-point-charges-1d`
-- **field**: Relate field and force with E = F/q: the force on a positive charge along the field, on a negative charge against it.
-  - Electric Field of Charged Ring (en, ★★★★) `e22850-electric-field-of-charged-ring`
-  - Adding Field Vectors (en, ★★) `e19431-adding-field-vectors`
-  - Charged Wire (en, ★★★★ 🖼) `e22945-charged-wire-1`
-  - Flying Electron (en, ★) `e17319-flying-electron-1`
-  - Vanishing Field (en, ★★) `e17320-vanishing-field`
+  - Forces Between Three Point Charges (2D) (en, ★★★ 🖼) `e10735-forces-between-three-point-charges-2d`
   - Field Between Point Charges (en, ★) `e17317-field-between-point-charges`
-- *for the app as a whole:* Quarks in a Proton `coulomb-09-quarks-in-a-proton`; Ions in a Crystal `coulomb-03-ions-in-a-crystal`; Two Point Charges `e17324-two-point-charges-1`; Rutherford's Experiment `coulomb-04-rutherford-experiment`; Nuclear Fission `coulomb-07-nuclear-fission`
+  - Copper Cube (en, ★) `e17318-copper-cube`
+- **factor**: Predict by what factor the force changes when the charges or their distance change (the inverse square law).
+  - Halving Force Between Point Charges (en, ★) `e10732-halving-force-between-point-charges`
+  - Percentage Change to Force Between Point Charges (en, ★★) `e10733-percentage-change-to-force-between-point`
+  - Reducing Distance Between Point Charges (en, ★) `e10731-reducing-distance-between-point-charges`
+  - Proton und Alphateilchen im elektrischen Feld (de, ★★) `e18849-proton-und-alphateilchen-im-elektrischen`
+  - Accelerated Electrons (en, ★★) `e17335-accelerated-electrons`
+  - The Hydrogen Atom (en, ★) `coulomb-01-hydrogen-atom`
+- **vector**: Add the forces of several charges as vectors: the net force, its direction, and where it is zero.
+  - Forces Between Three Point Charges (1D) (en, ★★★ 🖼) `e10729-forces-between-three-point-charges-1d`
+  - Forces Between Three Point Charges (2D) (en, ★★★ 🖼) `e10735-forces-between-three-point-charges-2d`
+  - Point Charges in Square (en, ★★ 🖼) `e19409-point-charges-in-square`
+  - Electrostatic force vectors (en, ★★ 🖼) `e22774-electrostatic-force-vectors`
+  - System of Point Charges (en, ★★★★) `e19357-system-of-point-charges`
+  - Adding Field Vectors (en, ★★) `e19431-adding-field-vectors`
+- **field**: Relate field and force with E = F/q: the force on a positive charge along the field, on a negative charge against it.
+  - Proton und Alphateilchen im elektrischen Feld (de, ★★) `e18849-proton-und-alphateilchen-im-elektrischen`
+  - Flying Electron (en, ★) `e17319-flying-electron-1`
+  - Field Between Point Charges (en, ★) `e17317-field-between-point-charges`
+  - Copper Cube (en, ★) `e17318-copper-cube`
+  - Force on Test Charge (en, ★) `e22846-force-on-test-charge`
+  - Millikan's Oil Drop Experiment (en, ★★) `e17316-millikans-oil-drop-experiment`
 
 ## coe
 
 - **forms**: Identify the forms of energy (kinetic, gravitational, elastic) in the initial and the final state, and show them in bar charts.
-  - Potential Energy for Mass on Spring (en, ★★★) `e19876-potential-energy-for-mass-on-spring-1`
-  - Kinetic and Potential Energy in an Oscillation (en, ★★★) `oscillations-10-energy-shares`
-  - Ein Flipperkasten (de, ★★★) `energy-conservation-09-flipperkasten`
   - Ein Springbrunnen (de, ★★) `energy-conservation-02-springbrunnen`
+  - Skispringen (de, ★★★) `energy-conservation-06-skispringen`
   - Eine Achterbahn (de, ★★) `energy-conservation-03-achterbahn`
-  - Eine Steinschleuder (de, ★★★) `energy-conservation-08-steinschleuder`
+  - Stabhochsprung (de, ★★) `energy-conservation-04-stabhochsprung`
+  - Durch ein Tal rollen (de, ★★★) `energy-conservation-05-durch-ein-tal`
+  - Eine Seilschaukel über dem See (de, ★★★) `energy-conservation-07-seilschaukel`
 - **balance**: Set up the energy balance of two states and solve it with symbols before inserting numbers, e.g. to see how a height or speed scales.
   - Ein Springbrunnen (de, ★★) `energy-conservation-02-springbrunnen`
   - Skispringen (de, ★★★) `energy-conservation-06-skispringen`
@@ -215,14 +235,14 @@ edit `pool.json`). ★ difficulty, 🖼 has an image (not in the export: a place
   - A Baby Bouncer (en, ★★★) `oscillations-05-baby-bouncer`
 - **error**: Find the wrong entry in an energy table.
   - (none found)
-- *for the app as a whole:* Ein Trampolin `energy-conservation-10-trampolin`; Conservation of Energy for Mass on Spring `e19802-conservation-of-energy-for-mass-on-sprin`; Potential Energy for Mass on Spring `e22930-potential-energy-for-mass-on-spring`
+- *for the app as a whole:* Eine Steinschleuder `energy-conservation-08-steinschleuder`; Ein Flipperkasten `energy-conservation-09-flipperkasten`; Ein Trampolin `energy-conservation-10-trampolin`; Potential Energy for Mass on Spring `e19876-potential-energy-for-mass-on-spring-1`; John Deere 8400 `e18951-john-deere-8400`; Wasserbarometer `e19011-wasserbarometer-1`
 
 ## force-concepts
 
 - **first**: Predict the motion of a body on which no net force acts: it stays at rest or moves on in a straight line at constant velocity.
+  - Senke (de, ★★★) `e18952-senke`
   - Vier Kugeln vom Tisch (de, ★★★) `force-concepts-01-vier-kugeln-vom-tisch`
   - Eine Fallschirmspringerin (de, ★★★) `force-systems-07-fallschirmspringerin`
-  - Senke (de, ★★★) `e18952-senke`
   - Einen Schlitten ziehen (de, ★★★★) `force-systems-11-schlitten-ziehen`
   - Acceleration Ramp (en, ★★★ 🖼) `e18575-acceleration-ramp`
 - **balanced**: Explain why balanced forces do not mean that a body is at rest: it may just as well move at constant velocity.
@@ -242,7 +262,7 @@ edit `pool.json`). ★ difficulty, 🖼 has an image (not in the export: a place
 ## interaction
 
 - **equal**: State that the two forces of an interaction are equally large and opposite and act on different bodies, whatever their masses, charges or motion.
-  - (none found)
+  - Copper Cube (en, ★) `e17318-copper-cube`
 - **partner**: Identify the partner of each force in a situation, such as mosquito and windscreen, nucleus and electron, or ice dancer and Earth.
   - (none found)
 - **normal**: Explain why the normal force is not the partner of the weight, and find a wrong pair in a list of force pairs.
@@ -251,28 +271,32 @@ edit `pool.json`). ★ difficulty, 🖼 has an image (not in the export: a place
 ## force-systems
 
 - **forces**: Choose a system and draw every force on it: weight, normal force, rope or contact force, static or kinetic friction, a push or pull, and no other.
-  - (none found)
+  - Deflection of Charged Pendula (en, ★★★★ 🖼) `e10741-deflection-of-charged-pendula`
+  - Electric Pendula (en, ★★★ 🖼) `e10756-electric-pendula`
+  - Magnetic Swing (en, ★★★) `e18577-magnetic-swing`
 - **slope**: Resolve the weight on a slope into components parallel and perpendicular to the slope.
+  - Acceleration Ramp (en, ★★★ 🖼) `e18575-acceleration-ramp`
   - Die Piste hinunter (de, ★★★★) `force-systems-10-skipiste`
   - Auf der Rampe geparkt (de, ★★★) `force-systems-09-parkhausrampe`
 - **system**: Choose the system so that a wanted force between two bodies, such as a rope force, becomes an external force.
-  - Lift und Gegengewicht (de, ★★★★) `force-systems-12-lift-gegengewicht`
+  - Magnetic Swing (en, ★★★) `e18577-magnetic-swing`
   - Ein Kran hebt einen Container (de, ★★) `force-systems-02-hafenkran`
   - Abschleppen (de, ★★★) `force-systems-05-abschleppen`
-  - Ein Kranausleger (de, ★★★) `torque-15-kranausleger`
-  - Eine Seilwinde (de, ★★) `torque-13-seilwinde`
+  - Lift und Gegengewicht (de, ★★★★) `force-systems-12-lift-gegengewicht`
   - Einen Schlitten ziehen (de, ★★★★) `force-systems-11-schlitten-ziehen`
+  - Eine Seilwinde (de, ★★) `torque-13-seilwinde`
 - **law**: Set up Newton’s second law along each axis, following the strategy: system, forces, axes, components, equations, then solve.
-  - Eine Fallschirmspringerin (de, ★★★) `force-systems-07-fallschirmspringerin`
-  - Ein Kran hebt einen Container (de, ★★) `force-systems-02-hafenkran`
+  - Deflection of Charged Pendula (en, ★★★★ 🖼) `e10741-deflection-of-charged-pendula`
+  - Electric Pendula (en, ★★★ 🖼) `e10756-electric-pendula`
+  - Senke (de, ★★★) `e18952-senke`
   - Acceleration Ramp (en, ★★★ 🖼) `e18575-acceleration-ramp`
-  - Abschleppen (de, ★★★) `force-systems-05-abschleppen`
-  - Lift und Gegengewicht (de, ★★★★) `force-systems-12-lift-gegengewicht`
-  - Eine Waage im Lift (de, ★★) `force-systems-01-waage-im-lift`
+  - Luftwiderstand (de, ★★★) `e18963-luftwiderstand`
+  - Eine Fallschirmspringerin (de, ★★★) `force-systems-07-fallschirmspringerin`
 - **spring**: Draw the spring force where the spring is attached, back towards its relaxed length (a stretched spring pulls, a compressed one pushes), find it with F = k Δx and use it in Newton’s second law.
   - Eine Fallschirmspringerin (de, ★★★) `force-systems-07-fallschirmspringerin`
   - Ein Sprungbrett (de, ★★★★) `torque-09-sprungbrett`
 - **drag**: Draw air resistance against the velocity (not the acceleration), knowing that it grows with speed, and use it in Newton’s second law: at terminal velocity it balances the weight.
+  - Luftwiderstand (de, ★★★) `e18963-luftwiderstand`
   - Eine Fallschirmspringerin (de, ★★★) `force-systems-07-fallschirmspringerin`
   - Die Piste hinunter (de, ★★★★) `force-systems-10-skipiste`
   - Ein Güterzug (de, ★★★) `force-systems-06-gueterzug`
@@ -280,39 +304,39 @@ edit `pool.json`). ★ difficulty, 🖼 has an image (not in the export: a place
   - Vier Kugeln vom Tisch (de, ★★★) `force-concepts-01-vier-kugeln-vom-tisch`
 - **error**: Find the wrong step in a student’s free-body diagram and equations.
   - (none found)
-- *for the app as a whole:* Eine Kiste auf dem Lastwagen `force-systems-03-kiste-auf-lastwagen`; Notbremsung `force-systems-04-notbremsung`
+- *for the app as a whole:* Eine Waage im Lift `force-systems-01-waage-im-lift`
 
 ## induction-match
 
 - **flux**: Work out the magnetic flux Φ = B·A through a loop, with A its area in the field, and how it changes as the loop moves.
-  - A Magnet Falls through a Coil (en, ★★★) `induction-match-01-falling-magnet`
-  - Faraday's Law with Graphs (en, ★★ 🖼) `e19310-faradays-law-with-graphs`
-  - Flux through circular loop (en, ★) `e23791-flux-through-circular-loop`
-  - Unit of Magnetic Flux (en, ★) `e19275-unit-of-magnetic-flux`
-  - Faraday's Law (en, ★★★★) `e19274-faradays-law`
-  - Numerical Calculation of Magnetic Flux (en, ★★★★★★) `e19315-numerical-calculation-of-magnetic-flux`
-- **slope**: Read the induced voltage as minus the slope of the flux graph, and find the flux graph from the voltage.
-  - Self-induced emf for linear decrease (en, ★★) `e23794-self-induced-emf-for-linear-decrease`
-  - Rotor Blades (en, ★★) `e19318-rotor-blades`
   - Rectangular Coil (en, ★★ 🖼) `e19316-rectangular-coil`
-  - Train (en, ★★) `e19294-train`
-  - Moving Rod (en, ★★ 🖼) `e19292-moving-rod`
-  - A Magnet Falls through a Coil (en, ★★★) `induction-match-01-falling-magnet`
-- **change**: Decide when a voltage is induced in a loop moving through a field: only while the flux through it changes.
-  - Force on Loop of Wire (en, ★★) `e19313-force-on-loop-of-wire`
   - Flux through circular loop (en, ★) `e23791-flux-through-circular-loop`
   - Deforming Loop (en, ★★) `e19297-deforming-loop`
   - Deforming Loop (en, ★★) `e19298-deforming-loop-1`
   - Deforming Loop (en, ★★) `e19299-deforming-loop-2`
-  - Lenz's Law (en, ★★ 🖼) `e19319-lenzs-law`
+  - Force on Loop of Wire (en, ★★) `e19313-force-on-loop-of-wire`
+- **slope**: Read the induced voltage as minus the slope of the flux graph, and find the flux graph from the voltage.
+  - Faraday's Law (en, ★★★★) `e19274-faradays-law`
+  - Faraday's Law with Graphs (en, ★★ 🖼) `e19310-faradays-law-with-graphs`
+  - Rectangular Coil (en, ★★ 🖼) `e19316-rectangular-coil`
+  - Force on Loop of Wire (en, ★★) `e19313-force-on-loop-of-wire`
+  - Deforming Loop (en, ★★) `e19297-deforming-loop`
+  - Deforming Loop (en, ★★) `e19298-deforming-loop-1`
+- **change**: Decide when a voltage is induced in a loop moving through a field: only while the flux through it changes.
+  - Rectangular Coil (en, ★★ 🖼) `e19316-rectangular-coil`
+  - Falling Ring (en, ★ 🖼) `e19304-falling-ring`
+  - Force on Loop of Wire (en, ★★) `e19313-force-on-loop-of-wire`
+  - Deforming Loop (en, ★★) `e19297-deforming-loop`
+  - Deforming Loop (en, ★★) `e19298-deforming-loop-1`
+  - Deforming Loop (en, ★★) `e19299-deforming-loop-2`
 - **lenz**: Find the direction of an induced current with Lenz's rule.
   - Lenz's Law (en, ★★ 🖼) `e19319-lenzs-law`
+  - Falling Ring (en, ★ 🖼) `e19304-falling-ring`
   - Current direction (en, ★★ 🖼) `e23793-current-direction`
+  - Two Coils (en, ★★) `e19296-two-coils`
   - A Magnet Falls through a Coil (en, ★★★) `induction-match-01-falling-magnet`
   - The Magnetic Brake of a Drop Tower (en, ★★★) `induction-match-02-magnetic-brake`
-  - A Bicycle Dynamo (en, ★★) `induction-match-05-bicycle-dynamo`
-  - Advanced RL Circuit (en, ★★★★ 🖼) `e19343-advanced-rl-circuit`
-- *for the app as a whole:* A Guitar Pickup `induction-match-03-guitar-pickup`; Induction in moving wire `e23789-induction-in-moving-wire`; An Induction Hob `induction-match-04-induction-hob`
+- *for the app as a whole:* Loop in Decreasing Field `e19312-loop-in-decreasing-field`; Generator Coil in Variable Field `e19311-generator-coil-in-variable-field`; Generator voltage with Faraday's law `e23792-generator-voltage-with-faradays-law`
 
 ## motion-data
 
@@ -326,14 +350,15 @@ edit `pool.json`). ★ difficulty, 🖼 has an image (not in the export: a place
 ## motion-graphs
 
 - **slope**: Read a velocity as the slope of the s(t) graph, not as its height.
-  - Beschleunigung und Strecke im v(t)-Diagramm (de, ★ 🖼) `e18962-beschleunigung-und-strecke-im-vt-diagram`
   - Beschleunigung im v(t)-Diagramm (de, ★ 🖼) `e19017-beschleunigung-im-vt-diagramm`
+  - Beschleunigung und Strecke im v(t)-Diagramm (de, ★ 🖼) `e18962-beschleunigung-und-strecke-im-vt-diagram`
 - **negative**: Recognise a negative velocity in a falling s(t) graph or in decreasing positions in a value table.
   - Beschleunigung und Strecke im v(t)-Diagramm (de, ★ 🖼) `e18962-beschleunigung-und-strecke-im-vt-diagram`
 - **sketch**: Sketch v(t) from s(t), and a(t) from v(t), and find the error in such a sketch.
   - (none found)
 - **uniform**: Recognise a uniform acceleration as a straight line in v(t) and as a parabola in s(t).
   - (none found)
+- *for the app as a whole:* Kylian Mbappé `e18844-kylian-mbappe`
 
 ## motion-areas
 
@@ -352,27 +377,27 @@ edit `pool.json`). ★ difficulty, 🖼 has an image (not in the export: a place
 - **circle**: Describe a simple harmonic motion as the projection of a uniform circular motion: the radius is the amplitude, the angular velocity is ω, one turn is one period.
   - Gedämpftes Federpendel (de, ★★★ 🖼) `e19019-gedampftes-federpendel-1`
 - **harmonic**: Decide whether a system oscillates harmonically by checking that its acceleration is proportional and opposite to its displacement, and read off ω.
-  - Differential Equation for Damped Oscillation (en, ★★★) `e19804-differential-equation-for-damped-oscilla`
+  - Oscillating Test Tube (en, ★★★) `e19867-oscillating-test-tube`
   - Characteristic Equation (en, ★★★) `e19788-characteristic-equation`
-  - Damped Oscillation (general solution) (en, ★★) `e23039-damped-oscillation-general-solution-1`
-  - Amplitude, Period and Phase from a Graph (en, ★★★) `oscillations-09-amplitude-period-phase`
-  - Damped Oscillation (general solution) (en, ★★) `e23038-damped-oscillation-general-solution`
-  - Coupled Mathematical Pendula (en, ★★) `e20531-coupled-mathematical-pendula`
-- **extremes**: Locate the largest speed Aω (at the equilibrium) and the largest acceleration Aω² (at the turning points) in the cycle.
-  - A Tuning Fork (en, ★★) `oscillations-01-tuning-fork`
-  - A Swaying Skyscraper (en, ★★★) `oscillations-06-swaying-skyscraper`
-  - Atoms in a Crystal (en, ★★★★) `oscillations-08-atoms-in-a-crystal`
-  - A Baby Bouncer (en, ★★★) `oscillations-05-baby-bouncer`
-  - Maximum Velocity and Acceleration (en, ★) `e19785-maximum-velocity-and-acceleration`
-  - Salt on a Loudspeaker (en, ★★★) `oscillations-03-salt-on-a-loudspeaker`
-- **lc**: Recognise the LC circuit as the same equation with other quantities: the charge for the displacement, the current for the velocity, L for the mass and 1/C for the spring constant.
-  - LC Oscillator (en, ★★★ 🖼) `e19866-lc-oscillator-1`
-  - LC Oscillator (en, ★★) `e19792-lc-oscillator`
-  - Damped LC Oscillator (en, ★★) `e19908-damped-lc-oscillator`
-  - Conservation of Energy in LC Circuit (en, ★★) `e19803-conservation-of-energy-in-lc-circuit`
-  - Low Damping (en, ★★) `e19905-low-damping`
+  - Oscillation Graphs (en, ★) `e19865-oscillation-graphs`
   - Resonance for Mechanical Oscillator (en, ★★) `e19904-resonance-for-mechanical-oscillator`
-- *for the app as a whole:* An Earthquake `oscillations-04-earthquake`; The Tide in a Harbour `oscillations-07-tide-in-a-harbour`; A Bouncing Ball `oscillations-02-bouncing-ball`; Kinetic and Potential Energy in an Oscillation `oscillations-10-energy-shares`
+  - Maximum Velocity and Acceleration (en, ★) `e19785-maximum-velocity-and-acceleration`
+  - Oscillating Rod (en, ★★) `e19879-oscillating-rod`
+- **extremes**: Locate the largest speed Aω (at the equilibrium) and the largest acceleration Aω² (at the turning points) in the cycle.
+  - Maximum Velocity and Acceleration (en, ★) `e19785-maximum-velocity-and-acceleration`
+  - Increasing Amplitude (en, ★) `e19786-increasing-amplitude`
+  - Oscillation Graphs (en, ★) `e19865-oscillation-graphs`
+  - Speed Bump (en, ★★) `e19791-speed-bump`
+  - Oscillating Rod (en, ★★) `e19879-oscillating-rod`
+  - Schwingungen (wahr oder falsch?) (de, ★) `e18854-schwingungen-wahr-oder-falsch`
+- **lc**: Recognise the LC circuit as the same equation with other quantities: the charge for the displacement, the current for the velocity, L for the mass and 1/C for the spring constant.
+  - Resonance for Mechanical Oscillator (en, ★★) `e19904-resonance-for-mechanical-oscillator`
+  - Schwingungen (wahr oder falsch?) (de, ★) `e18854-schwingungen-wahr-oder-falsch`
+  - LC Oscillator (en, ★★) `e19792-lc-oscillator`
+  - LC Oscillator (en, ★★★ 🖼) `e19866-lc-oscillator-1`
+  - Conservation of Energy in LC Circuit (en, ★★) `e19803-conservation-of-energy-in-lc-circuit`
+  - Damped LC Oscillator (en, ★★) `e19908-damped-lc-oscillator`
+- *for the app as a whole:* A Tuning Fork `oscillations-01-tuning-fork`; A Swaying Skyscraper `oscillations-06-swaying-skyscraper`; Atoms in a Crystal `oscillations-08-atoms-in-a-crystal`
 
 ## cyclic-processes
 
@@ -384,92 +409,94 @@ edit `pool.json`). ★ difficulty, 🖼 has an image (not in the export: a place
   - (none found)
 - **error**: Find the error in a sketch of a cycle.
   - (none found)
+- *for the app as a whole:* Gasflasche `e18846-gasflasche-3`
 
 ## wave-propagation
 
 - **medium**: Tell the motion of the wave from the motion of the rope: where a crest is later, how a point of the rope moves, and its y(t) graph.
+  - Wave Reflection (en, ★★ 🖼) `e20057-wave-reflection`
   - Guitar String (en, ★★) `e20014-guitar-string-1`
-  - A Rope on a Wall or a Ring (en, ★★) `wave-propagation-02-rope-wall-ring`
   - Steel string (en, ★★) `e23217-steel-string`
-  - Wave on a Rope (en, ★) `e20005-wave-on-a-rope`
-  - A Wave at the Harbour Wall (en, ★★★) `wave-propagation-04-harbour-wall`
-  - Finding a Break in a Cable (en, ★★★) `wave-propagation-03-cable-fault`
-- **reflect**: Predict the crest reflected at a fixed end (upside down) and at a free end (upright).
-  - A Wave at the Harbour Wall (en, ★★★) `wave-propagation-04-harbour-wall`
   - A Rope on a Wall or a Ring (en, ★★) `wave-propagation-02-rope-wall-ring`
-  - Finding a Break in a Cable (en, ★★★) `wave-propagation-03-cable-fault`
-  - Wave Reflection (en, ★★ 🖼) `e20057-wave-reflection`
-  - Schiffswrack (de, ★) `e22231-schiffswrack`
-  - A-Scan (de, ★★★) `e22232-a-scan`
-- **superpose**: Add the displacements of two overlapping crests point by point.
-  - A Wave at the Harbour Wall (en, ★★★) `wave-propagation-04-harbour-wall`
+  - Wave on a Rope (en, ★) `e20005-wave-on-a-rope`
   - Triangle Superposition (en, ★ 🖼) `e20055-triangle-superposition`
-  - Two Pulses on a Slinky (en, ★★★) `wave-propagation-05-slinky-pulses`
+- **reflect**: Predict the crest reflected at a fixed end (upside down) and at a free end (upright).
   - Wave Reflection (en, ★★ 🖼) `e20057-wave-reflection`
+  - A Rope on a Wall or a Ring (en, ★★) `wave-propagation-02-rope-wall-ring`
+  - A Wave at the Harbour Wall (en, ★★★) `wave-propagation-04-harbour-wall`
+  - Finding a Break in a Cable (en, ★★★) `wave-propagation-03-cable-fault`
+  - Schiffswrack (de, ★) `e22231-schiffswrack`
+  - Echoortung (de, ★) `e18964-echoortung`
+- **superpose**: Add the displacements of two overlapping crests point by point.
+  - Triangle Superposition (en, ★ 🖼) `e20055-triangle-superposition`
+  - Wave Reflection (en, ★★ 🖼) `e20057-wave-reflection`
+  - A Wave at the Harbour Wall (en, ★★★) `wave-propagation-04-harbour-wall`
+  - Two Pulses on a Slinky (en, ★★★) `wave-propagation-05-slinky-pulses`
   - Wavelength of a Helium-Neon laser (en, ★) `e23399-wavelength-of-a-helium-neon-laser`
 - **standing**: Locate the nodes and antinodes of a standing wave on a rope: nodes λ/2 apart, a node at a fixed end, an antinode at a free end.
-  - A Wave at the Harbour Wall (en, ★★★) `wave-propagation-04-harbour-wall`
-  - Finding a Break in a Cable (en, ★★★) `wave-propagation-03-cable-fault`
   - Guitar String (en, ★★) `e20014-guitar-string-1`
   - Pan Flute (en, ★★) `e20015-pan-flute`
-  - Harmonic Waves (en, ★) `e20009-harmonic-waves`
-  - Harmonic Waves (en, ★) `e20010-harmonic-waves-1`
-- *for the app as a whole:* The Stadium Wave `wave-propagation-01-stadium-wave`; Harmonic Wave Function `e20067-harmonic-wave-function`; A Stop-and-Go Wave `wave-propagation-06-stop-and-go-wave`
+  - Steel string (en, ★★) `e23217-steel-string`
+  - Organ pipe (en, ★) `e23218-organ-pipe`
+  - A Wave at the Harbour Wall (en, ★★★) `wave-propagation-04-harbour-wall`
+  - Finding a Break in a Cable (en, ★★★) `wave-propagation-03-cable-fault`
+- *for the app as a whole:* Harmonic Wave Function `e20067-harmonic-wave-function`; Harmonic Waves `e20009-harmonic-waves`; Harmonic Waves `e20010-harmonic-waves-1`; The Stadium Wave `wave-propagation-01-stadium-wave`
 
 ## interference
 
 - **huygens**: Explain diffraction with Huygens’ principle: how much a wave spreads behind an opening depends on its width compared with the wavelength.
-  - Suppressed Maximum (en, ★★) `e20402-suppressed-maximum`
   - Beugung von weissem Licht (de, ★) `e18961-beugung-von-weissem-licht`
+  - Elektronenbeugung (de, ★★) `e18950-elektronenbeugung-1`
+  - Suppressed Maximum (en, ★★) `e20402-suppressed-maximum`
+  - Microwave Diffraction (en, ★★) `e20381-microwave-diffraction`
   - Beugung von Mikrowellen (de, ★★ 🖼) `e18859-beugung-von-mikrowellen`
   - Beugung von Mikrowellen (de, ★★ 🖼) `e20419-beugung-von-mikrowellen-CwNqPdO50S-clone`
-  - Microwave Diffraction (en, ★★) `e20381-microwave-diffraction`
-  - Single Slit (en, ★★) `e20401-single-slit`
 - **maxima**: Predict where the maxima of a double slit and a grating lie, from the path difference: d·sin α = k·λ.
-  - Suppressed Maximum (en, ★★) `e20402-suppressed-maximum`
   - Beugung von weissem Licht (de, ★) `e18961-beugung-von-weissem-licht`
-  - Double Slit (en, ★) `e20396-double-slit`
-  - Wavelength of a Helium-Neon laser (en, ★) `e23399-wavelength-of-a-helium-neon-laser`
-  - He-Ne Laser (en, ★★) `e20382-he-ne-laser`
-  - Sodium-Vapour Lamp (en, ★) `e20383-sodium-vapour-lamp`
-- **changes**: Predict how the pattern changes when the slit width, the slit spacing or the wavelength changes.
-  - Suppressed Maximum (en, ★★) `e20402-suppressed-maximum`
   - Interference Patterns (en, ★ 🖼) `e20423-interference-patterns`
+  - Suppressed Maximum (en, ★★) `e20402-suppressed-maximum`
+  - Wavelength of a Helium-Neon laser (en, ★) `e23399-wavelength-of-a-helium-neon-laser`
+  - Microwave Diffraction (en, ★★) `e20381-microwave-diffraction`
+  - He-Ne Laser (en, ★★) `e20382-he-ne-laser`
+- **changes**: Predict how the pattern changes when the slit width, the slit spacing or the wavelength changes.
+  - Beugung von weissem Licht (de, ★) `e18961-beugung-von-weissem-licht`
+  - Interference Patterns (en, ★ 🖼) `e20423-interference-patterns`
+  - Elektronenbeugung (de, ★★) `e18950-elektronenbeugung-1`
+  - Suppressed Maximum (en, ★★) `e20402-suppressed-maximum`
   - Microwave Diffraction (en, ★★) `e20381-microwave-diffraction`
   - Wavelength of a Helium-Neon laser (en, ★) `e23399-wavelength-of-a-helium-neon-laser`
-  - Beugung von Mikrowellen (de, ★★ 🖼) `e18859-beugung-von-mikrowellen`
-  - He-Ne Laser (en, ★★) `e20382-he-ne-laser`
 - **resolve**: Relate the resolving power to the aperture and the wavelength: θₘᵢₙ = 1.22·λ/D.
   - James Webb Telescope (en, ★) `e23403-james-webb-telescope-1`
   - Headlights (en, ★★) `e23404-headlights`
   - Hot-Air Balloon (en, ★★) `e20384-hot-air-balloon`
   - Un dimanche après-midi à la Grande Jatte (en, ★★) `e20385-un-dimanche-apres-midi-a-la-grande-jatte`
   - Satellite Dish (en, ★) `e20424-satellite-dish`
-- *for the app as a whole:* Spectral Lines `e20398-spectral-lines`; Track spacing for a compact disc (CD) `e23400-track-spacing-for-a-compact-disc-cd`
+  - Microperforation (en, ★) `e23402-microperforation`
+- *for the app as a whole:* Track spacing for a compact disc (CD) `e23400-track-spacing-for-a-compact-disc-cd`; Sodium-Vapour Lamp `e20383-sodium-vapour-lamp`; Spectral Lines `e20398-spectral-lines`
 
 ## electric-field
 
 - **sketch**: Sketch the field lines of point charges, of a charged wire and of a plate capacitor (a uniform field).
-  - Equipotentials in field of electric dipole (en, ★) `e23028-equipotentials-in-field-of-electric-dipo`
   - Field Line Image for an Electric Dipole (en, ★) `e22848-field-line-image-for-an-electric-dipole`
+  - Field Line Images (en, ★ 🖼) `e17315-field-line-images`
   - Electric Field Lines (en, ★ 🖼) `e17336-electric-field-lines`
+  - Equipotentials in field of electric dipole (en, ★) `e23028-equipotentials-in-field-of-electric-dipo`
   - Equipotentials of Two Positive Point Charges (en, ★) `e17488-equipotentials-of-two-positive-point-cha`
   - Dipole in Field of Point Charge (en, ★★★ 🖼) `e22975-dipole-in-field-of-point-charge`
-  - Dipole in Field of Charged Wire (en, ★★★ 🖼) `e22980-dipole-in-field-of-charged-wire`
 - **read**: Read the direction and the relative strength of a field from its field lines.
+  - Electric Field Lines (en, ★ 🖼) `e17336-electric-field-lines`
   - Field Line Image for an Electric Dipole (en, ★) `e22848-field-line-image-for-an-electric-dipole`
   - A Jet of Water and a Charged Rod (en, ★★★) `electric-field-07-bent-jet-of-water`
   - An Inkjet Printer (en, ★★★★) `electric-field-02-inkjet-printer`
   - Under a Thundercloud (en, ★★) `electric-field-03-thundercloud`
   - By What Factor? (en, ★★) `electric-field-08-by-what-factor`
-  - Two Capacitors Compared (en, ★★★) `electric-field-09-two-capacitors`
 - **dipole**: Determine the force and the torque on a dipole in a uniform field.
-  - Point Dipole (en, ★★) `e22852-point-dipole`
+  - Force and Torque on Dipole (en, ★★ 🖼) `e22905-force-and-torque-on-dipole`
   - Equipotentials in field of electric dipole (en, ★) `e23028-equipotentials-in-field-of-electric-dipo`
-  - Dipole in Field of Point Charge (en, ★★★ 🖼) `e22975-dipole-in-field-of-point-charge`
-  - Dipole in Field of Charged Wire (en, ★★★ 🖼) `e22980-dipole-in-field-of-charged-wire`
   - Field Line Image for an Electric Dipole (en, ★) `e22848-field-line-image-for-an-electric-dipole`
   - Water Molecule (en, ★★) `e17334-water-molecule`
+  - Point Dipole (en, ★★) `e22852-point-dipole`
+  - Dipole in Field of Point Charge (en, ★★★ 🖼) `e22975-dipole-in-field-of-point-charge`
 - **equi**: Sketch equipotential lines at right angles to the field lines.
   - Equipotentials in field of electric dipole (en, ★) `e23028-equipotentials-in-field-of-electric-dipo`
   - Equipotentials of Two Positive Point Charges (en, ★) `e17488-equipotentials-of-two-positive-point-cha`
@@ -479,127 +506,134 @@ edit `pool.json`). ★ difficulty, 🖼 has an image (not in the export: a place
   - Potential Difference in Field of Charged Wire (en, ★★) `e23051-potential-difference-in-field-of-charged`
 - **error**: Find the error in a sketch of field lines and equipotentials: lines that cross, or equipotentials not at right angles to the field lines.
   - (none found)
-- *for the app as a whole:* Millikan's Oil Drop `electric-field-01-millikan-oil-drop`; Lightning Strikes a Car `electric-field-04-lightning-strikes-a-car`; An Electrostatic Precipitator `electric-field-05-electrostatic-precipitator`; A Laser Printer `electric-field-06-laser-printer`
+- *for the app as a whole:* Two Capacitors Compared `electric-field-09-two-capacitors`; Millikan's Oil Drop `electric-field-01-millikan-oil-drop`
 
 ## electric-potential
 
 - **quantities**: Tell potential energy, potential and potential difference apart, and say which of them depends on the charge.
-  - Electric vs. Gravitational Potential Energy (en, ★★) `e17471-electric-vs-gravitational-potential-ener`
-  - Rutherford's Experiment: Closest Approach (en, ★★★★) `electric-potential-08-rutherford-closest-approach`
+  - Potential in electric field (en, ★ 🖼) `e23024-potential-in-electric-field-1`
+  - Potential in Electric Field (en, ★ 🖼) `e23048-potential-in-electric-field`
   - Potential Energy of a Proton (en, ★) `e23047-potential-energy-of-a-proton`
-  - Repelling Particles (en, ★★★) `e17519-repelling-particles`
-  - Repelled by a Charged Sphere (en, ★★★★) `electric-potential-09-repelled-by-a-sphere`
+  - Potential in Triangle (en, ★★★★) `e17529-potential-in-triangle`
   - Proton Between Two Point Charges (en, ★★) `e17534-proton-between-two-point-charges`
+  - High-Voltage (en, ★) `e22523-high-voltage`
 - **uniform**: Use E = ΔV/d in a uniform field, with d measured along the field lines.
-  - Protons in Uniform Field (en, ★★★) `e17520-protons-in-uniform-field`
-  - Maximising Energy (en, ★) `e17705-maximising-energy`
-  - Voltage in uniform field (en, ★) `e23025-voltage-in-uniform-field`
-  - The Membrane of a Nerve Cell (en, ★★★) `electric-potential-06-nerve-cell-membrane`
-  - Dielectric Material (en, ★) `e17638-dielectric-material`
-  - Potential difference in field of charged plate (en, ★★★) `e23030-potential-difference-in-field-of-charged`
-- **point**: Predict how the potential of a point charge depends on its sign and on the distance.
-  - Potential difference in field of point charge (en, ★★★) `e23026-potential-difference-in-field-of-point-c`
-  - Potential Difference in Field of Point Charge (en, ★★) `e23050-potential-difference-in-field-of-point-c`
-  - Proton Between Two Point Charges (en, ★★) `e17534-proton-between-two-point-charges`
-  - Equipotentials of Two Positive Point Charges (en, ★) `e17488-equipotentials-of-two-positive-point-cha`
-  - Rutherford's Experiment: Closest Approach (en, ★★★★) `electric-potential-08-rutherford-closest-approach`
-  - Repelled by a Charged Sphere (en, ★★★★) `electric-potential-09-repelled-by-a-sphere`
-- **energy**: Decide whether a charge gains or loses potential energy moving between two points, from the signs of q and of ΔV.
-  - Rutherford's Experiment: Closest Approach (en, ★★★★) `electric-potential-08-rutherford-closest-approach`
-  - Electric vs. Gravitational Potential Energy (en, ★★) `e17471-electric-vs-gravitational-potential-ener`
-  - The Membrane of a Nerve Cell (en, ★★★) `electric-potential-06-nerve-cell-membrane`
   - Potential Energy of a Proton (en, ★) `e23047-potential-energy-of-a-proton`
+  - Protons in Uniform Field (en, ★★★) `e17520-protons-in-uniform-field`
+  - Voltage in uniform field (en, ★) `e23025-voltage-in-uniform-field`
+  - Voltage in Uniform Field (en, ★) `e23049-voltage-in-uniform-field-1`
+  - Thundercloud (en, ★★) `e17530-thundercloud`
+  - Maximising Energy (en, ★) `e17705-maximising-energy`
+- **point**: Predict how the potential of a point charge depends on its sign and on the distance.
+  - Proton Between Two Point Charges (en, ★★) `e17534-proton-between-two-point-charges`
   - Potential difference in field of point charge (en, ★★★) `e23026-potential-difference-in-field-of-point-c`
   - Potential Difference in Field of Point Charge (en, ★★) `e23050-potential-difference-in-field-of-point-c`
-- *for the app as a whole:* A Van de Graaff Generator `electric-potential-05-van-de-graaff`; An X-Ray Tube `electric-potential-01-x-ray-tube`; An Electron Gun `electric-potential-02-electron-gun`; The Ion Thruster of Dawn `electric-potential-03-ion-thruster`
+  - Potential in Triangle (en, ★★★★) `e17529-potential-in-triangle`
+  - Voltage in field of charged sphere (en, ★) `e23027-voltage-in-field-of-charged-sphere`
+  - Voltage in Field of Sphere (en, ★) `e23052-voltage-in-field-of-sphere`
+- **energy**: Decide whether a charge gains or loses potential energy moving between two points, from the signs of q and of ΔV.
+  - Potential Energy of a Proton (en, ★) `e23047-potential-energy-of-a-proton`
+  - Potential in electric field (en, ★ 🖼) `e23024-potential-in-electric-field-1`
+  - Potential in Electric Field (en, ★ 🖼) `e23048-potential-in-electric-field`
+  - High-Voltage (en, ★) `e22523-high-voltage`
+  - Potential Difference (en, ★) `e22524-potential-difference`
+  - Potential difference in field of point charge (en, ★★★) `e23026-potential-difference-in-field-of-point-c`
 
 ## magnetic-forces
 
 - **lines**: Sketch the field lines of a bar magnet, a straight wire, a loop and a solenoid, with the right-hand grip rule for the currents.
+  - Helmholtz coil force (en, ★★) `e23736-helmholtz-coil-force`
   - The Aurora (en, ★★) `magnetic-forces-01-aurora`
-  - Helmholtz coil force (en, ★★) `e23736-helmholtz-coil-force`
-  - Cosmic Rays and the Earth's Field (en, ★★★) `magnetic-forces-07-cosmic-rays`
-  - Two Moving Charges (en, ★★★★) `magnetic-forces-09-two-moving-charges`
-  - Magnetic Force on Charged Particles (en, ★) `e18719-magnetic-force-on-charged-particles`
-  - A Particle Detector (en, ★★★) `magnetic-forces-05-particle-detector`
-- **wire**: Find the direction and the size of the force on a current-carrying wire, F = I·L·B·sin θ, by mental arithmetic or as a ratio.
-  - Helmholtz coil force (en, ★★) `e23736-helmholtz-coil-force`
-  - Parallel Currents (en, ★★) `e19196-parallel-currents`
   - Floating Wire (en, ★★) `e18571-floating-wire`
+  - Cosmic Rays and the Earth's Field (en, ★★★) `magnetic-forces-07-cosmic-rays`
+  - Wire in Magnetic Field (en, ★) `e18567-wire-in-magnetic-field`
+  - Electrons in Equilibrium (en, ★★) `e18591-electrons-in-equilibrium`
+- **wire**: Find the direction and the size of the force on a current-carrying wire, F = I·L·B·sin θ, by mental arithmetic or as a ratio.
+  - Kraftrichtungen (de, ★) `e19016-kraftrichtungen-2`
+  - Magnetic Swing (en, ★★★) `e18577-magnetic-swing`
   - Force Between Parallel Wires (en, ★★) `e19199-force-between-parallel-wires`
-  - Coil From a Wire (en, ★★) `e19207-coil-from-a-wire`
-  - Falling Wire (en, ★★) `e19291-falling-wire`
+  - Square Coil in Magnetic Field (en, ★ 🖼) `e18576-square-coil-in-magnetic-field`
+  - Floating Wire (en, ★★) `e18571-floating-wire`
+  - Voice Coil (en, ★★) `e18568-voice-coil`
 - **charge**: Find the direction of the force on a moving charge, reversed for a negative charge.
-  - Acceleration of Charged Particles in Magnetic Field (en, ★ 🖼) `e18714-acceleration-of-charged-particles-in-mag`
-  - Two Moving Charges (en, ★★★★) `magnetic-forces-09-two-moving-charges`
-  - The Aurora (en, ★★) `magnetic-forces-01-aurora`
-  - Direction of Magnetic Force on Particles (en, ★ 🖼) `e18713-direction-of-magnetic-force-on-particles`
-  - Rectangular Coil (en, ★★ 🖼) `e19316-rectangular-coil`
+  - Kraftrichtungen (de, ★) `e19016-kraftrichtungen-2`
+  - Electrons in Equilibrium (en, ★★) `e18591-electrons-in-equilibrium`
   - Ions in Salt Solution (en, ★) `e18715-ions-in-salt-solution`
+  - Proton (en, ★) `e23387-proton`
+  - Magnetic Force As a Vector (en, ★★★) `e18716-magnetic-force-as-a-vector`
+  - Direction of Magnetic Force on Particles (en, ★ 🖼) `e18713-direction-of-magnetic-force-on-particles`
 - **coil**: Explain the torque on a coil in a magnetic field and when it is largest, as in the electric motor, the loudspeaker and the moving-coil meter.
-  - Helmholtz coil force (en, ★★) `e23736-helmholtz-coil-force`
-  - Rectangular Coil (en, ★★ 🖼) `e19316-rectangular-coil`
+  - Square Coil in Magnetic Field (en, ★ 🖼) `e18576-square-coil-in-magnetic-field`
   - Torque on Coils (en, ★★) `e18578-torque-on-coils`
-  - Current direction (en, ★★ 🖼) `e23793-current-direction`
-  - Short Coil (en, ★★★) `e19200-short-coil`
-  - Helmholtz Coil (en, ★★) `e19205-helmholtz-coil`
+  - DC Motor (en, ★) `e18570-dc-motor`
+  - Torque on Coil (en, ★) `e23385-torque-on-coil`
+  - Electric motor (en, ★) `e23386-electric-motor-1`
+  - Helmholtz coil force (en, ★★) `e23736-helmholtz-coil-force`
 - **pair**: Predict whether two parallel currents attract or repel each other.
-  - Parallel Currents (en, ★★) `e19196-parallel-currents`
   - Helmholtz coil force (en, ★★) `e23736-helmholtz-coil-force`
   - Force Between Parallel Wires (en, ★★) `e19199-force-between-parallel-wires`
+  - Parallel Currents (en, ★★) `e19196-parallel-currents`
   - Two Moving Charges (en, ★★★★) `magnetic-forces-09-two-moving-charges`
   - A Short Circuit between Two Cables (en, ★★★) `magnetic-forces-06-short-circuit-cables`
 - **error**: Find the wrong step in a student’s hand rule: the wrong hand, or the sign of the charge ignored.
   - (none found)
-- *for the app as a whole:* The Fine-Beam Tube `magnetic-forces-04-fine-beam-tube`; Magnetic Swing `e18577-magnetic-swing`; Induction in moving wire `e23789-induction-in-moving-wire`; A Cyclotron `magnetic-forces-03-cyclotron`; Radius and Period of an Alpha Particle `magnetic-forces-08-radius-and-period`; Voice Coil `e18568-voice-coil`
+- *for the app as a whole:* Loudspeaker `e23384-loudspeaker`; Magnetic Force on Current `e18573-magnetic-force-on-current`; Acceleration Ramp `e18575-acceleration-ramp`; Magnetic Force `e18574-magnetic-force`
 
 ## charged-particles
 
 - **accel**: Apply |q|·ΔV = ΔE_kin to a charge accelerated through a voltage, and give its energy in electronvolts.
-  - Acceleration voltage (en, ★) `e23054-acceleration-voltage`
-  - Voltage Increase (en, ★★) `e17475-voltage-increase`
-  - Accelerated electron (en, ★) `e23055-accelerated-electron`
   - Mass of an electron (en, ★★★) `e23438-mass-of-an-electron`
   - Crossed Fields (en, ★) `e23437-crossed-fields`
   - Electrons in Crossed Fields (en, ★★) `e22072-electrons-in-crossed-fields`
+  - Voltage Increase (en, ★★) `e17475-voltage-increase`
+  - Acceleration voltage (en, ★) `e23054-acceleration-voltage`
+  - Accelerated electron (en, ★) `e23055-accelerated-electron`
 - **work**: Explain why a magnetic field changes the direction of a charge but not its speed: the magnetic force does no work, unlike the electric force in a capacitor.
+  - SESAME (de, ★★★ 🖼) `e18945-sesame`
+  - SESAME (de, ★★★ 🖼) `e19007-sesame-2`
+  - SESAME (de, ★★★ 🖼) `e19027-sesame-3`
   - The Fine-Beam Tube (en, ★★★) `magnetic-forces-04-fine-beam-tube`
   - The Aurora (en, ★★) `magnetic-forces-01-aurora`
 - **radius**: Relate the radius r = m·v/(q·B) of the circular path to mass, speed, charge and field by ratios, and explain why the period does not depend on the speed.
-  - Cyclotron radius (en, ★) `e23410-cyclotron-radius`
-  - A Cyclotron (en, ★★★★) `magnetic-forces-03-cyclotron`
-  - Proton Cyclotron (en, ★) `e18712-proton-cyclotron`
-  - Cyclotron (en, ★) `e23450-cyclotron`
-  - A Mass Spectrometer (en, ★★★) `magnetic-forces-02-mass-spectrometer`
+  - Mass of an electron (en, ★★★) `e23438-mass-of-an-electron`
+  - SESAME (de, ★★★ 🖼) `e18945-sesame`
+  - SESAME (de, ★★★ 🖼) `e19007-sesame-2`
+  - SESAME (de, ★★★ 🖼) `e19027-sesame-3`
+  - Mass Spectrometer (en, ★★) `e18707-mass-spectrometer`
   - Particle Accelerator (en, ★) `e18709-particle-accelerator`
 - **crossed**: Find the speed that passes crossed electric and magnetic fields undeflected, and explain how the Hall voltage builds up.
-  - Hall Coefficient (en, ★★) `e18728-hall-coefficient`
-  - Crossed Fields (en, ★) `e23437-crossed-fields`
-  - Hall voltage (en, ★) `e23431-hall-voltage`
   - Electrons in Crossed Fields (en, ★★) `e22072-electrons-in-crossed-fields`
+  - Crossed Fields (en, ★) `e23437-crossed-fields`
   - Velocity Selector (en, ★) `e18589-velocity-selector`
+  - Hall Coefficient (en, ★★) `e18728-hall-coefficient`
+  - Hall voltage (en, ★) `e23431-hall-voltage`
   - Bismuth (en, ★) `e23432-bismuth-1`
-- *for the app as a whole:* Mass Spectrometer `e18707-mass-spectrometer`
+- *for the app as a whole:* Electron Repelled from Sphere `e17531-electron-repelled-from-sphere`; Compact Muon Solenoid (CMS) `e23451-compact-muon-solenoid-cms`; Alpha Particle `e17476-alpha-particle`; Speed Increase `e17487-speed-increase`; Cathode Ray Tube `e17514-cathode-ray-tube`; X-Ray Tube `e17515-x-ray-tube`; Protons in Uniform Field `e17520-protons-in-uniform-field`
 
 ## em-waves
 
 - **dirs**: Determine the direction of propagation from E and B, which form a right-handed set with it, and get one field from the other with E = c·B.
   - Poynting Vector (en, ★★) `e20388-poynting-vector`
-- **speed**: Use the speed c in vacuum and c/n in a medium, where the frequency stays the same and the wavelength shrinks to λ₀/n.
-  - Microwaves and Visible Light in Water (en, ★) `e20811-microwaves-and-visible-light-in-water`
-  - Microwaves in Water (en, ★) `e20346-microwaves-in-water`
-  - Microwaves in Water (en, ★) `e20347-microwaves-in-water-1`
-  - The Speed of Light in a Microwave Oven (en, ★★★) `em-waves-01-microwave-oven`
-  - Light in Water (en, ★) `e20339-light-in-water`
-  - Driving a Rover on Mars (en, ★★) `em-waves-05-mars-rover`
-- **spectrum**: Order the parts of the spectrum by wavelength, frequency and photon energy.
-  - The Speed of Light in a Microwave Oven (en, ★★★) `em-waves-01-microwave-oven`
-  - Microwaves and Visible Light in Water (en, ★) `e20811-microwaves-and-visible-light-in-water`
-  - A Standing Microwave (en, ★★★) `em-waves-14-standing-microwave`
-  - Microwaves in Water (en, ★) `e20346-microwaves-in-water`
-  - Microwaves in Water (en, ★) `e20347-microwaves-in-water-1`
   - Radio Transmitter (en, ★) `e20341-radio-transmitter`
-- *for the app as a whole:* Echoes from the Moon and from an Aeroplane `em-waves-08-moon-and-radar-echo`; How Strong are the Fields? `em-waves-12-fields-of-sunlight-and-radio`; The FM Band `em-waves-02-fm-band`; Infrarotstrahlung `e21179-infrarotstrahlung`; A Mobile Phone Mast `em-waves-03-phone-mast`
+  - Electric Field (en, ★) `e20337-electric-field`
+  - Laser Intensity (en, ★★★) `e20340-laser-intensity`
+  - Electromagnetic Wave (en, ★) `e20389-electromagnetic-wave`
+  - Solar Constant (en, ★★) `e20392-solar-constant`
+- **speed**: Use the speed c in vacuum and c/n in a medium, where the frequency stays the same and the wavelength shrinks to λ₀/n.
+  - Microwaves in Water (en, ★) `e20346-microwaves-in-water`
+  - Microwaves in Water (en, ★) `e20347-microwaves-in-water-1`
+  - Microwaves and Visible Light in Water (en, ★) `e20811-microwaves-and-visible-light-in-water`
+  - Light in Water (en, ★) `e20339-light-in-water`
+  - Wavelength in Plexiglas (en, ★) `e20338-wavelength-in-plexiglas`
+  - Liquid (en, ★) `e20395-liquid`
+- **spectrum**: Order the parts of the spectrum by wavelength, frequency and photon energy.
+  - Arktur (de, ★★) `e21176-arktur`
+  - Radio Transmitter (en, ★) `e20341-radio-transmitter`
+  - Microwaves in Water (en, ★) `e20346-microwaves-in-water`
+  - Microwaves in Water (en, ★) `e20347-microwaves-in-water-1`
+  - Microwaves and Visible Light in Water (en, ★) `e20811-microwaves-and-visible-light-in-water`
+  - The Speed of Light in a Microwave Oven (en, ★★★) `em-waves-01-microwave-oven`
+- *for the app as a whole:* Pulsed Laser `e20393-pulsed-laser`
 
 ## photons
 
@@ -608,48 +642,48 @@ edit `pool.json`). ★ difficulty, 🖼 has an image (not in the export: a place
   - Maximum Kinetic Energy (en, ★★) `e20503-maximum-kinetic-energy`
 - **einstein**: Apply E = h·f and the energy balance h·f = φ + E_k,max, with E_k,max measured by the stopping voltage.
   - Work Function (en, ★★) `e20549-work-function`
-  - A Night-Vision Device (en, ★★★) `photons-04-night-vision`
+  - Photozelle (de, ★★) `e21446-photozelle`
   - Stopping Voltage (en, ★★) `e20550-stopping-voltage`
   - Gegenspannung (de, ★★) `e21445-gegenspannung`
-  - Photozelle (de, ★★) `e21446-photozelle`
-  - Threshold frequency and cut-off wavelength (en, ★) `e23444-threshold-frequency-and-cut-off-waveleng`
+  - Kupferplatte (de, ★★) `e21443-kupferplatte`
+  - Maximum Kinetic Energy (en, ★★) `e20503-maximum-kinetic-energy`
 - **threshold**: Determine the threshold frequency, the cut-off wavelength and the work function, for instance from a V_s(f) graph with slope h/e.
-  - Threshold frequency and cut-off wavelength (en, ★) `e23444-threshold-frequency-and-cut-off-waveleng`
   - Work Function (en, ★★) `e20549-work-function`
-  - A Night-Vision Device (en, ★★★) `photons-04-night-vision`
   - Photozelle (de, ★★) `e21446-photozelle`
+  - Threshold frequency and cut-off wavelength (en, ★) `e23444-threshold-frequency-and-cut-off-waveleng`
   - Tungsten Plate (en, ★) `e20548-tungsten-plate`
-  - A Silicon Solar Cell (en, ★★★) `photons-03-solar-cell`
+  - Siliziumplatte (de, ★) `e21444-siliziumplatte`
+  - A Night-Vision Device (en, ★★★) `photons-04-night-vision`
 - **rate**: Tell the photon energy from the number of photons per second when the brightness or the frequency of the light changes, also in the characteristic of a photocell.
-  - A Laser Pointer in the Eye (en, ★★) `photons-01-laser-pointer`
-  - Photons from a Remote Control (en, ★★) `photons-09-infrared-remote-control`
-  - Reading an X-Ray Spectrum (en, ★★★) `photons-11-reading-an-x-ray-spectrum`
   - Radio Station (en, ★★) `e20552-radio-station`
-  - The Solar Sail IKAROS (en, ★★★) `photons-05-solar-sail-ikaros`
-  - The Momentum of Light (en, ★★) `photons-10-momentum-of-light`
-- *for the app as a whole:* Sunburn, but not from a Heater `photons-02-sunburn`; X-Rays at the Dentist `photons-06-dental-x-rays`
+  - Radiosender (de, ★★) `e21449-radiosender-1`
+  - Solar Photons (en, ★★) `e20502-solar-photons`
+  - Microwave (en, ★) `e20553-microwave`
+  - Human Eye (en, ★★★) `e20555-human-eye`
+  - Mikrowellen (de, ★) `e21447-mikrowellen-1`
+- *for the app as a whole:* Bremsspektrum `e22043-bremsspektrum`; Planck's constant `e20554-plancks-constant`; Photon Emission `e20602-photon-emission`
 
 ## matter-waves
 
 - **debroglie**: Work out de Broglie wavelengths by ratios with λ = h/p and p = √(2·m·E_kin), not E/c, and explain why electron diffraction shows that electrons are waves.
   - de Broglie Wavelength (en, ★) `e20570-de-broglie-wavelength`
   - de Broglie-Wellenlänge (de, ★) `e21477-de-broglie-wellenlange`
-  - A Football through the Goal (en, ★) `matter-waves-01-football`
-  - Electrons Through 150 Volts (en, ★) `matter-waves-07-electrons-through-150-volts`
-  - Big and Small Particles (en, ★★) `matter-waves-08-big-and-small-particles`
-  - Electrons Diffracted by Graphite (en, ★★★★) `matter-waves-09-electrons-diffracted-by-graphite`
+  - Ultracold Sodium Atoms (en, ★★★) `e20572-ultracold-sodium-atoms`
+  - Elektronenbeugung (de, ★★) `e21481-elektronenbeugung-2`
+  - Ultrakalte Natriumatome (de, ★★) `e21483-ultrakalte-natriumatome`
+  - Elektronenbeugung (de, ★★) `e18950-elektronenbeugung-1`
 - **box**: Sketch the standing waves of a particle in a box, and explain why its energies are quantised, with E_n ∝ n² and ∝ 1/L².
   - Ball in a Box (en, ★★) `e20582-ball-in-a-box`
   - Ball in Box (de, ★★) `e21554-ball-in-box`
   - Electron in a box (en, ★) `e23595-electron-in-a-box`
-  - Nichtstationärer Zustand (de, ★★) `e21557-nichtstationarer-zustand`
   - Photon Emission (en, ★★) `e20602-photon-emission`
   - Photonenemission (de, ★★) `e21555-photonenemission`
+  - Nichtstationärer Zustand (de, ★★) `e21557-nichtstationarer-zustand`
 - **psi**: Read |ψ|² as a probability density, with its expectation value and its uncertainty, and tell the uncertainty from a measurement error.
-  - Ground State Statistics (en, ★★★) `e20643-ground-state-statistics`
-  - Expectation value and uncertainty (en, ★★) `e23596-expectation-value-and-uncertainty`
-  - Elektron im Grundzustand (de, ★★★★) `e21642-elektron-im-grundzustand`
-  - Position Operator (en, ★★★) `e20598-position-operator`
-  - Erwartungswert von Überlagerung (de, ★★) `e21656-erwartungswert-von-uberlagerung`
+  - Nichtstationärer Zustand (de, ★★) `e21557-nichtstationarer-zustand`
   - Superposition State (en, ★★) `e20597-superposition-state`
-- *for the app as a whole:* An Electron and a Grain of Dust `matter-waves-11-electron-and-grain-of-dust`; Uncertainty at a Single Slit `matter-waves-12-uncertainty-at-a-single-slit`; Electrons at a Double Slit `matter-waves-10-electrons-at-a-double-slit`; Non-Stationary State `e20604-non-stationary-state`; Momentum of Stationary States `e20629-momentum-of-stationary-states`; Überlagerungszustand `e21558-uberlagerungszustand`
+  - Non-Stationary State (en, ★★) `e20604-non-stationary-state`
+  - Momentum of Stationary States (en, ★★★) `e20629-momentum-of-stationary-states`
+  - Überlagerungszustand (de, ★★) `e21558-uberlagerungszustand`
+  - Ortsoperator (de, ★★★) `e21560-ortsoperator`
+- *for the app as a whole:* Normalised Eigenstates `e20575-normalised-eigenstates`; Stationary State `e20603-stationary-state`; Stationärer Zustand `e21556-stationarer-zustand`; Impuls von stationären Zuständen `e21559-impuls-von-stationaren-zustanden`; Normalisierung `e21562-normalisierung`; Erwartungswert von Überlagerung `e21656-erwartungswert-von-uberlagerung`

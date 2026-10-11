@@ -16,7 +16,11 @@ and takes the upload of a TeXercises export.
 
       python3 hub-admin/sheets/build_pool.py ../texercises-by-2026-10-10 --fails run-final.txt
 
-  It overwrites `pool.json`: after editing that by hand, change the keyword rules instead, or merge.
+  It combines two first passes: its own keyword rules, and `data/exercise-objectives.csv` (each exercise of
+  the export and the objectives it practises, read from its text; `data/candidate-objectives.csv` adds
+  exercises that fit an app without practising one of its objectives). An exercise both passes name for an
+  objective comes first. It overwrites `pool.json`: after editing that by hand, change the rules or the CSV
+  files instead, or merge.
 - `sheets.py` (used by `../hubadmin.py`) chooses the exercises and runs `build_sheet.py` (the collection as a
   LaTeX document) and LuaLaTeX with `texercises-lp.sty` (the TeXercises macros) and `lp-minion.sty` in its
   modern look (Erewhon, Fira Sans: free fonts). PDFs are cached in `hub-data/sheets/` until anything they are
