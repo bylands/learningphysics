@@ -17,3 +17,6 @@ models/
 
 # Screenshots for feedback, kept locally
 screenshots/
+
+# exercise sheets: the drafts as deploy.sh places them on the server, copied for local tests
+hub-admin/sheets/drafts/
