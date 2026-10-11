@@ -216,10 +216,10 @@
       P.charge([0, y], s1, l1); P.charge([d, y], s2, l2); P.dim([0, y], [d, y], rl, -24);
     };
     const s1 = Math.sign(p.s1 || 1), s2 = Math.sign(p.s2 || 1), d0 = 90;
-    row(0, d0, sv('q', '1'), sv('q', '2'), s1, s2, L('before', 'vorher'), sv('r'));
+    row(0, d0, sv('q', '1'), sv('q', '2'), s1, s2, p.before || L('before', 'vorher'), sv('r'));
     const lab = (a, i) => (a === 1 ? sv('q', i) : `${a === 0.5 ? '½' : a}${sv('q', i)}`);
     const n = p.n || 1;
-    row(-90, d0 * n, lab(p.a || 1, '1'), lab(p.b || 1, '2'), s1, s2, L('after', 'nachher'), n === 1 ? sv('r') : `${n === 0.5 ? '½' : n === 1 / 3 ? '⅓' : n === 0.25 ? '¼' : n}${sv('r')}`);
+    row(-90, d0 * n, lab(p.a || 1, '1'), lab(p.b || 1, '2'), s1, s2, p.after || L('after', 'nachher'), p.rl || (n === 1 ? sv('r') : `${n === 0.5 ? '½' : n === 1 / 3 ? '⅓' : n === 0.25 ? '¼' : n}${sv('r')}`));
     return P.svg();
   }
   const factor = {
@@ -297,7 +297,12 @@
         `$$\\frac{1}{n^2} = ${ft(p.m)} \\;\\Rightarrow\\; n = \\frac{1}{\\sqrt{${ft(p.m)}}} = ${res(ft(v.n))}, \\qquad r' = ${ft(v.n)}\\cdot ${tq(p.r0, 'cm')} = ${res(tq(v.r2, 'cm'))}$$` +
         p$(p.m > 1 ? L('A larger force: the charges must come closer.', 'Eine grössere Kraft: Die Ladungen müssen näher zusammen.') : L('A smaller force: the charges must move apart.', 'Eine kleinere Kraft: Die Ladungen müssen sich voneinander entfernen.'))),
     ],
-    figure: (p, v, view) => factorFigure({ ...p, n: view.show && view.show.size ? v.n : 1, a: 1, b: 1 }, v, view),
+    // after: the distance unknown (r' = ?) until the solution shows it; the forces in the titles
+    figure: (p, v, view) => {
+      const shown = view.show && view.show.size, N = (x) => String(Number(x.toPrecision(3)));
+      return factorFigure({ ...p, n: shown ? v.n : 1, a: 1, b: 1, rl: shown ? `${sv('r')}′ = ${N(v.r2 * 100)} cm` : `${sv('r')}′ = ?`,
+        before: `${L('before', 'vorher')}: F = ${N(p.F)} N`, after: `${L('after', 'nachher')}: F′ = ${N(p.F * p.m)} N` }, v, view);
+    },
   };
 
   // ---------------------------------------------------------------- 3 three charges in a line
