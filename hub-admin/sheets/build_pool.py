@@ -22,6 +22,7 @@ import json, os, re, sys, glob
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(os.path.dirname(HERE))
 OWN = 'by'
+DATA = os.path.join(HERE, 'data')  # the mapping (a copy of texercises-sheets/data/; --data <folder> for another)
 PER_OBJECTIVE = 6      # exercises kept per objective
 PER_APP = 14           # exercises kept for an app as a whole (sets that name no objectives)
 
@@ -218,13 +219,13 @@ def reading_pass():
     """(export id -> {(app, objective)}, export id -> {app}) from data/, if it is there."""
     import csv
     objs, apps = {}, {}
-    f = os.path.join(HERE, 'data', 'exercise-objectives.csv')
+    f = os.path.join(DATA, 'exercise-objectives.csv')
     if os.path.exists(f):
         for r in csv.DictReader(open(f, encoding='utf-8')):
             pairs = {tuple(o.split(':', 1)) for o in r.get('objectives', '').split() if ':' in o}
             if pairs:
                 objs[int(r['exercise_id'])] = pairs
-    f = os.path.join(HERE, 'data', 'candidate-objectives.csv')
+    f = os.path.join(DATA, 'candidate-objectives.csv')
     if os.path.exists(f):
         for r in csv.DictReader(open(f, encoding='utf-8')):
             if r.get('placement', '').startswith('extend:'):
@@ -240,6 +241,11 @@ def main():
         i = args.index('--fails')
         fails = {l.split()[0].rstrip(':') for l in open(args[i + 1]) if l.startswith('  ')}
         del args[i:i + 2]
+    if '--data' in args:
+        global DATA
+        i = args.index('--data')
+        DATA = args[i + 1]
+        del args[i:i + 2]
     export = args[0]
     objectives = json.load(open(os.path.join(ROOT, 'hub', 'objectives.json'), encoding='utf-8'))
     owner = draft_apps()
@@ -253,39 +259,43 @@ def main():
         if key in fails:
             continue
         images = '#image_path:' in text
-        eid = meta.get('id') if source == 'export' else None
-        said = {o for a, o in read_objs.get(eid, set()) if a}  # (app, objective) pairs, below per app
-        for app, (gate, objs) in RULES.items():
-            told = {o for a, o in read_objs.get(eid, set()) if a == app}
-            fits = app in read_apps.get(eid, set())
-            mine = owner.get(key) == app or bool(told) or fits
-            if not mine and (not re.search(gate, hay, re.I | re.S)
-                             or not SUBS.get(app, set()) & set(meta.get('subbranches', []))):
+        if source == 'export':
+            # the mapping of data/ decides: the objectives an exercise practises, and the apps it fits
+            pairs = read_objs.get(meta.get('id'), set())
+            told = {}
+            for a, o in pairs:
+                told.setdefault(a, set()).add(o)
+            for a in read_apps.get(meta.get('id'), set()):
+                told.setdefault(a, set())
+        else:
+            # a draft (not in the mapping): its own app, its objectives by the keyword rules there
+            app = owner.get(key)
+            if app not in RULES:
                 continue
-            hits = {}
-            for ob, pat in objs.items():
-                n = len(re.findall(pat, hay, re.I)) + 3 * len(re.findall(pat, title, re.I))
-                n = min(n, 6) + (20 if ob in told else 0)  # the reading pass outweighs keywords
-                if n:
-                    hits[ob] = n
-            if not hits and not mine:
+            objs = RULES[app][1]
+            told = {app: {ob for ob, pat in objs.items()
+                          if len(re.findall(pat, hay, re.I)) + 3 * len(re.findall(pat, title, re.I)) >= 2}}
+        for app, obs in told.items():
+            if app not in objectives:
                 continue
-            score = sum(min(n, 6) for n in hits.values()) + 10 * len(told) + (6 if mine else 0) - (4 if images else 0)
             pool.setdefault(app, []).append({
                 'key': key, 'source': source, 'title': meta.get('title', ''),
                 'lang': 'de' if meta.get('language') == 'GER' else 'en',
                 'difficulty': meta.get('default_difficulty') or 1, 'images': images,
-                'url': meta.get('info', {}).get('url', ''), 'hits': hits, 'score': score})
+                'url': meta.get('info', {}).get('url', ''), 'hits': {ob: 1 for ob in obs},
+                # order: with objectives before those that only fit the app, without image first,
+                # then from easy to hard
+                'score': 10 * bool(obs) - 4 * images - (meta.get('default_difficulty') or 1)})
     out = {'_about': 'Built by build_pool.py: for every app, its exercises and the objectives each practises. '
                      'Review and edit by hand: move a key between objectives, or delete it.', 'apps': {}}
     md = ['# Exercise pool for the exercise sheets', '',
           'For each app and learning objective, the exercises a sheet may take (built by `build_pool.py`;',
           'edit `pool.json`). ★ difficulty, 🖼 has an image (not in the export: a placeholder on the sheet).', '']
     for app, entry in objectives.items():
-        cands = sorted(pool.get(app, []), key=lambda e: -e['score'])
+        cands = sorted(pool.get(app, []), key=lambda e: (-e['score'], e['title']))
         keep, objs = {}, {}
         for ob in [o['id'] for o in entry.get('objectives', [])]:
-            best = [e for e in sorted(cands, key=lambda e: (-e['hits'].get(ob, 0) * 2 - e['score'])) if e['hits'].get(ob)]
+            best = [e for e in sorted(cands, key=lambda e: (-e['score'], e['title'])) if e['hits'].get(ob)]
             objs[ob] = [e['key'] for e in best[:PER_OBJECTIVE]]
             for e in best[:PER_OBJECTIVE]:
                 keep[e['key']] = e

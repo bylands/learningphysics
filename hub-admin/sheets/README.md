@@ -11,16 +11,16 @@ and takes the upload of a TeXercises export.
   set's sheet takes, app by app, for each of the set's objectives (all of the app's if it names none) the
   first two exercises not taken yet, those in the set's language first; at most 24. Edit `pool.json` to
   change what a sheet gets: move a key up, to another objective, or delete it. `pool.md` shows it readably.
-- `build_pool.py` made the first version by keywords, from a TeXercises export (only the exercises created by
-  `by`) and from the drafts of this repository (`texercises-drafts*/`):
+- `build_pool.py` writes `pool.json` from the exercise-objective mapping of the sheets branch
+  (`texercises-sheets/data/`, copied to `data/` here): `exercise-objectives.csv` says which objectives each
+  exercise of the TeXercises export practises, `candidate-objectives.csv` (placement `extend:<app>`) which
+  exercises fit an app as a whole. Only the exercises created by `by` count. The drafts of this repository
+  (`texercises-drafts*/`), which the mapping does not cover, go to their own app, with objectives found by
+  keyword rules. Per objective, exercises without image come first, then from easy to hard.
 
-      python3 hub-admin/sheets/build_pool.py ../texercises-by-2026-10-10 --fails run-final.txt
+      python3 hub-admin/sheets/build_pool.py ../texercises-by-2026-10-10 --fails run-final.txt [--data <folder>]
 
-  It combines two first passes: its own keyword rules, and `data/exercise-objectives.csv` (each exercise of
-  the export and the objectives it practises, read from its text; `data/candidate-objectives.csv` adds
-  exercises that fit an app without practising one of its objectives). An exercise both passes name for an
-  objective comes first. It overwrites `pool.json`: after editing that by hand, change the rules or the CSV
-  files instead, or merge.
+  It overwrites `pool.json`: to change the sheets for good, change the mapping and build again.
 - `sheets.py` (used by `../hubadmin.py`) chooses the exercises and runs `build_sheet.py` (the collection as a
   LaTeX document) and LuaLaTeX with `texercises-lp.sty` (the TeXercises macros) and `lp-minion.sty` in its
   modern look (Erewhon, Fira Sans: free fonts). PDFs are cached in `hub-data/sheets/` until anything they are
