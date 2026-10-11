@@ -17,14 +17,14 @@ cards in its order, shows their tags, and lets visitors filter by tag. This serv
     /admin/api/sheets    GET  the state of the exercise sheets (LaTeX, exercises) and the sets
     /admin/api/texercises POST a TeXercises export (zip): its exercises by the teacher are kept for
                          the sheets (hub-data/texercises/), all others are left out
-    /admin/sheet/<set>.pdf            the set's exercise sheet (public, like the set's page)
-    /admin/sheet/<set>-solutions.pdf  the same with the solutions (logged in only)
-    /admin/sheet/<set>.json           {"exercises": n, "available": bool}: whether there is a sheet
+    /admin/sheet/<set>.pdf            the set's exercise sheet       (logged in only: the sheets are
+    /admin/sheet/<set>-solutions.pdf  the same with the solutions     made and found in the admin panel,
+    /admin/sheet/<set>.json           {"exercises": n, "available"}   not on the set's public page)
     /admin/static/...    the panel's scripts and styles
 
 Exercise sheets (sheets/sheets.py): a set's apps and learning objectives choose exercises from
 sheets/pool.json; build_sheet.py and LuaLaTeX make the PDF, cached in hub-data/sheets/. They need
-LaTeX on the server (see sheets/README.md); without it the hub page shows no sheet links.
+LaTeX on the server (see sheets/README.md); without it the panel says so.
 
 A set is opened at learningphysics.ch/<name> (nginx serves the hub page for it, which then shows
 only the set's apps; see hub/index.html and shared/sets.js, which applies the set in the apps):
@@ -598,11 +598,14 @@ def make_handler(admin: Admin):
                 name, solutions = name[: -len("-solutions")], True
             if not SET_NAME.fullmatch(name):
                 self.send(404, "Not found", "text/plain; charset=utf-8")
+            elif not self.logged_in():  # the sheets are the teacher's: made in the admin panel only
+                if kind == "json":
+                    self.json(403, {"error": "login"})
+                else:
+                    self.send(403, page("Exercise sheet", '<p class="lead">Exercise sheets are made in the admin panel: '
+                                        '<a href="/admin/">log in</a>, then open the link again.</p>'))
             elif kind == "json":
                 self.json(200, admin.sheet_info(name))
-            elif solutions and not self.logged_in():
-                self.send(403, page("Solutions", '<p class="lead">The sheet with the solutions is for teachers: '
-                                    '<a href="/admin/">log in</a>, then open the link again.</p>'))
             else:
                 pdf, why = admin.sheet(name, solutions)
                 if pdf is None:
@@ -778,7 +781,7 @@ def panel_page() -> str:
       <div id="set-list" class="setlist"></div>
       <div id="set-edit"></div>
       <h2 class="section">Exercise sheets</h2>
-      <p class="note">Every set gets an exercise sheet (PDF) from your TeXercises exercises: per app and learning objective of the set, the exercises listed for it (sheets/pool.json). The set's page links to the sheet; the sheet with the solutions is only for you (logged in). Upload a TeXercises export (Settings → Export, the .zip) whenever your exercises change: only your own exercises are kept.</p>
+      <p class="note">Every set gets an exercise sheet (PDF) from your TeXercises exercises: per app and learning objective of the set, the exercises listed for it (sheets/pool.json). The sheets are made here only, for you (logged in); the set's public page does not show them. Upload a TeXercises export (Settings → Export, the .zip) whenever your exercises change: only your own exercises are kept.</p>
       <div id="sheets" class="sheets"><p class="note">Loading…</p></div>
     </section>
     <section id="view-quizzes">

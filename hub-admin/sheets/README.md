@@ -1,9 +1,8 @@
 # Exercise sheets for the sets
 
-Every set of the hub (learningphysics.ch/<name>) gets an exercise sheet as a PDF, made from the teacher's
-TeXercises exercises: on the set's page, "Exercise sheet (PDF)" (public, like the page) and "with solutions,
-for teachers" (only when logged in to the admin panel). The admin panel (Sets) lists the sheets of all sets
-and takes the upload of a TeXercises export.
+Every set of the hub gets an exercise sheet as a PDF, made from the teacher's TeXercises exercises, with and
+without the solutions. Only in the admin panel (Sets → Exercise sheets, logged in): it lists both sheets of
+every set and takes the upload of a TeXercises export. The set's public page does not show them.
 
 ## How a sheet is made
 
@@ -48,4 +47,4 @@ and takes the upload of a TeXercises export.
 4. In the admin panel (Sets → Exercise sheets), upload a TeXercises export (TeXercises: Settings → Export,
    the .zip). Upload it again whenever exercises change.
 
-Without LaTeX the hub page shows no sheet links and the admin panel says so; everything else works as before.
+Without LaTeX the admin panel says so; everything else works as before.

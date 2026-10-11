@@ -6,7 +6,7 @@ may have (and that no app or set clashes with a service nginx passes on), the at
 service end to end: login, rate limit, the API with and without a session, and that saves reach
 apps.json and sets.json. The exercise sheets: which exercises a set gets, the upload of a TeXercises
 export (only the teacher's exercises kept, nothing written outside its folder), and the sheet routes
-(public sheet, solutions only when logged in; a PDF only where LaTeX is installed).
+(both sheets only when logged in; a PDF only where LaTeX is installed).
 """
 import io
 import zipfile
@@ -408,18 +408,20 @@ class Service(unittest.TestCase):
         cookie = headers["Set-Cookie"].split(";")[0]
         st, _, body = self.req("/api/texercises", export_zip({key: "by", "x-other": "pw"}), "application/zip", cookie)
         self.assertEqual((st, json.loads(body)), (200, {"exercises": 1, "skipped": 1}))
-        st, _, body = self.req("/sheet/3a.json")
+        self.assertEqual(self.req("/sheet/3a.json")[0], 403)  # the sheets are the teacher's only
+        self.assertEqual(self.req("/sheet/3a.pdf")[0], 403)
+        self.assertEqual(self.req("/sheet/3a-solutions.pdf")[0], 403)
+        st, _, body = self.req("/sheet/3a.json", cookie=cookie)
         info = json.loads(body)
         self.assertGreaterEqual(info["exercises"], 1)
         self.assertEqual(info["available"], bool(S.lualatex()))
         state = json.loads(self.req("/api/sheets", cookie=cookie)[2])
         self.assertEqual(state["sets"][0]["name"], "3a")
-        self.assertEqual(self.req("/sheet/nope.json")[2], b'{"exercises": 0, "available": false}')
-        self.assertEqual(self.req("/sheet/3a-solutions.pdf")[0], 403)  # the solutions: teachers only
-        self.assertEqual(self.req("/sheet/nope.pdf")[0], 404)
-        self.assertEqual(self.req("/sheet/../x.pdf")[0], 404)
+        self.assertEqual(self.req("/sheet/nope.json", cookie=cookie)[2], b'{"exercises": 0, "available": false}')
+        self.assertEqual(self.req("/sheet/nope.pdf", cookie=cookie)[0], 404)
+        self.assertEqual(self.req("/sheet/../x.pdf", cookie=cookie)[0], 404)
         if not S.lualatex():  # no LaTeX here: a clear answer instead of a sheet
-            self.assertEqual(self.req("/sheet/3a.pdf")[0], 503)
+            self.assertEqual(self.req("/sheet/3a.pdf", cookie=cookie)[0], 503)
 
     def test_rate_limit(self):
         for _ in range(H.LOGIN_ATTEMPTS):
