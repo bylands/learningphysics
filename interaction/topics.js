@@ -19,6 +19,8 @@
 //                             parameters ex.p. Exercises without them never run out.
 //     variant(),              (optional) a mode that changes how many exercises there are (e.g.
 //                             with symbols or with numbers)
+//     situationOf(ex),        (optional) the situation an exercise shows (e.g. its title): the next
+//                             exercise shows another one than the last, if the stage has another
 //   })
 // The steps the student sees are the topic's stages, but a stage with fewer than three different
 // exercises (in the current variant) is merged with the next one; after the last step comes one
@@ -186,10 +188,12 @@
       next(last) {
         const t = cur.topic, s = cur.stage, was = runOut, here = seenHere();
         let ex = null, fresh = false;
+        // not the situation of the last one (if the first tries find another)
+        const was0 = last && o.situationOf ? o.situationOf(last) : null;
         for (let k = 0; k < 25 && !fresh; k++) {
           ex = Practice.next(o.app, (seed) => exercise(t, s, seed), (e) => o.typeOf(e), last ? o.typeOf(last) : null);
           const key = keyOf(ex);
-          fresh = key == null || !here.has(key);
+          fresh = (key == null || !here.has(key)) && (was0 == null || k >= 15 || o.situationOf(ex) !== was0);
         }
         if (!fresh) here.clear(); // all seen: they come round again
         const key = keyOf(ex);

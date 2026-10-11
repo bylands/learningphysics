@@ -24,7 +24,7 @@
         en: 'Horizontally no force acts, vertically gravity does: the ball keeps its forward speed while it falls faster and faster — a parabola.',
         de: 'Horizontal wirkt keine Kraft, vertikal die Schwerkraft: Die Kugel behält ihre Geschwindigkeit nach vorn und fällt dabei immer schneller — eine Parabel.',
       },
-      gen: 'rolloff', params: { variant: 'table', v: 1.5, h: 0.8 },
+      gen: 'rolloff', params: { variant: 'table', ask: 'vx' },
       practice: [{ types: ['gravity/rolloff'] }, { types: ['inertia/cart-launcher'] }],
     },    {
       name: { en: 'Constant speed', de: 'Konstante Geschwindigkeit' },
@@ -48,7 +48,7 @@
         en: 'Forces add as arrows: put them tip to tail, or draw the parallelogram. The net force — and so the acceleration — points along the diagonal: not along the larger force, and not halfway between the two.',
         de: 'Kräfte addieren sich als Pfeile: Hänge sie aneinander oder zeichne das Parallelogramm. Die resultierende Kraft — und damit die Beschleunigung — zeigt entlang der Diagonale: nicht in Richtung der grösseren Kraft und nicht genau zwischen die beiden.',
       },
-      gen: 'two-forces', params: { pair: [3, 6], a1: 0, gamma: 90, sense: -1 },
+      gen: 'two-forces', params: { pair: [3, 6], a1: 0, gamma: 90, sense: -1, motion: 'rest' },
       practice: [{ types: ['force/two-forces'] }, { types: ['force/thruster'] }],
     },    {
       name: { en: 'Thrown up', de: 'Hochgeworfen' },

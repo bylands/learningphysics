@@ -7,90 +7,131 @@
 
   const FC = root.FC || require('./core.js');
   const D = root.Draw || require('./draw.js');
-  const { T, FL, o, two, register } = FC;
+  const { T, FL, cap, o, two, register } = FC;
   const RIGHT = () => T('Right.', 'Richtig.');
 
   // ================================================================ cart with a ball launcher
+  // A ball shot straight up from a cart, a ball thrown straight up by a skateboarder, a wrench
+  // dropped from the top of a ship's mast; the carrier keeps its speed, speeds up or slows down.
+  const carriers = () => ({ // a function: the texts in the current language
+    cart: { name: 'cart', C: FC.noun('m', 'Wagen'), gen: 'des Wagens', body: 'ball', B: FC.noun('m', 'Ball'), bgen: 'des Balls', up: true, her: 'its',
+      release: T('launch', 'Abschuss'), at: T('at launch', 'beim Abschuss'), left: T('the cart', 'den Wagen'),
+      title: T('Ball from a moving cart', 'Ball vom fahrenden Wagen'),
+      in: T('Back into the launcher.', 'Zurück in den Werfer.'), behind: T('Behind the launcher.', 'Hinter dem Werfer.'), front: T('In front of the launcher.', 'Vor dem Werfer.'),
+      landsIn: T('the ball drops back into the launcher', 'Der Ball fällt zurück in den Werfer'),
+      lands: { behind: T('behind the launcher', 'hinter dem Werfer'), front: T('in front of the launcher', 'vor dem Werfer') },
+      situation: (ph) => T(`<p>A cart rolls along a level track. A launcher on the cart shoots a ball straight up (as seen from the cart). ${{ constant: 'The cart rolls on at constant speed (friction negligible).', speeding: 'While the ball is in the air, a constant force speeds the cart up.', slowing: 'Right after the launch, the cart brakes gently.' }[ph]} Air resistance is negligible.</p>`,
+        `<p>Ein Wagen rollt auf einer ebenen Schiene. Ein Werfer auf dem Wagen schiesst einen Ball senkrecht nach oben (vom Wagen aus gesehen). ${{ constant: 'Der Wagen rollt mit konstanter Geschwindigkeit weiter (Reibung vernachlässigbar).', speeding: 'Während der Ball in der Luft ist, beschleunigt eine konstante Kraft den Wagen weiter.', slowing: 'Direkt nach dem Abschuss bremst der Wagen sanft.' }[ph]} Der Luftwiderstand ist vernachlässigbar.</p>`) },
+    skater: { name: 'skater', C: FC.noun('f', 'Skaterin'), gen: 'der Skaterin', body: 'ball', B: FC.noun('m', 'Ball'), bgen: 'des Balls', up: true, her: 'her',
+      release: T('the throw', 'Wurf'), at: T('at the throw', 'beim Wurf'), left: T('her hand', 'ihre Hand'),
+      title: T('Catch on the skateboard', 'Fangen auf dem Skateboard'),
+      in: T('Back into her hand.', 'Zurück in ihre Hand.'), behind: T('Behind her.', 'Hinter ihr.'), front: T('In front of her.', 'Vor ihr.'),
+      landsIn: T('the ball drops back into her hand', 'Der Ball fällt zurück in ihre Hand'),
+      lands: { behind: T('behind her', 'hinter ihr'), front: T('in front of her', 'vor ihr') },
+      situation: (ph) => T(`<p>A skateboarder rolls along level ground. She throws a ball straight up (as she sees it) and wants to catch it again. ${{ constant: 'She rolls on at constant speed (friction negligible).', speeding: 'While the ball is in the air, a friend pulls her forward on a rope, so she gets faster and faster.', slowing: 'Right after the throw, she brakes gently with one foot.' }[ph]} Air resistance is negligible.</p>`,
+        `<p>Eine Skaterin rollt auf ebenem Boden. Sie wirft einen Ball senkrecht nach oben (aus ihrer Sicht) und will ihn wieder fangen. ${{ constant: 'Sie rollt mit konstanter Geschwindigkeit weiter (Reibung vernachlässigbar).', speeding: 'Während der Ball in der Luft ist, zieht eine Freundin sie an einem Seil vorwärts, sodass sie immer schneller wird.', slowing: 'Direkt nach dem Wurf bremst sie sanft mit einem Fuss.' }[ph]} Der Luftwiderstand ist vernachlässigbar.</p>`) },
+    ship: { name: 'ship', C: FC.noun('n', 'Schiff'), gen: 'des Schiffs', body: 'wrench', B: FC.noun('m', 'Schraubenschlüssel'), bgen: 'des Schraubenschlüssels', up: false, her: 'its',
+      release: T('the moment it is let go', 'Loslassen'), at: T('when it was let go', 'beim Loslassen'), left: T('the sailor’s hand', 'die Hand des Matrosen'),
+      title: T('From the top of the mast', 'Vom Mast'),
+      in: T('At the foot of the mast.', 'Am Fuss des Masts.'), behind: T('Behind the mast (toward the stern).', 'Hinter dem Mast (Richtung Heck).'), front: T('In front of the mast (toward the bow).', 'Vor dem Mast (Richtung Bug).'),
+      landsIn: T('the wrench lands at the foot of the mast', 'Der Schraubenschlüssel landet am Fuss des Masts'),
+      lands: { behind: T('behind the mast', 'hinter dem Mast'), front: T('in front of the mast', 'vor dem Mast') },
+      situation: (ph) => T(`<p>A ship moves on calm water. A sailor at the top of the mast lets a wrench drop. ${{ constant: 'The ship keeps a constant speed.', speeding: 'While the wrench falls, the ship gets faster.', slowing: 'While the wrench falls, the ship gets slower.' }[ph]} Air resistance is negligible.</p>`,
+        `<p>Ein Schiff fährt auf ruhigem Wasser. Ein Matrose oben am Mast lässt einen Schraubenschlüssel fallen. ${{ constant: 'Das Schiff fährt mit konstanter Geschwindigkeit weiter.', speeding: 'Während der Schraubenschlüssel fällt, wird das Schiff schneller.', slowing: 'Während der Schraubenschlüssel fällt, wird das Schiff langsamer.' }[ph]} Der Luftwiderstand ist vernachlässigbar.</p>`) },
+  });
+
   function cartLauncher(r, p) {
     const phase = p.phase || r.pick(['constant', 'speeding', 'slowing']);
-    const c = { constant: 0, speeding: 0.3, slowing: -0.3 }[phase]; // extra cart travel, as a fraction
+    const K = carriers()[p.carrier || r.pick(['cart', 'skater', 'ship'])], { C, B, name, body } = K;
+    const c = { constant: 0, speeding: 0.3, slowing: -0.3 }[phase]; // extra carrier travel, as a fraction
     const right = { constant: 'in', speeding: 'behind', slowing: 'front' }[phase];
+    const poss = C.g === 'f' ? 'ihre' : 'seine', rel = { m: 'der', f: 'die', n: 'das' }[C.g];
 
     // ---------------------------------------------------------- figure
-    const yT = 170, x0 = 70, W = 230;
-    const cart = (x, cls) => {
-      const g = D.rect(x - 34, yT - 30, 68, 22, 'obj', 3) + D.ball(x - 20, yT - 6, 6, 'wheel') + D.ball(x + 20, yT - 6, 6, 'wheel') + D.rect(x - 5, yT - 50, 10, 20, 'solid', 1);
-      return cls ? D.ghost(g) : g;
-    };
+    const yT = 170, x0 = name === 'ship' ? 80 : 70, W = name === 'ship' ? 220 : 230;
+    // the carrier at x, and where the body starts relative to it
+    const draw = {
+      cart: (x) => D.rect(x - 34, yT - 30, 68, 22, 'obj', 3) + D.ball(x - 20, yT - 6, 6, 'wheel') + D.ball(x + 20, yT - 6, 6, 'wheel') + D.rect(x - 5, yT - 50, 10, 20, 'solid', 1),
+      skater: (x) => D.person(x, yT - 12, 92, 1, 'hold') + D.rect(x - 24, yT - 13, 48, 4, 'solid', 2) + D.ball(x - 15, yT - 5, 4, 'wheel') + D.ball(x + 15, yT - 5, 4, 'wheel'),
+      ship: (x) => `<polygon class="obj" points="${[[x - 50, yT - 26], [x + 50, yT - 26], [x + 38, yT + 2], [x - 40, yT + 2]].map((q) => q.join(',')).join(' ')}"/>` + D.rect(x - 3, yT - 156, 6, 130, 'solid', 0),
+    }[name];
+    const dx = { cart: 0, skater: 28, ship: 10 }[name], y0 = { cart: yT - 58, skater: yT - 76, ship: yT - 146 }[name], yEnd = { cart: yT - 58, skater: yT - 76, ship: yT - 32 }[name];
+    const bodyAt = (x, y) => (name === 'ship' ? D.rect(x - 7, y - 2.5, 14, 5, 'obj', 1) : D.ball(x, y, 7));
+    const yAt = (u) => (K.up ? y0 - 150 * u * (1 - u) : y0 + (yEnd - y0) * u * u);
+    const carrier = (x, ghost) => (ghost ? D.ghost(draw(x)) : draw(x));
     function figure(o = {}) {
       let g = D.line(0, yT, 420, yT, 'gline');
       if (o.strobe) {
         const us = [0, 0.25, 0.5, 0.75, 1];
-        g += D.poly(Array.from({ length: 21 }, (z, j) => { const u = j / 20; return [x0 + W * u, yT - 56 - 150 * u * (1 - u) * 1.0]; }), 'trace');
+        g += D.poly(Array.from({ length: 21 }, (z, j) => { const u = j / 20; return [x0 + dx + W * u, yAt(u)]; }), 'trace');
         us.forEach((u, k) => {
-          const xb = x0 + W * u, yb = yT - 56 - 150 * u * (1 - u), xc = x0 + W * (u + c * u * u);
-          g += k === us.length - 1 ? cart(xc) : cart(xc, true);
-          g += k === us.length - 1 ? D.ball(xb, yb, 7) : D.ghost(D.ball(xb, yb, 7));
+          const xb = x0 + dx + W * u, yb = yAt(u), xc = x0 + W * (u + c * u * u);
+          g += carrier(xc, k < us.length - 1);
+          g += k === us.length - 1 ? bodyAt(xb, yb) : D.ghost(bodyAt(xb, yb));
         });
-        const land = x0 + W, cl = x0 + W * (1 + c);
+        const land = x0 + dx + W, cl = x0 + dx + W * (1 + c);
         if (Math.abs(land - cl) > 1) g += D.line(land, yT + 8, cl, yT + 8, 'guide') + D.text((land + cl) / 2, yT + 22, T('gap', 'Abstand'), 'txt');
-        return D.svg(420, 200, g, T('The ball and the cart at equal time intervals', 'Ball und Wagen in gleichen Zeitabständen'));
+        return D.svg(420, 200, g, T(`The ${body} and the ${name} at equal time intervals`, `${cap(B.word)} und ${C.word} in gleichen Zeitabständen`));
       }
-      g += cart(x0) + D.ball(x0, yT - 58, 7) + D.arrow(x0 + 40, yT - 18, x0 + 90, yT - 18, 'v', 'v');
-      g += D.arrow(x0 + 14, yT - 58, x0 + 14, yT - 100, 'v', T('launch', 'Abschuss'), { cls: 'alt', at: [x0 + 20, yT - 92], anchor: 'start' });
-      if (phase === 'speeding') g += D.arrow(x0 - 80, yT - 20, x0 - 36, yT - 20, 'f', 'F');
+      g += carrier(x0) + bodyAt(x0 + dx, y0) + D.arrow(x0 + 52, yT - 18, x0 + 102, yT - 18, 'v', 'v');
+      if (K.up) g += D.arrow(x0 + dx + 14, y0, x0 + dx + 14, y0 - 42, 'v', T(name === 'cart' ? 'launch' : 'throw', name === 'cart' ? 'Abschuss' : 'Wurf'), { cls: 'alt', at: [x0 + dx + 20, y0 - 34], anchor: 'start' });
+      if (phase === 'speeding') g += name === 'ship' ? D.arrow(x0 - 40, yT - 12, x0 + 4, yT - 12, 'f', 'F') : D.arrow(x0 - 80, yT - 20, x0 - 36, yT - 20, 'f', 'F');
       if (phase === 'slowing') g += D.words(x0, yT + 22, T('braking', 'bremst'));
-      return D.svg(420, 200, g, T('A cart with a ball launcher', 'Ein Wagen mit Ballwerfer'));
+      return D.svg(420, 200, g, T(`A ${name} and a ${body}`, `${cap(C.ein)} und ${B.ein}`));
     }
 
     // ---------------------------------------------------------- the two tiers
-    const cartDoes = { constant: T('keeps its speed', 'behält seine Geschwindigkeit'), speeding: T('gets faster', 'wird schneller'), slowing: T('gets slower', 'wird langsamer') }[phase];
-    const deHere = { constant: 'behält der Wagen seine Geschwindigkeit', speeding: 'wird der Wagen schneller', slowing: 'wird der Wagen langsamer' }[phase]; // after “Hier”
-    const keeps = T('After launch the ball keeps the horizontal velocity the cart had at that moment: no horizontal force acts on it.', 'Nach dem Abschuss behält der Ball die horizontale Geschwindigkeit, die der Wagen in diesem Moment hatte: Horizontal wirkt keine Kraft auf ihn.');
-    const whereWhy = {
-      in: T(`${keeps} The cart ${cartDoes}${phase === 'constant' ? ' too' : ''}, so ${phase === 'constant' ? 'both stay level horizontally: the ball drops back into the launcher' : `the cart ${phase === 'speeding' ? 'pulls ahead of' : 'falls behind'} the ball`}.`,
-        `${keeps} Der Wagen ${cartDoes}, also ${phase === 'constant' ? 'bleiben beide horizontal gleichauf: Der Ball fällt zurück in den Werfer' : `${phase === 'speeding' ? 'fährt der Wagen dem Ball davon' : 'bleibt der Wagen hinter dem Ball zurück'}`}.`),
-    };
+    const cartDoes = { constant: T(`keeps ${K.her} speed`, `behält ${poss} Geschwindigkeit`), speeding: T('gets faster', 'wird schneller'), slowing: T('gets slower', 'wird langsamer') }[phase];
+    const deHere = { constant: `behält ${C.nom} ${poss} Geschwindigkeit`, speeding: `wird ${C.nom} schneller`, slowing: `wird ${C.nom} langsamer` }[phase]; // after “Hier”
+    const after = T(`After ${K.release} the ${body} keeps the horizontal velocity the ${name} had at that moment: no horizontal force acts on it.`,
+      `Nach dem ${K.release} behält ${B.nom} die horizontale Geschwindigkeit, die ${C.nom} in diesem Moment hatte: Horizontal wirkt keine Kraft auf ${B.ihn}.`);
+    const whereWhy = T(`${after} The ${name} ${cartDoes}${phase === 'constant' ? ' too' : ''}, so ${phase === 'constant' ? `both stay level horizontally: ${K.landsIn}` : `the ${name} ${phase === 'speeding' ? 'pulls ahead of' : 'falls behind'} the ${body}`}.`,
+      `${after} ${cap(C.nom)} ${cartDoes}, also ${phase === 'constant' ? `bleiben beide horizontal gleichauf: ${K.landsIn}` : phase === 'speeding' ? `fährt ${C.nom} ${B.dat} davon` : `bleibt ${C.nom} hinter ${B.dat} zurück`}.`);
     const preds = [
-      o(T('Back into the launcher.', 'Zurück in den Werfer.'), right === 'in' ? 'ok' : 'other', whereWhy.in),
-      o(T('Behind the launcher.', 'Hinter dem Werfer.'), right === 'behind' ? 'ok' : phase === 'constant' ? 'active-force' : 'other',
-        right === 'behind' ? whereWhy.in : T(`Nothing has to carry the ball forward: it keeps its horizontal velocity. ${whereWhy.in}`, `Nichts muss den Ball vorwärts tragen: Er behält seine horizontale Geschwindigkeit. ${whereWhy.in}`)),
-      o(T('In front of the launcher.', 'Vor dem Werfer.'), right === 'front' ? 'ok' : 'other', whereWhy.in),
+      o(K.in, right === 'in' ? 'ok' : 'other', whereWhy),
+      o(K.behind, right === 'behind' ? 'ok' : phase === 'constant' ? 'active-force' : 'other',
+        right === 'behind' ? whereWhy : T(`Nothing has to carry the ${body} forward: it keeps its horizontal velocity. ${whereWhy}`, `Nichts muss ${B.acc} vorwärts tragen: ${cap(B.er)} behält seine horizontale Geschwindigkeit. ${whereWhy}`)),
+      o(K.front, right === 'front' ? 'ok' : 'other', whereWhy),
     ];
     const R = {
-      constant: T('The ball keeps the cart’s horizontal velocity, and the cart keeps it too.', 'Der Ball behält die horizontale Geschwindigkeit des Wagens, und der Wagen behält sie auch.'),
-      speeding: T('The ball keeps the horizontal velocity the cart had at launch, while the cart gets faster.', 'Der Ball behält die horizontale Geschwindigkeit, die der Wagen beim Abschuss hatte, während der Wagen schneller wird.'),
-      slowing: T('The ball keeps the horizontal velocity the cart had at launch, while the cart gets slower.', 'Der Ball behält die horizontale Geschwindigkeit, die der Wagen beim Abschuss hatte, während der Wagen langsamer wird.'),
+      constant: T(`The ${body} keeps the ${name}’s horizontal velocity, and the ${name} keeps it too.`, `${cap(B.nom)} behält die horizontale Geschwindigkeit ${K.gen}, und ${C.nom} behält sie auch.`),
+      speeding: T(`The ${body} keeps the horizontal velocity the ${name} had ${K.at}, while the ${name} gets faster.`, `${cap(B.nom)} behält die horizontale Geschwindigkeit, die ${C.nom} ${K.at} hatte, während ${C.nom} schneller wird.`),
+      slowing: T(`The ${body} keeps the horizontal velocity the ${name} had ${K.at}, while the ${name} gets slower.`, `${cap(B.nom)} behält die horizontale Geschwindigkeit, die ${C.nom} ${K.at} hatte, während ${C.nom} langsamer wird.`),
     };
-    const reasons = [o(R[phase], 'ok', `${RIGHT()} ${whereWhy.in}`)];
+    const reasons = [o(R[phase], 'ok', `${RIGHT()} ${whereWhy}`)];
     const wrongs = [
-      ...['constant', 'speeding', 'slowing'].filter((k) => k !== phase).map((k) => o(R[k], 'other', T(`That describes a cart that ${({ constant: 'keeps its speed', speeding: 'gets faster', slowing: 'gets slower' })[k]}. Here the cart ${cartDoes}.`, `Das beschreibt einen Wagen, der ${({ constant: 'seine Geschwindigkeit behält', speeding: 'schneller wird', slowing: 'langsamer wird' })[k]}. Hier ${deHere}.`))),
-      o(T('Once the ball has left the cart, nothing carries it forward any more.', 'Sobald der Ball den Wagen verlassen hat, trägt ihn nichts mehr vorwärts.'), 'active-force', T(`The ball does not need anything to carry it forward: it keeps its horizontal velocity (inertia). ${whereWhy.in}`, `Der Ball braucht nichts, das ihn vorwärts trägt: Er behält seine horizontale Geschwindigkeit (Trägheit). ${whereWhy.in}`)),
-      o(T('The ball’s forward motion slowly wears off in the air.', 'Die Vorwärtsbewegung des Balls lässt in der Luft langsam nach.'), 'impetus', T(`Nothing slows the ball down horizontally (air resistance negligible). ${whereWhy.in}`, `Horizontal bremst nichts den Ball (Luftwiderstand vernachlässigbar). ${whereWhy.in}`)),
+      ...['constant', 'speeding', 'slowing'].filter((k) => k !== phase).map((k) => o(R[k], 'other', T(`That describes a ${name} that ${({ constant: `keeps ${K.her} speed`, speeding: 'gets faster', slowing: 'gets slower' })[k]}. Here the ${name} ${cartDoes}.`, `Das beschreibt ${C.einen}, ${rel} ${({ constant: `${poss} Geschwindigkeit behält`, speeding: 'schneller wird', slowing: 'langsamer wird' })[k]}. Hier ${deHere}.`))),
+      o(T(`Once the ${body} has left ${K.left}, nothing carries it forward any more.`, `Sobald ${B.nom} ${K.left} verlassen hat, trägt ${B.ihn} nichts mehr vorwärts.`), 'active-force', T(`The ${body} does not need anything to carry it forward: it keeps its horizontal velocity (inertia). ${whereWhy}`, `${cap(B.nom)} braucht nichts, das ${B.ihn} vorwärts trägt: ${cap(B.er)} behält seine horizontale Geschwindigkeit (Trägheit). ${whereWhy}`)),
+      o(T(`The ${body}’s forward motion slowly wears off in the air.`, `Die Vorwärtsbewegung ${K.bgen} lässt in der Luft langsam nach.`), 'impetus', T(`Nothing slows the ${body} down horizontally (air resistance negligible). ${whereWhy}`, `Horizontal bremst nichts ${B.acc} (Luftwiderstand vernachlässigbar). ${whereWhy}`)),
     ];
     reasons.push(...r.shuffle(wrongs).slice(0, 3));
-    const qu = two(r, 'land', T('Where does the ball land?', 'Wo landet der Ball?'), T('Why?', 'Warum?'), preds, reasons);
+    const qu = two(r, 'land', T(`Where does the ${body} land?`, `Wo landet ${B.nom}?`), T('Why?', 'Warum?'), preds, reasons);
 
     const steps = [
-      { title: T('The ball', 'Der Ball'), figure: figure({ strobe: true }),
-        text: T(`At launch the ball moves forward with the cart and gets an extra velocity straight up. In the air only gravity acts (vertically): horizontally the ball keeps the velocity it had at launch.`,
-          `Beim Abschuss bewegt sich der Ball mit dem Wagen vorwärts und bekommt zusätzlich eine Geschwindigkeit senkrecht nach oben. In der Luft wirkt nur die Schwerkraft (vertikal): Horizontal behält der Ball die Geschwindigkeit, die er beim Abschuss hatte.`) },
-      { title: T('The cart', 'Der Wagen'), figure: figure({ strobe: true }),
-        text: { constant: T('No horizontal force acts on the cart either: it keeps its speed and stays exactly below the ball. The ball lands back in the launcher.', 'Auch auf den Wagen wirkt horizontal keine Kraft: Er behält seine Geschwindigkeit und bleibt genau unter dem Ball. Der Ball landet wieder im Werfer.'),
-          speeding: T('The force keeps speeding the cart up, but it does not act on the ball in the air. The cart pulls ahead, and the ball lands behind the launcher.', 'Die Kraft beschleunigt den Wagen weiter, wirkt aber nicht auf den Ball in der Luft. Der Wagen fährt davon, und der Ball landet hinter dem Werfer.'),
-          slowing: T('The brakes slow the cart down, but not the ball in the air. The cart falls behind, and the ball lands in front of the launcher.', 'Die Bremsen verlangsamen den Wagen, aber nicht den Ball in der Luft. Der Wagen bleibt zurück, und der Ball landet vor dem Werfer.') }[phase] },
+      { title: T(`The ${body}`, cap(B.nom)), figure: figure({ strobe: true }),
+        text: K.up
+          ? T(`At ${K.release} the ball moves forward with the ${name} and gets an extra velocity straight up. In the air only gravity acts (vertically): horizontally the ball keeps the velocity it had ${K.at}.`,
+            `Beim ${K.release} bewegt sich der Ball mit ${C.dat} vorwärts und bekommt zusätzlich eine Geschwindigkeit senkrecht nach oben. In der Luft wirkt nur die Schwerkraft (vertikal): Horizontal behält der Ball die Geschwindigkeit, die er ${K.at} hatte.`)
+          : T('When it is let go, the wrench moves forward with the ship; it has no vertical velocity yet. In the air only gravity acts (vertically): horizontally the wrench keeps the velocity it had at that moment.',
+            'Beim Loslassen bewegt sich der Schraubenschlüssel mit dem Schiff vorwärts; eine vertikale Geschwindigkeit hat er noch nicht. In der Luft wirkt nur die Schwerkraft (vertikal): Horizontal behält der Schraubenschlüssel die Geschwindigkeit, die er in diesem Moment hatte.') },
+      { title: T(`The ${name}`, cap(C.nom)), figure: figure({ strobe: true }),
+        text: { constant: T(`No net horizontal force acts on the ${name} either: it keeps ${K.her} speed and stays exactly below the ${body}. ${cap(K.landsIn)}.`,
+          `Auch auf ${C.acc} wirkt horizontal keine resultierende Kraft: ${cap(C.er)} behält ${poss} Geschwindigkeit und bleibt genau unter ${B.dat}. ${K.landsIn}.`),
+        speeding: T(`A force keeps speeding the ${name} up, but it does not act on the ${body} in the air. The ${name} pulls ahead, and the ${body} lands ${K.lands.behind}.`,
+          `Eine Kraft beschleunigt ${C.acc} weiter, wirkt aber nicht auf ${B.acc} in der Luft. ${cap(C.nom)} fährt davon, und ${B.nom} landet ${K.lands.behind}.`),
+        slowing: T(`A force slows the ${name} down, but not the ${body} in the air. The ${name} falls behind, and the ${body} lands ${K.lands.front}.`,
+          `Eine Kraft bremst ${C.acc}, aber nicht ${B.acc} in der Luft. ${cap(C.nom)} bleibt zurück, und ${B.nom} landet ${K.lands.front}.`) }[phase] },
     ];
     return {
-      title: T('Ball from a moving cart', 'Ball vom fahrenden Wagen'),
-      situation: T(`<p>A cart rolls along a level track. A launcher on the cart shoots a ball straight up (as seen from the cart). ${{ constant: 'The cart rolls on at constant speed (friction negligible).', speeding: 'While the ball is in the air, a constant force keeps pushing the cart forward.', slowing: 'Right after the launch, the cart brakes gently.' }[phase]} Air resistance is negligible.</p>`,
-        `<p>Ein Wagen rollt auf einer ebenen Schiene. Ein Werfer auf dem Wagen schiesst einen Ball senkrecht nach oben (vom Wagen aus gesehen). ${{ constant: 'Der Wagen rollt mit konstanter Geschwindigkeit weiter (Reibung vernachlässigbar).', speeding: 'Während der Ball in der Luft ist, schiebt eine konstante Kraft den Wagen weiter vorwärts.', slowing: 'Direkt nach dem Abschuss bremst der Wagen sanft.' }[phase]} Der Luftwiderstand ist vernachlässigbar.</p>`),
+      title: K.title,
+      situation: K.situation(phase),
       figure: figure(),
       questions: [qu],
       hints: [
-        T('Treat ball and cart separately. Which horizontal forces act on the ball while it is in the air? Which on the cart?', 'Betrachte Ball und Wagen getrennt. Welche horizontalen Kräfte wirken auf den Ball, solange er in der Luft ist? Welche auf den Wagen?'),
-        T('Plan: compare the horizontal motion of the ball with that of the cart during the flight.', 'Plan: Vergleiche während des Flugs die horizontale Bewegung des Balls mit der des Wagens.'),
+        T(`Treat ${body} and ${name} separately. Which horizontal forces act on the ${body} while it is in the air? Which on the ${name}?`, `Betrachte ${B.acc} und ${C.acc} getrennt. Welche horizontalen Kräfte wirken auf ${B.acc}, solange ${B.er} in der Luft ist? Welche auf ${C.acc}?`),
+        T(`Plan: compare the horizontal motion of the ${body} with that of the ${name} during the flight.`, `Plan: Vergleiche während des Flugs die horizontale Bewegung ${K.bgen} mit der ${K.gen}.`),
         T('First law: without a horizontal force, the horizontal velocity stays the same.', 'Erstes Newtonsches Gesetz: Ohne horizontale Kraft bleibt die horizontale Geschwindigkeit gleich.'),
-        T(`Here the ball keeps the cart’s velocity at launch, and the cart ${cartDoes}.`, `Hier behält der Ball die Geschwindigkeit des Wagens beim Abschuss, und der Wagen ${cartDoes}.`),
+        T(`Here the ${body} keeps the ${name}’s velocity ${K.at}, and the ${name} ${cartDoes}.`, `Hier behält ${B.nom} die Geschwindigkeit ${K.gen} ${K.at}, und ${C.nom} ${cartDoes}.`),
       ],
       steps,
     };

@@ -187,7 +187,7 @@
         [L('← backwards, against her velocity', '← nach hinten, gegen ihre Geschwindigkeit'), true],
         [L('→ forwards, against her acceleration', '→ nach vorn, gegen ihre Beschleunigung'), false, accel],
         [L('← backwards, balanced by a force of motion forwards that keeps her rolling', '← nach hinten, im Gleichgewicht mit einer Bewegungskraft nach vorn, die sie rollen lässt'), false,
-          { flag: 'motion', why: L('There is no “force of motion”: once she stops pedalling, nothing pushes her forwards. She keeps rolling by inertia, and slows down.', 'Es gibt keine „Bewegungskraft“: Sobald sie nicht mehr tritt, schiebt sie nichts nach vorn. Sie rollt aus Trägheit weiter und wird langsamer.') }],
+          { flag: 'motion', why: L('There is no “force of motion”: once she stops pedalling, nothing pushes her forwards. She keeps rolling by inertia, and slows down.', 'Es gibt keine „Bewegungskraft“: Sobald sie nicht mehr tritt, treibt sie nichts mehr nach vorn an. Sie rollt aus Trägheit weiter und wird langsamer.') }],
         [L('← backwards, as large as her weight', '← nach hinten, so gross wie ihre Gewichtskraft'), false,
           { flag: 'terminal', why: L('Air resistance equals the weight only for a body falling at terminal velocity. Here it is the only horizontal force: m a, much less than her weight.', 'Der Luftwiderstand ist nur bei einem Körper, der mit Endgeschwindigkeit fällt, gleich der Gewichtskraft. Hier ist er die einzige waagrechte Kraft: m a, viel kleiner als ihre Gewichtskraft.') }],
       ],

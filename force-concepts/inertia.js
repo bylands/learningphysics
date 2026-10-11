@@ -501,9 +501,9 @@
       { title: T('From t₁ to t₂', 'Von t₁ bis t₂'), figure: bigGraph(1),
         text: brake
           ? T(`The ${eng} pushes with a constant force <i>F</i> against the direction of motion. Second law: constant acceleration <i>a</i> = <i>F</i>/<i>m</i>, backward, so the speed falls at a steady rate: a straight falling line. The ${eng} is switched off before the ${name} stops.`,
-            `${cap(E.nom)} schiebt mit einer konstanten Kraft <i>F</i> gegen die Bewegungsrichtung. Zweites Newtonsches Gesetz: konstante Beschleunigung <i>a</i> = <i>F</i>/<i>m</i>, nach hinten, also sinkt die Geschwindigkeit gleichmässig: eine fallende Gerade. ${cap(E.nom)} wird abgeschaltet, bevor ${N.nom} stillsteht.`)
+            `${cap(E.nom)} übt eine konstante Kraft <i>F</i> gegen die Bewegungsrichtung aus. Zweites Newtonsches Gesetz: konstante Beschleunigung <i>a</i> = <i>F</i>/<i>m</i>, nach hinten, also sinkt die Geschwindigkeit gleichmässig: eine fallende Gerade. ${cap(E.nom)} wird abgeschaltet, bevor ${N.nom} stillsteht.`)
           : T(`The ${eng} pushes with a constant force <i>F</i> in the direction of motion. Second law: constant acceleration <i>a</i> = <i>F</i>/<i>m</i>, so the speed rises at a steady rate: a straight rising line.`,
-            `${cap(E.nom)} schiebt mit einer konstanten Kraft <i>F</i> in Bewegungsrichtung. Zweites Newtonsches Gesetz: konstante Beschleunigung <i>a</i> = <i>F</i>/<i>m</i>, also steigt die Geschwindigkeit gleichmässig: eine steigende Gerade.`) },
+            `${cap(E.nom)} übt eine konstante Kraft <i>F</i> in Bewegungsrichtung aus. Zweites Newtonsches Gesetz: konstante Beschleunigung <i>a</i> = <i>F</i>/<i>m</i>, also steigt die Geschwindigkeit gleichmässig: eine steigende Gerade.`) },
       { title: T('After t₂', 'Nach t₂'), figure: bigGraph(2),
         text: T(`No force acts any more. First law: the ${name} keeps the speed ${it} has at ${t2}, for ever — a horizontal line. ${cap(it)} ${brake ? 'does not slow down further and does not stop' : 'does not slow down'}: there is nothing that would slow ${him} down.`,
           `Es wirkt keine Kraft mehr. Erstes Newtonsches Gesetz: ${cap(N.nom)} behält die Geschwindigkeit, die ${N.er} bei ${t2} hat, für immer — eine horizontale Linie. ${cap(N.er)} wird nicht ${brake ? 'weiter langsamer und bleibt nicht stehen' : 'langsamer'}: Es gibt nichts, was ${N.ihn} bremsen würde.`) },
@@ -513,9 +513,9 @@
     const pron = him;
     const pushes = brake
       ? T(`From the time ${t1} to ${t2} ${B.what} brakes ${pron}: it pushes ${pron} with a constant force against the direction of motion`,
-        `Vom Zeitpunkt ${t1} bis ${t2} bremst ${B.what} ${N.ihn}: ${cap(E.er)} schiebt ${N.ihn} mit einer konstanten Kraft gegen die Bewegungsrichtung`)
+        `Vom Zeitpunkt ${t1} bis ${t2} bremst ${B.what} ${N.ihn} mit einer konstanten Kraft, die gegen die Bewegungsrichtung zeigt`)
       : T(`From the time ${t1} to ${t2} ${B.what} pushes ${pron} with a constant force in the direction of ${rest ? 'the arrow' : 'motion'}`,
-        `Vom Zeitpunkt ${t1} bis ${t2} schiebt ${B.what} ${N.ihn} mit einer konstanten Kraft in ${rest ? 'Pfeilrichtung' : 'Bewegungsrichtung'}`);
+        `Vom Zeitpunkt ${t1} bis ${t2} übt ${B.what} eine konstante Kraft in ${rest ? 'Pfeilrichtung' : 'Bewegungsrichtung'} auf ${N.ihn} aus`);
     const off = T(`; then the ${eng} is switched off${brake ? `, while the ${name} is still moving forward` : ''}.`, `; danach wird ${E.nom} abgeschaltet${brake ? `, während ${N.nom} sich noch vorwärts bewegt` : ''}.`);
     return {
       title: brake ? T(`Braking with the ${eng}`, `Bremsen mit ${E.dat}`) : B.title,
