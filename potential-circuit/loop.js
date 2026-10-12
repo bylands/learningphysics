@@ -114,8 +114,10 @@
   const num = (x) => String(Math.round(x * 100) / 100).replace('-', '−');
   const tv = (x) => `${Math.round(x * 100) / 100}\\,\\mathrm{V}`;
   const tma = (x) => `${x}\\,\\mathrm{mA}`;
-  const phi = (name) => `\\varphi_{\\mathrm{${name}}}`;
-  const uxy = (a, b) => `U_{\\mathrm{${a}${b}}}`;
+  // English: V for the potential, ΔV for a voltage; German: φ and U
+  const phi = (name) => L(`V_{\\mathrm{${name}}}`, `\\varphi_{\\mathrm{${name}}}`);
+  const uxy = (a, b) => L(`\\Delta V_{\\mathrm{${a}${b}}}`, `U_{\\mathrm{${a}${b}}}`);
+  const uN = (n) => L(`\\Delta V_{${n}}`, `U_{${n}}`);
   const nameOf = (c, k) => c.points[k].name;
   const stepName = (c, s) => `${nameOf(c, s.from)} → ${nameOf(c, s.to)}`;
   const lampTex = (n) => `$L_${n}$`;
@@ -229,7 +231,7 @@
     c.points.forEach((pt) => out.push(`<line class="grid" x1="${X(pt.node)}" y1="${Y(lo)}" x2="${X(pt.node)}" y2="${Y(hi)}"/>`));
     [...c.points, { node: 6, name: 'A' }].forEach((pt) => out.push(`<text class="ptl" x="${X(pt.node)}" y="${(y0 + 16).toFixed(1)}" text-anchor="middle">${pt.name}</text>`));
     out.push(`<path class="axis" d="M${X(0)} ${Y(lo)}H${(x0 + 6 * sx + 8).toFixed(1)}M${X(0)} ${Y(lo)}V${(y0 - (hi - lo) * sy - 10).toFixed(1)}"/>`);
-    out.push(`<text class="axl" x="${x0 - 8}" y="13" text-anchor="middle"><tspan class="it">φ</tspan> in V</text>`);
+    out.push(`<text class="axl" x="${x0 - 8}" y="13" text-anchor="middle">${L('<tspan class="it">V</tspan> in V', '<tspan class="it">φ</tspan> in V')}</text>`);
     if (o.right) out.push(line(good, 'phi right'));
     out.push(line(shown, 'phi'));
     if (o.mark != null) {
@@ -268,15 +270,15 @@
   function loop(r, two) {
     const c = two ? twoBatteries(r, r.next() < 0.6) : oneBattery(r, r.pick([2, 3]));
     const u = r.pick(lampsOf(c)), s = c.steps.find((x) => x.el === u), end = s.to ? s.to : s.from;
-    const eqn = `${rises(c).map(tv).join(' + ')} = ${c.slots.filter((el) => el && jump(el) < 0).map((el) => (el === u ? `U_${u.n}` : tv(el.V))).join(' + ')}`;
+    const eqn = `${rises(c).map(tv).join(' + ')} = ${c.slots.filter((el) => el && jump(el) < 0).map((el) => (el === u ? `${uN(u.n)}` : tv(el.V))).join(' + ')}`;
     const hide = new Set([`U${u.n}`]);
     return {
       kind: 'loop', c, difficulty: two ? 3 : 2,
-      text: `<p>${ZERO(c)} ${L(`The voltage $U_${u.n}$ across $L_${u.n}$ is not marked. Find it, and the potential at ${nameOf(c, end)}.`, `Die Spannung $U_${u.n}$ an $L_${u.n}$ ist nicht angegeben. Bestimme sie und das Potential in ${nameOf(c, end)}.`)}</p>`,
-      fields: [numField('U', `U_${u.n}`, 'V', u.V), numField(`p${nameOf(c, end)}`, phi(nameOf(c, end)), 'V', c.points[end].phi)],
+      text: `<p>${ZERO(c)} ${L(`The voltage $${uN(u.n)}$ across $L_${u.n}$ is not marked. Find it, and the potential at ${nameOf(c, end)}.`, `Die Spannung $${uN(u.n)}$ an $L_${u.n}$ ist nicht angegeben. Bestimme sie und das Potential in ${nameOf(c, end)}.`)}</p>`,
+      fields: [numField('U', `${uN(u.n)}`, 'V', u.V), numField(`p${nameOf(c, end)}`, phi(nameOf(c, end)), 'V', c.points[end].phi)],
       hints: [LOOP(), L(`The rises: ${rises(c).map((v) => `${v} V`).join(' and ')}. The drops: every lamp${against(c) ? `, and the ${against(c).V} V battery, which the current flows through from + to −` : ''}.`, `Die Anstiege: ${rises(c).map((v) => `${v} V`).join(' und ')}. Die Abfälle: jede Lampe${against(c) ? `, und die ${against(c).V}-V-Batterie, durch die der Strom von + nach − fliesst` : ''}.`), RULES()],
-      solution: [`${LOOP()} $${eqn}$, ${L('so', 'also')} $U_${u.n} = ${tv(u.V)}$.`, ...walk(c, s.to ? c.steps.indexOf(s) + 1 : c.steps.length - 1).map((x) => `${x}.`)],
-      results: `$U_${u.n} = ${tv(u.V)}$, $${phi(nameOf(c, end))} = ${tv(c.points[end].phi)}$`,
+      solution: [`${LOOP()} $${eqn}$, ${L('so', 'also')} $${uN(u.n)} = ${tv(u.V)}$.`, ...walk(c, s.to ? c.steps.indexOf(s) + 1 : c.steps.length - 1).map((x) => `${x}.`)],
+      results: `$${uN(u.n)} = ${tv(u.V)}$, $${phi(nameOf(c, end))} = ${tv(c.points[end].phi)}$`,
       figure: (sol) => draw(c, { known: sol, cur: true, hide: sol ? null : hide, ask: sol ? null : nameOf(c, end) }) + (sol ? plot(c) : ''),
       p: { slots: c.slots, u: u.n },
     };
@@ -291,17 +293,17 @@
     return {
       kind: 'junction', c, difficulty: 3,
       text: `<p>${L(`The battery drives the current $I = ${tma(c.I)}$; $I_${m} = ${tma(par.I[1 - k])}$ flows through $L_${m}$. Find $I_${n}$ and the voltage across the lamps in parallel.`, `Die Batterie treibt den Strom $I = ${tma(c.I)}$; durch $L_${m}$ fliesst $I_${m} = ${tma(par.I[1 - k])}$. Bestimme $I_${n}$ und die Spannung an den parallelen Lampen.`)}</p>`,
-      fields: [numField('I', `I_${n}`, 'mA', par.I[k]), numField('U', `U_${par.n}`, 'V', par.V)],
+      fields: [numField('I', `I_${n}`, 'mA', par.I[k]), numField('U', `${uN(par.n)}`, 'V', par.V)],
       hints: [
         L(`Junction rule: at ${D} the current $I$ splits into $I_${par.n}$ and $I_${par.n + 1}$; what flows in flows out: $I = I_${par.n} + I_${par.n + 1}$. (Through $L_${one.n}$ flows all of $I$: a lamp does not use up current.)`, `Knotenregel: In ${D} teilt sich der Strom $I$ in $I_${par.n}$ und $I_${par.n + 1}$; was hineinfliesst, fliesst hinaus: $I = I_${par.n} + I_${par.n + 1}$. (Durch $L_${one.n}$ fliesst der ganze Strom $I$: Eine Lampe verbraucht keinen Strom.)`),
-        L(`Loop rule for the loop through the battery, $L_${one.n}$ and $L_${par.n}$: $${tv(c.slots[0].V)} = U_${one.n} + U_${par.n}$.`, `Maschenregel für die Masche durch die Batterie, $L_${one.n}$ und $L_${par.n}$: $${tv(c.slots[0].V)} = U_${one.n} + U_${par.n}$.`),
+        L(`Loop rule for the loop through the battery, $L_${one.n}$ and $L_${par.n}$: $${tv(c.slots[0].V)} = ${uN(one.n)} + ${uN(par.n)}$.`, `Maschenregel für die Masche durch die Batterie, $L_${one.n}$ und $L_${par.n}$: $${tv(c.slots[0].V)} = ${uN(one.n)} + ${uN(par.n)}$.`),
         L(`The loop through $L_${par.n + 1}$ instead gives the same: lamps in parallel have the same voltage, each the whole of it.`, `Die Masche durch $L_${par.n + 1}$ ergibt dasselbe: Parallele Lampen haben dieselbe Spannung, jede die ganze.`),
       ],
       solution: [
         L(`Junction rule at ${D}: $I = I_${par.n} + I_${par.n + 1}$, so $I_${n} = ${tma(c.I)} - ${tma(par.I[1 - k])} = ${tma(par.I[k])}$. At ${E} the two currents join again to $${tma(c.I)}$.`, `Knotenregel in ${D}: $I = I_${par.n} + I_${par.n + 1}$, also $I_${n} = ${tma(c.I)} - ${tma(par.I[1 - k])} = ${tma(par.I[k])}$. In ${E} vereinigen sich die zwei Ströme wieder zu $${tma(c.I)}$.`),
-        L(`Loop rule: $${tv(c.slots[0].V)} = ${tv(one.V)} + U_${par.n}$, so $U_${par.n} = U_${par.n + 1} = ${tv(par.V)}$ (lamps in parallel: the same voltage).`, `Maschenregel: $${tv(c.slots[0].V)} = ${tv(one.V)} + U_${par.n}$, also $U_${par.n} = U_${par.n + 1} = ${tv(par.V)}$ (parallele Lampen: dieselbe Spannung).`),
+        L(`Loop rule: $${tv(c.slots[0].V)} = ${tv(one.V)} + ${uN(par.n)}$, so $${uN(par.n)} = ${uN(par.n + 1)} = ${tv(par.V)}$ (lamps in parallel: the same voltage).`, `Maschenregel: $${tv(c.slots[0].V)} = ${tv(one.V)} + ${uN(par.n)}$, also $${uN(par.n)} = ${uN(par.n + 1)} = ${tv(par.V)}$ (parallele Lampen: dieselbe Spannung).`),
       ],
-      results: `$I_${n} = ${tma(par.I[k])}$, $U_${par.n} = U_${par.n + 1} = ${tv(par.V)}$`,
+      results: `$I_${n} = ${tma(par.I[k])}$, $${uN(par.n)} = ${uN(par.n + 1)} = ${tv(par.V)}$`,
       figure: (sol) => draw(c, { known: sol, hide: sol ? null : hide }),
       p: { slots: c.slots, I: c.I, k },
       asked: { n, m, k },
@@ -476,7 +478,7 @@
         const e = generate('junction', seed), c = e.c, par = c.slots[3], one = c.slots.find((el) => el && el.t === 'lamp'), V = c.slots[0].V;
         return {
           title: L('Lamps in parallel', 'Parallele Lampen'), text: '', figure: draw(c, { hide: new Set([`U${par.n}`, `U${par.n + 1}`]) }),
-          ask: L(`Find the voltage $U_${par.n}$ across $L_${par.n}$.`, `Wie gross ist die Spannung $U_${par.n}$ an $L_${par.n}$?`),
+          ask: L(`Find the voltage $${uN(par.n)}$ across $L_${par.n}$.`, `Wie gross ist die Spannung $${uN(par.n)}$ an $L_${par.n}$?`),
           options: options(par.V, [
             { value: par.V / 2, flag: 'parallel', why: L('Lamps in parallel do not share the voltage: each one gets all of it.', 'Parallele Lampen teilen sich die Spannung nicht: Jede bekommt die ganze.') },
             { value: V, flag: 'whole', why: L(`$L_${one.n}$ in series takes its share of the battery voltage.`, `$L_${one.n}$ in Serie nimmt ihren Teil der Batteriespannung.`) },
@@ -489,7 +491,7 @@
       const others = c.slots.filter((el) => el && el.t === 'lamp' && el !== u).reduce((a, el) => a + el.V, 0);
       return {
         title: L('The loop rule', 'Die Maschenregel'), text: '', figure: draw(c, { cur: true, hide: new Set([`U${u.n}`]) }),
-        ask: L(`Find the voltage $U_${u.n}$ across $L_${u.n}$.`, `Wie gross ist die Spannung $U_${u.n}$ an $L_${u.n}$?`),
+        ask: L(`Find the voltage $${uN(u.n)}$ across $L_${u.n}$.`, `Wie gross ist die Spannung $${uN(u.n)}$ an $L_${u.n}$?`),
         options: options(u.V, [
           ...(o ? [{ value: c.slots[0].V + o.V - others, flag: 'source', why: L(`The current flows through the ${o.V} V battery from + to −: it is a drop, not a rise.`, `Der Strom fliesst durch die ${o.V}-V-Batterie von + nach −: Sie ist ein Abfall, kein Anstieg.`) }] : []),
           { value: c.slots[0].V, flag: 'whole', why: L('The battery voltage is shared by all the lamps in the loop.', 'Die Batteriespannung teilen sich alle Lampen der Masche.') },
@@ -612,18 +614,18 @@
       frames: () => {
         const c = BRANCHED();
         return [
-          frame(L('The task', 'Die Aufgabe'), P(L('The battery (9 V) drives $I = 600\\,\\mathrm{mA}$; $U_1 = 3\\,\\mathrm{V}$, and $I_2 = 200\\,\\mathrm{mA}$ flows through $L_2$. Find the currents $I_1$ and $I_3$, the voltages across $L_2$ and $L_3$, and the potentials at B to E.', 'Die Batterie (9 V) treibt $I = 600\\,\\mathrm{mA}$; $U_1 = 3\\,\\mathrm{V}$, und durch $L_2$ fliesst $I_2 = 200\\,\\mathrm{mA}$. Bestimme die Ströme $I_1$ und $I_3$, die Spannungen an $L_2$ und $L_3$ und die Potentiale in B bis E.')),
+          frame(L('The task', 'Die Aufgabe'), P(L('The battery (9 V) drives $I = 600\\,\\mathrm{mA}$; $\\Delta V_1 = 3\\,\\mathrm{V}$, and $I_2 = 200\\,\\mathrm{mA}$ flows through $L_2$. Find the currents $I_1$ and $I_3$, the voltages across $L_2$ and $L_3$, and the potentials at B to E.', 'Die Batterie (9 V) treibt $I = 600\\,\\mathrm{mA}$; $U_1 = 3\\,\\mathrm{V}$, und durch $L_2$ fliesst $I_2 = 200\\,\\mathrm{mA}$. Bestimme die Ströme $I_1$ und $I_3$, die Spannungen an $L_2$ und $L_3$ und die Potentiale in B bis E.')),
           draw(c, { known: 1, hide: new Set(['I3', 'U2', 'U3']) })),
           frame(L('The current through $L_1$', 'Der Strom durch $L_1$'), P(L('$L_1$ is in series with the battery: all of $I$ flows through it, $I_1 = I = 600\\,\\mathrm{mA}$. A lamp does not use up current.', '$L_1$ ist in Serie mit der Batterie: Der ganze Strom fliesst durch sie, $I_1 = I = 600\\,\\mathrm{mA}$. Eine Lampe verbraucht keinen Strom.')),
           draw(c, { known: 1, hide: new Set(['I3', 'U2', 'U3']) })),
           frame(L('Junction rule', 'Knotenregel'), P(L('At D the current splits: what flows in flows out, $I = I_2 + I_3$, so $I_3 = 600\\,\\mathrm{mA} - 200\\,\\mathrm{mA} = 400\\,\\mathrm{mA}$. At E the two join again to 600 mA.', 'In D teilt sich der Strom: Was hineinfliesst, fliesst hinaus, $I = I_2 + I_3$, also $I_3 = 600\\,\\mathrm{mA} - 200\\,\\mathrm{mA} = 400\\,\\mathrm{mA}$. In E vereinigen sich die beiden wieder zu 600 mA.')),
           draw(c, { known: 1, hide: new Set(['U2', 'U3']) })),
-          frame(L('Loop rule', 'Maschenregel'), P(L('The loop through the battery, $L_1$ and $L_2$: the rise of 9 V equals the drops, $9\\,\\mathrm{V} = 3\\,\\mathrm{V} + U_2$, so $U_2 = 6\\,\\mathrm{V}$.', 'Die Masche durch die Batterie, $L_1$ und $L_2$: Der Anstieg von 9 V ist gleich den Abfällen, $9\\,\\mathrm{V} = 3\\,\\mathrm{V} + U_2$, also $U_2 = 6\\,\\mathrm{V}$.'),
-            L('The loop through $L_3$ instead gives $U_3 = 6\\,\\mathrm{V}$ too: lamps in parallel have the same voltage, each the whole of it. They do not share it.', 'Die Masche durch $L_3$ ergibt ebenso $U_3 = 6\\,\\mathrm{V}$: Parallele Lampen haben dieselbe Spannung, jede die ganze. Sie teilen sie nicht.')),
+          frame(L('Loop rule', 'Maschenregel'), P(L('The loop through the battery, $L_1$ and $L_2$: the rise of 9 V equals the drops, $9\\,\\mathrm{V} = 3\\,\\mathrm{V} + \\Delta V_2$, so $\\Delta V_2 = 6\\,\\mathrm{V}$.', 'Die Masche durch die Batterie, $L_1$ und $L_2$: Der Anstieg von 9 V ist gleich den Abfällen, $9\\,\\mathrm{V} = 3\\,\\mathrm{V} + U_2$, also $U_2 = 6\\,\\mathrm{V}$.'),
+            L('The loop through $L_3$ instead gives $\\Delta V_3 = 6\\,\\mathrm{V}$ too: lamps in parallel have the same voltage, each the whole of it. They do not share it.', 'Die Masche durch $L_3$ ergibt ebenso $U_3 = 6\\,\\mathrm{V}$: Parallele Lampen haben dieselbe Spannung, jede die ganze. Sie teilen sie nicht.')),
           draw(c, { known: 1 })),
           frame(L('The potentials', 'Die Potentiale'), P(...walk(c).map((x) => `${x}.`), L('E is joined to A by a wire: 0 V.', 'E ist durch einen Draht mit A verbunden: 0 V.')), draw(c, { known: true }) + plot(c)),
           frame(L('Typical mistakes', 'Typische Fehler'), P(
-            L('“$L_2$ and $L_3$ share the 6 V, 3 V each.” No: each lies between D and E, so each has the whole voltage $\\varphi_{\\mathrm{D}} - \\varphi_{\\mathrm{E}}$.', '«$L_2$ und $L_3$ teilen sich die 6 V, je 3 V.» Nein: Jede liegt zwischen D und E, also hat jede die ganze Spannung $\\varphi_{\\mathrm{D}} - \\varphi_{\\mathrm{E}}$.'),
+            L('“$L_2$ and $L_3$ share the 6 V, 3 V each.” No: each lies between D and E, so each has the whole voltage $V_{\\mathrm{D}} - V_{\\mathrm{E}}$.', '«$L_2$ und $L_3$ teilen sich die 6 V, je 3 V.» Nein: Jede liegt zwischen D und E, also hat jede die ganze Spannung $\\varphi_{\\mathrm{D}} - \\varphi_{\\mathrm{E}}$.'),
             L('“The currents in parallel are equal.” Only for equal lamps; the junction rule only says that they add up to $I$.', '«Die Ströme parallel sind gleich.» Nur bei gleichen Lampen; die Knotenregel sagt nur, dass sie zusammen $I$ ergeben.')),
           draw(c, { known: true })),
         ];
@@ -631,7 +633,7 @@
     },
     {
       topic: 2, name: () => L('Voltage between two points', 'Spannung zwischen zwei Punkten'),
-      idea: () => L('The voltage between X and Y is the difference of the potentials, the first minus the second: U_XY = φ_X − φ_Y.', 'Die Spannung zwischen X und Y ist die Differenz der Potentiale, das erste minus das zweite: U_XY = φ_X − φ_Y.'),
+      idea: () => L('The voltage between X and Y is the difference of the potentials, the first minus the second: ΔV_XY = V_X − V_Y.', 'Die Spannung zwischen X und Y ist die Differenz der Potentiale, das erste minus das zweite: U_XY = φ_X − φ_Y.'),
       frames: () => {
         const c = AGAINST(), fig = draw(c, { known: true, cur: true }) + plot(c);
         return [

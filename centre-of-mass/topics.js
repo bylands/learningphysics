@@ -26,7 +26,8 @@
 // exercises (in the current variant) is merged with the next one; after the last step comes one
 // with the exercises of all steps. When a step has no new exercises left, a note says so and
 // suggests moving on; the exercises then come round again.
-//   T.mount(el)               the topic menu, the stages and the link to the worked example, in el
+//   T.mount(el)               the topic menu, the stages and the links to the worked example and the
+//                             next one, in el
 //   T.relabel()               the texts in the current language
 //   T.next(last)              a new exercise of the current topic and stage, its id 'p3.2-seed'
 //                             (topic 3, stage 2) or 'mix-seed'
@@ -48,9 +49,9 @@
 
   const WINS = 2;
   const TX = {
-    en: { topic: 'Topic', mixed: 'All topics (mixed)', stage: 'Step', worked: (i, n) => `Worked example ${i} · ${n}`, like: 'like the example',
+    en: { topic: 'Topic', mixed: 'All topics (mixed)', stage: 'Step', worked: (i, n) => `Worked example ${i} · ${n}`, nextWorked: (i, n) => `Next: worked example ${i} · ${n} →`, like: 'like the example',
       done: (n) => `Well done! Next step: ${n}.`, notClean: 'To move on to the next step, solve two exercises of this step at the first try without hints.', allSteps: 'all steps', none: 'You have seen all the exercises of this step: move on to the next step or to another topic.', noneLast: 'You have seen all the exercises of this step: move on to another topic.', newWorked: (i, n) => `This step has its own worked example (${i} · ${n}): have a look at it first.`, last: 'Well done! You have reached the last step of this topic; practise on, or choose another topic.', also: 'Practice:' },
-    de: { topic: 'Thema', mixed: 'Alle Themen (gemischt)', stage: 'Schritt', worked: (i, n) => `Beispiel ${i} · ${n}`, like: 'wie im Beispiel',
+    de: { topic: 'Thema', mixed: 'Alle Themen (gemischt)', stage: 'Schritt', worked: (i, n) => `Beispiel ${i} · ${n}`, nextWorked: (i, n) => `Nächstes: Beispiel ${i} · ${n} →`, like: 'wie im Beispiel',
       done: (n) => `Gut gemacht! Nächster Schritt: ${n}.`, notClean: 'Für den nächsten Schritt löse zwei Aufgaben dieses Schritts beim ersten Versuch ohne Tipps.', allSteps: 'alle Schritte', none: 'Du hast alle Aufgaben dieses Schritts gesehen: Mach mit dem nächsten Schritt oder einem anderen Thema weiter.', noneLast: 'Du hast alle Aufgaben dieses Schritts gesehen: Mach mit einem anderen Thema weiter.', newWorked: (i, n) => `Zu diesem Schritt gibt es ein eigenes Beispiel (${i} · ${n}): Schau es dir zuerst an.`, last: 'Gut gemacht! Du hast den letzten Schritt dieses Themas erreicht; übe weiter oder wähle ein anderes Thema.', also: 'Üben:' },
   };
   const tx = () => TX[root.Lang && root.Lang.get() === 'de' ? 'de' : 'en'];
@@ -124,6 +125,12 @@
     }
     limit();
     if (S) S.on(() => { limit(); render(); });
+    // the worked examples of the topics and their steps, in the order of the tutor
+    const examples = () => {
+      const seen = new Map();
+      o.topics.forEach((tp, t) => stagesOf(t).forEach((_, k) => { const e = workedOf(t, k); if (!seen.has(e.i)) seen.set(e.i, e); }));
+      return [...seen.values()].sort((a, b) => a.i - b.i);
+    };
     const workedOf = (t, s = 0) => { const e = o.topics[t].example; return typeof e === 'function' ? e(s) : e || { i: t, name: o.topics[t].name }; };
     const reached = (t) => Math.min((progress[t] || {}).stage || 0, stagesOf(t).length - 1);
     const typesOf = (t, s) => (t < 0 ? all : stagesOf(t)[Math.min(s, stagesOf(t).length - 1)].types);
@@ -151,8 +158,11 @@
       const last = t < 0 || cur.stage >= stagesOf(t).length - 1;
       // the link to the worked example, if the set has it
       const linked = wk && tutorHas(wk.i);
+      // and to the next worked example the topics have (the next one the set shows)
+      const nx = linked ? examples().find((e) => e.i > wk.i && tutorHas(e.i)) : null;
       el.innerHTML = `<label class="topic-pick"><span>${X.topic}</span><select id="topic-pick">${opts}</select></label>${stages}` +
         (linked ? `<button type="button" class="linklike worked">📖 ${esc(X.worked(wk.i + 1, wk.name()))}</button>` : '') +
+        (nx ? `<button type="button" class="linklike worked next-worked" data-i="${nx.i}">${esc(X.nextWorked(nx.i + 1, nx.name()))}</button>` : '') +
         (runOut ? `<p class="topic-note">${last ? X.noneLast : X.none}</p>` : '') +
         (suggest && suggest.topic === t && suggest.stage === cur.stage && linked ? `<p class="topic-note tip">${esc(X.newWorked(wk.i + 1, wk.name()))} <button type="button" class="linklike worked">📖 ${esc(X.worked(wk.i + 1, wk.name()))}</button></p>` : '');
     }
@@ -176,7 +186,9 @@
           o.onChange();
         });
         el.addEventListener('click', (evt) => {
-          if (!evt.target.closest('.worked')) return;
+          const btn = evt.target.closest('.worked');
+          if (!btn) return;
+          if (btn.dataset.i != null) { o.tutor(Number(btn.dataset.i)); return; }
           if (suggest) { suggest = null; render(); }
           o.tutor(cur.topic < 0 ? workedOf(shownTopic).i : workedOf(cur.topic, cur.stage).i);
         });
