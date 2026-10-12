@@ -1,0 +1,515 @@
+% texercises-lp.sty -- a rebuild of the TeXercises solver macros, from the TeXercises cheatsheet,
+% so that exercises exported from TeXercises compile outside TeXercises (pdflatex).
+% Not the original package: output can differ in details (rounding, box layout, material values).
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{texercises-lp}[2026/10/11 TeXercises macros, rebuilt]
+\RequirePackage[dvipsnames,svgnames,table]{xcolor}
+\RequirePackage{amsmath,amssymb,mathtools,xfp,siunitx,graphicx,tikz,ulem,enumitem,multicol,ifthen}
+\RequirePackage{float,tabularx,array,booktabs,adjustbox,url,upgreek,textcomp,cancel}
+\RequirePackage[version=4]{mhchem}
+\RequirePackage{tcolorbox}\tcbuselibrary{most}
+\RequirePackage[european resistors]{circuitikz}
+% tkz-fct (function plots, needs gnuplot for the curves) has to come before tkz-euclide
+\IfFileExists{tkz-fct.sty}{\RequirePackage{tkz-fct}}{}
+\IfFileExists{tkz-euclide.sty}{\RequirePackage{tkz-euclide}}{}
+\IfFileExists{chessfss.sty}{\RequirePackage{chessfss}}{}
+\normalem\urlstyle{same}\g@addto@macro\UrlBreaks{\do\-}
+\usetikzlibrary{arrows.meta,calc,decorations.pathmorphing,decorations.markings,patterns,positioning,angles,quotes,shapes}
+
+% \qty: siunitx' \qty[options]{value}{unit}, or physics-style \qty( ... ) and \qty[ ... ] for big
+% parentheses and brackets (a [...] not followed by { is a bracket)
+\ExplSyntaxOn
+\AtBeginDocument
+  {
+    \NewCommandCopy \__txlp_siqty:w \qty
+    \RenewDocumentCommand \qty { }
+      {
+        \peek_charcode:NTF (
+          { \__txlp_paren:w }
+          { \peek_charcode:NTF [ { \__txlp_brack:w } { \__txlp_siqty:w } }
+      }
+  }
+\cs_new:Npn \__txlp_paren:w (#1) { \left( #1 \right) }
+\cs_new_protected:Npn \__txlp_brack:w [#1]
+  { \peek_catcode:NTF \c_group_begin_token { \__txlp_siqty:w [#1] } { \left[ #1 \right] } }
+\ExplSyntaxOff
+\providecommand\abs[1]{\left|#1\right|}
+\providecommand\norm[1]{\left\|#1\right\|}
+\providecommand\dd[1]{\mathrm{d}#1}
+\providecommand\dv[2]{\frac{\mathrm{d}#1}{\mathrm{d}#2}}
+\providecommand\pdv[2]{\frac{\partial#1}{\partial#2}}
+% unit macros also work outside \unit (\m, \A, \ohm print the unit), as in TeXercises
+\sisetup{free-standing-units=true,overwrite-commands=false,unit-optional-argument=false,space-before-unit=false,use-xspace=false}
+\sisetup{exponent-thresholds=-3:3,per-mode=symbol,output-decimal-marker={.},exponent-product=\cdot,separate-uncertainty=true}
+
+% ---------------------------------------------------------------- language
+\newif\iftxde
+\newcommand\txlang[1]{\def\@tmp{#1}\def\@de{de}\ifx\@tmp\@de\txdetrue\else\txdefalse\fi}
+\newcommand\DuSie[2]{#2}
+\let\duSie\DuSie
+\newcommand\txGiven{\iftxde Gegeben\else Given\fi}
+\newcommand\txWanted{\iftxde Gesucht\else Wanted\fi}
+\newcommand\txSolution{\iftxde Lösung\else Solution\fi}
+% the sheet builder marks the solver part: \Waerme and \Dichte print nothing there
+\newif\iftxpreamble
+\newcommand\txinpreamble{\txpreambletrue}
+\newcommand\txendpreamble{\txpreamblefalse}
+
+% ---------------------------------------------------------------- quantities
+% Definitions are local: an exercise run in a group does not leak its names into the next one.
+% For every quantity <x>: \<x>X (SI number, expandable), \<x>U (SI unit), \<x>F (formula),
+% \<x> (4 figures), \<x>S{n}, \<x>P{p}{n}, \<x>Q, \<x>I; given quantities also \<x>O (as typed),
+% \<x>OX (number as typed) and \<x>OU (unit as typed, siunitx unit macros).
+\ExplSyntaxOn
+\tl_new:N \l__txlp_val_tl
+\tl_new:N \l__txlp_fac_tl
+\tl_new:N \l__txlp_x_tl
+\tl_new:N \l__txlp_r_tl
+\tl_new:N \l__txlp_u_tl
+\tl_new:N \l__txlp_expr_tl
+\tl_new:N \l__txlp_opt_tl
+\int_new:N \l__txlp_paren_int
+\cs_generate_variant:Nn \tl_if_blank:nTF { V }
+
+% fp evaluation into a tl; closes parentheses left open by the author
+\cs_new_protected:Npn \__txlp_fpset:Nn #1#2
+  {
+    \tl_set:Nn \l__txlp_expr_tl {#2}
+    \int_zero:N \l__txlp_paren_int
+    \tl_map_inline:Nn \l__txlp_expr_tl
+      {
+        \tl_if_eq:nnT {##1} { ( } { \int_incr:N \l__txlp_paren_int }
+        \tl_if_eq:nnT {##1} { ) } { \int_decr:N \l__txlp_paren_int }
+      }
+    \int_compare:nNnT \l__txlp_paren_int > 0
+      { \tl_put_right:Nx \l__txlp_expr_tl { \prg_replicate:nn { \l__txlp_paren_int } { ) } } }
+    \int_compare:nNnT \l__txlp_paren_int < 0
+      { \tl_put_left:Nx \l__txlp_expr_tl { \prg_replicate:nn { - \l__txlp_paren_int } { ( } } }
+    \tl_set:Nx #1 { \fp_eval:n { \l__txlp_expr_tl } }
+  }
+% #1 := #2 rounded to #3 significant figures (no padding zeros)
+\cs_new_protected:Npn \__txlp_figures:Nnn #1#2#3
+  {
+    \fp_compare:nNnTF {#2} = { 0 }
+      { \tl_set:Nn #1 { 0 } }
+      { \tl_set:Nx #1 { \fp_eval:n { round( #2 , #3 - 1 - floor( ln(abs(#2)) / ln(10) + 1e-9 ) ) } } }
+  }
+% siunitx options: TeXercises' scientific-notation=true/false, the rest passed on
+\cs_new_protected:Npn \__txlp_opts:Nn #1#2
+  {
+    \tl_set:Nn #1 {#2}
+    \tl_replace_all:Nnn #1 { scientific-notation=false } { exponent-mode=fixed,fixed-exponent=0 }
+    \tl_replace_all:Nnn #1 { scientific-notation=true } { exponent-mode=scientific }
+  }
+% \__txlp_print:nnn {options} {number} {unit}; siunitx' own \SI and \num, kept even when an
+% exercise defines a quantity S (whose integer form would be \SI)
+\NewCommandCopy \__txlp_SI:w \SI
+\NewCommandCopy \__txlp_num:w \num
+\cs_new_protected:Npn \__txlp_print:nnn #1#2#3
+  {
+    \tl_if_blank:nTF {#3}
+      { \__txlp_num:w [#1] {#2} }
+      {
+        % a unit written as \frac{km}{h} only works in math
+        \tl_if_in:nnTF {#3} { \frac }
+          { \__txlp_SI:w [#1, mode=math] {#2} {#3} }
+          { \__txlp_SI:w [#1] {#2} {#3} }
+      }
+  }
+\cs_new_protected:Npn \__txlp_prefixed:nnnnn #1#2#3#4#5
+  % #1 options, #2 number, #3 unit, #4 power of ten, #5 figures
+  {
+    \tl_set:Nx \l__txlp_x_tl { \fp_eval:n { (#2) / 10^(#4) } }
+    \__txlp_print:nnn
+      { round-mode=figures, round-precision=#5, exponent-mode=fixed, fixed-exponent=0, #1 }
+      { \l__txlp_x_tl }
+      { \__txlp_prefix:n {#4} #3 }
+  }
+\cs_new:Npn \__txlp_prefix:n #1
+  {
+    \int_case:nnF {#1}
+      { {-18}{\atto} {-15}{\femto} {-12}{\pico} {-9}{\nano} {-6}{\micro} {-3}{\milli} {-2}{\centi} {-1}{\deci}
+        {0}{} {2}{\hecto} {3}{\kilo} {6}{\mega} {9}{\giga} {12}{\tera} {15}{\peta} }
+      { }
+  }
+% names whose plain form would replace a LaTeX command that the page itself needs
+\clist_const:Nn \c__txlp_reserved_clist
+  { value , par , item , text , label , ref , begin , end , the , relax , left , right , frac , sqrt , cdot , times , hline , quad , phantom }
+% may \<name> itself be defined? not for the reserved names, and not over a TeX primitive
+% (a quantity dp must not replace \dp, the depth of a box, which LaTeX itself uses)
+\prg_new_conditional:Npnn \__txlp_plain_ok:n #1 { TF , T }
+  {
+    \clist_if_in:NnTF \c__txlp_reserved_clist {#1}
+      { \prg_return_false: }
+      {
+        \cs_if_exist:cTF {#1}
+          { \exp_args:Nc \token_if_primitive:NTF {#1} { \prg_return_false: } { \prg_return_true: } }
+          { \prg_return_true: }
+      }
+  }
+% the printed forms; #1 name, #2 SI unit, #3 options
+\cs_new_protected:Npn \__txlp_printers:nnn #1#2#3
+  {
+    \cs_set:cpn { #1U } { \unit {#2} }
+    \__txlp_plain_ok:nT {#1}
+    { \cs_set_protected:cpn { #1 }
+      { \__txlp_print:nnn { round-mode=figures, round-precision=4, exponent-mode=threshold, #3 } { \use:c {#1X} } {#2} } }
+    \cs_set_protected:cpn { #1S } ##1
+      { \__txlp_print:nnn { round-mode=figures, round-precision=##1, exponent-mode=threshold, #3 } { \use:c {#1X} } {#2} }
+    \cs_set_protected:cpn { #1Q }
+      { \__txlp_print:nnn { round-mode=figures, round-precision=4, exponent-mode=fixed, fixed-exponent=0, #3 } { \use:c {#1X} } {#2} }
+    \str_if_eq:nnF {#1} { S } { \cs_set_protected:cpn { #1I }
+      { \__txlp_print:nnn { round-mode=places, round-precision=0, exponent-mode=fixed, fixed-exponent=0, #3 } { \use:c {#1X} } {#2} } }
+    \cs_set_protected:cpn { #1P } ##1##2
+      { \__txlp_prefixed:nnnnn {#3} { \use:c {#1X} } {#2} {##1} {##2} }
+  }
+\cs_generate_variant:Nn \__txlp_printers:nnn { nVV , nVn }
+\cs_new_protected:Npn \__txlp_given_plain:nnn #1#2#3
+  {
+    \__txlp_plain_ok:nT {#1}
+      { \cs_set_protected:cpn {#1} { \__txlp_print:nnn { exponent-mode=threshold, round-mode=figures, round-precision=4, round-pad=false } {#2} {#3} } }
+  }
+\cs_generate_variant:Nn \__txlp_given_plain:nnn { nVV }
+
+% \NewQty{name}{value}[unit][factor][SI unit]
+%   factor e-3 (or E-3) is appended to the value; any other factor, or the starred form, multiplies
+% \NewQty[siunitx options]... : the options apply to the printed forms
+\NewDocumentCommand \NewQty { s O{} m m o o o }
+  { \tl_if_blank:nF {#3} { \__txlp_newqty:nnnnnnn {#1} {#3} {#4} {#5} {#6} {#7} {#2} } }
+\cs_new_protected:Npn \__txlp_newqty:nnnnnnn #1#2#3#4#5#6#7
+  {
+    \tl_set:Nn \l__txlp_val_tl {#3}
+    \tl_replace_all:Nnn \l__txlp_val_tl { , } { . }
+    % an uncertainty 3.2(1) or 3.2+-0.1 does not enter the number
+    \regex_replace_once:nnN { \(\d+\)\Z } { } \l__txlp_val_tl
+    \regex_replace_once:nnN { \+\-.*\Z } { } \l__txlp_val_tl
+    \regex_replace_once:nnN { \A([eE]) } { 1\1 } \l__txlp_val_tl
+    \tl_set:Nx \l__txlp_val_tl { \l__txlp_val_tl }
+    \tl_clear:N \l__txlp_fac_tl
+    \IfValueT {#5} { \tl_set:Nn \l__txlp_fac_tl {#5} }
+    \tl_if_blank:VTF \l__txlp_fac_tl
+      { \__txlp_fpset:Nn \l__txlp_x_tl { \l__txlp_val_tl } }
+      {
+        \bool_lazy_and:nnTF
+          { ! #1 }
+          { \bool_lazy_or_p:nn { \str_if_eq_p:ee { \tl_head:N \l__txlp_fac_tl } { e } } { \str_if_eq_p:ee { \tl_head:N \l__txlp_fac_tl } { E } } }
+          { \__txlp_fpset:Nn \l__txlp_x_tl { ( \l__txlp_val_tl ) * 1 \l__txlp_fac_tl } }
+          { \__txlp_fpset:Nn \l__txlp_x_tl { ( \l__txlp_val_tl ) * ( \l__txlp_fac_tl ) } }
+      }
+    % X keeps 12 figures (no binary-looking tails); \<x> prints at most 4, without padding zeros
+    \__txlp_figures:NVn \l__txlp_r_tl \l__txlp_x_tl { 4 }
+    \__txlp_figures:NVn \l__txlp_x_tl \l__txlp_x_tl { 12 }
+    \tl_clear:N \l__txlp_u_tl
+    \IfValueT {#4} { \tl_set:Nn \l__txlp_u_tl {#4} }
+    \IfValueT {#6} { \tl_if_blank:nF {#6} { \tl_set:Nn \l__txlp_u_tl {#6} } }
+    \cs_set:cpx { #2X } { \l__txlp_x_tl }
+    \cs_set:cpx { #2OX } { \l__txlp_val_tl }
+    \IfValueTF {#4}
+      {
+        \cs_set:cpn { #2OU } {#4}
+        \cs_set_protected:cpn { #2O } { \__txlp_print:nnn {#7} {#3} {#4} }
+      }
+      {
+        \cs_set:cpn { #2OU } { }
+        \cs_set_protected:cpn { #2O } { \__txlp_print:nnn {#7} {#3} { } }
+      }
+    \cs_set:cpn { #2F } {#2}
+    \__txlp_printers:nVn {#2} \l__txlp_u_tl {#7}
+    \__txlp_given_plain:nVV {#2} \l__txlp_r_tl \l__txlp_u_tl
+  }
+\cs_generate_variant:Nn \__txlp_figures:Nnn { NV }
+% \SolQty[siunitx options]{name}[formula]{xfp expression}[SI unit]
+\NewDocumentCommand \SolQty { O{} m o m o }
+  {
+    \__txlp_fpset:Nn \l__txlp_x_tl {#4}
+    \cs_set:cpx { #2X } { \l__txlp_x_tl }
+    \IfNoValueTF {#3} { \cs_set:cpn { #2F } {#2} } { \cs_set:cpn { #2F } {#3} }
+    \__txlp_opts:Nn \l__txlp_opt_tl {#1}
+    \IfValueTF {#5} { \tl_set:Nn \l__txlp_u_tl {#5} } { \tl_clear:N \l__txlp_u_tl }
+    \__txlp_printers:nVV {#2} \l__txlp_u_tl \l__txlp_opt_tl
+    \__txlp_plain_ok:nT {#2} { \cs_set_eq:cc { #2O } { #2 } }
+  }
+% \ConvTo{new}{factor}{old}{unit}
+\NewDocumentCommand \ConvTo { m m m m }
+  {
+    \__txlp_fpset:Nn \l__txlp_x_tl { \use:c {#3X} * ( #2 ) }
+    \cs_set:cpx { #1X } { \l__txlp_x_tl }
+    \cs_set_eq:cc { #1F } { #3F }
+    \__txlp_printers:nnn {#1} {#4} { }
+  }
+\ExplSyntaxOff
+
+% ---------------------------------------------------------------- constants (CODATA 2018)
+\NewQty{ncg}{9.81}[\meter\per\second\squared]
+\NewQty{ncG}{6.674e-11}[\newton\meter\squared\per\kilogram\squared]
+\NewQty{ncme}{9.109e-31}[\kilogram]
+\NewQty{ncmp}{1.673e-27}[\kilogram]
+\NewQty{ncmn}{1.675e-27}[\kilogram]
+\NewQty{nce}{1.602e-19}[\coulomb]
+\NewQty{nceps}{8.854e-12}[\ampere\second\per\volt\per\meter]
+\NewQty{ncepsO}{8.854e-12}[\ampere\second\per\volt\per\meter]
+\NewQty{ncmuo}{1.257e-6}[\volt\second\per\ampere\per\meter]
+\NewQty{ncmuO}{1.257e-6}[\volt\second\per\ampere\per\meter]
+\NewQty{ncmu}{1.257e-6}[\volt\second\per\ampere\per\meter]
+\NewQty{ncNA}{6.022e23}[\per\mole]
+\NewQty{ncc}{2.998e8}[\meter\per\second]
+\NewQty{nch}{6.626e-34}[\joule\second]
+\NewQty{nchbar}{1.055e-34}[\joule\second]
+\NewQty{ncu}{1.661e-27}[\kilogram]
+\NewQty{ncpo}{1.013e5}[\pascal]
+\NewQty{nck}{1.381e-23}[\joule\per\kelvin]
+\NewQty{nckB}{1.381e-23}[\joule\per\kelvin]
+\NewQty{nckc}{8.988e9}[\newton\meter\squared\per\coulomb\squared]
+\NewQty{ncR}{8.314}[\joule\per\mole\per\kelvin]
+\NewQty{ncS}{5.670e-8}[\watt\per\meter\squared\per\kelvin\tothe{4}]
+\NewQty{ncsigma}{5.670e-8}[\watt\per\meter\squared\per\kelvin\tothe{4}]
+\NewQty{ncb}{2.898e-3}[\meter\kelvin]
+\NewQty{ncJS}{1361}[\watt\per\meter\squared]
+\NewQty{ncRy}{1.097e7}[\per\meter]
+\NewQty{MSun}{1.989e30}[\kilogram]   \NewQty{rSun}{6.96e8}[\meter]
+\NewQty{MEar}{5.972e24}[\kilogram]   \NewQty{rEar}{6.371e6}[\meter]
+\NewQty{MMoo}{7.342e22}[\kilogram]   \NewQty{rMoo}{1.737e6}[\meter]
+\NewQty{MMer}{3.301e23}[\kilogram]   \NewQty{rMer}{2.440e6}[\meter]
+\NewQty{MVen}{4.867e24}[\kilogram]   \NewQty{rVen}{6.052e6}[\meter]
+\NewQty{MMar}{6.417e23}[\kilogram]   \NewQty{rMar}{3.390e6}[\meter]
+\NewQty{MJup}{1.898e27}[\kilogram]   \NewQty{rJup}{6.991e7}[\meter]
+\NewQty{MSat}{5.683e26}[\kilogram]   \NewQty{rSat}{5.823e7}[\meter]
+\NewQty{MUra}{8.681e25}[\kilogram]   \NewQty{rUra}{2.536e7}[\meter]
+\NewQty{MNep}{1.024e26}[\kilogram]   \NewQty{rNep}{2.462e7}[\meter]
+\NewQty{MPlu}{1.303e22}[\kilogram]   \NewQty{rPlu}{1.188e6}[\meter]
+% older exercises write the bare number of a constant as \nc<x>n
+\@for\txlp@c:=g,G,me,mp,mn,e,eps,epsO,muo,muO,mu,NA,c,h,hbar,u,po,k,kB,kc,R,S,sigma,b,JS,Ry\do{%
+  \expandafter\edef\csname nc\txlp@c n\endcsname{\csname nc\txlp@c X\endcsname}}
+\newcommand\clight{\ncc}
+
+% ---------------------------------------------------------------- material values
+% \<k><Xx>: k = c (specific heat), Lf, Lv (latent heats), Tf, Tv (melting, boiling point in °C),
+% R (density), a = al (linear expansion), g (volume expansion), r (resistivity), l (thermal conductivity);
+% Xx = the first two letters of the German name (Wasser -> Wa, Kupfer -> Ku), copper also Cu.
+% Values from usual school tables (20 °C); TeXercises' own table can differ in the last digit.
+\def\txlp@c{\joule\per\kilogram\per\kelvin}\def\txlp@L{\joule\per\kilogram}\def\txlp@T{\degreeCelsius}
+\def\txlp@R{\kilogram\per\cubic\meter}\def\txlp@a{\per\kelvin}\def\txlp@r{\ohm\meter}\def\txlp@l{\watt\per\meter\per\kelvin}
+\newcommand\txlp@mat[2]{\@for\txlp@kv:=#2\do{\expandafter\txlp@matone\txlp@kv\relax{#1}}}
+\def\txlp@matone#1=#2:#3\relax#4{\expandafter\txlp@matdef\expandafter{#3}{#1#4}{#2}}
+\def\txlp@matdef#1#2#3{\NewQty{#2}{#3}[#1]}
+\txlp@mat{Wa}{c=4182:\txlp@c,Lf=3.338e5:\txlp@L,Lv=2.256e6:\txlp@L,Tf=0:\txlp@T,Tv=100:\txlp@T,R=998.2:\txlp@R,g=2.07e-4:\txlp@a,l=0.598:\txlp@l}
+\txlp@mat{Ei}{c=2090:\txlp@c,Lf=3.338e5:\txlp@L,Tf=0:\txlp@T,R=917:\txlp@R,a=5.1e-5:\txlp@a,l=2.2:\txlp@l}
+\txlp@mat{Ku}{c=383:\txlp@c,Lf=2.05e5:\txlp@L,Lv=4.79e6:\txlp@L,Tf=1083:\txlp@T,Tv=2595:\txlp@T,R=8920:\txlp@R,a=1.65e-5:\txlp@a,al=1.65e-5:\txlp@a,g=4.95e-5:\txlp@a,r=1.7e-8:\txlp@r,l=394:\txlp@l}
+\txlp@mat{Cu}{c=383:\txlp@c,Lf=2.05e5:\txlp@L,Lv=4.79e6:\txlp@L,Tf=1083:\txlp@T,Tv=2595:\txlp@T,R=8920:\txlp@R,a=1.65e-5:\txlp@a,al=1.65e-5:\txlp@a,g=4.95e-5:\txlp@a,r=1.7e-8:\txlp@r,l=394:\txlp@l}
+\txlp@mat{Al}{c=896:\txlp@c,Lf=3.97e5:\txlp@L,Lv=1.09e7:\txlp@L,Tf=660:\txlp@T,Tv=2467:\txlp@T,R=2700:\txlp@R,a=2.31e-5:\txlp@a,al=2.31e-5:\txlp@a,g=6.93e-5:\txlp@a,r=2.65e-8:\txlp@r,l=237:\txlp@l}
+\txlp@mat{Fe}{c=449:\txlp@c,Lf=2.77e5:\txlp@L,Lv=6.34e6:\txlp@L,Tf=1538:\txlp@T,Tv=2862:\txlp@T,R=7874:\txlp@R,a=1.18e-5:\txlp@a,al=1.18e-5:\txlp@a,g=3.54e-5:\txlp@a,r=9.7e-8:\txlp@r,l=80:\txlp@l}
+\txlp@mat{Ko}{c=470:\txlp@c,Tf=1450:\txlp@T,R=7850:\txlp@R,a=1.2e-5:\txlp@a,al=1.2e-5:\txlp@a,g=3.6e-5:\txlp@a,l=50:\txlp@l}
+\txlp@mat{Si}{c=235:\txlp@c,Lf=1.05e5:\txlp@L,Lv=2.36e6:\txlp@L,Tf=961.8:\txlp@T,Tv=2162:\txlp@T,R=10490:\txlp@R,a=1.89e-5:\txlp@a,al=1.89e-5:\txlp@a,g=5.67e-5:\txlp@a,r=1.59e-8:\txlp@r,l=429:\txlp@l}
+\txlp@mat{Wo}{c=134:\txlp@c,Lf=1.92e5:\txlp@L,Lv=4.48e6:\txlp@L,Tf=3422:\txlp@T,Tv=5555:\txlp@T,R=19300:\txlp@R,a=4.5e-6:\txlp@a,al=4.5e-6:\txlp@a,r=5.5e-8:\txlp@r,l=173:\txlp@l}
+\txlp@mat{Lu}{c=1005:\txlp@c,R=1.293:\txlp@R,l=0.0262:\txlp@l}
+\txlp@mat{Et}{c=2430:\txlp@c,Lf=1.08e5:\txlp@L,Lv=8.42e5:\txlp@L,Tf=-114.5:\txlp@T,Tv=78.3:\txlp@T,R=789:\txlp@R,g=1.10e-3:\txlp@a}
+\txlp@mat{Be}{c=1740:\txlp@c,Lf=1.27e5:\txlp@L,Lv=3.94e5:\txlp@L,Tf=5.5:\txlp@T,Tv=80.1:\txlp@T,R=879:\txlp@R,g=1.23e-3:\txlp@a}
+\txlp@mat{Ol}{c=1970:\txlp@c,R=910:\txlp@R,g=7.2e-4:\txlp@a}
+% \Waerme{Wasser, Kupfer}, \Dichte{Luft}: in the solver part only the values above; elsewhere a short note
+\newcommand\txlp@matlist[2]{\iftxpreamble\else\par\emph{(\iftxde #1\else #2\fi: \txlp@items)}\par\fi}
+\newcommand\Waerme[1]{\def\txlp@items{#1}\txlp@matlist{Stoffwerte aus der Tabelle}{material values from the table}}
+\newcommand\Dichte[1]{\def\txlp@items{#1}\txlp@matlist{Dichte aus der Tabelle}{density from the table}}
+
+% ---------------------------------------------------------------- units (abbreviations used in exercises)
+\DeclareSIUnit\mps{\meter\per\second}      \DeclareSIUnit\cmps{\centi\meter\per\second}
+\DeclareSIUnit\kmps{\kilo\meter\per\second} \DeclareSIUnit\kmph{\kilo\meter\per\hour}
+\DeclareSIUnit\mpss{\meter\per\second\squared} \DeclareSIUnit\mpsq{\meter\per\second\squared}
+\DeclareSIUnit\cmpsq{\centi\meter\per\second\squared} \DeclareSIUnit\kmpsq{\kilo\meter\per\second\squared}
+\DeclareSIUnit\Npkg{\newton\per\kilogram} \DeclareSIUnit\Nmqpkgq{\newton\meter\squared\per\kilogram\squared}
+\DeclareSIUnit\mkpkgsq{\meter\cubed\per\kilogram\per\second\squared}
+\DeclareSIUnit\radps{\radian\per\second} \DeclareSIUnit\radpsq{\radian\per\second\squared}
+\DeclareSIUnit\radqpsq{\radian\squared\per\second\squared}
+\DeclareSIUnit\rpss{\per\second\squared} \DeclareSIUnit\rps{\per\second}
+\DeclareSIUnit\Npm{\newton\per\meter} \DeclareSIUnit\Npcm{\newton\per\centi\meter} \DeclareSIUnit\Npmm{\newton\per\milli\meter}
+\DeclareSIUnit\kgmps{\kilogram\meter\per\second} \DeclareSIUnit\kgpmk{\kilogram\per\meter\cubed}
+\DeclareSIUnit\kgpcm{\kilogram\per\centi\meter\cubed} \DeclareSIUnit\gpcmk{\gram\per\centi\meter\cubed}
+\DeclareSIUnit\Wpqmkv{\watt\per\meter\squared\per\kelvin\tothe{4}} \DeclareSIUnit\Wpmq{\watt\per\meter\squared}
+\DeclareSIUnit\mTps{\milli\tesla\per\second} \DeclareSIUnit\CpVm{\coulomb\per\volt\per\meter}
+\DeclareSIUnit\vmps{\meter\per\second}
+\DeclareSIUnit\Jpkg{\joule\per\kilogram} \DeclareSIUnit\JpkgK{\joule\per\kilogram\per\kelvin}
+\DeclareSIUnit\Jpk{\joule\per\kelvin} \DeclareSIUnit\Jps{\joule\per\second}
+\DeclareSIUnit\atomicmassunit{u} \DeclareSIUnit\atomicmassunits{u} \DeclareSIUnit\atomicamassunit{u}
+% short unit names that siunitx does not know (they only act inside units)
+\DeclareSIUnit\h{h} \DeclareSIUnit\min{min} \DeclareSIUnit\d{d} \DeclareSIUnit\y{a} \DeclareSIUnit\a{a}
+\DeclareSIUnit\rad{rad} \DeclareSIUnit\sr{sr} \DeclareSIUnit\Bq{Bq} \DeclareSIUnit\Gy{Gy} \DeclareSIUnit\Sv{Sv}
+\DeclareSIUnit\eV{eV} \DeclareSIUnit\bar{bar} \DeclareSIUnit\l{l} \DeclareSIUnit\L{L} \DeclareSIUnit\u{u}
+\DeclareSIUnit\celsius{\degreeCelsius} \DeclareSIUnit\celcius{\degreeCelsius} \DeclareSIUnit\degC{\degreeCelsius}
+\DeclareSIUnit\permille{\text{\textperthousand}}
+\DeclareSIUnit\Wh{\watt\hour} \DeclareSIUnit\kWh{\kilo\watt\hour} \DeclareSIUnit\Ah{\ampere\hour}
+\DeclareSIUnit\rpm{rpm} \DeclareSIUnit\dB{dB} \DeclareSIUnit\lj{ly} \DeclareSIUnit\ly{ly} \DeclareSIUnit\AE{AE} \DeclareSIUnit\AU{AU}
+\DeclareSIUnit\pc{pc} \DeclareSIUnit\cal{cal} \DeclareSIUnit\atm{atm} \DeclareSIUnit\Torr{Torr}
+\DeclareSIPostPower\squred{2} \DeclareSIPrePower\squar{2}
+
+% ---------------------------------------------------------------- layout helpers
+\newcounter{abc}
+\newenvironment{abcliste}
+  {\begin{list}{\alph{abc})}{\usecounter{abc}\setlength\leftmargin{2em}\setlength\labelwidth{1.5em}%
+     \setlength\itemsep{0.3ex}\setlength\topsep{0.5ex}}}
+  {\end{list}}
+\newenvironment{abclist}{\begin{abcliste}}{\end{abcliste}}
+\newcommand\abc{\item}
+% true/false lists
+\newenvironment{wf}{\begin{list}{\textbullet}{\setlength\leftmargin{1.5em}\setlength\itemsep{0.3ex}}}{\end{list}}
+\newcommand\claim[1]{\item #1 \hfill $\square$ \iftxde wahr\else true\fi\quad $\square$ \iftxde falsch\else false\fi}
+\newcommand\trueclaim[1]{\item #1 \hfill \textbf{\iftxde wahr\else true\fi}}
+\newcommand\falseclaim[1]{\item #1 \hfill \textbf{\iftxde falsch\else false\fi}}
+% \ssc{E}{kin}: upright subscript; with a command, _ or ^ inside (\ssc{E}{\gamma}, \ssc{m}{C_12})
+% an upright math subscript
+\ExplSyntaxOn
+\NewDocumentCommand \ssc { m m }
+  { \regex_match:nnTF { \c{[A-Za-z]+} | \cD. | \cU. } {#2} { #1 \sb { \mathrm {#2} } } { #1 \sb { \text {#2} } } }
+\ExplSyntaxOff
+\newcommand\result[1]{\ensuremath{\uuline{#1}}}
+\newcommand\pq[2]{\SI{#1}{#2}}
+\newcommand\ds{\displaystyle}
+\newcommand\mustbe{\overset{!}{=}}
+\newcommand\alphaarrow{\xrightarrow{\alpha}} \newcommand\betaarrow{\xrightarrow{\beta}}
+\newcommand\betamarrow{\xrightarrow{\beta^-}} \newcommand\betaparrow{\xrightarrow{\beta^+}}
+\newcommand\gammaarrow{\xrightarrow{\gamma}}
+\providecommand\xlongrightarrow{\xrightarrow}
+\providecommand\xlongleftarrow{\xleftarrow}
+\NewDocumentCommand\isotope{O{}O{}m}{\ensuremath{{}^{#1}_{#2}\mathrm{#3}}}
+\newcommand\toPercent[2][2]{\num[round-mode=figures,round-precision=#1]{\fpeval{100*\csname #2X\endcsname}}\,\%}
+\newcommand\nprv[1]{#1}   % "not in preview": kept in print
+\newcommand\prv[1]{}      % "preview only": left out in print
+\newcommand\Korrekturhinweise[1]{}
+% \al{...}: an align* block
+\newcommand\al[1]{\begin{align*}#1\end{align*}}
+% small helpers found in exercises
+\providecommand\e{\mathrm{e}}
+\providecommand\Z{\mathbb{Z}}
+\providecommand\R{\mathbb{R}}
+\providecommand\cross{\times}
+\newcommand\zu{_{\text{zu}}}
+\newcommand\nutz{_{\text{nutz}}}
+\providecommand\glqq{\quotedblbase}
+\providecommand\grqq{\textquotedblleft}
+\providecommand\glq{\quotesinglbase}
+\providecommand\grq{\textquoteleft}
+\providecommand\href[2]{#2}
+\providecommand\enquote[1]{``#1''}
+\providecommand\textquote[1]{\enquote{#1}}
+\providecommand\permil{\text{\textperthousand}}
+\providecommand\infinity{\infty}
+\providecommand\astrosun{\odot}
+\providecommand\alhpa{\alpha}
+\providecommand\aplha{\alpha}
+\providecommand\Delt{\Delta}
+\providecommand\textsuperscrip{\textsuperscript}
+% difficulty markers (chess pieces); without chessfss a letter
+\ifdefined\symking
+  \newcommand\pawnB{\sympawn}\newcommand\knightB{\symknight}\newcommand\bishopB{\symbishop}
+  \newcommand\rookB{\symrook}\newcommand\queenB{\symqueen}\newcommand\kingB{\symking}
+\else
+  \newcommand\pawnB{P}\newcommand\knightB{N}\newcommand\bishopB{B}
+  \newcommand\rookB{R}\newcommand\queenB{Q}\newcommand\kingB{K}
+\fi
+\let\pawnW\pawnB \let\knightW\knightB \let\bishopW\bishopB \let\rookW\rookB \let\queenW\queenB \let\kingW\kingB
+% colours used in drawings
+\definecolor{darkred}{rgb}{0.6,0,0}\definecolor{darkgreen}{rgb}{0,0.45,0}\definecolor{darkblue}{rgb}{0,0,0.55}
+\definecolor{lightgray}{gray}{0.85}\definecolor{darkgray}{gray}{0.35}\definecolor{lightblue}{rgb}{0.68,0.85,0.9}
+
+% ---------------------------------------------------------------- boxes
+\newcommand\Geg[1]{\begin{tcolorbox}[colback=white,colframe=black!40,title=\txGiven,fonttitle=\small\bfseries,coltitle=black,colbacktitle=black!8]\vspace{-1ex}\begin{align*}#1\end{align*}\end{tcolorbox}}
+\newcommand\Ges[2]{\begin{tcolorbox}[colback=white,colframe=black!40,title=\txWanted,fonttitle=\small\bfseries,coltitle=black,colbacktitle=black!8]#1, \quad $#2$\end{tcolorbox}}
+\newcommand\Lsg[1]{\begin{tcolorbox}[colback=green!4,colframe=green!45!black,title=\txSolution,fonttitle=\small\bfseries]\vspace{-1ex}\begin{align*}#1\end{align*}\end{tcolorbox}}
+\let\Giv\Geg \let\Sol\Lsg
+% \tcbhighmath[aufgabe]{...} red, [loesung] green, [highlight math] yellow (TeXercises cheatsheet)
+\tcbset{aufgabe/.style={colback=red!5,colframe=red!70!black},
+        loesung/.style={colback=green!5,colframe=green!50!black},
+        highlight math/.style={colback=yellow!15,colframe=orange!80!black},
+        highlight math style={enhanced,colback=yellow!15,colframe=orange!80!black,boxrule=0.6pt,arc=2pt,
+          left=2pt,right=2pt,top=1pt,bottom=1pt}}
+
+% ---------------------------------------------------------------- text input
+% (pdflatex; LuaLaTeX reads Unicode directly)
+\ifdefined\directlua\else
+\DeclareUnicodeCharacter{2005}{\ }\DeclareUnicodeCharacter{2009}{\,}\DeclareUnicodeCharacter{202F}{\,}
+\DeclareUnicodeCharacter{200B}{}\DeclareUnicodeCharacter{2002}{\enspace}\DeclareUnicodeCharacter{2003}{\quad}
+\DeclareUnicodeCharacter{03B1}{\ensuremath{\alpha}}\DeclareUnicodeCharacter{03B2}{\ensuremath{\beta}}
+\DeclareUnicodeCharacter{03B3}{\ensuremath{\gamma}}\DeclareUnicodeCharacter{03B4}{\ensuremath{\delta}}
+\DeclareUnicodeCharacter{03B5}{\ensuremath{\varepsilon}}\DeclareUnicodeCharacter{03B7}{\ensuremath{\eta}}
+\DeclareUnicodeCharacter{03B8}{\ensuremath{\theta}}\DeclareUnicodeCharacter{03BB}{\ensuremath{\lambda}}
+\DeclareUnicodeCharacter{03BC}{\ensuremath{\mu}}
+\DeclareUnicodeCharacter{03BD}{\ensuremath{\nu}}\DeclareUnicodeCharacter{03C0}{\ensuremath{\pi}}
+\DeclareUnicodeCharacter{03C1}{\ensuremath{\rho}}\DeclareUnicodeCharacter{03C3}{\ensuremath{\sigma}}
+\DeclareUnicodeCharacter{03C4}{\ensuremath{\tau}}\DeclareUnicodeCharacter{03C6}{\ensuremath{\varphi}}
+\DeclareUnicodeCharacter{03C9}{\ensuremath{\omega}}\DeclareUnicodeCharacter{0394}{\ensuremath{\Delta}}
+\DeclareUnicodeCharacter{03A9}{\ensuremath{\Omega}}\DeclareUnicodeCharacter{2126}{\ensuremath{\Omega}}
+\DeclareUnicodeCharacter{2212}{\ensuremath{-}}
+\DeclareUnicodeCharacter{2264}{\ensuremath{\leq}}\DeclareUnicodeCharacter{2265}{\ensuremath{\geq}}
+\DeclareUnicodeCharacter{2248}{\ensuremath{\approx}}\DeclareUnicodeCharacter{2192}{\ensuremath{\rightarrow}}
+\DeclareUnicodeCharacter{21D2}{\ensuremath{\Rightarrow}}\DeclareUnicodeCharacter{2260}{\ensuremath{\neq}}
+\DeclareUnicodeCharacter{221A}{\ensuremath{\surd}}\DeclareUnicodeCharacter{221E}{\ensuremath{\infty}}
+\DeclareUnicodeCharacter{2032}{\ensuremath{'}}
+\fi
+
+% Function plots (tkz-fct's \tkzFct, TikZ's plot function{...}) normally call gnuplot through
+% -shell-escape. Here the points are computed in TeX instead (l3fp, gnuplot syntax: sin in
+% radians, x**2), so the plots need neither gnuplot nor -shell-escape.
+\ExplSyntaxOn
+\fp_new_variable:n { x }
+\iow_new:N \g__txlp_plot_iow
+\tl_new:N \l__txlp_plot_tl
+\seq_new:N \l__txlp_plot_seq
+\int_new:N \l__txlp_plot_n_int
+\fp_new:N \l__txlp_plot_a_fp
+\fp_new:N \l__txlp_plot_b_fp
+\cs_new_protected:Npn \__txlp_plot_table:nn #1#2
+  % #1 table file, #2 the gnuplot code TikZ wrote: set samples N; plot [x=a:b] [range] expression
+  {
+    \tl_set:Nn \l__txlp_plot_tl {#2}
+    \regex_extract_once:nVNTF
+      { \A \s* set \s+ samples \s+ (\d+) [^;]* ; \s* plot \s* \[ \s* x \s* = ([^:]+) : ([^\]]+) \] \s* (?: \[ [^\]]* \] \s* )? (.*) \Z }
+      \l__txlp_plot_tl \l__txlp_plot_seq
+      {
+        \int_set:Nn \l__txlp_plot_n_int { \int_max:nn { 2 } { \seq_item:Nn \l__txlp_plot_seq { 2 } } }
+        \fp_set:Nn \l__txlp_plot_a_fp { \seq_item:Nn \l__txlp_plot_seq { 3 } }
+        \fp_set:Nn \l__txlp_plot_b_fp { \seq_item:Nn \l__txlp_plot_seq { 4 } }
+        \tl_set:Nx \l__txlp_plot_tl { \seq_item:Nn \l__txlp_plot_seq { 5 } }
+        \tl_replace_all:Nnn \l__txlp_plot_tl { ** } { ^ }
+        % sin(deg(...)) is TikZ' degree style; gnuplot's sin takes radians already
+        \regex_replace_all:nnN { deg \s* \( } { ( } \l__txlp_plot_tl
+        \iow_open:Nn \g__txlp_plot_iow {#1}
+        \int_step_inline:nnn { 0 } { \l__txlp_plot_n_int - 1 }
+          {
+            \fp_set_variable:nn { x }
+              { \l__txlp_plot_a_fp + ##1 * ( \l__txlp_plot_b_fp - \l__txlp_plot_a_fp ) / ( \l__txlp_plot_n_int - 1 ) }
+            \iow_now:Nx \g__txlp_plot_iow
+              { \fp_eval:n { round( x , 6 ) } \c_space_tl \fp_eval:n { round( \l__txlp_plot_tl , 6 ) } \c_space_tl i }
+          }
+        \iow_close:N \g__txlp_plot_iow
+      }
+      {
+        \msg_warning:nnx { texercises-lp } { plot } { \tl_to_str:N \l__txlp_plot_tl }
+        \iow_open:Nn \g__txlp_plot_iow {#1}
+        \iow_close:N \g__txlp_plot_iow
+      }
+  }
+\cs_generate_variant:Nn \regex_extract_once:nnNTF { nV }
+\msg_new:nnn { texercises-lp } { plot } { This~plot~needs~gnuplot,~it~is~left~out:~#1 }
+\cs_set_protected:Npn \pgf@plotgnuplot [#1] #2
+  {
+    \pgfutilpreparefilename { #1.table }
+    \tl_set_eq:NN \pgf@plottablefile \pgfretval
+    \use:x { \exp_not:N \__txlp_plot_table:nn { \pgf@plottablefile } { \pgfutil@trimspaces@e {#2} } }
+    \pgfplotxyfile { \pgf@plottablefile }
+  }
+\ExplSyntaxOff
+% old circuit drawings close the path with "to (cycle)"; they all start at the origin
+\tikzset{every picture/.append style={execute at begin picture={\coordinate (cycle) at (0,0);}}}
+
+% images are not part of the export: a missing file prints a framed placeholder
+% (also tried with .png, .pdf, .jpg; with \txexurl set, the placeholder links to the exercise)
+\let\txlp@includegraphics\includegraphics
+% an image never gets wider than the line (\textwidth inside a list would stick out)
+\renewcommand\includegraphics[2][]{%
+  \IfFileExists{#2}{\txlp@image{#1}{#2}}{%
+  \IfFileExists{#2.pdf}{\txlp@image{#1}{#2.pdf}}{%
+  \IfFileExists{#2.png}{\txlp@image{#1}{#2.png}}{%
+  \IfFileExists{#2.jpg}{\txlp@image{#1}{#2.jpg}}{%
+  \txlp@missing{#2}}}}}}
+\newcommand\txlp@image[2]{\adjustbox{max width=\linewidth}{\txlp@includegraphics[#1]{#2}}}
+\newcommand\txlp@missing[1]{\ifdefined\txexurl\href{\txexurl}{\txlp@missingbox{#1}}\else\txlp@missingbox{#1}\fi}
+\newcommand\txlp@missingbox[1]{\fbox{\parbox{0.4\linewidth}{\centering\footnotesize image missing:\\\texttt{\detokenize{#1}}}}}
+\endinput

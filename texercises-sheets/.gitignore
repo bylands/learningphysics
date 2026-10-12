@@ -1,0 +1,8 @@
+images/
+*.aux
+*.log
+*.fls
+*.fdb_latexmk
+*.out
+*-images.txt
+*.tkzfonct.*

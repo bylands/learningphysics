@@ -1,0 +1,200 @@
+% lp-minion.sty -- Samuel Byland's exercise sheet layout (LuaLaTeX), after "W1 PAe AC Circuits":
+% Minion 3, old-style figures; body 10/12 pt; title 14 pt bold small caps; section titles 10 pt
+% semibold small caps; footer 8 pt small caps (left text, date, author); exercises numbered
+% 1., 2., ... with a hanging indent, a)/b) parts indented once more; numerical solutions in 6 pt.
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{lp-minion}[2026/10/11 Learning Physics sheet layout, Minion 3]
+% option oldstylemath: old-style figures in formulas too (default: lining figures in formulas,
+% easier to read in exponents and indices; text and quantities in text stay old-style)
+\newif\iflp@osmath
+\DeclareOption{oldstylemath}{\lp@osmathtrue}
+% option cochineal: Cochineal (Michael Sharpe's extension of Crimson Text, a Minion-like Garalde)
+% with its matching math (newtxmath); Cochineal has no semibold, section titles are set bold
+\newif\iflp@coch
+\DeclareOption{cochineal}{\lp@cochtrue}
+% option modern: a modern textbook look, all free fonts: Erewhon (Michael Sharpe's Utopia) with
+% Erewhon Math, headings in Fira Sans, lining figures, one accent colour
+\newif\iflp@modern
+\DeclareOption{modern}{\lp@moderntrue}
+\ProcessOptions\relax
+\RequirePackage{iftex}
+\RequireLuaTeX
+\RequirePackage[a4paper,left=2.5cm,right=2.5cm,top=2.5cm,bottom=62bp,footskip=24bp]{geometry}
+\RequirePackage{amsmath}
+\RequirePackage{enumitem}
+
+% ---------------------------------------------------------------- fonts
+\iflp@modern
+\RequirePackage{fontspec}
+\RequirePackage{unicode-math}
+% (an older TeX Live without these fonts falls back to TeX Gyre Pagella and its math, and to
+% Latin Modern Sans; the sheet then still compiles)
+\IfFontExistsTF{Erewhon-Regular.otf}{%
+\setmainfont{Erewhon}[Extension=.otf, UprightFont=*-Regular, ItalicFont=*-Italic,
+  BoldFont=*-Bold, BoldItalicFont=*-BoldItalic, SlantedFont=*-RegularSlanted, Ligatures=TeX]}{%
+\setmainfont{TeX Gyre Pagella}[Ligatures=TeX]}
+\IfFontExistsTF{FiraSans-Book.otf}{%
+\setsansfont{FiraSans}[Extension=.otf, UprightFont=*-Book, ItalicFont=*-BookItalic,
+  BoldFont=*-SemiBold, BoldItalicFont=*-SemiBoldItalic,
+  FontFace={sb}{n}{*-SemiBold}, FontFace={mb}{n}{*-Medium}, FontFace={mb}{it}{*-MediumItalic}]}{%
+\setsansfont{Latin Modern Sans}[FontFace={sb}{n}{* Demi Cond}, FontFace={mb}{n}{* Demi Cond}]}
+\IfFontExistsTF{Erewhon-Math.otf}{\setmathfont{Erewhon-Math.otf}}{\setmathfont{TeX Gyre Pagella Math}}
+\newcommand\lpsemibold{\sffamily\fontseries{sb}\selectfont}
+\else
+\iflp@coch
+\RequirePackage[osf]{cochineal}
+\RequirePackage[cochineal,vvarbb]{newtxmath}
+\newcommand\lpsemibold{\bfseries}
+\else
+\RequirePackage{fontspec}
+\RequirePackage{unicode-math}
+\newcommand\lpsemibold{\fontseries{sb}\selectfont}
+% Minion 3 by file name (it is installed in ~/Library/Fonts); Medium and Semibold as extra series
+\setmainfont{Minion3}[Extension=.otf, UprightFont=*-Regular, ItalicFont=*-Italic,
+  BoldFont=*-Bold, BoldItalicFont=*-BoldItalic,
+  FontFace={sb}{n}{*-Semibold}, FontFace={sb}{it}{*-SemiboldItalic},
+  FontFace={mb}{n}{*-Medium}, FontFace={mb}{it}{*-MediumItalic},
+  Numbers=OldStyle, Ligatures=TeX]
+% math: with Minion Math installed (the OpenType math font made for Minion, typoma.com) that one;
+% otherwise letters, Greek and figures from Minion 3, operators and big symbols from Libertinus Math
+\IfFontExistsTF{Minion Math}{\def\lp@minionmath{1}}{\def\lp@minionmath{0}}
+\ifnum\lp@minionmath=1
+\setmathfont{Minion Math}
+\else
+\setmathfont{Libertinus Math}[Scale=MatchLowercase]
+\setmathfont{Minion3-Italic.otf}[range=it/{latin,Latin,greek,Greek}]
+\iflp@osmath\def\lp@mathnum{OldStyle}\else\def\lp@mathnum{Lining}\fi
+\setmathfont{Minion3-Regular.otf}[range={up/{latin,Latin,greek,Greek,num}}, Numbers=\lp@mathnum]
+\setmathfont{Minion3-Bold.otf}[range={bfup/{latin,Latin,greek,Greek,num}}, Numbers=\lp@mathnum]
+% + = - x < > in Minion; parentheses and brackets stay with Libertinus, which can make them grow
+\setmathfont{Minion3-Regular.otf}[range={"002B,"003D,"2212,"00D7,"003C,"003E}]
+\fi
+\fi
+\fi
+% quantities in a sentence are set in the text font (old-style figures), in formulas as math
+\sisetup{mode=match, reset-text-family=false, reset-text-series=false, reset-text-shape=false}
+\newcommand\lpfrac[2]{\ensuremath{\frac{\text{#1}}{\text{#2}}}}
+\sisetup{fraction-command=\lpfrac}
+\renewcommand\normalsize{\fontsize{10bp}{12bp}\selectfont
+  \abovedisplayskip 6bp plus 2bp minus 2bp \belowdisplayskip \abovedisplayskip
+  \abovedisplayshortskip 2pt plus 2pt \belowdisplayshortskip 4pt plus 2pt minus 2pt}
+\normalsize
+\setlength\topskip{10bp}
+\setlength\parindent{0pt}
+\setlength\parskip{0pt}
+\frenchspacing
+% finer line breaking: character protrusion and font expansion, a little emergency stretch
+\RequirePackage{microtype}
+\setlength\emergencystretch{1.5em}
+
+% ---------------------------------------------------------------- page
+% \lpsetfooter{text}{date}{signature}: the text on the left; signature and date together on the
+% right ("MNG Rämibühl · ByS · 11/10/2026"), where a signed and dated sheet carries them
+\newcommand\lpfootertext{}
+\newcommand\lpfooterdate{}
+\newcommand\lpfootersign{}
+\newcommand\lpsetfooter[3]{\renewcommand\lpfootertext{#1}\renewcommand\lpfooterdate{#2}\renewcommand\lpfootersign{#3}}
+% \lpsetschool{MNG Rämibühl}: the school, left of the signature
+\newcommand\lpfooterschool{}
+\newcommand\lpsetschool[1]{\renewcommand\lpfooterschool{#1}}
+\newcommand\lpdot{\enspace\textperiodcentered\enspace}
+\newcommand\lpsigned{\ifx\lpfooterschool\@empty\else\lpfooterschool\lpdot\fi
+  {\upshape\lpfootersign}\ifx\lpfooterdate\@empty\else\lpdot\lpfooterdate\fi}
+\def\ps@lp{\let\@oddhead\@empty\let\@evenhead\@empty
+  \def\@oddfoot{\fontsize{8bp}{10bp}\selectfont\scshape
+    \rlap{\lpfootertext}\hfil\llap{\lpsigned}}%
+  \let\@evenfoot\@oddfoot}
+\pagestyle{lp}
+
+% ---------------------------------------------------------------- headings
+% title 14 pt bold small caps; section 10 pt semibold small caps (sizes in PostScript points, as
+% in Pages). Baselines as measured: title -> section 26, section -> first exercise 16, last line ->
+% next section 24, between exercises 16 (12 + 4)
+\newcommand\lptitle[1]{\par\noindent{\fontsize{14bp}{16bp}\bfseries\scshape #1\par}\addvspace{14bp}}
+\newcommand\lpsection[1]{\par\addvspace{12bp}\noindent{\lpsemibold\scshape #1\par}\nobreak\vskip 4bp\nobreak\@afterheading}
+
+% ---------------------------------------------------------------- exercises
+% 1., 2., ... at the margin, text 18 pt in; 4 pt between exercises; numbering runs on across sections
+\newlist{lpexercises}{enumerate}{1}
+\setlist[lpexercises]{label=\arabic*., leftmargin=18bp, labelwidth=!, labelsep=0pt, align=left,
+  topsep=0pt, partopsep=0pt, itemsep=4bp, parsep=0pt}
+% a), b) parts: one more 18 pt step
+\setlist[enumerate,2]{label=\alph*), leftmargin=18bp, labelsep=0pt, align=left, topsep=2bp, itemsep=0pt, parsep=0pt}
+\renewenvironment{abcliste}
+  {\begin{list}{\alph{abc})}{\usecounter{abc}\setlength\leftmargin{18bp}\setlength\labelwidth{18bp}%
+     \setlength\labelsep{0pt}\setlength\itemsep{0pt}\setlength\parsep{0pt}\setlength\topsep{2bp}%
+     \setlength\partopsep{0pt}\def\makelabel##1{##1\hfil}}}
+  {\end{list}}
+\setlist[itemize]{leftmargin=18bp, topsep=2bp, itemsep=0pt, parsep=0pt}
+
+% figures and tables stay where they are (a sheet is read in order; floats in lists would fail)
+\renewenvironment{figure}[1][]{\par\smallskip\begin{minipage}{\linewidth}\def\@captype{figure}\centering}
+  {\end{minipage}\par\smallskip}
+\renewenvironment{table}[1][]{\par\smallskip\begin{minipage}{\linewidth}\def\@captype{table}\centering}
+  {\end{minipage}\par\smallskip}
+
+% ---------------------------------------------------------------- exercise heads
+% \lpextitle{url}{title}{difficulty}: semibold title (a hidden link to the exercise on TeXercises),
+% difficulty as stars at the right, as TeXercises marks it (\star)
+\newcommand\lpextitle[3]{{\lpsemibold\href{#1}{#2}}\hfill\lpdifficulty{#3}\par\nobreak}
+\newcommand\lpdifficulty[1]{\ifnum0#1>0 {\color{black!45}\count@=#1\relax
+  \loop\ifnum\count@>0 \,\lpstar\advance\count@\m@ne\repeat}\fi}
+\iflp@coch\newcommand\lpstar{\ensuremath{\scriptstyle\bigstar}}\else\newcommand\lpstar{\ensuremath{\bigstar}}\fi
+\definecolor{lpaccent}{rgb}{0,0,0}
+% similar exercises: one small grey line of linked titles
+\newcommand\lpsimilar[1]{\par\vskip 2bp{\fontsize{8bp}{10bp}\selectfont\color{black!55}%
+  \textit{\iftxde Ähnlich:\else Similar:\fi}\enspace #1\par}}
+\newcommand\lpsimilarsep{\enspace\textperiodcentered\enspace\allowbreak}
+
+% ---------------------------------------------------------------- numerical solutions
+% \begin{lpnumerical} \lpnum{1}{6.7 ms} ... \end{lpnumerical}: 6 pt on 7 pt, label semibold small caps
+\newenvironment{lpnumerical}
+  {\par\addvspace{12bp}\noindent\fontsize{6bp}{7bp}\selectfont
+   {\lpsemibold\scshape\iftxde Numerische Lösungen\else Numerical Solutions\fi}\enspace\ignorespaces}
+  {\par}
+\newcommand\lpnum[2]{\mbox{#1.}~#2\enspace\ignorespaces}
+% the solver part runs inside the paragraph: its line ends and spaces must not print
+\newcommand\lpquietpreamble{\txinpreamble\catcode32=9 \endlinechar=-1 }
+\newcommand\lpendquietpreamble{\txendpreamble\catcode32=10 \endlinechar=13 }
+
+% ---------------------------------------------------------------- links (not coloured, not boxed)
+\RequirePackage[hidelinks,pdfusetitle]{hyperref}
+
+% ---------------------------------------------------------------- TeXercises boxes in the sheet colours
+\tcbset{fonttitle=\lpsemibold\scshape}
+
+% ---------------------------------------------------------------- modern look
+% sans headings in one accent colour (a deep blue), numbers set off in the margin, lining figures,
+% a little more leading for Erewhon's large x-height; same page grid and structure as above
+\iflp@modern
+\definecolor{lpaccent}{RGB}{0,82,147}
+\renewcommand\normalsize{\fontsize{10bp}{13bp}\selectfont
+  \abovedisplayskip 6bp plus 2bp minus 2bp \belowdisplayskip \abovedisplayskip
+  \abovedisplayshortskip 2pt plus 2pt \belowdisplayshortskip 4pt plus 2pt minus 2pt}
+\normalsize
+\def\ps@lp{\let\@oddhead\@empty\let\@evenhead\@empty
+  \def\@oddfoot{\sffamily\fontsize{7.5bp}{10bp}\selectfont\color{black!60}%
+    \rlap{\lpfootertext}\hfil{\color{lpaccent}\fontseries{sb}\selectfont\thepage}\hfil\llap{\lpsigned}}%
+  \let\@evenfoot\@oddfoot}
+\pagestyle{lp}
+\renewcommand\lptitle[1]{\par\noindent{\sffamily\fontseries{sb}\selectfont\fontsize{18bp}{22bp}\selectfont
+  \color{lpaccent}#1\par}\vskip 5bp{\color{lpaccent}\hrule height 0.6bp}\addvspace{16bp}}
+\renewcommand\lpsection[1]{\par\addvspace{16bp}\noindent{\sffamily\fontseries{sb}\selectfont
+  \fontsize{11bp}{13bp}\selectfont\color{lpaccent}#1\par}\nobreak\vskip 6bp\nobreak\@afterheading}
+\setlist[lpexercises]{label={\sffamily\fontseries{sb}\selectfont\color{lpaccent}\arabic*}, leftmargin=22bp,
+  labelwidth=!, labelsep=0pt, align=left, topsep=0pt, partopsep=0pt, itemsep=9bp, parsep=0pt}
+\renewcommand\lpextitle[3]{{\sffamily\fontseries{mb}\selectfont\href{#1}{#2}}\hfill\lpdifficulty{#3}\par\nobreak\vskip 1bp}
+\renewcommand\lpdifficulty[1]{\ifnum0#1>0 {\color{lpaccent!55}\count@=#1\relax
+  \loop\ifnum\count@>0 \,\lpstar\advance\count@\m@ne\repeat}\fi}
+\renewcommand\lpstar{\ensuremath{\scriptstyle\bigstar}}
+\renewcommand\lpsimilar[1]{\par\vskip 3bp{\sffamily\fontsize{7.5bp}{10bp}\selectfont\color{black!55}%
+  {\color{lpaccent!70}\iftxde Ähnlich\else Similar\fi}\enspace #1\par}}
+\renewenvironment{abcliste}
+  {\begin{list}{{\sffamily\fontseries{mb}\selectfont\color{lpaccent}\alph{abc}}}{\usecounter{abc}%
+     \setlength\leftmargin{16bp}\setlength\labelwidth{16bp}%
+     \setlength\labelsep{0pt}\setlength\itemsep{1bp}\setlength\parsep{0pt}\setlength\topsep{3bp}%
+     \setlength\partopsep{0pt}\def\makelabel##1{##1\hfil}}}
+  {\end{list}}
+\tcbset{fonttitle=\sffamily\fontseries{sb}\selectfont}
+\fi
+\endinput
