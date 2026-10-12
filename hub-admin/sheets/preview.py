@@ -441,20 +441,24 @@ def fmt(x: Optional[float], figures: int = 4, pad: bool = True, mode: str = "thr
     figures = max(1, min(int(figures), 15))
     if x == 0:
         return "0"
-    e = math.floor(math.log10(abs(x)))
-    r = round(x, figures - 1 - e)
-    if r != 0:
-        e = math.floor(math.log10(abs(r)))
+    mant, _, exp = f"{abs(x):.{figures - 1}e}".partition("e")  # the figures, from the decimal digits
+    digits, e = mant.replace(".", ""), int(exp)
+    sign = "-" if x < 0 else ""
     if mode == "scientific" or (mode == "threshold" and not -3 <= e <= 3):
-        m = r / 10 ** e
-        s = f"{m:.{figures - 1}f}"
+        s = digits[0] + ("." + digits[1:] if len(digits) > 1 else "")
         if not pad and "." in s:
             s = s.rstrip("0").rstrip(".")
-        return f"{plain(s)}\\cdot 10^{{{e}}}" if e else plain(s)
-    s = f"{r:.{max(0, figures - 1 - e)}f}"
+        return sign + (f"{plain(s)}\\cdot 10^{{{e}}}" if e else plain(s))
+    point = e + 1  # where the decimal point goes in the digits
+    if point <= 0:
+        s = "0." + "0" * -point + digits
+    elif point >= len(digits):
+        s = digits + "0" * (point - len(digits))
+    else:
+        s = digits[:point] + "." + digits[point:]
     if not pad and "." in s:
         s = s.rstrip("0").rstrip(".")
-    return plain(s)
+    return sign + plain(s)
 
 
 NUMBER = re.compile(r"([+-]?)(\d*\.?\d*)(?:[eE]([+-]?\d+))?")
@@ -1618,11 +1622,9 @@ MATH_SIMPLE = {"e": r"\mathrm{e}", "ds": r"\displaystyle ", "mustbe": r"\overset
                "degC": r"{}^{\circ}\mathrm{C}", "alphaarrow": r"\xrightarrow{\alpha}", "betaarrow": r"\xrightarrow{\beta}",
                "betamarrow": r"\xrightarrow{\beta^-}", "betaparrow": r"\xrightarrow{\beta^+}", "gammaarrow": r"\xrightarrow{\gamma}",
                "xlongrightarrow": r"\xrightarrow", "xlongleftarrow": r"\xleftarrow", "Z": r"\mathbb{Z}", "R": r"\mathbb{R}",
-               "zu": r"_{\text{zu}}", "nutz": r"_{\text{nutz}}", "clight": "c", "upmu": r"\mu ", "unit": "",
+               "zu": r"_{\text{zu}}", "nutz": r"_{\text{nutz}}", "clight": "c", "upmu": r"\mu ",
                "textdegree": r"^{\circ}", "dots": r"\dots ", "ldots": r"\ldots ", "noindent": "", "centering": "",
-               "qquad": r"\qquad ", "si": ""}
-MATH_SIMPLE.pop("unit")
-MATH_SIMPLE.pop("si")
+               "qquad": r"\qquad "}
 
 
 # ---------------------------------------------------------------------- an exercise
@@ -1645,7 +1647,11 @@ def render_parts(parts: Dict[str, object], solution: bool = True) -> Dict[str, o
     meta = parts.get("meta") or {}
     lang = "de" if meta.get("language") == "GER" else "en"
     url = str((meta.get("info") or {}).get("url") or "") if isinstance(meta.get("info"), dict) else ""
-    ex = Exercise(str(parts.get("preamble") or ""), lang, url)
+    try:
+        ex = Exercise(str(parts.get("preamble") or ""), lang, url)
+    except Exception:  # an unreadable solver part: the exercise without its quantities
+        ex = Exercise("", lang, url)
+        ex.fallback("error")
     out: Dict[str, object] = {"title": str(meta.get("title") or ""), "lang": lang,
                               "text": convert(ex, str(parts.get("text") or ""))}
     if solution:
@@ -1658,7 +1664,7 @@ def render_parts(parts: Dict[str, object], solution: bool = True) -> Dict[str, o
 def convert(ex: Exercise, tex: str) -> str:
     try:
         return ex.html(strip_comments(tex))
-    except (RecursionError, ValueError, IndexError) as e:  # never break the page
+    except Exception:  # never break the page
         ex.fallback("error")
         return '<pre class="tx-raw">' + escape(tex) + "</pre>"
 

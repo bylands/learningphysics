@@ -1620,7 +1620,7 @@ SHEETS_JS = r"""
   let st = null, cur = null, plan = null, dirty = false, loaded = false, busy = false;
   const previews = {}; // key → { title, text, solution, fallbacks }
   const openAlts = new Set(), openPrev = new Set();
-  let showPreview = false, withSolutions = false, planTimer = 0;
+  let showPreview = false, withSolutions = false, planTimer = 0, count = '';
 
   function el(tag, attrs, ...kids) {
     const e = document.createElement(tag);
@@ -1767,7 +1767,8 @@ SHEETS_JS = r"""
   }
 
   function exercises() {
-    const n = el('input', { type: 'number', min: '1', max: String(st.max), class: 'count', placeholder: plan ? String(plan.default_count) : '', 'aria-label': 'Number of exercises' });
+    const n = el('input', { type: 'number', min: '1', max: String(st.max), class: 'count', value: count, placeholder: plan ? String(plan.default_count) : '', 'aria-label': 'Number of exercises' });
+    n.addEventListener('input', () => { count = n.value; });
     const sug = el('button', { type: 'button', class: 'primary', disabled: !cur.modules.length || busy, onclick: () => {
       if (cur.exercises.length && !confirm('Replace the exercises of the sheet by a new suggestion?')) return;
       replanNow(true, Number(n.value) || undefined);

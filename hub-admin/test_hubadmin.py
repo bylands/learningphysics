@@ -445,6 +445,8 @@ class Preview(unittest.TestCase):
         self.assertEqual(P.fmt(12345.6, 4), r"1.235\cdot 10^{4}")
         self.assertEqual(P.fmt(12345.6, 4, mode="fixed"), r"12\,350")
         self.assertEqual(P.fmt(9.9996, 4), "10.00")
+        self.assertEqual(P.fmt(2.27e39, 2, mode="fixed"), r"2\,300" + r"\,000" * 12)  # no binary digits
+        self.assertEqual(P.fmt(-0.00123456, 3), r"-0.001\,23")
         self.assertEqual(P.fmt(None), r"\text{?}")
         self.assertEqual(P.typed_number("6.674e-11"), r"6.674\cdot 10^{-11}")
         self.assertEqual(P.typed_number("2,5"), "2.5")
