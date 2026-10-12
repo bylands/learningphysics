@@ -4,29 +4,40 @@ Checks the reading of the hub page, the cleaning of a configuration and of sets 
 objectives, and those saved before there were objectives), the names a set
 may have (and that no app or set clashes with a service nginx passes on), the atomic write, the password (in the crossword app's format) and sessions, and the
 service end to end: login, rate limit, the API with and without a session, and that saves reach
-apps.json and sets.json. The exercise sheets: which exercises a set gets, the upload of a TeXercises
-export (only the teacher's exercises kept, nothing written outside its folder), and the sheet routes
-(only when logged in; a sheet is created, kept and deleted in the admin panel; a PDF only where
-LaTeX is installed).
+apps.json and sets.json. The exercise sheets: what a sheet suggests (every objective covered, the
+language, exercises without image, the difficulty mix) and the alternatives of an exercise, the .tex
+of an ordered list of exercises (without LaTeX), the PDFs where LaTeX is missing, the upload of a
+TeXercises export (only the teacher's exercises kept, nothing written outside its folder), the
+preview (sheets/preview.py: the arithmetic of the solver part, numbers and units, text to HTML,
+everything escaped, and every draft of this repository), and the service: a sheet created, changed,
+shared, duplicated and deleted, everything only when logged in except a shared sheet's online
+version, which shows no solutions.
 """
 import io
 import zipfile
 import hashlib
 import json
+import math
+import os
 import re
 import secrets
+import shutil
+import subprocess
 import sys
 import tempfile
 import threading
 import unittest
 import urllib.error
 import urllib.request
+from html import escape
 from http.server import ThreadingHTTPServer
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
 import hubadmin as H  # noqa: E402
 from sheets import sheets as S  # noqa: E402
+from sheets import preview as P  # noqa: E402
+from unittest import mock  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent
 
@@ -205,29 +216,143 @@ def export_zip(exercises):
     return buf.getvalue()
 
 
-class Sheets(unittest.TestCase):
-    POOL = {
-        "coulomb": {"objectives": {"factor": ["a1", "a2", "a3"], "vector": ["a2", "a4"]},
-                    "exercises": {"a1": {"lang": "en"}, "a2": {"lang": "de"}, "a3": {"lang": "de"}, "a4": {"lang": "en"}}},
-        "photons": {"objectives": {}, "exercises": {"p1": {"lang": "en"}, "p2": {"lang": "en"}, "p3": {"lang": "en"}, "p4": {"lang": "en"}}},
-    }
+def ex(lang="en", difficulty=1, images=False, title=""):
+    return {"lang": lang, "difficulty": difficulty, "images": images, "title": title}
 
-    def test_choose(self):
-        have = {k: Path(k) for k in ("a1", "a2", "a3", "a4", "p1", "p2", "p3", "p4")}
-        s = {"apps": [{"id": "coulomb", "objectives": ["vector", "factor"]}, {"id": "photons"}, {"id": "nope"}]}
-        # per objective the first two not taken yet, in the set's order of objectives; an app with no
-        # objectives in the pool gives its first three
-        self.assertEqual(S.choose(s, self.POOL, have), [("coulomb", "a2"), ("coulomb", "a4"), ("coulomb", "a1"), ("coulomb", "a3"),
-                                                        ("photons", "p1"), ("photons", "p2"), ("photons", "p3")])
-        # the set's language first
-        s = {"lang": "de", "apps": [{"id": "coulomb", "objectives": ["factor"]}]}
-        self.assertEqual(S.choose(s, self.POOL, have), [("coulomb", "a2"), ("coulomb", "a3")])
-        # only exercises that are there; no objectives in the set: all of the app's
-        self.assertEqual(S.choose({"apps": [{"id": "coulomb"}]}, self.POOL, {"a3": Path("a3"), "a4": Path("a4")}),
-                         [("coulomb", "a3"), ("coulomb", "a4")])
-        coll = S.collection("3a", S.choose(s, self.POOL, have), {"coulomb": "Point Charges"})
-        self.assertEqual(coll, {"title": "3a", "items": [{"exercise": "a2"}, {"exercise": "a3"}],
-                                "containers": [{"first": 1, "title": "Point Charges"}]})
+
+class Sheets(unittest.TestCase):
+    # two modules: coulomb with three objectives, photons without objectives in the pool
+    POOL = {
+        "coulomb": {"objectives": {"factor": ["f1", "f2", "f3", "f4", "f5"], "vector": ["v1", "v2", "f2"], "field": ["d1", "d2"]},
+                    "exercises": {"f1": ex("de", 1), "f2": ex("en", 2), "f3": ex("en", 1, True), "f4": ex("en", 3), "f5": ex("en", 1),
+                                  "v1": ex("en", 3), "v2": ex("en", 2), "d1": ex("en", 2), "d2": ex("de", 1)}},
+        "photons": {"objectives": {"wave": []}, "exercises": {"p1": ex("en", 1), "p2": ex("en", 2), "p3": ex("en", 3)}},
+    }
+    ALL = {"factor", "vector", "field"}
+
+    def have(self, *missing):
+        return {k for a in self.POOL.values() for k in a["exercises"]} - set(missing)
+
+    def mods(self, objectives=("factor", "vector", "field"), photons=True):
+        return [{"id": "coulomb", "objectives": list(objectives)}] + ([{"id": "photons", "objectives": ["wave"]}] if photons else [])
+
+    def test_targets(self):
+        self.assertEqual(S.targets(self.mods(), self.POOL), [("coulomb", "factor"), ("coulomb", "vector"), ("coulomb", "field"), ("photons", None)])
+        self.assertEqual(S.targets([{"id": "coulomb", "objectives": ["field", "nope"]}, {"id": "nope", "objectives": []}], self.POOL), [("coulomb", "field")])
+        self.assertEqual(S.candidates(("coulomb", "vector"), self.POOL, self.have("v1")), ["v2", "f2"])
+        self.assertEqual(S.covers("f2", S.targets(self.mods(), self.POOL), self.POOL), [("coulomb", "factor"), ("coulomb", "vector")])
+
+    def test_suggest_covers_every_objective(self):
+        keys = S.suggest(self.mods(), "en", self.POOL, self.have(), 4)
+        self.assertEqual(len(keys), 4)
+        tgts = S.targets(self.mods(), self.POOL)
+        covered = {t for k in keys for t in S.covers(k, tgts, self.POOL)}
+        self.assertEqual(covered, set(tgts))  # one each before any has two
+        self.assertEqual(len(set(keys)), len(keys))
+        # by default two per objective (here 4 objectives: 8), at most DEFAULT_MAX
+        keys = S.suggest(self.mods(), "en", self.POOL, self.have())
+        self.assertEqual(len(keys), 8)
+        self.assertEqual(S.default_count(self.mods(), self.POOL, self.have()), 8)
+        per = {t: sum(t in S.covers(k, tgts, self.POOL) for k in keys) for t in tgts}
+        self.assertTrue(all(n >= 2 for n in per.values()), per)
+        # by module, then from easy to hard
+        apps = [S.info(self.POOL, k)[0] for k in keys]
+        self.assertEqual(apps, sorted(apps, key=["coulomb", "photons"].index))
+        levels = [S.level(S.info(self.POOL, k)[1]["difficulty"]) for k in keys if S.info(self.POOL, k)[0] == "coulomb"]
+        self.assertEqual(levels, sorted(levels))
+        # the same every time; never more than there are, nor more than asked
+        self.assertEqual(keys, S.suggest(self.mods(), "en", self.POOL, self.have()))
+        self.assertEqual(len(S.suggest(self.mods(), "en", self.POOL, self.have(), 99)), 12)
+        self.assertEqual(S.suggest(self.mods(), "en", self.POOL, set()), [])
+
+    def test_suggest_prefers(self):
+        # the sheet's language first: one exercise of field, German sheet: d2 (de), English: d1
+        one = [{"id": "coulomb", "objectives": ["field"]}]
+        self.assertEqual(S.suggest(one, "de", self.POOL, self.have(), 1), ["d2"])
+        self.assertEqual(S.suggest(one, "en", self.POOL, self.have(), 1), ["d1"])
+        # without image first: of factor (f1 de, f2 average, f3 easy with image, f4 hard, f5 easy), English; one
+        # exercise: an average one; two: an easy one too, without image (f5, not f3); easy first
+        fac = [{"id": "coulomb", "objectives": ["factor"]}]
+        self.assertEqual(S.suggest(fac, "en", self.POOL, self.have(), 1), ["f2"])
+        self.assertEqual(S.suggest(fac, "en", self.POOL, self.have(), 2), ["f5", "f2"])
+        self.assertNotIn("f3", S.suggest(fac, "en", self.POOL, self.have(), 3))
+        # the difficulty mix: of 10, 3 easy, 5 average, 2 hard
+        self.assertEqual(S.mix(10), {1: 3, 2: 5, 3: 2})
+        self.assertEqual(sum(S.mix(7).values()), 7)
+        pool = {"a": {"objectives": {"o": [f"e{d}{i}" for i in range(10) for d in (1, 2, 3)]},
+                      "exercises": {f"e{d}{i}": ex("en", d) for i in range(10) for d in (1, 2, 3)}}}
+        keys = S.suggest([{"id": "a", "objectives": ["o"]}], "en", pool, set(pool["a"]["exercises"]), 10)
+        got = {d: sum(pool["a"]["exercises"][k]["difficulty"] == d for k in keys) for d in (1, 2, 3)}
+        self.assertEqual(got, {1: 3, 2: 5, 3: 2})
+        # only exercises that are there
+        self.assertNotIn("d1", S.suggest(one, "en", self.POOL, self.have("d1"), 2))
+
+    def test_alternatives(self):
+        sheet = ["f2", "v1"]
+        alts = S.alternatives("f2", sheet, self.mods(), "en", self.POOL, self.have())
+        # of factor and vector, not on the sheet; English first, then near difficulty 2 (f5/f3 easy,
+        # f4 hard, v2 average), without image first
+        self.assertEqual(alts[0], "v2")
+        self.assertNotIn("f2", alts)
+        self.assertNotIn("v1", alts)
+        self.assertEqual(alts[-1], "f1")  # German
+        self.assertEqual(set(alts), {"f1", "f3", "f4", "f5", "v2"})
+        self.assertLess(alts.index("f5"), alts.index("f3"))  # without image first
+        self.assertEqual(len(S.alternatives("f2", sheet, self.mods(), "en", self.POOL, self.have(), 2)), 2)
+        self.assertEqual(S.alternatives("p1", ["p1"], self.mods(), "en", self.POOL, self.have("p3")), ["p2"])
+        # an exercise of none of the sheet's objectives: its module's
+        self.assertEqual(S.alternatives("d1", ["d1"], self.mods(("factor",)), "en", self.POOL, {"d1", "d2", "f1"}), ["f1", "d2"])
+
+    def test_collection(self):
+        coll = S.collection("3a", [("coulomb", "f2"), ("coulomb", "f1"), ("photons", "p1"), ("coulomb", "d1")], {"coulomb": "Point Charges"})
+        self.assertEqual(coll, {"title": "3a", "items": [{"exercise": "f2"}, {"exercise": "f1"}, {"exercise": "p1"}, {"exercise": "d1"}],
+                                "containers": [{"first": 1, "title": "Point Charges"}, {"first": 3, "title": "photons"}, {"first": 4, "title": "Point Charges"}]})
+
+    def test_build_sheet_tex(self):
+        # the .tex of an ordered list of exercises (LaTeX is not needed to write it)
+        keys = ["coulomb-03-ions-in-a-crystal", "coulomb-01-hydrogen-atom", "photons-01-laser-pointer"]
+        with tempfile.TemporaryDirectory() as d:
+            coll = S.collection("Test sheet", [("coulomb", keys[0]), ("coulomb", keys[1]), ("photons", keys[2])], {"coulomb": "Point Charges", "photons": "Photons"})
+            (Path(d) / "c.json").write_text(json.dumps(coll))
+            srcs = os.pathsep.join(str(ROOT / f) for f in ("texercises-drafts", "texercises-drafts-2"))
+            for part, lang in (("both", "de"), ("exercises", "")):
+                args = [sys.executable, str(ROOT / "hub-admin" / "sheets" / "build_sheet.py"), srcs, str(Path(d) / "c.json"),
+                        str(Path(d) / "s.tex"), "--font=modern", f"--part={part}", "--date=01.02.2026"] + ([f"--lang={lang}"] if lang else [])
+                r = subprocess.run(args, capture_output=True, text=True)
+                self.assertEqual(r.returncode, 0, r.stderr)
+                tex = (Path(d) / "s.tex").read_text()
+                self.assertTrue(tex.startswith("% !TeX program = lualatex"))
+                self.assertIn(r"\begin{document}", tex)
+                self.assertTrue(tex.rstrip().endswith(r"\end{document}"))
+                self.assertEqual(tex.count(r"\begingroup"), tex.count(r"\endgroup"))
+                self.assertEqual(tex.count(r"\begin{lpexercises}"), tex.count(r"\end{lpexercises}"))
+                # in the given order, with a section where the module changes
+                firsts = [tex.index(re.search(r"\\NewQty\{(\w+)\}", (ROOT / "texercises-drafts" / "exercises" / k / "preamble.tex").read_text()).group(0)) for k in keys]
+                self.assertEqual(firsts, sorted(firsts))
+                self.assertIn(r"\lpsection{Point Charges}", tex)
+                self.assertLess(tex.index(r"\lpsection{Point Charges}"), tex.index(r"\lpsection{Photons}"))
+                self.assertEqual(r"Lösungen" in tex, part == "both")
+                self.assertEqual(r"\usepackage[ngerman]{babel}" in tex, lang == "de")
+
+    def test_request_pdf_without_latex(self):
+        # no LaTeX: a clear answer; a PDF made before (cached by its hash) is there all the same
+        with tempfile.TemporaryDirectory() as d:
+            export, cache = Path(d) / "texercises", Path(d) / "sheets"
+            (export / "exercises").mkdir(parents=True)
+            shutil.copytree(ROOT / "texercises-drafts" / "exercises" / "coulomb-01-hydrogen-atom", export / "exercises" / "coulomb-01-hydrogen-atom")
+            chosen = [("coulomb", "coulomb-01-hydrogen-atom"), ("coulomb", "not-there")]
+            with mock.patch.object(S, "lualatex", return_value=None):
+                state, why = S.request_pdf("T", chosen, {}, export, cache)
+                self.assertEqual(state, "error")
+                self.assertIn("LaTeX", why)
+                self.assertEqual(S.request_pdf("T", [("coulomb", "not-there")], {}, export, cache)[0], "error")
+                have = S.available(export)
+                key = S.fingerprint(S.collection("T", chosen[:1], {}), have, "exercises", {})
+                cache.mkdir()
+                (cache / f"{key}.pdf").write_bytes(b"%PDF-cached")
+                self.assertEqual(S.request_pdf("T", chosen, {}, export, cache), ("ready", b"%PDF-cached"))
+                self.assertEqual(S.request_pdf("T", chosen, {}, export, cache, "both")[0], "error")  # another part
+                self.assertEqual(S.make_pdf("T", chosen, {}, export, cache), (b"%PDF-cached", ""))
 
     def test_store_export(self):
         with tempfile.TemporaryDirectory() as d:
@@ -257,6 +382,177 @@ class Sheets(unittest.TestCase):
                 self.assertIn(ob, known)
                 for k in keys:
                     self.assertIn(k, entry["exercises"])
+            for k, e in entry["exercises"].items():  # what the suggestion uses
+                self.assertIn(e["lang"], ("en", "de"), k)
+                self.assertIsInstance(e["difficulty"], int, k)
+                self.assertIsInstance(e["images"], bool, k)
+
+    def test_normalize_sheet(self):
+        apps = [{"id": "coulomb", "objectives": [{"id": "factor"}, {"id": "vector"}, {"id": "field"}]}, {"id": "photons", "objectives": []}]
+        out = H.normalize_sheet({"title": " Blatt <b>1</b>\n", "lang": "de", "modules": [
+            {"id": "photons"}, {"id": "coulomb", "objectives": ["field", "nope", "factor"]}, {"id": "photons"}],
+            "exercises": ["f2", "p1", "f2"]}, apps, self.POOL)
+        self.assertEqual(out, {"title": "Blatt b1/b", "lang": "de", "modules": [{"id": "coulomb", "objectives": ["factor", "field"]},
+                               {"id": "photons", "objectives": []}], "exercises": ["f2", "p1"]})  # in the apps' order
+        # all objectives when none are given; English unless German
+        self.assertEqual(H.normalize_sheet({"modules": [{"id": "coulomb"}], "lang": "fr"}, apps, self.POOL),
+                         {"title": "", "lang": "en", "modules": [{"id": "coulomb", "objectives": ["factor", "vector", "field"]}], "exercises": []})
+        for bad in ({"modules": [{"id": "../x"}]}, {"exercises": ["../../etc/passwd"]}, {"exercises": [3]},
+                    {"exercises": [f"f{i}" for i in range(H.MAX_SHEET_EXERCISES + 1)]}):
+            with self.assertRaises(ValueError):
+                H.normalize_sheet(bad, apps, self.POOL)
+        self.assertEqual(H.normalize_sheet({"exercises": ["f1", "zz"], "modules": [{"id": "x"}]}, apps, self.POOL, strict=False)["exercises"], ["f1"])
+
+
+class Preview(unittest.TestCase):
+    def ex(self, preamble="", lang="en"):
+        return P.Exercise(preamble, lang, "/exercise/test-ex/")
+
+    def test_evaluate(self):
+        num = {"aX": 2.0, "bX": 3.0}
+
+        def look(name):
+            if name in num:
+                return num[name]
+            raise P.EvalError(name)
+        ev = lambda e: P.evaluate(e, look)
+        self.assertEqual(ev("1+2*3"), 7)
+        self.assertEqual(ev("2^3^2"), 512)  # right-associative
+        self.assertEqual(ev("2**3"), 8)
+        self.assertEqual(ev("-2^2"), -4)
+        self.assertEqual(ev("(\\aX+\\bX)/2"), 2.5)
+        self.assertAlmostEqual(ev("2pi"), 2 * math.pi)
+        self.assertAlmostEqual(ev("1/2pi"), 1 / (2 * math.pi))  # as xfp: juxtaposition binds first
+        self.assertAlmostEqual(ev("3(\\aX+1)"), 9)
+        self.assertAlmostEqual(ev("sin(pi/6)"), 0.5)
+        self.assertAlmostEqual(ev("sind(30)+cosd(60)"), 1)
+        self.assertAlmostEqual(ev("asind(0.5)"), 30)
+        self.assertAlmostEqual(ev("sqrt(16)+ln(exp(2))+log(100)+abs(-1)"), 9)
+        self.assertAlmostEqual(ev("30deg"), math.pi / 6)
+        self.assertAlmostEqual(ev("max(1,\\bX,2)"), 3)
+        self.assertAlmostEqual(ev("2.5e-3*1E3"), 2.5)
+        self.assertAlmostEqual(ev("sqrt(2*(\\aX+\\bX)"), math.sqrt(10))  # left open: closed, as xfp
+        for bad in ("__import__('os')", "\\cX", "foo(1)", "1/0", "10^10^10", "(-8)^(1/3)", "sqrt(-1)", "2 3",
+                    "x" * 5000, "(" * 3000 + "1", "1;2", "open"):
+            with self.assertRaises(P.EvalError, msg=bad):
+                ev(bad)
+
+    def test_numbers_and_units(self):
+        self.assertEqual(P.fmt(0.04977, 4), r"0.049\,77")
+        self.assertEqual(P.fmt(350.0, 4), "350.0")
+        self.assertEqual(P.fmt(350.0, 4, pad=False), "350")
+        self.assertEqual(P.fmt(1.993e-26, 4), r"1.993\cdot 10^{-26}")
+        self.assertEqual(P.fmt(12345.6, 4), r"1.235\cdot 10^{4}")
+        self.assertEqual(P.fmt(12345.6, 4, mode="fixed"), r"12\,350")
+        self.assertEqual(P.fmt(9.9996, 4), "10.00")
+        self.assertEqual(P.fmt(None), r"\text{?}")
+        self.assertEqual(P.typed_number("6.674e-11"), r"6.674\cdot 10^{-11}")
+        self.assertEqual(P.typed_number("2,5"), "2.5")
+        self.assertEqual(P.typed_number("3.2+-0.1"), r"3.2\pm 0.1")
+        self.assertIsNone(P.typed_number("abc"))
+        u = lambda s: P.unit_tex(s)[0]
+        self.assertEqual(u(r"\kilo\meter\per\second\squared"), r"\mathrm{km/s^{2}}")
+        self.assertEqual(u(r"\newton\meter\squared\per\kilogram\squared"), r"\mathrm{N\,m^{2}/kg^{2}}")
+        self.assertEqual(u(r"\joule\per\kilogram\per\kelvin"), r"\mathrm{J/(kg\,K)}")
+        self.assertEqual(u(r"\mps"), r"\mathrm{m/s}")  # declared in texercises-lp.sty
+        self.assertEqual(u(r"\kmph"), r"\mathrm{km/h}")
+        self.assertEqual(u(r"\milli\ampere"), r"\mathrm{mA}")
+        self.assertEqual(u(r"\micro\farad"), r"\mathrm{\mu F}")
+        self.assertEqual(u(r"\kilo\ohm"), r"\mathrm{k\Omega }")
+        self.assertEqual(u(r"\m^{-3}"), r"\mathrm{m^{-3}}")
+        self.assertEqual(u(r"\per\second"), r"\mathrm{1/s}")
+        self.assertEqual(u("km/h"), r"\mathrm{km/h}")
+        self.assertEqual(u(r"\cm"), r"\mathrm{cm}")
+        self.assertEqual(P.unit_tex(r"\degree"), (r"\mathrm{{}^{\circ}}", True))
+        self.assertEqual(u(""), "")
+
+    def test_quantities(self):
+        e = self.ex("\\NewQty{I}{20}[\\milli\\ampere][e-3][\\ampere]\n\\NewQty*{v}{54}[\\kmph][1/3.6][\\mps]\n"
+                    "\\NewQty{d}{7.8e7}[\\km][e3][\\m]\n"
+                    "\\SolQty{R}[\\frac{V}{I}]{7/\\IX}[\\ohm]\n\\SolQty{t}[\\frac{d}{c}]{\\dX/\\nccX}[\\s]\n"
+                    "\\ConvTo{tm}{1/60}{t}{\\minute}\n\\SolQty{bad}{\\nopeX+1}[\\m]")
+        m = e.math
+        self.assertEqual(m(r"\IO"), r"{20\,\mathrm{mA}} ")
+        self.assertEqual(m(r"\I"), r"{0.02\,\mathrm{A}} ")
+        self.assertEqual(m(r"\IX"), "{0.02} ")
+        self.assertEqual(m(r"\vO"), r"{54\,\mathrm{km/h}} ")
+        self.assertEqual(m(r"\v"), r"{15\,\mathrm{m/s}} ")
+        self.assertEqual(m(r"\d"), r"{7.8\cdot 10^{10}\,\mathrm{m}} ")
+        self.assertEqual(m(r"\R"), r"{350.0\,\mathrm{\Omega }} ")
+        self.assertEqual(m(r"\RS{2}"), r"{350\,\mathrm{\Omega }} ")
+        self.assertEqual(m(r"\RS{1}"), r"{400\,\mathrm{\Omega }} ")
+        self.assertEqual(m(r"\RP{3}{2}"), r"{0.35\,\mathrm{k\Omega }} ")
+        self.assertEqual(m(r"\RF"), r"{\frac{V}{I}} ")
+        self.assertEqual(m(r"\RU"), r"{\mathrm{\Omega }} ")
+        self.assertEqual(m(r"\RI"), r"{350\,\mathrm{\Omega }} ")
+        self.assertEqual(m(r"\t"), r"{260.2\,\mathrm{s}} ")
+        self.assertEqual(m(r"\tmP{0}{2}"), r"{4.3\,\mathrm{min}} ")
+        self.assertEqual(m(r"\ncc"), r"{2.998\cdot 10^{8}\,\mathrm{m/s}} ")  # a constant of texercises-lp.sty
+        self.assertEqual(m(r"\bad"), r"{\text{?}} ")
+        self.assertIn("value:bad", e.fallbacks)
+        # siunitx and friends
+        self.assertEqual(m(r"\SI{3.0e8}{\meter\per\second}"), r"{3.0\cdot 10^{8}\,\mathrm{m/s}} ")
+        self.assertEqual(m(r"\qty{5}{\kg}"), r"{5\,\mathrm{kg}} ")
+        self.assertEqual(m(r"\num{12345}"), r"{12\,345} ")
+        self.assertEqual(m(r"\si{\volt}"), r"{\mathrm{V}} ")
+        self.assertEqual(m(r"\ang{30}"), r"{30^{\circ}} ")
+        self.assertEqual(m(r"\ssc{E}{kin}"), r"{{E}_{\text{kin}}} ")
+        self.assertEqual(m(r"\ce{Na+}"), r"{\mathrm{Na^{+}}} ")
+        self.assertEqual(m(r"\ce{H2O}"), r"{\mathrm{H_{2}O}} ")
+        self.assertEqual(m(r"\result{x}"), r"{\underline{\underline{x}}} ")
+        self.assertEqual(m(r"\qty(a+b)"), r"{\left(a+b\right)} ")
+        self.assertEqual(m(r"5\,\m"), r"5\,{\mathrm{m}} ")  # a free-standing unit
+        self.assertEqual(m(r"\frac{a}{b}\cdot\alpha"), r"\frac{a}{b}\cdot\alpha")  # KaTeX's own: as they are
+
+    def test_text(self):
+        e = self.ex("\\NewQty{m}{2.0}[\\kg]")
+        h = e.html("A body of \\mO\\ falls.\n\nIt is \\textbf{heavy} & <b>bold</b>:\n"
+                   "\\begin{abcliste}\n\\abc How fast is it, $v = \\sqrt{2gh}$?\n\\abc Where?\n\\end{abcliste}\n"
+                   "\\begin{align}\n a &= b \\label{x}\\\\ c &= \\m\n\\end{align}\n"
+                   "\\begin{itemize}\\item[i)] one \\item two\\end{itemize}")
+        self.assertIn(r'<p>A body of <span class="tx-m">{2.0\,\mathrm{kg}}</span> falls.</p>', h)
+        self.assertIn("<strong>heavy</strong> &amp; &lt;b&gt;bold&lt;/b&gt;", h)
+        self.assertIn('<ol class="tx-abc"><li>How fast is it, <span class="tx-m">v = \\sqrt{2gh}</span>?</li><li>Where?</li></ol>', h)
+        self.assertIn('<div class="tx-d">\\begin{align*}', h)
+        self.assertNotIn("\\label", h)
+        self.assertIn('<li><span class="tx-label">i)</span> one</li>', h)
+        self.assertEqual(e.fallbacks, [])
+
+    def test_text_fallbacks(self):
+        e = self.ex()
+        h = e.html("See \\begin{tikzpicture}\\draw (0,0) -- (1,1);\\end{tikzpicture} and "
+                   "\\includegraphics[width=3cm]{#image_path:coil#} and \\weird{x} \\begin{strange}y\\end{strange}"
+                   " <script>alert(1)</script> \\textit{\"<i>\"} $\\text{<img src=x onerror=alert(1)>}$")
+        self.assertIn('<div class="tx-fig">figure in the PDF</div>', h)
+        self.assertIn('<a href="https://texercises.com/exercise/test-ex/" target="_blank" rel="noopener">image on TeXercises ↗</a>', h)
+        self.assertIn('<code class="tx-raw">\\weird</code>x', h)
+        self.assertIn('<div class="tx-env">', h)
+        self.assertNotIn("<script", h)
+        self.assertNotIn("<img", h)
+        self.assertNotIn("<i>", h)
+        self.assertIn("&lt;script&gt;", h)
+        self.assertEqual(sorted(e.fallbacks), sorted(["figure", "image", "\\weird", "env:strange"]))
+        de = self.ex(lang="de")
+        self.assertIn("Abbildung im PDF", de.html("\\begin{circuitikz}x\\end{circuitikz}"))
+        # never breaks: unbalanced input, deep nesting
+        for junk in ("\\textbf{", "$x", "\\begin{align} a", "{" * 500 + "x", "\\SI{", "\\NewQty", "}}}}"):
+            self.assertIsInstance(P.convert(self.ex(), junk), str)
+        self.assertIsInstance(P.Exercise("\\NewQty{a}{1}[\\m]\\SolQty{b}{\\aX*(2+1}").q["b"].x, float)
+
+    def test_table_and_macros(self):
+        e = self.ex("\\newcommand{\\twice}[1]{2#1}\\def\\half{\\frac12}")
+        h = e.html("\\begin{tabular}{lc}\n a & $Q$ \\\\ \\hline\n \\multicolumn{2}{c}{both}\n\\end{tabular} $\\twice{x} \\half$")
+        self.assertIn('<table class="tx-table"><tr><td>a</td><td><span class="tx-m">Q</span></td></tr><tr><td colspan="2">both</td></tr></table>', h)
+        self.assertRegex(h, r'<span class="tx-m">2x\s+\\frac12</span>')
+
+    def test_drafts(self):
+        # every draft of this repository renders, with no fallbacks but the pictures (TikZ)
+        folders = sorted(ROOT.glob("texercises-drafts*/exercises/*"))
+        self.assertGreater(len(folders), 150)
+        for f in folders:
+            r = P.render(f)
+            self.assertEqual([x for x in r["fallbacks"] if x != "figure"], [], f.name)
+            self.assertTrue(r["text"] and r["solution"], f.name)
 
 
 class Service(unittest.TestCase):
@@ -399,57 +695,148 @@ class Service(unittest.TestCase):
             {"id": "electric-field", "modes": ["tutor", "practice", "check"], "objectives": ["sketch", "read"]},
             {"id": "photons", "modes": ["check"]}])
 
+    def drafts_zip(self, *keys):
+        """A TeXercises export of drafts of this repository, as the teacher's."""
+        buf = io.BytesIO()
+        with zipfile.ZipFile(buf, "w") as z:
+            for k in keys:
+                d = next(ROOT.glob(f"texercises-drafts*/exercises/{k}"))
+                for f in d.iterdir():
+                    data = f.read_bytes()
+                    if f.name == "exercise.json":
+                        meta = json.loads(data)
+                        meta["info"] = {"creator": "by", "url": f"/exercise/{k}/"}
+                        data = json.dumps(meta).encode()
+                    z.writestr(f"x/exercises/{k}/{f.name}", data)
+        return buf.getvalue()
+
     def test_sheets(self):
-        app = next(a for a, e in S.load_pool().items() if any(e["objectives"].values()))
-        key = next(k for ks in S.load_pool()[app]["objectives"].values() for k in ks)
-        H.write_config(self.sets, {"sets": {"3a": {"title": "Klasse 3a", "apps": [{"id": app, "modes": ["tutor"]}]}}})
-        self.assertEqual(self.req("/api/sheets")[0], 403)
-        self.assertEqual(self.req("/api/texercises", export_zip({key: "by"}), "application/zip")[0], 403)
+        (Path(self.dir.name) / "objectives.json").write_text((ROOT / "hub" / "objectives.json").read_text())
+        pool = S.load_pool()
+        drafts = [k for k in pool["coulomb"]["exercises"] if k.startswith("coulomb-")] + \
+                 [k for k in pool["photons"]["exercises"] if k.startswith("photons-")]
+        self.assertGreater(len(drafts), 6)
+        j = lambda o: json.dumps(o).encode()
+        # nothing about sheets without the login (only a shared sheet's online version, below)
+        for path in ("/api/sheets", "/api/sheets/0123456789ab", "/api/preview?keys=" + drafts[0], "/sheet/0123456789ab.pdf",
+                     "/sheet/0123456789ab-solutions.pdf"):
+            self.assertEqual(self.req(path)[0], 403, path)
+        for path in ("/api/plan", "/api/sheets/new", "/api/sheets/0123456789ab"):
+            self.assertEqual(self.req(path, j({"sheet": {}}), "application/json")[0], 403, path)
+        self.assertEqual(self.req("/api/texercises", self.drafts_zip(drafts[0]), "application/zip")[0], 403)
         st, headers, _ = self.login()
         cookie = headers["Set-Cookie"].split(";")[0]
-        st, _, body = self.req("/api/texercises", export_zip({key: "by", "x-other": "pw"}), "application/zip", cookie)
-        self.assertEqual((st, json.loads(body)), (200, {"exercises": 1, "skipped": 1}))
-        self.assertEqual(self.req("/sheet/3a.json")[0], 403)  # the sheets are the teacher's only
-        self.assertEqual(self.req("/sheet/3a.pdf")[0], 403)
-        self.assertEqual(self.req("/sheet/3a-solutions.pdf")[0], 403)
-        st, _, body = self.req("/sheet/3a.json", cookie=cookie)
-        info = json.loads(body)
-        self.assertGreaterEqual(info["exercises"], 1)
-        self.assertEqual(info["available"], bool(S.lualatex()))
+        st, _, body = self.req("/api/texercises", self.drafts_zip(*drafts), "application/zip", cookie)
+        self.assertEqual((st, json.loads(body)), (200, {"exercises": len(drafts), "skipped": 0}))
         state = json.loads(self.req("/api/sheets", cookie=cookie)[2])
-        self.assertEqual(state["sets"][0]["name"], "3a")
-        self.assertEqual(json.loads(self.req("/sheet/nope.json", cookie=cookie)[2]), {"exercises": 0, "available": False, "made": None})
-        self.assertEqual(self.req("/sheet/nope.pdf", cookie=cookie)[0], 404)
-        self.assertEqual(self.req("/sheet/../x.pdf", cookie=cookie)[0], 404)
-        self.assertEqual(self.req("/sheet/3a.pdf", cookie=cookie)[0], 404)  # not made yet
-        create = json.dumps({"action": "create"}).encode()
-        delete = json.dumps({"action": "delete"}).encode()
-        self.assertEqual(self.req("/sheet/3a", create, "application/json")[0], 403)
-        self.assertEqual(self.req("/sheet/3a", create, "text/plain", cookie)[0], 415)
-        self.assertEqual(self.req("/sheet/3a", b'{"action": "x"}', "application/json", cookie)[0], 400)
-        st, _, body = self.req("/sheet/3a", create, "application/json", cookie)
+        self.assertEqual((state["sheets"], state["exercises"], state["latex"]), ([], len(drafts), bool(S.lualatex())))
+        coulomb = next(a for a in state["apps"] if a["id"] == "coulomb")
+        self.assertEqual([o["id"] for o in coulomb["objectives"]], ["direction", "factor", "vector", "field"])
+        self.assertTrue(coulomb["objectives"][0]["de"])
+        # a suggestion for two modules (JSON only)
+        draft = {"title": "Kräfte <3", "lang": "en", "modules": [{"id": "photons"}, {"id": "coulomb", "objectives": ["direction", "vector"]}]}
+        self.assertEqual(self.req("/api/plan", j({"sheet": draft, "suggest": True}), "text/plain", cookie)[0], 415)
+        st, _, body = self.req("/api/plan", j({"sheet": draft, "suggest": True}), "application/json", cookie)
+        self.assertEqual(st, 200)
+        plan = json.loads(body)
+        keys = plan["exercises"]
+        self.assertTrue(keys)
+        self.assertEqual(len(keys), len(set(keys)))
+        self.assertTrue(all(k in drafts for k in keys))
+        self.assertEqual(plan["default_count"], len(keys))
+        self.assertEqual({(t["app"], t["objective"]) for t in plan["targets"]},
+                         {("coulomb", "direction"), ("coulomb", "vector"), ("photons", "wave"), ("photons", "einstein"), ("photons", "threshold"), ("photons", "rate")})
+        covered = {(plan["details"][k]["app"], o) for k in keys for o in plan["details"][k]["objectives"]}
+        self.assertLessEqual({(t["app"], t["objective"]) for t in plan["targets"] if t["keys"]}, covered)
+        self.assertEqual([plan["details"][k]["app"] for k in keys], sorted((plan["details"][k]["app"] for k in keys), key=["coulomb", "photons"].index))
+        self.assertEqual(len(json.loads(self.req("/api/plan", j({"sheet": draft, "suggest": True, "count": 3}), "application/json", cookie)[2])["exercises"]), 3)
+        for bad in ({"modules": [{"id": "../../etc"}]}, {"exercises": ["../x"]}, {"exercises": ["nope"]}):
+            self.assertEqual(self.req("/api/plan", j({"sheet": bad}), "application/json", cookie)[0], 400)
+        # create it
+        st, _, body = self.req("/api/sheets/new", j({"sheet": {**draft, "exercises": keys}}), "application/json", cookie)
+        self.assertEqual(st, 200)
+        sheet = json.loads(body)
+        sid = sheet["id"]
+        self.assertRegex(sid, r"^[0-9a-f]{12}$")
+        self.assertEqual((sheet["title"], sheet["exercises"], sheet["token"]), ("Kräfte 3", keys, None))
+        self.assertEqual([m["id"] for m in sheet["modules"]], ["coulomb", "photons"])  # the hub's order
+        saved = json.loads((Path(self.dir.name) / "data" / "exercise-sheets.json").read_text())
+        self.assertEqual(list(saved["sheets"]), [sid])
+        self.assertEqual((Path(self.dir.name) / "data" / "exercise-sheets.json").stat().st_mode & 0o777, 0o600)
+        # replace one by an alternative, remove one, reorder; save
+        alts = sheet["plan"]["alternatives"]
+        k0 = next(k for k in keys if alts[k])
+        alt = alts[k0][0]
+        self.assertNotIn(alt, keys)
+        self.assertTrue(set(plan["details"][k0]["objectives"]) & set(sheet["plan"]["details"][alt]["objectives"]) or
+                        sheet["plan"]["details"][alt]["app"] == plan["details"][k0]["app"])
+        new = [alt if k == k0 else k for k in keys][1:][::-1]
+        st, _, body = self.req(f"/api/sheets/{sid}", j({"action": "save", "sheet": {**draft, "exercises": new}}), "application/json", cookie)
+        self.assertEqual((st, json.loads(body)["exercises"]), (200, new))
+        self.assertEqual(json.loads(self.req(f"/api/sheets/{sid}", cookie=cookie)[2])["exercises"], new)
+        self.assertEqual(self.req(f"/api/sheets/{sid}", j({"action": "save", "sheet": {"exercises": ["zz"]}}), "application/json", cookie)[0], 400)
+        self.assertEqual(self.req(f"/api/sheets/{sid}", j({"action": "x"}), "application/json", cookie)[0], 400)
+        self.assertEqual(self.req("/api/sheets/abcdefabcdef", j({"action": "save", "sheet": draft}), "application/json", cookie)[0], 404)
+        self.assertEqual(self.req("/api/sheets/abcdefabcdef", cookie=cookie)[0], 404)
+        self.assertEqual(self.req("/api/sheets/..%2f..%2fetc", cookie=cookie)[0], 404)
+        # the preview: HTML, the math left to KaTeX
+        st, _, body = self.req("/api/preview?keys=" + ",".join(new[:2] + ["../../x", "nope"]), cookie=cookie)
+        prev = json.loads(body)["exercises"]
+        self.assertEqual(sorted(prev), sorted(new[:2]))
+        self.assertIn('class="tx-m"', prev[new[0]]["text"] + prev[new[0]]["solution"])
+        # the PDF: made where LaTeX is, else a clear answer
+        st, _, body = self.req(f"/sheet/{sid}.pdf", cookie=cookie)
         if S.lualatex():
-            self.assertEqual(st, 200)
-            st, headers, pdf = self.req("/sheet/3a-solutions.pdf", cookie=cookie)
-            self.assertEqual((st, pdf[:5]), (200, b"%PDF-"))
-            self.assertIsNotNone(json.loads(self.req("/sheet/3a.json", cookie=cookie)[2])["made"])
-        else:  # no LaTeX here: a clear answer instead of a sheet
-            self.assertEqual(st, 400)
-            self.assertIn("LaTeX", json.loads(body)["error"])
-        # a kept sheet, also of a set that no longer exists, can be opened and deleted
-        made = self.admin.sheets_made_dir
-        made.mkdir(parents=True, exist_ok=True)
-        (made / "old.pdf").write_bytes(b"%PDF-old")
-        (made / "old-solutions.pdf").write_bytes(b"%PDF-old-s")
-        H.write_config(self.admin.sheets_list, {"sheets": {**self.admin.sheets_made(), "old": {"created": 1, "title": "Old", "exercises": 3}}})
-        state = json.loads(self.req("/api/sheets", cookie=cookie)[2])
-        self.assertTrue(any(x["name"] == "old" and x.get("gone") for x in state["sets"]))
-        self.assertEqual(self.req("/sheet/old-solutions.pdf", cookie=cookie)[2], b"%PDF-old-s")
-        self.assertEqual(self.req("/sheet/old.pdf")[0], 403)  # not without the login
-        self.assertEqual(self.req("/sheet/old", delete, "application/json", cookie)[0], 200)
-        self.assertEqual(self.req("/sheet/old.pdf", cookie=cookie)[0], 404)
-        self.assertFalse((made / "old.pdf").exists())
-        self.assertEqual(self.req("/sheet/old", delete, "application/json", cookie)[0], 404)  # gone already
+            self.assertIn(st, (200, 202))
+        else:
+            self.assertEqual(st, 409)
+            self.assertIn(b"LaTeX is not installed", body)
+        self.assertEqual(self.req("/sheet/abcdefabcdef.pdf", cookie=cookie)[0], 404)
+        self.assertEqual(self.req("/sheet/../x.pdf", cookie=cookie)[0], 404)
+        # shared: the online version, for everyone with the link, without the solutions
+        token = json.loads(self.req(f"/api/sheets/{sid}", j({"action": "share"}), "application/json", cookie)[2])["token"]
+        self.assertRegex(token, r"^[A-Za-z0-9_-]{32}$")
+        self.assertNotIn(token, self.req("/api/sheets", cookie=cookie)[2].decode())  # not in the list
+        st, headers, page_ = self.req(f"/sheet/s/{token}")
+        self.assertEqual(st, 200)
+        page_ = page_.decode()
+        self.assertIn("<title>Kräfte 3</title>", page_)
+        self.assertIn("/katex/katex.min.js", page_)
+        self.assertIn("font-src 'self'", headers["Content-Security-Policy"])
+        for k in new:
+            folder = next(ROOT.glob(f"texercises-drafts*/exercises/{k}"))
+            r = P.render(folder)
+            self.assertIn(r["text"], page_)
+            self.assertNotIn(r["solution"], page_)
+            self.assertIn(escape(json.loads((folder / "exercise.json").read_text())["title"]), page_)
+        self.assertNotIn("tx-sol", page_)
+        self.assertNotIn("\\underline{\\underline", page_)  # the results of the solutions
+        self.assertIn("Exercises Kräfte 3", page_)  # the footer, as on the PDF
+        self.assertEqual(self.req("/sheet/s/" + "x" * 32)[0], 404)
+        self.assertEqual(self.req("/sheet/s/../../exercise-sheets.json")[0], 404)
+        # a new link: the old one stops working; unshared: none
+        token2 = json.loads(self.req(f"/api/sheets/{sid}", j({"action": "share"}), "application/json", cookie)[2])["token"]
+        self.assertEqual((self.req(f"/sheet/s/{token}")[0], self.req(f"/sheet/s/{token2}")[0]), (404, 200))
+        self.req(f"/api/sheets/{sid}", j({"action": "unshare"}), "application/json", cookie)
+        self.assertEqual(self.req(f"/sheet/s/{token2}")[0], 404)
+        # duplicate, delete
+        st, _, body = self.req(f"/api/sheets/{sid}", j({"action": "duplicate"}), "application/json", cookie)
+        copy = json.loads(body)["id"]
+        listed = json.loads(self.req("/api/sheets", cookie=cookie)[2])["sheets"]
+        self.assertEqual(sorted(x["id"] for x in listed), sorted([sid, copy]))
+        self.assertEqual(next(x for x in listed if x["id"] == copy)["title"], "Kräfte 3 (copy)")
+        self.assertEqual(self.req(f"/api/sheets/{sid}", j({"action": "delete"}), "application/json")[0], 403)
+        self.assertEqual(self.req(f"/api/sheets/{sid}", j({"action": "delete"}), "application/json", cookie)[0], 200)
+        self.assertEqual(self.req(f"/api/sheets/{sid}", cookie=cookie)[0], 404)
+        self.assertEqual(self.req(f"/api/sheets/{sid}", j({"action": "delete"}), "application/json", cookie)[0], 404)
+        self.assertEqual([x["id"] for x in json.loads(self.req("/api/sheets", cookie=cookie)[2])["sheets"]], [copy])
+        # the panel has the tab and loads KaTeX
+        st, headers, body = self.req("/", cookie=cookie)
+        self.assertIn(b'href="#sheets"', body)
+        self.assertIn(b'id="view-sheets"', body)
+        self.assertIn(b"/katex/katex.min.js", body)
+        self.assertEqual(self.req("/static/sheets.js")[0], 200)
+        self.assertEqual(self.req("/static/online.js")[0], 200)
 
     def test_rate_limit(self):
         for _ in range(H.LOGIN_ATTEMPTS):

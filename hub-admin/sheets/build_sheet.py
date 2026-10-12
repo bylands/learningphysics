@@ -12,6 +12,7 @@
     --font=modern    modern textbook look: Erewhon + Erewhon Math, Fira Sans headings, accent colour
     --part=exercises the exercises only (minion style; default both: exercises, then solutions)
     --numerical      print the short solutions as "Numerical Solutions" after the exercises (minion)
+    --lang=de        the sheet's language (headings, date, footer; default: that of most exercises)
 
 Images: TeXercises does not export them. The sheet looks for images/<name> next to the .tex;
 <out>-images.txt lists every image the sheet uses, whether it is there, and its exercise page.
@@ -111,7 +112,7 @@ def esc(s):
     return ''.join('\\' + c if c in '&%$#_{}' else c for c in s)
 
 def options(argv):
-    opts = {'short': False, 'numerical': False, 'style': 'minion', 'font': 'minion', 'author': 'ByS', 'school': 'MNG Rämibühl', 'date': None, 'footer': None, 'part': 'both'}
+    opts = {'short': False, 'numerical': False, 'style': 'minion', 'font': 'minion', 'author': 'ByS', 'school': 'MNG Rämibühl', 'date': None, 'footer': None, 'part': 'both', 'lang': None}
     args = []
     for a in argv:
         if a == '--short': opts['short'] = True
@@ -134,7 +135,7 @@ def main():
         if not e: sys.exit(f'not in the export: {it}')
         items.append((it, e))
     heads = {c['first']: c['title'] for c in coll.get('containers', [])}
-    de = sum(e['meta']['language'] == 'GER' for _, e in items) > len(items) / 2
+    de = o['lang'] == 'de' if o['lang'] in ('de', 'en') else sum(e['meta']['language'] == 'GER' for _, e in items) > len(items) / 2
     title = esc(coll['title'])
     lang = lambda e: 'de' if e['meta']['language'] == 'GER' else 'en'
     pre = lambda e: [r'\txinpreamble', e['preamble'], r'\txendpreamble']
