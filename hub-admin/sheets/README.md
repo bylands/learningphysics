@@ -1,8 +1,11 @@
 # Exercise sheets for the sets
 
-Every set of the hub gets an exercise sheet as a PDF, made from the teacher's TeXercises exercises, with and
-without the solutions. Only in the admin panel (Sets → Exercise sheets, logged in): it lists both sheets of
-every set and takes the upload of a TeXercises export. The set's public page does not show them.
+A set of the hub can have an exercise sheet: two PDFs (with and without the solutions) made from the
+teacher's TeXercises exercises. Only in the admin panel (Sets → Exercise sheets, logged in): **Create** makes
+a set's sheet and keeps it as it is (`hub-data/sheets/made/`, listed in `hub-data/sheets.json`), even if the
+set changes, until it is made again (**Create again**) or **Delete**d; the sheet of a set that was deleted
+stays listed until it is deleted too. The panel also takes the upload of a TeXercises export. The set's public
+page does not show the sheets.
 
 ## How a sheet is made
 
@@ -22,8 +25,8 @@ every set and takes the upload of a TeXercises export. The set's public page doe
   It overwrites `pool.json`: to change the sheets for good, change the mapping and build again.
 - `sheets.py` (used by `../hubadmin.py`) chooses the exercises and runs `build_sheet.py` (the collection as a
   LaTeX document) and LuaLaTeX with `texercises-lp.sty` (the TeXercises macros) and `lp-minion.sty` in its
-  modern look (Erewhon, Fira Sans: free fonts). PDFs are cached in `hub-data/sheets/` until anything they are
-  made of changes.
+  modern look (Erewhon, Fira Sans: free fonts). Built PDFs are also cached in `hub-data/sheets/` by a hash
+  of everything they are made of, so creating an unchanged sheet again is quick.
 - The exercises: the export uploaded in the admin panel (kept in `hub-data/texercises/`, only the teacher's
   own: `OWN_CREATOR` in hubadmin.py), and the drafts that `deploy.sh` copies to `hub-admin/sheets/drafts/`.
   Neither is served by nginx. Exercise texts and solutions never go into this public repository: `pool.json`
