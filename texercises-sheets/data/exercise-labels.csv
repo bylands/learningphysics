@@ -1,0 +1,506 @@
+id,area,topic,skill,bloom,demand,context,level
+10724,Electrostatics,Electric Charge,"Explain charging by contact and influence, and that a neutral body is attracted by both signs of charge.",understand,conceptual,abstract,core
+10725,Electrostatics,Electric Charge,Relate an amount of charge to the number of elementary charges with Q = N·e.,apply,single-formula,applied,core
+10726,Electrostatics,Electric Charge,Determine the charges of identical conductors after contact using charge conservation.,apply,single-formula,abstract,core
+10727,Electrostatics,Coulomb's Law,"Calculate the force, distance or charges between two point charges with Coulomb's law.",apply,single-formula,applied,core
+10728,Electrostatics,Coulomb's Law,"Calculate the force, distance or charges between two point charges with Coulomb's law.",apply,single-formula,abstract,core
+10730,Electrostatics,Coulomb's Law,"Calculate the force, distance or charges between two point charges with Coulomb's law.",apply,single-formula,abstract,core
+10750,Electrostatics,Electric Charge,Relate an amount of charge to the number of elementary charges with Q = N·e.,apply,multi-step,applied,core
+10752,Electrostatics,Coulomb's Law,"Calculate the force, distance or charges between two point charges with Coulomb's law.",apply,single-formula,abstract,core
+10753,Electrostatics,Coulomb's Law,Compare the electric and gravitational forces between particles.,evaluate,multi-step,abstract,core
+10754,Electrostatics,Coulomb's Law,"Calculate the force, distance or charges between two point charges with Coulomb's law.",apply,single-formula,applied,core
+17320,Electrostatics,Superposition of Electric Fields,Find the point where the superposed electric fields of point charges and/or a uniform field vanish.,analyse,multi-step,abstract,advanced
+17322,Electrostatics,Parallel Plate Capacitor,"Relate field strength, charge and plate area of a parallel plate capacitor with E = Q/(ε0·A).",apply,single-formula,abstract,advanced
+17323,Electrostatics,Parallel Plate Capacitor,"Relate field strength, charge and plate area of a parallel plate capacitor with E = Q/(ε0·A).",analyse,multi-step,abstract,advanced
+17324,Electrostatics,Superposition of Electric Fields,Find the point where the superposed electric fields of point charges and/or a uniform field vanish.,analyse,multi-step,abstract,advanced
+17329,Electrostatics,Field of a Point Charge,Calculate the electric field of a point charge or charged sphere with E = k·Q/r².,apply,single-formula,applied,core
+17331,Electrostatics,Superposition of Electric Fields,Add electric field vectors of point charges or uniform fields component-wise.,apply,multi-step,abstract,core
+17332,Electrostatics,Electric Dipole Field,Derive and apply the field of an electric dipole and its far-field approximation.,analyse,derivation,abstract,beyond
+17333,Electrostatics,Electric Field Concept,Distinguish the electric field at a point from charge and force at that point.,understand,conceptual,abstract,core
+17334,Electrostatics,Electric Dipole Field,Derive and apply the field of an electric dipole and its far-field approximation.,apply,multi-step,applied,beyond
+17337,Electrostatics,Gauss's Law,Apply Gauss's law to find electric flux or the field of symmetric charge distributions.,apply,single-formula,abstract,beyond
+17338,Electrostatics,Continuous Charge Distributions,Derive the electric field or force of a continuous charge distribution by integration.,analyse,multi-step,abstract,beyond
+17470,Electrostatics,Work and Potential Difference,"Relate work, charge and potential difference with W = q·ΔV.",apply,single-formula,abstract,core
+17471,Electrostatics,Work and Potential Difference,Compare electric and gravitational potential (energy) and their potential differences.,evaluate,multi-step,abstract,advanced
+17472,Electrostatics,Work and Potential Difference,Compare electric and gravitational potential (energy) and their potential differences.,understand,derivation,abstract,advanced
+17473,Measurement & units,Electronvolt Conversions,"Convert energies and masses between joules, kilograms and electronvolts (eV, eV/c²).",evaluate,multi-step,applied,advanced
+17489,Electrostatics,Coulomb Potential Energy,Find the closest approach of a charged particle to a nucleus from energy conservation with the Coulomb potential energy.,analyse,multi-step,applied,advanced
+17512,Measurement & units,Electronvolt Conversions,"Convert energies and masses between joules, kilograms and electronvolts (eV, eV/c²).",apply,single-formula,abstract,advanced
+17516,Measurement & units,Electronvolt Conversions,"Convert energies and masses between joules, kilograms and electronvolts (eV, eV/c²).",apply,single-formula,applied,advanced
+17517,Measurement & units,Electronvolt Conversions,"Convert energies and masses between joules, kilograms and electronvolts (eV, eV/c²).",apply,single-formula,applied,core
+17518,Electrostatics,Coulomb Potential Energy,Use the Coulomb potential energy E = k·q1·q2/r to find a distance or energy.,apply,single-formula,applied,advanced
+17519,Electrostatics,Coulomb Potential Energy,Combine energy and momentum conservation to find the final speeds of two repelling charges.,analyse,derivation,abstract,beyond
+17532,Electrostatics,Cylindrical and Spherical Capacitors,Calculate the capacitance or charge of a cylindrical or spherical capacitor from its geometry.,apply,single-formula,abstract,beyond
+17620,Electrostatics,Capacitance,"Relate charge, voltage and capacitance with Q = C·ΔV.",apply,single-formula,abstract,core
+17635,Electrostatics,Capacitance,"Relate charge, voltage and capacitance with Q = C·ΔV.",apply,single-formula,abstract,core
+17636,Electrostatics,Parallel Plate Capacitor,Calculate the capacitance of a parallel plate capacitor from C = ε0·εr·A/d and how it changes with geometry or dielectric.,apply,single-formula,abstract,core
+17637,Electrostatics,Parallel Plate Capacitor,Calculate the capacitance of a parallel plate capacitor from C = ε0·εr·A/d and how it changes with geometry or dielectric.,apply,single-formula,abstract,core
+17638,Electrostatics,Parallel Plate Capacitor,Calculate the capacitance of a parallel plate capacitor from C = ε0·εr·A/d and how it changes with geometry or dielectric.,apply,multi-step,applied,advanced
+17642,Electrostatics,Cylindrical and Spherical Capacitors,Calculate the capacitance or charge of a cylindrical or spherical capacitor from its geometry.,apply,single-formula,abstract,beyond
+17643,Electrostatics,Cylindrical and Spherical Capacitors,Calculate the capacitance or charge of a cylindrical or spherical capacitor from its geometry.,apply,single-formula,applied,beyond
+17645,Electrostatics,Energy in a Capacitor,Calculate the energy stored in a capacitor with W = ½·C·ΔV² and relate it to other forms of energy.,apply,single-formula,abstract,core
+17646,Electrostatics,Energy in a Capacitor,Calculate the energy stored in a capacitor with W = ½·C·ΔV² and relate it to other forms of energy.,apply,single-formula,abstract,core
+17651,Electrostatics,Energy in a Capacitor,Calculate the energy stored in a capacitor with W = ½·C·ΔV² and relate it to other forms of energy.,apply,multi-step,applied,core
+17652,Electrostatics,Energy Density of Fields,Relate the energy density of electric and magnetic fields to the field strength.,apply,single-formula,applied,advanced
+17704,Electrostatics,Cylindrical and Spherical Capacitors,Calculate the capacitance of a parallel plate capacitor from C = ε0·εr·A/d and how it changes with geometry or dielectric.,analyse,multi-step,applied,advanced
+17705,Electrostatics,Energy in a Capacitor,Calculate the energy stored in a capacitor with W = ½·C·ΔV² and relate it to other forms of energy.,understand,conceptual,abstract,core
+17707,Electrostatics,Energy in a Capacitor,Calculate the energy stored in a capacitor with W = ½·C·ΔV² and relate it to other forms of energy.,apply,multi-step,applied,core
+17708,Electrostatics,Cylindrical and Spherical Capacitors,Show that spherical and cylindrical capacitors with small gaps approach the parallel plate capacitor.,analyse,derivation,abstract,beyond
+18078,Circuits,Electric Power and Energy,Calculate electric power and energy with P = ΔV·I = R·I² = ΔV²/R.,apply,estimation,applied,core
+18079,Circuits,Electric Current and Charge,"Relate current, charge and time with I = ΔQ/Δt, also as the derivative I = dQ/dt.",apply,single-formula,applied,core
+18080,Circuits,Electric Power and Energy,Calculate electric power and energy with P = ΔV·I = R·I² = ΔV²/R.,apply,single-formula,applied,core
+18083,Circuits,Electric Power and Energy,Calculate electric power and energy with P = ΔV·I = R·I² = ΔV²/R.,apply,single-formula,applied,core
+18084,Circuits,Electric Power and Energy,Calculate electric power and energy with P = ΔV·I = R·I² = ΔV²/R.,apply,multi-step,applied,core
+18087,Circuits,Electric Power and Energy,"Predict how the dissipated power changes when voltage, current or resistance change, using ratios.",apply,multi-step,abstract,core
+18088,Circuits,Electric Power and Energy,"Predict how the dissipated power changes when voltage, current or resistance change, using ratios.",apply,multi-step,abstract,core
+18089,Circuits,Electric Power and Energy,Calculate electric power and energy with P = ΔV·I = R·I² = ΔV²/R.,apply,single-formula,applied,core
+18090,Circuits,Resistivity,"Calculate the resistance of a wire from R = ρ·L/A and solve for length, cross-section or resistivity.",apply,single-formula,applied,core
+18091,Circuits,Electric Power and Energy,"Predict how the dissipated power changes when voltage, current or resistance change, using ratios.",apply,multi-step,abstract,core
+18092,Circuits,Resistivity,"Calculate the resistance of a wire from R = ρ·L/A and solve for length, cross-section or resistivity.",apply,single-formula,applied,core
+18093,Circuits,Temperature Dependence of Resistance,Calculate the change of resistance with temperature from R = R0·(1 + α·Δϑ).,apply,single-formula,abstract,core
+18094,Circuits,Resistivity,"Calculate the resistance of a wire from R = ρ·L/A and solve for length, cross-section or resistivity.",apply,multi-step,abstract,core
+18095,Circuits,Temperature Dependence of Resistance,Calculate the change of resistance with temperature from R = R0·(1 + α·Δϑ).,apply,single-formula,abstract,core
+18096,Circuits,Resistivity,"Calculate the resistance of a wire from R = ρ·L/A and solve for length, cross-section or resistivity.",apply,single-formula,applied,core
+18097,Circuits,Resistivity,"Calculate the resistance of a wire from R = ρ·L/A and solve for length, cross-section or resistivity.",apply,single-formula,applied,core
+18098,Circuits,Resistivity,"Calculate the resistance of a wire from R = ρ·L/A and solve for length, cross-section or resistivity.",analyse,multi-step,applied,core
+18101,Circuits,Resistivity,"Calculate the resistance of a wire from R = ρ·L/A and solve for length, cross-section or resistivity.",analyse,multi-step,applied,core
+18120,Circuits,Resistivity,"Calculate the resistance of a wire from R = ρ·L/A and solve for length, cross-section or resistivity.",analyse,multi-step,applied,core
+18133,Circuits,Electric Power and Energy,Calculate electric power and energy with P = ΔV·I = R·I² = ΔV²/R.,apply,single-formula,applied,core
+18134,Circuits,Electric Power and Energy,Calculate electric power and energy with P = ΔV·I = R·I² = ΔV²/R.,apply,single-formula,applied,core
+18135,Circuits,Nonlinear Characteristics,Use a nonlinear I–V characteristic graphically to find the operating point of a component in a circuit.,analyse,graph,applied,advanced
+18572,Mathematics,Vector Product,Compute vector (cross) products of 3D vectors from their components and interpret their direction.,apply,derivation,abstract,advanced
+18710,Magnetism & induction,Magnetic Force on a Moving Charge,"Calculate the size of the magnetic force F = q·v·B·sin θ on a moving charge, or the field from the force.",apply,multi-step,applied,advanced
+18719,Magnetism & induction,Magnetic Force on a Moving Charge,"Calculate the size of the magnetic force F = q·v·B·sin θ on a moving charge, or the field from the force.",apply,single-formula,abstract,advanced
+18725,Magnetism & induction,Charges in Combined Fields,Describe the path of a charged particle in combined electric and magnetic fields.,analyse,conceptual,abstract,advanced
+18844,Mechanics,Uniform Motion,"Calculate time, distance or speed of a uniform motion from v = Δs/Δt, with unit conversion.",apply,single-formula,applied,core
+18845,Mechanics,Momentum Conservation,Predict the motion after a perfectly inelastic collision from conservation of momentum.,understand,conceptual,abstract,core
+18846,Thermodynamics,Ideal Gas Law,"Apply the ideal gas law pV = nRT (or p/T = const.) with absolute temperatures to find pressure, temperature or particle density.",apply,multi-step,applied,core
+18847,Electrostatics,Electric Charge,Determine the charges of identical conductors after contact using charge conservation.,apply,single-formula,abstract,core
+18852,Circuits,Electric Power and Energy,Calculate electric power and energy with P = ΔV·I = R·I² = ΔV²/R.,apply,multi-step,applied,core
+18853,Magnetism & induction,Magnetic Field of a Solenoid,"Calculate the magnetic field inside a solenoid or coil from B = μ0·μr·N·I/L, or solve it for N, I or μr.",create,estimation,applied,core
+18855,Magnetism & induction,Transformer,Relate primary and secondary voltages and currents of an ideal transformer through power conservation.,apply,single-formula,applied,core
+18856,Waves & acoustics,Wavelength and Frequency,Relate wavelength and frequency of electromagnetic waves with c = λ·f.,apply,single-formula,applied,core
+18857,Optics,Refraction and Total Reflection,Sketch the path of a light ray through a glass body with refraction towards or away from the normal and total internal reflection.,apply,graph,abstract,core
+18858,Waves & acoustics,Sound Intensity Level,"Calculate changes of the sound intensity level in decibels from intensity ratios with L = 10·log(I/I0), and vice versa.",apply,single-formula,applied,core
+18860,Relativity,Relativistic Energy and Momentum,"Use the relativistic energy–momentum relation E² = (pc)² + (mc²)² and E = γmc² to find momentum, energy or mass of a particle.",apply,single-formula,applied,advanced
+18861,Nuclear & particle,Mass Defect,Explain the mass difference in a radioactive decay by the equivalence of mass and energy.,understand,conceptual,abstract,core
+18871,Oscillations,Damped Oscillations,Determine the period and the envelope (linear or exponential) of a damped oscillation from measured data.,analyse,graph,applied,advanced
+18885,Circuits,Resistivity,"Calculate the resistance of a wire from R = ρ·L/A and solve for length, cross-section or resistivity.",analyse,multi-step,applied,core
+18948,Relativity,Relativistic Energy and Momentum,"Use the relativistic energy–momentum relation E² = (pc)² + (mc²)² and E = γmc² to find momentum, energy or mass of a particle.",apply,single-formula,applied,advanced
+18949,Relativity,Time Dilation,Calculate time dilation and length contraction with the Lorentz factor γ = 1/√(1 − v²/c²).,apply,single-formula,applied,advanced
+18951,Mechanics,Power and Efficiency,"Relate power, energy, time and efficiency with P = E/Δt and η = E_out/E_in.",apply,single-formula,applied,core
+18964,Waves & acoustics,Wave Speed and Wavelength,"Relate wavelength, frequency, period, wave number and propagation speed of a harmonic wave with v = λ·f.",apply,single-formula,applied,core
+18965,Nuclear & particle,Types of Radiation,"Describe the nature of α, β and γ radiation.",remember,conceptual,abstract,core
+19005,Oscillations,Damped Oscillations,Determine the period and the envelope (linear or exponential) of a damped oscillation from measured data.,analyse,graph,applied,advanced
+19008,Waves & acoustics,Standing Waves in Solids,Calculate the speed of sound in a solid from v = √(E/ρ) and the frequencies of its standing waves.,analyse,multi-step,applied,advanced
+19009,Nuclear & particle,Radioactive Decay,"Write decay equations for α, β and γ radiation and use the decay law with half-life and activity.",analyse,multi-step,applied,core
+19010,Nuclear & particle,Radioactive Decay,"Write decay equations for α, β and γ radiation and use the decay law with half-life and activity.",analyse,multi-step,applied,core
+19011,Mechanics,Hydrostatic Pressure,"Calculate hydrostatic pressure p = ρ·g·h, or the height of a liquid column for a given pressure.",apply,single-formula,applied,core
+19012,Thermodynamics,Humidity,Calculate the mass of water vapour in air from the relative humidity and the saturation density.,apply,single-formula,applied,core
+19014,Electrostatics,Capacitance,"Relate charge, voltage and capacitance with Q = C·ΔV.",apply,single-formula,abstract,core
+19017,Mechanics,Acceleration from v(t) Graph,"Read an acceleration, with its sign, as the slope of the v(t) graph.",apply,graph,abstract,core
+19019,Oscillations,Damped Oscillations,Determine the period and the envelope (linear or exponential) of a damped oscillation from measured data.,analyse,graph,applied,advanced
+19021,Circuits,Resistivity,"Calculate the resistance of a wire from R = ρ·L/A and solve for length, cross-section or resistivity.",analyse,multi-step,applied,core
+19022,Circuits,Resistivity,"Calculate the resistance of a wire from R = ρ·L/A and solve for length, cross-section or resistivity.",analyse,multi-step,applied,core
+19029,Relativity,Time Dilation,Calculate time dilation and length contraction with the Lorentz factor γ = 1/√(1 − v²/c²).,apply,single-formula,applied,advanced
+19030,Relativity,Time Dilation,Calculate time dilation and length contraction with the Lorentz factor γ = 1/√(1 − v²/c²).,apply,single-formula,applied,advanced
+19031,Relativity,Lorentz Factor,Calculate the Lorentz factor for a given speed and the speed for a given Lorentz factor.,apply,single-formula,applied,advanced
+19157,Thermodynamics,Heat Engine Efficiency,Use the efficiency η = W/Q and the heating value of a fuel to find the power or fuel consumption of a heat engine.,apply,multi-step,applied,core
+19160,Thermodynamics,Heat Mixing,Set up the heat balance Q_released = Q_absorbed with c·m·Δθ to find a mixing temperature or an unknown mass.,apply,multi-step,applied,core
+19189,Magnetism & induction,Magnetic Field of a Wire,"Calculate the magnetic field of a long straight wire from B = μ0·I/(2πr), and superpose the fields of several wires.",apply,single-formula,abstract,core
+19190,Magnetism & induction,Magnetic Field of a Wire,"Calculate the magnetic field of a long straight wire from B = μ0·I/(2πr), and superpose the fields of several wires.",analyse,multi-step,applied,core
+19191,Magnetism & induction,Magnetic Field of a Loop,"Calculate the magnetic field of a circular loop or short coil, on its axis and at its centre.",apply,single-formula,applied,advanced
+19192,Magnetism & induction,Magnetic Field of a Loop,"Calculate the magnetic field of a circular loop or short coil, on its axis and at its centre.",analyse,multi-step,applied,advanced
+19193,Magnetism & induction,Magnetic Field of a Solenoid,"Calculate the magnetic field inside a solenoid or coil from B = μ0·μr·N·I/L, or solve it for N, I or μr.",apply,single-formula,abstract,core
+19194,Magnetism & induction,Magnetic Field of a Solenoid,"Calculate the magnetic field inside a solenoid or coil from B = μ0·μr·N·I/L, or solve it for N, I or μr.",apply,multi-step,abstract,advanced
+19195,Magnetism & induction,Magnetic Field of a Solenoid,"Calculate the magnetic field inside a solenoid or coil from B = μ0·μr·N·I/L, or solve it for N, I or μr.",apply,single-formula,applied,advanced
+19196,Magnetism & induction,Magnetic Field of a Wire,"Calculate the magnetic field of a long straight wire from B = μ0·I/(2πr), and superpose the fields of several wires.",analyse,multi-step,abstract,advanced
+19197,Magnetism & induction,Earth's Magnetic Field,Resolve the Earth's magnetic field into horizontal and vertical components using the inclination angle.,analyse,multi-step,applied,advanced
+19198,Magnetism & induction,Magnetic Field of a Wire,"Calculate the magnetic field of a long straight wire from B = μ0·I/(2πr), and superpose the fields of several wires.",evaluate,estimation,applied,core
+19200,Magnetism & induction,Magnetic Field of a Loop,"Calculate the magnetic field of a circular loop or short coil, on its axis and at its centre.",analyse,multi-step,abstract,advanced
+19205,Magnetism & induction,Helmholtz Coil,Calculate the field of a Helmholtz coil as the superposition of two coaxial loops.,apply,multi-step,applied,advanced
+19207,Magnetism & induction,Magnetic Field of a Loop,"Calculate the magnetic field of a circular loop or short coil, on its axis and at its centre.",analyse,derivation,abstract,advanced
+19208,Magnetism & induction,Earth's Magnetic Field,Resolve the Earth's magnetic field into horizontal and vertical components using the inclination angle.,apply,single-formula,applied,advanced
+19209,Magnetism & induction,Magnetic Materials,Calculate the internal field in a para- or diamagnetic material from its susceptibility and state its direction.,apply,single-formula,applied,advanced
+19275,Magnetism & induction,Unit of Magnetic Flux,Express the unit of magnetic flux in SI base units using force and induction laws.,analyse,derivation,abstract,advanced
+19289,Magnetism & induction,Motional EMF,Calculate the motional emf ε = v·B·L of a conductor moving perpendicular to a magnetic field.,apply,single-formula,applied,core
+19290,Magnetism & induction,Motional EMF,Calculate the motional emf ε = v·B·L of a conductor moving perpendicular to a magnetic field.,apply,single-formula,applied,core
+19291,Magnetism & induction,Motional EMF,Calculate the motional emf ε = v·B·L of a conductor moving perpendicular to a magnetic field.,apply,multi-step,abstract,core
+19292,Magnetism & induction,Motional EMF,Calculate the motional emf ε = v·B·L of a conductor moving perpendicular to a magnetic field.,analyse,multi-step,applied,advanced
+19293,Magnetism & induction,Motional EMF,Calculate the motional emf ε = v·B·L of a conductor moving perpendicular to a magnetic field.,apply,single-formula,applied,core
+19294,Magnetism & induction,Motional EMF,Calculate the motional emf ε = v·B·L of a conductor moving perpendicular to a magnetic field.,analyse,multi-step,applied,advanced
+19295,Magnetism & induction,AC Generator,"Calculate the amplitude ε0 = N·A·B·ω of the emf of a rotating coil generator, or solve it for B, N, A or f.",apply,single-formula,applied,advanced
+19305,Magnetism & induction,Self-Inductance,Calculate the self-induced emf ε = −L·ΔI/Δt of a coil and the inductance of a solenoid.,apply,single-formula,abstract,advanced
+19306,Magnetism & induction,Self-Inductance,Calculate the self-induced emf ε = −L·ΔI/Δt of a coil and the inductance of a solenoid.,apply,single-formula,abstract,advanced
+19307,Circuits,RL Circuit Decay,Use the exponential decay I(t) = I0·e^(−t/τ) with τ = L/R to find switching times in an RL circuit.,apply,multi-step,abstract,advanced
+19315,Magnetism & induction,Magnetic Flux,Calculate the magnetic flux of a non-uniform field through a surface numerically with a computer program.,create,multi-step,abstract,beyond
+19318,Magnetism & induction,Motional EMF,Apply Faraday's law ε = −dΦ/dt to a conductor rotating in a magnetic field.,analyse,multi-step,applied,advanced
+19320,Magnetism & induction,Magnetic Energy,"Calculate the energy stored in a coil, W = ½·L·I², and the magnetic energy density w = B²/(2μ0).",apply,multi-step,applied,advanced
+19321,Magnetism & induction,LC Circuit Energy,Use energy conservation between capacitor and coil to find the current in an LC circuit.,apply,multi-step,abstract,advanced
+19322,Magnetism & induction,Energy Density of Fields,Relate the energy density of electric and magnetic fields to the field strength.,apply,multi-step,abstract,advanced
+19408,Electrostatics,Continuous Charge Distributions,Derive the electric field or force of a continuous charge distribution by integration.,analyse,derivation,abstract,beyond
+19430,Electrostatics,Field of a Point Charge,Calculate the electric field of a point charge or charged sphere with E = k·Q/r².,apply,single-formula,applied,core
+19431,Electrostatics,Superposition of Electric Fields,Add electric field vectors of point charges or uniform fields component-wise.,apply,multi-step,abstract,advanced
+19499,Circuits,AC Quantities,"Describe an ac voltage by its amplitude, rms value, frequency, angular frequency and period.",apply,single-formula,abstract,advanced
+19500,Circuits,AC Impedance,"Calculate the impedance of an ac circuit as the ratio of voltage and current amplitudes, Z = V0/I0.",apply,single-formula,abstract,advanced
+19539,Circuits,AC Power and Phase Shift,"Relate apparent power, effective power, power factor and phase shift in an ac circuit, P = V_rms·I_rms·cos Δφ.",apply,multi-step,applied,advanced
+19540,Circuits,AC Power and Phase Shift,"Relate apparent power, effective power, power factor and phase shift in an ac circuit, P = V_rms·I_rms·cos Δφ.",apply,multi-step,applied,advanced
+19541,Circuits,Reactance,Calculate the reactances X_L = ωL and X_C = 1/(ωC) and find the frequency for a given reactance.,apply,single-formula,abstract,advanced
+19544,Circuits,RLC Circuits,Calculate the impedance and the phase shift of series and parallel RLC circuits with phasors or the impedance formula.,analyse,multi-step,abstract,advanced
+19563,Circuits,RLC Circuits,Calculate the impedance and the phase shift of series and parallel RLC circuits with phasors or the impedance formula.,apply,multi-step,abstract,advanced
+19569,Circuits,RLC Circuits,Calculate the impedance and the phase shift of series and parallel RLC circuits with phasors or the impedance formula.,apply,multi-step,abstract,advanced
+19625,Circuits,Electric Current and Charge,"Relate current, charge and time with I = ΔQ/Δt, also as the derivative I = dQ/dt.",apply,derivation,abstract,advanced
+19626,Circuits,Electric Current and Charge,"Relate current, charge and time with I = ΔQ/Δt, also as the derivative I = dQ/dt.",apply,single-formula,applied,core
+19628,Circuits,Drift Velocity,Calculate the drift velocity of electrons from I = n·A·e·v.,apply,single-formula,applied,advanced
+19629,Circuits,Drift Velocity,Calculate the drift velocity of electrons from I = n·A·e·v.,analyse,multi-step,abstract,advanced
+19630,Circuits,Drift Velocity,Calculate the drift velocity of electrons from I = n·A·e·v.,analyse,multi-step,abstract,advanced
+19633,Circuits,RLC Circuits,Calculate the impedance and the phase shift of series and parallel RLC circuits with phasors or the impedance formula.,analyse,derivation,abstract,advanced
+19647,Magnetism & induction,Helmholtz Coil,Calculate the field of a Helmholtz coil as the superposition of two coaxial loops.,analyse,multi-step,abstract,beyond
+19667,Circuits,Electric Power and Energy,Combine electric power with the heat needed to warm or melt a substance (Q = c·m·Δϑ + m·L_f).,analyse,multi-step,applied,core
+19765,Circuits,Temperature Dependence of Resistance,Calculate the change of resistance with temperature from R = R0·(1 + α·Δϑ).,analyse,multi-step,applied,core
+19784,Oscillations,Mass–Spring Oscillator,"Calculate period, mass or spring constant of a mass–spring oscillator from T = 2π·√(m/k).",apply,single-formula,abstract,core
+19787,Oscillations,Mass–Spring Oscillator,"Calculate period, mass or spring constant of a mass–spring oscillator from T = 2π·√(m/k).",apply,multi-step,abstract,core
+19792,Oscillations,LC Oscillator,"Calculate frequency, inductance or capacitance of an LC oscillator from f = 1/(2π·√(LC)).",apply,single-formula,abstract,advanced
+19802,Oscillations,Energy in Harmonic Oscillations,"Use energy conservation in a harmonic oscillator to relate displacement, speed and amplitude.",apply,multi-step,abstract,advanced
+19803,Oscillations,Energy in Harmonic Oscillations,"Use energy conservation in an LC circuit, ½CV² + ½LI² = const., to find current or voltage.",apply,multi-step,abstract,advanced
+19804,Oscillations,Damped Oscillations,Show that a given function solves the differential equation of a damped oscillator and fit it to initial conditions.,analyse,derivation,abstract,beyond
+19864,Oscillations,Mass–Spring Oscillator,"Calculate period, mass or spring constant of a mass–spring oscillator from T = 2π·√(m/k).",analyse,multi-step,applied,core
+19866,Oscillations,LC Oscillator,"Calculate frequency, inductance or capacitance of an LC oscillator from f = 1/(2π·√(LC)).",apply,graph,applied,advanced
+19876,Oscillations,Energy in Harmonic Oscillations,Show that gravity only shifts the equilibrium of a vertical spring so that the potential energy is ½·k·y² about the new equilibrium.,analyse,derivation,abstract,advanced
+19878,Oscillations,Physical Pendulum,"Derive and apply the period of a physical pendulum from its moment of inertia, including the mathematical pendulum as a limit.",analyse,derivation,abstract,beyond
+19893,Oscillations,Torsional Pendulum,Derive the period of a torsional pendulum from its moment of inertia and restoring torque constant.,analyse,derivation,applied,beyond
+19903,Oscillations,Driven Oscillations and Resonance,Determine bandwidth and Q factor Q = f_R/Δf of a resonance curve.,apply,graph,abstract,advanced
+19905,Oscillations,Damped Oscillations,"Classify damping as weak, critical or strong with the damping ratio ζ = δ/ω0, for mechanical and LC oscillators.",apply,multi-step,abstract,advanced
+19906,Oscillations,Driven Oscillations and Resonance,Determine bandwidth and Q factor Q = f_R/Δf of a resonance curve.,apply,single-formula,applied,advanced
+19907,Oscillations,Damped Oscillations,"Relate the amplitude envelope of a damped oscillation (linear or exponential) to its damping coefficient, half-life and remaining energy (E ∝ A²).",apply,multi-step,abstract,advanced
+19908,Oscillations,Damped Oscillations,"Relate the amplitude envelope of a damped oscillation (linear or exponential) to its damping coefficient, half-life and remaining energy (E ∝ A²).",apply,multi-step,abstract,advanced
+19909,Oscillations,Damped Oscillations,"Classify damping as weak, critical or strong with the damping ratio ζ = δ/ω0, for mechanical and LC oscillators.",apply,single-formula,abstract,advanced
+19910,Oscillations,Superposition of Oscillations,Find the amplitude of the superposition of two harmonic oscillations of equal frequency from their phase shift.,apply,single-formula,applied,advanced
+19924,Oscillations,Damped Oscillations,"Relate the amplitude envelope of a damped oscillation (linear or exponential) to its damping coefficient, half-life and remaining energy (E ∝ A²).",analyse,derivation,abstract,advanced
+19955,Oscillations,Beats,Explain and calculate beats as the superposition of two oscillations with slightly different frequencies.,apply,single-formula,applied,advanced
+19957,Oscillations,Beats,Explain and calculate beats as the superposition of two oscillations with slightly different frequencies.,analyse,multi-step,applied,advanced
+19967,Oscillations,Beats,Explain and calculate beats as the superposition of two oscillations with slightly different frequencies.,analyse,graph,abstract,advanced
+19978,Oscillations,Superposition of Oscillations,Find the amplitude of the superposition of two harmonic oscillations of equal frequency from their phase shift.,apply,single-formula,abstract,advanced
+19979,Oscillations,Superposition of Oscillations,Find the amplitude of the superposition of two harmonic oscillations of equal frequency from their phase shift.,apply,multi-step,abstract,advanced
+20005,Waves & acoustics,Wave Speed and Wavelength,"Relate wavelength, frequency, period, wave number and propagation speed of a harmonic wave with v = λ·f.",apply,multi-step,applied,core
+20008,Waves & acoustics,Wave Functions,"Construct a travelling wave function y(x,t) = f(x ∓ vt) from a pulse shape and interpret its parameters.",create,graph,abstract,beyond
+20009,Waves & acoustics,Wave Speed and Wavelength,"Relate wavelength, frequency, period, wave number and propagation speed of a harmonic wave with v = λ·f.",apply,single-formula,abstract,core
+20010,Waves & acoustics,Wave Speed and Wavelength,"Relate wavelength, frequency, period, wave number and propagation speed of a harmonic wave with v = λ·f.",apply,single-formula,abstract,core
+20011,Waves & acoustics,Wavelength and Frequency,Relate wavelength and frequency of electromagnetic waves with c = λ·f.,apply,single-formula,applied,core
+20012,Waves & acoustics,Wavelength and Frequency,Relate wavelength and frequency of electromagnetic waves with c = λ·f.,apply,single-formula,applied,core
+20013,Waves & acoustics,Wave Speed and Wavelength,"Relate wavelength, frequency, period, wave number and propagation speed of a harmonic wave with v = λ·f.",apply,single-formula,applied,core
+20066,Waves & acoustics,Wave Functions,"Read amplitude, frequency, wavelength, speed and direction from a harmonic wave function y(x,t) = A·sin(ωt ± kx + φ).",apply,multi-step,abstract,advanced
+20067,Waves & acoustics,Harmonic Wave Function,"Read amplitude, frequency, wavelength and propagation speed from the equation y(x,t) = A·sin(ωt + kx + φ) of a harmonic wave.",apply,multi-step,abstract,advanced
+20068,Waves & acoustics,Speed of Sound,"Calculate the speed of sound in a gas, liquid or solid from its material properties (v = √(κRT/M), 1/√(χρ), √(E/ρ)) and solve for an unknown.",apply,single-formula,applied,advanced
+20072,Waves & acoustics,Speed of Sound,"Calculate the speed of sound in a gas, liquid or solid from its material properties (v = √(κRT/M), 1/√(χρ), √(E/ρ)) and solve for an unknown.",apply,single-formula,abstract,advanced
+20073,Waves & acoustics,Speed of Sound,"Calculate the speed of sound in a gas, liquid or solid from its material properties (v = √(κRT/M), 1/√(χρ), √(E/ρ)) and solve for an unknown.",apply,single-formula,applied,advanced
+20075,Waves & acoustics,Musical Intervals,"Combine musical intervals by multiplying their frequency ratios and express ratios in octaves, semitones or cents.",apply,single-formula,applied,advanced
+20076,Waves & acoustics,Musical Tuning Systems,Compare just intervals with equally tempered intervals built from the semitone ratio 2^(1/12).,analyse,multi-step,applied,advanced
+20088,Waves & acoustics,Musical Intervals,"Combine musical intervals by multiplying their frequency ratios and express ratios in octaves, semitones or cents.",apply,multi-step,applied,advanced
+20189,Waves & acoustics,Doppler Effect,Decide whether a Doppler situation is a moving source or a moving observer and whether the heard frequency rises or falls.,understand,conceptual,applied,advanced
+20190,Waves & acoustics,Doppler Effect,"Calculate the frequency heard when the source and/or observer move, using the Doppler formulas for sound.",apply,single-formula,applied,advanced
+20191,Waves & acoustics,Doppler Effect,"Calculate the frequency heard when the source and/or observer move, using the Doppler formulas for sound.",apply,single-formula,applied,advanced
+20192,Waves & acoustics,Doppler Effect,Apply the Doppler formula twice to a wave reflected from a moving object to relate frequency shift and speed.,analyse,multi-step,applied,advanced
+20193,Waves & acoustics,Doppler Effect,Apply the Doppler formula twice to a wave reflected from a moving object to relate frequency shift and speed.,analyse,multi-step,applied,advanced
+20195,Waves & acoustics,Doppler Effect,"Calculate the frequency heard when the source and/or observer move, using the Doppler formulas for sound.",apply,single-formula,abstract,advanced
+20196,Waves & acoustics,Doppler Effect,"Calculate the frequency heard when the source and/or observer move, using the Doppler formulas for sound.",apply,multi-step,applied,advanced
+20208,Waves & acoustics,Mach Cone,Determine the Mach number of a supersonic body from the opening angle of its Mach cone.,apply,single-formula,applied,advanced
+20209,Waves & acoustics,Doppler Effect,"Calculate the Doppler-shifted frequency for a moving source and/or a moving observer, and solve for the speed.",apply,multi-step,applied,core
+20211,Waves & acoustics,Sound Intensity Level,"Convert between sound intensity level in decibels and intensity, I = I0·10^(β/10), and find the power through an area.",apply,estimation,applied,advanced
+20212,Waves & acoustics,Sound Intensity Level,"Relate changes of sound intensity to changes of sound intensity level in decibels, β = 10·log(I/I0).",apply,multi-step,applied,core
+20213,Waves & acoustics,Sound Intensity Level,"Relate changes of sound intensity to changes of sound intensity level in decibels, β = 10·log(I/I0).",apply,single-formula,applied,core
+20214,Waves & acoustics,Sound Intensity Level,Add the sound intensities (not the levels) of several sources to find the combined sound intensity level.,apply,multi-step,applied,core
+20306,Mathematics,Systems of Linear ODEs,"Convert higher-order linear differential equations into systems of first-order equations and back, and set up the coefficient matrix.",apply,derivation,abstract,beyond
+20307,Mathematics,Systems of Linear ODEs,"Convert higher-order linear differential equations into systems of first-order equations and back, and set up the coefficient matrix.",apply,derivation,abstract,beyond
+20308,Mathematics,Systems of Linear ODEs,"Convert higher-order linear differential equations into systems of first-order equations and back, and set up the coefficient matrix.",apply,derivation,abstract,beyond
+20309,Mathematics,Coupled ODE Systems,"Model a coupled process (decay chain, reaction, population) as a linear system of ODEs and solve it with eigenvalues and eigenvectors.",analyse,multi-step,applied,beyond
+20310,Mathematics,Coupled ODE Systems,"Model a coupled process (decay chain, reaction, population) as a linear system of ODEs and solve it with eigenvalues and eigenvectors.",analyse,multi-step,applied,beyond
+20311,Mathematics,Eigenvalues and Eigenvectors,Calculate eigenvalues and eigenvectors of a 2×2 or 3×3 matrix.,apply,multi-step,abstract,beyond
+20312,Mathematics,Eigenvalues of Matrices,Derive the eigenvalues of a 2×2 matrix from its trace and determinant.,analyse,derivation,abstract,beyond
+20319,Mathematics,Damped Oscillator as Linear System,"Analyse the damped oscillator as a linear 2D system: relate eigenvalues to under-, over- and critical damping and solve initial value problems.",analyse,derivation,abstract,beyond
+20320,Mathematics,Damped Oscillator as Linear System,"Analyse the damped oscillator as a linear 2D system: relate eigenvalues to under-, over- and critical damping and solve initial value problems.",analyse,derivation,abstract,beyond
+20324,Mathematics,Systems of Linear ODEs,Construct the solution of a linear system as a superposition of eigenvector solutions and fit it to initial conditions.,apply,multi-step,abstract,beyond
+20330,Mathematics,Phase Portraits,"Classify the fixed point of a 2D linear system (node, saddle, centre, spiral) from trace, determinant or eigenvalues, and sketch its phase portrait.",apply,graph,abstract,beyond
+20331,Mathematics,Phase Portraits,"Classify the fixed point of a 2D linear system (node, saddle, centre, spiral) from trace, determinant or eigenvalues, and sketch its phase portrait.",apply,graph,abstract,beyond
+20332,Mathematics,Phase Portraits,"Classify the fixed point of a 2D linear system (node, saddle, centre, spiral) from trace, determinant or eigenvalues, and sketch its phase portrait.",apply,graph,abstract,beyond
+20333,Mathematics,Phase Portraits,"Classify the fixed point of a 2D linear system (node, saddle, centre, spiral) from trace, determinant or eigenvalues, and sketch its phase portrait.",apply,graph,abstract,beyond
+20334,Mathematics,Coupled ODE Systems,"Model a coupled process (decay chain, reaction, population) as a linear system of ODEs and solve it with eigenvalues and eigenvectors.",analyse,multi-step,applied,beyond
+20335,Mathematics,Damped Oscillator as Linear System,"Analyse the damped oscillator as a linear 2D system: relate eigenvalues to under-, over- and critical damping and solve initial value problems.",analyse,derivation,abstract,beyond
+20336,Waves & acoustics,Maxwell Equations,Verify that a plane electromagnetic wave satisfies Maxwell's curl equations.,analyse,derivation,abstract,beyond
+20343,Waves & acoustics,Loudness and Phon,Read the loudness in phon from equal-loudness contours for a given frequency and sound intensity level.,apply,graph,applied,core
+20344,Waves & acoustics,Sound Intensity Level,Relate the pressure amplitude of a sound wave to its intensity and sound intensity level.,apply,multi-step,abstract,advanced
+20345,Waves & acoustics,Sound Intensity Level,"Calculate changes of the sound intensity level in decibels from intensity ratios with L = 10·log(I/I0), and vice versa.",apply,single-formula,applied,core
+20348,Mathematics,Systems of Linear ODEs,Construct the solution of a linear system as a superposition of eigenvector solutions and fit it to initial conditions.,analyse,derivation,abstract,beyond
+20351,Mathematics,Coupled ODE Systems,"Model a coupled process (decay chain, reaction, population) as a linear system of ODEs and solve it with eigenvalues and eigenvectors.",analyse,conceptual,applied,beyond
+20379,Mathematics,Systems of Linear ODEs,"Convert higher-order linear differential equations into systems of first-order equations and back, and set up the coefficient matrix.",apply,derivation,abstract,beyond
+20386,Optics,Thin-Film Interference,"Find the film thickness for constructive or destructive thin-film interference, including the phase jump on reflection.",analyse,multi-step,applied,advanced
+20390,Waves & acoustics,Intensity of EM Waves,"Relate intensity, power and area of a wave, including the inverse square law and I ∝ E².",apply,multi-step,applied,advanced
+20391,Waves & acoustics,Intensity of EM Waves,Calculate the energy contained in a light field from its power and travel time or energy density.,analyse,multi-step,applied,advanced
+20394,Waves & acoustics,Wavelength and Frequency,Relate wavelength and frequency of electromagnetic waves with c = λ·f.,apply,single-formula,applied,core
+20401,Optics,Single-Slit Diffraction,Calculate the angles of the minima of a single slit from b·sin α = k·λ.,apply,single-formula,abstract,advanced
+20411,Oscillations,Energy in Harmonic Oscillations,"Use energy conservation in a harmonic oscillator to relate displacement, speed and amplitude.",apply,multi-step,abstract,advanced
+20412,Oscillations,Damped Oscillations,"Classify damping as weak, critical or strong with the damping ratio ζ = δ/ω0, for mechanical and LC oscillators.",apply,multi-step,abstract,advanced
+20413,Oscillations,Energy in Harmonic Oscillations,"Use energy conservation in a harmonic oscillator to relate displacement, speed and amplitude.",apply,multi-step,abstract,advanced
+20414,Oscillations,Damped Oscillations,"Relate the amplitude envelope of a damped oscillation (linear or exponential) to its damping coefficient, half-life and remaining energy (E ∝ A²).",apply,multi-step,abstract,advanced
+20415,Oscillations,Damped Oscillations,"Relate the amplitude envelope of a damped oscillation (linear or exponential) to its damping coefficient, half-life and remaining energy (E ∝ A²).",apply,multi-step,abstract,advanced
+20416,Oscillations,Damped Oscillations,"Relate the amplitude envelope of a damped oscillation (linear or exponential) to its damping coefficient, half-life and remaining energy (E ∝ A²).",apply,multi-step,abstract,advanced
+20417,Optics,Coherence,Explain why only waves with a fixed phase relation (coherent waves) produce a stable interference pattern.,understand,conceptual,abstract,advanced
+20418,Optics,Diffraction at a Circular Aperture,Calculate the positions of the diffraction minima of a circular aperture on a screen with small-angle approximations.,apply,multi-step,applied,advanced
+20437,Mathematics,Complex Exponential Functions,Express sine and cosine through complex exponentials using Euler's formula.,analyse,derivation,abstract,beyond
+20438,Oscillations,Velocity in Harmonic Motion,"Differentiate the displacement of a harmonic motion, using complex exponentials, to obtain its velocity.",apply,derivation,abstract,beyond
+20443,Optics,Michelson Interferometer,Relate the shift of interference fringes in a Michelson interferometer to the mirror displacement.,apply,single-formula,applied,advanced
+20479,Oscillations,Coupled Oscillators,Set up the equations of motion of coupled oscillators and find their normal-mode frequencies and eigenvectors.,analyse,derivation,abstract,beyond
+20480,Oscillations,Coupled Oscillators,Set up the equations of motion of coupled oscillators and find their normal-mode frequencies and eigenvectors.,analyse,derivation,abstract,beyond
+20481,Oscillations,Coupled Oscillators,Set up the equations of motion of coupled oscillators and find their normal-mode frequencies and eigenvectors.,analyse,derivation,abstract,beyond
+20496,Oscillations,Coupled Oscillators,Set up the equations of motion of coupled oscillators and find their normal-mode frequencies and eigenvectors.,analyse,derivation,abstract,beyond
+20531,Oscillations,Coupled Oscillators,Set up the equations of motion of coupled oscillators and find their normal-mode frequencies and eigenvectors.,analyse,derivation,abstract,beyond
+20532,Oscillations,Coupled Oscillators,Set up the equations of motion of coupled oscillators and find their normal-mode frequencies and eigenvectors.,analyse,derivation,applied,beyond
+20533,Oscillations,Coupled Oscillators,Set up the equations of motion of coupled oscillators and find their normal-mode frequencies and eigenvectors.,analyse,derivation,applied,beyond
+20534,Oscillations,Coupled Oscillators,Set up the equations of motion of coupled oscillators and find their normal-mode frequencies and eigenvectors.,analyse,derivation,abstract,beyond
+20535,Oscillations,Coupled Oscillators,Set up the equations of motion of coupled oscillators and find their normal-mode frequencies and eigenvectors.,analyse,derivation,abstract,beyond
+20571,Quantum & atomic,Phase and Group Velocity,Derive the phase and group velocity of a de Broglie wave from the relativistic dispersion relation.,analyse,derivation,abstract,beyond
+20579,Mathematics,Systems of Linear ODEs,"Convert higher-order linear differential equations into systems of first-order equations and back, and set up the coefficient matrix.",apply,derivation,abstract,beyond
+20580,Mathematics,Systems of Linear ODEs,Classify a differential equation as linear or nonlinear and as time-variant or time-invariant.,understand,conceptual,abstract,beyond
+20581,Mathematics,Systems of Linear ODEs,"Convert higher-order linear differential equations into systems of first-order equations and back, and set up the coefficient matrix.",apply,derivation,abstract,beyond
+20583,Mathematics,Phase Portraits,"Classify the fixed point of a 2D linear system (node, saddle, centre, spiral) from trace, determinant or eigenvalues, and sketch its phase portrait.",apply,graph,abstract,beyond
+20591,Mathematics,Systems of Linear ODEs,Construct the solution of a linear system as a superposition of eigenvector solutions and fit it to initial conditions.,apply,multi-step,abstract,beyond
+20592,Oscillations,Coupled Oscillators,Set up the equations of motion of coupled oscillators and find their normal-mode frequencies and eigenvectors.,analyse,derivation,abstract,beyond
+20594,Mathematics,Phase Portraits,"Classify the fixed point of a 2D linear system (node, saddle, centre, spiral) from trace, determinant or eigenvalues, and sketch its phase portrait.",analyse,graph,abstract,beyond
+20595,Mathematics,Systems of Linear ODEs,Construct the solution of a linear system as a superposition of eigenvector solutions and fit it to initial conditions.,apply,multi-step,abstract,beyond
+20605,Mathematics,Systems of Linear ODEs,"Convert higher-order linear differential equations into systems of first-order equations and back, and set up the coefficient matrix.",apply,derivation,abstract,beyond
+20606,Mathematics,Systems of Linear ODEs,Classify a differential equation as linear or nonlinear and as time-variant or time-invariant.,apply,conceptual,applied,beyond
+20607,Mathematics,Phase Portraits,"Classify the fixed point of a 2D linear system (node, saddle, centre, spiral) from trace, determinant or eigenvalues, and sketch its phase portrait.",analyse,graph,abstract,beyond
+20608,Mathematics,Damped Oscillator as Linear System,"Analyse the damped oscillator as a linear 2D system: relate eigenvalues to under-, over- and critical damping and solve initial value problems.",analyse,derivation,abstract,beyond
+20615,Oscillations,Coupled Oscillators,Set up the equations of motion of coupled oscillators and find their normal-mode frequencies and eigenvectors.,analyse,derivation,abstract,beyond
+20617,Mathematics,Systems of Linear ODEs,Construct the solution of a linear system as a superposition of eigenvector solutions and fit it to initial conditions.,apply,multi-step,abstract,beyond
+20618,Mathematics,Phase Portraits,"Classify the fixed point of a 2D linear system (node, saddle, centre, spiral) from trace, determinant or eigenvalues, and sketch its phase portrait.",apply,graph,abstract,beyond
+20620,Quantum & atomic,Hydrogen Atom Energy Levels,Scale the hydrogen energy levels to hydrogen-like and exotic atoms with charge Z and (reduced) mass.,analyse,multi-step,abstract,beyond
+20624,Quantum & atomic,Bohr Radius,Evaluate atomic constants such as the Bohr radius and the ground-state energy from fundamental constants and relate their expressions.,apply,single-formula,abstract,advanced
+20625,Quantum & atomic,Bohr Radius,Evaluate atomic constants such as the Bohr radius and the ground-state energy from fundamental constants and relate their expressions.,apply,derivation,abstract,advanced
+20626,Quantum & atomic,Hydrogen Atom Energy Levels,Calculate the energy levels E_n = E_1/n² of the hydrogen atom (and hydrogen-like systems) and the energy of transitions or ionisation.,apply,single-formula,abstract,advanced
+20631,Quantum & atomic,Atomic Orbitals,Determine the number of orbitals and the angular momentum L = ħ√(ℓ(ℓ+1)) from the quantum numbers n and ℓ.,analyse,derivation,abstract,advanced
+20632,Quantum & atomic,Atomic Orbitals,Determine the number of orbitals and the angular momentum L = ħ√(ℓ(ℓ+1)) from the quantum numbers n and ℓ.,apply,single-formula,abstract,advanced
+20633,Quantum & atomic,Atomic Orbitals,Determine the number of orbitals and the angular momentum L = ħ√(ℓ(ℓ+1)) from the quantum numbers n and ℓ.,apply,single-formula,abstract,advanced
+20640,Mathematics,Integrals in Spherical Coordinates,Integrate a spherically symmetric function in spherical coordinates and evaluate radial integrals.,analyse,derivation,abstract,beyond
+20642,Mathematics,Integrals in Spherical Coordinates,Integrate a spherically symmetric function in spherical coordinates and evaluate radial integrals.,analyse,derivation,abstract,beyond
+20651,Relativity,Lorentz Factor,Calculate the Lorentz factor for a given speed and the speed for a given Lorentz factor.,apply,multi-step,applied,advanced
+20660,Relativity,Relativistic Doppler Effect,Apply the relativistic Doppler factor √((1+β)/(1−β)) to find shifted wavelengths or the relative speed of a source.,apply,multi-step,applied,advanced
+20661,Relativity,Relativistic Doppler Effect,Apply the relativistic Doppler factor √((1+β)/(1−β)) to find shifted wavelengths or the relative speed of a source.,apply,multi-step,abstract,advanced
+20662,Relativity,Length Contraction,Calculate time dilation and length contraction with the Lorentz factor γ = 1/√(1 − v²/c²).,analyse,multi-step,applied,advanced
+20663,Relativity,Length Contraction,Calculate time dilation and length contraction with the Lorentz factor γ = 1/√(1 − v²/c²).,apply,single-formula,applied,advanced
+20667,Relativity,Time Dilation,Calculate time dilation and length contraction with the Lorentz factor γ = 1/√(1 − v²/c²).,apply,single-formula,applied,advanced
+20668,Relativity,Time Dilation,Calculate time dilation and length contraction with the Lorentz factor γ = 1/√(1 − v²/c²).,analyse,multi-step,applied,advanced
+20669,Relativity,Time Dilation,Approximate the Lorentz factor for small speeds by γ ≈ 1 + v²/(2c²) to estimate tiny relativistic effects.,apply,estimation,applied,advanced
+20670,Relativity,Time Dilation,Calculate time dilation and length contraction with the Lorentz factor γ = 1/√(1 − v²/c²).,apply,multi-step,applied,advanced
+20671,Relativity,Relativistic Velocity Addition,Combine velocities with the relativistic velocity addition formula u = (v + u')/(1 + vu'/c²).,apply,single-formula,applied,advanced
+20672,Relativity,Relativistic Velocity Addition,Combine velocities with the relativistic velocity addition formula u = (v + u')/(1 + vu'/c²).,apply,multi-step,applied,advanced
+20673,Relativity,Relativistic Velocity Addition,Combine velocities with the relativistic velocity addition formula u = (v + u')/(1 + vu'/c²).,analyse,multi-step,applied,advanced
+20674,Relativity,Mass-Energy Equivalence,Relate a change in energy to a change in mass with ΔE = Δm·c².,apply,multi-step,applied,advanced
+20675,Nuclear & particle,Nuclear Binding Energy,Calculate nuclear binding energies and reaction energies from the mass defect with ΔE = Δm·c².,apply,single-formula,abstract,advanced
+20676,Nuclear & particle,Nuclear Binding Energy,Calculate nuclear binding energies and reaction energies from the mass defect with ΔE = Δm·c².,apply,multi-step,abstract,advanced
+20679,Nuclear & particle,Nuclear Binding Energy,Calculate nuclear binding energies and reaction energies from the mass defect with ΔE = Δm·c².,apply,multi-step,abstract,advanced
+20681,Relativity,Particle Collisions,Determine threshold energies for particle production in collisions from energy conservation and rest energies.,analyse,multi-step,abstract,advanced
+20682,Relativity,Particle Collisions,Determine threshold energies for particle production in collisions from energy conservation and rest energies.,apply,multi-step,abstract,advanced
+20683,Relativity,Relativistic Kinetic Energy,Calculate the relativistic kinetic energy E_kin = (γ − 1)·mc² and compare it with the classical expression.,apply,single-formula,abstract,advanced
+20685,Relativity,Relativistic Kinetic Energy,Calculate the relativistic kinetic energy E_kin = (γ − 1)·mc² and compare it with the classical expression.,apply,multi-step,applied,advanced
+20686,Relativity,Relativistic Kinetic Energy,Calculate the relativistic kinetic energy E_kin = (γ − 1)·mc² and compare it with the classical expression.,apply,multi-step,abstract,advanced
+20687,Relativity,Mass-Energy Equivalence,Relate a change in energy to a change in mass with ΔE = Δm·c².,analyse,multi-step,applied,advanced
+20690,Relativity,Length Contraction,Calculate time dilation and length contraction with the Lorentz factor γ = 1/√(1 − v²/c²).,apply,multi-step,abstract,advanced
+20691,Relativity,Relativistic Energy and Momentum,"Derive relations of special relativity, such as the energy–momentum relation or identities of the Lorentz factor, from the definitions.",analyse,derivation,abstract,advanced
+20692,Relativity,Relativistic Energy and Momentum,"Use the relativistic energy–momentum relation E² = (pc)² + (mc²)² and E = γmc² to find momentum, energy or mass of a particle.",apply,multi-step,abstract,advanced
+20693,Relativity,Relativistic Dynamics,Derive the relation between force and acceleration in relativistic dynamics from F = dp/dt with p = γmv.,analyse,derivation,abstract,beyond
+20695,Relativity,Lorentz Factor,"Derive relations of special relativity, such as the energy–momentum relation or identities of the Lorentz factor, from the definitions.",analyse,derivation,abstract,advanced
+20696,Relativity,Relativistic Energy and Momentum,"Use the relativistic energy–momentum relation E² = (pc)² + (mc²)² and E = γmc² to find momentum, energy or mass of a particle.",analyse,multi-step,applied,advanced
+20698,Relativity,Relativistic Energy and Momentum,Calculate the relativistic momentum p = γmv of a particle and solve for its mass or speed.,apply,single-formula,abstract,advanced
+20705,Relativity,Mass-Energy Equivalence,Relate a change in energy to a change in mass with ΔE = Δm·c².,apply,multi-step,applied,advanced
+20706,Relativity,Relativistic Kinetic Energy,Calculate the relativistic kinetic energy E_kin = (γ − 1)·mc² and compare it with the classical expression.,apply,multi-step,applied,advanced
+20709,Relativity,Length Contraction,Argue by contradiction that lengths perpendicular to the motion are not contracted.,evaluate,derivation,abstract,beyond
+20776,Relativity,Relativistic Energy and Momentum,"Derive relations of special relativity, such as the energy–momentum relation or identities of the Lorentz factor, from the definitions.",analyse,derivation,abstract,advanced
+20813,Thermodynamics,Heat Mixing,Set up the heat balance Q_released = Q_absorbed with c·m·Δθ to find a mixing temperature or an unknown mass.,analyse,multi-step,applied,core
+21070,Waves & acoustics,Intensity of EM Waves,"Relate intensity, power and area of a wave, including the inverse square law and I ∝ E².",apply,single-formula,applied,core
+21071,Astrophysics & gravitation,Stellar Luminosity,"Relate luminosity, distance and intensity (or magnitude) of a star with the inverse square law.",apply,single-formula,applied,advanced
+21072,Astrophysics & gravitation,Stellar Magnitudes,"Convert between apparent magnitude, absolute magnitude, distance and luminosity ratio of stars.",apply,multi-step,applied,advanced
+21174,Astrophysics & gravitation,Apparent Magnitude and Distance,Relate apparent and absolute magnitude to the distance of a star (distance modulus).,analyse,multi-step,applied,advanced
+21175,Astrophysics & gravitation,Stellar Radiation,Calculate a star's intensity at Earth with the Stefan–Boltzmann law and its distance from apparent and absolute magnitude.,apply,multi-step,applied,advanced
+21177,Astrophysics & gravitation,Stellar Luminosity and Radius,"Relate luminosity, radius and surface temperature of a star with the Stefan–Boltzmann law L = 4πR²σT⁴.",apply,single-formula,applied,advanced
+21178,Astrophysics & gravitation,Stellar Luminosity and Radius,"Relate luminosity, radius and surface temperature of a star with the Stefan–Boltzmann law L = 4πR²σT⁴.",apply,multi-step,applied,advanced
+21179,Thermodynamics,Black-Body Radiation,Apply Wien's displacement law to relate the temperature of a black body to its peak wavelength.,analyse,graph,applied,advanced
+21180,Thermodynamics,Black-Body Radiation,Apply Wien's displacement law to relate the temperature of a black body to its peak wavelength.,apply,single-formula,applied,advanced
+21182,Astrophysics & gravitation,Apparent Magnitude and Distance,Relate apparent and absolute magnitude to the distance of a star (distance modulus).,analyse,multi-step,applied,advanced
+21293,Astrophysics & gravitation,Stellar Parallax,Convert between annual parallax and stellar distance in light years and parsecs.,apply,single-formula,applied,advanced
+21294,Astrophysics & gravitation,Stellar Parallax,Convert between annual parallax and stellar distance in light years and parsecs.,apply,single-formula,applied,advanced
+21295,Astrophysics & gravitation,Cepheid Distances,"Use the period–luminosity relation of Cepheids to find absolute magnitude, period or distance.",apply,multi-step,applied,advanced
+21296,Astrophysics & gravitation,Cepheid Distances,"Use the period–luminosity relation of Cepheids to find absolute magnitude, period or distance.",apply,single-formula,applied,advanced
+21297,Astrophysics & gravitation,Astronomical Distance Units,"Convert astronomical distances between astronomical units, light years, parsecs and metres.",apply,single-formula,applied,advanced
+21298,Astrophysics & gravitation,Hubble Law,Estimate the recession speed of a galaxy from its distance with Hubble's law v = H0·d.,apply,single-formula,applied,advanced
+21299,Astrophysics & gravitation,Hertzsprung–Russell Diagram,Place stars in the Hertzsprung–Russell diagram from temperature and luminosity and classify them.,understand,graph,applied,advanced
+21301,Astrophysics & gravitation,Stellar Luminosity and Radius,"Relate luminosity, radius and surface temperature of a star with the Stefan–Boltzmann law L = 4πR²σT⁴.",apply,single-formula,applied,advanced
+21302,Astrophysics & gravitation,Stellar Luminosity and Radius,"Relate luminosity, radius and surface temperature of a star with the Stefan–Boltzmann law L = 4πR²σT⁴.",apply,single-formula,applied,advanced
+21303,Astrophysics & gravitation,Binary Star Orbits,Calculate the orbital period of a binary system from Newton's law of gravitation and the circular-motion condition (Kepler's third law).,apply,multi-step,applied,advanced
+21346,Astrophysics & gravitation,Jeans Criterion,Apply the Jeans criterion to find the critical mass or density for gravitational collapse of a gas cloud.,apply,multi-step,applied,advanced
+21347,Astrophysics & gravitation,Jeans Criterion,Apply the Jeans criterion to find the critical mass or density for gravitational collapse of a gas cloud.,analyse,multi-step,abstract,advanced
+21348,Astrophysics & gravitation,Solar Fusion,Estimate the fusion rate and lifetime of the Sun from its luminosity and the energy released per reaction.,analyse,estimation,applied,advanced
+21349,Astrophysics & gravitation,Schwarzschild Radius,"Calculate the Schwarzschild radius R = 2GM/c² of a black hole, or the mass from it.",apply,single-formula,applied,advanced
+21350,Astrophysics & gravitation,Schwarzschild Radius,"Calculate the Schwarzschild radius R = 2GM/c² of a black hole, or the mass from it.",apply,single-formula,applied,advanced
+21351,Astrophysics & gravitation,Schwarzschild Radius,"Calculate the Schwarzschild radius R = 2GM/c² of a black hole, or the mass from it.",apply,single-formula,applied,advanced
+21352,Astrophysics & gravitation,Rotating Neutron Stars,"Combine circular-motion kinematics with gravitation to find surface speed, centripetal acceleration and maximum rotation rate of a star.",analyse,multi-step,applied,advanced
+21353,Astrophysics & gravitation,Stellar Energy Output,Estimate the total energy radiated by a star from its luminosity and lifetime with E = P·t.,apply,estimation,applied,advanced
+21354,Astrophysics & gravitation,Density of Astronomical Objects,Compare the mean densities of astronomical objects across orders of magnitude.,understand,estimation,applied,advanced
+21355,Astrophysics & gravitation,Density of Astronomical Objects,Calculate the mean density of a star from its mass and radius and compare it with the Sun.,apply,single-formula,applied,advanced
+21356,Astrophysics & gravitation,Mass–Luminosity Relation,Apply the main-sequence mass–luminosity (L ∝ M^3.5) and lifetime (τ ∝ M^-2.5) relations.,apply,single-formula,applied,advanced
+21357,Astrophysics & gravitation,Mass–Luminosity Relation,Apply the main-sequence mass–luminosity (L ∝ M^3.5) and lifetime (τ ∝ M^-2.5) relations.,apply,single-formula,applied,advanced
+21358,Astrophysics & gravitation,Mass–Luminosity Relation,Apply the main-sequence mass–luminosity (L ∝ M^3.5) and lifetime (τ ∝ M^-2.5) relations.,apply,single-formula,applied,advanced
+21381,Astrophysics & gravitation,Jeans Criterion,Apply the Jeans criterion to find the critical mass or density for gravitational collapse of a gas cloud.,apply,multi-step,applied,advanced
+21382,Thermodynamics,Ideal Gas Law,"Apply the ideal gas law pV = nRT (or p/T = const.) with absolute temperatures to find pressure, temperature or particle density.",apply,multi-step,applied,advanced
+21631,Quantum & atomic,Bohr Radius,Evaluate atomic constants such as the Bohr radius and the ground-state energy from fundamental constants and relate their expressions.,apply,single-formula,abstract,advanced
+21632,Quantum & atomic,Bohr Radius,Evaluate atomic constants such as the Bohr radius and the ground-state energy from fundamental constants and relate their expressions.,apply,derivation,abstract,advanced
+21633,Quantum & atomic,Hydrogen Atom Energy Levels,Calculate the energy levels E_n = E_1/n² of the hydrogen atom (and hydrogen-like systems) and the energy of transitions or ionisation.,apply,single-formula,abstract,advanced
+21638,Quantum & atomic,Hydrogen Atom Energy Levels,Scale the hydrogen energy levels to hydrogen-like and exotic atoms with charge Z and (reduced) mass.,analyse,multi-step,abstract,beyond
+21639,Quantum & atomic,Atomic Orbitals,Determine the number of orbitals and the angular momentum L = ħ√(ℓ(ℓ+1)) from the quantum numbers n and ℓ.,apply,single-formula,abstract,advanced
+21640,Quantum & atomic,Atomic Orbitals,Determine the number of orbitals and the angular momentum L = ħ√(ℓ(ℓ+1)) from the quantum numbers n and ℓ.,analyse,derivation,abstract,advanced
+21641,Quantum & atomic,Atomic Orbitals,Determine the number of orbitals and the angular momentum L = ħ√(ℓ(ℓ+1)) from the quantum numbers n and ℓ.,apply,single-formula,abstract,advanced
+21644,Mathematics,Integrals in Spherical Coordinates,Integrate a spherically symmetric function in spherical coordinates and evaluate radial integrals.,analyse,derivation,abstract,beyond
+21645,Mathematics,Integrals in Spherical Coordinates,Integrate a spherically symmetric function in spherical coordinates and evaluate radial integrals.,analyse,derivation,abstract,beyond
+22042,Quantum & atomic,X-Ray Spectra,Calculate the wavelength of characteristic X-ray lines with Moseley's law.,apply,single-formula,applied,advanced
+22044,Quantum & atomic,X-Ray Tube,"Calculate the radiated power and heating of an X-ray tube from voltage, current, efficiency and heat capacity.",analyse,multi-step,applied,advanced
+22046,Nuclear & particle,Absorption of Radiation,Calculate the transmitted fraction of γ radiation through a shield with the exponential absorption law I = I0·e^(−μd).,apply,single-formula,applied,advanced
+22047,Quantum & atomic,X-Ray Attenuation,Calculate the transmitted fraction of X-ray intensity using exponential attenuation coefficients.,apply,multi-step,applied,advanced
+22048,Quantum & atomic,X-Ray Spectrum,Find the maximum of a spectral distribution by differentiating it.,analyse,derivation,abstract,advanced
+22089,Nuclear & particle,Radiation Dose,"Calculate the radiation dose received from a radioactive tracer from its activity, decay energy and body mass.",analyse,multi-step,applied,advanced
+22090,Nuclear & particle,Radiation Dose,"Calculate absorbed, equivalent and effective dose from energy, mass and weighting factors.",analyse,multi-step,applied,core
+22092,Nuclear & particle,Radiation Dose,"Calculate absorbed, equivalent and effective dose from energy, mass and weighting factors.",apply,single-formula,abstract,core
+22095,Nuclear & particle,Radiation Dose,Calculate a dose from a dose rate and assess the health risk.,apply,single-formula,applied,core
+22227,Electrostatics,Piezoelectric Effect,"Calculate the piezoelectric voltage from pressure, thickness and the piezoelectric constant.",apply,multi-step,applied,advanced
+22228,Waves & acoustics,Ultrasound Imaging,"Use c = f·λ to relate frequency, wavelength and wave speed, e.g. the resolution of ultrasound.",apply,single-formula,applied,core
+22229,Optics,Reflection at Interfaces,Calculate the reflected fraction of intensity at an interface from the impedances (refractive indices) of the media.,apply,single-formula,applied,advanced
+22230,Waves & acoustics,Acoustic Impedance,Calculate the acoustic impedance Z = ρ·c and the reflected fraction of intensity at a boundary between two media.,apply,single-formula,applied,advanced
+22231,Waves & acoustics,Acoustic Impedance,Calculate the acoustic impedance Z = ρ·c and the reflected fraction of intensity at a boundary between two media.,apply,single-formula,applied,advanced
+22232,Waves & acoustics,Acoustic Impedance,Combine travel times and reflection coefficients at tissue boundaries to predict an ultrasound A-scan signal.,analyse,multi-step,applied,advanced
+22233,Waves & acoustics,Doppler Effect,"Apply the acoustic Doppler formulas for moving sources, observers and reflectors to find frequency shifts or speeds.",apply,single-formula,applied,advanced
+22235,Waves & acoustics,Acoustic Impedance,Calculate the acoustic impedance Z = ρ·c and the reflected fraction of intensity at a boundary between two media.,apply,multi-step,abstract,advanced
+22236,Waves & acoustics,Ultrasound Imaging,"Use c = f·λ to relate frequency, wavelength and wave speed, e.g. the resolution of ultrasound.",apply,single-formula,applied,core
+22237,Waves & acoustics,Doppler Effect,Apply the Doppler formula twice to a wave reflected from a moving object to relate frequency shift and speed.,analyse,multi-step,applied,advanced
+22454,Thermodynamics,Thermal Radiation,Determine a surface temperature from the peak wavelength with Wien's displacement law and sketch how the spectrum shifts with temperature.,apply,graph,applied,core
+22498,Electrostatics,Electric Charge,Relate an amount of charge to the number of elementary charges with Q = N·e.,apply,single-formula,abstract,core
+22499,Circuits,"Charge, Current and Energy","Relate energy, charge and voltage with W = Q·ΔV for a source or a load.",apply,multi-step,applied,core
+22500,Circuits,"Charge, Current and Energy","Relate charge, current and time with ΔQ = I·Δt, including battery capacity in mAh.",apply,single-formula,applied,core
+22501,Circuits,"Charge, Current and Energy","Relate charge, current and time with ΔQ = I·Δt, including battery capacity in mAh.",apply,single-formula,applied,core
+22502,Circuits,Drift Velocity,"Calculate the drift velocity of electrons in a wire from the current, the cross-section and the charge carrier density.",apply,multi-step,applied,advanced
+22504,Circuits,Electric Power,Calculate electric power with P = ΔV·I and use it to find current or voltage from a device rating.,apply,single-formula,applied,core
+22506,Circuits,Resistance and Characteristics,Determine resistance and power from a measured I–V characteristic and interpret its non-linearity.,analyse,graph,applied,core
+22508,Circuits,Resistivity,Use R = ρ·L/A to relate the resistance of a wire to its resistivity and dimensions.,apply,single-formula,applied,core
+22509,Circuits,Resistivity,Use R = ρ·L/A to relate the resistance of a wire to its resistivity and dimensions.,apply,single-formula,applied,core
+22510,Circuits,Temperature Dependence of Resistance,"Use the linear temperature dependence of resistance, R = R0(1 + α·ΔT), to find a temperature coefficient or a temperature.",apply,single-formula,applied,advanced
+22511,Circuits,Temperature Dependence of Resistance,"Use the linear temperature dependence of resistance, R = R0(1 + α·ΔT), to find a temperature coefficient or a temperature.",analyse,multi-step,applied,advanced
+22521,Circuits,Internal Resistance,Combine identical sources in series and parallel to find the total source voltage and internal resistance.,apply,multi-step,applied,advanced
+22525,Thermodynamics,Thermal Radiation,Apply the Stefan–Boltzmann law together with an energy balance to find the equilibrium temperature of a radiating body.,analyse,multi-step,applied,advanced
+22773,Electrostatics,Coulomb's Law,"Calculate the force, distance or charges between two point charges with Coulomb's law.",apply,single-formula,abstract,core
+22775,Electrostatics,Continuous Charge Distributions,Derive the electric field or force of a continuous charge distribution by integration.,analyse,derivation,abstract,beyond
+22847,Electrostatics,Field of a Point Charge,Calculate the electric field of a point charge or charged sphere with E = k·Q/r².,apply,single-formula,applied,core
+22849,Electrostatics,Parallel Plate Capacitor,"Relate field strength, charge and plate area of a parallel plate capacitor with E = Q/(ε0·A).",apply,single-formula,abstract,advanced
+22850,Electrostatics,Continuous Charge Distributions,Derive the electric field or force of a continuous charge distribution by integration.,analyse,derivation,abstract,beyond
+22851,Electrostatics,Continuous Charge Distributions,Derive the electric field or force of a continuous charge distribution by integration.,analyse,derivation,abstract,beyond
+22852,Electrostatics,Electric Dipole Field,Derive and apply the field of an electric dipole and its far-field approximation.,apply,multi-step,abstract,beyond
+22857,Circuits,AC Impedance,Determine resistance and reactance of a series AC circuit from the impedance and the phase shift.,apply,multi-step,abstract,advanced
+22869,Circuits,RMS Values,Derive the mean and rms values of a periodic signal by integrating over one period.,analyse,derivation,abstract,advanced
+22870,Circuits,RMS Values,Derive the mean and rms values of a periodic signal by integrating over one period.,analyse,derivation,abstract,advanced
+22871,Circuits,RMS Values,Derive the mean and rms values of a periodic signal by integrating over one period.,analyse,derivation,abstract,beyond
+22902,Electrostatics,Field of a Charged Wire,Derive the electric field or force of a continuous charge distribution by integration.,apply,single-formula,abstract,advanced
+22911,Electrostatics,Field of a Charged Wire,Derive the electric field or force of a continuous charge distribution by integration.,analyse,derivation,abstract,beyond
+22912,Electrostatics,Field of a Charged Wire,Derive the electric field or force of a continuous charge distribution by integration.,analyse,derivation,abstract,beyond
+22930,Oscillations,Energy in Harmonic Oscillations,Show that gravity only shifts the equilibrium of a vertical spring so that the potential energy is ½·k·y² about the new equilibrium.,analyse,derivation,abstract,advanced
+22944,Electrostatics,Continuous Charge Distributions,Derive the electric field or force of a continuous charge distribution by integration.,analyse,derivation,abstract,beyond
+22945,Electrostatics,Continuous Charge Distributions,Derive the electric field or force of a continuous charge distribution by integration.,analyse,derivation,abstract,beyond
+22946,Electrostatics,Continuous Charge Distributions,Derive the electric field or force of a continuous charge distribution by integration.,analyse,derivation,abstract,beyond
+22947,Electrostatics,Continuous Charge Distributions,Derive the electric field or force of a continuous charge distribution by integration.,analyse,derivation,abstract,beyond
+22975,Electrostatics,Dipole in Non-Uniform Field,Derive the force on an electric dipole in a non-uniform field.,analyse,derivation,abstract,beyond
+22980,Electrostatics,Dipole in Non-Uniform Field,Derive the force on an electric dipole in a non-uniform field.,analyse,derivation,abstract,beyond
+23029,Electrostatics,Potential of Charge Distributions,Derive the potential difference in the field of a charge distribution by integrating the field.,analyse,derivation,abstract,beyond
+23030,Electrostatics,Potential of Charge Distributions,Derive the potential difference in the field of a charge distribution by integrating the field.,analyse,derivation,abstract,beyond
+23032,Electrostatics,Gauss's Law,Apply Gauss's law to find electric flux or the field of symmetric charge distributions.,analyse,derivation,abstract,beyond
+23038,Oscillations,Damped Oscillations,Show that a given function solves the differential equation of a damped oscillator and fit it to initial conditions.,apply,derivation,abstract,beyond
+23039,Oscillations,Damped Oscillations,Show that a given function solves the differential equation of a damped oscillator and fit it to initial conditions.,apply,derivation,abstract,beyond
+23046,Oscillations,Damped Oscillations,"Classify damping as weak, critical or strong with the damping ratio ζ = δ/ω0, for mechanical and LC oscillators.",apply,multi-step,abstract,advanced
+23051,Electrostatics,Potential of Charge Distributions,Derive the potential difference in the field of a charge distribution by integrating the field.,analyse,derivation,abstract,beyond
+23053,Oscillations,Damped Oscillations,Derive the damping coefficient of a physical oscillator from its drag force or circuit elements and calculate δ and ζ.,analyse,derivation,applied,beyond
+23056,Measurement & units,Electronvolt Conversions,"Convert energies and masses between joules, kilograms and electronvolts (eV, eV/c²).",apply,single-formula,abstract,advanced
+23057,Electrostatics,Kinetic Energy in Electronvolts,Calculate the speed of a particle from its kinetic energy given in electronvolts.,apply,multi-step,applied,advanced
+23058,Astrophysics & gravitation,Gauss's Law,Apply Gauss's law with a symmetric Gaussian surface to derive the field of a symmetric charge or mass distribution.,analyse,derivation,abstract,beyond
+23059,Electrostatics,Gauss's Law,Apply Gauss's law with a symmetric Gaussian surface to derive the field of a symmetric charge or mass distribution.,analyse,derivation,abstract,beyond
+23086,Electrostatics,Field as Potential Gradient,"Derive the electric field as the negative gradient of the potential, E = −∇V.",analyse,derivation,abstract,beyond
+23102,Electrostatics,Capacitance,Calculate the capacitance of a capacitor from its geometry or from C = Q/ΔV.,apply,graph,applied,core
+23103,Electrostatics,Capacitance,Calculate the capacitance of a capacitor from its geometry or from C = Q/ΔV.,apply,single-formula,abstract,core
+23104,Electrostatics,Capacitance,Calculate the capacitance of a capacitor from its geometry or from C = Q/ΔV.,apply,single-formula,abstract,advanced
+23107,Electrostatics,Energy in Electric Fields,"Calculate the energy stored in a capacitor, W = ½·C·V², and the energy density of an electric field, w = ½·ε0·E².",apply,single-formula,abstract,core
+23108,Electrostatics,Energy in Electric Fields,"Calculate the energy stored in a capacitor, W = ½·C·V², and the energy density of an electric field, w = ½·ε0·E².",apply,single-formula,applied,advanced
+23214,Waves & acoustics,Speed of Sound,"Calculate the speed of sound in a gas, liquid or solid from its material properties (v = √(κRT/M), 1/√(χρ), √(E/ρ)) and solve for an unknown.",apply,single-formula,abstract,advanced
+23215,Waves & acoustics,Speed of Sound,"Calculate the speed of sound in a gas, liquid or solid from its material properties (v = √(κRT/M), 1/√(χρ), √(E/ρ)) and solve for an unknown.",apply,multi-step,abstract,advanced
+23216,Waves & acoustics,Speed of Sound,Explain differences in the speed of sound between materials from their elastic modulus and density.,understand,conceptual,abstract,advanced
+23222,Waves & acoustics,Musical Intervals,"Combine musical intervals by multiplying their frequency ratios and express ratios in octaves, semitones or cents.",apply,single-formula,abstract,advanced
+23223,Waves & acoustics,Musical Intervals,"Combine musical intervals by multiplying their frequency ratios and express ratios in octaves, semitones or cents.",analyse,multi-step,abstract,advanced
+23224,Waves & acoustics,Musical Tuning Systems,Compare just intervals with equally tempered intervals built from the semitone ratio 2^(1/12).,apply,derivation,abstract,advanced
+23225,Waves & acoustics,Musical Tuning Systems,Compare just intervals with equally tempered intervals built from the semitone ratio 2^(1/12).,apply,multi-step,abstract,advanced
+23262,Waves & acoustics,Doppler Effect,"Apply the acoustic Doppler formulas for moving sources, observers and reflectors to find frequency shifts or speeds.",apply,multi-step,applied,core
+23263,Waves & acoustics,Doppler Effect,"Apply the acoustic Doppler formulas for moving sources, observers and reflectors to find frequency shifts or speeds.",analyse,multi-step,applied,advanced
+23264,Waves & acoustics,Mach Cone,Calculate the Mach angle from sin α = 1/M for a supersonic source.,apply,single-formula,applied,advanced
+23308,Measurement & units,Measurement Uncertainty,Calculate absolute and relative uncertainties and propagate them through a product or quotient.,apply,single-formula,applied,core
+23309,Measurement & units,Measurement Uncertainty,Calculate absolute and relative uncertainties and propagate them through a product or quotient.,apply,single-formula,abstract,core
+23310,Measurement & units,Error Propagation,"Propagate measurement uncertainties through products, powers and functions to give a result with its absolute and relative uncertainty.",apply,single-formula,abstract,core
+23311,Measurement & units,Error Propagation,"Propagate measurement uncertainties through products, powers and functions to give a result with its absolute and relative uncertainty.",apply,single-formula,abstract,core
+23312,Measurement & units,Error Propagation,"Propagate measurement uncertainties through products, powers and functions to give a result with its absolute and relative uncertainty.",apply,multi-step,applied,core
+23313,Measurement & units,Measurement Uncertainty,Calculate absolute and relative uncertainties and propagate them through a product or quotient.,apply,multi-step,applied,core
+23314,Measurement & units,Error Propagation,"Propagate measurement uncertainties through products, powers and functions to give a result with its absolute and relative uncertainty.",apply,multi-step,abstract,core
+23315,Measurement & units,Error Propagation,Determine the uncertainty of a function value with the maximum-uncertainty (min/max) method.,analyse,multi-step,abstract,advanced
+23401,Optics,Single-Slit Diffraction,Use the minima of single-slit diffraction to determine the size of an obstacle or slit.,apply,single-formula,applied,advanced
+23405,Optics,Thin-Film Interference,"Determine the thickness of a thin film from the condition for destructive or constructive interference, including phase jumps on reflection.",analyse,multi-step,applied,advanced
+23551,Waves & acoustics,Intensity of EM Waves,Relate the field amplitude of a radio transmitter at a distance to its power and the intensity of the radiation.,analyse,multi-step,applied,advanced
+23585,Quantum & atomic,Phase and Group Velocity,Derive the phase and group velocity of a de Broglie wave from the relativistic dispersion relation.,analyse,derivation,abstract,beyond
+23598,Quantum & atomic,Atomic Orbitals,Determine the number of orbitals and the angular momentum L = ħ√(ℓ(ℓ+1)) from the quantum numbers n and ℓ.,apply,single-formula,abstract,advanced
+23599,Quantum & atomic,Atomic Orbitals,Determine the number of orbitals and the angular momentum L = ħ√(ℓ(ℓ+1)) from the quantum numbers n and ℓ.,apply,single-formula,abstract,advanced
+23628,Relativity,Lorentz Factor,Calculate the Lorentz factor for a given speed and the speed for a given Lorentz factor.,apply,single-formula,applied,advanced
+23632,Relativity,Relativistic Doppler Effect,Apply the relativistic Doppler factor √((1+β)/(1−β)) to find shifted wavelengths or the relative speed of a source.,apply,multi-step,applied,advanced
+23633,Relativity,Relativistic Doppler Effect,Apply the relativistic Doppler factor √((1+β)/(1−β)) to find shifted wavelengths or the relative speed of a source.,apply,multi-step,applied,advanced
+23634,Relativity,Relativistic Velocity Addition,Combine velocities with the relativistic velocity addition formula u = (v + u')/(1 + vu'/c²).,apply,single-formula,applied,advanced
+23635,Relativity,Relativistic Velocity Addition,Show from the velocity addition formula that the speed of light is the same in every inertial frame and that the Galilean addition is the low-speed limit.,analyse,derivation,abstract,advanced
+23636,Relativity,Relativistic Velocity Addition,Show from the velocity addition formula that the speed of light is the same in every inertial frame and that the Galilean addition is the low-speed limit.,analyse,derivation,abstract,advanced
+23637,Relativity,Time Dilation,Calculate time dilation and length contraction with the Lorentz factor γ = 1/√(1 − v²/c²).,analyse,multi-step,applied,advanced
+23638,Relativity,Time Dilation,Calculate time dilation and length contraction with the Lorentz factor γ = 1/√(1 − v²/c²).,analyse,multi-step,applied,advanced
+23657,Quantum & atomic,Particle in a Box,Show that the stationary wave functions of the infinite potential well are orthonormal.,analyse,derivation,abstract,beyond
+23702,Optics,Thin Lens Equation,"Determine image position, size and type with the thin lens equation 1/f = 1/d_o + 1/d_i.",apply,single-formula,abstract,core
+23703,Optics,Thin Lens Equation,Determine the image of a two-lens system by using the image of the first lens as the object of the second.,analyse,multi-step,abstract,advanced
+23732,Magnetism & induction,Magnetic Field of a Solenoid,"Calculate the magnetic field inside a solenoid or coil from B = μ0·μr·N·I/L, or solve it for N, I or μr.",evaluate,single-formula,applied,advanced
+23733,Magnetism & induction,Earth's Magnetic Field,Resolve the Earth's magnetic field into horizontal and vertical components using the inclination angle.,analyse,multi-step,applied,advanced
+23734,Magnetism & induction,Earth's Magnetic Field,Resolve the Earth's magnetic field into horizontal and vertical components using the inclination angle.,apply,single-formula,applied,advanced
+23735,Magnetism & induction,Helmholtz Coil,Calculate the field of a Helmholtz coil as the superposition of two coaxial loops.,analyse,derivation,abstract,advanced
+23743,Relativity,Mass-Energy Equivalence,Relate a change in energy to a change in mass with ΔE = Δm·c².,apply,multi-step,applied,advanced
+23744,Relativity,Mass-Energy Equivalence,Explain qualitatively how the mass of a system changes when it releases or absorbs energy.,understand,conceptual,applied,advanced
+23745,Relativity,Particle Collisions,Calculate the energy needed for pair production and released in annihilation from the rest energy of the particles.,apply,single-formula,abstract,advanced
+23746,Relativity,Particle Collisions,Determine threshold energies for particle production in collisions from energy conservation and rest energies.,apply,multi-step,abstract,advanced
+23747,Nuclear & particle,Nuclear Binding Energy,Calculate nuclear binding energies and reaction energies from the mass defect with ΔE = Δm·c².,apply,single-formula,abstract,advanced
+23748,Nuclear & particle,Nuclear Binding Energy,Calculate nuclear binding energies and reaction energies from the mass defect with ΔE = Δm·c².,apply,single-formula,abstract,advanced
+23749,Nuclear & particle,Nuclear Binding Energy,Calculate nuclear binding energies and reaction energies from the mass defect with ΔE = Δm·c².,apply,single-formula,abstract,advanced
+23750,Nuclear & particle,Liquid-Drop Model,Calculate nuclear binding energies with the semi-empirical liquid-drop formula.,apply,multi-step,abstract,beyond
+23751,Relativity,Relativistic Kinetic Energy,Calculate the relativistic kinetic energy E_kin = (γ − 1)·mc² and compare it with the classical expression.,apply,multi-step,abstract,advanced
+23752,Relativity,Relativistic Kinetic Energy,Calculate the relativistic kinetic energy E_kin = (γ − 1)·mc² and compare it with the classical expression.,analyse,multi-step,abstract,advanced
+23755,Relativity,Relativistic Energy and Momentum,"Use the relativistic energy–momentum relation E² = (pc)² + (mc²)² and E = γmc² to find momentum, energy or mass of a particle.",apply,multi-step,abstract,advanced
+23756,Relativity,Relativistic Energy and Momentum,"Derive relations of special relativity, such as the energy–momentum relation or identities of the Lorentz factor, from the definitions.",analyse,derivation,abstract,advanced
+23757,Relativity,Relativistic Energy and Momentum,"Derive relations of special relativity, such as the energy–momentum relation or identities of the Lorentz factor, from the definitions.",analyse,derivation,abstract,advanced
+23789,Magnetism & induction,Motional EMF,Calculate the motional emf ε = v·B·L of a conductor moving perpendicular to a magnetic field.,apply,single-formula,abstract,core
+23790,Magnetism & induction,AC Generator,"Calculate the amplitude ε0 = N·A·B·ω of the emf of a rotating coil generator, or solve it for B, N, A or f.",apply,single-formula,applied,advanced
+23794,Magnetism & induction,Self-Inductance,Calculate the self-induced emf ε = −L·ΔI/Δt of a coil and the inductance of a solenoid.,apply,single-formula,abstract,advanced
+23795,Magnetism & induction,Magnetic Energy,"Calculate the energy stored in a coil, W = ½·L·I², and the magnetic energy density w = B²/(2μ0).",apply,single-formula,abstract,advanced
+23796,Magnetism & induction,Magnetic Energy,"Calculate the energy stored in a coil, W = ½·L·I², and the magnetic energy density w = B²/(2μ0).",apply,single-formula,abstract,advanced
+23798,Magnetism & induction,Induction and Energy Conservation,Show that the electrical power dissipated by a motional emf equals the mechanical power needed to move the conductor.,analyse,derivation,abstract,advanced
+24288,Circuits,AC Impedance,"Determine the phase shift from the time shift between current and voltage, Δφ = 2π·Δt/T.",apply,multi-step,abstract,advanced
+24289,Circuits,Reactance,Calculate the reactances X_L = ωL and X_C = 1/(ωC) and find the frequency for a given reactance.,apply,single-formula,abstract,advanced
+24290,Circuits,RLC Circuits,Calculate the impedance and the phase shift of series and parallel RLC circuits with phasors or the impedance formula.,apply,multi-step,abstract,advanced
+24291,Circuits,RLC Circuits,Calculate the impedance and the phase shift of series and parallel RLC circuits with phasors or the impedance formula.,apply,multi-step,abstract,advanced
+24292,Circuits,AC Power and Phase Shift,"Relate apparent power, effective power, power factor and phase shift in an ac circuit, P = V_rms·I_rms·cos Δφ.",apply,multi-step,applied,advanced
+24293,Circuits,Transformer,Calculate the secondary voltage of an ideal transformer from the turns ratio V1/V2 = N1/N2.,apply,single-formula,applied,core
+24294,Circuits,Power Transmission Losses,"Explain why high voltage reduces transmission losses, P_loss ∝ 1/V², and calculate the change in losses.",apply,multi-step,applied,core
+24446,Circuits,Direction of Current,Distinguish the direction of the conventional current from the motion of electrons and ions.,understand,conceptual,applied,core
+24447,Circuits,Direction of Current,Distinguish the direction of the conventional current from the motion of electrons and ions.,apply,multi-step,applied,core
+24448,Circuits,Internal Resistance,"Combine cells in series and parallel to find source voltage, internal resistance and terminal voltage of a battery.",apply,multi-step,applied,advanced
+24449,Circuits,Internal Resistance,"Combine cells in series and parallel to find source voltage, internal resistance and terminal voltage of a battery.",evaluate,multi-step,applied,advanced
+24455,Circuits,Temperature Dependence of Resistance,Choose a conductor material for an application from its resistivity and temperature coefficient.,evaluate,conceptual,applied,core
+24456,Circuits,Temperature Dependence of Resistance,Calculate the change of resistance with temperature from R = R0·(1 + α·Δϑ).,analyse,multi-step,applied,core

@@ -1,0 +1,2 @@
+# sheets in the minion style need LuaLaTeX (fontspec, Minion 3); the plain style works with it too
+$pdf_mode = 4;
