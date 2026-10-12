@@ -12,6 +12,13 @@
 //                     o.tStep, o.yStep, o.tUnit; without (o.bare): only the levels named;
 //                     o.levels [{ y, label }] (dashed), o.marks [{ t, label }] (dashed),
 //                     o.dots [[t, y]], o.lines [[[t, y], [t, y]]] (e.g. a tangent), o.label (aria)
+//                     o.read { m, U0, tau, charge }: the graph follows the pointer (see readers)
+//   Uq()              the letter of a voltage, as SVG: ΔV in English, U in German
+//
+// Reading a graph: one listener for the page shows, while the pointer is over a graph with
+// o.read, the coordinates of that point with lines to the axes (m 'xy'), or the tangent to the
+// curve U₀·e^(−t/τ) or U₀·(1 − e^(−t/τ)) at that time (m 'tan'), drawn to the level it heads
+// for, which it reaches one τ later.
 (function (root) {
   'use strict';
 
@@ -87,7 +94,7 @@
   function rc(kind, o = {}) {
     const sk = new Sketch();
     sk.autoDots = false;
-    const R = o.R || '$R$', C = o.C || '$C$', U0 = o.U0 || '$U_0$'; // labels
+    const R = o.R || '$R$', C = o.C || '$C$', U0 = o.U0 || L('$ΔV_0$', '$U_0$'); // labels
     if (kind === 'charge') {
       sk.wire([0, 0], [0, 0.45]).bat([0, 0.45], [0, 1.55], { l: U0, ls: 'left' }).wire([0, 1.55], [0, 2.2], [0.5, 2.2]);
       sk.sw([0.5, 2.2], [1.7, 2.2], { closed: o.closed, l: '$S$' });
@@ -126,7 +133,7 @@
     for (const l of o.levels || []) if (l.label) s += `<text class="lvlt" x="${x(0) - 6}" y="${y(l.y) + 5}" text-anchor="end">${l.label}</text>`;
     for (const m of o.marks || []) if (m.label) s += `<text class="lvlt" x="${x(m.t)}" y="${y(0) + 17}" text-anchor="middle">${m.label}</text>`;
     const [q, i] = o.name;
-    s += `<text class="axl" x="${x(0) + 8}" y="${MT - 8}"><tspan class="it">${q}</tspan>${i ? `<tspan class="sub" dy="4">${i}</tspan>` : ''}${o.unit ? `<tspan dy="${i ? -4 : 0}"> in ${o.unit}</tspan>` : ''}</text>`;
+    s += `<text class="axl" x="${x(0) + 8}" y="${MT - 8}">${q === 'U' ? Uq() : `<tspan class="it">${q}</tspan>`}${i ? `<tspan class="sub" dy="4">${i}</tspan>` : ''}${o.unit ? `<tspan dy="${i ? -4 : 0}"> in ${o.unit}</tspan>` : ''}</text>`;
     s += `<text class="axl" x="${W - 4}" y="${H - 6}" text-anchor="end"><tspan class="it">t</tspan>${o.tUnit ? ` in ${o.tUnit}` : ''}</text>`;
     for (const c of o.curves) {
       const pts = c.pts || Array.from({ length: 121 }, (_, k) => { const t = (k / 120) * T; return [t, c.f(t)]; });
@@ -134,10 +141,52 @@
     }
     for (const [[t0, v0], [t1, v1]] of o.lines || []) s += `<line class="tan" x1="${x(t0)}" y1="${y(v0)}" x2="${x(t1)}" y2="${y(v1)}"/>`;
     for (const [t, v] of o.dots || []) s += `<circle class="tdot" cx="${x(t)}" cy="${y(v)}" r="4"/>`;
-    return `<svg class="tgraph${o.bare ? ' bare' : ''}" viewBox="0 0 ${W} ${H}" role="img" aria-label="${o.label || L('A graph against time', 'Ein Graph gegen die Zeit')}">${s}</svg>`;
+    const read = o.read ? ` data-read="${JSON.stringify({ ...o.read, T, Y, ts: o.tStep, tu: o.tUnit || '', i: i || '' }).replace(/"/g, '&quot;')}"` : '';
+    if (o.read) s += '<g class="rd"></g>';
+    return `<svg class="tgraph${o.bare ? ' bare' : ''}" viewBox="0 0 ${W} ${H}" role="img"${read} aria-label="${o.label || L('A graph against time', 'Ein Graph gegen die Zeit')}">${s}</svg>`;
+  }
+  const Uq = () => L('Δ<tspan class="it">V</tspan>', '<tspan class="it">U</tspan>');
+
+  // ---------------------------------------------------------------- reading a graph
+  function readAt(svg, evt) {
+    const d = JSON.parse(svg.getAttribute('data-read')), g = svg.querySelector('.rd'), ctm = svg.getScreenCTM();
+    if (!g || !ctm) return;
+    const pt = svg.createSVGPoint();
+    pt.x = evt.clientX; pt.y = evt.clientY;
+    const { x: sx, y: sy } = pt.matrixTransform(ctm.inverse());
+    const PW = W - ML - MR, PH = H - MT - MB, t = ((sx - ML) / PW) * d.T, v = ((MT + PH - sy) / PH) * d.Y;
+    const x = (tt) => f1(ML + (tt / d.T) * PW), y = (vv) => f1(MT + PH - (vv / d.Y) * PH);
+    if (t < 0 || t > d.T || v < 0 || v > 1.08 * d.Y) { g.innerHTML = ''; return; }
+    if (d.m === 'xy') {
+      const st = d.ts / 10, tr = Math.round(t / st) * st, vr = Math.round(v * 10) / 10;
+      g.innerHTML = `<line class="rdl" x1="${x(tr)}" y1="${y(0)}" x2="${x(tr)}" y2="${y(vr)}"/><line class="rdl" x1="${x(0)}" y1="${y(vr)}" x2="${x(tr)}" y2="${y(vr)}"/>` +
+        `<circle class="rdp" cx="${x(tr)}" cy="${y(vr)}" r="3.5"/>` +
+        `<text class="rdt" x="${W - MR}" y="${MT + 6}" text-anchor="end"><tspan class="it">t</tspan> = ${num(tr)} ${d.tu}, ${Uq()}<tspan class="sub" dy="4">${d.i}</tspan><tspan dy="-4"> = ${num(vr)} V</tspan></text>`;
+      return;
+    }
+    // the tangent at t: it reaches the level the curve heads for (U₀ or 0) at t + τ
+    const f = (tt) => (d.charge ? d.U0 * (1 - Math.exp(-tt / d.tau)) : d.U0 * Math.exp(-tt / d.tau));
+    const y0 = f(t), goal = d.charge ? d.U0 : 0, slope = (goal - y0) / d.tau, ta = Math.max(0, t - 0.4 * d.tau), tb = Math.min(d.T, t + 1.3 * d.tau);
+    const at = (tt) => (tt <= t + d.tau ? y0 + slope * (tt - t) : goal);
+    g.innerHTML = `<polyline class="rdl tanl" points="${x(ta)},${y(at(ta))} ${x(Math.min(tb, t + d.tau))},${y(at(Math.min(tb, t + d.tau)))}"/>` +
+      (t + d.tau <= d.T ? `<circle class="rdp" cx="${x(t + d.tau)}" cy="${y(goal)}" r="3.5"/>` : '') +
+      `<circle class="rdp" cx="${x(t)}" cy="${y(y0)}" r="4"/>`;
+  }
+  // one listener for the page: the graph under the pointer, and the one shown before cleared
+  if (typeof document !== 'undefined' && !root.__capReaders) {
+    root.__capReaders = true;
+    let last = null;
+    const move = (evt) => {
+      const svg = evt.target && evt.target.closest ? evt.target.closest('svg[data-read]') : null;
+      if (last && last !== svg) { const g = last.querySelector('.rd'); if (g) g.innerHTML = ''; }
+      last = svg;
+      if (svg) readAt(svg, evt);
+    };
+    document.addEventListener('pointermove', move);
+    document.addEventListener('pointerdown', move);
   }
 
-  const api = { network, rc, graph, label };
+  const api = { network, rc, graph, label, Uq };
   root.Figures = api;
   if (typeof module !== 'undefined') module.exports = api;
 })(typeof window !== 'undefined' ? window : globalThis);

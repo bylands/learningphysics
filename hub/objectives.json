@@ -79,8 +79,8 @@
    },
    {
     "id": "sketch",
-    "en": "Sketch the voltage and the current against time while a capacitor charges or discharges.",
-    "de": "Die Spannung und den Strom gegen die Zeit skizzieren, während ein Kondensator geladen oder entladen wird."
+    "en": "Sketch the voltages and the current against time while a capacitor charges or discharges, and find them at a moment with the loop rule.",
+    "de": "Die Spannungen und den Strom gegen die Zeit skizzieren, während ein Kondensator geladen oder entladen wird, und sie in einem Moment mit der Maschenregel bestimmen."
    },
    {
     "id": "tau",

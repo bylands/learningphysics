@@ -55,14 +55,53 @@ function verify(ex, tag) {
       break;
     }
     case 'bounds': {
-      const C = p.ser ? ser(...p.vals) : p.vals.reduce((s, v) => s + v, 0), lo = Math.min(...p.vals), hi = Math.max(...p.vals);
-      const where = C < lo ? 'below' : C > hi ? 'above' : 'between';
-      if (field(ex, 'where').value !== where) fail(`${tag}: the total ${C} lies ${where}`);
-      if (field(ex, 'more').value !== (p.ser ? 'down' : 'up')) fail(`${tag}: a fourth capacitor`);
-      if (new Set(p.vals).size !== 3) fail(`${tag}: capacitances not distinct`);
+      const total = (vals) => (p.ser ? ser(...vals) : vals.reduce((s, v) => s + v, 0)), w = field(ex, 'where').value, m = field(ex, 'more').value;
+      if (p.kind !== 'equal' && new Set(p.vals).size !== 3) fail(`${tag}: capacitances not distinct`);
+      if (p.kind === 'where') {
+        const C = total(p.vals), lo = Math.min(...p.vals), hi = Math.max(...p.vals);
+        const where = C < lo ? 'below' : C > hi ? 'above' : 'between';
+        if (w !== where) fail(`${tag}: the total ${C} lies ${where}`);
+        // the change worked out: a fourth (any) added, C₃ taken out, C₁ made larger or smaller
+        const after = { add: total([...p.vals, 7]), remove: total(p.vals.slice(0, 2)), larger: total([p.vals[0] * 1.5, ...p.vals.slice(1)]), smaller: total([p.vals[0] / 1.5, ...p.vals.slice(1)]) }[p.change];
+        if (m !== (after > C ? 'up' : 'down')) fail(`${tag}: the change ${p.change}`);
+      } else if (p.kind === 'share') {
+        // in series the voltages Q/C differ (largest for the smallest C), in parallel the charges C·U
+        const k = 1 + p.vals.indexOf(p.ser ? Math.min(...p.vals) : Math.max(...p.vals));
+        if (w !== `c${k}` || m !== 'same') fail(`${tag}: which capacitor`);
+      } else if (p.kind === 'mixed') {
+        const [a, b, c] = p.vals, blk = p.ser ? b + c : ser(b, c), C = p.ser ? ser(a, blk) : a + blk;
+        if (w !== (C < a ? 'below' : 'above') || m !== (C < blk ? 'below' : 'above')) fail(`${tag}: compared with C₁ or the block`);
+      } else if (p.kind === 'equal') {
+        if (!close(Number(w), p.ser ? p.c / p.n : p.n * p.c) || m !== (p.ser ? 'part' : 'all')) fail(`${tag}: equal capacitors`);
+      } else fail(`${tag}: kind ${p.kind}`);
       break;
     }
-    case 'curve-u': case 'curve-i': case 'curve-r': {
+    case 'network': {
+      // worked out again, every group inside out a multiple of 0.5 µF
+      let ok = true;
+      const cap = (sh, at) => {
+        if (!Array.isArray(sh)) return p.vals[at.k++];
+        const parts = sh.slice(1).map((x) => cap(x, at)), v = sh[0] === 's' ? ser(...parts) : parts.reduce((s, x) => s + x, 0);
+        if (!half(v)) ok = false;
+        return v;
+      };
+      const SH = [['s', ['p', 0, 0], ['p', 0, 0]], ['p', ['s', 0, 0], ['s', 0, 0]], ['s', 0, ['p', 0, ['s', 0, 0]]], ['p', 0, ['s', 0, ['p', 0, 0]]], ['s', ['p', 0, 0], ['p', 0, 0, 0]], ['p', ['s', 0, 0], ['s', 0, ['p', 0, 0]]]];
+      const C = cap(SH[p.shape], { k: 0 });
+      if (!close(field(ex, 'C').value, C)) fail(`${tag}: C = ${field(ex, 'C').value}, expected ${C}`);
+      if (!ok || p.vals.length < 4) fail(`${tag}: a block not a multiple of 0.5 µF`);
+      const swap = (sh, at) => (!Array.isArray(sh) ? p.vals[at.k++] : ((xs) => (sh[0] === 'p' ? ser(...xs) : xs.reduce((s, x) => s + x, 0)))(sh.slice(1).map((x) => swap(x, at))));
+      if (Math.abs(swap(SH[p.shape], { k: 0 }) / C - 1) > 0.05 && !field(ex, 'C').traps.some((t) => t.flag === 'swap')) fail(`${tag}: no trap of the resistor rules`);
+      break;
+    }
+    case 'loop': case 'loop-d': {
+      const UC = p.moment === 'start' ? (p.charge ? 0 : p.U0) : p.moment === 'fromI' ? field(ex, 'UC').value : p.UC, UR = field(ex, 'UR').value;
+      if (!close(p.charge ? UR + UC : UR, p.charge ? p.U0 : UC)) fail(`${tag}: the loop rule`);
+      if (p.moment !== 'fromI' && !close(field(ex, 'I').value, UR / p.R)) fail(`${tag}: I = U_R/R`);
+      if (p.charge !== (ex.type === 'loop')) fail(`${tag}: charging or discharging`);
+      break;
+    }
+    case 'curve-u': case 'curve-i': case 'curve-r': case 'curve-u-d': case 'curve-i-d': case 'curve-r-d': {
+      if (p.charge !== !ex.type.endsWith('-d')) fail(`${tag}: charging or discharging`);
       const f = field(ex, 'graph');
       if (f.value !== 'exp' || f.options.length !== 4 || !f.pics) fail(`${tag}: the graph field`);
       if (f.options.some((o) => o.v !== 'exp' && !o.flag)) fail(`${tag}: a wrong graph without a flag`);
@@ -71,7 +110,10 @@ function verify(ex, tag) {
     case 'read-half': {
       const tau = p.th / Math.LN2, U = (t) => (p.charge ? p.U0 * (1 - Math.exp(-t / tau)) : p.U0 * Math.exp(-t / tau));
       if (!close(U(field(ex, 'th').value), p.U0 / 2, 1e-6)) fail(`${tag}: U(T½) is not U₀/2`);
-      if (!close(U(field(ex, 't2').value), p.charge ? 0.75 * p.U0 : 0.25 * p.U0, 1e-6)) fail(`${tag}: U(t₂)`);
+      const part = 1 / 2 ** p.k, q = p.charge ? (1 - part) * p.U0 : part * p.U0;
+      if (p.ask === 'time' && !close(U(field(ex, 't2').value), q, 1e-6)) fail(`${tag}: U(t₂)`);
+      if (p.ask === 'volt' && !close(field(ex, 't2').value, U(p.k * p.th), 1e-6)) fail(`${tag}: U at k·T½`);
+      if (p.tEnd < p.k * p.th) fail(`${tag}: k·T½ beyond the graph`);
       if (p.tEnd / p.tStep > 10 || p.tEnd < 2 * p.th) fail(`${tag}: the time axis`);
       break;
     }

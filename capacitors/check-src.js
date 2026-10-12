@@ -11,12 +11,12 @@
   const L = (en, de) => Lang.L(en, de);
 
   const OBJECTIVES = [
-    { id: 'combine', kinds: ['pair', 'bounds', 'mixed'], tutor: 0, topic: 0,
+    { id: 'combine', kinds: ['pair', 'bounds', 'mixed', 'network'], tutor: 0, topic: 0,
       name: () => L('Combine capacitors in series and in parallel: in parallel the capacitances add, in series their reciprocals add (the rules of resistors, swapped).',
         'Kondensatoren in Serie und parallel kombinieren: Parallel addieren sich die Kapazitäten, in Serie ihre Kehrwerte (die Regeln der Widerstände, vertauscht).') },
-    { id: 'sketch', kinds: ['curve-u', 'curve-i', 'curve-r'], tutor: 1, topic: 1,
-      name: () => L('Sketch the voltage and the current against time while a capacitor charges or discharges.',
-        'Die Spannung und den Strom gegen die Zeit skizzieren, während ein Kondensator geladen oder entladen wird.') },
+    { id: 'sketch', kinds: ['curve-u-d', 'curve-i-d', 'curve-r-d', 'loop-d', 'curve-u', 'curve-i', 'curve-r', 'loop'], tutor: 1, topic: 1,
+      name: () => L('Sketch the voltages and the current against time while a capacitor charges or discharges, and find them at a moment with the loop rule.',
+        'Die Spannungen und den Strom gegen die Zeit skizzieren, während ein Kondensator geladen oder entladen wird, und sie in einem Moment mit der Maschenregel bestimmen.') },
     { id: 'tau', kinds: ['read-half', 'read-tau', 'predict', 'predict-graph'], tutor: 3, topic: 2,
       name: () => L('Read the time constant τ = R·C or the half-life from a graph, and predict what a change of R or C does.',
         'Die Zeitkonstante τ = R·C oder die Halbwertszeit aus einem Graphen ablesen und vorhersagen, was eine Änderung von R oder C bewirkt.') },
@@ -39,7 +39,7 @@
     id: 'cap',
     objectives: OBJECTIVES,
     question: checkQuestion,
-    concept: { swap: 'rules', avg: 'rules', edge: 'rules', shape: 'shape', jump: 'jump', direction: 'direction', start: 'start', current: 'current', half: 'half', level: 'level', factor: 'factor', final: 'final', i0: 'i0' },
+    concept: { swap: 'rules', avg: 'rules', edge: 'rules', shape: 'shape', jump: 'jump', direction: 'direction', start: 'start', current: 'current', half: 'half', level: 'level', loop: 'loop', share: 'share', factor: 'factor', final: 'final', i0: 'i0' },
     concepts: () => ({
       rules: L('the rules of resistors used for capacitors', 'die Regeln der Widerstände für Kondensatoren verwendet'),
       shape: L('a straight line, or the wrong curvature: the change is fastest at the start', 'eine Gerade oder die falsche Krümmung: Die Änderung ist am Anfang am schnellsten'),
@@ -47,11 +47,13 @@
       direction: L('charging and discharging swapped', 'Laden und Entladen vertauscht'),
       start: L('the current starting at zero: it is largest at the start', 'der Strom beginnt bei null: Er ist am Anfang am grössten'),
       current: L('the current following the voltage of the capacitor', 'der Strom folgt der Spannung des Kondensators'),
+      loop: L('the loop rule not used: ΔV₀ = ΔV_R + ΔV_C while charging, ΔV_R = ΔV_C while discharging', 'die Maschenregel nicht verwendet: U₀ = U_R + U_C beim Laden, U_R = U_C beim Entladen'),
+      share: L('the same charge (in series) and the same voltage (in parallel) mixed up', 'dieselbe Ladung (in Serie) und dieselbe Spannung (parallel) verwechselt'),
       half: L('half-life and time constant mixed up', 'Halbwertszeit und Zeitkonstante verwechselt'),
       level: L('37 % and 63 % mixed up', '37 % und 63 % verwechselt'),
       factor: L('τ = R·C: the effect of R or C turned round', 'τ = R·C: die Wirkung von R oder C umgekehrt'),
       final: L('R or C changing the final voltage', 'R oder C ändert die Endspannung'),
-      i0: L('the current at the start depending on C: I₀ = U₀/R', 'der Strom am Anfang hängt von C ab: I₀ = U₀/R'),
+      i0: L('the current at the start depending on C: I₀ = ΔV₀/R', 'der Strom am Anfang hängt von C ab: I₀ = U₀/R'),
     }),
   };
 
