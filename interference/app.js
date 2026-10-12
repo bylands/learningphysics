@@ -377,6 +377,8 @@
     topics = window.Topics.create({
       app: PRACTICE, topics: topicList(),
       make: (type, seed) => practiceOf(type, seed), typeOf,
+      // what makes an exercise new: not the order of its options
+      keyOf: (ex) => JSON.stringify({ ...ex.p, o: undefined, off: undefined, order: undefined }),
       onChange: fresh,
       tutor: (i) => { setMode('tutor'); tutor.open(i); },
     });

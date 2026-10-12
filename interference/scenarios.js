@@ -16,7 +16,8 @@
 //                    and the highest order)
 //   changes          change (how the pattern changes when λ, L, d, b or N changes), single (the
 //                    central fringe of a single slit, w = 2·λ·L/b, or the width of a hair from it)
-//   resolving power  res-change (how θₘᵢₙ = 1.22·λ/D changes), res-scale (θₘᵢₙ or D by ratios)
+//   resolving power  res-change (how θₘᵢₙ = 1.22·λ/D changes), res-scale (θₘᵢₙ or D by ratios),
+//                    res-far (how far two lamps are seen as two, how small craters on the Moon)
 //   concepts         concept-huy, concept-ds, concept-pat, concept-res (which statement is right)
 // The numbers are chosen so that the results come out round: small angles and ratios, no
 // calculator.
@@ -130,11 +131,16 @@
 
   // ================================================================ 3 the double slit
   // y_k = k·λ·L/d for small angles; λ, d and L chosen so that y comes out in whole tenths of a mm
-  const DS_LAM = [400, 450, 500, 600, 700].map(nm), DS_D = [0.1, 0.2, 0.25, 0.3, 0.4, 0.5].map(mm), DS_L = [1, 1.5, 2, 2.5, 3];
+  // without a calculator: λ/d (or λ/b) a whole number of thousandths, L a whole number of metres
+  const DS_LAM = [400, 500, 600, 700].map(nm), DS_D = [0.1, 0.2, 0.25, 0.3, 0.5].map(mm), DS_L = [1, 2, 3];
+  const permille = (x) => Math.abs(x * 1e3 - Math.round(x * 1e3)) < 1e-9;
   const dsMake = (r) => {
     const p = { lam: pick(r, DS_LAM), d: pick(r, DS_D), L: pick(r, DS_L), k: pick(r, [1, 2, 3]) }, y1 = (p.lam * p.L) / p.d;
-    return tidy(y1, 'mm') && y1 >= 1e-3 && p.k * y1 <= 30e-3 ? p : null;
+    return permille(p.lam / p.d) && y1 >= 1e-3 && p.k * y1 <= 30e-3 ? p : null;
   };
+  // the way without a calculator: the ratio λ/d first, a small pure number
+  const ratio = (a, b, sa, sb) => `\\frac{${sa}}{${sb}} = \\frac{${tq(a, a < 1e-6 ? 'nm' : 'μm')}}{${tq(b, b < 1e-3 ? 'μm' : 'mm')}} = ${tnum(a / b)}`;
+  const NOCALC = () => L('Without a calculator:', 'Ohne Rechner:');
   const SMALL = () => L('For small angles, $\\sin\\alpha \\approx \\tan\\alpha = y/L$: the bright fringe of order $k$ lies at $y_k = k\\cdot\\dfrac{\\lambda L}{d}$, and neighbouring fringes are $\\Delta y = \\dfrac{\\lambda L}{d}$ apart.', 'Für kleine Winkel ist $\\sin\\alpha \\approx \\tan\\alpha = y/L$: Der helle Streifen der Ordnung $k$ liegt bei $y_k = k\\cdot\\dfrac{\\lambda L}{d}$, und benachbarte Streifen sind $\\Delta y = \\dfrac{\\lambda L}{d}$ voneinander entfernt.');
   const DSIN = () => L('Bright where the path difference is a whole number of wavelengths: $\\Delta s = d\\cdot\\sin\\alpha = k\\cdot\\lambda$.', 'Hell, wo der Gangunterschied eine ganze Zahl von Wellenlängen ist: $\\Delta s = d\\cdot\\sin\\alpha = k\\cdot\\lambda$.');
   const WHY_K = () => L('That is the first bright fringe; the one of order $k$ is $k$ times as far from the centre: $y_k = k\\cdot\\lambda L/d$.', 'Das ist der erste helle Streifen; der der Ordnung $k$ ist $k$-mal so weit von der Mitte entfernt: $y_k = k\\cdot\\lambda L/d$.');
@@ -157,7 +163,7 @@
       step(L('The path difference', 'Der Gangunterschied'), p$(L('From two slits at the distance $d$, the rays to a far point are almost parallel; the one from the lower slit is longer by $\\Delta s = d\\cdot\\sin\\alpha$.', 'Von zwei Spalten im Abstand $d$ sind die Strahlen zu einem fernen Punkt fast parallel; der vom unteren Spalt ist um $\\Delta s = d\\cdot\\sin\\alpha$ länger.')) + p$(DSIN()), ['zoom']),
       step(L('Small angles', 'Kleine Winkel'), p$(SMALL()), ['geo']),
       step(L('The numbers', 'Die Zahlen'), `$$y_{${p.k}} = \\frac{${p.k}\\cdot\\lambda\\cdot L}{d} = \\frac{${p.k}\\cdot ${tq(p.lam, 'm')}\\cdot ${tq(p.L, 'm')}}{${tq(p.d, 'm')}} = ${res(tq(v.y, 'mm'))}$$` +
-        p$(L(`Check: $\\lambda/d = ${tnum(p.lam / p.d)}$, a small angle indeed.`, `Kontrolle: $\\lambda/d = ${tnum(p.lam / p.d)}$, tatsächlich ein kleiner Winkel.`)), ['pat']),
+        p$(`${NOCALC()} $${ratio(p.lam, p.d, '\\lambda', 'd')}$ ${L('(a small angle indeed), so', '(tatsächlich ein kleiner Winkel), also')} $y_{${p.k}} = ${p.k}\\cdot ${tq(p.L, 'm')}\\cdot ${tnum(p.lam / p.d)} = ${tq(v.y, 'mm')}$.`), ['pat']),
     ],
     // the task: the set-up; the steps: the path difference close up, the set-up, the pattern
     figure: (p, v, view) => {
@@ -185,7 +191,8 @@
       const y = p.both ? v.D / 2 : v.D;
       return [
         step(L('From the centre', 'Von der Mitte aus'), p$(p.both ? L(`The fringe of order ${p.k} is half of that from the centre: $y_{${p.k}} = ${tq(y, 'mm')}$.`, `Der Streifen der Ordnung ${p.k} ist halb so weit von der Mitte entfernt: $y_{${p.k}} = ${tq(y, 'mm')}$.`) : L(`$y_{${p.k}} = ${tq(y, 'mm')}$ from the centre.`, `$y_{${p.k}} = ${tq(y, 'mm')}$ von der Mitte aus.`)) + p$(SMALL()), ['pat']),
-        step(L('The wavelength', 'Die Wellenlänge'), `$$\\lambda = \\frac{y_{${p.k}}\\cdot d}{${p.k}\\cdot L} = \\frac{${tq(y, 'm')}\\cdot ${tq(p.d, 'm')}}{${p.k}\\cdot ${tq(p.L, 'm')}} = ${res(tq(v.lam, 'nm'))}$$`, ['pat']),
+        step(L('The wavelength', 'Die Wellenlänge'), `$$\\lambda = \\frac{y_{${p.k}}\\cdot d}{${p.k}\\cdot L} = \\frac{${tq(y, 'm')}\\cdot ${tq(p.d, 'm')}}{${p.k}\\cdot ${tq(p.L, 'm')}} = ${res(tq(v.lam, 'nm'))}$$` +
+          p$(`${NOCALC()} $\\frac{y_{${p.k}}}{${p.k}\\cdot L} = \\frac{${tq(y, 'mm')}}{${tq(p.k * p.L, 'm')}} = ${tnum(y / (p.k * p.L))}$, ${L('so', 'also')} $\\lambda = ${tnum(y / (p.k * p.L))}\\cdot ${tq(p.d, 'mm')} = ${tq(v.lam, 'nm')}$.`), ['pat']),
       ];
     },
     figure: (p, v, view) => (view.task ? Fg().geometry() : dsPattern(p.lam, p.L, p.d, p.k)),
@@ -198,7 +205,7 @@
     id: 'grating', difficulty: 2,
     title: () => L('A grating', 'Ein Gitter'),
     make: (r) => {
-      const p = { n: pick(r, [50, 100, 200]), lam: pick(r, DS_LAM), L: pick(r, [0.5, 1, 1.5, 2]), k: pick(r, [1, 2]) }, d = 1e-3 / p.n;
+      const p = { n: pick(r, [50, 100, 200]), lam: pick(r, DS_LAM), L: pick(r, [0.5, 1, 2]), k: pick(r, [1, 2]) }, d = 1e-3 / p.n;
       return (p.k * p.lam) / d <= 0.1 && tidy((p.k * p.lam * p.L) / d, 'cm') ? p : null;
     },
     solve: (p, o = {}) => { const d = 1e-3 / p.n; return { d, y: ((o.half ? p.k - 0.5 : o.k ? 1 : p.k) * p.lam * p.L) / d }; },
@@ -211,7 +218,8 @@
     steps: (p, v) => [
       step(L('The slit spacing', 'Der Spaltabstand'), `$$d = \\frac{1}{n} = \\frac{1\\,\\mathrm{mm}}{${p.n}} = ${res(tq(v.d, 'μm'))}$$`),
       step(L('The maximum', 'Das Maximum'), p$(GRATING()) + p$(L(`Here $k\\lambda/d = ${tnum((p.k * p.lam) / v.d)}$: a small angle, so $\\sin\\alpha \\approx y/L$:`, `Hier ist $k\\lambda/d = ${tnum((p.k * p.lam) / v.d)}$: ein kleiner Winkel, also $\\sin\\alpha \\approx y/L$:`)) +
-        `$$y_{${p.k}} = \\frac{${p.k}\\cdot\\lambda\\cdot L}{d} = \\frac{${p.k}\\cdot ${tq(p.lam, 'm')}\\cdot ${tq(p.L, 'm')}}{${tq(v.d, 'm')}} = ${res(tq(v.y, 'cm'))}$$`, ['pat']),
+        `$$y_{${p.k}} = \\frac{${p.k}\\cdot\\lambda\\cdot L}{d} = \\frac{${p.k}\\cdot ${tq(p.lam, 'm')}\\cdot ${tq(p.L, 'm')}}{${tq(v.d, 'm')}} = ${res(tq(v.y, 'cm'))}$$` +
+        p$(`${NOCALC()} $${ratio(p.lam, v.d, '\\lambda', 'd')}$, ${L('so', 'also')} $y_{${p.k}} = ${p.k}\\cdot ${tq(p.L, 'm')}\\cdot ${tnum(p.lam / v.d)} = ${tq(v.y, 'cm')}$.`), ['pat']),
     ],
     figure: (p, v, view) => (view.task ? '' : dsPattern(p.lam, p.L, v.d, p.k, 8)),
   };
@@ -365,9 +373,9 @@
     id: 'single', difficulty: 3,
     title: (p) => (p.hair ? L('The width of a hair', 'Die Dicke eines Haars') : L('A single slit', 'Ein Einzelspalt')),
     make: (r) => {
-      const p = { lam: pick(r, DS_LAM), L: pick(r, DS_L), b: mm(pick(r, [0.05, 0.06, 0.08, 0.1, 0.12, 0.15, 0.2, 0.25])), hair: r() < 0.5 };
+      const p = { lam: pick(r, DS_LAM), L: pick(r, DS_L), b: mm(pick(r, [0.05, 0.1, 0.2, 0.25, 0.5])), hair: r() < 0.5 };
       const w = (2 * p.lam * p.L) / p.b;
-      return tidy(w, 'mm') && w <= 80e-3 && (!p.hair || p.b <= 0.12e-3) ? p : null;
+      return permille(p.lam / p.b) && w <= 80e-3 && (!p.hair || p.b <= 0.1e-3) ? p : null;
     },
     solve: (p, o = {}) => { const w = (2 * p.lam * p.L) / p.b; return p.hair ? { w, b: ((o.whole ? 1 : 2) * p.lam * p.L) / w } : { w: o.whole ? w / 2 : w }; },
     traps: ['whole'],
@@ -381,8 +389,10 @@
     hints: () => [L('The first dark fringes of a single slit are where $b\\cdot\\sin\\alpha = \\lambda$: the slit splits into two halves whose wavelets cancel in pairs.', 'Die ersten dunklen Streifen eines Einzelspalts liegen dort, wo $b\\cdot\\sin\\alpha = \\lambda$: Der Spalt zerfällt in zwei Hälften, deren Elementarwellen sich paarweise auslöschen.'), L('Small angles: $y_1 = \\lambda L/b$ on each side, so $w = 2\\lambda L/b$.', 'Kleine Winkel: $y_1 = \\lambda L/b$ auf jeder Seite, also $w = 2\\lambda L/b$.')],
     steps: (p, v) => [
       step(L('The first dark fringes', 'Die ersten dunklen Streifen'), p$(L('A single slit is dark where $b\\cdot\\sin\\alpha = \\lambda$: each wavelet from the upper half of the slit meets one from the lower half half a wavelength behind. For small angles they lie at $y_1 = \\lambda L/b$ on both sides, and the central bright fringe is $w = 2\\lambda L/b$ wide.', 'Ein Einzelspalt ist dunkel, wo $b\\cdot\\sin\\alpha = \\lambda$: Jede Elementarwelle aus der oberen Hälfte des Spalts trifft eine aus der unteren, die eine halbe Wellenlänge zurückliegt. Für kleine Winkel liegen sie bei $y_1 = \\lambda L/b$ auf beiden Seiten, und der mittlere helle Streifen ist $w = 2\\lambda L/b$ breit.')), ['pat']),
-      p.hair ? step(L('The thickness', 'Die Dicke'), `$$b = \\frac{2\\lambda L}{w} = \\frac{2\\cdot ${tq(p.lam, 'm')}\\cdot ${tq(p.L, 'm')}}{${tq(v.w, 'm')}} = ${res(tq(p.b, 'μm'))}$$`, ['pat'])
-        : step(L('The width', 'Die Breite'), `$$w = \\frac{2\\lambda L}{b} = \\frac{2\\cdot ${tq(p.lam, 'm')}\\cdot ${tq(p.L, 'm')}}{${tq(p.b, 'm')}} = ${res(tq(v.w, 'mm'))}$$`, ['pat']),
+      p.hair ? step(L('The thickness', 'Die Dicke'), `$$b = \\frac{2\\lambda L}{w} = \\frac{2\\cdot ${tq(p.lam, 'm')}\\cdot ${tq(p.L, 'm')}}{${tq(v.w, 'm')}} = ${res(tq(p.b, 'μm'))}$$` +
+        p$(`${NOCALC()} $\\frac{w}{2L} = \\frac{${tq(v.w, 'mm')}}{${tq(2 * p.L, 'm')}} = ${tnum(v.w / (2 * p.L))}$, ${L('so', 'also')} $b = \\frac{${tq(p.lam, 'nm')}}{${tnum(v.w / (2 * p.L))}} = ${tq(p.b, 'μm')}$.`), ['pat'])
+        : step(L('The width', 'Die Breite'), `$$w = \\frac{2\\lambda L}{b} = \\frac{2\\cdot ${tq(p.lam, 'm')}\\cdot ${tq(p.L, 'm')}}{${tq(p.b, 'm')}} = ${res(tq(v.w, 'mm'))}$$` +
+        p$(`${NOCALC()} $${ratio(p.lam, p.b, '\\lambda', 'b')}$, ${L('so', 'also')} $w = 2\\cdot ${tq(p.L, 'm')}\\cdot ${tnum(p.lam / p.b)} = ${tq(v.w, 'mm')}$.`), ['pat']),
     ],
     figure: (p, v, view) => { const y1 = (p.lam * p.L) / p.b; return view.task ? '' : Fg().pattern([{ lam: p.lam, L: p.L, b: p.b, N: 1 }], { Y: 3.4 * y1, dims: [[-y1, y1, it$('w')]], ticks: [[y1, ''], [-y1, '']] }); },
   };
@@ -430,6 +440,33 @@
       return [step(L('The same ratio λ/D', 'Dasselbe Verhältnis λ/D'), p$(L('The same smallest angle needs the same ratio $\\lambda/D$: the dish must be as many times larger as the wave is longer.', 'Derselbe kleinste Winkel braucht dasselbe Verhältnis $\\lambda/D$: Die Schüssel muss so viel mal grösser sein, wie die Welle länger ist.')) +
         `$$D = ${tq(p.D1, 'm')}\\cdot\\frac{${tq(p.l2, 'm')}}{${tq(RES[2].l1, 'm')}} = ${res(tq(v.D, v.D >= 1e3 ? 'km' : 'm'))}$$` + p$(L('No single dish is that large; radio astronomers link telescopes far apart instead.', 'Keine einzelne Schüssel ist so gross; Radioastronomen verbinden stattdessen weit voneinander entfernte Teleskope.')))];
     },
+    figure: () => '',
+  };
+
+  // the smallest angle θₘᵢₙ given: how far away two lamps are still seen as two (x = s/θ), or how
+  // far apart two craters on the Moon must be to be seen as two (s = θ·x); small angles: s = θ·x
+  const MOON = 3.8e8;
+  const resFar = {
+    id: 'res-far', difficulty: 2,
+    title: (p) => (p.k === 'dist' ? L('How far away?', 'Wie weit weg?') : L('How small?', 'Wie klein?')),
+    make: (r) => (r() < 0.6 ? { k: 'dist', th: pick(r, [100e-6, 200e-6]), s: pick(r, [1, 1.2, 1.5, 2]) } : { k: 'size', th: pick(r, [0.5e-6, 1e-6, 2e-6, 5e-6]) }),
+    solve: (p, o = {}) => (p.k === 'dist' ? { x: o.rinv ? p.s * p.th : p.s / p.th } : { s: o.rinv ? MOON / p.th : p.th * MOON }),
+    traps: ['rinv'],
+    why: { rinv: () => L('For a small angle, the separation is the angle (in rad) times the distance: $s = \\theta\\cdot x$, so $x = s/\\theta$.', 'Für einen kleinen Winkel ist der Abstand der Winkel (in rad) mal die Entfernung: $s = \\theta\\cdot x$, also $x = s/\\theta$.') },
+    fields: (p) => (p.k === 'dist' ? [num$('x', 'x', 'km', L('greatest distance', 'grösste Entfernung'))] : [num$('s', 's', 'm', L('smallest separation of the craters', 'kleinster Abstand der Krater'))]),
+    text: (p) => (p.k === 'dist'
+      ? L(`By diffraction at the pupil, your eye resolves angles down to about ${q(p.th, 'μrad')}. The headlights of a car are ${q(p.s, 'm')} apart. From how far away can you still see them as two?`,
+        `Wegen der Beugung an der Pupille trennt dein Auge Winkel bis hinunter zu etwa ${q(p.th, 'μrad')}. Die Scheinwerfer eines Autos sind ${q(p.s, 'm')} voneinander entfernt. Aus welcher Entfernung siehst du sie noch als zwei?`)
+      : L(`A telescope resolves angles down to ${q(p.th, 'μrad')}. The Moon is 380\u2009000\u00a0km away. How far apart must two craters be, at least, to be seen as two?`,
+        `Ein Teleskop trennt Winkel bis hinunter zu ${q(p.th, 'μrad')}. Der Mond ist 380\u2009000\u00a0km entfernt. Wie weit müssen zwei Krater mindestens voneinander entfernt sein, damit man sie als zwei sieht?`)),
+    hints: () => [L('Two things are seen as two if the angle between them is at least $\\theta_{\\min}$.', 'Zwei Dinge sieht man als zwei, wenn der Winkel zwischen ihnen mindestens $\\theta_{\\min}$ ist.'),
+      L('For a small angle in rad: separation = angle × distance, $s = \\theta\\cdot x$.', 'Für einen kleinen Winkel in rad: Abstand = Winkel × Entfernung, $s = \\theta\\cdot x$.'), L('1 μrad = 10⁻⁶ rad.', '1 μrad = 10⁻⁶ rad.')],
+    steps: (p, v) => [
+      step(L('Angle, separation and distance', 'Winkel, Abstand und Entfernung'), p$(L('Seen from far away, two points a distance $s$ apart are at the small angle $\\theta = s/x$ (in rad). They are seen as two while $\\theta \\ge \\theta_{\\min}$.', 'Aus grosser Entfernung erscheinen zwei Punkte im Abstand $s$ unter dem kleinen Winkel $\\theta = s/x$ (in rad). Man sieht sie als zwei, solange $\\theta \\ge \\theta_{\\min}$.'))),
+      p.k === 'dist'
+        ? step(L('The distance', 'Die Entfernung'), `$$x = \\frac{s}{\\theta_{\\min}} = \\frac{${tq(p.s, 'm')}}{${tnum(p.th)}} = ${res(tq(v.x, 'km'))}$$` + p$(L('Further away, the two headlights merge into one.', 'Weiter weg verschmelzen die beiden Scheinwerfer zu einem.')))
+        : step(L('The separation', 'Der Abstand'), `$$s = \\theta_{\\min}\\cdot x = ${tnum(p.th)}\\cdot ${tnum(MOON)}\\,\\mathrm{m} = ${res(tq(v.s, 'm'))}$$` + p$(L('Smaller craters closer together blur into one.', 'Kleinere, näher beieinander liegende Krater verschwimmen zu einem.'))),
+    ],
     figure: () => '',
   };
 
@@ -512,6 +549,91 @@
       [[['halves: the eye resolves more.', 'halb so gross: Das Auge trennt mehr.'], ['A narrower opening diffracts more: θₘᵢₙ = 1.22·λ/D grows.', 'Eine engere Öffnung beugt stärker: θₘᵢₙ = 1.22·λ/D wächst.'], 'rinv'],
         [['stays the same.', 'bleibt gleich.'], ['θₘᵢₙ = 1.22·λ/D depends on the diameter of the pupil.', 'θₘᵢₙ = 1.22·λ/D hängt vom Durchmesser der Pupille ab.'], 'rsame'],
         [['becomes four times as large.', 'viermal so gross.'], ['θₘᵢₙ ∝ 1/D: half the diameter, twice the angle, not four times (that would be the area).', 'θₘᵢₙ ∝ 1/D: halber Durchmesser, doppelter Winkel, nicht vierfacher (das wäre die Fläche).'], null]]],
+    ['huy', ['Plane water waves reach a wall with a gap many wavelengths wide. What do the waves look like right behind the gap?', 'Gerade Wasserwellen treffen auf eine Wand mit einer Öffnung, die viele Wellenlängen breit ist. Wie sehen die Wellen direkt hinter der Öffnung aus?'],
+      ['A straight front about as wide as the gap; only at its ends does it bend a little into the shadow.', 'Eine gerade Front, etwa so breit wie die Öffnung; nur an ihren Enden biegt sie ein wenig in den Schatten.'],
+      [[['Circular waves that spread into the whole space behind the wall.', 'Kreiswellen, die sich in den ganzen Raum hinter der Wand ausbreiten.'], ['That happens behind a gap about one wavelength wide or narrower. In a wide gap the wavelets of its many points add up to a straight front.', 'Das geschieht hinter einer Öffnung, die etwa eine Wellenlänge breit oder schmaler ist. In einer breiten Öffnung addieren sich die Elementarwellen ihrer vielen Punkte zu einer geraden Front.'], 'size'],
+        [['Waves only behind the two edges of the gap.', 'Wellen nur hinter den beiden Rändern der Öffnung.'], ['Every point in the gap sends out wavelets, not only the edges; together they continue the front.', 'Jeder Punkt in der Öffnung sendet Elementarwellen aus, nicht nur die Ränder; zusammen setzen sie die Front fort.'], 'ray'],
+        [['A straight front with a shorter wavelength.', 'Eine gerade Front mit kürzerer Wellenlänge.'], ['Same medium, same speed, same frequency: the same wavelength.', 'Dasselbe Medium, dieselbe Geschwindigkeit, dieselbe Frequenz: dieselbe Wellenlänge.'], 'lambda']]],
+    ['huy', ['Sea waves with a wavelength of 10 m reach a harbour entrance 10 m wide. What happens behind it?', 'Meereswellen mit einer Wellenlänge von 10 m erreichen eine Hafeneinfahrt von 10 m Breite. Was geschieht dahinter?'],
+      ['They spread out in circles into the whole harbour.', 'Sie breiten sich kreisförmig in den ganzen Hafen aus.'],
+      [[['They pass straight through, in a strip 10 m wide.', 'Sie laufen geradeaus hindurch, in einem 10 m breiten Streifen.'], ['A gap of about one wavelength acts like a point source: the waves spread in all directions.', 'Eine Öffnung von etwa einer Wellenlänge wirkt wie eine punktförmige Quelle: Die Wellen breiten sich in alle Richtungen aus.'], 'size'],
+        [['They are stopped: the entrance is too narrow for them.', 'Sie werden aufgehalten: Die Einfahrt ist zu schmal für sie.'], ['A gap of one wavelength lets the wave through, and spreads it.', 'Eine Öffnung von einer Wellenlänge lässt die Welle durch und breitet sie aus.'], 'ray'],
+        [['Their wavelength becomes shorter in the harbour.', 'Ihre Wellenlänge wird im Hafen kürzer.'], ['Same water, same depth, same frequency: the same wavelength.', 'Dasselbe Wasser, dieselbe Tiefe, dieselbe Frequenz: dieselbe Wellenlänge.'], 'lambda']]],
+    ['huy', ['Why does the light behind a very narrow slit spread out on the screen, much wider than the slit?', 'Warum breitet sich das Licht hinter einem sehr schmalen Spalt auf dem Schirm aus, viel breiter als der Spalt?'],
+      ['Each point of the slit sends out wavelets in all directions: the light is diffracted.', 'Jeder Punkt des Spalts sendet Elementarwellen in alle Richtungen aus: Das Licht wird gebeugt.'],
+      [[['The edges of the slit reflect the light sideways.', 'Die Ränder des Spalts reflektieren das Licht zur Seite.'], ['Black, absorbing edges give the same pattern: it comes from the wavelets in the gap, not from the edges.', 'Schwarze, absorbierende Ränder geben dasselbe Muster: Es kommt von den Elementarwellen in der Öffnung, nicht von den Rändern.'], 'ray'],
+        [['The air behind the slit scatters the light.', 'Die Luft hinter dem Spalt streut das Licht.'], ['The pattern looks the same in a vacuum: it is diffraction at the slit.', 'Im Vakuum sieht das Muster gleich aus: Es ist Beugung am Spalt.'], null],
+        [['The narrow slit acts like a lens.', 'Der schmale Spalt wirkt wie eine Linse.'], ['A lens focuses; a narrow slit spreads the light, the more the narrower it is.', 'Eine Linse bündelt; ein schmaler Spalt verbreitert das Licht, umso mehr, je schmaler er ist.'], 'size']]],
+    ['huy', ['A wave passes through a gap and is diffracted. What stays the same behind the gap?', 'Eine Welle läuft durch eine Öffnung und wird gebeugt. Was bleibt hinter der Öffnung gleich?'],
+      ['Its wavelength, its frequency and its speed.', 'Ihre Wellenlänge, ihre Frequenz und ihre Geschwindigkeit.'],
+      [[['Only the frequency: the wavelength gets shorter.', 'Nur die Frequenz: Die Wellenlänge wird kürzer.'], ['In the same medium the speed stays, so with the frequency the wavelength stays too.', 'Im selben Medium bleibt die Geschwindigkeit, also mit der Frequenz auch die Wellenlänge.'], 'lambda'],
+        [['Only the speed: the frequency drops.', 'Nur die Geschwindigkeit: Die Frequenz sinkt.'], ['The frequency is set by the source; the gap cannot change it.', 'Die Frequenz ist durch die Quelle bestimmt; die Öffnung kann sie nicht ändern.'], 'lambda'],
+        [['Only the direction: the wave goes on straight ahead.', 'Nur die Richtung: Die Welle läuft geradeaus weiter.'], ['The direction is just what changes: the wave spreads into the shadow.', 'Gerade die Richtung ändert sich: Die Welle breitet sich in den Schatten aus.'], 'ray']]],
+    ['huy', ['Long-wave radio (λ ≈ 1 km) can be received in a deep valley behind a hill; a phone signal (λ ≈ 30 cm) hardly. Why?', 'Langwellenradio (λ ≈ 1 km) empfängt man in einem tiefen Tal hinter einem Hügel; ein Handysignal (λ ≈ 30 cm) kaum. Warum?'],
+      ['Waves about as long as the hill is high are diffracted strongly round it; short waves hardly.', 'Wellen, die etwa so lang sind, wie der Hügel hoch ist, werden stark um ihn herum gebeugt; kurze kaum.'],
+      [[['Long waves travel faster.', 'Lange Wellen sind schneller.'], ['All radio waves travel at the speed of light. What differs is their wavelength compared with the hill.', 'Alle Radiowellen laufen mit Lichtgeschwindigkeit. Was sich unterscheidet, ist ihre Wellenlänge im Vergleich zum Hügel.'], null],
+        [['Short waves are absorbed by the air.', 'Kurze Wellen werden von der Luft absorbiert.'], ['On an open field the phone works fine: the difference is how much the waves bend round the hill.', 'Auf freiem Feld funktioniert das Handy gut: Der Unterschied ist, wie stark die Wellen um den Hügel biegen.'], null],
+        [['Short waves are diffracted more, but they are too weak.', 'Kurze Wellen werden stärker gebeugt, aber sie sind zu schwach.'], ['The other way round: the longer the wave compared with the obstacle, the more it is diffracted.', 'Umgekehrt: Je länger die Welle im Vergleich zum Hindernis, desto stärker wird sie gebeugt.'], 'size']]],
+    ['ds', ['In a double-slit experiment, one slit is covered. What do you see on the screen?', 'In einem Doppelspaltversuch wird ein Spalt abgedeckt. Was sieht man auf dem Schirm?'],
+      ['One broad bright patch, the pattern of a single slit: the fringes disappear.', 'Einen breiten hellen Fleck, das Muster eines Einzelspalts: Die Streifen verschwinden.'],
+      [[['The same fringes, half as bright.', 'Dieselben Streifen, halb so hell.'], ['The fringes come from the light of two slits interfering; with one slit there is nothing to interfere with.', 'Die Streifen entstehen durch die Interferenz des Lichts zweier Spalte; mit einem Spalt interferiert nichts mehr.'], null],
+        [['The same fringes, twice as far apart.', 'Dieselben Streifen, doppelt so weit auseinander.'], ['Without a second slit there is no path difference between two waves, and no fringes.', 'Ohne zweiten Spalt gibt es keinen Gangunterschied zwischen zwei Wellen und keine Streifen.'], null],
+        [['A narrow bright line just behind the open slit.', 'Eine schmale helle Linie direkt hinter dem offenen Spalt.'], ['A narrow slit diffracts: the light spreads out into a broad patch.', 'Ein schmaler Spalt beugt: Das Licht breitet sich zu einem breiten Fleck aus.'], 'ray']]],
+    ['ds', ['At a point P on the screen of a double slit, the path difference is 2.5 λ. What is there?', 'An einem Punkt P auf dem Schirm eines Doppelspalts ist der Gangunterschied 2.5 λ. Was ist dort?'],
+      ['A dark fringe, between the maxima of order 2 and 3.', 'Ein dunkler Streifen, zwischen den Maxima 2. und 3. Ordnung.'],
+      [[['A bright fringe of order 2.5.', 'Ein heller Streifen der Ordnung 2.5.'], ['Bright needs a whole number of wavelengths. With half a wavelength over, crest meets trough.', 'Hell braucht eine ganze Zahl von Wellenlängen. Mit einer halben Wellenlänge zu viel trifft Berg auf Tal.'], 'half'],
+        [['A bright fringe of order 2.', 'Ein heller Streifen der Ordnung 2.'], ['Order 2 has Δs = 2λ exactly; the extra half wavelength makes it dark.', 'Die Ordnung 2 hat genau Δs = 2λ; die zusätzliche halbe Wellenlänge macht es dunkel.'], 'half'],
+        [['A bright fringe of order 5, counted in half wavelengths.', 'Ein heller Streifen der Ordnung 5, in halben Wellenlängen gezählt.'], ['The order counts whole wavelengths: Δs = k·λ.', 'Die Ordnung zählt ganze Wellenlängen: Δs = k·λ.'], 'order']]],
+    ['ds', ['Why are the maxima of a grating much sharper than those of a double slit?', 'Warum sind die Maxima eines Gitters viel schärfer als die eines Doppelspalts?'],
+      ['Just beside a maximum the waves of the many slits get out of step with each other and cancel almost completely.', 'Knapp neben einem Maximum geraten die Wellen der vielen Spalte ausser Takt und löschen sich fast vollständig aus.'],
+      [[['The slits of a grating are narrower.', 'Die Spalte eines Gitters sind schmaler.'], ['The width of the slits sets only the envelope; the sharpness comes from the number of slits.', 'Die Breite der Spalte bestimmt nur die Einhüllende; die Schärfe kommt von der Anzahl Spalte.'], 'bd'],
+        [['They are brighter, so they only look smaller.', 'Sie sind heller, darum sehen sie nur kleiner aus.'], ['They really are narrower: beside them, the light of many slits cancels.', 'Sie sind wirklich schmaler: Daneben löscht sich das Licht vieler Spalte aus.'], 'grating'],
+        [['A grating focuses the light like a lens.', 'Ein Gitter bündelt das Licht wie eine Linse.'], ['A grating does not focus; its maxima are sharp because many waves interfere.', 'Ein Gitter bündelt nicht; seine Maxima sind scharf, weil viele Wellen interferieren.'], 'grating']]],
+    ['ds', ['Why does a double-slit experiment need the light of one source (for example one laser), not of two separate lamps?', 'Warum braucht ein Doppelspaltversuch das Licht einer Quelle (zum Beispiel eines Lasers) und nicht zweier getrennter Lampen?'],
+      ['The two waves must keep a fixed phase difference (be coherent); with two lamps it changes all the time and the fringes wash out.', 'Die beiden Wellen müssen einen festen Phasenunterschied behalten (kohärent sein); bei zwei Lampen ändert er sich ständig, und die Streifen verwischen.'],
+      [[['Two lamps would be too bright.', 'Zwei Lampen wären zu hell.'], ['Brightness does not matter: the phase difference must stay fixed.', 'Die Helligkeit spielt keine Rolle: Der Phasenunterschied muss fest bleiben.'], null],
+        [['The light of two lamps cannot overlap.', 'Das Licht zweier Lampen kann sich nicht überlagern.'], ['It overlaps, but its phase difference changes so fast that the fringes move too fast to be seen.', 'Es überlagert sich, aber sein Phasenunterschied ändert sich so schnell, dass die Streifen zu schnell wandern, um sie zu sehen.'], null],
+        [['With two lamps there would be twice as many fringes.', 'Mit zwei Lampen gäbe es doppelt so viele Streifen.'], ['There would be no steady fringes at all: the waves are not coherent.', 'Es gäbe gar keine festen Streifen: Die Wellen sind nicht kohärent.'], null]]],
+    ['pat', ['The screen behind a double slit is moved twice as far away. What happens to the spacing of the fringes?', 'Der Schirm hinter einem Doppelspalt wird doppelt so weit weg gerückt. Was passiert mit dem Abstand der Streifen?'],
+      ['It doubles.', 'Er verdoppelt sich.'],
+      [[['It halves.', 'Er halbiert sich.'], ['Δy = λL/d grows with L: the same angles reach further out on a screen further away.', 'Δy = λL/d wächst mit L: Dieselben Winkel reichen auf einem weiter entfernten Schirm weiter hinaus.'], 'inv'],
+        [['It stays the same: the angles do not change.', 'Er bleibt gleich: Die Winkel ändern sich nicht.'], ['The angles stay, but at twice the distance the same angle gives twice the distance on the screen.', 'Die Winkel bleiben, aber im doppelten Abstand gibt derselbe Winkel den doppelten Abstand auf dem Schirm.'], 'same'],
+        [['It becomes four times as large.', 'Er wird viermal so gross.'], ['L enters Δy = λL/d once, not squared.', 'L kommt in Δy = λL/d einfach vor, nicht im Quadrat.'], null]]],
+    ['pat', ['A grating with 300 lines per mm is replaced by one with 600 lines per mm. What happens to the maxima?', 'Ein Gitter mit 300 Linien pro mm wird durch eines mit 600 Linien pro mm ersetzt. Was passiert mit den Maxima?'],
+      ['They move further apart: the slits are half as far apart.', 'Sie rücken weiter auseinander: Die Spalte haben den halben Abstand.'],
+      [[['They move closer together: more lines, denser maxima.', 'Sie rücken näher zusammen: mehr Linien, dichtere Maxima.'], ['More lines per mm means a smaller spacing d, and sin α = k·λ/d grows.', 'Mehr Linien pro mm heisst ein kleinerer Abstand d, und sin α = k·λ/d wächst.'], 'inv'],
+        [['They stay where they are and become sharper.', 'Sie bleiben, wo sie sind, und werden schärfer.'], ['That is what more lit slits with the same spacing do; here the spacing d changes.', 'Das tun mehr beleuchtete Spalte mit demselben Abstand; hier ändert sich der Abstand d.'], 'grating'],
+        [['More orders appear.', 'Es erscheinen mehr Ordnungen.'], ['Fewer: with a smaller d, sin α = k·λ/d reaches 1 at a lower order.', 'Weniger: Mit kleinerem d erreicht sin α = k·λ/d schon bei einer tieferen Ordnung 1.'], 'round']]],
+    ['pat', ['A single slit is lit first with red, then with blue laser light. What happens to the central bright fringe?', 'Ein Einzelspalt wird zuerst mit rotem, dann mit blauem Laserlicht beleuchtet. Was passiert mit dem mittleren hellen Streifen?'],
+      ['It gets narrower.', 'Er wird schmaler.'],
+      [[['It gets wider.', 'Er wird breiter.'], ['Blue light has the shorter wavelength, and w = 2λL/b.', 'Blaues Licht hat die kürzere Wellenlänge, und w = 2λL/b.'], 'inv'],
+        [['It stays the same; only its colour changes.', 'Er bleibt gleich; nur seine Farbe ändert sich.'], ['w = 2λL/b depends on the wavelength.', 'w = 2λL/b hängt von der Wellenlänge ab.'], 'same'],
+        [['It splits into two fringes.', 'Er teilt sich in zwei Streifen.'], ['A single slit always has one central bright fringe.', 'Ein Einzelspalt hat immer einen mittleren hellen Streifen.'], null]]],
+    ['pat', ['Behind a double slit with fairly wide slits, some bright fringes are missing. Why?', 'Hinter einem Doppelspalt mit ziemlich breiten Spalten fehlen einige helle Streifen. Warum?'],
+      ['There the pattern of each single slit is dark: the envelope has a zero.', 'Dort ist das Muster jedes Einzelspalts dunkel: Die Einhüllende hat eine Nullstelle.'],
+      [[['There the path difference is half a wavelength.', 'Dort ist der Gangunterschied eine halbe Wellenlänge.'], ['At a maximum the path difference between the slits is a whole number of wavelengths; the light is missing because each slit sends none in that direction.', 'Bei einem Maximum ist der Gangunterschied zwischen den Spalten eine ganze Zahl von Wellenlängen; das Licht fehlt, weil jeder Spalt keines in diese Richtung schickt.'], 'half'],
+        [['The slit spacing is too large there.', 'Der Spaltabstand ist dort zu gross.'], ['The slit spacing sets where the fringes are; the slit width sets which of them are bright.', 'Der Spaltabstand bestimmt, wo die Streifen sind; die Spaltbreite, welche von ihnen hell sind.'], 'bd'],
+        [['The light is too weak to reach that far.', 'Das Licht ist zu schwach, um so weit zu kommen.'], ['Fringes further out can be bright again: only those at the zeros of the envelope are missing.', 'Weiter aussen können Streifen wieder hell sein: Nur die bei den Nullstellen der Einhüllenden fehlen.'], 'bd']]],
+    ['res', ['A telescope observes the same double star first in red, then in blue light. When does it resolve finer detail?', 'Ein Teleskop beobachtet denselben Doppelstern zuerst in rotem, dann in blauem Licht. Wann trennt es feinere Einzelheiten?'],
+      ['In blue light: its wavelength is shorter, and θₘᵢₙ = 1.22·λ/D.', 'Im blauen Licht: Seine Wellenlänge ist kürzer, und θₘᵢₙ = 1.22·λ/D.'],
+      [[['In red light: longer waves get through the air better.', 'Im roten Licht: Längere Wellen kommen besser durch die Luft.'], ['Diffraction alone: the shorter the wave, the smaller θₘᵢₙ.', 'Allein wegen der Beugung: Je kürzer die Welle, desto kleiner θₘᵢₙ.'], 'rinv'],
+        [['In both the same: the mirror is the same.', 'In beiden gleich: Der Spiegel ist derselbe.'], ['θₘᵢₙ = 1.22·λ/D depends on the wavelength too.', 'θₘᵢₙ = 1.22·λ/D hängt auch von der Wellenlänge ab.'], 'rsame'],
+        [['In whichever colour the star is brighter.', 'In der Farbe, in der der Stern heller ist.'], ['Brightness does not change the size of the diffraction blur.', 'Die Helligkeit ändert die Grösse der Beugungsscheibchen nicht.'], null]]],
+    ['res', ['Radio telescopes thousands of kilometres apart are linked to observe together. Why does that help?', 'Radioteleskope, die Tausende Kilometer voneinander entfernt sind, werden zusammengeschaltet. Warum hilft das?'],
+      ['Together they act like one opening as wide as their distance: θₘᵢₙ ≈ λ/D becomes tiny.', 'Zusammen wirken sie wie eine Öffnung, so breit wie ihr Abstand: θₘᵢₙ ≈ λ/D wird winzig.'],
+      [[['They only collect more signal; the detail stays the same.', 'Sie sammeln nur mehr Signal; die Einzelheiten bleiben dieselben.'], ['The decisive size is the width of the whole opening, here the distance between the dishes.', 'Entscheidend ist die Breite der ganzen Öffnung, hier der Abstand der Schüsseln.'], 'rsame'],
+        [['Linking them shortens the wavelength.', 'Das Zusammenschalten verkürzt die Wellenlänge.'], ['The wavelength is set by the source; what grows is D.', 'Die Wellenlänge ist durch die Quelle bestimmt; was wächst, ist D.'], null],
+        [['It does not help: a wider opening diffracts more.', 'Es hilft nicht: Eine breitere Öffnung beugt stärker.'], ['The other way round: the wider the opening, the less it diffracts.', 'Umgekehrt: Je breiter die Öffnung, desto weniger beugt sie.'], 'rinv']]],
+    ['res', ['Why can no light microscope show single atoms (about 0.1 nm across)?', 'Warum kann kein Lichtmikroskop einzelne Atome (etwa 0.1 nm gross) zeigen?'],
+      ['They are thousands of times smaller than the wavelength of light: diffraction blurs detail below about λ.', 'Sie sind tausendmal kleiner als die Wellenlänge des Lichts: Die Beugung verwischt Einzelheiten unter etwa λ.'],
+      [[['The lenses are not yet good enough.', 'Die Linsen sind noch nicht gut genug.'], ['Even a perfect lens cannot beat diffraction: the limit is set by λ.', 'Auch eine perfekte Linse überwindet die Beugung nicht: Die Grenze ist durch λ gesetzt.'], 'rayleigh'],
+        [['Atoms are transparent.', 'Atome sind durchsichtig.'], ['The limit is diffraction: detail much smaller than λ cannot be resolved.', 'Die Grenze ist die Beugung: Einzelheiten viel kleiner als λ kann man nicht trennen.'], null],
+        [['A stronger magnification would show them.', 'Eine stärkere Vergrösserung würde sie zeigen.'], ['Magnifying a blurred image only gives a larger blur.', 'Ein verwaschenes Bild zu vergrössern, gibt nur einen grösseren Fleck.'], 'rayleigh']]],
+    ['res', ['Two stars are just resolved by a telescope. Then a ring covers the outer part of the mirror, so that only half its diameter is used. Now the stars…', 'Zwei Sterne werden von einem Teleskop knapp getrennt. Dann deckt ein Ring den äusseren Teil des Spiegels ab, so dass nur sein halber Durchmesser genutzt wird. Jetzt …'],
+      ['merge into one: θₘᵢₙ doubles.', 'verschmelzen die Sterne zu einem: θₘᵢₙ verdoppelt sich.'],
+      [[['appear further apart.', 'erscheinen die Sterne weiter auseinander.'], ['A smaller opening diffracts more: the images get larger and overlap.', 'Eine kleinere Öffnung beugt stärker: Die Bilder werden grösser und überlappen sich.'], 'rinv'],
+        [['are still resolved, only fainter.', 'sind die Sterne immer noch getrennt, nur schwächer.'], ['θₘᵢₙ = 1.22·λ/D depends on the diameter used.', 'θₘᵢₙ = 1.22·λ/D hängt vom genutzten Durchmesser ab.'], 'rsame'],
+        [['are resolved better: less light, sharper images.', 'sind die Sterne besser getrennt: weniger Licht, schärfere Bilder.'], ['The other way round: half the opening, twice the blur.', 'Umgekehrt: halbe Öffnung, doppelt so grosse Unschärfe.'], 'rinv']]],
   ];
   const CONCEPT_HINTS = {
     huy: () => HUYGENS(),
@@ -541,7 +663,7 @@
     };
   };
 
-  const SCENARIOS = [gap, path, dsPos, dsLam, grating, gratingMax, change, single, resChange, resScale, conceptOf('huy'), conceptOf('ds'), conceptOf('pat'), conceptOf('res')];
+  const SCENARIOS = [gap, path, dsPos, dsLam, grating, gratingMax, change, single, resChange, resScale, resFar, conceptOf('huy'), conceptOf('ds'), conceptOf('pat'), conceptOf('res')];
 
   root.Scenarios = { SCENARIOS, SETUPS, CONCEPTS, RES, GAP_MEDIA };
   if (typeof module !== 'undefined') module.exports = root.Scenarios;
