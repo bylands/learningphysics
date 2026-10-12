@@ -1070,7 +1070,7 @@ def online_page(sheet: Dict[str, object], parts: List[str], opts: Dict[str, str]
     screen and for printing; the footer as on the PDF."""
     de = opts.get("lang") == "de"
     title = str(sheet.get("title") or ("Übungen" if de else "Exercises"))
-    footer = " · ".join(x for x in (("Übungen " if de else "Exercises ") + title, opts.get("date", ""), opts.get("author", ""), opts.get("school", "")) if x)
+    footer = " · ".join(x for x in (("Übungen " if de else "Exercises ") + title, opts.get("school", ""), opts.get("author", ""), opts.get("date", "")) if x)
     body = "".join(parts) or f'<p class="empty">{"Dieses Blatt hat noch keine Aufgaben." if de else "This sheet has no exercises yet."}</p>'
     return f"""<!doctype html>
 <html lang="{'de' if de else 'en'}">
