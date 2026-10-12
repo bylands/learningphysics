@@ -39,6 +39,8 @@ const EXPECT = {
   change: (p) => ({ ans: fkey(p.k ** POWER[p.s][p.v]) }),
   'res-change': (p) => ({ ans: fkey(p.k ** POWER[p.s][p.v]) }),
   single: (p) => (p.hair ? { w: (2 * p.lam * p.L) / p.b, b: p.b } : { w: (2 * p.lam * p.L) / p.b }),
+  // two lamps seen as two from x = s/θ; craters on the Moon (3.8·10⁸ m) at least s = θ·x apart
+  'res-far': (p) => (p.k === 'dist' ? { x: p.s / p.th } : { s: p.th * 3.8e8 }),
   'res-scale': (p) => {
     const R = Scenarios.RES, th = (lam, D) => (1.22 * lam) / D;
     // the angles given are those of θ = 1.22·λ/D, rounded (the eye at 550 nm)

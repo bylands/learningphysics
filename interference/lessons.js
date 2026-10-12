@@ -83,7 +83,7 @@
     { name: () => L('Double slit and grating', 'Doppelspalt und Gitter'), example: (s) => (s >= 3 && s <= 4 ? 2 : 1),
       stages: [st(null, null, ['path']), st('positions', 'Positionen', ['ds-pos']), st('the wavelength', 'die Wellenlänge', ['ds-lam']), st('the grating', 'das Gitter', ['grating']), st('the highest order', 'die höchste Ordnung', ['grating-max']), st('Concepts', 'Konzepte', ['concept-ds'])] },
     { name: () => L('Changing the pattern', 'Das Muster ändern'), example: () => 3, stages: [st(null, null, ['change']), st('the single slit', 'der Einzelspalt', ['single']), st('Concepts', 'Konzepte', ['concept-pat'])] },
-    { name: () => L('Resolving power', 'Auflösungsvermögen'), example: () => 4, stages: [st(null, null, ['res-change']), st('by ratios', 'über Verhältnisse', ['res-scale']), st('Concepts', 'Konzepte', ['concept-res'])] },
+    { name: () => L('Resolving power', 'Auflösungsvermögen'), example: () => 4, stages: [st(null, null, ['res-change']), st('by ratios', 'über Verhältnisse', ['res-scale']), st('how far, how small', 'wie weit, wie klein', ['res-far']), st('Concepts', 'Konzepte', ['concept-res'])] },
   ];
 
   root.Lessons = { EXAMPLES, TOPICS };

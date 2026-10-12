@@ -18,7 +18,7 @@
     { id: 'changes', kinds: ['change', 'concept-pat', 'change'], tutor: 3, topic: 2,
       name: () => L('Predict how the pattern changes when the slit width, the slit spacing or the wavelength changes.',
         'Voraussagen, wie sich das Muster ändert, wenn sich die Spaltbreite, der Spaltabstand oder die Wellenlänge ändert.') },
-    { id: 'resolve', kinds: ['res-change', 'concept-res', 'res-scale'], tutor: 4, topic: 3,
+    { id: 'resolve', kinds: ['res-change', 'concept-res', 'res-scale', 'res-far'], tutor: 4, topic: 3,
       name: () => L('Relate the resolving power to the aperture and the wavelength: θₘᵢₙ = 1.22·λ/D.',
         'Das Auflösungsvermögen mit der Öffnung und der Wellenlänge verknüpfen: θₘᵢₙ = 1.22·λ/D.') },
   ];
