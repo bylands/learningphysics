@@ -5,12 +5,15 @@
 // (traps: the answers under typical wrong ideas) or a choice { key, type: 'choice', what, value,
 // options: [{ v, html, why, flag }], pics (the options are graphs), stack (one below the other) }.
 //
-//   combining      pair (two capacitors in series or in parallel), bounds (is the total smaller
-//                  than the smallest, larger than the largest, …; no numbers), mixed (one
-//                  capacitor in series or in parallel with a pair: the block first)
-//   time curves    curve-u (which graph shows U_C while charging or discharging), curve-i (the
-//                  current), curve-r (U_R while charging)
-//   time constant  read-half (T½ and 2·T½ read from a graph), read-tau (τ read from a graph),
+//   combining      pair (two capacitors in series or in parallel), bounds (without numbers: where
+//                  the total lies and how a change moves it, which capacitor has the largest
+//                  voltage or charge, a capacitor and a pair, equal capacitors), mixed (one
+//                  capacitor in series or in parallel with a pair: the block first), network (four
+//                  or five capacitors, nested)
+//   time curves    curve-u, curve-i, curve-r (which graph shows U_C, the current, U_R while
+//                  charging), curve-u-d, curve-i-d, curve-r-d (the same while discharging), loop and
+//                  loop-d (U_R, I or U_C at a moment, with numbers: the loop rule)
+//   time constant  read-half (T½ and 2 or 3·T½ read from a graph), read-tau (τ read from a graph),
 //                  predict (R or C changed: τ, the current at the start, the final voltage),
 //                  predict-graph (which graph shows the charging with R or C changed)
 // Capacitances in µF are chosen so that the totals come out round (mental arithmetic). The time
@@ -44,7 +47,7 @@
 
   // ---------------------------------------------------------------- helpers
   const num = (x) => String(Math.round(x * 100) / 100).replace('-', '−');
-  const TEXU = { 'µF': '\\mu\\mathrm{F}', s: '\\mathrm{s}', ms: '\\mathrm{ms}', V: '\\mathrm{V}' };
+  const TEXU = { 'µF': '\\mu\\mathrm{F}', s: '\\mathrm{s}', ms: '\\mathrm{ms}', V: '\\mathrm{V}', mA: '\\mathrm{mA}', 'kΩ': '\\mathrm{k\\Omega}' };
   const tq = (x, u) => `${num(x).replace('−', '-')}\\,${TEXU[u]}`;
   const p$ = (s) => `<p>${s}</p>`;
   const step = (rule, html) => `<p class="step-rule">${rule}</p>${html}`;
@@ -63,8 +66,8 @@
   const leaf = (c, v) => ({ c, v });
 
   const RULES = {
-    par: () => L('In parallel, the capacitors have the same voltage $U$, and their charges add: $Q = C_1U + C_2U$. So the capacitances add: $C = C_1 + C_2$.', 'Parallel geschaltete Kondensatoren haben dieselbe Spannung $U$, und ihre Ladungen addieren sich: $Q = C_1U + C_2U$. Also addieren sich die Kapazitäten: $C = C_1 + C_2$.'),
-    ser: () => L('In series, the capacitors carry the same charge $Q$ (what leaves one plate arrives on the next), and their voltages add: $U = Q/C_1 + Q/C_2$. So the reciprocals add: $\\frac{1}{C} = \\frac{1}{C_1} + \\frac{1}{C_2}$, for two capacitors $C = \\frac{C_1C_2}{C_1 + C_2}$.', 'In Serie tragen die Kondensatoren dieselbe Ladung $Q$ (was eine Platte verlässt, kommt auf der nächsten an), und ihre Spannungen addieren sich: $U = Q/C_1 + Q/C_2$. Also addieren sich die Kehrwerte: $\\frac{1}{C} = \\frac{1}{C_1} + \\frac{1}{C_2}$, für zwei Kondensatoren $C = \\frac{C_1C_2}{C_1 + C_2}$.'),
+    par: () => L('In parallel, the capacitors have the same voltage $\\Delta V$, and their charges add: $Q = C_1\\Delta V + C_2\\Delta V$. So the capacitances add: $C = C_1 + C_2$.', 'Parallel geschaltete Kondensatoren haben dieselbe Spannung $U$, und ihre Ladungen addieren sich: $Q = C_1U + C_2U$. Also addieren sich die Kapazitäten: $C = C_1 + C_2$.'),
+    ser: () => L('In series, the capacitors carry the same charge $Q$ (what leaves one plate arrives on the next), and their voltages add: $\\Delta V = Q/C_1 + Q/C_2$. So the reciprocals add: $\\frac{1}{C} = \\frac{1}{C_1} + \\frac{1}{C_2}$, for two capacitors $C = \\frac{C_1C_2}{C_1 + C_2}$.', 'In Serie tragen die Kondensatoren dieselbe Ladung $Q$ (was eine Platte verlässt, kommt auf der nächsten an), und ihre Spannungen addieren sich: $U = Q/C_1 + Q/C_2$. Also addieren sich die Kehrwerte: $\\frac{1}{C} = \\frac{1}{C_1} + \\frac{1}{C_2}$, für zwei Kondensatoren $C = \\frac{C_1C_2}{C_1 + C_2}$.'),
     swap: () => L('These are the rules of resistors, swapped: resistors add in series, capacitors in parallel.', 'Das sind die Regeln der Widerstände, vertauscht: Widerstände addieren sich in Serie, Kapazitäten parallel.'),
   };
   const WHY_SWAP = {
@@ -150,43 +153,199 @@
     check: ['C', 'C23'],
   };
 
-  // Three capacitors in series or in parallel: where does the total lie? Then a fourth is added.
+  // Without calculating, in four kinds (p.kind):
+  //   where   three capacitors in series or in parallel: where does the total lie? Then one of
+  //           them is added, removed, or replaced by a larger or a smaller one (p.change)
+  //   share   three in series or in parallel on a battery: which one has the largest voltage,
+  //           which one the largest charge?
+  //   mixed   C₁ in series with a parallel pair (p.ser) or in parallel with a series pair: the
+  //           total compared with C₁ alone and with the pair alone
+  //   equal   n equal capacitors in series or in parallel: the total, and the voltage of each
+  const KINDS = ['where', 'where', 'share', 'mixed', 'equal'], CHANGE = ['add', 'remove', 'larger', 'smaller'];
+  const capList = (vals) => vals.map((v, i) => `$C_${i + 1} = ${tq(v, 'µF')}$`).join(', ');
+  const bigSmall = (v) => ({ up: L('larger', 'grösser'), down: L('smaller', 'kleiner'), same: L('the same', 'gleich') }[v]);
+
+  function boundsWhere(p) {
+    const { ser, vals, change } = p, lo = Math.min(...vals), hi = Math.max(...vals), sum = vals.reduce((s, v) => s + v, 0);
+    const inv = vals.reduce((s, v) => s + 1 / v, 0), net = { [ser ? 's' : 'p']: vals.map((v, i) => leaf(String(i + 1), v)) };
+    const why = {
+      ser: L('In series the reciprocals add: $\\frac{1}{C} = \\frac{1}{C_1} + \\frac{1}{C_2} + \\frac{1}{C_3}$ is larger than each $\\frac{1}{C_k}$, so $C$ is smaller than each $C_k$.', 'In Serie addieren sich die Kehrwerte: $\\frac{1}{C} = \\frac{1}{C_1} + \\frac{1}{C_2} + \\frac{1}{C_3}$ ist grösser als jedes $\\frac{1}{C_k}$, also ist $C$ kleiner als jedes $C_k$.'),
+      par: L(`In parallel the capacitances add: $C = C_1 + C_2 + C_3 = ${tq(sum, 'µF')}$, larger than each one.`, `Parallel addieren sich die Kapazitäten: $C = C_1 + C_2 + C_3 = ${tq(sum, 'µF')}$, grösser als jede einzelne.`),
+    }[ser ? 'ser' : 'par'];
+    const where = choiceF('where', L('The total capacitance is', 'Die Gesamtkapazität ist'), ser ? 'below' : 'above', [
+      opt('below', L(`smaller than the smallest: $C < ${tq(lo, 'µF')}$`, `kleiner als die kleinste: $C < ${tq(lo, 'µF')}$`), why, ser ? null : 'swap'),
+      opt('edge', ser ? L(`equal to the smallest: $C = ${tq(lo, 'µF')}$`, `gleich der kleinsten: $C = ${tq(lo, 'µF')}$`) : L(`equal to the largest: $C = ${tq(hi, 'µF')}$`, `gleich der grössten: $C = ${tq(hi, 'µF')}$`), `${L('Each capacitor counts.', 'Jeder Kondensator zählt.')} ${why}`, 'edge'),
+      opt('between', L(`between the smallest and the largest`, `zwischen der kleinsten und der grössten`), `${L('That would be some kind of average.', 'Das wäre eine Art Mittelwert.')} ${why}`, 'avg'),
+      opt('above', L(`larger than the largest: $C > ${tq(hi, 'µF')}$`, `grösser als die grösste: $C > ${tq(hi, 'µF')}$`), why, ser ? 'swap' : null),
+    ].map((o) => (o.v === (ser ? 'below' : 'above') ? { ...o, why: '' } : o)), { stack: true, ask: L('Where does the total capacitance lie?', 'Wo liegt die Gesamtkapazität?') });
+    // the change: what is done, the answer, why, and the flag of the opposite answer
+    const ch = {
+      add: { text: ser ? L('A fourth capacitor is added in series.', 'Ein vierter Kondensator wird in Serie dazugeschaltet.') : L('A fourth capacitor is added in parallel.', 'Ein vierter Kondensator wird parallel dazugeschaltet.'), v: ser ? 'down' : 'up', flag: 'swap',
+        why: ser ? L('One more term $\\frac{1}{C_4}$ makes $\\frac{1}{C}$ larger, so $C$ smaller. (Like resistors in parallel: each one added lowers the total.)', 'Ein weiterer Summand $\\frac{1}{C_4}$ macht $\\frac{1}{C}$ grösser, also $C$ kleiner. (Wie bei parallelen Widerständen: Jeder weitere senkt den Gesamtwiderstand.)') : L('In parallel one more capacitance is added to the sum: $C$ becomes larger. (Like resistors in series.)', 'Parallel kommt eine weitere Kapazität zur Summe dazu: $C$ wird grösser. (Wie bei Widerständen in Serie.)') },
+      remove: { text: ser ? L('$C_3$ is taken out and replaced by a wire.', '$C_3$ wird entfernt und durch einen Draht ersetzt.') : L('$C_3$ is taken out (its branch is left open).', '$C_3$ wird entfernt (sein Zweig bleibt offen).'), v: ser ? 'up' : 'down', flag: 'swap',
+        why: ser ? L('One term $\\frac{1}{C_3}$ less makes $\\frac{1}{C}$ smaller, so $C$ larger: two capacitors in series store more charge at the same voltage than three.', 'Ein Summand $\\frac{1}{C_3}$ weniger macht $\\frac{1}{C}$ kleiner, also $C$ grösser: Zwei Kondensatoren in Serie speichern bei derselben Spannung mehr Ladung als drei.') : L('In parallel one capacitance less is added: $C$ becomes smaller.', 'Parallel wird eine Kapazität weniger addiert: $C$ wird kleiner.') },
+      larger: { text: L('$C_1$ is replaced by a capacitor with a larger capacitance.', '$C_1$ wird durch einen Kondensator mit grösserer Kapazität ersetzt.'), v: 'up', flag: null,
+        why: ser ? L('A larger $C_1$ makes $\\frac{1}{C_1}$ smaller, so $\\frac{1}{C}$ smaller and $C$ larger.', 'Ein grösseres $C_1$ macht $\\frac{1}{C_1}$ kleiner, also $\\frac{1}{C}$ kleiner und $C$ grösser.') : L('A larger $C_1$ makes the sum $C_1 + C_2 + C_3$ larger.', 'Ein grösseres $C_1$ macht die Summe $C_1 + C_2 + C_3$ grösser.') },
+      smaller: { text: L('$C_1$ is replaced by a capacitor with a smaller capacitance.', '$C_1$ wird durch einen Kondensator mit kleinerer Kapazität ersetzt.'), v: 'down', flag: null,
+        why: ser ? L('A smaller $C_1$ makes $\\frac{1}{C_1}$ larger, so $\\frac{1}{C}$ larger and $C$ smaller.', 'Ein kleineres $C_1$ macht $\\frac{1}{C_1}$ grösser, also $\\frac{1}{C}$ grösser und $C$ kleiner.') : L('A smaller $C_1$ makes the sum $C_1 + C_2 + C_3$ smaller.', 'Ein kleineres $C_1$ macht die Summe $C_1 + C_2 + C_3$ kleiner.') },
+    }[change];
+    const more = choiceF('more', `${ch.text} ${L('The total capacitance becomes', 'Die Gesamtkapazität wird')}`, ch.v, ['up', 'down', 'same'].map((v) => opt(v, bigSmall(v),
+      v === ch.v ? '' : v === 'same' ? `${L('Every capacitor counts in the total.', 'Jeder Kondensator zählt bei der Gesamtkapazität mit.')} ${ch.why}` : ch.why, v === ch.v ? null : v === 'same' ? 'edge' : ch.flag)));
+    return {
+      text: p$(L(`Three capacitors, ${capList(vals)}, are connected ${inWords(ser)}. Without calculating: where does the total capacitance lie?`, `Drei Kondensatoren, ${capList(vals)}, sind ${inWords(ser)} geschaltet. Ohne zu rechnen: Wo liegt die Gesamtkapazität?`)),
+      fields: [where, more],
+      figure: () => Fg.network(net),
+      solutionFigure: () => Fg.network(net, { reduce: [[net, '', ser ? 1 / inv : sum]] }),
+      hints: [ser ? L('In series the charges are the same and the voltages add. What does that mean for $\\frac{1}{C}$?', 'In Serie sind die Ladungen gleich, und die Spannungen addieren sich. Was heisst das für $\\frac{1}{C}$?') : L('In parallel the voltages are the same and the charges add. What does that mean for $C$?', 'Parallel sind die Spannungen gleich, und die Ladungen addieren sich. Was heisst das für $C$?'), RULES[ser ? 'ser' : 'par'](), RULES.swap()],
+      solution: [
+        step(L('Where the total lies', 'Wo die Gesamtkapazität liegt'), p$(why) + (ser ? p$(L(`Here: $\\frac{1}{C} = ${vals.map((v) => `\\frac{1}{${v}}`).join(' + ')}\\,\\frac{1}{\\mu\\mathrm{F}}$, so $C \\approx ${tq(1 / inv, 'µF')}$, less than $${tq(lo, 'µF')}$.`, `Hier: $\\frac{1}{C} = ${vals.map((v) => `\\frac{1}{${v}}`).join(' + ')}\\,\\frac{1}{\\mu\\mathrm{F}}$, also $C \\approx ${tq(1 / inv, 'µF')}$, weniger als $${tq(lo, 'µF')}$.`)) : '')),
+        step(L('The change', 'Die Änderung'), p$(`${ch.why} ${L('The total becomes', 'Die Gesamtkapazität wird')} <span class="result">${bigSmall(ch.v)}</span>.`)),
+      ],
+      results: `${ser ? L('smaller than the smallest', 'kleiner als die kleinste') : L('larger than the largest', 'grösser als die grösste')}; ${bigSmall(ch.v)}`,
+    };
+  }
+
+  function boundsShare(p) {
+    const { ser, vals } = p, net = { [ser ? 's' : 'p']: vals.map((v, i) => leaf(String(i + 1), v)) };
+    const k = 1 + vals.indexOf(ser ? Math.min(...vals) : Math.max(...vals)), right = `c${k}`;
+    const same = ser ? L('In series all carry the same charge $Q$: what leaves one plate arrives on the next.', 'In Serie tragen alle dieselbe Ladung $Q$: Was eine Platte verlässt, kommt auf der nächsten an.') : L('In parallel all are connected to the same two points: they have the same voltage $\\Delta V$.', 'Parallel sind alle an dieselben zwei Punkte angeschlossen: Sie haben dieselbe Spannung $U$.');
+    const most = ser ? L('So the voltages differ: $\\Delta V_k = Q/C_k$, the smallest capacitance has the largest voltage.', 'Also sind die Spannungen verschieden: $U_k = Q/C_k$, die kleinste Kapazität hat die grösste Spannung.') : L('So the charges differ: $Q_k = C_k\\,\\Delta V$, the largest capacitance carries the largest charge.', 'Also sind die Ladungen verschieden: $Q_k = C_k U$, die grösste Kapazität trägt die grösste Ladung.');
+    const options = (r, why) => [...vals.map((_, i) => [`c${i + 1}`, `$C_${i + 1}$`]), ['same', L('all the same', 'alle gleich')]].map(([v, h]) => opt(v, h, v === r ? '' : why, v === r ? null : 'share'));
+    const qV = L('Which capacitor has the largest voltage?', 'Welcher Kondensator hat die grösste Spannung?'), qQ = L('Which capacitor carries the largest charge?', 'Welcher Kondensator trägt die grösste Ladung?');
+    return {
+      text: p$(L(`Three capacitors, ${capList(vals)}, are connected ${inWords(ser)} between A and B, and a battery is connected to A and B. Without calculating: which capacitor has the largest voltage, which one the largest charge?`, `Drei Kondensatoren, ${capList(vals)}, sind zwischen A und B ${inWords(ser)} geschaltet, und an A und B wird eine Batterie angeschlossen. Ohne zu rechnen: Welcher Kondensator hat die grösste Spannung, welcher die grösste Ladung?`)),
+      fields: [
+        choiceF('where', ser ? qV : qQ, right, options(right, `${same} ${most}`), { ask: ser ? qV : qQ }),
+        choiceF('more', ser ? qQ : qV, 'same', options('same', same), { ask: ser ? qQ : qV }),
+      ],
+      figure: () => Fg.network(net),
+      solutionFigure: () => Fg.network(net),
+      hints: [ser ? L('In series: which quantity is the same for all capacitors?', 'In Serie: Welche Grösse ist für alle Kondensatoren gleich?') : L('In parallel: which quantity is the same for all capacitors?', 'Parallel: Welche Grösse ist für alle Kondensatoren gleich?'), same, L('Each capacitor: $Q = C\\cdot\\Delta V$.', 'Jeder Kondensator: $Q = C\\cdot U$.')],
+      solution: [
+        step(ser ? L('Series: the same charge', 'Serie: dieselbe Ladung') : L('Parallel: the same voltage', 'Parallel: dieselbe Spannung'), p$(`${same} ${L('So', 'Also')} <span class="result">${ser ? L('the charge is the same for all', 'die Ladung ist für alle gleich') : L('the voltage is the same for all', 'die Spannung ist für alle gleich')}</span>.`)),
+        step(ser ? L('The voltages', 'Die Spannungen') : L('The charges', 'Die Ladungen'), p$(`${most} ${L('Here that is', 'Hier ist das')} <span class="result">$C_${k}$</span> ($${tq(vals[k - 1], 'µF')}$).`)),
+      ],
+      results: ser ? L(`the largest voltage: $C_${k}$; the charge: the same for all`, `die grösste Spannung: $C_${k}$; die Ladung: für alle gleich`) : L(`the largest charge: $C_${k}$; the voltage: the same for all`, `die grösste Ladung: $C_${k}$; die Spannung: für alle gleich`),
+    };
+  }
+
+  function boundsMixed(p) {
+    const { ser, vals: [a, b, c] } = p;
+    const block = ser ? { p: [leaf('2', b), leaf('3', c)] } : { s: [leaf('2', b), leaf('3', c)] }, net = ser ? { s: [leaf('1', a), block] } : { p: [leaf('1', a), block] };
+    const vb = ser ? b + c : ser2(b, c), total = ser ? ser2(a, vb) : a + vb, v = ser ? 'below' : 'above';
+    const why = ser ? L('$C_1$ and the block $C_{23}$ are in series: the total is smaller than each of them, whatever the values.', '$C_1$ und der Block $C_{23}$ sind in Serie: Die Gesamtkapazität ist kleiner als jeder der beiden, was immer die Werte sind.') : L('$C_1$ and the block $C_{23}$ are in parallel: the total is their sum, larger than each of them, whatever the values.', '$C_1$ und der Block $C_{23}$ sind parallel: Die Gesamtkapazität ist ihre Summe, grösser als jeder der beiden, was immer die Werte sind.');
+    const cmp = (key, name) => choiceF(key, L(`Compared with ${name} alone, the total capacitance is`, `Verglichen mit ${name} allein ist die Gesamtkapazität`), v, [
+      ['below', L('smaller', 'kleiner'), ser ? null : 'swap'], ['edge', L('the same', 'gleich gross'), 'edge'], ['above', L('larger', 'grösser'), ser ? 'swap' : null], ['depends', L('it depends on the values', 'es hängt von den Werten ab'), 'edge'],
+    ].map(([o, h, f]) => opt(o, h, o === v ? '' : why, o === v ? null : f)), { stack: true, ask: L(`Compared with ${name} alone: is the total capacitance smaller or larger?`, `Verglichen mit ${name} allein: Ist die Gesamtkapazität kleiner oder grösser?`) });
+    return {
+      text: p$(L(`Three capacitors, ${capList([a, b, c])}, are connected as shown. Without calculating: how does the total capacitance compare with $C_1$ alone, and with the block $C_{23}$ of $C_2$ and $C_3$ alone?`, `Drei Kondensatoren, ${capList([a, b, c])}, sind wie gezeigt geschaltet. Ohne zu rechnen: Wie verhält sich die Gesamtkapazität zu $C_1$ allein und zum Block $C_{23}$ aus $C_2$ und $C_3$ allein?`)),
+      fields: [cmp('where', '$C_1$'), cmp('more', L('the block $C_{23}$', 'dem Block $C_{23}$'))],
+      figure: () => Fg.network(net, { hl: block, cap: '$C_{23}$' }),
+      solutionFigure: () => Fg.network(net, { reduce: [[block, '23', vb]] }),
+      hints: [L('Think of the block $C_{23}$ as one capacitor. How is it connected to $C_1$?', 'Stell dir den Block $C_{23}$ als einen Kondensator vor. Wie ist er mit $C_1$ verbunden?'), `${RULES.par()} ${RULES.ser()}`, RULES.swap()],
+      solution: [
+        step(L('The block', 'Der Block'), p$(L(`$C_2$ and $C_3$ are ${inWords(!ser)}: they act like one capacitor $C_{23}$.`, `$C_2$ und $C_3$ sind ${inWords(!ser)} geschaltet: Sie wirken wie ein Kondensator $C_{23}$.`))),
+        step(L('The block and $C_1$', 'Der Block und $C_1$'), p$(`${why} ${L('The total is', 'Die Gesamtkapazität ist')} <span class="result">${ser ? L('smaller than both', 'kleiner als beide') : L('larger than both', 'grösser als beide')}</span>.`) +
+          p$(L(`Here: $C_{23} \\approx ${tq(vb, 'µF')}$ and $C \\approx ${tq(total, 'µF')}$.`, `Hier: $C_{23} \\approx ${tq(vb, 'µF')}$ und $C \\approx ${tq(total, 'µF')}$.`))),
+      ],
+      results: ser ? L('smaller than $C_1$; smaller than $C_{23}$', 'kleiner als $C_1$; kleiner als $C_{23}$') : L('larger than $C_1$; larger than $C_{23}$', 'grösser als $C_1$; grösser als $C_{23}$'),
+    };
+  }
+
+  function boundsEqual(p) {
+    const { ser, n, c } = p, value = ser ? c / n : n * c, net = { [ser ? 's' : 'p']: Array.from({ length: n }, (_, i) => leaf(String(i + 1), c)) };
+    const why = ser ? L(`In series the reciprocals add: $\\frac{1}{C} = ${n}\\cdot\\frac{1}{C_1}$, so $C = C_1/${n}$.`, `In Serie addieren sich die Kehrwerte: $\\frac{1}{C} = ${n}\\cdot\\frac{1}{C_1}$, also $C = C_1/${n}$.`) : L(`In parallel the capacitances add: $C = ${n}\\cdot C_1$.`, `Parallel addieren sich die Kapazitäten: $C = ${n}\\cdot C_1$.`);
+    const totals = [[c / n, ser ? null : 'swap'], [n * c, ser ? 'swap' : null], [c, 'edge'], [ser ? c / (n * n) : n * n * c, null]];
+    const share = ser ? L(`In series the ${n} voltages add up to $\\Delta V$. All carry the same charge, and equal capacitors with the same charge have the same voltage: $\\Delta V/${n}$ each.`, `In Serie addieren sich die ${n} Spannungen zu $U$. Alle tragen dieselbe Ladung, und gleiche Kondensatoren mit derselben Ladung haben dieselbe Spannung: je $U/${n}$.`) : L('In parallel each capacitor is connected to A and B: each has the whole voltage $\\Delta V$.', 'Parallel ist jeder Kondensator an A und B angeschlossen: Jeder hat die ganze Spannung $U$.');
+    const each = ser ? 'part' : 'all';
+    return {
+      text: p$(L(`${n} equal capacitors, each with $C_1 = ${tq(c, 'µF')}$, are connected ${inWords(ser)} between A and B. Without a calculator: what is the total capacitance? A battery with voltage $\\Delta V$ is connected to A and B: what is the voltage of each capacitor?`, `${n} gleiche Kondensatoren mit je $C_1 = ${tq(c, 'µF')}$ sind zwischen A und B ${inWords(ser)} geschaltet. Ohne Rechner: Wie gross ist die Gesamtkapazität? An A und B wird eine Batterie mit der Spannung $U$ angeschlossen: Welche Spannung hat jeder Kondensator?`)),
+      fields: [
+        choiceF('where', L('The total capacitance:', 'Die Gesamtkapazität:'), String(value), totals.map(([x, f]) => opt(String(x), `$C = ${tq(x, 'µF')}$`, x === value ? '' : why, x === value ? null : f)), { ask: L('What is the total capacitance?', 'Wie gross ist die Gesamtkapazität?') }),
+        choiceF('more', L('The voltage of each capacitor:', 'Die Spannung jedes Kondensators:'), each, [['part', L(`$\\Delta V/${n}$`, `$U/${n}$`)], ['all', L('$\\Delta V$', '$U$')], ['more', L(`$${n}\\,\\Delta V$`, `$${n}\\,U$`)]].map(([v, h]) => opt(v, h, v === each ? '' : share, v === each ? null : 'share'))),
+      ],
+      figure: () => Fg.network(net),
+      solutionFigure: () => Fg.network(net, { reduce: [[net, '', value]] }),
+      hints: [ser ? L('In series the reciprocals add. What is $\\frac{1}{C}$ for equal capacitors?', 'In Serie addieren sich die Kehrwerte. Was ist $\\frac{1}{C}$ bei gleichen Kondensatoren?') : L('In parallel the capacitances add.', 'Parallel addieren sich die Kapazitäten.'), RULES.swap(), ser ? L('In series the voltages add.', 'In Serie addieren sich die Spannungen.') : L('In parallel the voltages are the same.', 'Parallel sind die Spannungen gleich.')],
+      solution: [
+        step(L('The total', 'Die Gesamtkapazität'), p$(`${why} ${L('Here', 'Hier')}: $C = \\htmlClass{result}{${tq(value, 'µF')}}$.`)),
+        step(L('The voltage of each', 'Die Spannung jedes Kondensators'), p$(`${share}`)),
+      ],
+      results: `$C = ${tq(value, 'µF')}$; ${ser ? L(`$\\Delta V/${n}$ each`, `je $U/${n}$`) : L('$\\Delta V$ each', 'je $U$')}`,
+    };
+  }
+
+  const BOUNDS = { where: boundsWhere, share: boundsShare, mixed: boundsMixed, equal: boundsEqual };
   const bounds = {
     difficulty: 2,
     title: () => L('Larger or smaller?', 'Grösser oder kleiner?'),
-    make: (r) => ({ ser: r.next() < 0.5, vals: r.shuffle(VALS.slice(1, 10)).slice(0, 3), add: r.int(1, 2) }),
+    make(r) {
+      const kind = r.pick(KINDS), ser = r.next() < 0.5, vals = r.shuffle(VALS.slice(1, 10)).slice(0, 3);
+      if (kind === 'where') return { kind, ser, vals, change: r.pick(CHANGE) };
+      if (kind === 'equal') { const n = r.int(2, 4); return { kind, ser, n, c: r.pick([4, 6, 8, 12].filter((x) => x % n === 0)) }; }
+      return { kind, ser, vals };
+    },
+    build: (p) => BOUNDS[p.kind](p),
+    check: ['where'],
+  };
+
+  // ---------------------------------------------------------------- four or five capacitors
+  // The shapes of the networks (0: a capacitor), the leaves numbered in the order drawn; the
+  // capacitances chosen so that every block comes out as a multiple of 0.5 µF.
+  const SHAPES = [
+    ['s', ['p', 0, 0], ['p', 0, 0]],
+    ['p', ['s', 0, 0], ['s', 0, 0]],
+    ['s', 0, ['p', 0, ['s', 0, 0]]],
+    ['p', 0, ['s', 0, ['p', 0, 0]]],
+    ['s', ['p', 0, 0], ['p', 0, 0, 0]],
+    ['p', ['s', 0, 0], ['s', 0, ['p', 0, 0]]],
+  ];
+  const nLeaves = (sh) => (Array.isArray(sh) ? sh.slice(1).reduce((s, x) => s + nLeaves(x), 0) : 1);
+  function netOf(sh, vals, at = { k: 0 }) {
+    if (!Array.isArray(sh)) { const i = at.k++; return leaf(String(i + 1), vals[i]); }
+    return { [sh[0]]: sh.slice(1).map((x) => netOf(x, vals, at)) };
+  }
+  const leaves = (n) => (n.c ? [n.c] : (n.s || n.p).flatMap(leaves));
+  const groups = (n) => (n.c ? [] : [...(n.s || n.p).flatMap(groups), n]); // inside out
+  // the capacitance of a net (swap: with the rules of resistors)
+  const capOf = (n, swap = false) => (n.c ? n.v : ((n.s && !swap) || (n.p && swap))
+    ? 1 / (n.s || n.p).reduce((s, m) => s + 1 / capOf(m, swap), 0) : (n.s || n.p).reduce((s, m) => s + capOf(m, swap), 0));
+  const workN = (ser, parts, name) => (parts.length === 2 ? work(ser, parts[0].v, parts[1].v, parts[0].name, parts[1].name, name) : ser
+    ? `$\\frac{1}{${name}} = ${parts.map((q) => `\\frac{1}{${q.name}}`).join(' + ')}$, ${L('so', 'also')} $${name} = \\htmlClass{result}{${tq(1 / parts.reduce((s, q) => s + 1 / q.v, 0), 'µF')}}$`
+    : `$${name} = ${parts.map((q) => q.name).join(' + ')} = ${parts.map((q) => `${num(q.v)}\\,\\mu\\mathrm{F}`).join(' + ')} = \\htmlClass{result}{${tq(parts.reduce((s, q) => s + q.v, 0), 'µF')}}$`);
+  const network = {
+    difficulty: 4,
+    title: (p) => (p.vals.length === 4 ? L('Four capacitors', 'Vier Kondensatoren') : L('Five capacitors', 'Fünf Kondensatoren')),
+    make(r) {
+      const shape = r.int(0, SHAPES.length - 1), n = nLeaves(SHAPES[shape]);
+      for (let k = 0; k < 4000; k++) {
+        const vals = Array.from({ length: n }, () => r.pick(VALS.slice(0, 11))), net = netOf(SHAPES[shape], vals);
+        if (groups(net).every((g) => half(capOf(g))) && capOf(net) <= 60) return { shape, vals };
+      }
+      return { shape: 0, vals: [2, 4, 3, 3] };
+    },
     build(p) {
-      const { ser, vals } = p, lo = Math.min(...vals), hi = Math.max(...vals), sum = vals.reduce((s, v) => s + v, 0);
-      const inv = vals.reduce((s, v) => s + 1 / v, 0), net = { [ser ? 's' : 'p']: vals.map((v, i) => leaf(String(i + 1), v)) };
-      const why = {
-        ser: L('In series the reciprocals add: $\\frac{1}{C} = \\frac{1}{C_1} + \\frac{1}{C_2} + \\frac{1}{C_3}$ is larger than each $\\frac{1}{C_k}$, so $C$ is smaller than each $C_k$.', 'In Serie addieren sich die Kehrwerte: $\\frac{1}{C} = \\frac{1}{C_1} + \\frac{1}{C_2} + \\frac{1}{C_3}$ ist grösser als jedes $\\frac{1}{C_k}$, also ist $C$ kleiner als jedes $C_k$.'),
-        par: L(`In parallel the capacitances add: $C = C_1 + C_2 + C_3 = ${tq(sum, 'µF')}$, larger than each one.`, `Parallel addieren sich die Kapazitäten: $C = C_1 + C_2 + C_3 = ${tq(sum, 'µF')}$, grösser als jede einzelne.`),
-      }[ser ? 'ser' : 'par'];
-      const where = choiceF('where', L('The total capacitance is', 'Die Gesamtkapazität ist'), ser ? 'below' : 'above', [
-        opt('below', L(`smaller than the smallest: $C < ${tq(lo, 'µF')}$`, `kleiner als die kleinste: $C < ${tq(lo, 'µF')}$`), why, ser ? null : 'swap'),
-        opt('edge', ser ? L(`equal to the smallest: $C = ${tq(lo, 'µF')}$`, `gleich der kleinsten: $C = ${tq(lo, 'µF')}$`) : L(`equal to the largest: $C = ${tq(hi, 'µF')}$`, `gleich der grössten: $C = ${tq(hi, 'µF')}$`), `${L('Each capacitor counts.', 'Jeder Kondensator zählt.')} ${why}`, 'edge'),
-        opt('between', L(`between the smallest and the largest`, `zwischen der kleinsten und der grössten`), `${L('That would be some kind of average.', 'Das wäre eine Art Mittelwert.')} ${why}`, 'avg'),
-        opt('above', L(`larger than the largest: $C > ${tq(hi, 'µF')}$`, `grösser als die grösste: $C > ${tq(hi, 'µF')}$`), why, ser ? 'swap' : null),
-      ], { stack: true, ask: L('Where does the total capacitance lie?', 'Wo liegt die Gesamtkapazität?') });
-      const more = choiceF('more', ser ? L('A fourth capacitor is added in series. The total capacitance becomes', 'Ein vierter Kondensator wird in Serie dazugeschaltet. Die Gesamtkapazität wird') : L('A fourth capacitor is added in parallel. The total capacitance becomes', 'Ein vierter Kondensator wird parallel dazugeschaltet. Die Gesamtkapazität wird'), ser ? 'down' : 'up', [
-        opt('up', L('larger', 'grösser'), ser ? L('One more term $\\frac{1}{C_4}$ makes $\\frac{1}{C}$ larger, so $C$ smaller.', 'Ein weiterer Summand $\\frac{1}{C_4}$ macht $\\frac{1}{C}$ grösser, also $C$ kleiner.') : '', ser ? 'swap' : null),
-        opt('down', L('smaller', 'kleiner'), ser ? '' : L('In parallel one more capacitance is added to the sum.', 'Parallel kommt eine weitere Kapazität zur Summe dazu.'), ser ? null : 'swap'),
-        opt('same', L('the same', 'gleich'), L('Every capacitor counts in the total.', 'Jeder Kondensator zählt bei der Gesamtkapazität mit.'), 'edge'),
-      ]);
+      const net = netOf(SHAPES[p.shape], p.vals), value = capOf(net), n = p.vals.length;
+      const nameOf = (m) => (m === net ? 'C' : m.c ? `C_${m.c}` : `C_{${leaves(m).join('')}}`);
+      const and = (names) => names.map((x) => `$${x}$`).join(', ').replace(/, ([^,]*)$/, L(' and $1', ' und $1'));
+      const solution = groups(net).map((g) => {
+        const ser = !!g.s, parts = (g.s || g.p).map((m) => ({ name: nameOf(m), v: capOf(m) }));
+        return step(ser ? L('Series: the same charge', 'Serie: dieselbe Ladung') : L('Parallel: the same voltage', 'Parallel: dieselbe Spannung'),
+          p$(`${L(`${and(parts.map((q) => q.name))} are ${inWords(ser)}:`, `${and(parts.map((q) => q.name))} sind ${inWords(ser)} geschaltet:`)} ${workN(ser, parts, nameOf(g))}.`));
+      });
+      const tops = (net.s || net.p).filter((m) => !m.c);
       return {
-        text: p$(L(`Three capacitors, ${vals.map((v, i) => `$C_${i + 1} = ${tq(v, 'µF')}$`).join(', ')}, are connected ${inWords(ser)}. Without calculating: where does the total capacitance lie?`, `Drei Kondensatoren, ${vals.map((v, i) => `$C_${i + 1} = ${tq(v, 'µF')}$`).join(', ')}, sind ${inWords(ser)} geschaltet. Ohne zu rechnen: Wo liegt die Gesamtkapazität?`)),
-        fields: [where, more],
+        text: p$(L(`${n === 4 ? 'Four' : 'Five'} capacitors are connected between A and B as shown. Find the total capacitance.`, `${n === 4 ? 'Vier' : 'Fünf'} Kondensatoren sind wie gezeigt zwischen A und B geschaltet. Bestimme die Gesamtkapazität.`)),
+        fields: [numF('C', 'C', 'µF', totalWhat(), value, [{ value: capOf(net, true), why: `${L('Resistor rules used.', 'Die Regeln der Widerstände verwendet.')} ${RULES.swap()}`, flag: 'swap' }])],
         figure: () => Fg.network(net),
-        solutionFigure: () => Fg.network(net, { reduce: [[net, '', ser ? 1 / inv : sum]] }),
-        hints: [ser ? L('In series the charges are the same and the voltages add. What does that mean for $\\frac{1}{C}$?', 'In Serie sind die Ladungen gleich, und die Spannungen addieren sich. Was heisst das für $\\frac{1}{C}$?') : L('In parallel the voltages are the same and the charges add. What does that mean for $C$?', 'Parallel sind die Spannungen gleich, und die Ladungen addieren sich. Was heisst das für $C$?'), RULES[ser ? 'ser' : 'par'](), RULES.swap()],
-        solution: [
-          step(L('Where the total lies', 'Wo die Gesamtkapazität liegt'), p$(why) + (ser ? p$(L(`Here: $\\frac{1}{C} = ${vals.map((v) => `\\frac{1}{${v}}`).join(' + ')}\\,\\frac{1}{\\mu\\mathrm{F}}$, so $C \\approx ${tq(1 / inv, 'µF')}$, less than $${tq(lo, 'µF')}$.`, `Hier: $\\frac{1}{C} = ${vals.map((v) => `\\frac{1}{${v}}`).join(' + ')}\\,\\frac{1}{\\mu\\mathrm{F}}$, also $C \\approx ${tq(1 / inv, 'µF')}$, weniger als $${tq(lo, 'µF')}$.`)) : '')),
-          step(L('A fourth one', 'Ein vierter'), p$(ser ? L('In series every capacitor adds to $\\frac{1}{C}$: the total becomes <span class="result">smaller</span>. (Like resistors in parallel: each one added lowers the total.)', 'In Serie vergrössert jeder Kondensator $\\frac{1}{C}$: Die Gesamtkapazität wird <span class="result">kleiner</span>. (Wie bei parallelen Widerständen: Jeder weitere senkt den Gesamtwiderstand.)') : L('In parallel every capacitor adds its capacitance: the total becomes <span class="result">larger</span>. (Like resistors in series.)', 'Parallel addiert jeder Kondensator seine Kapazität: Die Gesamtkapazität wird <span class="result">grösser</span>. (Wie bei Widerständen in Serie.)'))),
-        ],
-        results: ser ? L('smaller than the smallest; smaller', 'kleiner als die kleinste; kleiner') : L('larger than the largest; larger', 'grösser als die grösste; grösser'),
+        solutionFigure: () => Fg.network(net, { reduce: tops.map((m) => [m, leaves(m).join(''), capOf(m)]) }),
+        hints: [L('Find a group of capacitors that are only in series or only in parallel (at first a small one, inside), replace it by one capacitor, and repeat until one is left.', 'Suche eine Gruppe von Kondensatoren, die nur in Serie oder nur parallel geschaltet sind (zuerst eine kleine, innen), ersetze sie durch einen Kondensator, und wiederhole das, bis nur noch einer übrig ist.'),
+          `${RULES.par()} ${RULES.ser()}`, RULES.swap()],
+        solution,
+        results: `$C = ${tq(value, 'µF')}$`,
       };
     },
-    check: ['where'],
+    check: ['C'],
   };
 
   // ================================================================ time curves
@@ -203,23 +362,23 @@
   const STEPUP = [[0, 0], [1.5, 0], [1.5, 1], [T_END, 1]], STEPDOWN = [[0, 1], [1.5, 1], [1.5, 0], [T_END, 0]];
   const CONST = [[0, 1], [2.5, 1], [2.5, 0], [T_END, 0]];
   const sym = { U: ['U', 'C'], I: ['I', ''], R: ['U', 'R'] };
-  const LEVEL = { U: '<tspan class="it">U</tspan>₀', I: '<tspan class="it">I</tspan>₀', R: '<tspan class="it">U</tspan>₀' };
-  const curveGraph = (q, c, label) => Fg.graph({ curves: [c.pts ? { pts: c.pts } : { f: c.f }], tEnd: T_END, yMax: 1.2, bare: true, name: sym[q], levels: [{ y: 1, label: LEVEL[q] }], label });
+  const LEVEL = { U: () => `${Fg.Uq()}₀`, I: () => '<tspan class="it">I</tspan>₀', R: () => `${Fg.Uq()}₀` };
+  const curveGraph = (q, c, label) => Fg.graph({ curves: [c.pts ? { pts: c.pts } : { f: c.f }], tEnd: T_END, yMax: 1.2, bare: true, name: sym[q], levels: [{ y: 1, label: LEVEL[q]() }], label });
   // the options of a graph question: the right curve and three of four wrong ones (p.drop is
   // left out), in the order p.perm
   function curveField(p, q, list) {
     const wrong = list.slice(1).filter((_, i) => i !== p.drop % (list.length - 1));
     const opts = [list[0], ...wrong].map((c, k) => ({ v: c.id, html: curveGraph(q, c, L(`Graph ${k + 1}`, `Graph ${k + 1}`)), why: c.why || '', flag: c.flag || null }));
     rng(p.perm).shuffle(opts);
-    const what = { U: L('The voltage $U_C$ across the capacitor:', 'Die Spannung $U_C$ über dem Kondensator:'), I: L('The current $I$ (its size):', 'Der Strom $I$ (sein Betrag):'), R: L('The voltage $U_R$ across the resistor:', 'Die Spannung $U_R$ über dem Widerstand:') }[q];
+    const what = { U: L('The voltage $\\Delta V_C$ across the capacitor:', 'Die Spannung $U_C$ über dem Kondensator:'), I: L('The current $I$ (its size):', 'Der Strom $I$ (sein Betrag):'), R: L('The voltage $\\Delta V_R$ across the resistor:', 'Die Spannung $U_R$ über dem Widerstand:') }[q];
     return choiceF('graph', what, list[0].id, opts, { pics: true });
   }
   const WHY = {
     shape: () => L('The change is fastest at the start and then slows down, the closer the capacitor gets to its final voltage: the curve is steepest at $t = 0$ and levels off (an exponential).', 'Die Änderung ist am Anfang am schnellsten und wird dann langsamer, je näher der Kondensator seiner Endspannung kommt: Die Kurve ist bei $t = 0$ am steilsten und flacht ab (eine Exponentialfunktion).'),
     jump: () => L('The voltage of a capacitor cannot jump: it takes time for the charge to flow on or off the plates through the resistor.', 'Die Spannung eines Kondensators kann nicht springen: Es braucht Zeit, bis die Ladung durch den Widerstand auf die Platten oder von ihnen weg geflossen ist.'),
     direction: () => L('That is the other process: charging and discharging swapped.', 'Das ist der andere Vorgang: Laden und Entladen vertauscht.'),
-    start: () => L('Right after the switch closes, the current is largest: the whole voltage $U_0$ is across the resistor, $I_0 = U_0/R$. The current can jump; only the capacitor voltage cannot.', 'Unmittelbar nach dem Schliessen des Schalters ist der Strom am grössten: Die ganze Spannung $U_0$ liegt über dem Widerstand, $I_0 = U_0/R$. Der Strom kann springen, nur die Kondensatorspannung nicht.'),
-    current: () => L('The current does not follow the capacitor voltage: it is largest at the start and falls as the capacitor fills, $I = (U_0 - U_C)/R$.', 'Der Strom folgt nicht der Kondensatorspannung: Er ist am Anfang am grössten und nimmt ab, während sich der Kondensator füllt, $I = (U_0 - U_C)/R$.'),
+    start: () => L('Right after the switch closes, the current is largest: the whole voltage $\\Delta V_0$ is across the resistor, $I_0 = \\Delta V_0/R$. The current can jump; only the capacitor voltage cannot.', 'Unmittelbar nach dem Schliessen des Schalters ist der Strom am grössten: Die ganze Spannung $U_0$ liegt über dem Widerstand, $I_0 = U_0/R$. Der Strom kann springen, nur die Kondensatorspannung nicht.'),
+    current: () => L('The current does not follow the capacitor voltage: it is largest at the start and falls as the capacitor fills, $I = (\\Delta V_0 - \\Delta V_C)/R$.', 'Der Strom folgt nicht der Kondensatorspannung: Er ist am Anfang am grössten und nimmt ab, während sich der Kondensator füllt, $I = (U_0 - U_C)/R$.'),
     constant: () => L('The current is not constant: it falls as the voltage that drives it falls.', 'Der Strom ist nicht konstant: Er nimmt ab, wie die Spannung, die ihn antreibt.'),
   };
   // the graphs of U_C, I and U_R: the right one first
@@ -239,40 +398,45 @@
       { id: 'const', pts: CONST, why: WHY.constant(), flag: 'shape' },
     ],
   };
-  LISTS.R = () => LISTS.I(true).map((c) => (c.id === 'rise' ? { ...c, why: L('That is $U_C$. Across the resistor is the rest, $U_R = U_0 - U_C = R\\cdot I$: it follows the current.', 'Das ist $U_C$. Über dem Widerstand liegt der Rest, $U_R = U_0 - U_C = R\\cdot I$: Sie folgt dem Strom.') } : c));
+  // U_R = R·I follows the current: while charging it is the rest, U₀ − U_C; while discharging the
+  // resistor is connected straight across the capacitor, U_R = U_C
+  LISTS.R = (charge) => LISTS.I(charge).map((c) => (c.id !== 'rise' ? c : charge
+    ? { ...c, why: L('That is $\\Delta V_C$. Across the resistor is the rest, $\\Delta V_R = \\Delta V_0 - \\Delta V_C = R\\cdot I$: it follows the current.', 'Das ist $U_C$. Über dem Widerstand liegt der Rest, $U_R = U_0 - U_C = R\\cdot I$: Sie folgt dem Strom.') }
+    : { ...c, why: L('While discharging, the resistor is connected straight across the capacitor: $\\Delta V_R = \\Delta V_C$, which falls. A rising curve would be charging.', 'Beim Entladen ist der Widerstand direkt an den Kondensator angeschlossen: $U_R = U_C$, und das nimmt ab. Eine steigende Kurve wäre Laden.'), flag: 'direction' }));
 
   const SITUATION = {
-    charge: () => L('An uncharged capacitor $C$ is connected through a resistor $R$ to a battery with voltage $U_0$. At $t = 0$ the switch S is closed.', 'Ein ungeladener Kondensator $C$ ist über einen Widerstand $R$ mit einer Batterie der Spannung $U_0$ verbunden. Bei $t = 0$ wird der Schalter S geschlossen.'),
-    discharge: () => L('A capacitor $C$ charged to the voltage $U_0$ is discharged through a resistor $R$: at $t = 0$ the switch S is closed.', 'Ein auf die Spannung $U_0$ geladener Kondensator $C$ wird über einen Widerstand $R$ entladen: Bei $t = 0$ wird der Schalter S geschlossen.'),
+    charge: () => L('An uncharged capacitor $C$ is connected through a resistor $R$ to a battery with voltage $\\Delta V_0$. At $t = 0$ the switch S is closed.', 'Ein ungeladener Kondensator $C$ ist über einen Widerstand $R$ mit einer Batterie der Spannung $U_0$ verbunden. Bei $t = 0$ wird der Schalter S geschlossen.'),
+    discharge: () => L('A capacitor $C$ charged to the voltage $\\Delta V_0$ is discharged through a resistor $R$: at $t = 0$ the switch S is closed.', 'Ein auf die Spannung $U_0$ geladener Kondensator $C$ wird über einen Widerstand $R$ entladen: Bei $t = 0$ wird der Schalter S geschlossen.'),
   };
   const ASK = {
-    U: () => L('Which graph shows the voltage $U_C$ across the capacitor against time?', 'Welcher Graph zeigt die Spannung $U_C$ über dem Kondensator gegen die Zeit?'),
+    U: () => L('Which graph shows the voltage $\\Delta V_C$ across the capacitor against time?', 'Welcher Graph zeigt die Spannung $U_C$ über dem Kondensator gegen die Zeit?'),
     I: () => L('Which graph shows the current $I$ (its size) against time?', 'Welcher Graph zeigt den Strom $I$ (seinen Betrag) gegen die Zeit?'),
-    R: () => L('Which graph shows the voltage $U_R$ across the resistor against time?', 'Welcher Graph zeigt die Spannung $U_R$ über dem Widerstand gegen die Zeit?'),
+    R: () => L('Which graph shows the voltage $\\Delta V_R$ across the resistor against time?', 'Welcher Graph zeigt die Spannung $U_R$ über dem Widerstand gegen die Zeit?'),
   };
   // the steps: the start, the end, and the shape between
   function curveSteps(q, charge) {
     const start = charge
-      ? L('At $t = 0$ the capacitor is empty, $U_C = 0$: its voltage cannot jump. So the whole voltage $U_0$ is across the resistor, $U_R = U_0$, and the current is largest, $I_0 = U_0/R$.', 'Bei $t = 0$ ist der Kondensator leer, $U_C = 0$: Seine Spannung kann nicht springen. Also liegt die ganze Spannung $U_0$ über dem Widerstand, $U_R = U_0$, und der Strom ist am grössten, $I_0 = U_0/R$.')
-      : L('At $t = 0$ the capacitor still has its full voltage $U_C = U_0$: its voltage cannot jump. This voltage is across the resistor, so the current is largest at the start, $I_0 = U_0/R$.', 'Bei $t = 0$ hat der Kondensator noch seine volle Spannung $U_C = U_0$: Seine Spannung kann nicht springen. Diese Spannung liegt über dem Widerstand, also ist der Strom am Anfang am grössten, $I_0 = U_0/R$.');
+      ? L('At $t = 0$ the capacitor is empty, $\\Delta V_C = 0$: its voltage cannot jump. So the whole voltage $\\Delta V_0$ is across the resistor, $\\Delta V_R = \\Delta V_0$, and the current is largest, $I_0 = \\Delta V_0/R$.', 'Bei $t = 0$ ist der Kondensator leer, $U_C = 0$: Seine Spannung kann nicht springen. Also liegt die ganze Spannung $U_0$ über dem Widerstand, $U_R = U_0$, und der Strom ist am grössten, $I_0 = U_0/R$.')
+      : L('At $t = 0$ the capacitor still has its full voltage $\\Delta V_C = \\Delta V_0$: its voltage cannot jump. This voltage is across the resistor, so the current is largest at the start, $I_0 = \\Delta V_0/R$.', 'Bei $t = 0$ hat der Kondensator noch seine volle Spannung $U_C = U_0$: Seine Spannung kann nicht springen. Diese Spannung liegt über dem Widerstand, also ist der Strom am Anfang am grössten, $I_0 = U_0/R$.');
     const end = charge
-      ? L('Long after, the capacitor is full: $U_C = U_0$, no current flows, $U_R = 0$.', 'Lange danach ist der Kondensator voll: $U_C = U_0$, es fliesst kein Strom, $U_R = 0$.')
-      : L('Long after, the capacitor is empty: $U_C = 0$ and no current flows.', 'Lange danach ist der Kondensator leer: $U_C = 0$, und es fliesst kein Strom.');
+      ? L('Long after, the capacitor is full: $\\Delta V_C = \\Delta V_0$, no current flows, $\\Delta V_R = 0$.', 'Lange danach ist der Kondensator voll: $U_C = U_0$, es fliesst kein Strom, $U_R = 0$.')
+      : L('Long after, the capacitor is empty: $\\Delta V_C = 0$ and no current flows.', 'Lange danach ist der Kondensator leer: $U_C = 0$, und es fliesst kein Strom.');
     const between = charge
-      ? L('In between, the fuller the capacitor, the smaller the voltage left for the resistor, so the smaller the current, and the more slowly the capacitor charges: $U_C = U_0\\left(1 - e^{-t/\\tau}\\right)$ rises steeply at first and levels off; $I = I_0\\,e^{-t/\\tau}$ and $U_R = U_0\\,e^{-t/\\tau}$ fall, steeply at first.', 'Dazwischen gilt: Je voller der Kondensator, desto kleiner die Spannung, die für den Widerstand bleibt, desto kleiner der Strom, und desto langsamer lädt sich der Kondensator: $U_C = U_0\\left(1 - e^{-t/\\tau}\\right)$ steigt zuerst steil an und flacht ab; $I = I_0\\,e^{-t/\\tau}$ und $U_R = U_0\\,e^{-t/\\tau}$ fallen, zuerst steil.')
-      : L('In between, the less charge is left, the smaller the voltage, the smaller the current, and the more slowly the charge flows off: $U_C = U_0\\,e^{-t/\\tau}$ and $I = I_0\\,e^{-t/\\tau}$ fall steeply at first and then more and more slowly.', 'Dazwischen gilt: Je weniger Ladung übrig ist, desto kleiner die Spannung, desto kleiner der Strom, und desto langsamer fliesst die Ladung ab: $U_C = U_0\\,e^{-t/\\tau}$ und $I = I_0\\,e^{-t/\\tau}$ fallen zuerst steil und dann immer langsamer.');
-    const which = { U: L('the voltage $U_C$', 'die Spannung $U_C$'), I: L('the current', 'der Strom'), R: L('the voltage $U_R$', 'die Spannung $U_R$') }[q];
-    return [step(L('Right after switching', 'Unmittelbar nach dem Schalten'), p$(start)), step(L('Long after', 'Lange danach'), p$(end)), step(L('In between', 'Dazwischen'), p$(between) + p$(L(`So ${which} follows the <span class="result">curve of the right graph</span>.`, `Also folgt ${which} der <span class="result">Kurve des richtigen Graphen</span>.`)))];
+      ? L('In between, the fuller the capacitor, the smaller the voltage left for the resistor, so the smaller the current, and the more slowly the capacitor charges: $\\Delta V_C = \\Delta V_0\\left(1 - e^{-t/\\tau}\\right)$ rises steeply at first and levels off; $I = I_0\\,e^{-t/\\tau}$ and $\\Delta V_R = \\Delta V_0\\,e^{-t/\\tau}$ fall, steeply at first.', 'Dazwischen gilt: Je voller der Kondensator, desto kleiner die Spannung, die für den Widerstand bleibt, desto kleiner der Strom, und desto langsamer lädt sich der Kondensator: $U_C = U_0\\left(1 - e^{-t/\\tau}\\right)$ steigt zuerst steil an und flacht ab; $I = I_0\\,e^{-t/\\tau}$ und $U_R = U_0\\,e^{-t/\\tau}$ fallen, zuerst steil.')
+      : L('In between, the less charge is left, the smaller the voltage, the smaller the current, and the more slowly the charge flows off: $\\Delta V_C = \\Delta V_0\\,e^{-t/\\tau}$ and $I = I_0\\,e^{-t/\\tau}$ fall steeply at first and then more and more slowly.', 'Dazwischen gilt: Je weniger Ladung übrig ist, desto kleiner die Spannung, desto kleiner der Strom, und desto langsamer fliesst die Ladung ab: $U_C = U_0\\,e^{-t/\\tau}$ und $I = I_0\\,e^{-t/\\tau}$ fallen zuerst steil und dann immer langsamer.');
+    const which = { U: L('the voltage $\\Delta V_C$', 'die Spannung $U_C$'), I: L('the current', 'der Strom'), R: L('the voltage $\\Delta V_R$', 'die Spannung $U_R$') }[q];
+    const across = q === 'R' && !charge ? p$(L('The resistor is connected straight across the capacitor: $\\Delta V_R = \\Delta V_C$ at every moment.', 'Der Widerstand ist direkt an den Kondensator angeschlossen: $U_R = U_C$ in jedem Moment.')) : '';
+    return [step(L('Right after switching', 'Unmittelbar nach dem Schalten'), across + p$(start)), step(L('Long after', 'Lange danach'), p$(end)), step(L('In between', 'Dazwischen'), p$(between) + p$(L(`So ${which} follows the <span class="result">curve of the right graph</span>.`, `Also folgt ${which} der <span class="result">Kurve des richtigen Graphen</span>.`)))];
   }
   const curveHints = (q, charge) => [
-    L(`Start with $t = 0$: what is ${charge ? 'the voltage of the empty capacitor' : 'the voltage of the charged capacitor'}, and so ${q === 'U' ? 'where does $U_C$ start' : 'what voltage drives the current through $R$'}?`, `Beginne bei $t = 0$: Wie gross ist ${charge ? 'die Spannung des leeren Kondensators' : 'die Spannung des geladenen Kondensators'}, und ${q === 'U' ? 'wo beginnt also $U_C$' : 'welche Spannung treibt also den Strom durch $R$'}?`),
+    L(`Start with $t = 0$: what is ${charge ? 'the voltage of the empty capacitor' : 'the voltage of the charged capacitor'}, and so ${q === 'U' ? 'where does $\\Delta V_C$ start' : 'what voltage drives the current through $R$'}?`, `Beginne bei $t = 0$: Wie gross ist ${charge ? 'die Spannung des leeren Kondensators' : 'die Spannung des geladenen Kondensators'}, und ${q === 'U' ? 'wo beginnt also $U_C$' : 'welche Spannung treibt also den Strom durch $R$'}?`),
     L('Long after the switch closed, no current flows any more. Where does the curve end?', 'Lange nach dem Schliessen fliesst kein Strom mehr. Wo endet die Kurve?'),
     L('In between: when the current is large, the capacitor charges or discharges fast; when it is small, slowly. Where is the curve steepest?', 'Dazwischen: Wenn der Strom gross ist, lädt oder entlädt sich der Kondensator schnell; wenn er klein ist, langsam. Wo ist die Kurve am steilsten?'),
   ];
-  const curveType = (q, difficulty) => ({
+  const curveType = (q, difficulty, charge) => ({
     difficulty,
     title: () => ({ U: L('Voltage of the capacitor', 'Spannung des Kondensators'), I: L('The current', 'Der Strom'), R: L('Voltage of the resistor', 'Spannung des Widerstands') }[q]),
-    make: (r) => ({ charge: q === 'R' || r.next() < 0.5, drop: r.int(0, 3), perm: r.int(1, 99999) }),
+    make: (r) => ({ charge, drop: r.int(0, 3), perm: r.int(1, 99999) }),
     build(p) {
       const kind = p.charge ? 'charge' : 'discharge';
       return {
@@ -280,7 +444,7 @@
         situation: p$(SITUATION[kind]()),
         fields: [curveField(p, q, LISTS[q](p.charge))],
         figure: () => Fg.rc(kind),
-        solutionFigure: () => `<div class="fig">${Fg.graph({ curves: [{ f: (q === 'U' && p.charge) ? CURVES.up : CURVES.down }], tEnd: T_END, yMax: 1.2, bare: true, name: sym[q], levels: [{ y: 1, label: LEVEL[q] }], marks: [{ t: 1, label: '<tspan class="it">τ</tspan>' }] })}</div>`,
+        solutionFigure: () => `<div class="fig">${Fg.graph({ curves: [{ f: (q === 'U' && p.charge) ? CURVES.up : CURVES.down }], tEnd: T_END, yMax: 1.2, bare: true, name: sym[q], levels: [{ y: 1, label: LEVEL[q]() }], marks: [{ t: 1, label: '<tspan class="it">τ</tspan>' }] })}</div>`,
         hints: curveHints(q, p.charge),
         solution: curveSteps(q, p.charge),
         results: L('the exponential curve', 'die Exponentialkurve'),
@@ -290,48 +454,124 @@
     check: ['graph'],
   });
 
+  // The voltages and the current at a moment, with numbers: right after switching ('start'), when
+  // the capacitor has the voltage U_C ('mid'), or when the current is I ('fromI'). While charging
+  // the loop rule U₀ = U_R + U_C, while discharging U_R = U_C; and I = U_R/R (kΩ, mA).
+  const Vs = (i) => L(`\\Delta V_${i}`, `U_${i}`);
+  const loopType = (charge) => ({
+    difficulty: 2,
+    title: () => (charge ? L('Charging with numbers', 'Laden mit Zahlen') : L('Discharging with numbers', 'Entladen mit Zahlen')),
+    make(r) {
+      const U0 = r.pick([6, 8, 9, 10, 12, 20]), R = r.pick([1, 2, 4, 5, 10]), moment = r.pick(['start', 'mid', 'mid', 'fromI']);
+      const [a, b] = r.pick([[1, 4], [1, 3], [1, 2], [2, 3], [3, 4]].filter(([x, y]) => (U0 * x) % y === 0));
+      return { charge, U0, R, moment, UC: (U0 * a) / b };
+    },
+    build(p) {
+      const { U0, R, moment } = p, kind = charge ? 'charge' : 'discharge';
+      const UC = moment === 'start' ? (charge ? 0 : U0) : p.UC, UR = charge ? U0 - UC : UC, I = UR / R;
+      const rule = charge ? L('The loop rule holds at every moment: $\\Delta V_0 = \\Delta V_R + \\Delta V_C$.', 'Die Maschenregel gilt in jedem Moment: $U_0 = U_R + U_C$.')
+        : L('The resistor is connected straight across the capacitor: $\\Delta V_R = \\Delta V_C$ at every moment.', 'Der Widerstand ist direkt an den Kondensator angeschlossen: $U_R = U_C$ in jedem Moment.');
+      const ohm = L('The current through the resistor is $I = \\Delta V_R/R$; with $R$ in kΩ it comes out in mA.', 'Der Strom durch den Widerstand ist $I = U_R/R$; mit $R$ in kΩ ergibt er sich in mA.');
+      const sit = charge
+        ? L(`An uncharged capacitor is connected through a resistor $R = ${tq(R, 'kΩ')}$ to a battery with the voltage $\\Delta V_0 = ${tq(U0, 'V')}$. At $t = 0$ the switch S is closed.`, `Ein ungeladener Kondensator ist über einen Widerstand $R = ${tq(R, 'kΩ')}$ mit einer Batterie der Spannung $U_0 = ${tq(U0, 'V')}$ verbunden. Bei $t = 0$ wird der Schalter S geschlossen.`)
+        : L(`A capacitor charged to $\\Delta V_0 = ${tq(U0, 'V')}$ is discharged through a resistor $R = ${tq(R, 'kΩ')}$: at $t = 0$ the switch S is closed.`, `Ein auf $U_0 = ${tq(U0, 'V')}$ geladener Kondensator wird über einen Widerstand $R = ${tq(R, 'kΩ')}$ entladen: Bei $t = 0$ wird der Schalter S geschlossen.`);
+      const ask = {
+        start: L('Right after the switch is closed: find the voltage $\\Delta V_R$ across the resistor and the current $I$.', 'Unmittelbar nach dem Schliessen des Schalters: Bestimme die Spannung $U_R$ über dem Widerstand und den Strom $I$.'),
+        mid: L(`Some time later the capacitor has the voltage $\\Delta V_C = ${tq(UC, 'V')}$. Find $\\Delta V_R$ and $I$ at this moment.`, `Etwas später hat der Kondensator die Spannung $U_C = ${tq(UC, 'V')}$. Bestimme $U_R$ und $I$ in diesem Moment.`),
+        fromI: L(`Some time later the current is $I = ${tq(I, 'mA')}$. Find the voltages $\\Delta V_R$ and $\\Delta V_C$ at this moment.`, `Etwas später ist der Strom $I = ${tq(I, 'mA')}$. Bestimme die Spannungen $U_R$ und $U_C$ in diesem Moment.`),
+      }[moment];
+      const LOOP = charge ? L('Across the resistor is the rest: $\\Delta V_R = \\Delta V_0 - \\Delta V_C$, not $\\Delta V_C$ itself.', 'Über dem Widerstand liegt der Rest: $U_R = U_0 - U_C$, nicht $U_C$ selbst.')
+        : L('While discharging there is no battery: the resistor is connected straight across the capacitor, $\\Delta V_R = \\Delta V_C$.', 'Beim Entladen gibt es keine Batterie: Der Widerstand ist direkt an den Kondensator angeschlossen, $U_R = U_C$.');
+      const START = L('That is the current at the start, $I_0 = \\Delta V_0/R$. Since then it has fallen, with the voltage across the resistor.', 'Das ist der Strom am Anfang, $I_0 = U_0/R$. Seither hat er abgenommen, mit der Spannung über dem Widerstand.');
+      const urF = numF('UR', Vs('R'), 'V', L('across the resistor', 'über dem Widerstand'), UR, moment === 'start' ? [] : moment === 'fromI' ? [{ value: I / R, why: ohm, flag: null }]
+        : charge ? [{ value: UC, why: LOOP, flag: 'loop' }, { value: U0, why: START, flag: 'loop' }] : [{ value: U0 - UC, why: LOOP, flag: 'direction' }, { value: U0, why: START, flag: 'loop' }]);
+      const second = moment === 'fromI'
+        ? numF('UC', Vs('C'), 'V', L('across the capacitor', 'über dem Kondensator'), UC, [{ value: charge ? UR : U0 - UR, why: LOOP, flag: charge ? 'loop' : 'direction' }])
+        : numF('I', 'I', 'mA', L('current', 'Strom'), I, moment === 'start' ? [{ value: U0 * R, why: ohm, flag: null }]
+          : [{ value: charge ? UC / R : (U0 - UC) / R, why: charge ? WHY.current() : LOOP, flag: charge ? 'current' : 'direction' }, { value: U0 / R, why: START, flag: 'loop' }]);
+      const solution = [];
+      if (moment === 'start') {
+        solution.push(step(L('Right after switching', 'Unmittelbar nach dem Schalten'), p$(charge
+          ? L(`The capacitor is still empty, $\\Delta V_C = 0$: its voltage cannot jump. So the whole battery voltage is across the resistor: $\\Delta V_R = \\Delta V_0 = \\htmlClass{result}{${tq(UR, 'V')}}$.`, `Der Kondensator ist noch leer, $U_C = 0$: Seine Spannung kann nicht springen. Also liegt die ganze Batteriespannung über dem Widerstand: $U_R = U_0 = \\htmlClass{result}{${tq(UR, 'V')}}$.`)
+          : L(`The capacitor still has its whole voltage, $\\Delta V_C = \\Delta V_0$: its voltage cannot jump. The resistor is connected straight across it: $\\Delta V_R = \\Delta V_C = \\htmlClass{result}{${tq(UR, 'V')}}$.`, `Der Kondensator hat noch seine ganze Spannung, $U_C = U_0$: Seine Spannung kann nicht springen. Der Widerstand ist direkt an ihn angeschlossen: $U_R = U_C = \\htmlClass{result}{${tq(UR, 'V')}}$.`))));
+      } else if (moment === 'mid') {
+        solution.push(step(L('The voltage of the resistor', 'Die Spannung des Widerstands'), p$(rule) + p$(charge ? `$${Vs('R')} = ${Vs('0')} - ${Vs('C')} = ${tq(U0, 'V')} - ${tq(UC, 'V')} = \\htmlClass{result}{${tq(UR, 'V')}}$` : `$${Vs('R')} = ${Vs('C')} = \\htmlClass{result}{${tq(UR, 'V')}}$`)));
+      } else {
+        solution.push(step(L('The voltage of the resistor', 'Die Spannung des Widerstands'), p$(`$${Vs('R')} = R\\cdot I = ${tq(R, 'kΩ')}\\cdot ${tq(I, 'mA')} = \\htmlClass{result}{${tq(UR, 'V')}}$`)));
+        solution.push(step(L('The voltage of the capacitor', 'Die Spannung des Kondensators'), p$(rule) + p$(charge ? `$${Vs('C')} = ${Vs('0')} - ${Vs('R')} = ${tq(U0, 'V')} - ${tq(UR, 'V')} = \\htmlClass{result}{${tq(UC, 'V')}}$` : `$${Vs('C')} = ${Vs('R')} = \\htmlClass{result}{${tq(UC, 'V')}}$`)));
+      }
+      if (moment !== 'fromI') solution.push(step(L('The current', 'Der Strom'), p$(`$I = \\frac{${Vs('R')}}{R} = \\frac{${tq(UR, 'V')}}{${tq(R, 'kΩ')}} = \\htmlClass{result}{${tq(I, 'mA')}}$`)));
+      return {
+        text: p$(sit) + p$(ask),
+        fields: [urF, second],
+        figure: () => Fg.rc(kind, { R: `${num(R)} kΩ`, U0: `${num(U0)} V` }),
+        solutionFigure: () => Fg.rc(kind, { closed: true, cur: true, R: `${num(R)} kΩ`, U0: `${num(U0)} V` }),
+        hints: [moment === 'start' ? L('The voltage of a capacitor cannot jump: what is it right after switching?', 'Die Spannung eines Kondensators kann nicht springen: Wie gross ist sie unmittelbar nach dem Schalten?') : rule, moment === 'start' ? rule : ohm, ohm],
+        solution,
+        results: moment === 'fromI' ? `$${Vs('R')} = ${tq(UR, 'V')}$, $${Vs('C')} = ${tq(UC, 'V')}$` : `$${Vs('R')} = ${tq(UR, 'V')}$, $I = ${tq(I, 'mA')}$`,
+      };
+    },
+    check: ['UR'],
+  });
+
   // ================================================================ the time constant
   const LN2 = Math.LN2;
   const tUnitOf = (p) => p.unit;
-  const WHY_HALF = () => L('That is where the voltage is $U_0/2$: the half-life $T_{1/2} = \\tau\\cdot\\ln 2 \\approx 0.69\\,\\tau$, shorter than $\\tau$.', 'Dort ist die Spannung $U_0/2$: die Halbwertszeit $T_{1/2} = \\tau\\cdot\\ln 2 \\approx 0.69\\,\\tau$, kürzer als $\\tau$.');
-  const WHY_TAU = () => L('That is the time constant $\\tau$, where the voltage has fallen to 37 % (or risen to 63 %). The half-life is where it is $U_0/2$.', 'Das ist die Zeitkonstante $\\tau$, bei der die Spannung auf 37 % gefallen (oder auf 63 % gestiegen) ist. Die Halbwertszeit ist dort, wo sie $U_0/2$ ist.');
-  const WHY_LEVEL = (charge) => (charge ? L('After $\\tau$ the capacitor is charged to 63 % of $U_0$ (it has $e^{-1} \\approx 37\\,\\%$ to go), not to 37 %.', 'Nach $\\tau$ ist der Kondensator auf 63 % von $U_0$ geladen (es fehlen noch $e^{-1} \\approx 37\\,\\%$), nicht auf 37 %.') : L('After $\\tau$ the voltage has fallen to 37 % of $U_0$ ($e^{-1} \\approx 0.37$), not to 63 %.', 'Nach $\\tau$ ist die Spannung auf 37 % von $U_0$ gefallen ($e^{-1} \\approx 0.37$), nicht auf 63 %.'));
+  const WHY_HALF = () => L('That is where the voltage is $\\Delta V_0/2$: the half-life $T_{1/2} = \\tau\\cdot\\ln 2 \\approx 0.69\\,\\tau$, shorter than $\\tau$.', 'Dort ist die Spannung $U_0/2$: die Halbwertszeit $T_{1/2} = \\tau\\cdot\\ln 2 \\approx 0.69\\,\\tau$, kürzer als $\\tau$.');
+  const WHY_TAU = () => L('That is the time constant $\\tau$, where the voltage has fallen to 37 % (or risen to 63 %). The half-life is where it is $\\Delta V_0/2$.', 'Das ist die Zeitkonstante $\\tau$, bei der die Spannung auf 37 % gefallen (oder auf 63 % gestiegen) ist. Die Halbwertszeit ist dort, wo sie $U_0/2$ ist.');
+  const WHY_LEVEL = (charge) => (charge ? L('After $\\tau$ the capacitor is charged to 63 % of $\\Delta V_0$ (it has $e^{-1} \\approx 37\\,\\%$ to go), not to 37 %.', 'Nach $\\tau$ ist der Kondensator auf 63 % von $U_0$ geladen (es fehlen noch $e^{-1} \\approx 37\\,\\%$), nicht auf 37 %.') : L('After $\\tau$ the voltage has fallen to 37 % of $\\Delta V_0$ ($e^{-1} \\approx 0.37$), not to 63 %.', 'Nach $\\tau$ ist die Spannung auf 37 % von $U_0$ gefallen ($e^{-1} \\approx 0.37$), nicht auf 63 %.'));
   // the graph of U_C(t) of a reading exercise, with its levels and marks as asked
   function readGraph(p, tau, o = {}) {
     const f = p.charge ? (t) => p.U0 * (1 - E(-t / tau)) : (t) => p.U0 * E(-t / tau);
-    return `<div class="fig">${Fg.graph({ curves: [{ f }], tEnd: p.tEnd, yMax: p.U0 * 1.1, tStep: p.tStep, yStep: p.U0 <= 6 ? 1 : p.U0 <= 12 ? 2 : 4, name: ['U', 'C'], unit: 'V', tUnit: tUnitOf(p), levels: o.levels, marks: o.marks, dots: o.dots, lines: o.lines, label: L('The voltage across the capacitor against time', 'Die Spannung über dem Kondensator gegen die Zeit') })}</div>`;
+    return `<div class="fig">${Fg.graph({ curves: [{ f }], tEnd: p.tEnd, yMax: p.U0 * 1.1, tStep: p.tStep, yStep: p.U0 <= 6 ? 1 : p.U0 <= 12 ? 2 : 4, name: ['U', 'C'], unit: 'V', tUnit: tUnitOf(p), levels: o.levels, marks: o.marks, dots: o.dots, lines: o.lines, read: o.read && { m: o.read, U0: p.U0, tau, charge: p.charge }, label: L('The voltage across the capacitor against time', 'Die Spannung über dem Kondensator gegen die Zeit') })}</div>`;
   }
 
+  // T½, then after k = 2 or 3 half-lives: the time until the voltage (while charging: the gap to
+  // U₀) is down to 1/2^k ('time'), or the voltage at t = k·T½ ('volt')
+  const FRAC = { 2: ['\\tfrac{1}{4}', '\\tfrac{3}{4}', '¼', '¾'], 3: ['\\tfrac{1}{8}', '\\tfrac{7}{8}', '⅛', '⅞'] };
   const readHalf = {
     difficulty: 2,
     title: () => L('The half-life', 'Die Halbwertszeit'),
     make(r) {
       // about ten labels on the time axis; T½ on a line of the grid
       const th = r.pick([1, 2, 3, 4, 6, 8]), unit = r.pick(['s', 'ms']), tStep = [0.5, 1, 2, 4].find((x) => (4.5 * th) / x <= 10);
-      return { charge: r.next() < 0.4, U0: r.pick([6, 8, 10, 12]), th, unit, tStep, tEnd: Math.ceil((4.5 * th) / tStep) * tStep };
+      return { charge: r.next() < 0.4, U0: r.pick([6, 8, 10, 12]), th, unit, tStep, tEnd: Math.ceil((4.5 * th) / tStep) * tStep, k: r.pick([2, 3]), ask: r.pick(['time', 'volt']) };
     },
     build(p) {
-      const { th, U0, charge, unit } = p, tau = th / LN2;
-      const q = charge ? 3 * U0 / 4 : U0 / 4;
+      const { th, U0, charge, unit, k, ask } = p, tau = th / LN2, part = 1 / 2 ** k;
+      const q = charge ? U0 * (1 - part) : U0 * part, frac = FRAC[k][charge ? 1 : 0], fr = FRAC[k][charge ? 3 : 2], t2 = k * th;
+      const halves = charge ? L('While charging, the gap to $\\Delta V_0$ halves in every half-life: after one it is $\\Delta V_0/2$, after two $\\Delta V_0/4$, after three $\\Delta V_0/8$.', 'Beim Laden halbiert sich der Abstand zu $U_0$ in jeder Halbwertszeit: Nach einer ist er $U_0/2$, nach zweien $U_0/4$, nach dreien $U_0/8$.')
+        : L('While discharging, the voltage halves in every half-life: $\\Delta V_0 \\to \\Delta V_0/2 \\to \\Delta V_0/4 \\to \\Delta V_0/8$.', 'Beim Entladen halbiert sich die Spannung in jeder Halbwertszeit: $U_0 \\to U_0/2 \\to U_0/4 \\to U_0/8$.');
+      const COUNT = L('In every half-life the voltage halves again (while charging, the gap to $\\Delta V_0$): count the half-lives, one by one.', 'In jeder Halbwertszeit halbiert sich die Spannung wieder (beim Laden der Abstand zu $U_0$): Zähle die Halbwertszeiten, eine nach der anderen.');
+      const second = ask === 'time'
+        ? numF('t2', 't_2', unit, L(`until ${fr} ΔV₀`, `bis ${fr} U₀`), t2, [{ value: (k - 0.5) * th, why: COUNT, flag: 'shape' }, { value: k * tau, why: WHY_TAU(), flag: 'half' }], 0.08)
+        : numF('t2', Vs('2'), 'V', L(`at t = ${num(t2)} ${unit}`, `bei t = ${num(t2)} ${unit}`), q, [{ value: charge ? U0 * (1 - 2 * part) : 2 * U0 * part, why: COUNT, flag: null }], 0.1);
+      const askText = ask === 'time'
+        ? (charge ? L(`and the time $t_2$ until it is charged to $${frac}\\,\\Delta V_0 = ${tq(q, 'V')}$.`, `und die Zeit $t_2$, bis er auf $${frac}\\,U_0 = ${tq(q, 'V')}$ geladen ist.`) : L(`and the time $t_2$ until the voltage has fallen to $${frac}\\,\\Delta V_0 = ${tq(q, 'V')}$.`, `und die Zeit $t_2$, bis die Spannung auf $${frac}\\,U_0 = ${tq(q, 'V')}$ gefallen ist.`))
+        : L(`and the voltage $\\Delta V_2$ at $t = ${tq(t2, unit)}$.`, `und die Spannung $U_2$ bei $t = ${tq(t2, unit)}$.`);
+      const twoText = ask === 'time'
+        ? L(`After ${k} half-lives the ${charge ? 'gap to $\\Delta V_0$' : 'voltage'} is down to $${FRAC[k][0]}$ of $\\Delta V_0$${charge ? `, so the capacitor is at $${frac}\\,\\Delta V_0$` : ''}: $t_2 = ${k}\\,T_{1/2} = \\htmlClass{result}{${tq(t2, unit)}}$.`, `Nach ${k} Halbwertszeiten ist ${charge ? 'der Abstand zu $U_0$' : 'die Spannung'} auf $${FRAC[k][0]}$ von $U_0$ gesunken${charge ? `, der Kondensator also bei $${frac}\\,U_0$` : ''}: $t_2 = ${k}\\,T_{1/2} = \\htmlClass{result}{${tq(t2, unit)}}$.`)
+        : L(`$t = ${tq(t2, unit)}$ is ${k} half-lives: the ${charge ? 'gap to $\\Delta V_0$' : 'voltage'} is down to $${FRAC[k][0]}$ of $\\Delta V_0$, so $\\Delta V_2 = ${frac}\\cdot ${tq(U0, 'V')} = \\htmlClass{result}{${tq(q, 'V')}}$.`, `$t = ${tq(t2, unit)}$ sind ${k} Halbwertszeiten: ${charge ? 'Der Abstand zu $U_0$' : 'Die Spannung'} ist auf $${FRAC[k][0]}$ von $U_0$ gesunken, also $U_2 = ${frac}\\cdot ${tq(U0, 'V')} = \\htmlClass{result}{${tq(q, 'V')}}$.`);
       return {
-        text: p$(charge ? L(`A capacitor is charged through a resistor to $U_0 = ${tq(U0, 'V')}$. The graph shows its voltage against time.`, `Ein Kondensator wird über einen Widerstand auf $U_0 = ${tq(U0, 'V')}$ geladen. Der Graph zeigt seine Spannung gegen die Zeit.`) : L(`A capacitor charged to $U_0 = ${tq(U0, 'V')}$ is discharged through a resistor. The graph shows its voltage against time.`, `Ein auf $U_0 = ${tq(U0, 'V')}$ geladener Kondensator wird über einen Widerstand entladen. Der Graph zeigt seine Spannung gegen die Zeit.`)) +
-          p$(charge ? L(`Read the half-life $T_{1/2}$ (the time until the capacitor is charged to $U_0/2$), and the time $t_2$ until it is charged to $\\tfrac{3}{4}U_0 = ${tq(q, 'V')}$.`, `Lies die Halbwertszeit $T_{1/2}$ ab (die Zeit, bis der Kondensator auf $U_0/2$ geladen ist) und die Zeit $t_2$, bis er auf $\\tfrac{3}{4}U_0 = ${tq(q, 'V')}$ geladen ist.`) : L(`Read the half-life $T_{1/2}$, and the time $t_2$ until the voltage has fallen to $\\tfrac{1}{4}U_0 = ${tq(q, 'V')}$.`, `Lies die Halbwertszeit $T_{1/2}$ ab und die Zeit $t_2$, bis die Spannung auf $\\tfrac{1}{4}U_0 = ${tq(q, 'V')}$ gefallen ist.`)),
+        text: p$(charge ? L(`A capacitor is charged through a resistor to $\\Delta V_0 = ${tq(U0, 'V')}$. The graph shows its voltage against time.`, `Ein Kondensator wird über einen Widerstand auf $U_0 = ${tq(U0, 'V')}$ geladen. Der Graph zeigt seine Spannung gegen die Zeit.`) : L(`A capacitor charged to $\\Delta V_0 = ${tq(U0, 'V')}$ is discharged through a resistor. The graph shows its voltage against time.`, `Ein auf $U_0 = ${tq(U0, 'V')}$ geladener Kondensator wird über einen Widerstand entladen. Der Graph zeigt seine Spannung gegen die Zeit.`)) +
+          p$(`${charge ? L('Read the half-life $T_{1/2}$ (the time until the capacitor is charged to $\\Delta V_0/2$),', 'Lies die Halbwertszeit $T_{1/2}$ ab (die Zeit, bis der Kondensator auf $U_0/2$ geladen ist)') : L('Read the half-life $T_{1/2}$,', 'Lies die Halbwertszeit $T_{1/2}$ ab')} ${askText}`) +
+          p$(`<span class="note">${L('Point at the graph to read its coordinates.', 'Zeige auf den Graphen, um seine Koordinaten abzulesen.')}</span>`),
         fields: [
-          numF('th', 'T_{1/2}', unit, L('half-life', 'Halbwertszeit'), th, [{ value: tau, why: WHY_TAU(), flag: 'half' }, { value: 2 * th, why: L(`At $t = ${tq(2 * th, unit)}$ the voltage is ${charge ? '$\\tfrac{3}{4}U_0$' : '$\\tfrac{1}{4}U_0$'}: that is $2\\,T_{1/2}$.`, `Bei $t = ${tq(2 * th, unit)}$ ist die Spannung ${charge ? '$\\tfrac{3}{4}U_0$' : '$\\tfrac{1}{4}U_0$'}: Das ist $2\\,T_{1/2}$.`), flag: null }], 0.08),
-          numF('t2', 't_2', unit, L(charge ? 'until ¾ U₀' : 'until ¼ U₀', charge ? 'bis ¾ U₀' : 'bis ¼ U₀'), 2 * th, [{ value: 1.5 * th, why: L('In every half-life the voltage halves again (the gap to $U_0$ when charging): from $\\tfrac{1}{2}$ to $\\tfrac{1}{4}$ takes a whole half-life again, not half of one.', 'In jeder Halbwertszeit halbiert sich die Spannung wieder (beim Laden der Abstand zu $U_0$): Von $\\tfrac{1}{2}$ auf $\\tfrac{1}{4}$ dauert es wieder eine ganze Halbwertszeit, nicht eine halbe.'), flag: 'shape' }], 0.08),
+          numF('th', 'T_{1/2}', unit, L('half-life', 'Halbwertszeit'), th, [{ value: tau, why: WHY_TAU(), flag: 'half' }, { value: t2, why: L(`At $t = ${tq(t2, unit)}$ the voltage is $${frac}\\,\\Delta V_0$: that is $${k}\\,T_{1/2}$.`, `Bei $t = ${tq(t2, unit)}$ ist die Spannung $${frac}\\,U_0$: Das ist $${k}\\,T_{1/2}$.`), flag: null }], 0.08),
+          second,
         ],
-        figure: () => readGraph(p, tau, { levels: [{ y: U0 }] }),
-        solutionFigure: () => readGraph(p, tau, { levels: [{ y: U0 / 2 }, { y: q }], marks: [{ t: th }, { t: 2 * th }], dots: [[th, U0 / 2], [2 * th, q]] }),
+        figure: () => readGraph(p, tau, { levels: [{ y: U0 }], read: 'xy' }),
+        solutionFigure: () => readGraph(p, tau, { levels: [{ y: U0 / 2 }, { y: q }], marks: [{ t: th }, { t: t2 }], dots: [[th, U0 / 2], [t2, q]] }),
         hints: [
-          L(`The half-life is the time until the voltage is $U_0/2 = ${tq(U0 / 2, 'V')}$: find that height on the vertical axis, go across to the curve and down to the time axis.`, `Die Halbwertszeit ist die Zeit, bis die Spannung $U_0/2 = ${tq(U0 / 2, 'V')}$ ist: Suche diese Höhe auf der senkrechten Achse, geh hinüber zur Kurve und hinunter zur Zeitachse.`),
-          charge ? L('While charging, the gap to $U_0$ halves in every half-life: after one it is $U_0/2$, after two $U_0/4$.', 'Beim Laden halbiert sich der Abstand zu $U_0$ in jeder Halbwertszeit: Nach einer ist er $U_0/2$, nach zweien $U_0/4$.') : L('While discharging, the voltage halves in every half-life: $U_0 \\to U_0/2 \\to U_0/4 \\to \\dots$', 'Beim Entladen halbiert sich die Spannung in jeder Halbwertszeit: $U_0 \\to U_0/2 \\to U_0/4 \\to \\dots$'),
+          L(`The half-life is the time until the voltage is $\\Delta V_0/2 = ${tq(U0 / 2, 'V')}$: find that height on the vertical axis, go across to the curve and down to the time axis.`, `Die Halbwertszeit ist die Zeit, bis die Spannung $U_0/2 = ${tq(U0 / 2, 'V')}$ ist: Suche diese Höhe auf der senkrechten Achse, geh hinüber zur Kurve und hinunter zur Zeitachse.`),
+          halves,
         ],
         solution: [
-          step(L('The half-life', 'Die Halbwertszeit'), p$(L(`The curve reaches $U_0/2 = ${tq(U0 / 2, 'V')}$ at $T_{1/2} = \\htmlClass{result}{${tq(th, unit)}}$.`, `Die Kurve erreicht $U_0/2 = ${tq(U0 / 2, 'V')}$ bei $T_{1/2} = \\htmlClass{result}{${tq(th, unit)}}$.`))),
-          step(L('Two half-lives', 'Zwei Halbwertszeiten'), p$(charge ? L(`After each half-life the gap to $U_0$ is halved: after two it is $U_0/4$, so the capacitor is at $\\tfrac{3}{4}U_0$: $t_2 = 2\\,T_{1/2} = \\htmlClass{result}{${tq(2 * th, unit)}}$.`, `Nach jeder Halbwertszeit ist der Abstand zu $U_0$ halbiert: Nach zweien ist er $U_0/4$, der Kondensator also bei $\\tfrac{3}{4}U_0$: $t_2 = 2\\,T_{1/2} = \\htmlClass{result}{${tq(2 * th, unit)}}$.`) : L(`After each half-life the voltage is halved: $U_0/4$ after two, $t_2 = 2\\,T_{1/2} = \\htmlClass{result}{${tq(2 * th, unit)}}$.`, `Nach jeder Halbwertszeit ist die Spannung halbiert: $U_0/4$ nach zweien, $t_2 = 2\\,T_{1/2} = \\htmlClass{result}{${tq(2 * th, unit)}}$.`))),
+          step(L('The half-life', 'Die Halbwertszeit'), p$(L(`The curve reaches $\\Delta V_0/2 = ${tq(U0 / 2, 'V')}$ at $T_{1/2} = \\htmlClass{result}{${tq(th, unit)}}$.`, `Die Kurve erreicht $U_0/2 = ${tq(U0 / 2, 'V')}$ bei $T_{1/2} = \\htmlClass{result}{${tq(th, unit)}}$.`))),
+          step(L(`${k === 2 ? 'Two' : 'Three'} half-lives`, `${k === 2 ? 'Zwei' : 'Drei'} Halbwertszeiten`), p$(halves) + p$(twoText)),
           step(L('The time constant', 'Die Zeitkonstante'), p$(L(`From $T_{1/2} = \\tau\\cdot\\ln 2$: $\\tau = T_{1/2}/\\ln 2 \\approx 1.44\\cdot ${tq(th, unit)} \\approx ${tq(tau, unit)}$.`, `Aus $T_{1/2} = \\tau\\cdot\\ln 2$: $\\tau = T_{1/2}/\\ln 2 \\approx 1.44\\cdot ${tq(th, unit)} \\approx ${tq(tau, unit)}$.`))),
         ],
-        results: `$T_{1/2} = ${tq(th, unit)}$, $t_2 = ${tq(2 * th, unit)}$`,
+        results: `$T_{1/2} = ${tq(th, unit)}$, ${ask === 'time' ? `$t_2 = ${tq(t2, unit)}$` : `$${Vs('2')} = ${tq(q, 'V')}$`}`,
       };
     },
     check: ['th', 't2'],
@@ -348,23 +588,24 @@
       const { tau, U0, charge, unit } = p, lvl = charge ? 0.63 * U0 : 0.37 * U0;
       const tangent = charge ? [[0, 0], [tau, U0]] : [[0, U0], [tau, 0]];
       return {
-        text: p$(charge ? L(`A capacitor is charged through a resistor to $U_0 = ${tq(U0, 'V')}$.`, `Ein Kondensator wird über einen Widerstand auf $U_0 = ${tq(U0, 'V')}$ geladen.`) : L(`A capacitor charged to $U_0 = ${tq(U0, 'V')}$ is discharged through a resistor.`, `Ein auf $U_0 = ${tq(U0, 'V')}$ geladener Kondensator wird über einen Widerstand entladen.`)) +
-          p$(L('Read the time constant $\\tau = R\\cdot C$ from the graph.', 'Lies die Zeitkonstante $\\tau = R\\cdot C$ aus dem Graphen ab.')),
+        text: p$(charge ? L(`A capacitor is charged through a resistor to $\\Delta V_0 = ${tq(U0, 'V')}$.`, `Ein Kondensator wird über einen Widerstand auf $U_0 = ${tq(U0, 'V')}$ geladen.`) : L(`A capacitor charged to $\\Delta V_0 = ${tq(U0, 'V')}$ is discharged through a resistor.`, `Ein auf $U_0 = ${tq(U0, 'V')}$ geladener Kondensator wird über einen Widerstand entladen.`)) +
+          p$(L('Read the time constant $\\tau = R\\cdot C$ from the graph.', 'Lies die Zeitkonstante $\\tau = R\\cdot C$ aus dem Graphen ab.')) +
+          p$(`<span class="note">${L('Point at the graph to see the tangent to the curve there.', 'Zeige auf den Graphen, um dort die Tangente an die Kurve zu sehen.')}</span>`),
         fields: [numF('tau', '\\tau', unit, L('time constant', 'Zeitkonstante'), tau, [
           { value: tau * LN2, why: WHY_HALF(), flag: 'half' },
           { value: tau * Math.log(1 / 0.63), why: WHY_LEVEL(charge), flag: 'level' },
         ], 0.1)],
-        figure: () => readGraph(p, tau, { levels: [{ y: U0 }] }),
+        figure: () => readGraph(p, tau, { levels: [{ y: U0 }], read: 'tan' }),
         solutionFigure: () => readGraph(p, tau, { levels: [{ y: U0 }, { y: lvl }], marks: [{ t: tau }], dots: [[tau, lvl]], lines: [tangent] }),
         hints: [
-          charge ? L('After one time constant $\\tau$ the capacitor is charged to $1 - e^{-1} \\approx 63\\,\\%$ of $U_0$.', 'Nach einer Zeitkonstante $\\tau$ ist der Kondensator auf $1 - e^{-1} \\approx 63\\,\\%$ von $U_0$ geladen.') : L('After one time constant $\\tau$ the voltage has fallen to $e^{-1} \\approx 37\\,\\%$ of $U_0$.', 'Nach einer Zeitkonstante $\\tau$ ist die Spannung auf $e^{-1} \\approx 37\\,\\%$ von $U_0$ gefallen.'),
+          charge ? L('After one time constant $\\tau$ the capacitor is charged to $1 - e^{-1} \\approx 63\\,\\%$ of $\\Delta V_0$.', 'Nach einer Zeitkonstante $\\tau$ ist der Kondensator auf $1 - e^{-1} \\approx 63\\,\\%$ von $U_0$ geladen.') : L('After one time constant $\\tau$ the voltage has fallen to $e^{-1} \\approx 37\\,\\%$ of $\\Delta V_0$.', 'Nach einer Zeitkonstante $\\tau$ ist die Spannung auf $e^{-1} \\approx 37\\,\\%$ von $U_0$ gefallen.'),
           L(`Here that is $${tq(lvl, 'V')}$: find it on the vertical axis, go across to the curve and down to the time axis.`, `Hier sind das $${tq(lvl, 'V')}$: Suche das auf der senkrechten Achse, geh hinüber zur Kurve und hinunter zur Zeitachse.`),
-          L(`Or: the tangent at $t = 0$ reaches ${charge ? '$U_0$' : 'zero'} at $t = \\tau$.`, `Oder: Die Tangente bei $t = 0$ erreicht ${charge ? '$U_0$' : 'null'} bei $t = \\tau$.`),
+          L(`Or: the tangent at $t = 0$ reaches ${charge ? '$\\Delta V_0$' : 'zero'} at $t = \\tau$.`, `Oder: Die Tangente bei $t = 0$ erreicht ${charge ? '$U_0$' : 'null'} bei $t = \\tau$.`),
         ],
         solution: [
-          step(L('The level after one τ', 'Die Höhe nach einem τ'), p$(charge ? L(`$U_C(\\tau) = U_0\\left(1 - e^{-1}\\right) \\approx 0.63\\cdot ${tq(U0, 'V')} = ${tq(lvl, 'V')}$.`, `$U_C(\\tau) = U_0\\left(1 - e^{-1}\\right) \\approx 0.63\\cdot ${tq(U0, 'V')} = ${tq(lvl, 'V')}$.`) : `$U_C(\\tau) = U_0\\,e^{-1} \\approx 0.37\\cdot ${tq(U0, 'V')} = ${tq(lvl, 'V')}$.`)),
-          step(L('Read off', 'Ablesen'), p$(L(`The curve reaches $${tq(lvl, 'V')}$ at $\\tau = \\htmlClass{result}{${tq(tau, unit)}}$. The tangent at $t = 0$ (dashed) gives the same: it reaches ${charge ? '$U_0$' : 'zero'} at $t = \\tau$.`, `Die Kurve erreicht $${tq(lvl, 'V')}$ bei $\\tau = \\htmlClass{result}{${tq(tau, unit)}}$. Die Tangente bei $t = 0$ (gestrichelt) gibt dasselbe: Sie erreicht ${charge ? '$U_0$' : 'null'} bei $t = \\tau$.`))),
-          step(L('Not the half-life', 'Nicht die Halbwertszeit'), p$(L(`At $U_0/2$ you would read the half-life, $T_{1/2} = \\tau\\cdot\\ln 2 \\approx ${tq(tau * LN2, unit)}$, shorter than $\\tau$.`, `Bei $U_0/2$ liest man die Halbwertszeit ab, $T_{1/2} = \\tau\\cdot\\ln 2 \\approx ${tq(tau * LN2, unit)}$, kürzer als $\\tau$.`))),
+          step(L('The level after one τ', 'Die Höhe nach einem τ'), p$(charge ? L(`$\\Delta V_C(\\tau) = \\Delta V_0\\left(1 - e^{-1}\\right) \\approx 0.63\\cdot ${tq(U0, 'V')} = ${tq(lvl, 'V')}$.`, `$U_C(\\tau) = U_0\\left(1 - e^{-1}\\right) \\approx 0.63\\cdot ${tq(U0, 'V')} = ${tq(lvl, 'V')}$.`) : `$${Vs('C')}(\\tau) = ${Vs('0')}\\,e^{-1} \\approx 0.37\\cdot ${tq(U0, 'V')} = ${tq(lvl, 'V')}$.`)),
+          step(L('Read off', 'Ablesen'), p$(L(`The curve reaches $${tq(lvl, 'V')}$ at $\\tau = \\htmlClass{result}{${tq(tau, unit)}}$. The tangent at $t = 0$ (dashed) gives the same: it reaches ${charge ? '$\\Delta V_0$' : 'zero'} at $t = \\tau$.`, `Die Kurve erreicht $${tq(lvl, 'V')}$ bei $\\tau = \\htmlClass{result}{${tq(tau, unit)}}$. Die Tangente bei $t = 0$ (gestrichelt) gibt dasselbe: Sie erreicht ${charge ? '$U_0$' : 'null'} bei $t = \\tau$.`))),
+          step(L('Not the half-life', 'Nicht die Halbwertszeit'), p$(L(`At $\\Delta V_0/2$ you would read the half-life, $T_{1/2} = \\tau\\cdot\\ln 2 \\approx ${tq(tau * LN2, unit)}$, shorter than $\\tau$.`, `Bei $U_0/2$ liest man die Halbwertszeit ab, $T_{1/2} = \\tau\\cdot\\ln 2 \\approx ${tq(tau * LN2, unit)}$, kürzer als $\\tau$.`))),
         ],
         results: `$\\tau = ${tq(tau, unit)}$`,
       };
@@ -387,9 +628,9 @@
   const factor = (k) => (k === 1 ? L('unchanged', 'gleich') : k > 1 ? `×${k}` : `×${{ 0.5: '½', 0.25: '¼' }[k]}`);
   const kText = (k) => (k === 2 ? L('doubles', 'verdoppelt sich') : k === 4 ? L('becomes four times as long', 'wird viermal so lang') : k === 0.5 ? L('halves', 'halbiert sich') : k === 0.25 ? L('becomes a quarter', 'wird ein Viertel') : L('stays the same', 'bleibt gleich'));
   const WHY_FACTOR = () => L('$\\tau = R\\cdot C$: a larger resistance lets less current flow, a larger capacitance needs more charge. Both make the charging slower, $\\tau$ longer.', '$\\tau = R\\cdot C$: Ein grösserer Widerstand lässt weniger Strom fliessen, eine grössere Kapazität braucht mehr Ladung. Beides macht das Laden langsamer, $\\tau$ länger.');
-  const WHY_FINAL = () => L('The capacitor charges until its voltage is $U_0$, whatever $R$ and $C$: they change how fast, not how far. (A larger $C$ stores more charge at the same voltage.)', 'Der Kondensator lädt sich auf, bis seine Spannung $U_0$ ist, was immer $R$ und $C$ sind: Sie ändern, wie schnell, nicht wie weit. (Ein grösseres $C$ speichert bei derselben Spannung mehr Ladung.)');
-  const WHY_I0 = () => L('Right after closing the switch the capacitor is empty, the whole $U_0$ is across $R$: $I_0 = U_0/R$. Only $R$ counts.', 'Unmittelbar nach dem Schliessen ist der Kondensator leer, die ganze Spannung $U_0$ liegt über $R$: $I_0 = U_0/R$. Nur $R$ zählt.');
-  const changeText = (c) => p$(L(`A capacitor is charged through a resistor $R$ by a battery with voltage $U_0$. The experiment is repeated with ${c.en}.`, `Ein Kondensator wird über einen Widerstand $R$ von einer Batterie mit der Spannung $U_0$ geladen. Das Experiment wird mit ${c.de} wiederholt.`));
+  const WHY_FINAL = () => L('The capacitor charges until its voltage is $\\Delta V_0$, whatever $R$ and $C$: they change how fast, not how far. (A larger $C$ stores more charge at the same voltage.)', 'Der Kondensator lädt sich auf, bis seine Spannung $U_0$ ist, was immer $R$ und $C$ sind: Sie ändern, wie schnell, nicht wie weit. (Ein grösseres $C$ speichert bei derselben Spannung mehr Ladung.)');
+  const WHY_I0 = () => L('Right after closing the switch the capacitor is empty, the whole $\\Delta V_0$ is across $R$: $I_0 = \\Delta V_0/R$. Only $R$ counts.', 'Unmittelbar nach dem Schliessen ist der Kondensator leer, die ganze Spannung $U_0$ liegt über $R$: $I_0 = U_0/R$. Nur $R$ zählt.');
+  const changeText = (c) => p$(L(`A capacitor is charged through a resistor $R$ by a battery with voltage $\\Delta V_0$. The experiment is repeated with ${c.en}.`, `Ein Kondensator wird über einen Widerstand $R$ von einer Batterie mit der Spannung $U_0$ geladen. Das Experiment wird mit ${c.de} wiederholt.`));
   const changeSteps = (c, k) => [
     step(L('What changes', 'Was sich ändert'), p$(c.id === 'par' || c.id === 'ser' ? L(`Two equal capacitors ${c.id === 'par' ? 'in parallel have twice the capacitance, $2C$' : 'in series have half the capacitance, $C/2$'}.`, `Zwei gleiche Kondensatoren ${c.id === 'par' ? 'parallel haben die doppelte Kapazität, $2C$' : 'in Serie haben die halbe Kapazität, $C/2$'}.`) + ' ' : '') + p$(L(`$R$ ${factor(c.kR)}, $C$ ${factor(c.kC)}.`, `$R$ ${factor(c.kR)}, $C$ ${factor(c.kC)}.`))),
     step(L('The time constant', 'Die Zeitkonstante'), p$(L(`$\\tau = R\\cdot C$ ${kText(k)}: <span class="result">${factor(k)}</span>. The curve is stretched (or squeezed) along the time axis by this factor.`, `$\\tau = R\\cdot C$ ${kText(k)}: <span class="result">${factor(k)}</span>. Die Kurve wird um diesen Faktor entlang der Zeitachse gestreckt (oder gestaucht).`))),
@@ -417,11 +658,11 @@
             [['up', L('larger', 'grösser')], ['down', L('smaller', 'kleiner')], ['same', L('the same', 'gleich')], ['zero', L('zero in both', 'in beiden null')]]
               .map(([v, h]) => opt(v, h, v === i0 ? '' : i0Why(v), v === i0 ? null : v === 'zero' ? 'start' : 'i0')), { ask: L('How does the current right after closing the switch change?', 'Wie ändert sich der Strom unmittelbar nach dem Schliessen?') }),
           choiceF('fin', L('The voltage of the capacitor at the end:', 'Die Spannung des Kondensators am Schluss:'), 'same',
-            [['up', L('larger', 'grösser')], ['down', L('smaller', 'kleiner')], ['same', L('the same, U₀', 'gleich, U₀')]].map(([v, h]) => opt(v, h, v === 'same' ? '' : WHY_FINAL(), v === 'same' ? null : 'final'))),
+            [['up', L('larger', 'grösser')], ['down', L('smaller', 'kleiner')], ['same', L('the same, ΔV₀', 'gleich, U₀')]].map(([v, h]) => opt(v, h, v === 'same' ? '' : WHY_FINAL(), v === 'same' ? null : 'final'))),
         ],
         figure: () => Fg.rc('charge'),
         solutionFigure: () => `<div class="fig">${predictGraph(k, 1, true)}</div>`,
-        hints: [L('The time constant is $\\tau = R\\cdot C$.', 'Die Zeitkonstante ist $\\tau = R\\cdot C$.'), WHY_I0(), L('When does the charging stop? When no current flows any more: then $U_R = 0$, so $U_C = \\dots$', 'Wann hört das Laden auf? Wenn kein Strom mehr fliesst: Dann ist $U_R = 0$, also $U_C = \\dots$')],
+        hints: [L('The time constant is $\\tau = R\\cdot C$.', 'Die Zeitkonstante ist $\\tau = R\\cdot C$.'), WHY_I0(), L('When does the charging stop? When no current flows any more: then $\\Delta V_R = 0$, so $\\Delta V_C = \\dots$', 'Wann hört das Laden auf? Wenn kein Strom mehr fliesst: Dann ist $U_R = 0$, also $U_C = \\dots$')],
         solution: changeSteps(c, k),
         results: L(`τ ${factor(k)}; I₀ ${{ up: 'larger', down: 'smaller', same: 'the same' }[i0]}; the final voltage the same`, `τ ${factor(k)}; I₀ ${{ up: 'grösser', down: 'kleiner', same: 'gleich' }[i0]}; die Endspannung gleich`),
       };
@@ -434,7 +675,7 @@
     const T = 8;
     return Fg.graph({
       curves: [{ f: (t) => 1 - E(-t), cls: 'ghost' }, { f: (t) => m * (1 - E(-t / k)) }],
-      tEnd: T, yMax: 2.1, bare: true, name: ['U', 'C'], levels: [{ y: 1, label: '<tspan class="it">U</tspan>₀' }],
+      tEnd: T, yMax: 2.1, bare: true, name: ['U', 'C'], levels: [{ y: 1, label: `${Fg.Uq()}₀` }],
       marks: solved ? [{ t: 1, label: '<tspan class="it">τ</tspan>' }, { t: k, label: k === 1 ? '' : `${k === 0.5 ? '½' : k === 0.25 ? '¼' : k}<tspan class="it">τ</tspan>` }] : [],
       label: L('The first charging (grey) and the new one', 'Das erste Laden (grau) und das neue'),
     });
@@ -454,13 +695,13 @@
       rng(p.perm).shuffle(opts);
       opts.forEach((o, i) => { o.html = o.html.replace(/aria-label="[^"]*"/, `aria-label="${L(`Graph ${i + 1}`, `Graph ${i + 1}`)}"`); });
       return {
-        text: changeText(c) + p$(L('The grey curve shows the voltage $U_C$ of the first charging. Which graph shows the new one?', 'Die graue Kurve zeigt die Spannung $U_C$ beim ersten Laden. Welcher Graph zeigt die neue?')),
+        text: changeText(c) + p$(L('The grey curve shows the voltage $\\Delta V_C$ of the first charging. Which graph shows the new one?', 'Die graue Kurve zeigt die Spannung $U_C$ beim ersten Laden. Welcher Graph zeigt die neue?')),
         fields: [choiceF('graph', L('The new charging:', 'Das neue Laden:'), 'ok', opts, { pics: true })],
         figure: () => Fg.rc('charge'),
         solutionFigure: () => `<div class="fig">${predictGraph(k, 1, true)}</div>`,
         hints: [L('The time constant is $\\tau = R\\cdot C$: how does it change?', 'Die Zeitkonstante ist $\\tau = R\\cdot C$: Wie ändert sie sich?'), L('A longer $\\tau$ stretches the curve along the time axis: it rises more slowly.', 'Ein längeres $\\tau$ streckt die Kurve entlang der Zeitachse: Sie steigt langsamer an.'), L('Up to which voltage does the capacitor charge?', 'Bis zu welcher Spannung lädt sich der Kondensator auf?')],
         solution: changeSteps(c, k),
-        results: L(`τ ${factor(k)}, the same final voltage U₀`, `τ ${factor(k)}, dieselbe Endspannung U₀`),
+        results: L(`τ ${factor(k)}, the same final voltage ΔV₀`, `τ ${factor(k)}, dieselbe Endspannung U₀`),
         ask: L('Which graph shows the new charging?', 'Welcher Graph zeigt das neue Laden?'),
       };
     },
@@ -469,8 +710,9 @@
 
   // ================================================================ exercises
   const TYPES = {
-    pair, bounds, mixed,
-    'curve-u': curveType('U', 1), 'curve-i': curveType('I', 2), 'curve-r': curveType('R', 3),
+    pair, bounds, mixed, network,
+    'curve-u-d': curveType('U', 1, false), 'curve-i-d': curveType('I', 2, false), 'curve-r-d': curveType('R', 2, false), 'loop-d': loopType(false),
+    'curve-u': curveType('U', 1, true), 'curve-i': curveType('I', 2, true), 'curve-r': curveType('R', 3, true), loop: loopType(true),
     'read-half': readHalf, 'read-tau': readTau, predict, 'predict-graph': predictGraphType,
   };
 

@@ -46,7 +46,7 @@
     },
   };
   const ui = () => UI[Lang.get()];
-  const UNIT = { 'µF': 'µF', s: 's', ms: 'ms', V: 'V' };
+  const UNIT = { 'µF': 'µF', s: 's', ms: 'ms', V: 'V', mA: 'mA', 'kΩ': 'kΩ' };
 
   let ex = null, st = null, tutor = null, checker = null, topics = null;
 
