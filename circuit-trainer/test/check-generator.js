@@ -76,6 +76,16 @@ for (const level of Object.keys(LEVELS)) {
       const html = ex.figure(sol);
       if (!html.includes('<svg') || html.includes('NaN') || html.includes('undefined')) fail(`${tag}: bad figure`);
     }
+    // notes of a student: every resistor can be picked, every quantity noted there (not a given
+    // one) is drawn as a note
+    const noted = new Map();
+    for (const leaf of c.leaves) {
+      const rows = ex.noteRows(leaf.id);
+      if (!rows.length || rows.some((r) => !r.cells.length || /undefined|NaN/.test(r.name)) || rows.flatMap((r) => r.cells).some((x) => ex.givens.has(x.key))) fail(`${tag}: bad note rows at R${leaf.idx}`);
+      for (const x of rows.flatMap((r) => r.cells)) noted.set(x.key, '1.5');
+    }
+    const nhtml = ex.figure(false, null, noted, c.leaves[0].id), nNotes = (nhtml.match(/class="[^"]*\bnote\b[^"]*"/g) || []).length;
+    if (/NaN|undefined/.test(nhtml) || (nhtml.match(/class="pick"/g) || []).length !== c.leaves.length || nNotes < noted.size) fail(`${tag}: bad figure with notes`);
     for (const t of [...ex.hints, ...ex.solution, ex.text, ex.results]) {
       if (/undefined|NaN|\[object/.test(t)) fail(`${tag}: bad text: ${t.slice(0, 120)}`);
     }
@@ -150,22 +160,29 @@ for (const stage of ['read', 'place', 'wrong']) {
     }
     if (stage === 'read' && !(ex.meters.length === 2 && ex.meters.every((m) => m.key))) fail(`${tag}: not an ammeter and a voltmeter in their places`);
     if (stage === 'place') {
-      // every spot: a meter there that counts as right shows the quantity asked for and changes
-      // no current in the circuit; the spot of the meter in the figure counts as right
-      const how = ex.fields.find((f) => f.place), m = ex.meters[0], target = ex.fields.find((f) => !f.place).value;
-      if (ex.meters.length !== 1 || !m.key || !how || how.value !== (m.across ? 'a' : 's') + m.at || !ex.placeCheck(how.value).ok) fail(`${tag}: not one meter in its place, with the spot asked`);
+      // every spot, for each meter (the other one in its place): a meter there that counts as
+      // right shows the quantity asked for and changes no current in the circuit; the spot of the
+      // meter in the figure counts as right
+      const hows = ex.fields.filter((f) => f.place);
+      if (!hows.length || hows.length !== ex.meters.length || ex.meters.length > 2 || new Set(ex.meters.map((m) => m.m)).size !== ex.meters.length) fail(`${tag}: not one place field per meter`);
       const base = solve(meterNetlist(ex.circuit, [])), Is = (sol) => ex.circuit.leaves.map((n) => Math.abs(sol.i('n' + n.id)));
-      for (const id of ex.slots) {
-        const at = id === 'main' || id === 'battery' ? 0 : Number(id.slice(1)), across = id === 'battery' || id[0] === 'a';
-        const sol = solve(meterNetlist(ex.circuit, [{ m: m.m, at, across }]));
-        const shown = m.m === 'A' ? Math.abs(sol.i('M' + m.m)) : Math.abs(sol.i('M' + m.m)) * RV;
-        const same = Is(sol).every((x, k) => Math.abs(x - Is(base)[k]) < 1e-3 * Math.max(1, x)), right = same && Math.abs(shown - target) < 1e-3 * Math.max(1, target);
-        const r = ex.placeCheck(id);
-        if (r.ok && !right) fail(`${tag}: spot ${id} counts as right, but the meter there shows ${shown}${same ? '' : ' and changes the circuit'}`);
-        if (!r.ok && !r.why) fail(`${tag}: spot ${id} is wrong without a reason`);
-        if (!r.ok && right) fail(`${tag}: spot ${id} counts as wrong, but the meter there shows the quantity and changes nothing`);
-        const html = ex.placeFig(id);
-        if (!html.includes('<svg') || /NaN|undefined/.test(html) || (html.match(/class="slot"/g) || []).length !== ex.slots.length - 1) fail(`${tag}: bad figure with the meter at ${id}`);
+      const spot = (id) => ({ at: id === 'main' || id === 'battery' ? 0 : Number(id.slice(1)), across: id === 'battery' || id[0] === 'a' });
+      for (const m of ex.meters) {
+        const how = hows.find((f) => f.meter === m.m), other = ex.meters.find((x) => x !== m), target = ex.fields.find((f) => !f.place && f.key === m.m).value;
+        if (!m.key || !how || how.value !== (m.across ? 'a' : 's') + m.at || !ex.placeCheck(how.value, m.m).ok) { fail(`${tag}: the ${m.m} meter is not in its place, with the spot asked`); continue; }
+        for (const id of ex.slots) {
+          if (other && id === (other.across ? 'a' : 's') + other.at) continue;
+          const sol = solve(meterNetlist(ex.circuit, [{ m: m.m, ...spot(id) }, ...(other ? [other] : [])]));
+          const shown = m.m === 'A' ? Math.abs(sol.i('M' + m.m)) : Math.abs(sol.i('M' + m.m)) * RV;
+          const same = Is(sol).every((x, k) => Math.abs(x - Is(base)[k]) < 1e-3 * Math.max(1, x)), right = same && Math.abs(shown - target) < 1e-3 * Math.max(1, target);
+          const r = ex.placeCheck(id, m.m);
+          if (r.ok && !right) fail(`${tag}: ${m.m} at ${id} counts as right, but it shows ${shown}${same ? '' : ' and changes the circuit'}`);
+          if (!r.ok && !r.why) fail(`${tag}: ${m.m} at ${id} is wrong without a reason`);
+          if (!r.ok && right) fail(`${tag}: ${m.m} at ${id} counts as wrong, but it shows the quantity and changes nothing`);
+          const placed = { [m.m]: id, ...(other ? { [other.m]: hows.find((f) => f.meter === other.m).value } : {}) };
+          const html = ex.placeFig(placed), free = ex.slots.length - new Set(Object.values(placed)).size;
+          if (!html.includes('<svg') || /NaN|undefined/.test(html) || (html.match(/class="slot"/g) || []).length !== free || (html.match(/class="lbl meter-l"/g) || []).length !== ex.meters.length) fail(`${tag}: bad figure with the meters at ${JSON.stringify(placed)}`);
+        }
       }
     }
     for (const f of ex.fields.filter((x) => !x.choice && !x.place)) if (!isHalf(f.value) || f.value < 0 || (f.value === 0 && ex.kind !== 'vseries')) fail(`${tag}: reading ${f.key} = ${f.value} is not nice`);

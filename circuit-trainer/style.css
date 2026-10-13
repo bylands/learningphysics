@@ -7,6 +7,8 @@
   --zone-light-line: rgba(43, 89, 195, 0.45);
   --zone-strong: rgba(43, 89, 195, 0.16);
   --zone-strong-line: rgba(43, 89, 195, 0.6);
+  --note: #17864a;
+  --note-bg: rgba(23, 134, 74, 0.07);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -17,6 +19,8 @@
     --zone-light-line: rgba(122, 162, 255, 0.45);
     --zone-strong: rgba(122, 162, 255, 0.2);
     --zone-strong-line: rgba(122, 162, 255, 0.65);
+    --note: #5fd38d;
+    --note-bg: rgba(95, 211, 141, 0.08);
   }
 }
 
@@ -67,13 +71,15 @@ svg .meter-l { font-size: 15px; font-weight: 600; fill: var(--ink); }
 .choices.stack > label > span { border-left: 0; border-top: 1px solid var(--line); text-align: left; padding: 6px 12px; white-space: normal; }
 .choices.stack > label:first-child > span { border-top: 0; }
 /* where does the meter go: the spots in the circuit (circuit.js slot), the meter to drag */
-svg .slot { cursor: pointer; outline: none; }
-svg .slot circle { fill: var(--card); stroke: var(--accent); stroke-width: 1.6; stroke-dasharray: 4 3; }
-svg .slot-lead { fill: none; stroke: var(--accent); stroke-width: 1.2; stroke-dasharray: 4 3; opacity: 0; } /* the leads of a spot across a part: shown when it is pointed at */
-svg .slot:hover circle, svg .slot:focus-visible circle, svg .slot.near circle { fill: color-mix(in srgb, var(--accent) 22%, var(--card)); stroke-dasharray: none; stroke-width: 2.2; }
-svg .slot:hover .slot-lead, svg .slot:focus-visible .slot-lead, svg .slot.near .slot-lead { opacity: 1; }
-svg .slot.pulse circle { animation: slot-pulse 0.9s ease-in-out 2; }
-@keyframes slot-pulse { 50% { fill: color-mix(in srgb, var(--accent) 35%, var(--card)); } }
+/* the spots stay hidden until the dragged meter comes close (.close), the one it would land on is .near */
+svg .slot { outline: none; pointer-events: none; }
+svg .slot circle { fill: var(--card); stroke: var(--accent); stroke-width: 1.6; stroke-dasharray: 4 3; opacity: 0; transition: opacity 0.12s; }
+svg .slot-lead { fill: none; stroke: var(--accent); stroke-width: 1.2; stroke-dasharray: 4 3; opacity: 0; } /* the leads of a spot across a part */
+svg .slot.close circle, svg .slot:focus-visible circle { opacity: 1; }
+svg .slot.near circle, svg .slot:focus-visible circle { opacity: 1; fill: color-mix(in srgb, var(--accent) 22%, var(--card)); stroke-dasharray: none; stroke-width: 2.2; }
+svg .slot.near .slot-lead, svg .slot:focus-visible .slot-lead { opacity: 1; }
+.place-row .note.pulse { animation: note-pulse 0.9s ease-in-out 2; }
+@keyframes note-pulse { 50% { color: var(--accent); } }
 .place-row { display: flex; align-items: center; gap: 12px; }
 .place-row .note { margin: 0; color: var(--muted); font-size: 0.9rem; }
 .meter-chip, .meter-ghost { width: 44px; height: 44px; flex: none; border-radius: 50%; border: 2px solid var(--ink); background: var(--card); color: var(--ink);
@@ -81,3 +87,23 @@ svg .slot.pulse circle { animation: slot-pulse 0.9s ease-in-out 2; }
 .meter-chip { cursor: grab; touch-action: none; padding: 0; }
 .meter-ghost { position: fixed; z-index: 50; pointer-events: none; transform: translate(-50%, -50%); box-shadow: 0 4px 14px rgb(0 0 0 / 0.2); }
 svg.circuit text { pointer-events: none; } /* the spots under a label stay clickable */
+/* notes of the student on the circuit: like given values, in green, the arrows dashed; the resistors
+   can be picked (circuit.js res, o.id) */
+svg .cur.note, svg .vol.note { stroke: var(--note); stroke-dasharray: 5 3; }
+svg .cur-h.note, svg .vol-h.note { fill: var(--note); }
+svg text.note { fill: var(--note); }
+svg .zone.note { fill: var(--note-bg); stroke: var(--note); stroke-width: 1.2; stroke-dasharray: 5 3; }
+svg .pick { fill: transparent; stroke: none; cursor: pointer; outline: none; }
+svg .pick:hover, svg .pick:focus-visible { stroke: var(--note); stroke-width: 1.5; stroke-dasharray: 4 3; }
+.notes { margin: 2px 0 12px; }
+.notes .notes-hint { margin: 0; font-size: 0.9rem; }
+.notes.open { border: 1px dashed var(--note); border-radius: 8px; padding: 8px 12px; background: var(--note-bg); }
+.notes-head { color: var(--note); font-weight: 600; }
+.note-row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; margin: 8px 0; }
+.note-who { flex: 0 0 100%; color: var(--muted); font-size: 0.9rem; }
+.note-cell { display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; }
+.note-cell input { width: 4.2em; padding: 5px 8px; border: 1px solid var(--line); border-radius: 6px; background: var(--bg); font-variant-numeric: tabular-nums; }
+.note-cell input:focus { outline: 2px solid var(--note); outline-offset: 1px; }
+.note-cell input.bad { border-color: var(--bad, #c8322b); }
+.note-cell .unit { color: var(--muted); }
+.notes-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
