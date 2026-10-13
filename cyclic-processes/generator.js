@@ -244,25 +244,35 @@
 
   // ---------------------------------------------------------------- mistakes: other cycles
   // Variants of a cycle as a student might get it wrong: one step of another kind, one factor
-  // upside down; each valid and different from the right one. [{ tag, cycle, why }]
+  // upside down; each valid and different from the right one. [{ tag, cycle, why, nudge }]
+  // (nudge: shown in practice while the exercise is open, in place of a why that gives the answer
+  // away; the why stays for the check and once the exercise is solved)
   function variants(c) {
     const steps = c.segs.filter((s) => !s.closing).map(({ type, k, say }) => ({ type, k, say }));
     const out = [];
     steps.forEach((st, i) => {
       for (const t of TYPES.filter((x) => x !== st.type)) {
         const s2 = steps.map((x, j) => (j === i ? { ...x, type: t, say: t === 'isothermal' ? 'V' : x.say === 'p' && t === 'isobaric' ? 'V' : x.say === 'V' && t === 'isochoric' ? 'p' : x.say } : x));
-        out.push({ tag: 'type', step: i, cycle: cycleOf(c.states[0], s2), why: L(`${nameOf(i)} → ${nameOf(i + 1)} is drawn ${ADJ[t]()}, but it is ${ADJ[st.type]()}.`, `${nameOf(i)} → ${nameOf(i + 1)} ist ${ADJ[t]()} gezeichnet, ist aber ${ADJ[st.type]()}.`) });
+        out.push({ tag: 'type', step: i, cycle: cycleOf(c.states[0], s2), why: L(`${nameOf(i)} → ${nameOf(i + 1)} is drawn ${ADJ[t]()}, but it is ${ADJ[st.type]()}.`, `${nameOf(i)} → ${nameOf(i + 1)} ist ${ADJ[t]()} gezeichnet, ist aber ${ADJ[st.type]()}.`), nudge: NUDGE.type(i) });
       }
       const s3 = steps.map((x, j) => (j === i ? { ...x, k: 1 / x.k } : x));
-      out.push({ tag: 'factor', step: i, cycle: cycleOf(c.states[0], s3), why: L(`In ${nameOf(i)} → ${nameOf(i + 1)} the factor is upside down: ${describe(st)}.`, `Bei ${nameOf(i)} → ${nameOf(i + 1)} ist der Faktor umgekehrt: ${describe(st)}.`) });
+      out.push({ tag: 'factor', step: i, cycle: cycleOf(c.states[0], s3), why: L(`In ${nameOf(i)} → ${nameOf(i + 1)} the factor is upside down: ${describe(st)}.`, `Bei ${nameOf(i)} → ${nameOf(i + 1)} ist der Faktor umgekehrt: ${describe(st)}.`), nudge: NUDGE.factor(i) });
     });
     return out.filter((v) => valid(v.cycle) && !sameCycle(v.cycle, c));
   }
+  // nudges in place of a why that gives the answer away (see variants)
+  const NUDGE = {
+    type: (i) => L(`Check ${nameOf(i)} → ${nameOf(i + 1)}: what kind of process is it, and what shape does that have in this diagram?`, `Prüfe ${nameOf(i)} → ${nameOf(i + 1)}: Welche Art von Prozess ist das, und welche Form hat er in diesem Diagramm?`),
+    factor: (i) => L(`Check ${nameOf(i)} → ${nameOf(i + 1)}: by what factor does it change, and which way?`, `Prüfe ${nameOf(i)} → ${nameOf(i + 1)}: Um welchen Faktor ändert sich die Grösse, und in welche Richtung?`),
+    reverse: () => L('Check the direction of the arrows: in which order does the cycle run through the states?', 'Prüfe die Richtung der Pfeile: In welcher Reihenfolge durchläuft der Kreisprozess die Zustände?'),
+    shape: () => L('Check the shape of each line: what does an isotherm look like in the p(V) diagram?', 'Prüfe die Form jeder Linie: Wie sieht eine Isotherme im p(V)-Diagramm aus?'),
+    back: () => L('Check the direction: going from D to A, which of p, V and T rise, and which fall?', 'Prüfe die Richtung: Welche von p, V und T steigen von D nach A, und welche sinken?'),
+  };
   const sameCycle = (a, b) => a.states.length === b.states.length && a.states.every((s, i) => same(s, b.states[i]));
 
   // ---------------------------------------------------------------- the exercises
   const ok = (html, why = '') => ({ html, ok: true, why });
-  const no = (html, why, tag) => ({ html, ok: false, why, tag });
+  const no = (html, why, tag, nudge) => ({ html, ok: false, why, tag, ...(nudge ? { nudge } : {}) });
 
   // 1 description → diagram: four diagrams of the same kind, one right.
   function match(r, o = {}) {
@@ -272,21 +282,66 @@
       if (e.questions[0].options.length === 4 || tries > 50) return e;
     }
   }
+  // 1b the same with diagrams of different kinds side by side (two of one kind, one each of the
+  // others): the right cycle in one of them, three wrong ones in the others.
+  function matchMix(r) {
+    for (let tries = 0; ; tries++) {
+      const e = matchMixOnce(r);
+      if (e.questions[0].options.length === 4 || tries > 50) return e;
+    }
+  }
+  function matchMixOnce(r) {
+    const c = randomCycle(r, 3);
+    const slots = r.shuffle([r.pick(DIAGRAMS), ...DIAGRAMS]), d = slots.shift();
+    const opts = [{ ok: true, fig: { cycle: c, diagram: d }, why: '' }];
+    const pool = r.shuffle(variants(c));
+    const iso = c.segs.findIndex((s) => s.type === 'isothermal');
+    if (iso >= 0 && slots.includes('pV')) pool.unshift({ tag: 'shape', cycle: c, straight: iso, why: L(`${arrow(c.segs[iso])} is isothermal: in the p(V) diagram it is a hyperbola (p ∝ 1/V), not a straight line.`, `${arrow(c.segs[iso])} ist isotherm: Im p(V)-Diagramm ist das eine Hyperbel (p ∝ 1/V), keine Gerade.`), nudge: NUDGE.shape() });
+    pool.splice(Math.min(pool.length, 2), 0, { tag: 'reverse', cycle: c, reverse: true, why: L('The arrows point the wrong way: the cycle runs A → B → C → D → A.', 'Die Pfeile zeigen in die falsche Richtung: Der Kreisprozess läuft A → B → C → D → A.'), nudge: NUDGE.reverse() });
+    const used = new Set();
+    for (const v of pool) {
+      if (!slots.length) break;
+      const key = `${v.tag === 'reverse' ? 'rev' : ''}${v.straight != null ? 'str' : ''}${JSON.stringify(v.cycle.states)}`;
+      if (used.has(key) || (v.tag !== 'reverse' && v.straight == null && sameCycle(v.cycle, c))) continue;
+      // a straight isotherm only makes sense in p(V)
+      const k = v.straight != null ? slots.indexOf('pV') : 0;
+      if (k < 0) continue;
+      used.add(key);
+      const [dv] = slots.splice(k, 1);
+      opts.push({ ok: false, tag: v.tag, fig: { cycle: v.cycle, diagram: dv, reverse: v.reverse, straight: v.straight }, why: v.why, nudge: v.nudge });
+    }
+    const options = r.shuffle(opts);
+    return {
+      kind: 'match', diagram: d, mixed: true, cycle: c, difficulty: 4,
+      text: L(`A fixed amount of an ideal gas runs through a cyclic process: <ul>${describeCycle(c).map((x) => `<li>${x}</li>`).join('')}<li>from D straight back to A</li></ul> The diagrams are of different kinds. Which one shows the process?`,
+        `Eine feste Menge eines idealen Gases durchläuft einen Kreisprozess: <ul>${describeCycle(c).map((x) => `<li>${x}</li>`).join('')}<li>von D direkt zurück nach A</li></ul> Die Diagramme sind von verschiedener Art. Welches zeigt den Prozess?`),
+      questions: [{ type: 'pick', key: 'fig', options }],
+      hints: [
+        L('First read the axes: which diagram is a p(V), a p(T) or a V(T) diagram?', 'Lies zuerst die Achsen: Welches Diagramm ist ein p(V)-, ein p(T)- oder ein V(T)-Diagramm?'),
+        L(`Isobaric is ${shape('isobaric', 'pV')} in p(V), ${shape('isobaric', 'pT')} in p(T) and ${shape('isobaric', 'VT')} in V(T); isochoric is ${shape('isochoric', 'pV')}, ${shape('isochoric', 'pT')} and ${shape('isochoric', 'VT')}; isothermal ${shape('isothermal', 'pV')}, ${shape('isothermal', 'pT')} and ${shape('isothermal', 'VT')}.`,
+          `Isobar ist im p(V)-Diagramm ${shape('isobaric', 'pV')}, im p(T)-Diagramm ${shape('isobaric', 'pT')} und im V(T)-Diagramm ${shape('isobaric', 'VT')}; isochor ${shape('isochoric', 'pV')}, ${shape('isochoric', 'pT')} und ${shape('isochoric', 'VT')}; isotherm ${shape('isothermal', 'pV')}, ${shape('isothermal', 'pT')} und ${shape('isothermal', 'VT')}.`),
+        L('Go step by step from A in each diagram: does the step have the right shape, does it go the right way, and by the right factor?', 'Geh in jedem Diagramm Schritt für Schritt von A aus: Hat der Schritt die richtige Form, geht er in die richtige Richtung und um den richtigen Faktor?'),
+        ruleT(),
+      ],
+      solution: c.segs.map((s) => summary(c, s)),
+      p: { kind: 'match', d: 'mix', s: c.states },
+    };
+  }
   function matchOnce(r, d) {
     const c = randomCycle(r, 3);
     const opts = [{ ok: true, fig: { cycle: c, diagram: d }, why: '' }];
     const pool = r.shuffle(variants(c));
     // an isotherm drawn straight in p(V), and the cycle run backwards
     const iso = c.segs.findIndex((s) => s.type === 'isothermal');
-    if (d === 'pV' && iso >= 0) pool.unshift({ tag: 'shape', cycle: c, straight: iso, why: L(`${arrow(c.segs[iso])} is isothermal: in the p(V) diagram it is a hyperbola (p ∝ 1/V), not a straight line.`, `${arrow(c.segs[iso])} ist isotherm: Im p(V)-Diagramm ist das eine Hyperbel (p ∝ 1/V), keine Gerade.`) });
-    pool.splice(Math.min(pool.length, 2), 0, { tag: 'reverse', cycle: c, reverse: true, why: L('The arrows point the wrong way: the cycle runs A → B → C → D → A.', 'Die Pfeile zeigen in die falsche Richtung: Der Kreisprozess läuft A → B → C → D → A.') });
+    if (d === 'pV' && iso >= 0) pool.unshift({ tag: 'shape', cycle: c, straight: iso, why: L(`${arrow(c.segs[iso])} is isothermal: in the p(V) diagram it is a hyperbola (p ∝ 1/V), not a straight line.`, `${arrow(c.segs[iso])} ist isotherm: Im p(V)-Diagramm ist das eine Hyperbel (p ∝ 1/V), keine Gerade.`), nudge: NUDGE.shape() });
+    pool.splice(Math.min(pool.length, 2), 0, { tag: 'reverse', cycle: c, reverse: true, why: L('The arrows point the wrong way: the cycle runs A → B → C → D → A.', 'Die Pfeile zeigen in die falsche Richtung: Der Kreisprozess läuft A → B → C → D → A.'), nudge: NUDGE.reverse() });
     const used = new Set();
     for (const v of pool) {
       if (opts.length === 4) break;
       const key = `${v.tag === 'reverse' ? 'rev' : ''}${v.straight != null ? 'str' : ''}${JSON.stringify(v.cycle.states)}`;
       if (used.has(key) || (v.tag !== 'reverse' && v.straight == null && sameCycle(v.cycle, c))) continue;
       used.add(key);
-      opts.push({ ok: false, tag: v.tag, fig: { cycle: v.cycle, diagram: d, reverse: v.reverse, straight: v.straight }, why: v.why });
+      opts.push({ ok: false, tag: v.tag, fig: { cycle: v.cycle, diagram: d, reverse: v.reverse, straight: v.straight }, why: v.why, nudge: v.nudge });
     }
     const options = r.shuffle(opts);
     return {
@@ -321,11 +376,11 @@
     const opts = [ok(right)];
     // the same kind the other way, the other kinds, and "none of the three"
     const words = new Set([right]);
-    const add = (html, why, tag) => { if (!words.has(html) && opts.length < 4) { words.add(html); opts.push(no(html, why, tag)); } };
+    const add = (html, why, tag, nudge) => { if (!words.has(html) && opts.length < 4) { words.add(html); opts.push(no(html, why, tag, nudge)); } };
     const why = summary(c, back);
     if (back.type !== 'general') {
       const flipped = { ...back, from: back.to, to: back.from };
-      add(closingWords({ states: c.states }, flipped), `${L('The other way round.', 'Umgekehrt.')} ${why}`, 'reverse');
+      add(closingWords({ states: c.states }, flipped), `${L('The other way round.', 'Umgekehrt.')} ${why}`, 'reverse', NUDGE.back());
     }
     for (const t of r.shuffle(TYPES.filter((x) => x !== back.type))) {
       for (const dir of r.shuffle(['up', 'down'])) add(`${ADJ_F[t]()} ${NOUN[dir][t === 'isochoric' ? 'T' : 'V']()}`, why, 'type');
@@ -436,8 +491,8 @@
     const opts = [{ ok: true, fig: { cycle: c, diagram: to }, why: '' }];
     const pool = [
       { tag: 'copy', fig: { cycle: c, diagram: to, copyFrom: from }, why: L(`That is the ${dname(from)} diagram with other names on the axes: each process has a different shape in the ${dname(to)} diagram.`, `Das ist das ${dname(from)}-Diagramm mit anderen Namen an den Achsen: Jeder Prozess hat im ${dname(to)}-Diagramm eine andere Form.`) },
-      { tag: 'reverse', fig: { cycle: c, diagram: to, reverse: true }, why: L('The arrows point the wrong way.', 'Die Pfeile zeigen in die falsche Richtung.') },
-      ...r.shuffle(variants(c)).map((v) => ({ tag: v.tag, fig: { cycle: v.cycle, diagram: to }, why: v.why })),
+      { tag: 'reverse', fig: { cycle: c, diagram: to, reverse: true }, why: L('The arrows point the wrong way.', 'Die Pfeile zeigen in die falsche Richtung.'), nudge: NUDGE.reverse() },
+      ...r.shuffle(variants(c)).map((v) => ({ tag: v.tag, fig: { cycle: v.cycle, diagram: to }, why: v.why, nudge: v.nudge })),
     ];
     // a copy is no mistake where it happens to look the same (e.g. p(V) → p(T) with only isobars)
     for (const v of pool) if (opts.length < 4 && !(v.tag === 'copy' && copyLooksRight(c, from, to))) opts.push({ ok: false, ...v });
@@ -542,11 +597,11 @@
     const kind = classify(a, s);
     if (kind === step.type) {
       const v = step.type === 'isochoric' ? 'p' : 'V', got = VARS[v](s) / VARS[v](a);
-      if (eq(got, 1 / step.k)) return L(`The right kind of process, but the factor upside down: ${describe(step)}.`, `Die richtige Art von Prozess, aber der Faktor umgekehrt: ${describe(step)}.`);
+      if (eq(got, 1 / step.k)) return L(`The right kind of process, but check the direction of the change: ${describe(step)}.`, `Die richtige Art von Prozess, aber prüfe die Richtung der Änderung: ${describe(step)}.`);
       return L(`The right kind of process, but the wrong factor: ${describe(step)}.`, `Die richtige Art von Prozess, aber der falsche Faktor: ${describe(step)}.`);
     }
     const what = kind === 'general' ? L('That point is not reached by any of the three processes from there.', 'Dieser Punkt wird von dort mit keinem der drei Prozesse erreicht.') : L(`From there that would be ${ADJ[kind]()}.`, `Von dort aus wäre das ${ADJ[kind]()}.`);
-    return `${what} ${L(`This step is ${ADJ[step.type]()}: in the ${dname(d)} diagram ${shape(step.type, d)}.`, `Dieser Schritt ist ${ADJ[step.type]()}: im ${dname(d)}-Diagramm ${shape(step.type, d)}.`)}`;
+    return `${what} ${L(`This step is ${ADJ[step.type]()}: what does that look like in the ${dname(d)} diagram?`, `Dieser Schritt ist ${ADJ[step.type]()}: Wie sieht das im ${dname(d)}-Diagramm aus?`)}`;
   }
 
   // 7 find the error: a student's sketch of a description, with one step wrong.
@@ -638,6 +693,7 @@
   function generate(type, seed) {
     const r = rng(seed), [kind, a, b] = type.split('-');
     const o = kind === 'switch' ? { from: a, to: b } : { diagram: a };
+    if (type === 'match-mix') return { ...matchMix(r), type, seed };
     return { ...EXERCISES[kind](r, o), type, seed };
   }
 

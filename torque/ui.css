@@ -51,11 +51,14 @@
 * { box-sizing: border-box; }
 [hidden] { display: none !important; }
 
+/* System fonts draw ∝ tiny; take it (only it) from KaTeX's main font, which all apps can reach. */
+@font-face { font-family: "LP Symbols"; src: url("/katex/fonts/KaTeX_Main-Regular.woff2") format("woff2"); unicode-range: U+221D; }
+
 body {
   margin: 0;
   background: var(--bg);
   color: var(--ink);
-  font: 16px/1.55 system-ui, -apple-system, "Segoe UI", sans-serif;
+  font: 16px/1.55 "LP Symbols", system-ui, -apple-system, "Segoe UI", sans-serif;
 }
 
 .wrap { max-width: 920px; margin: 0 auto; padding-inline: 16px; }
