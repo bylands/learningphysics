@@ -775,7 +775,9 @@ class Service(unittest.TestCase):
         st, _, body = self.req("/api/sets", json.dumps(new).encode(), "application/json", cookie)
         self.assertEqual(st, 200)
         self.assertEqual(json.loads(body)["sets"], new["sets"])
-        self.assertEqual(json.loads(self.sets.read_text()), new)
+        # on disk, under the superuser's identifier (learningphysics.ch/bys/3a-elektro, or /3a-elektro)
+        on_disk = {"default": "bys", "sets": {"bys/3a-elektro": new["sets"]["3a-elektro"]}}
+        self.assertEqual(json.loads(self.sets.read_text()), on_disk)
         self.assertEqual(json.loads(self.req("/api/sets", cookie=cookie)[2])["sets"], new["sets"])
         # a language other than English or German: the students choose
         st, _, body = self.req("/api/sets", json.dumps({"sets": {"x": {"lang": "fr"}}}).encode(), "application/json", cookie)
@@ -790,10 +792,10 @@ class Service(unittest.TestCase):
             st, _, body = self.req("/api/sets", json.dumps({"sets": {name: {}}}).encode(), "application/json", cookie)
             self.assertEqual(st, 400, name)
             self.assertIn(why, json.loads(body)["error"])
-        self.assertEqual(json.loads(self.sets.read_text()), new)
+        self.assertEqual(json.loads(self.sets.read_text()), on_disk)
         # deleting every set
         st, _, body = self.req("/api/sets", b'{"sets": {}}', "application/json", cookie)
-        self.assertEqual(json.loads(self.sets.read_text()), {"sets": {}})
+        self.assertEqual(json.loads(self.sets.read_text()), {"default": "bys", "sets": {}})
         # the panel loads the frames of the apps from the same site
         st, headers, _ = self.req("/", cookie=cookie)
         self.assertIn("frame-src 'self'", headers["Content-Security-Policy"])
@@ -818,7 +820,7 @@ class Service(unittest.TestCase):
             {"id": "photons", "modes": ["check"], "objectives": ["wave", "einstein", "threshold", "rate"]}]}}}  # all: no list
         st, _, body = self.req("/api/sets", json.dumps(new).encode(), "application/json", cookie)
         self.assertEqual(st, 200)
-        self.assertEqual(json.loads(self.sets.read_text())["sets"]["3a"]["apps"], [
+        self.assertEqual(json.loads(self.sets.read_text())["sets"]["bys/3a"]["apps"], [
             {"id": "electric-field", "modes": ["tutor", "practice", "check"], "objectives": ["sketch", "read"]},
             {"id": "photons", "modes": ["check"]}])
 
@@ -1035,6 +1037,114 @@ class Service(unittest.TestCase):
         self.assertEqual(self.req("/sheet/fig/../exercise-sheets.json")[0], 404)
         self.assertEqual(self.req("/static/fonts/..%2F..%2Fetc%2Fpasswd")[0], 404)
         self.assertEqual(self.req("/static/fonts/hubadmin.py")[0], 404)
+
+    def cookie_of(self, user, password):
+        st, headers, _ = self.req("/login", f"user={user}&password={password}".encode(), "application/x-www-form-urlencoded")
+        self.assertEqual(st, 303, user)
+        return headers["Set-Cookie"].split(";")[0]
+
+    def teachers(self, body, cookie):
+        st, _, data = self.req("/api/teachers", json.dumps(body).encode(), "application/json", cookie)
+        return st, json.loads(data)
+
+    def test_teachers(self):
+        boss = self.cookie_of("samuel.byland", "teacher pw")
+        self.assertEqual(boss.split(".")[0], "hub_admin=bys")
+        self.assertEqual(self.cookie_of("bys", "teacher pw").split(".")[0], "hub_admin=bys")  # the identifier works too
+        self.assertEqual(self.cookie_of("", "teacher pw").split(".")[0], "hub_admin=bys")
+        # the superuser's sets, saved before there were teachers (names without one)
+        H.write_config(self.sets, {"sets": {"3a": {"title": "3a", "apps": [{"id": "photons", "modes": ["check"]}]}}})
+        self.admin.migrate_sets()
+        self.assertEqual(json.loads(self.sets.read_text()),
+                         {"default": "bys", "sets": {"bys/3a": {"title": "3a", "apps": [{"id": "photons", "modes": ["check"]}]}}})
+        # a new teacher: a password shown once
+        self.assertEqual(self.req("/api/teachers")[0], 403)
+        st, d = self.teachers({"action": "create", "id": "abc", "user": " Anna.B ", "name": " Anna <B> "}, boss)
+        self.assertEqual(st, 200)
+        pw = d["password"]
+        self.assertEqual(len(pw), 12)
+        self.assertEqual(d["teachers"], [{"id": "abc", "user": "anna.b", "name": "Anna B", "created": d["teachers"][0]["created"], "sets": 0}])
+        self.assertNotIn(pw, self.admin.teachers_file.read_text())  # only its hash
+        self.assertEqual(self.admin.teachers_file.stat().st_mode & 0o777, 0o600)
+        for bad, why in [("abc", "already"), ("bys", "already"), ("ab", "three"), ("ABC", "three"), ("abcd", "three"),
+                         ("coe", "taken"), ("api", "taken"), (None, "three")]:
+            st, d = self.teachers({"action": "create", "id": bad, "user": "someone"}, boss)
+            self.assertEqual(st, 400, bad)
+            self.assertIn(why, d["error"], bad)
+        for user, why in [("anna.b", "taken"), ("samuel.byland", "taken"), ("bys", "taken"), ("abc", "taken"), ("a b", "user name has"), (".x", "user name has")]:
+            st, d = self.teachers({"action": "create", "id": "xyz", "user": user}, boss)
+            self.assertEqual(st, 400, user)
+            self.assertIn(why, d["error"], user)
+        # the teacher logs in, sees the sets and an account, not the superuser's tabs
+        self.assertEqual(self.req("/login", f"user=abc&password=wrong".encode(), "application/x-www-form-urlencoded")[0], 403)
+        anna = self.cookie_of("anna.b", pw)
+        self.cookie_of("abc", pw)  # the identifier works too
+        st, _, body = self.req("/", cookie=anna)
+        self.assertIn(b'id="view-sets"', body)
+        self.assertIn(b'id="view-account"', body)
+        self.assertIn(b'data-teacher="abc"', body)
+        self.assertIn(b"anna.b (abc)", body)
+        for tab in (b'id="view-apps"', b'id="view-sheets"', b'id="view-teachers"'):
+            self.assertNotIn(tab, body)
+        st, _, body = self.req("/", cookie=boss)
+        self.assertIn(b'id="view-teachers"', body)
+        self.assertNotIn(b'id="view-account"', body)
+        # the superuser's things are not theirs
+        for path in ("/api/config", "/api/teachers", "/api/sheets", "/api/preview?keys=x", "/sheet/0123456789ab.pdf"):
+            self.assertEqual(self.req(path, cookie=anna)[0], 403, path)
+        with mock.patch.object(self.admin, "kept_image", return_value=Path(__file__)) as kept:
+            self.assertEqual(self.req("/sheet/img/x.png", cookie=anna)[0], 404)  # (an image of the sheets: not hers)
+            kept.assert_not_called()
+            self.assertEqual(self.req("/sheet/img/x.png", cookie=boss)[0], 200)
+        for path in ("/api/config", "/api/teachers", "/api/sheets/new", "/api/plan", "/api/images/fetch"):
+            self.assertEqual(self.req(path, b"{}", "application/json", anna)[0], 403, path)
+        # their own sets: learningphysics.ch/abc/<name>; the superuser's stay
+        self.assertEqual(json.loads(self.req("/api/sets", cookie=anna)[2])["sets"], {})
+        mine = {"sets": {"3a": {"title": "Annas 3a", "apps": [{"id": "torque", "modes": ["tutor"]}]}}}
+        st, _, body = self.req("/api/sets", json.dumps(mine).encode(), "application/json", anna)
+        self.assertEqual(st, 200)
+        self.assertEqual(json.loads(body)["teacher"], "abc")
+        on_disk = json.loads(self.sets.read_text())
+        self.assertEqual(list(on_disk["sets"]), ["bys/3a", "abc/3a"])
+        self.assertEqual(on_disk["sets"]["abc/3a"]["title"], "Annas 3a")
+        self.assertEqual(json.loads(self.req("/api/sets", cookie=boss)[2])["sets"]["3a"]["title"], "3a")
+        self.assertEqual(json.loads(self.req("/api/sets", cookie=anna)[2])["sets"], mine["sets"])
+        self.req("/api/sets", b'{"sets": {}}', "application/json", boss)  # the superuser's go, not hers
+        self.assertEqual(list(json.loads(self.sets.read_text())["sets"]), ["abc/3a"])
+        st, d = self.teachers({"action": "rename", "id": "abc", "name": "Anna Beispiel"}, boss)
+        self.assertEqual(d["teachers"][0]["name"], "Anna Beispiel")
+        self.assertEqual(self.teachers({"action": "rename", "id": "abc", "user": "samuel.byland"}, boss)[0], 400)
+        st, d = self.teachers({"action": "rename", "id": "abc", "user": "anna.beispiel"}, boss)
+        self.assertEqual((d["teachers"][0]["user"], d["teachers"][0]["name"]), ("anna.beispiel", "Anna Beispiel"))
+        self.assertEqual(self.req("/login", f"user=anna.b&password={pw}".encode(), "application/x-www-form-urlencoded")[0], 403)
+        self.cookie_of("anna.beispiel", pw)
+        self.assertEqual(d["teachers"][0]["sets"], 1)
+        # her own password: the current one needed; her session goes on with a new cookie
+        pwreq = lambda body, c: self.req("/api/password", json.dumps(body).encode(), "application/json", c)
+        self.assertEqual(pwreq({"current": "wrong", "new": "a new password"}, anna)[0], 400)
+        self.assertEqual(pwreq({"current": pw, "new": "short"}, anna)[0], 400)
+        self.assertEqual(pwreq({"current": "teacher pw", "new": "a new password"}, boss)[0], 400)  # the crossword app's
+        st, headers, _ = pwreq({"current": pw, "new": "a new password"}, anna)
+        self.assertEqual(st, 200)
+        self.assertEqual(self.req("/api/sets", cookie=anna)[0], 403)  # the old session ended
+        anna = headers["Set-Cookie"].split(";")[0]
+        self.assertEqual(self.req("/api/sets", cookie=anna)[0], 200)
+        self.assertEqual(self.req("/login", f"user=abc&password={pw}".encode(), "application/x-www-form-urlencoded")[0], 403)
+        self.cookie_of("abc", "a new password")
+        # a new password from the superuser ends her sessions
+        st, d = self.teachers({"action": "reset", "id": "abc"}, boss)
+        self.assertEqual(self.req("/api/sets", cookie=anna)[0], 403)
+        anna = self.cookie_of("abc", d["password"])
+        self.assertEqual(self.teachers({"action": "reset", "id": "zzz"}, boss)[0], 404)
+        # a session cannot be moved to another teacher
+        forged = anna.replace("hub_admin=abc.", "hub_admin=bys.")
+        self.assertEqual(self.req("/api/sets", cookie=forged)[0], 403)
+        # deleted: the account and its sets
+        st, d = self.teachers({"action": "delete", "id": "abc"}, boss)
+        self.assertEqual(d["teachers"], [])
+        self.assertEqual(json.loads(self.sets.read_text())["sets"], {})
+        self.assertEqual(self.req("/api/sets", cookie=anna)[0], 403)
+        self.assertEqual(self.req("/static/accounts.js")[0], 200)
 
     def test_rate_limit(self):
         for _ in range(H.LOGIN_ATTEMPTS):

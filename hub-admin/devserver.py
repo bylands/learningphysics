@@ -62,7 +62,7 @@ def main() -> int:
                 folder = REPO / FOLDERS.get(m.group(1), m.group(1))
                 if m.group(1) not in NOT_SERVED and folder.is_dir():
                     return str(folder) + (m.group(2) or "")
-                if re.fullmatch(r"/[a-z0-9][a-z0-9-]{0,39}/?", path):  # a set: the hub page
+                if re.fullmatch(r"/([a-z]{3}/)?[a-z0-9][a-z0-9-]{0,39}/?", path):  # a set: the hub page
                     return str(REPO / "hub" / "index.html")
             return str(REPO / "-not-found-")
 

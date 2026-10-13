@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Learning Physics</title>
   <script>
-    // a set of the teacher's (learningphysics.ch/name, see below): its apps only, once they are known
-    if (/^\/[a-z0-9][a-z0-9-]{0,39}\/?$/.test(location.pathname) && !/^\/hub\/?$/.test(location.pathname)) document.documentElement.classList.add('set-page');
+    // a set of a teacher's (learningphysics.ch/xyz/name, or /name: the default teacher's, see below): its apps only, once they are known
+    if (/^\/(?:[a-z]{3}\/)?[a-z0-9][a-z0-9-]{0,39}\/?$/.test(location.pathname) && !/^\/hub\/?$/.test(location.pathname)) document.documentElement.classList.add('set-page');
   </script>
   <link rel="icon" href="/favicon.ico" sizes="48x48">
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
@@ -886,9 +886,10 @@
     // The search matches the name of an app or of one of its tags, in English or German. The order
     // is the standard one (the admin panel's) or, if chosen, the most recently used apps first
     // (tp-recent, noted by lang.js in each app); the choice is remembered (tp-hub-order).
-    // At learningphysics.ch/name (nginx serves this page for any such address that is no folder),
-    // the page shows the teacher's set of that name from /sets.json (written by the admin panel):
-    // its title, and only its apps, in its order, with its modes; they link to /app/?set=name, and
+    // At learningphysics.ch/xyz/name (nginx serves this page for any such address that is no folder),
+    // the page shows teacher xyz's set of that name from /sets.json (written by the admin panel; its
+    // key "xyz/name"); learningphysics.ch/name is the default teacher's (sets.json's "default"):
+    // its title, and only its apps, in its order, with its modes; they link to /app/?set=xyz/name, and
     // the set is remembered for the tab (sessionStorage lp-set) so that the apps apply it at once
     // (see shared/sets.js). No filters there. The page at / leaves any set.
     // Each card lists the module's learning objectives (/objectives.json, read from the apps by
@@ -900,7 +901,7 @@
       const cards = [...main.querySelectorAll('a.app')];
       cards.forEach((c) => { c.dataset.id = (c.getAttribute('href').match(/^\/([a-z0-9-]+)\/?$/) || [])[1]; });
       const idOf = (a) => a.dataset.id;
-      const setName = document.documentElement.classList.contains('set-page') ? location.pathname.replace(/\//g, '') : '';
+      const setName = document.documentElement.classList.contains('set-page') ? location.pathname.replace(/^\/|\/$/g, '') : '';
       let set = null; // the set, once known; false: there is none of that name
       const L = (en, de) => Lang.L(en, de);
 
@@ -1211,7 +1212,13 @@
       if (setName) {
         fetch('/sets.json', { cache: 'no-cache' })
           .then((r) => (r.ok ? r.json() : null))
-          .then((d) => showSet(d && d.sets && typeof d.sets[setName] === 'object' && !Array.isArray(d.sets[setName]) ? d.sets[setName] : null))
+          .then((d) => {
+            // "xyz/name", or "name": the default teacher's (in a sets.json written before there were teachers, "name" itself)
+            const sets = d && d.sets && typeof d.sets === 'object' ? d.sets : {};
+            const own = (k) => (Object.prototype.hasOwnProperty.call(sets, k) ? sets[k] : null);
+            const s = own(setName) || (!setName.includes('/') && d && typeof d.default === 'string' ? own(`${d.default}/${setName}`) : null);
+            showSet(s && typeof s === 'object' && !Array.isArray(s) ? s : null);
+          })
           .catch(() => showSet(null));
         return;
       }
