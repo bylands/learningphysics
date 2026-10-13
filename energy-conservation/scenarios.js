@@ -332,8 +332,8 @@
         { flag: 'fall', f: (V) => Math.sqrt(Math.sqrt(3) * V.g * V.l), tex: '\\sqrt{\\sqrt{3}\\,g\\,\\ell}' }]),
     why: {
       fall: (p) => (p.ang === 90
-        ? L('The bob drops by the length of the string ℓ, from the height of the pivot down to the lowest point.', 'Das Pendel sinkt um die Fadenlänge ℓ, von der Höhe der Aufhängung bis zum tiefsten Punkt.')
-        : L('The bob does not drop by the whole length ℓ: at 60° it hangs ℓ cos 60° = ℓ/2 below the pivot, so it drops by ℓ − ℓ/2.', 'Das Pendel sinkt nicht um die ganze Länge ℓ: Bei 60° hängt es ℓ cos 60° = ℓ/2 unter der Aufhängung, es sinkt also um ℓ − ℓ/2.')),
+        ? L('From which height to which height does the bob drop? Compare the start with the lowest point.', 'Von welcher Höhe bis zu welcher Höhe sinkt das Pendel? Vergleiche den Start mit dem tiefsten Punkt.')
+        : L('The bob does not drop by the whole length ℓ: how far below the pivot does it hang at 60°?', 'Das Pendel sinkt nicht um die ganze Länge ℓ: Wie weit unter der Aufhängung hängt es bei 60°?')),
     },
     states: (p) => [{ pot: G * p.V.h }, { kin: G * p.V.h }],
     energies: () => [{ pot: pot('h') }, { kin: kin('v') }],
@@ -628,8 +628,8 @@
       { flag: 'square', f: (V) => fval(p.fr) * V.h, tex: `${coef(p.fr)}h` },
     ],
     why: {
-      square: (p) => L(`The kinetic energy grows with the square of the speed: at ${fwords(p.fr)} of the final speed, the ball has (${fplain(p.fr)})² of the final kinetic energy.`,
-        `Die kinetische Energie wächst mit dem Quadrat der Geschwindigkeit: Bei ${fwords(p.fr)} der Endgeschwindigkeit hat der Ball (${fplain(p.fr)})² der kinetischen Endenergie.`),
+      square: (p) => L(`The kinetic energy grows with the square of the speed: what fraction of the final kinetic energy does the ball have at ${fwords(p.fr)} of the final speed?`,
+        `Die kinetische Energie wächst mit dem Quadrat der Geschwindigkeit: Welchen Bruchteil der kinetischen Endenergie hat der Ball bei ${fwords(p.fr)} der Endgeschwindigkeit?`),
       fall: () => L("That is the height the ball has fallen, h − h', not its height h' above the ground.", "Das ist die Strecke, um die der Ball gefallen ist, h − h', nicht seine Höhe h' über dem Boden."),
     },
     states: (p) => [{ pot: G * p.V.h }, { pot: G * p.V.hp, kin: 0.5 * sq(p.V.vp) }, { kin: G * p.V.h }],
@@ -886,7 +886,7 @@
       ];
     },
     why: {
-      fall: () => L('The block does not drop by s: on a 30° slope it drops by h = s · sin 30° = s/2.', 'Der Klotz sinkt nicht um s: Auf einer 30°-Ebene sinkt er um h = s · sin 30° = s/2.'),
+      fall: () => L('The block does not drop by s: by how much does it drop on a 30° slope, measured vertically?', 'Der Klotz sinkt nicht um s: Um wie viel sinkt er auf einer 30°-Ebene, senkrecht gemessen?'),
     },
     states: (p) => [{ pot: G * p.V.h }, { kin: G * p.V.h }],
     energies: () => [{ pot: pot('h') }, { kin: kin('v') }],
@@ -1102,12 +1102,12 @@
       { flag: 'square', f: (V) => 2 * V.h + V.s, tex: '2\\,h + s' },
     ],
     why: {
-      square: () => L('The elastic energy grows with the square of the compression: twice the compression needs four times the energy.', 'Die Spannenergie wächst mit dem Quadrat der Stauchung: Doppelte Stauchung braucht vierfache Energie.'),
-      extra: () => L("Count the fall correctly: the ball drops by h' + 2s the second time, and by h + s the first time.", "Zähle den Fall richtig: Beim zweiten Mal sinkt der Ball um h' + 2s, beim ersten Mal um h + s."),
-      diff: () => L('The spring is compressed from relaxed to 2s: it stores ½ k (2s)² = 4 · ½ k s², not only the 3 · ½ k s² added beyond s.', 'Die Feder wird von entspannt bis 2s gestaucht: Sie speichert ½ k (2s)² = 4 · ½ k s², nicht nur die 3 · ½ k s², die über s hinaus dazukommen.'),
-      old: () => L("In the second drop the ball sinks by 2s while it compresses the spring, not by s: it falls h' + 2s in all.", "Beim zweiten Versuch sinkt der Ball um 2s, während er die Feder staucht, nicht um s: Er fällt insgesamt h' + 2s."),
-      first: () => L('In the first drop the ball also sinks by s while it compresses the spring: it falls h + s, not h.', 'Auch beim ersten Versuch sinkt der Ball um s, während er die Feder staucht: Er fällt h + s, nicht h.'),
-      both: () => L("Two slips: the energy grows with the square of the compression (four times, not twice), and the ball falls h' + 2s, not h'.", "Zwei Fehler: Die Energie wächst mit dem Quadrat der Stauchung (vierfach, nicht doppelt), und der Ball fällt h' + 2s, nicht h'."),
+      square: () => L('How does the elastic energy grow with the compression? What does that mean for twice the compression?', 'Wie wächst die Spannenergie mit der Stauchung? Was heisst das für die doppelte Stauchung?'),
+      extra: () => L('Count the fall correctly: by how much does the ball drop each time, including while it compresses the spring?', 'Zähle den Fall richtig: Um wie viel sinkt der Ball jedes Mal, auch während er die Feder staucht?'),
+      diff: () => L('The spring is compressed from relaxed to 2s: how much elastic energy does it store then in all?', 'Die Feder wird von entspannt bis 2s gestaucht: Wie viel Spannenergie speichert sie dann insgesamt?'),
+      old: () => L('In the second drop: by how much does the ball sink while it compresses the spring? How far does it fall in all, then?', 'Beim zweiten Versuch: Um wie viel sinkt der Ball, während er die Feder staucht? Wie weit fällt er dann insgesamt?'),
+      first: () => L('In the first drop the ball also compresses the spring: how far does it fall in all, then?', 'Auch beim ersten Versuch staucht der Ball die Feder: Wie weit fällt er dann insgesamt?'),
+      both: () => L('Two slips: how does the elastic energy grow with the compression, and how far does the ball fall in all the second time?', 'Zwei Fehler: Wie wächst die Spannenergie mit der Stauchung, und wie weit fällt der Ball beim zweiten Mal insgesamt?'),
     },
     states: (p) => { const { m, hp, s, k } = p.V; return [{ pot: m * G * (hp + 2 * s) }, { el: 0.5 * k * sq(2 * s) }]; },
     energies: () => [{ pot: pot("(h' + 2\\,s)") }, { el: el('(2\\,s)') }],
@@ -1261,7 +1261,7 @@
       { flag: 'half', f: (V) => (2 * V.k * sq(V.s)) / (V.m * V.g), tex: '\\frac{2\\,k\\,s^2}{m\\,g}' },
     ],
     why: {
-      fall: () => L('That is the height the block rises, h. Along the 30° slope it travels twice as far: d = h / sin 30° = 2h.', 'Das ist die Höhe h, um die der Klotz steigt. Entlang der 30°-Ebene legt er doppelt so viel zurück: d = h / sin 30° = 2h.'),
+      fall: () => L('That is the height the block rises, h. How long is the path d along the 30° slope for this height?', 'Das ist die Höhe h, um die der Klotz steigt. Wie lang ist der Weg d entlang der 30°-Ebene für diese Höhe?'),
     },
     states: (p) => [{ el: 0.5 * p.V.k * sq(p.V.s) }, { pot: p.V.m * G * p.V.h }],
     energies: () => [{ el: el('s') }, { pot: pot('h') }],

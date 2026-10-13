@@ -64,9 +64,10 @@
   function feedback() {
     let all = true, missing = false;
     const done = st && (st.solved || st.revealed);
-    const nudge = (w) => {
+    // n: the option's own nudge, where its reason would give the answer away
+    const nudge = (w, n) => {
       if (done) return w;
-      let t = w || '';
+      let t = n || w || '';
       // whole steps, then single sentences of the solution
       for (const s of ex.solution) if (s) t = t.split(s).join('');
       for (const s of ex.solution) for (const x of String(s || '').split(/(?<=[.!?])\s+/)) if (x.length > 3) t = t.split(x).join('');
@@ -94,7 +95,7 @@
           el.classList.remove('ok', 'bad', 'miss');
           if (chosen) el.classList.add(o.ok ? 'ok' : 'bad');
           else if (q.multi && o.ok && done) el.classList.add('miss');
-          if (chosen && !o.ok) notes.push(nudge(o.why));
+          if (chosen && !o.ok) notes.push(nudge(o.why, o.nudge));
           if (!chosen && q.multi && o.ok) notes.push(done ? `${ui().missed} ${o.why}` : ui().notAll);
           if (chosen !== o.ok && (chosen || q.multi)) all = false;
         });
@@ -103,7 +104,7 @@
       }
       const o = q.options[on[0]], row = $(`.field[data-key="${q.key}"]`);
       row.className = `field ${o.ok ? 'ok' : 'bad'}`;
-      row.querySelector('.fb').innerHTML = o.ok ? ui().correct : nudge(o.why);
+      row.querySelector('.fb').innerHTML = o.ok ? ui().correct : nudge(o.why, o.nudge);
       if (!o.ok) all = false;
     }
     return all ? true : missing && !document.querySelector('.field.bad, .cand.bad, .tile.bad, .tile.miss, .stmts li.bad, .stmts-fb:not(:empty)') ? null : false;

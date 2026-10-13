@@ -1,7 +1,7 @@
 // Exercises and worked examples from the exercise types (see scenarios.js).
 // practiceOf(type, seed) gives { scenario, difficulty, title, text, fields, figure(view),
 // solutionFigure(), hints, solution, results, p, v }: a number field has its value in its unit and
-// traps [{ value, why, flag }] (the answers under typical wrong ideas), a choice field its right
+// traps [{ value, why, nudge, flag }] (the answers under typical wrong ideas), a choice field its right
 // answer. quiz(exercise, seed) gives a multiple-choice question about one of its fields (for the
 // check), tutorial(lesson) the tutor's frames.
 (function (root) {
@@ -22,11 +22,13 @@
   function exercise(scn, p) {
     const v = scn.solve(p);
     const why = (flag) => (scn.why && scn.why[flag] ? scn.why[flag]() : '');
-    const wrong = scn.traps.map((flag) => ({ vals: scn.solve(p, { [flag]: true }), why: why(flag), flag }));
+    // the nudge after a wrong answer in practice, where the explanation (for the check) would give the answer away
+    const nudge = (flag) => (scn.nudge && scn.nudge[flag] ? scn.nudge[flag]() : '');
+    const wrong = scn.traps.map((flag) => ({ vals: scn.solve(p, { [flag]: true }), why: why(flag), nudge: nudge(flag), flag }));
     const fields = scn.fields(p, v).map((f) => {
       if (f.type !== 'num') return { ...f, value: v[f.key] };
       const value = inUnit(v[f.key], f.unit);
-      const traps = wrong.map((w) => ({ value: inUnit(w.vals[f.key], f.unit), why: w.why, flag: w.flag }))
+      const traps = wrong.map((w) => ({ value: inUnit(w.vals[f.key], f.unit), why: w.why, nudge: w.nudge, flag: w.flag }))
         .filter((t, i, all) => Number.isFinite(t.value) && !same(t.value, value) && all.findIndex((u) => same(u.value, t.value)) === i);
       return { ...f, value, traps };
     });

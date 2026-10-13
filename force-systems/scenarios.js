@@ -57,6 +57,13 @@
 
   // A result to work out (nums): its wrong values with the idea behind each (see generator.js).
   const num$ = (key, what, sym, unit, value, calc, wrongs) => ({ key, what, sym, unit, value, calc, wrongs });
+  // the nudges in practice where those would give the answer away
+  const NUDGE = {
+    swap: () => L('Where is the angle α? Check which component lies next to it and which opposite it.', 'Wo liegt der Winkel α? Prüfe, welche Komponente an ihm liegt und welche ihm gegenüber.'),
+    rope: () => L('The rope force is not the weight of the hanging box: that box accelerates. What does that mean for the forces on it?', 'Die Seilkraft ist nicht die Gewichtskraft der hängenden Kiste: Diese Kiste wird beschleunigt. Was heisst das für die Kräfte auf sie?'),
+    mass: () => L('Divide by the mass of the system whose forces you added: which boxes belong to it?', 'Teile durch die Masse des Systems, dessen Kräfte du addiert hast: Welche Kisten gehören dazu?'),
+    net: () => L('That is the net force. How is the acceleration related to it?', 'Das ist die resultierende Kraft. Wie hängt die Beschleunigung mit ihr zusammen?'),
+  };
   const WRONG = {
     flatN: () => L('The normal force equals the weight only when nothing else pushes or pulls perpendicular to the surface.', 'Die Normalkraft ist nur dann gleich der Gewichtskraft, wenn sonst nichts senkrecht zur Unterlage drückt oder zieht.'),
     swap: () => L('Sine and cosine swapped: the component next to the angle is the force times cos α, the one opposite it times sin α.', 'Sinus und Kosinus vertauscht: Die Komponente am Winkel ist die Kraft mal cos α, die gegenüber mal sin α.'),
@@ -125,7 +132,9 @@
       return [num$('N', L('The normal force of the floor:', 'Die Normalkraft des Bodens:'), T('N'), 'N', v.N,
         `${T('m')}\\,g ${up ? '-' : '+'} ${T('F')} = ${tq(FG, 'N')} ${up ? '-' : '+'} ${tq(p.F, 'N')} = ${tq(v.N, 'N')}`, [
           [up ? FG + p.F : FG - p.F, 'dir', up ? L('The rope pulls up: it carries part of the weight, so the floor pushes less than the weight, not more.', 'Das Seil zieht nach oben: Es trägt einen Teil der Gewichtskraft, darum drückt der Boden weniger als die Gewichtskraft, nicht mehr.')
-            : L('The hand pushes down: the floor has to hold the hand as well, so it pushes more than the weight, not less.', 'Die Hand drückt nach unten: Der Boden muss auch die Hand halten, darum drückt er mehr als die Gewichtskraft, nicht weniger.')],
+            : L('The hand pushes down: the floor has to hold the hand as well, so it pushes more than the weight, not less.', 'Die Hand drückt nach unten: Der Boden muss auch die Hand halten, darum drückt er mehr als die Gewichtskraft, nicht weniger.'),
+            up ? L('The rope pulls up: does the floor have to push more or less than the weight then?', 'Das Seil zieht nach oben: Muss der Boden dann mehr oder weniger drücken als die Gewichtskraft?')
+              : L('The hand pushes down: does the floor have to push more or less than the weight then?', 'Die Hand drückt nach unten: Muss der Boden dann mehr oder weniger drücken als die Gewichtskraft?')],
           [FG, 'flatN', WRONG.flatN()],
           [p.F, 'other', up ? L('That is the force of the rope, not of the floor.', 'Das ist die Kraft des Seils, nicht die des Bodens.') : L('That is the force of the hand, not of the floor.', 'Das ist die Kraft der Hand, nicht die des Bodens.')],
         ])];
@@ -196,10 +205,10 @@
       const FG = p.m * G, [up, side] = p.ref === 'v' ? [cosOf(p), sinOf(p)] : [sinOf(p), cosOf(p)], fn = p.ref === 'v' ? '\\cos' : '\\sin';
       return [num$('N', L('The normal force of the floor:', 'Die Normalkraft des Bodens:'), T('N'), 'N', v.N,
         `${T('m')}\\,g - ${T('F')}${fn}\\alpha = ${tq(FG, 'N')} - ${tq(p.F * up, 'N')} = ${tq(v.N, 'N')}`, [
-          [FG - p.F * side, 'swap', WRONG.swap()],
+          [FG - p.F * side, 'swap', WRONG.swap(), NUDGE.swap()],
           [FG - p.F, 'whole', L('Only the vertical component of the pull carries part of the weight, not the whole pull.', 'Nur die senkrechte Komponente der Zugkraft trägt einen Teil der Gewichtskraft, nicht die ganze Zugkraft.')],
           [FG, 'flatN', WRONG.flatN()],
-          [FG + p.F * up, 'dir', L('The rope pulls upwards: it carries part of the weight, so the floor pushes less than the weight, not more.', 'Das Seil zieht nach oben: Es trägt einen Teil der Gewichtskraft, darum drückt der Boden weniger als die Gewichtskraft, nicht mehr.')],
+          [FG + p.F * up, 'dir', L('The rope pulls upwards: it carries part of the weight, so the floor pushes less than the weight, not more.', 'Das Seil zieht nach oben: Es trägt einen Teil der Gewichtskraft, darum drückt der Boden weniger als die Gewichtskraft, nicht mehr.'), L('The rope pulls up: does the floor have to push more or less than the weight then?', 'Das Seil zieht nach oben: Muss der Boden dann mehr oder weniger drücken als die Gewichtskraft?')],
         ])];
     },
     steps(p, v) {
@@ -266,16 +275,16 @@
         return [num$('F', L('The pulling force:', 'Die Zugkraft:'), T('F'), 'N', v.F,
           `${T('m')}\\,${T('a')} + ${T('mu')}\\,${T('m')}\\,g = ${tq(ma, 'N')} + ${tq(R, 'N')} = ${tq(v.F, 'N')}`, [
             [ma, 'noFric', WRONG.noFric()],
-            [R, 'balance', L('The box accelerates: the pull has to overcome friction and provide the net force m a as well.', 'Die Kiste wird beschleunigt: Die Zugkraft muss die Reibung überwinden und zusätzlich die resultierende Kraft m a liefern.')],
-            [ma - R, 'dir', L('Friction acts against the pull: the pull has to be larger than m a, not smaller.', 'Die Reibung wirkt gegen die Zugkraft: Die Zugkraft muss grösser sein als m a, nicht kleiner.')],
+            [R, 'balance', L('The box accelerates: the pull has to overcome friction and provide the net force m a as well.', 'Die Kiste wird beschleunigt: Die Zugkraft muss die Reibung überwinden und zusätzlich die resultierende Kraft m a liefern.'), L('The box accelerates: do the pull and friction balance then? Set up the equation along the motion.', 'Die Kiste wird beschleunigt: Heben sich Zugkraft und Reibung dann auf? Stelle die Gleichung entlang der Bewegung auf.')],
+            [ma - R, 'dir', L('Friction acts against the pull: the pull has to be larger than m a, not smaller.', 'Die Reibung wirkt gegen die Zugkraft: Die Zugkraft muss grösser sein als m a, nicht kleiner.'), L('Friction acts against the pull: does the pull have to be larger or smaller than m a then?', 'Die Reibung wirkt gegen die Zugkraft: Muss die Zugkraft dann grösser oder kleiner sein als m a?')],
             [ma + p.mu * p.m, 'fric', fric],
           ])];
       }
       return [num$('a', L('The acceleration:', 'Die Beschleunigung:'), T('a'), 'a', v.a,
         `\\frac{${T('F')} - ${T('mu')}\\,${T('m')}\\,g}{${T('m')}} = \\frac{${tq(p.F, 'N')} - ${tq(R, 'N')}}{${tq(p.m, 'kg')}} = ${tq(v.a, 'a')}`, [
           [p.F / p.m, 'noFric', WRONG.noFric()],
-          [(p.F + R) / p.m, 'dir', L('Friction acts against the pull: subtract it.', 'Die Reibung wirkt gegen die Zugkraft: Zieh sie ab.')],
-          [p.F - R, 'net', WRONG.net()],
+          [(p.F + R) / p.m, 'dir', L('Friction acts against the pull: subtract it.', 'Die Reibung wirkt gegen die Zugkraft: Zieh sie ab.'), L('Friction acts against the pull: which sign does it get then?', 'Die Reibung wirkt gegen die Zugkraft: Welches Vorzeichen bekommt sie dann?')],
+          [p.F - R, 'net', WRONG.net(), NUDGE.net()],
           [(p.F - p.mu * p.m) / p.m, 'fric', fric],
         ])];
     },
@@ -570,15 +579,15 @@
         num$('a', L('The acceleration:', 'Die Beschleunigung:'), T('a'), 'a', v.a,
           `\\frac{${T('m')}_2\\,g - ${T('mu')}\\,${T('m')}_1\\,g}{${T('m')}_1 + ${T('m')}_2} = \\frac{${tq(W, 'N')} - ${tq(v.R, 'N')}}{${tq(M, 'kg')}} = ${tq(v.a, 'a')}`, [
             [W / M, 'noFric', WRONG.noFric()],
-            [v.res / p.m2, 'mass', WRONG.mass()],
-            [(W + v.R) / M, 'dir', L('Friction acts against the motion: subtract it.', 'Die Reibung wirkt gegen die Bewegung: Zieh sie ab.')],
-            [v.res / p.m1, 'mass', WRONG.mass()],
+            [v.res / p.m2, 'mass', WRONG.mass(), NUDGE.mass()],
+            [(W + v.R) / M, 'dir', L('Friction acts against the motion: subtract it.', 'Die Reibung wirkt gegen die Bewegung: Zieh sie ab.'), L('Friction acts against the motion: which sign does it get then?', 'Die Reibung wirkt gegen die Bewegung: Welches Vorzeichen bekommt sie dann?')],
+            [v.res / p.m1, 'mass', WRONG.mass(), NUDGE.mass()],
           ]),
         num$('S', L('The rope force:', 'Die Seilkraft:'), T('S'), 'N', v.S,
           `${T('m')}_1\\,${T('a')} + ${T('R')} = ${tq(p.m1 * v.a, 'N')} + ${tq(v.R, 'N')} = ${tq(v.S, 'N')}`, [
-            [W, 'rope', WRONG.rope()],
+            [W, 'rope', WRONG.rope(), NUDGE.rope()],
             [p.m1 * v.a, 'noFric', L('Friction on the box on the table is missing: the rope has to overcome it as well.', 'Die Reibung auf die Kiste auf dem Tisch fehlt: Das Seil muss sie auch überwinden.')],
-            [p.m2 * (G + v.a), 'dir', L('The hanging box accelerates downwards: the rope holds it with less than its weight, not more.', 'Die hängende Kiste wird nach unten beschleunigt: Das Seil hält sie mit weniger als ihrer Gewichtskraft, nicht mit mehr.')],
+            [p.m2 * (G + v.a), 'dir', L('The hanging box accelerates downwards: the rope holds it with less than its weight, not more.', 'Die hängende Kiste wird nach unten beschleunigt: Das Seil hält sie mit weniger als ihrer Gewichtskraft, nicht mit mehr.'), L('The hanging box accelerates downwards: does the rope hold it with more or with less than its weight then?', 'Die hängende Kiste wird nach unten beschleunigt: Hält das Seil sie dann mit mehr oder mit weniger als ihrer Gewichtskraft?')],
           ]),
       ];
     },
@@ -677,7 +686,7 @@
         `${T('m')}\\,${T('a')} + ${T('m')}\\,g\\sin\\alpha + ${T('mu')}\\,${T('m')}\\,g\\cos\\alpha = ${tq(ma, 'N')} + ${tq(Gp, 'N')} + ${tq(v.R, 'N')} = ${tq(v.F, 'N')}`, [
           [ma + v.R, 'noSlope', WRONG.noSlope()],
           [ma + Gp, 'noFric', WRONG.noFric()],
-          [ma + Gn + p.mu * Gp, 'swap', WRONG.swap()],
+          [ma + Gn + p.mu * Gp, 'swap', WRONG.swap(), NUDGE.swap()],
           [ma + Gp + p.mu * FG, 'flatN', L('On the slope, the normal force is m g cos α, not m g: friction is μ m g cos α.', 'Auf der schiefen Ebene ist die Normalkraft m g cos α, nicht m g: Die Reibung ist μ m g cos α.')],
         ])];
     },
@@ -766,13 +775,13 @@
           `\\frac{${T('m')}_2\\,g - ${T('m')}_1\\,g\\sin\\alpha - ${T('R')}}{${T('m')}_1 + ${T('m')}_2} = \\frac{${tq(W, 'N')} - ${tq(Gp, 'N')} - ${tq(v.R, 'N')}}{${tq(M, 'kg')}} = ${tq(v.a, 'a')}`, [
             [(W - v.R) / M, 'noSlope', WRONG.noSlope()],
             [(W - Gp) / M, 'noFric', WRONG.noFric()],
-            [(W - Gn - p.mu * Gp) / M, 'swap', WRONG.swap()],
-            [v.res / p.m2, 'mass', WRONG.mass()],
+            [(W - Gn - p.mu * Gp) / M, 'swap', WRONG.swap(), NUDGE.swap()],
+            [v.res / p.m2, 'mass', WRONG.mass(), NUDGE.mass()],
           ]),
         num$('S', L('The rope force:', 'Die Seilkraft:'), T('S'), 'N', v.S,
           `${T('m')}_2\\,(g - ${T('a')}) = ${tq(p.m2, 'kg')}\\cdot${tq(G - v.a, 'a')} = ${tq(v.S, 'N')}`, [
-            [W, 'rope', WRONG.rope()],
-            [p.m2 * (G + v.a), 'dir', L('The hanging box accelerates downwards: the rope holds it with less than its weight, not more.', 'Die hängende Kiste wird nach unten beschleunigt: Das Seil hält sie mit weniger als ihrer Gewichtskraft, nicht mit mehr.')],
+            [W, 'rope', WRONG.rope(), NUDGE.rope()],
+            [p.m2 * (G + v.a), 'dir', L('The hanging box accelerates downwards: the rope holds it with less than its weight, not more.', 'Die hängende Kiste wird nach unten beschleunigt: Das Seil hält sie mit weniger als ihrer Gewichtskraft, nicht mit mehr.'), L('The hanging box accelerates downwards: does the rope hold it with more or with less than its weight then?', 'Die hängende Kiste wird nach unten beschleunigt: Hält das Seil sie dann mit mehr oder mit weniger als ihrer Gewichtskraft?')],
             [p.m1 * v.a + Gp, 'noFric', L('Friction on the box on the slope is missing: the rope has to overcome it as well.', 'Die Reibung auf die Kiste auf dem Hang fehlt: Das Seil muss sie auch überwinden.')],
           ]),
       ];
@@ -883,15 +892,17 @@
       const unit = L(`F / k gives Δx in metres: ${num(dm, 3)} m = ${num(v.dx)} cm.`, `F / k ergibt Δx in Metern: ${num(dm, 3)} m = ${num(v.dx)} cm.`);
       const mass = L('The spring holds the weight m g, in newtons, not the mass.', 'Die Feder hält die Gewichtskraft m g, in Newton, nicht die Masse.');
       const flip = L('The law of the spring is F = k Δx: divide the force by k (or the force by Δx), not the other way round.', 'Das Federgesetz lautet F = k Δx: Teile die Kraft durch k (bzw. die Kraft durch Δx), nicht umgekehrt.');
+      const flipN = L('The law of the spring is F = k Δx: solve it for the wanted quantity.', 'Das Federgesetz lautet F = k Δx: Löse es nach der gesuchten Grösse auf.');
+      const unitN = L('F / k gives Δx in metres: convert it into the unit asked for.', 'F / k ergibt Δx in Metern: Rechne es in die verlangte Einheit um.');
       if (p.given === 'k') {
         return [num$('dx', SPRING_WHAT.dx(p), '\\Delta x', 'cm', v.dx,
           `\\frac{${T('m')}\\,g}{k} = \\frac{${tq(FG, 'N')}}{${tq(p.k, 'Nm')}} = ${FS.texNum(dm, 3)}\\,\\mathrm{m} = ${tq(v.dx, 'cm')}`, [
-            [dm, 'hooke', unit], [v.dx / G, 'hooke', mass], [p.k / FG, 'hooke', flip],
+            [dm, 'hooke', unit, unitN], [v.dx / G, 'hooke', mass], [p.k / FG, 'hooke', flip, flipN],
           ])];
       }
       return [num$('k', SPRING_WHAT.k(), 'k', 'Nm', p.k,
         `\\frac{${T('m')}\\,g}{\\Delta x} = \\frac{${tq(FG, 'N')}}{${FS.texNum(dm, 3)}\\,\\mathrm{m}} = ${tq(p.k, 'Nm')}`, [
-          [FG / v.dx, 'hooke', L(`Δx must be in metres: ${num(v.dx)} cm = ${num(dm, 3)} m.`, `Δx muss in Metern stehen: ${num(v.dx)} cm = ${num(dm, 3)} m.`)], [p.k / G, 'hooke', mass], [FG * dm, 'hooke', flip],
+          [FG / v.dx, 'hooke', L(`Δx must be in metres: ${num(v.dx)} cm = ${num(dm, 3)} m.`, `Δx muss in Metern stehen: ${num(v.dx)} cm = ${num(dm, 3)} m.`)], [p.k / G, 'hooke', mass], [FG * dm, 'hooke', flip, flipN],
         ])];
     },
     steps(p, v) {
@@ -961,8 +972,8 @@
       return [num$('a', L('The acceleration just after it starts to slide:', 'Die Beschleunigung gleich nachdem sie zu gleiten beginnt:'), T('a'), 'a', v.a,
         `\\frac{k\\,\\Delta x - ${T('mu')}\\,${T('m')}\\,g}{${T('m')}} = \\frac{${tq(v.Fs, 'N')} - ${tq(v.R, 'N')}}{${tq(p.m, 'kg')}} = ${tq(v.a, 'a')}`, [
           [v.Fs / p.m, 'noFric', WRONG.noFric()],
-          [(v.Fs + v.R) / p.m, 'dir', L('Friction acts against the motion: subtract it.', 'Die Reibung wirkt gegen die Bewegung: Zieh sie ab.')],
-          [v.Fs - v.R, 'net', WRONG.net()],
+          [(v.Fs + v.R) / p.m, 'dir', L('Friction acts against the motion: subtract it.', 'Die Reibung wirkt gegen die Bewegung: Zieh sie ab.'), L('Friction acts against the motion: which sign does it get then?', 'Die Reibung wirkt gegen die Bewegung: Welches Vorzeichen bekommt sie dann?')],
+          [v.Fs - v.R, 'net', WRONG.net(), NUDGE.net()],
           [(p.k * p.dx - v.R) / p.m, 'hooke', L(`Δx must be in metres: ${num(p.dx)} cm = ${num(p.dx / 100, 3)} m.`, `Δx muss in Metern stehen: ${num(p.dx)} cm = ${num(p.dx / 100, 3)} m.`)],
         ])];
     },
@@ -1048,8 +1059,8 @@
       if (p.phase === 'terminal') {
         return [num$('D', L('The air resistance on her:', 'Der Luftwiderstand auf sie:'), T('D'), 'N', v.D, `${T('m')}\\,g = ${tq(p.m, 'kg')}\\cdot${tq(G, 'a')} = ${tq(v.D, 'N')}`, [
           [p.m, 'other', L('Her weight is m g, in newtons: the mass times g.', 'Ihre Gewichtskraft ist m g, in Newton: die Masse mal g.')],
-          [0, 'noDrag', L('Air resistance does not vanish at a constant speed: it is there and balances her weight.', 'Der Luftwiderstand verschwindet bei konstanter Geschwindigkeit nicht: Er ist da und hält ihrer Gewichtskraft das Gleichgewicht.')],
-          [p.m * p.u, 'motion', L('There is no force m v: at a constant speed the forces balance, so the air resistance equals her weight.', 'Es gibt keine Kraft m v: Bei konstanter Geschwindigkeit heben sich die Kräfte auf, also ist der Luftwiderstand gleich ihrer Gewichtskraft.')],
+          [0, 'noDrag', L('Air resistance does not vanish at a constant speed: it is there and balances her weight.', 'Der Luftwiderstand verschwindet bei konstanter Geschwindigkeit nicht: Er ist da und hält ihrer Gewichtskraft das Gleichgewicht.'), L('Air resistance does not vanish at a constant speed. What holds for the forces on her then?', 'Der Luftwiderstand verschwindet bei konstanter Geschwindigkeit nicht. Was gilt dann für die Kräfte auf sie?')],
+          [p.m * p.u, 'motion', L('There is no force m v: at a constant speed the forces balance, so the air resistance equals her weight.', 'Es gibt keine Kraft m v: Bei konstanter Geschwindigkeit heben sich die Kräfte auf, also ist der Luftwiderstand gleich ihrer Gewichtskraft.'), L('There is no force m v. What holds for the forces at a constant speed?', 'Es gibt keine Kraft m v. Was gilt für die Kräfte bei konstanter Geschwindigkeit?')],
         ])];
       }
       const early = p.phase === 'early', net = early ? `${T('m')}\\,g - ${T('D')}` : `${T('D')} - ${T('m')}\\,g`;
@@ -1057,9 +1068,10 @@
       const terminal = early ? L('Her speed still changes: the forces do not balance yet, so there is a net force.', 'Ihre Geschwindigkeit ändert sich noch: Die Kräfte heben sich noch nicht auf, also gibt es eine resultierende Kraft.')
         : L('She slows down: the forces do not balance, so there is a net force.', 'Sie wird langsamer: Die Kräfte heben sich nicht auf, also gibt es eine resultierende Kraft.');
       const dir = L('Weight and air resistance point in opposite directions: subtract them.', 'Gewichtskraft und Luftwiderstand zeigen in entgegengesetzte Richtungen: Zieh sie voneinander ab.');
+      const dirN = L('Do weight and air resistance point the same way? What does that mean for the net force?', 'Zeigen Gewichtskraft und Luftwiderstand in dieselbe Richtung? Was heisst das für die resultierende Kraft?');
       return [
         num$('res', L('The net force on her:', 'Die resultierende Kraft auf sie:'), T('res'), 'N', v.res, `${net} = ${nets} = ${tq(v.res, 'N')}`, [
-          [FG + p.D, 'dir', dir], [0, 'terminal', terminal],
+          [FG + p.D, 'dir', dir, dirN], [0, 'terminal', terminal],
           early ? [p.D, 'other', L('The air resistance alone is not the net force: her weight acts too.', 'Der Luftwiderstand allein ist nicht die resultierende Kraft: Ihre Gewichtskraft wirkt auch.')]
             : [FG, 'other', L('The weight alone is not the net force: the air resistance acts too.', 'Die Gewichtskraft allein ist nicht die resultierende Kraft: Der Luftwiderstand wirkt auch.')],
         ]),
@@ -1068,7 +1080,7 @@
             [G, 'noDrag', L('She does not fall freely: the air resistance acts against her velocity.', 'Sie fällt nicht frei: Der Luftwiderstand wirkt gegen ihre Geschwindigkeit.')],
             [0, 'terminal', terminal],
             [p.D / p.m, 'other', L('Divide the net force by the mass, not the air resistance alone.', 'Teile die resultierende Kraft durch die Masse, nicht den Luftwiderstand allein.')],
-            [(FG + p.D) / p.m, 'dir', dir],
+            [(FG + p.D) / p.m, 'dir', dir, dirN],
           ]),
       ];
     },
@@ -1147,7 +1159,7 @@
       return [num$('a', L('Her acceleration (backwards: she slows down):', 'Ihre Beschleunigung (nach hinten: sie wird langsamer):'), T('a'), 'a', v.a,
         `\\frac{${T('D')}}{${T('m')}} = \\frac{${tq(p.D, 'N')}}{${tq(p.m, 'kg')}} = ${tq(v.a, 'a')}`, [
           [p.D / (p.m * G), 'mass', L('Divide by her mass, in kilograms, not by her weight.', 'Teile durch ihre Masse, in Kilogramm, nicht durch ihre Gewichtskraft.')],
-          [0, 'motion', L('She does not keep her speed: nothing pushes her forwards, so the air resistance is the net force and slows her down.', 'Sie behält ihre Geschwindigkeit nicht: Nichts treibt sie nach vorn an, also ist der Luftwiderstand die resultierende Kraft und bremst sie ab.')],
+          [0, 'motion', L('She does not keep her speed: nothing pushes her forwards, so the air resistance is the net force and slows her down.', 'Sie behält ihre Geschwindigkeit nicht: Nichts treibt sie nach vorn an, also ist der Luftwiderstand die resultierende Kraft und bremst sie ab.'), L('Does she keep her speed? Does anything still push her forwards, and which force is left as the net force?', 'Behält sie ihre Geschwindigkeit? Treibt sie noch etwas nach vorn an, und welche Kraft bleibt als resultierende Kraft?')],
           [(p.m * G - p.D) / p.m, 'other', L('Her weight acts vertically, not along the road: it does not change her speed.', 'Ihre Gewichtskraft wirkt senkrecht, nicht entlang der Strasse: Sie ändert ihre Geschwindigkeit nicht.')],
         ])];
     },

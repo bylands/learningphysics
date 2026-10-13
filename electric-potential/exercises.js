@@ -9,6 +9,7 @@
 //   which-way, gain-lose         which way a charge moves; whether it gains or loses potential energy
 //   stmts                        which statements are correct?
 // The check (check.js): OBJECTIVES, CONCEPT and question(kind, seed), a question of an exercise.
+// A wrong option may carry a nudge: shown in practice in place of a why that gives the answer away.
 (function (root) {
   'use strict';
 
@@ -29,6 +30,17 @@
   const frac = (x) => (Math.abs(x - 1) < 1e-9 ? '×1' : x > 1 ? `×${nice(x)}` : `×1/${nice(1 / x)}`);
   const eV = (x) => `${sgn(x)} eV`;
   const RULE = () => L('The potential energy of a charge q at a point with potential V is q·V. Moving from A to B, the field does the work W = q·(V_A − V_B) = q·V_AB, and the kinetic energy changes by that much.', 'Die potentielle Energie einer Ladung q in einem Punkt mit dem Potential Φ ist q·Φ. Von A nach B verrichtet das Feld die Arbeit W = q·(Φ_A − Φ_B) = q·U_AB, und die kinetische Energie ändert sich um so viel.');
+  // In practice, while the exercise is open, a nudge in place of a reason that would give the answer
+  // away (app.js); the reason itself stays for the check and once the exercise is solved.
+  const NUDGE = {
+    testqV: () => L('Does the potential at P depend on the charge placed there?', 'Hängt das Potential in P von der Ladung ab, die dort liegt?'),
+    testqU: () => L('Does the potential difference between P and Q depend on the charge that is moved?', 'Hängt die Spannung zwischen P und Q von der Ladung ab, die bewegt wird?'),
+    gain: () => L('Mind the sign: what sign does the charge have, and does the potential rise or fall from A to B?', 'Achte auf das Vorzeichen: Welches Vorzeichen hat die Ladung, und steigt oder fällt das Potential von A nach B?'),
+    uniform: () => L(`Check the sign: does the potential rise or fall in the direction of the field? Mind the order of the indices, ${vab('B', 'A')}.`, `Prüfe das Vorzeichen: Steigt oder fällt das Potential in Feldrichtung? Achte auf die Reihenfolge der Indizes, ${vab('B', 'A')}.`),
+    v2e: () => L('Check the sign: E = −dV/dx. Where V rises, which sign must E have?', 'Prüfe das Vorzeichen: E = −dΦ/dx. Welches Vorzeichen muss E haben, wo Φ steigt?'),
+    e2v: () => L('Check the direction: E = −dV/dx. Where E is positive, must V rise or fall?', 'Prüfe die Richtung: E = −dΦ/dx. Muss Φ steigen oder fallen, wo E positiv ist?'),
+    field: () => L('That is how the field falls off. How does the potential of a point charge depend on r?', 'So nimmt das Feld ab. Wie hängt das Potential einer Punktladung von r ab?'),
+  };
   const DOWNHILL = () => L('Left to itself, a positive charge moves towards lower potential, a negative charge towards higher potential; either way its potential energy decreases.', 'Sich selbst überlassen, bewegt sich eine positive Ladung zu tieferem Potential, eine negative zu höherem; so oder so nimmt ihre potentielle Energie ab.');
 
   // ---------------------------------------------------------------- graphs V(x) and E(x)
@@ -114,14 +126,14 @@
   // Potential, potential energy and voltage told apart: the test charge at P is replaced by
   // another one. The potential belongs to the point, the potential energy to the charge at the
   // point, the voltage to two points.
-  // options: the right value and its negative, then the first mistake [value, tag, why] of
+  // options: the right value and its negative, then the first mistake [value, tag, why, nudge] of
   // another size and its negative (so that the sign gives nothing away), sorted
   function opts4(right, mistakes, how, fmt) {
     const same = (a, b) => Math.abs(Math.abs(a) - Math.abs(b)) < 1e-9;
-    const [value, tag, why] = mistakes.find(([v]) => !same(v, right)) || [2 * right, 'other', how];
-    const flip = (x, w) => { const m = mistakes.find(([v]) => Math.abs(v + x) < 1e-9); return m ? { value: -x, tag: m[1], why: m[2] } : { value: -x, tag: 'sign', why: w }; };
-    const out = [{ value: right, ok: true, why: '' }, flip(right, how), { value, tag, why }, flip(value, why)];
-    return out.sort((a, b) => a.value - b.value).map((o) => ({ label: fmt(o.value), ok: !!o.ok, tag: o.ok ? undefined : o.tag, why: o.why }));
+    const [value, tag, why, nudge] = mistakes.find(([v]) => !same(v, right)) || [2 * right, 'other', how];
+    const flip = (x, w, n) => { const m = mistakes.find(([v]) => Math.abs(v + x) < 1e-9); return m ? { value: -x, tag: m[1], why: m[2], nudge: m[3] } : { value: -x, tag: 'sign', why: w, nudge: n }; };
+    const out = [{ value: right, ok: true, why: '' }, flip(right, how), { value, tag, why, nudge }, flip(value, why, nudge)];
+    return out.sort((a, b) => a.value - b.value).map((o) => ({ label: fmt(o.value), ok: !!o.ok, tag: o.ok ? undefined : o.tag, why: o.why, ...(o.nudge ? { nudge: o.nudge } : {}) }));
   }
   const num = (x) => nice(x).replace('-', '−');
   function whichQty(seed) {
@@ -140,9 +152,9 @@
         `<p>Im Punkt P ist das Potential Φ_P = ${VP} V, im Punkt Q ist es Φ_Q = ${VQ} V (weit weg null). Eine Probeladung q = ${nC(q)} in P hat die potentielle Energie ${fJ(q * VP)}. Sie wird durch die Ladung q′ = ${nC(q2)} ersetzt.</p>`),
       figs: '',
       questions: [
-        choice('V', L('(a) Now the potential at P is', '(a) Jetzt ist das Potential in P'), opts4(VP, [[k * VP, 'testq', testq(howV)], [U, 'diff', L(`That is the potential difference V_PQ between P and Q. ${howV}`, `Das ist die Spannung U_PQ zwischen P und Q. ${howV}`)]], howV, fV)),
+        choice('V', L('(a) Now the potential at P is', '(a) Jetzt ist das Potential in P'), opts4(VP, [[k * VP, 'testq', testq(howV), NUDGE.testqV()], [U, 'diff', L(`That is the potential difference V_PQ between P and Q. ${howV}`, `Das ist die Spannung U_PQ zwischen P und Q. ${howV}`)]], howV, fV)),
         choice('Ep', L('(b) The potential energy of q′ at P is', '(b) Die potentielle Energie von q′ in P ist'), opts4(q2 * VP, [[q * VP, 'noq', L(`The potential energy is proportional to the charge. ${howE}`, `Die potentielle Energie ist proportional zur Ladung. ${howE}`)], [-q2 * VP, 'sign', L(`Mind the sign of q′. ${howE}`, `Achte auf das Vorzeichen von q′. ${howE}`)], [q2 * U, 'diff', L(`That is the change of its potential energy from Q to P. ${howE}`, `Das ist die Änderung seiner potentiellen Energie von Q nach P. ${howE}`)]], howE, fJ)),
-        choice('U', L('(c) Now the potential difference V_PQ is', '(c) Jetzt ist die Spannung U_PQ'), opts4(U, [[k * U, 'testq', testq(howU)], [VP, 'point', L(`That is the potential at P alone. ${howU}`, `Das ist das Potential in P allein. ${howU}`)], [-U, 'sign', `${ORDER('P', 'Q')} ${howU}`]], howU, fV)),
+        choice('U', L('(c) Now the potential difference V_PQ is', '(c) Jetzt ist die Spannung U_PQ'), opts4(U, [[k * U, 'testq', testq(howU), NUDGE.testqU()], [VP, 'point', L(`That is the potential at P alone. ${howU}`, `Das ist das Potential in P allein. ${howU}`)], [-U, 'sign', `${ORDER('P', 'Q')} ${howU}`]], howU, fV)),
       ],
       hints: [L(`The potential V belongs to a point; the potential energy q·V to a charge at a point; the potential difference ${vab('P', 'Q')} to two points.`, `Das Potential Φ gehört zu einem Punkt; die potentielle Energie q·Φ zu einer Ladung in einem Punkt; die Spannung ${vab('P', 'Q')} zu zwei Punkten.`), L('Which of the three depends on the charge?', 'Welche der drei Grössen hängt von der Ladung ab?')],
       solution: [howV, howE, howU], p: { VP, VQ, q, k },
@@ -168,7 +180,7 @@
       text: L(`<p>The figure shows equipotential lines with their potentials. ${cap(pt.name())} moves from A to B.</p>`, `<p>Die Abbildung zeigt Äquipotentiallinien mit ihren Potentialen. ${cap(pt.name())} bewegt sich von A nach B.</p>`),
       figs: fig(C.fig({ kind: 'uniform', E: [1, 0] }, { box: [-3, 3, -1.8, 1.8], given: xs.map((x) => [[x, -3], [x, 3]]), equiLines: true, points: [A, B], tops: xs.map((x, i) => ({ x, label: `${levels[i]} V` })) })),
       questions: [
-        choice('Ep', L('(a) Its potential energy', '(a) Seine potentielle Energie'), values(dE, [{ value: -dE, tag: 'sign', why: sign }, ...(z === 2 ? [{ value: dE / 2, tag: 'z', why: L(`An alpha particle has the charge 2e. ${how}`, `Ein Alphateilchen hat die Ladung 2e. ${how}`) }] : [])], null, how, { signed: true, fmt: grow, extra: [2, 0.5] })),
+        choice('Ep', L('(a) Its potential energy', '(a) Seine potentielle Energie'), values(dE, [{ value: -dE, tag: 'sign', why: sign, nudge: NUDGE.gain() }, ...(z === 2 ? [{ value: dE / 2, tag: 'z', why: L(`An alpha particle has the charge 2e. ${how}`, `Ein Alphateilchen hat die Ladung 2e. ${how}`) }] : [])], null, how, { signed: true, fmt: grow, extra: [2, 0.5] })),
         choice('K', L('(b) If only the field acts on it, its kinetic energy', '(b) Wirkt nur das Feld darauf, so nimmt seine kinetische Energie'), words(r, [[L('increases', 'zu'), dE < 0, howK], [L('decreases', 'ab'), dE > 0, howK]])),
       ],
       hints: [L('ΔE_pot = q·(V_B − V_A): first the sign of ΔV, then that of q.', 'ΔE_pot = q·(Φ_B − Φ_A): zuerst das Vorzeichen von ΔΦ, dann das von q.'), chargeOf(pt), L('1 eV is the energy of a charge e moved through 1 V.', '1 eV ist die Energie einer Ladung e, die 1 V durchläuft.')],
@@ -191,7 +203,7 @@
         text: L(`<p>A uniform field of ${Ef} V/m points to the right. The grid spacing is 1 cm.</p>`, `<p>Ein homogenes Feld von ${Ef} V/m zeigt nach rechts. Der Gitterabstand ist 1 cm.</p>`),
         figs: fig(C.fig({ kind: 'uniform', E: [1, 0] }, { box: [-3, 3, -1.6, 1.6], lines: true, lineOpts: { gap: 1 }, grid: true, points: [{ x: ax, y: ay, name: 'A' }, { x: bx, y: by, name: 'B' }] })),
         questions: [
-          choice('U', L('(a) the potential difference V_BA', '(a) die Spannung U_BA'), values(dV, [{ value: -dV, tag: 'sign', why: L(`The potential falls along the field; mind the order of the indices, ${vab('B', 'A')}. ${how}`, `Das Potential fällt in Feldrichtung; achte auf die Reihenfolge der Indizes, ${vab('B', 'A')}. ${how}`) }, { value: -Ef * dist * Math.sign(dx), tag: 'straight', why: L(`Not the straight distance AB: only the part along the field lines counts. ${how}`, `Nicht der direkte Abstand AB: Nur der Teil längs der Feldlinien zählt. ${how}`) }, { value: -Ef * Math.abs(by - ay) / 100 * Math.sign(dx), tag: 'across', why: how }], null, how, { signed: true, fmt: fmtV, extra: [2, 0.5] })),
+          choice('U', L('(a) the potential difference V_BA', '(a) die Spannung U_BA'), values(dV, [{ value: -dV, tag: 'sign', why: L(`The potential falls along the field; mind the order of the indices, ${vab('B', 'A')}. ${how}`, `Das Potential fällt in Feldrichtung; achte auf die Reihenfolge der Indizes, ${vab('B', 'A')}. ${how}`), nudge: NUDGE.uniform() }, { value: -Ef * dist * Math.sign(dx), tag: 'straight', why: L(`Not the straight distance AB: only the part along the field lines counts. ${how}`, `Nicht der direkte Abstand AB: Nur der Teil längs der Feldlinien zählt. ${how}`) }, { value: -Ef * Math.abs(by - ay) / 100 * Math.sign(dx), tag: 'across', why: how }], null, how, { signed: true, fmt: fmtV, extra: [2, 0.5] })),
           choice('W', L('(b) the work done by the field on an electron moving from A to B', '(b) die Arbeit, die das Feld an einem Elektron verrichtet, das sich von A nach B bewegt'), values(Wel, [{ value: -Wel, tag: 'sign', why: L(`The electron is negative. ${howW}`, `Das Elektron ist negativ. ${howW}`) }], null, howW, { signed: true, fmt: eV, extra: [2, 0.5] })),
         ],
         hints: [L(`${vab('B', 'A')}. In a uniform field: |ΔV| = E·d, with d the distance measured along the field lines.`, `${vab('B', 'A')}. Im homogenen Feld: |U| = E·d, mit d dem Abstand längs der Feldlinien gemessen.`), L('Moving across the field lines changes nothing: those are equipotentials.', 'Eine Bewegung quer zu den Feldlinien ändert nichts: Das sind Äquipotentiallinien.'), L('The potential falls in the direction of the field.', 'Das Potential fällt in Feldrichtung.')],
@@ -241,7 +253,7 @@
       kind: 'graph', title: back ? L('From E back to V', 'Von E zurück zu Φ') : L('From V to E', 'Von Φ zu E'),
       text: back ? L(`<p>The graph shows the field E along the x axis. At x = 0 the potential is ${g.v0} V.</p>`, `<p>Der Graph zeigt das Feld E längs der x-Achse. Bei x = 0 ist das Potential ${g.v0} V.</p>`) : L('<p>The graph shows the potential V along the x axis (the field points along x).</p>', '<p>Der Graph zeigt das Potential Φ längs der x-Achse (das Feld zeigt längs x).</p>'),
       figs: fig(back ? eGraph(g.E, br) : vGraph(g.V, br)),
-      questions: [{ type: 'pick', key: 'g', label: back ? L('Which graph shows the potential?', 'Welcher Graph zeigt das Potential?') : L('Which graph shows the field?', 'Welcher Graph zeigt das Feld?'), options: r.shuffle(opts).map((o) => ({ html: o.html, ok: !!o.ok, tag: o.tag, why: o.ok ? '' : WHYG[o.tag]() })) }],
+      questions: [{ type: 'pick', key: 'g', label: back ? L('Which graph shows the potential?', 'Welcher Graph zeigt das Potential?') : L('Which graph shows the field?', 'Welcher Graph zeigt das Feld?'), options: r.shuffle(opts).map((o) => ({ html: o.html, ok: !!o.ok, tag: o.tag, why: o.ok ? '' : WHYG[o.tag](), ...(!o.ok && o.tag === 'sign' ? { nudge: back ? NUDGE.e2v() : NUDGE.v2e() } : {}) })) }],
       hints: [L('E = −dV/dx: the field is the slope of the potential graph, with the opposite sign.', 'E = −dΦ/dx: Das Feld ist die Steigung des Potentialgraphen, mit umgekehrtem Vorzeichen.'), back ? L('Going back: V changes by −E·Δx, minus the area under the E graph (1 kV/m · 1 mm = 1 V).', 'Zurück: Φ ändert sich um −E·Δx, minus die Fläche unter dem E-Graphen (1 kV/m · 1 mm = 1 V).') : L('Where V is constant, E = 0; where V falls, E is positive.', 'Wo Φ konstant ist, ist E = 0; wo Φ fällt, ist E positiv.')],
       solution: [sol], solFig: `<div class="figs">${fig(vGraph(g.V, br))}${fig(eGraph(g.E, br))}</div>`, p: { br: br.join(','), sl: g.sl.join(','), v0: g.v0 },
     };
@@ -252,9 +264,9 @@
   // four options: the right factor (×2, ×1/3), the tempting ones (each one mistake, with its reason), fillers
   function factors(right, tempt, how) {
     const out = [{ x: right, ok: true }];
-    for (const [x, why] of tempt) if (out.length < 4 && !out.some((o) => Math.abs(o.x - x) < 1e-9)) out.push({ x, why });
+    for (const [x, why, nudge] of tempt) if (out.length < 4 && !out.some((o) => Math.abs(o.x - x) < 1e-9)) out.push({ x, why, nudge });
     for (const x of FILL) if (out.length < 4 && !out.some((o) => Math.abs(o.x - x) < 1e-9)) out.push({ x, why: how });
-    return out.sort((p, q) => p.x - q.x).map((o) => ({ label: frac(o.x), ok: !!o.ok, why: o.ok ? '' : o.why }));
+    return out.sort((p, q) => p.x - q.x).map((o) => ({ label: frac(o.x), ok: !!o.ok, why: o.ok ? '' : o.why, ...(o.nudge ? { nudge: o.nudge } : {}) }));
   }
   // a multiple of V₀ as a fraction: +3/2 V₀
   function inV0(x) {
@@ -279,9 +291,9 @@
       text: L(`<p>A point charge Q = ${qs(sQ)} (with q > 0; the potential is zero far away). Call V₀ = k·q/r. Point A is at the distance r from Q, point B at the distance ${k}r. Then a second charge q₂ = ${qs(m)} is added: the point P is at the distance r from Q and ${s2 === 1 ? 'r' : `${s2}r`} from q₂.</p>`, `<p>Eine Punktladung Q = ${qs(sQ)} (mit q > 0; weit weg ist das Potential null). Sei Φ₀ = k·q/r. Der Punkt A ist im Abstand r von Q, der Punkt B im Abstand ${k}r. Dann kommt eine zweite Ladung q₂ = ${qs(m)} dazu: Der Punkt P ist im Abstand r von Q und ${s2 === 1 ? 'r' : `${s2}r`} von q₂.</p>`),
       figs: '',
       questions: [
-        choice('V', L('(a) Q alone: compared with A, the potential at B is', '(a) Q allein: Verglichen mit A ist das Potential in B'), factors(1 / k, [[1 / (k * k), field], [k, L('Further away, the potential is smaller in size.', 'Weiter weg ist das Potential dem Betrag nach kleiner.')]], howK)),
-        choice('U', L('(b) Q alone: the potential difference V_BA', '(b) Q allein: die Spannung U_BA'), values(dBA, [{ value: -dBA, tag: 'sign', why: L(`Mind the order of the indices, ${vab('B', 'A')}, and the sign of Q.`, `Achte auf die Reihenfolge der Indizes, ${vab('B', 'A')}, und auf das Vorzeichen von Q.`) }, { value: sQ * (1 / (k * k) - 1), tag: 'field', why: field }], null, howD, { signed: true, fmt: inV0, extra: [2, 0.5] })),
-        choice('P', L('(c) both charges: the potential at P', '(c) beide Ladungen: das Potential in P'), values(VP, [{ value: sQ + Math.abs(m) / s2 * sQ, tag: 'abs', why: L('Mind the signs of the charges.', 'Achte auf die Vorzeichen der Ladungen.') }, { value: sQ + m / (s2 * s2), tag: 'field', why: field }, { value: sQ, tag: 'one', why: L('Both charges contribute.', 'Beide Ladungen tragen bei.') }], null, howP, { signed: true, fmt: inV0, extra: [2, 0.5] })),
+        choice('V', L('(a) Q alone: compared with A, the potential at B is', '(a) Q allein: Verglichen mit A ist das Potential in B'), factors(1 / k, [[1 / (k * k), field, NUDGE.field()], [k, L('Further away, the potential is smaller in size.', 'Weiter weg ist das Potential dem Betrag nach kleiner.')]], howK)),
+        choice('U', L('(b) Q alone: the potential difference V_BA', '(b) Q allein: die Spannung U_BA'), values(dBA, [{ value: -dBA, tag: 'sign', why: L(`Mind the order of the indices, ${vab('B', 'A')}, and the sign of Q.`, `Achte auf die Reihenfolge der Indizes, ${vab('B', 'A')}, und auf das Vorzeichen von Q.`) }, { value: sQ * (1 / (k * k) - 1), tag: 'field', why: field, nudge: NUDGE.field() }], null, howD, { signed: true, fmt: inV0, extra: [2, 0.5] })),
+        choice('P', L('(c) both charges: the potential at P', '(c) beide Ladungen: das Potential in P'), values(VP, [{ value: sQ + Math.abs(m) / s2 * sQ, tag: 'abs', why: L('Mind the signs of the charges.', 'Achte auf die Vorzeichen der Ladungen.') }, { value: sQ + m / (s2 * s2), tag: 'field', why: field, nudge: NUDGE.field() }, { value: sQ, tag: 'one', why: L('Both charges contribute.', 'Beide Ladungen tragen bei.') }], null, howP, { signed: true, fmt: inV0, extra: [2, 0.5] })),
       ],
       hints: [L(`V = k·Q/r, with the sign of Q: it falls with 1/r. The potential difference between two points: ${vab('B', 'A')}.`, `Φ = k·Q/r, mit dem Vorzeichen von Q: Es nimmt mit 1/r ab. Die Spannung zwischen zwei Punkten: ${vab('B', 'A')}.`), L('Potentials of several charges add as numbers (no directions).', 'Die Potentiale mehrerer Ladungen addieren sich als Zahlen (ohne Richtungen).')],
       solution: [howK, howD, howP], p: { sQ, k, m, s2 },

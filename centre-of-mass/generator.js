@@ -1,6 +1,6 @@
 // Exercises and worked examples from the scenarios (see scenarios.js).
 // exercise(scenario, p) gives { scenario, title, text, fields: [{ key, sym, unit, dec, what, value,
-// traps: [{ value, why, flag }] }], figure(view), hints, solution, results };
+// traps: [{ value, why, nudge, flag }] }], figure(view), hints, solution, results };
 // practiceOf(scenario, seed) one of a given situation for practice, generateFor(scenario, seed) one
 // for the check; quiz(exercise, seed) a multiple-choice question about one of its quantities;
 // tutorial(lesson) the tutor's frames.
@@ -16,11 +16,12 @@
   function exercise(scn, p) {
     const v = scn.solve(p);
     const why = (flag) => (scn.why && scn.why[flag] ? scn.why[flag]() : '');
-    const wrong = scn.traps.map((flag) => ({ vals: scn.solve(p, { [flag]: true }), why: why(flag), flag }));
+    const nudge = (flag) => (scn.nudge && scn.nudge[flag] ? scn.nudge[flag]() : '');
+    const wrong = scn.traps.map((flag) => ({ vals: scn.solve(p, { [flag]: true }), why: why(flag), nudge: nudge(flag), flag }));
     const fields = scn.fields(p).map((f) => ({
       ...f,
       value: v[f.key],
-      traps: wrong.map((w) => ({ value: w.vals[f.key], why: w.why, flag: w.flag })).filter((t) => Number.isFinite(t.value) && !same(t.value, v[f.key])),
+      traps: wrong.map((w) => ({ value: w.vals[f.key], why: w.why, nudge: w.nudge, flag: w.flag })).filter((t) => Number.isFinite(t.value) && !same(t.value, v[f.key])),
     }));
     const steps = scn.steps(p, v);
     const all = new Set(steps.flatMap((s) => s.show || []));

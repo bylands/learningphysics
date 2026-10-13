@@ -81,9 +81,10 @@
     const done = st && (st.solved || st.revealed);
     // While the exercise is open, a wrong answer gets a nudge, not the solution: the steps of the
     // solution, whole or sentence by sentence, are taken out of its explanation.
-    const nudge = (w) => {
+    // n: the option's own nudge, where its reason would give the answer away
+    const nudge = (w, n) => {
       if (done) return w;
-      let t = w || '';
+      let t = n || w || '';
       for (const s of ex.solution) if (s) t = t.split(s).join('');
       for (const s of ex.solution) for (const x of String(s || '').split(/(?<=[.!?])\s+/)) if (x.length > 3) t = t.split(x).join('');
       t = t.replace(/\s+/g, ' ').trim();
@@ -107,11 +108,11 @@
       if (q.type === 'pick') {
         document.querySelectorAll(`input[name="q-${q.key}"]`).forEach((x) => x.closest('.cand').classList.remove('ok', 'bad'));
         sel.closest('.cand').classList.add(o.ok ? 'ok' : 'bad');
-        $(`[data-fb="${q.key}"]`).innerHTML = o.ok ? '' : nudge(o.why);
+        $(`[data-fb="${q.key}"]`).innerHTML = o.ok ? '' : nudge(o.why, o.nudge);
       } else {
         const row = $(`.field[data-key="${q.key}"]`);
         row.className = `field ${o.ok ? 'ok' : 'bad'}`;
-        row.querySelector('.fb').innerHTML = o.ok ? ui().correct : nudge(o.why);
+        row.querySelector('.fb').innerHTML = o.ok ? ui().correct : nudge(o.why, o.nudge);
       }
       if (!o.ok) all = false;
     }

@@ -72,7 +72,7 @@
     }
     // signed answers: each size once positive and once negative, so that the sign gives nothing away
     if (o.signed && right !== 0) {
-      const flip = (x) => ({ ...(mistakes.find((m) => Math.abs(m.value + x.value) < 1e-9 * Math.abs(x.value)) || { why: x.why || how, tag: 'sign' }), value: -x.value, ok: false });
+      const flip = (x) => ({ ...(mistakes.find((m) => Math.abs(m.value + x.value) < 1e-9 * Math.abs(x.value)) || { why: x.why || how, tag: 'sign', ...(x.nudge ? { nudge: x.nudge } : {}) }), value: -x.value, ok: false });
       const other = out.find((x) => !x.ok && Math.abs(Math.abs(x.value) - Math.abs(right)) > 0.15 * Math.abs(right))
         || { value: right * extra.find((k) => Math.abs(Math.abs(k) - 1) > 0.15), tag: 'other', why: how, ok: false };
       out.splice(0, out.length, out[0], flip({ ...out[0], why: '' }), other, flip(other));

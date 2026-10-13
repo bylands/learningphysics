@@ -117,7 +117,7 @@
       const s = sig(c.spec);
       if (seen.has(s)) continue;
       seen.add(s);
-      opts.push({ fig: c.spec, ok: false, why: c.why, tag: c.tag });
+      opts.push({ fig: c.spec, ok: false, why: c.why, nudge: c.nudge, tag: c.tag });
     }
     return r.shuffle(opts);
   }
@@ -133,6 +133,14 @@
     fixed: () => L('At a fixed end the crest is reflected upside down; at a free end it comes back upright. In both, its front and back swap: the front is reflected first.', 'An einem festen Ende wird der Buckel umgedreht (nach unten) reflektiert, an einem losen Ende kommt er aufrecht zurück. In beiden Fällen vertauschen sich Front und Rücken: Die Front wird zuerst reflektiert.'),
     mirror: () => L('Mirror trick: imagine a second crest behind the end, the mirror image of the incoming one, running towards it; at a fixed end it is also upside down. On the rope, add both.', 'Spiegeltrick: Stell dir hinter dem Ende einen zweiten Buckel vor, das Spiegelbild des einlaufenden, der ihm entgegenläuft; bei einem festen Ende steht er zudem auf dem Kopf. Auf dem Seil addierst du beide.'),
     medium: () => L('The rope only moves up and down. A point of the rope takes on, a moment later, the displacement the rope now has just behind it, upstream of the wave.', 'Das Seil bewegt sich nur auf und ab. Ein Punkt des Seils nimmt einen Moment später die Auslenkung an, die das Seil jetzt direkt hinter ihm hat, auf der Seite, von der die Welle kommt.'),
+  };
+
+  // Nudges after a wrong answer while the exercise is open, where the reason (why) would give the
+  // answer away; the reason stays for the explanation in check mode and after solving.
+  const NUDGE = {
+    fixed: () => L('What kind of end is it, and which way up does the crest come back from it?', 'Was für ein Ende ist es, und wie herum kommt der Buckel von dort zurück?'),
+    yt: () => L('Which part of the crest arrives at a fixed place first, the front or the back? Where is it then in the y(t) graph?', 'Welcher Teil des Buckels kommt an einem festen Ort zuerst an, die Front oder der Rücken? Wo steht er dann im y(t)-Bild?'),
+    ends: () => L('Look at the ends: what kind of end is each, and can the rope move there?', 'Schau die Enden an: Was für ein Ende ist es jeweils, und kann sich das Seil dort bewegen?'),
   };
 
   // a level of an exercise: 'lin' (straight pieces) or 'smooth'
@@ -155,7 +163,7 @@
       const cands = r.shuffle([
         { spec: snap(at(p, 2 * t), { label: tLabel(t) }), tag: 'dist', why: L(`That is where it is after ${num(2 * t)} s: how far does it move in ${num(t)} s at ${num(v)} m/s?`, `Dort ist er nach ${num(2 * t)} s: Wie weit kommt er in ${num(t)} s mit ${num(v)} m/s?`) },
         { spec: snap(at(p, t / 2), { label: tLabel(t) }), tag: 'dist', why: L(`Too short a distance: how far does it move in ${num(t)} s at ${num(v)} m/s?`, `Eine zu kurze Strecke: Wie weit kommt er in ${num(t)} s mit ${num(v)} m/s?`) },
-        { spec: snap(at({ ...p, dir: -dir }, t), { label: tLabel(t) }), tag: 'dir', why: L(`The crest moves ${dirWord(dir)}.`, `Der Buckel läuft ${dirWord(dir)}.`) },
+        { spec: snap(at({ ...p, dir: -dir }, t), { label: tLabel(t) }), tag: 'dir', why: L(`The crest moves ${dirWord(dir)}.`, `Der Buckel läuft ${dirWord(dir)}.`), nudge: L('Which way does the crest run, according to the text?', 'In welche Richtung läuft der Buckel laut Aufgabe?') },
         { spec: snap(at({ ...p, rev: true }, t), { label: tLabel(t) }), tag: 'turn', why: RULE.move() },
         { spec: snap(at({ ...p, sgn: -1 }, t), { label: tLabel(t) }), tag: 'flip', why: RULE.move() },
       ]);
@@ -190,11 +198,11 @@
     const right = graphT(f, T, { label: L(`x = ${num(xp)} m`, `x = ${num(xp)} m`) });
     const lab = right.label;
     const cands = r.shuffle([
-      { spec: graphT((t) => f(tf + tb - t), T, { label: lab }), tag: 'copy', why: RULE.yt() },
+      { spec: graphT((t) => f(tf + tb - t), T, { label: lab }), tag: 'copy', why: RULE.yt(), nudge: NUDGE.yt() },
       { spec: graphT((t) => f(t - w / v), T, { label: lab }), tag: 'back', why: L(`Which part of the crest reaches x = ${num(xp)} m first, the front or the back?`, `Welcher Teil des Buckels erreicht x = ${num(xp)} m zuerst, die Front oder der Rücken?`) },
       { spec: graphT((t) => f(tf + (t - tf) / 2), T, { label: lab }), tag: 'dur', why: RULE.dur() },
-      { spec: graphT((t) => -f(t), T, { label: lab }), tag: 'flip', why: L('The rope at that place is displaced the same way as the crest: upwards where the crest is up.', 'Das Seil an diesem Ort wird gleich ausgelenkt wie der Buckel: nach oben, wo der Buckel oben ist.') },
-      { spec: graphT((t) => f(tf + tb - t + 0.5), T, { label: lab }), tag: 'copy', why: RULE.yt() },
+      { spec: graphT((t) => -f(t), T, { label: lab }), tag: 'flip', why: L('The rope at that place is displaced the same way as the crest: upwards where the crest is up.', 'Das Seil an diesem Ort wird gleich ausgelenkt wie der Buckel: nach oben, wo der Buckel oben ist.'), nudge: L('As the crest passes, is the rope at that place displaced upwards or downwards?', 'Wird das Seil an diesem Ort nach oben oder nach unten ausgelenkt, wenn der Buckel vorbeiläuft?') },
+      { spec: graphT((t) => f(tf + tb - t + 0.5), T, { label: lab }), tag: 'copy', why: RULE.yt(), nudge: NUDGE.yt() },
     ]);
     return {
       kind: 'yt', level, difficulty: level === 'lin' ? 2 : 3, sc,
@@ -217,10 +225,10 @@
     const at = (pp, tt) => (x) => ev(pp, x, tt);
     const right = snap(at(p, t1), { label: tLabel(t1) });
     const cands = r.shuffle([
-      { spec: snap(at({ ...p, rev: true }, t1), { label: tLabel(t1) }), tag: 'copy', why: RULE.yt() },
+      { spec: snap(at({ ...p, rev: true }, t1), { label: tLabel(t1) }), tag: 'copy', why: RULE.yt(), nudge: NUDGE.yt() },
       { spec: snap(at(p, t1 + w / v), { label: tLabel(t1) }), tag: 'back', why: L(`Which part of the crest arrives at x = ${num(xp)} m first? That fixes where the crest is.`, `Welcher Teil des Buckels kommt zuerst bei x = ${num(xp)} m an? Das legt fest, wo der Buckel ist.`) },
       { spec: snap(at(p, t1 - 0.5), { label: tLabel(t1) }), tag: 'time', why: L(`Go from the time the front passes x = ${num(xp)} m, at ${num(v)} m/s.`, `Geh von der Zeit aus, zu der die Front x = ${num(xp)} m passiert, mit ${num(v)} m/s.`) },
-      { spec: snap(at({ ...p, sgn: -1 }, t1), { label: tLabel(t1) }), tag: 'flip', why: L('Up in the y(t) graph is up on the rope.', 'Oben im y(t)-Bild ist oben auf dem Seil.') },
+      { spec: snap(at({ ...p, sgn: -1 }, t1), { label: tLabel(t1) }), tag: 'flip', why: L('Up in the y(t) graph is up on the rope.', 'Oben im y(t)-Bild ist oben auf dem Seil.'), nudge: L('Does the crest point up or down in the y(t) graph, and how does it stand on the rope then?', 'Zeigt der Buckel im y(t)-Bild nach oben oder nach unten, und wie steht er dann auf dem Seil?') },
       { spec: snap(at(p, t1 + 0.5), { label: tLabel(t1) }), tag: 'time', why: L(`Go from the time the front passes x = ${num(xp)} m, at ${num(v)} m/s.`, `Geh von der Zeit aus, zu der die Front x = ${num(xp)} m passiert, mit ${num(v)} m/s.`) },
     ]);
     return {
@@ -391,9 +399,9 @@
       const fig = (f) => snap(f, { hi: E, end: sc.end, label: tLabel(t) });
       const right = fig(refOnly());
       const cands = r.shuffle([
-        { spec: snap(refOnly({ type: other }), { hi: E, end: sc.end, label: tLabel(t) }), tag: 'sign', why: RULE.fixed() },
-        { spec: fig(refOnly({ notRev: true })), tag: 'order', why: L('The front reaches the end first and so is reflected first: on the way back it leads again, so the crest comes back reversed.', 'Die Front erreicht das Ende zuerst und wird darum zuerst reflektiert: Auf dem Rückweg geht sie wieder voran, der Buckel kommt also seitenverkehrt zurück.') },
-        { spec: snap(refOnly({ type: other, notRev: true }), { hi: E, end: sc.end, label: tLabel(t) }), tag: 'sign', why: RULE.fixed() },
+        { spec: snap(refOnly({ type: other }), { hi: E, end: sc.end, label: tLabel(t) }), tag: 'sign', why: RULE.fixed(), nudge: NUDGE.fixed() },
+        { spec: fig(refOnly({ notRev: true })), tag: 'order', why: L('The front reaches the end first and so is reflected first: on the way back it leads again, so the crest comes back reversed.', 'Die Front erreicht das Ende zuerst und wird darum zuerst reflektiert: Auf dem Rückweg geht sie wieder voran, der Buckel kommt also seitenverkehrt zurück.'), nudge: L('Which part of the crest reaches the end first and so is reflected first? Which part leads on the way back?', 'Welcher Teil des Buckels erreicht das Ende zuerst und wird darum zuerst reflektiert? Welcher Teil geht auf dem Rückweg voran?') },
+        { spec: snap(refOnly({ type: other, notRev: true }), { hi: E, end: sc.end, label: tLabel(t) }), tag: 'sign', why: RULE.fixed(), nudge: NUDGE.fixed() },
         { spec: fig(refOnly({ dt: 1 })), tag: 'time', why: L(`The crest needs (${num(E)} m − x)/v to reach the end and as long again to come back to x.`, `Der Buckel braucht (${num(E)} m − x)/v bis zum Ende und gleich lang zurück bis x.`) },
         { spec: fig(refOnly({ dt: -0.5 })), tag: 'time', why: L(`The crest needs (${num(E)} m − x)/v to reach the end and as long again to come back to x.`, `Der Buckel braucht (${num(E)} m − x)/v bis zum Ende und gleich lang zurück bis x.`) },
       ]);
@@ -423,9 +431,9 @@
       const notRev = (x) => (x > E ? 0 : ev(p, x, t) + ev({ ...image(p, E, et), rev: !image(p, E, et).rev }, x, t));
       const right = fig(sum(sc));
       const cands = r.shuffle([
-        { spec: fig(sum(scOther)), tag: 'sign', why: RULE.fixed() },
+        { spec: fig(sum(scOther)), tag: 'sign', why: RULE.fixed(), nudge: NUDGE.fixed() },
         { spec: fig((x) => yIn(sc, x, t), { more: [{ f: (x) => yRef(sc, x, t), cls: 'main' }] }), tag: 'apart', why: L('Where the incoming and the reflected part overlap, the rope has one displacement: their sum.', 'Wo sich der einlaufende und der reflektierte Teil überlagern, hat das Seil eine einzige Auslenkung: ihre Summe.') },
-        { spec: fig(notRev), tag: 'order', why: RULE.fixed() },
+        { spec: fig(notRev), tag: 'order', why: RULE.fixed(), nudge: NUDGE.fixed() },
         { spec: fig((x) => y(sc, x, t + 0.5)), tag: 'time', why: L(`How far has the front run at t = ${num(t)} s?`, `Wie weit ist die Front bei t = ${num(t)} s gelaufen?`) },
         { spec: fig((x) => yIn(sc, x, t)), tag: 'cut', why: L('The part that has reached the end is not lost: it comes back, and adds to the part still arriving.', 'Der Teil, der das Ende erreicht hat, geht nicht verloren: Er kommt zurück und addiert sich zum Teil, der noch ankommt.') },
       ]);
@@ -452,11 +460,11 @@
     const im = image(p, E, et);
     const right = view(im);
     const cands = r.shuffle([
-      { spec: view(image(p, E, other)), tag: 'sign', why: RULE.fixed() },
-      { spec: view({ ...im, rev: !im.rev }), tag: 'order', why: L('A mirror image is reversed: the front of the incoming crest faces the end, and so does the front of the mirror crest.', 'Ein Spiegelbild ist seitenverkehrt: Die Front des einlaufenden Buckels zeigt zum Ende, und ebenso die Front des Spiegelbuckels.') },
-      { spec: view({ ...im, x0: im.x0 + 1 }), tag: 'dist', why: L('The mirror crest is as far behind the end as the incoming crest is in front of it.', 'Der Spiegelbuckel ist gleich weit hinter dem Ende wie der einlaufende Buckel vor ihm.') },
-      { spec: view({ ...image(p, E, other), rev: !im.rev }), tag: 'sign', why: RULE.fixed() },
-      { spec: view({ ...im, x0: im.x0 - 0.5 }), tag: 'dist', why: L('The mirror crest is as far behind the end as the incoming crest is in front of it.', 'Der Spiegelbuckel ist gleich weit hinter dem Ende wie der einlaufende Buckel vor ihm.') },
+      { spec: view(image(p, E, other)), tag: 'sign', why: RULE.fixed(), nudge: NUDGE.fixed() },
+      { spec: view({ ...im, rev: !im.rev }), tag: 'order', why: L('A mirror image is reversed: the front of the incoming crest faces the end, and so does the front of the mirror crest.', 'Ein Spiegelbild ist seitenverkehrt: Die Front des einlaufenden Buckels zeigt zum Ende, und ebenso die Front des Spiegelbuckels.'), nudge: L('Which way does the front of the incoming crest face? Which way must the front of its mirror image face, then?', 'Wohin zeigt die Front des einlaufenden Buckels? Wohin muss dann die Front seines Spiegelbilds zeigen?') },
+      { spec: view({ ...im, x0: im.x0 + 1 }), tag: 'dist', why: L('The mirror crest is as far behind the end as the incoming crest is in front of it.', 'Der Spiegelbuckel ist gleich weit hinter dem Ende wie der einlaufende Buckel vor ihm.'), nudge: L('Measure: how far is the incoming crest from the end, and how far the mirror crest?', 'Miss nach: Wie weit ist der einlaufende Buckel vom Ende entfernt, und wie weit der Spiegelbuckel?') },
+      { spec: view({ ...image(p, E, other), rev: !im.rev }), tag: 'sign', why: RULE.fixed(), nudge: NUDGE.fixed() },
+      { spec: view({ ...im, x0: im.x0 - 0.5 }), tag: 'dist', why: L('The mirror crest is as far behind the end as the incoming crest is in front of it.', 'Der Spiegelbuckel ist gleich weit hinter dem Ende wie der einlaufende Buckel vor ihm.'), nudge: L('Measure: how far is the incoming crest from the end, and how far the mirror crest?', 'Miss nach: Wie weit ist der einlaufende Buckel vom Ende entfernt, und wie weit der Spiegelbuckel?') },
     ]);
     return {
       kind: 'mirror', level, difficulty: level === 'lin' ? 3 : 4, sc,
@@ -477,11 +485,12 @@
     const right = g(f);
     const tf = (E - p.x0 - p.sh.w) / v;
     const cands = r.shuffle([
-      { spec: g(inc), tag: 'single', why: type === 'free' ? L('At a free end the incoming and the reflected crest overlap exactly: the end moves twice as far.', 'An einem losen Ende überlagern sich der einlaufende und der reflektierte Buckel genau: Das Ende bewegt sich doppelt so weit.') : L('A fixed end cannot move: y = 0 all the time.', 'Ein festes Ende kann sich nicht bewegen: y = 0 die ganze Zeit.') },
-      { spec: g((t) => (type === 'free' ? 0 : 2 * inc(t))), tag: 'sign', why: RULE.fixed() },
-      { spec: g((t) => 2 * inc(tf + tb - t)), tag: 'copy', why: RULE.yt() },
-      { spec: g((t) => -2 * inc(t)), tag: 'sign', why: RULE.fixed() },
-      { spec: g((t) => inc(tf + tb - t)), tag: 'copy', why: RULE.yt() },
+      { spec: g(inc), tag: 'single', why: type === 'free' ? L('At a free end the incoming and the reflected crest overlap exactly: the end moves twice as far.', 'An einem losen Ende überlagern sich der einlaufende und der reflektierte Buckel genau: Das Ende bewegt sich doppelt so weit.') : L('A fixed end cannot move: y = 0 all the time.', 'Ein festes Ende kann sich nicht bewegen: y = 0 die ganze Zeit.'),
+        nudge: type === 'free' ? L('At the end the incoming and the reflected crest overlap: what does their sum give there?', 'Am Ende überlagern sich der einlaufende und der reflektierte Buckel: Was gibt ihre Summe dort?') : L('What kind of end is it: can it move at all?', 'Was für ein Ende ist es: Kann es sich überhaupt bewegen?') },
+      { spec: g((t) => (type === 'free' ? 0 : 2 * inc(t))), tag: 'sign', why: RULE.fixed(), nudge: NUDGE.fixed() },
+      { spec: g((t) => 2 * inc(tf + tb - t)), tag: 'copy', why: RULE.yt(), nudge: NUDGE.yt() },
+      { spec: g((t) => -2 * inc(t)), tag: 'sign', why: RULE.fixed(), nudge: NUDGE.fixed() },
+      { spec: g((t) => inc(tf + tb - t)), tag: 'copy', why: RULE.yt(), nudge: NUDGE.yt() },
     ]);
     return {
       kind: 'end', level, difficulty: level === 'lin' ? 3 : 4, sc,
@@ -520,17 +529,18 @@
       const q = { ...p, rev: !p.rev }, notRev = (t) => y({ ...sc, pulses: [q] }, xp, t);
       const gap = (tb1 - t2), noOverlap = (t) => inc(t) + ref(t - gap);
       const whyT = L(`The reflected crest has to run to the end and back: ${num(d)} m and ${num(d)} m at ${num(v)} m/s, ${num((2 * d) / v)} s after the incoming one.`, `Der reflektierte Buckel muss bis zum Ende und zurück laufen: ${num(d)} m und ${num(d)} m mit ${num(v)} m/s, ${num((2 * d) / v)} s nach dem einlaufenden.`);
+      const nudgeT = L(`The reflected crest runs ${num(d)} m to the end and ${num(d)} m back: how long does it take at ${num(v)} m/s?`, `Der reflektierte Buckel läuft ${num(d)} m bis zum Ende und ${num(d)} m zurück: Wie lange braucht er dafür mit ${num(v)} m/s?`);
       const groups = [
-        [{ spec: g((t) => inc(t) - ref(t)), tag: 'sign', why: RULE.fixed() }],
-        [{ spec: g(notRev), tag: 'copy', why: RULE.yt() }],
+        [{ spec: g((t) => inc(t) - ref(t)), tag: 'sign', why: RULE.fixed(), nudge: NUDGE.fixed() }],
+        [{ spec: g(notRev), tag: 'copy', why: RULE.yt(), nudge: NUDGE.yt() }],
         r.shuffle([
           { spec: g(inc), tag: 'single', why: L('The crest is not lost at the end: it comes back over the place and adds to the part still arriving.', 'Der Buckel geht am Ende nicht verloren: Er kommt über den Ort zurück und addiert sich zum Teil, der noch ankommt.') },
           { spec: g(inc, { more: [{ f: ref, cls: 'main' }] }), tag: 'apart', why: L('Where the incoming and the reflected crest overlap, the rope has one displacement: their sum.', 'Wo sich der einlaufende und der reflektierte Buckel überlagern, hat das Seil eine einzige Auslenkung: ihre Summe.') },
-          { spec: g(noOverlap), tag: 'gap', why: L(`The reflected crest comes back while the incoming one is still passing: ${whyT}`, `Der reflektierte Buckel kommt zurück, während der einlaufende noch vorbeiläuft: ${whyT}`) },
+          { spec: g(noOverlap), tag: 'gap', why: L(`The reflected crest comes back while the incoming one is still passing: ${whyT}`, `Der reflektierte Buckel kommt zurück, während der einlaufende noch vorbeiläuft: ${whyT}`), nudge: L(`${nudgeT} Has the incoming one passed completely by then?`, `${nudgeT} Ist der einlaufende dann schon ganz vorbei?`) },
         ]),
         r.shuffle([
-          { spec: g((t) => inc(t) + ref(t + d / v)), tag: 'time', why: whyT },
-          { spec: g((t) => inc(t) + ref(t - d / v)), tag: 'time', why: whyT },
+          { spec: g((t) => inc(t) + ref(t + d / v)), tag: 'time', why: whyT, nudge: nudgeT },
+          { spec: g((t) => inc(t) + ref(t - d / v)), tag: 'time', why: whyT, nudge: nudgeT },
           { spec: g((t) => f(t - 0.5)), tag: 'time', why: L(`When does the front reach x = ${num(xp)} m?`, `Wann erreicht die Front x = ${num(xp)} m?`) },
         ]),
       ];
@@ -655,11 +665,11 @@
     const fig = (qq, pp, o) => standFig(len, ends, qq, pp, o);
     const right = fig(q, ph);
     const cands = r.shuffle([
-      { spec: fig(q + 1, 1 - ph), tag: 'ends', why: WHY_ENDS() },
-      { spec: fig(q + 1, ph), tag: 'ends', why: WHY_ENDS() },
-      { spec: fig(q, 1 - ph), tag: 'ends', why: WHY_ENDS() },
+      { spec: fig(q + 1, 1 - ph), tag: 'ends', why: WHY_ENDS(), nudge: NUDGE.ends() },
+      { spec: fig(q + 1, ph), tag: 'ends', why: WHY_ENDS(), nudge: NUDGE.ends() },
+      { spec: fig(q, 1 - ph), tag: 'ends', why: WHY_ENDS(), nudge: NUDGE.ends() },
       { spec: fig(q, ph, { warp: true }), tag: 'even', why: WHY_EVEN() },
-      ...(q > 1 ? [{ spec: fig(q - 1, ph), tag: 'ends', why: WHY_ENDS() }] : []),
+      ...(q > 1 ? [{ spec: fig(q - 1, ph), tag: 'ends', why: WHY_ENDS(), nudge: NUDGE.ends() }] : []),
     ]);
     return {
       kind: 'stand', variant: 'pic', level: 'mixed', difficulty: 2,
@@ -723,7 +733,7 @@
     }
     // denominators d (λ = λ₁/d; d < 1 for a multiple)
     const cands = [
-      { d: 1 / k, tag: 'ratio', why: L(`More loops on the same rope: a shorter wavelength. ${why}`, `Mehr Schleifen auf demselben Seil: eine kürzere Wellenlänge. ${why}`) },
+      { d: 1 / k, tag: 'ratio', why: L(`More loops on the same rope: a shorter wavelength. ${why}`, `Mehr Schleifen auf demselben Seil: eine kürzere Wellenlänge. ${why}`), nudge: L('More loops on the same rope: is the wavelength longer or shorter then?', 'Mehr Schleifen auf demselben Seil: Ist die Wellenlänge dann länger oder kürzer?') },
       { d: k + 1, tag: 'count', why: L(`Count the loops, not the nodes. ${why}`, `Zähle die Schleifen, nicht die Knoten. ${why}`) },
       ...(same ? [{ d: 2 * k, tag: 'halfS', why }] : [{ d: (q + 1) / 2, tag: 'ends', why: L(`At the free end the last piece is half a loop. ${why}`, `Am losen Ende ist das letzte Stück eine halbe Schleife. ${why}`) }]),
       { d: k - 1, tag: 'count', why },
@@ -789,7 +799,10 @@
     const why = (o) => (what === 'refl'
       ? L(`This sketch is right: at ${endWord(o.type)} the crest comes back ${o.type === 'fixed' ? 'upside down' : 'upright'}.`, `Diese Skizze stimmt: An ${o.type === 'fixed' ? 'einem festen Ende' : 'einem losen Ende'} kommt der Buckel ${o.type === 'fixed' ? 'umgedreht' : 'aufrecht'} zurück.`)
       : L('This sketch is right: a node at each fixed end, an antinode at each free end, the nodes evenly spaced.', 'Diese Skizze stimmt: ein Knoten an jedem festen Ende, ein Bauch an jedem losen Ende, die Knoten gleichmässig verteilt.'));
-    const options = sketches.map((o) => ({ fig: o.fig, ok: o.ok, why: o.ok ? '' : why(o), tag: o.ok ? '' : what === 'refl' ? 'errRefl' : 'errStand' }));
+    const nudge = () => (what === 'refl'
+      ? L('This sketch is right. Check each sketch: which kind of end, and which way up does the crest come back?', 'Diese Skizze stimmt. Prüfe jede Skizze: Was für ein Ende, und wie herum kommt der Buckel zurück?')
+      : L('This sketch is right. Check each end of each sketch (node or antinode?) and the spacing of the nodes.', 'Diese Skizze stimmt. Prüfe jedes Ende jeder Skizze (Knoten oder Bauch?) und die Abstände der Knoten.'));
+    const options = sketches.map((o) => ({ fig: o.fig, ok: o.ok, why: o.ok ? '' : why(o), nudge: o.ok ? '' : nudge(), tag: o.ok ? '' : what === 'refl' ? 'errRefl' : 'errStand' }));
     const n = options.findIndex((o) => o.ok) + 1;
     return {
       kind: 'error', variant: what, level: 'mixed', difficulty: 3, fig: null, anim: null, solAnim: null,

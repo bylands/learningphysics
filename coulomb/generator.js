@@ -1,7 +1,8 @@
 // Exercises and worked examples from the situations (see scenarios.js).
 // practiceOf(type, seed) gives { scenario, difficulty, title, text, fields, figure(view),
 // solutionFigure(), hints, solution, results, p, v }: a number field has its value in its unit and
-// traps [{ value, why, flag }] (the answers under typical wrong ideas), a choice, direction or
+// traps [{ value, why, nudge, flag }] (the answers under typical wrong ideas; why explains the
+// mistake, as in the check, nudge is the feedback in practice), a choice, direction or
 // ranking field its right answer (a direction or choice also traps: the answers under typical wrong
 // ideas). quiz(exercise, seed, key) gives a multiple-choice question about one of its fields (for the
 // check), tutorial(lesson) the tutor's frames.
@@ -26,17 +27,19 @@
   function exercise(scn, p) {
     const v = scn.solve(p);
     const why = (flag) => (scn.why && scn.why[flag] ? scn.why[flag]() : '');
-    const wrong = scn.traps.map((flag) => ({ vals: scn.solve(p, { [flag]: true }), why: why(flag), flag }));
+    // the nudge after a wrong answer in practice, where the why would give the answer away
+    const nudge = (flag) => (scn.nudge && scn.nudge[flag] ? scn.nudge[flag]() : why(flag));
+    const wrong = scn.traps.map((flag) => ({ vals: scn.solve(p, { [flag]: true }), why: why(flag), nudge: nudge(flag), flag }));
     const fields = scn.fields(p).map((f) => {
       // a direction or a choice: the other answers that typical wrong ideas give
       if (f.type === 'dir' || f.type === 'choice') {
-        const traps = wrong.map((w) => ({ value: w.vals[f.key], why: w.why, flag: w.flag }))
+        const traps = wrong.map((w) => ({ value: w.vals[f.key], why: w.why, nudge: w.nudge, flag: w.flag }))
           .filter((t, i, all) => t.value != null && t.value !== v[f.key] && all.findIndex((u) => u.value === t.value) === i);
         return { ...f, value: v[f.key], traps };
       }
       if (f.type !== 'num') return { ...f, value: v[f.key] };
       const value = inUnit(v[f.key], f.unit);
-      const traps = wrong.map((w) => ({ value: inUnit(w.vals[f.key], f.unit), why: w.why, flag: w.flag }))
+      const traps = wrong.map((w) => ({ value: inUnit(w.vals[f.key], f.unit), why: w.why, nudge: w.nudge, flag: w.flag }))
         .filter((t, i, all) => Number.isFinite(t.value) && !same(t.value, value) && all.findIndex((u) => same(u.value, t.value)) === i);
       return { ...f, value, traps };
     });

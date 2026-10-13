@@ -24,7 +24,7 @@
   const Eq = root.Equations || require('./equations.js');
   const Plot = root.Plot || require('./plot.js');
   const { L, pick, shuffle, tnum, q, tq, sig, speedUnit, rng } = OC;
-  const { MISTAKES, PWHY, FORMS, byId } = Eq;
+  const { MISTAKES, PWHY, PNUDGE, FORMS, byId } = Eq;
 
   // ---------------------------------------------------------------- helpers
   const step = (rule, html, show = []) => ({ text: `<p class="step-rule">${rule}</p>${html}`, show });
@@ -64,6 +64,11 @@
     start: L('This one starts at the opposite point of the circle: y(0) = −A·sin φ₀.', 'Diese beginnt im gegenüberliegenden Punkt des Kreises: y(0) = −A·sin φ₀.'),
     late: L('This one starts a quarter turn away from where the pointer is at t = 0.', 'Diese beginnt eine Vierteldrehung von dort entfernt, wo der Zeiger bei t = 0 steht.'),
   });
+  // the nudges in practice where the reason above would give the right graph away
+  const circleNudge = () => ({
+    turn: L('This is the shadow of a pointer turning clockwise. Which way does the arrow ω show it turning?', 'Das ist der Schatten eines Zeigers, der sich im Uhrzeigersinn dreht. Wie herum dreht er sich laut dem Pfeil ω?'),
+    proj: L('This is the shadow on the horizontal axis, A·cos(ωt + φ₀). The body is at the height of the tip: on which axis is the shadow that shows its height?', 'Das ist der Schatten auf der horizontalen Achse, A·cos(ωt + φ₀). Der Körper ist auf der Höhe der Spitze: Auf welcher Achse liegt der Schatten, der diese Höhe zeigt?'),
+  });
   // where the tip is at t = 0, and which way it goes next (it rises where cos φ₀ > 0)
   function startOf(k) {
     const phi = (k * Math.PI) / 4, y = Math.sin(phi), c = Math.cos(phi), y0 = Math.abs(y) < 1e-9 ? '0' : Math.abs(Math.abs(y) - 1) < 1e-9 ? (y > 0 ? 'A' : '-A') : `${y > 0 ? '' : '-'}0.71\\,A`;
@@ -87,7 +92,7 @@
     },
     solve: () => ({ graph: 'right' }),
     traps: [],
-    fields: (p) => [choice('graph', L('Which graph shows y(t)?', 'Welcher Graph zeigt y(t)?'), p.kinds.map((k) => [k, circleGraph(k, (p.k * Math.PI) / 4), k === 'right' ? '' : circleWhy()[k], CFLAG[k]]), { pics: true, ask: L('Which graph shows the displacement y(t) of the body?', 'Welcher Graph zeigt die Auslenkung y(t) des Körpers?') })],
+    fields: (p) => [choice('graph', L('Which graph shows y(t)?', 'Welcher Graph zeigt y(t)?'), p.kinds.map((k) => [k, circleGraph(k, (p.k * Math.PI) / 4), k === 'right' ? '' : circleWhy()[k], CFLAG[k], circleNudge()[k]]), { pics: true, ask: L('Which graph shows the displacement y(t) of the body?', 'Welcher Graph zeigt die Auslenkung y(t) des Körpers?') })],
     text: () => L('A pointer of length A turns anticlockwise at a constant angular velocity ω; the figure shows it at t = 0. A body moves up and down so that it is always at the height of the pointer’s tip. Which graph shows its displacement y(t)?',
       'Ein Zeiger der Länge A dreht sich mit konstanter Winkelgeschwindigkeit ω im Gegenuhrzeigersinn; die Figur zeigt ihn bei t = 0. Ein Körper bewegt sich so auf und ab, dass er immer auf der Höhe der Zeigerspitze ist. Welcher Graph zeigt seine Auslenkung y(t)?'),
     hints: () => [
@@ -137,11 +142,12 @@
   const yesNo = (p) => {
     const f = byId(p.eq.form), again = L('Bring it into the form ÿ = −ω²·y (or compare the solution with y = A·cos(ωt − φ₀)) and look again.', 'Bring sie in die Form ÿ = −ω²·y (oder vergleiche die Lösung mit y = A·cos(ωt − φ₀)) und schau nochmals.');
     const noFlag = f.shifted ? 'shift' : f.kind === 'ode' && f.level >= 2 ? 'form' : null;
-    return [['yes', L('yes', 'ja'), again, f.shm ? null : f.mistake], ['no', L('no', 'nein'), f.shifted ? L(`A constant only shifts the equilibrium, here to $${eqm(p)}$: around it, the motion is harmonic.`, `Eine Konstante verschiebt nur die Gleichgewichtslage, hier nach $${eqm(p)}$: Um sie herum ist die Bewegung harmonisch.`) : again, f.shm ? noFlag : null]];
+    return [['yes', L('yes', 'ja'), again, f.shm ? null : f.mistake], ['no', L('no', 'nein'), f.shifted ? L(`A constant only shifts the equilibrium, here to $${eqm(p)}$: around it, the motion is harmonic.`, `Eine Konstante verschiebt nur die Gleichgewichtslage, hier nach $${eqm(p)}$: Um sie herum ist die Bewegung harmonisch.`) : again, f.shm ? noFlag : null,
+      f.shifted ? L('What does the constant do? Write the displacement from a shifted equilibrium and look at the equation it obeys.', 'Was bewirkt die Konstante? Schreib die Auslenkung von einer verschobenen Gleichgewichtslage aus und schau, welche Gleichung sie erfüllt.') : '']];
   };
   function periodField(p, after, r) {
     const f = byId(p.eq.form), [right, ...wrong] = f.T(Eq.sym(p.eq));
-    const opts = [['right', `$T = ${right}$`, '', null], ...wrong.map(([tex, flag]) => [flag, `$T = ${tex}$`, PWHY[flag](), flag])];
+    const opts = [['right', `$T = ${right}$`, '', null], ...wrong.map(([tex, flag]) => [flag, `$T = ${tex}$`, PWHY[flag](), flag, PNUDGE[flag]()])];
     return choice('T', L('Its period:', 'Ihre Periode:'), shuffle(r, opts), { after, ask: L('It describes an SHM. What is its period?', 'Sie beschreibt eine harmonische Schwingung. Wie gross ist ihre Periode?') });
   }
   // What is wrong: the real mistake, and three features the equation really has, but which are
@@ -298,6 +304,18 @@
     };
     return W[k] || '';
   }
+  // the nudge in practice where that reason would give the right graph or equation away: the
+  // graph of an undamped SHM (or one around 0) chosen for another equation
+  function graphNudge(k, right) {
+    if (k === 'shm' || k === 'unshift') {
+      return right === 'damp' || right === 'anti' ? L('Here the amplitude stays the same. What does the term with ẏ in the equation do to the oscillation?', 'Hier bleibt die Amplitude gleich. Was macht der Term mit ẏ in der Gleichung mit der Schwingung?')
+        : right === 'shift' ? L('This one oscillates around 0. What does the constant g in the equation do?', 'Diese schwingt um 0. Was bewirkt die Konstante g in der Gleichung?')
+          : right === 'plus' ? L('An oscillation needs a restoring force. Which sign stands in the equation, and what does the body do then?', 'Eine Schwingung braucht eine rücktreibende Kraft. Welches Vorzeichen steht in der Gleichung, und was macht der Körper dann?')
+            : right === 'first' ? L('An oscillation needs the second derivative. Which derivative stands in the equation, and what does the body do then?', 'Eine Schwingung braucht die zweite Ableitung. Welche Ableitung steht in der Gleichung, und was macht der Körper dann?')
+              : right === 'const' ? L('Does the acceleration in the equation depend on the displacement? What does the graph look like then?', 'Hängt die Beschleunigung in der Gleichung von der Auslenkung ab? Wie sieht der Graph dann aus?') : '';
+    }
+    return '';
+  }
   const FLAG = { damp: 'damp', anti: 'sign', plus: 'sign', first: 'order', const: 'const', shift: 'shift', unshift: 'shift', shm: null };
 
   // the given kind and the wrong ones, in the order they are tried (some may look alike)
@@ -346,7 +364,7 @@
       },
       solve: (p) => ({ graph: p.given }),
       traps: [],
-      fields: (p) => [choice('graph', L('Which graph shows the motion?', 'Welcher Graph zeigt die Bewegung?'), p.kinds.map((k) => [k, qGraph(k, p.y, axisOf(p.kinds)), k === p.given ? '' : graphWhy(k, p.given), k === p.given ? null : FLAG[k]]), { pics: true })],
+      fields: (p) => [choice('graph', L('Which graph shows the motion?', 'Welcher Graph zeigt die Bewegung?'), p.kinds.map((k) => [k, qGraph(k, p.y, axisOf(p.kinds)), k === p.given ? '' : graphWhy(k, p.given), k === p.given ? null : FLAG[k], k === p.given ? '' : graphNudge(k, p.given)]), { pics: true })],
       text: (p) => L(`A body moves according to the equation below (the constants are positive). At the start it is displaced to ${p.y} > 0 and at rest. Which graph shows its motion?`,
         `Ein Körper bewegt sich gemäss der Gleichung unten (die Konstanten sind positiv). Am Anfang ist er nach ${p.y} > 0 ausgelenkt und in Ruhe. Welcher Graph zeigt seine Bewegung?`),
       hints: () => MATCH_HINTS(),
@@ -371,7 +389,7 @@
     },
     solve: (p) => ({ eq: p.given }),
     traps: [],
-    fields: (p) => [choice('eq', L('Which equation belongs to the graph?', 'Welche Gleichung gehört zum Graphen?'), p.kinds.map((k) => [k, `$${NKINDS[k].tex(p.y)}$`, k === p.given ? '' : graphWhy(k, p.given), k === p.given ? null : FLAG[k]]), { stack: true })],
+    fields: (p) => [choice('eq', L('Which equation belongs to the graph?', 'Welche Gleichung gehört zum Graphen?'), p.kinds.map((k) => [k, `$${NKINDS[k].tex(p.y)}$`, k === p.given ? '' : graphWhy(k, p.given), k === p.given ? null : FLAG[k], k === p.given ? '' : graphNudge(k, p.given)]), { stack: true })],
     text: (p) => L(`The graph shows the motion of a body; it starts at rest. Which equation of motion belongs to it (the constants are positive)?`, `Der Graph zeigt die Bewegung eines Körpers; er startet in Ruhe. Welche Bewegungsgleichung gehört dazu (die Konstanten sind positiv)?`),
     hints: () => [MATCH_HINTS()[1], MATCH_HINTS()[0]],
     steps: (p) => [
@@ -402,6 +420,12 @@
     inverse: () => L('Upside down: from $\\hat v = A\\,\\omega$, $\\omega = \\hat v / A$.', 'Kehrwert verwechselt: Aus $\\hat v = A\\,\\omega$ folgt $\\omega = \\hat v / A$.'),
     inverseA: () => L('Upside down: $\\hat a / \\hat v = A\\omega^2 / (A\\omega) = \\omega$.', 'Kehrwert verwechselt: $\\hat a / \\hat v = A\\omega^2 / (A\\omega) = \\omega$.'),
   };
+  // the nudges after these numbers in practice (WHYK stays for the check's explanation)
+  const NUDGEK = {
+    square: () => L('Which of the two, $\\hat v$ or $\\hat a$, contains $\\omega^2$? Check the units.', 'Welche der beiden Grössen, $\\hat v$ oder $\\hat a$, enthält $\\omega^2$? Prüfe die Einheiten.'),
+    inverse: () => L('Upside down: solve $\\hat v = A\\,\\omega$ for $\\omega$.', 'Kehrwert verwechselt: Löse $\\hat v = A\\,\\omega$ nach $\\omega$ auf.'),
+    inverseA: () => L('Upside down: write $\\hat a$ and $\\hat v$ with $A$ and $\\omega$. Which ratio of the two gives $\\omega$?', 'Kehrwert verwechselt: Schreib $\\hat a$ und $\\hat v$ mit $A$ und $\\omega$ hin. Welcher Quotient der beiden gibt $\\omega$?'),
+  };
   const pickAW = (r) => ({ A: pick(r, AS), w: pick(r, WS) });
   const given = (p) => L(`an amplitude of ${q(p.A, unitOfA(p.A))} and an angular frequency of ${q(p.w, '')} s⁻¹`, `einer Amplitude von ${q(p.A, unitOfA(p.A))} und einer Kreisfrequenz von ${q(p.w, '')} s⁻¹`);
   // the moments at the equilibrium ('eq') or at the turning points ('top') of y = A·cos(ωt)
@@ -414,6 +438,7 @@
     solve: (p, o = {}) => ({ vmax: o.square ? p.A * p.w * p.w : p.A * p.w, amax: o.square ? p.A * p.w : p.A * p.w * p.w }),
     traps: ['square'],
     why: { square: WHYK.square },
+    nudge: { square: NUDGEK.square },
     fields: (p) => [num$('vmax', VH, speedUnit(p.A * p.w), L('largest speed', 'grösste Geschwindigkeit')), num$('amax', AH, 'm/s²', L('largest acceleration', 'grösste Beschleunigung'))],
     text: (p) => L(`A body oscillates harmonically with ${given(p)}. What are its largest speed and its largest acceleration?`, `Ein Körper schwingt harmonisch mit ${given(p)}. Wie gross sind seine grösste Geschwindigkeit und seine grösste Beschleunigung?`),
     hints: () => [
@@ -437,6 +462,7 @@
     solve: (p, o = {}) => { const vm = p.A * p.w, w = o.flip ? p.A / vm : vm / p.A; return { vm, w, amax: o.square ? p.A * w : p.A * w * w }; },
     traps: ['flip', 'square'],
     why: { flip: WHYK.inverse, square: WHYK.square },
+    nudge: { flip: NUDGEK.inverse, square: NUDGEK.square },
     fields: () => [num$('w', '\\omega', 'rad/s', L('angular frequency', 'Kreisfrequenz')), num$('amax', AH, 'm/s²', L('largest acceleration', 'grösste Beschleunigung'))],
     text: (p) => { const vm = p.A * p.w; return L(`A body oscillates harmonically with an amplitude of ${q(p.A, unitOfA(p.A))}. Its largest speed is ${q(vm, speedUnit(vm))}. What are its angular frequency and its largest acceleration?`, `Ein Körper schwingt harmonisch mit einer Amplitude von ${q(p.A, unitOfA(p.A))}. Seine grösste Geschwindigkeit beträgt ${q(vm, speedUnit(vm))}. Wie gross sind seine Kreisfrequenz und seine grösste Beschleunigung?`); },
     hints: () => [L('$\\hat v = A\\,\\omega$: solve for $\\omega$.', '$\\hat v = A\\,\\omega$: Löse nach $\\omega$ auf.'), L('Then $\\hat a = A\\,\\omega^2$ (or $\\hat a = \\hat v\\,\\omega$).', 'Dann $\\hat a = A\\,\\omega^2$ (oder $\\hat a = \\hat v\\,\\omega$).')],
@@ -454,6 +480,7 @@
     solve: (p, o = {}) => { const vm = p.A * p.w, am = p.A * p.w * p.w, w = o.flip ? vm / am : am / vm; return { vm, am, w, A: vm / w }; },
     traps: ['flip'],
     why: { flip: WHYK.inverseA },
+    nudge: { flip: NUDGEK.inverseA },
     fields: (p) => [num$('w', '\\omega', 'rad/s', L('angular frequency', 'Kreisfrequenz')), num$('A', 'A', unitOfA(p.A), L('amplitude', 'Amplitude'))],
     text: (p) => { const vm = p.A * p.w, am = vm * p.w; return L(`A body oscillates harmonically. Its largest speed is ${q(vm, speedUnit(vm))}, its largest acceleration ${q(am, 'm/s²')}. What are its angular frequency and its amplitude?`, `Ein Körper schwingt harmonisch. Seine grösste Geschwindigkeit beträgt ${q(vm, speedUnit(vm))}, seine grösste Beschleunigung ${q(am, 'm/s²')}. Wie gross sind seine Kreisfrequenz und seine Amplitude?`); },
     hints: () => [L('$\\hat v = A\\,\\omega$ and $\\hat a = A\\,\\omega^2$: two equations for $A$ and $\\omega$.', '$\\hat v = A\\,\\omega$ und $\\hat a = A\\,\\omega^2$: zwei Gleichungen für $A$ und $\\omega$.'), L('Divide them: $\\hat a / \\hat v = \\omega$.', 'Teile sie: $\\hat a / \\hat v = \\omega$.')],
@@ -523,7 +550,8 @@
     Q: [L('the charge $Q$ on the capacitor', 'die Ladung $Q$ auf dem Kondensator'), L('The charge $Q$ plays the role of the displacement $y$: it is what oscillates.', 'Die Ladung $Q$ spielt die Rolle der Auslenkung $y$: Sie ist es, die schwingt.')],
     I: [L('the current $I = \\dot Q$', 'der Strom $I = \\dot Q$'), L('The current $I = \\dot Q$ plays the role of the velocity $v = \\dot y$.', 'Der Strom $I = \\dot Q$ spielt die Rolle der Geschwindigkeit $v = \\dot y$.')],
     L: [L('the inductance $L$', 'die Induktivität $L$'), L('$L\\,\\ddot Q$ stands where $m\\,\\ddot y$ stands: the inductance plays the role of the mass.', '$L\\,\\ddot Q$ steht dort, wo $m\\,\\ddot y$ steht: Die Induktivität spielt die Rolle der Masse.')],
-    C: [L('the capacitance $C$', 'die Kapazität $C$'), L('$Q/C$ stands where $D\\,y$ stands: not $C$, but $1/C$ plays the role of the spring constant.', '$Q/C$ steht dort, wo $D\\,y$ steht: Nicht $C$, sondern $1/C$ spielt die Rolle der Federkonstante.')],
+    C: [L('the capacitance $C$', 'die Kapazität $C$'), L('$Q/C$ stands where $D\\,y$ stands: not $C$, but $1/C$ plays the role of the spring constant.', '$Q/C$ steht dort, wo $D\\,y$ steht: Nicht $C$, sondern $1/C$ spielt die Rolle der Federkonstante.'),
+      L('$Q/C$ stands where $D\\,y$ stands: what exactly stands in the place of $D$?', '$Q/C$ steht dort, wo $D\\,y$ steht: Was genau steht an der Stelle von $D$?')],
     invC: [L('one over the capacitance, $1/C$', 'eins durch die Kapazität, $1/C$'), L('$Q/C$ stands where $D\\,y$ stands: $1/C$ plays the role of the spring constant.', '$Q/C$ steht dort, wo $D\\,y$ steht: $1/C$ spielt die Rolle der Federkonstante.')],
     invL: [L('one over the inductance, $1/L$', 'eins durch die Induktivität, $1/L$'), L('$L\\,\\ddot Q$ stands where $m\\,\\ddot y$ stands: $L$ itself plays the role of the mass.', '$L\\,\\ddot Q$ steht dort, wo $m\\,\\ddot y$ steht: $L$ selbst spielt die Rolle der Masse.')],
     dQ: [L('the rate of change of the current, $\\ddot Q = \\dot I$', 'die Änderungsrate des Stroms, $\\ddot Q = \\dot I$'), L('$\\ddot Q$ plays the role of the acceleration $\\ddot y$.', '$\\ddot Q$ spielt die Rolle der Beschleunigung $\\ddot y$.')],
@@ -537,16 +565,22 @@
     D: [() => L('the spring constant $D$', 'der Federkonstante $D$'), 'invC', ['C', 'L', 'invL']],
   };
   // ω and T: the right one and the usual wrong ones (as in equations.js)
-  const LC_W = () => [['right', '\\omega = \\frac{1}{\\sqrt{L\\,C}}', ''], ['omega2', '\\omega = \\frac{1}{L\\,C}', L('That is $\\omega^2$: in $\\ddot Q = -\\omega^2\\,Q$ the factor is $\\omega^2 = 1/(LC)$. Take the square root.', 'Das ist $\\omega^2$: In $\\ddot Q = -\\omega^2\\,Q$ ist der Faktor $\\omega^2 = 1/(LC)$. Zieh die Wurzel.')],
-    ['inverse', '\\omega = \\sqrt{L\\,C}', L('Upside down: as $\\omega = \\sqrt{D/m}$, $\\omega = \\sqrt{1/(LC)}$.', 'Kehrwert verwechselt: Wie $\\omega = \\sqrt{D/m}$ ist $\\omega = \\sqrt{1/(LC)}$.')],
-    ['map', '\\omega = \\sqrt{\\frac{C}{L}}', L('$C$ taken for $D$: it is $1/C$ that plays the role of the spring constant, so $\\omega^2 = D/m = 1/(LC)$.', '$C$ für $D$ genommen: $1/C$ spielt die Rolle der Federkonstante, also $\\omega^2 = D/m = 1/(LC)$.')]];
-  const LC_T = () => [['right', 'T = 2\\pi\\sqrt{L\\,C}', ''], ['inverse', 'T = \\frac{2\\pi}{\\sqrt{L\\,C}}', L('That is $2\\pi\\cdot\\omega$. The period is $T = 2\\pi/\\omega$ with $\\omega = 1/\\sqrt{LC}$.', 'Das ist $2\\pi\\cdot\\omega$. Die Periode ist $T = 2\\pi/\\omega$ mit $\\omega = 1/\\sqrt{LC}$.')],
-    ['omega2', 'T = 2\\pi\\,L\\,C', L('The root is missing: $\\omega^2 = 1/(LC)$, so $\\omega = 1/\\sqrt{LC}$.', 'Die Wurzel fehlt: $\\omega^2 = 1/(LC)$, also $\\omega = 1/\\sqrt{LC}$.')],
+  const LC_W = () => [['right', '\\omega = \\frac{1}{\\sqrt{L\\,C}}', ''], ['omega2', '\\omega = \\frac{1}{L\\,C}', L('That is $\\omega^2$: in $\\ddot Q = -\\omega^2\\,Q$ the factor is $\\omega^2 = 1/(LC)$. Take the square root.', 'Das ist $\\omega^2$: In $\\ddot Q = -\\omega^2\\,Q$ ist der Faktor $\\omega^2 = 1/(LC)$. Zieh die Wurzel.'),
+      L('Compare with $\\ddot Q = -\\omega^2\\,Q$: is the factor in front of $Q$ equal to $\\omega$ or to $\\omega^2$?', 'Vergleiche mit $\\ddot Q = -\\omega^2\\,Q$: Ist der Faktor vor $Q$ gleich $\\omega$ oder gleich $\\omega^2$?')],
+    ['inverse', '\\omega = \\sqrt{L\\,C}', L('Upside down: as $\\omega = \\sqrt{D/m}$, $\\omega = \\sqrt{1/(LC)}$.', 'Kehrwert verwechselt: Wie $\\omega = \\sqrt{D/m}$ ist $\\omega = \\sqrt{1/(LC)}$.'),
+      L('As $\\omega = \\sqrt{D/m}$ for the spring: which quantity plays the role of $D$, which that of $m$?', 'Wie $\\omega = \\sqrt{D/m}$ bei der Feder: Welche Grösse spielt die Rolle von $D$, welche jene von $m$?')],
+    ['map', '\\omega = \\sqrt{\\frac{C}{L}}', L('$C$ taken for $D$: it is $1/C$ that plays the role of the spring constant, so $\\omega^2 = D/m = 1/(LC)$.', '$C$ für $D$ genommen: $1/C$ spielt die Rolle der Federkonstante, also $\\omega^2 = D/m = 1/(LC)$.'),
+      L('$C$ taken for $D$? Look again at what stands in $L\\,\\dot I + Q/C = 0$ where $D\\,y$ stands.', '$C$ für $D$ genommen? Schau nochmals, was in $L\\,\\dot I + Q/C = 0$ dort steht, wo $D\\,y$ steht.')]];
+  const LC_T = () => [['right', 'T = 2\\pi\\sqrt{L\\,C}', ''], ['inverse', 'T = \\frac{2\\pi}{\\sqrt{L\\,C}}', L('That is $2\\pi\\cdot\\omega$. The period is $T = 2\\pi/\\omega$ with $\\omega = 1/\\sqrt{LC}$.', 'Das ist $2\\pi\\cdot\\omega$. Die Periode ist $T = 2\\pi/\\omega$ mit $\\omega = 1/\\sqrt{LC}$.'),
+      L('That is $2\\pi\\cdot\\omega$. How is the period related to $\\omega$?', 'Das ist $2\\pi\\cdot\\omega$. Wie hängt die Periode mit $\\omega$ zusammen?')],
+    ['omega2', 'T = 2\\pi\\,L\\,C', L('The root is missing: $\\omega^2 = 1/(LC)$, so $\\omega = 1/\\sqrt{LC}$.', 'Die Wurzel fehlt: $\\omega^2 = 1/(LC)$, also $\\omega = 1/\\sqrt{LC}$.'),
+      L('Compare with $\\ddot Q = -\\omega^2\\,Q$: is $1/(LC)$ equal to $\\omega$ or to $\\omega^2$?', 'Vergleiche mit $\\ddot Q = -\\omega^2\\,Q$: Ist $1/(LC)$ gleich $\\omega$ oder gleich $\\omega^2$?')],
     ['freq', 'T = \\frac{1}{2\\pi\\sqrt{L\\,C}}', L('That is the frequency $f = 1/T$.', 'Das ist die Frequenz $f = 1/T$.')]];
   const LC_WHEN = () => ({
     Q: [L('When the charge on the capacitor is largest, the current is', 'Wenn die Ladung auf dem Kondensator am grössten ist, ist der Strom'), L('like the velocity at a turning point', 'wie die Geschwindigkeit an einem Umkehrpunkt')],
     I: [L('When the current is largest, the charge on the capacitor is', 'Wenn der Strom am grössten ist, ist die Ladung auf dem Kondensator'), L('like the displacement at the equilibrium', 'wie die Auslenkung in der Gleichgewichtslage')],
   });
+  const LC_WHEN_NUDGE = () => L('Like $y$ and $v$, $Q$ and $I = \\dot Q$ are a quarter of a period apart. For the spring: how large is $v$ where $y$ is largest?', 'Wie $y$ und $v$ sind $Q$ und $I = \\dot Q$ um eine Viertelperiode verschoben. Bei der Feder: Wie gross ist $v$, wo $y$ am grössten ist?');
   const LC_WHEN_OPTS = () => [['zero', L('zero', 'null'), ''], ['max', L('largest too', 'auch am grössten'), L('Like $y$ and $v$, $Q$ and $I = \\dot Q$ are a quarter of a period apart: when one is largest, the other is zero.', 'Wie $y$ und $v$ sind $Q$ und $I = \\dot Q$ um eine Viertelperiode verschoben: Wenn das eine am grössten ist, ist das andere null.')],
     ['half', L('half its largest value', 'halb so gross wie am grössten'), L('Like $y$ and $v$, $Q$ and $I = \\dot Q$ are a quarter of a period apart: when one is largest, the other is zero.', 'Wie $y$ und $v$ sind $Q$ und $I = \\dot Q$ um eine Viertelperiode verschoben: Wenn das eine am grössten ist, ist das andere null.')],
     ['dep', L('it depends on $L$ and $C$', 'das hängt von $L$ und $C$ ab'), L('Whatever $L$ and $C$ are, $Q$ and $I = \\dot Q$ are a quarter of a period apart: when one is largest, the other is zero.', 'Was immer $L$ und $C$ sind: $Q$ und $I = \\dot Q$ sind um eine Viertelperiode verschoben. Wenn das eine am grössten ist, ist das andere null.')]];
@@ -560,16 +594,16 @@
       const r = orderOf(p);
       if (ROLES[p.ask]) {
         const [what, right, wrong] = ROLES[p.ask], R = ROLE();
-        return [choice('ans', L(`The role of ${what()} is played by:`, `Die Rolle ${what()} spielt:`), shuffle(r, [['right', R[right][0], '', null], ...wrong.map((k) => [k, R[k][0], R[k][1], 'map'])]),
+        return [choice('ans', L(`The role of ${what()} is played by:`, `Die Rolle ${what()} spielt:`), shuffle(r, [['right', R[right][0], '', null], ...wrong.map((k) => [k, R[k][0], R[k][1], 'map', R[k][2] || ''])]),
           { stack: true, ask: L(`Which quantity of the LC circuit plays the role of ${what()}?`, `Welche Grösse des Schwingkreises spielt die Rolle ${what()}?`) })];
       }
       if (p.ask === 'w' || p.ask === 'T') {
-        const opts = (p.ask === 'w' ? LC_W() : LC_T()).map(([k, tex, why]) => [k, `$${tex}$`, why, k === 'right' ? null : k]);
+        const opts = (p.ask === 'w' ? LC_W() : LC_T()).map(([k, tex, why, nudge]) => [k, `$${tex}$`, why, k === 'right' ? null : k, nudge || '']);
         return [choice('ans', p.ask === 'w' ? L('Its angular frequency:', 'Seine Kreisfrequenz:') : L('Its period:', 'Seine Periode:'), shuffle(r, opts),
           { ask: p.ask === 'w' ? L('What is the angular frequency of the LC circuit?', 'Wie gross ist die Kreisfrequenz des Schwingkreises?') : L('What is the period of the LC circuit?', 'Wie gross ist die Periode des Schwingkreises?') })];
       }
       const [lead] = LC_WHEN()[p.ask.slice(4)];
-      return [choice('ans', `${lead} …`, LC_WHEN_OPTS().map(([k, html, why]) => [k === 'zero' ? 'right' : k, html, why, k === 'zero' ? null : 'lcphase']), { stack: true, ask: `${lead} …` })];
+      return [choice('ans', `${lead} …`, LC_WHEN_OPTS().map(([k, html, why]) => [k === 'zero' ? 'right' : k, html, why, k === 'zero' ? null : 'lcphase', k === 'zero' ? '' : LC_WHEN_NUDGE()]), { stack: true, ask: `${lead} …` })];
     },
     text: () => L('In an LC circuit without resistance, the voltages across the coil and the capacitor add up to zero: $L\\,\\dot I + Q/C = 0$, where $Q$ is the charge on the capacitor and $I = \\dot Q$ the current. Compare it with a body on a spring.', 'In einem Schwingkreis ohne Widerstand ergeben die Spannungen an der Spule und am Kondensator zusammen null: $L\\,\\dot I + Q/C = 0$, wobei $Q$ die Ladung auf dem Kondensator ist und $I = \\dot Q$ der Strom. Vergleiche mit einem Körper an einer Feder.'),
     hints: () => [
@@ -601,11 +635,13 @@
     traps: [],
     fields: (p) => {
       const k = p.k, LC = p.what === 'both' ? k * k : k, right = 1 / Math.sqrt(LC);
+      const fnudge = L('Write $f$ with $L$ and $C$: how exactly does it depend on the product $L\\cdot C$?', 'Schreib $f$ mit $L$ und $C$ hin: Wie genau hängt $f$ vom Produkt $L\\cdot C$ ab?');
+      const nudges = { root: fnudge, prop: fnudge, dirn: L('Does the oscillation get faster or slower? A larger inductance is like a larger mass, a larger capacitance like a softer spring.', 'Wird die Schwingung schneller oder langsamer? Eine grössere Induktivität ist wie eine grössere Masse, eine grössere Kapazität wie eine weichere Feder.') };
       const opts = [[1 / LC, 'root', L('The root is missing: the frequency goes with $1/\\sqrt{L\\,C}$, not with $1/(L\\,C)$.', 'Die Wurzel fehlt: Die Frequenz geht mit $1/\\sqrt{L\\,C}$, nicht mit $1/(L\\,C)$.')], [right, 'right', ''],
         [Math.sqrt(LC), 'dirn', L('The right size, the wrong way: a larger inductance is like a larger mass, a larger capacitance like a softer spring: both make the oscillation slower.', 'Die richtige Grösse, die falsche Richtung: Eine grössere Induktivität ist wie eine grössere Masse, eine grössere Kapazität wie eine weichere Feder: Beide machen die Schwingung langsamer.')],
         [LC, 'prop', L('$f = 1/(2\\pi\\sqrt{L\\,C})$: the frequency changes with one over the square root of $L\\cdot C$.', '$f = 1/(2\\pi\\sqrt{L\\,C})$: Die Frequenz ändert sich mit eins durch die Wurzel aus $L\\cdot C$.')]]
         .sort((a, b) => a[0] - b[0]);
-      return [choice('fac', L('The frequency changes by:', 'Die Frequenz ändert sich um:'), opts.map(([x, key, why]) => [key, fac(x), why, key === 'right' ? null : key === 'dirn' ? 'inverse' : 'omega2']), { ask: L('By what factor does the frequency change?', 'Um welchen Faktor ändert sich die Frequenz?') })];
+      return [choice('fac', L('The frequency changes by:', 'Die Frequenz ändert sich um:'), opts.map(([x, key, why]) => [key, fac(x), why, key === 'right' ? null : key === 'dirn' ? 'inverse' : 'omega2', nudges[key] || '']), { ask: L('By what factor does the frequency change?', 'Um welchen Faktor ändert sich die Frequenz?') })];
     },
     text: (p) => {
       const k = p.k, what = { C: L('the capacitance', 'die Kapazität'), L: L('the inductance', 'die Induktivität') };

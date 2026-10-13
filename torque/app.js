@@ -91,7 +91,7 @@
     const e = f.value, near = (y, z, tol) => Math.abs(y - z) <= tol * Math.max(Math.abs(z), 0.01);
     const right = near(x, e, 0.01) || Math.abs(x - e) <= 0.5 * 10 ** -f.dec + 1e-9;
     if (right) return f.sense && sense !== f.senseValue ? { cls: 'bad', msg: ui().badSense } : { cls: 'ok', msg: ui().correct };
-    for (const t of f.traps) if (near(x, t.value, 0.01)) return { cls: 'bad', msg: t.why };
+    for (const t of f.traps) if (near(x, t.value, 0.01)) return { cls: 'bad', msg: t.nudge || t.why };
     if (e !== 0 && near(-x, e, 0.01)) return { cls: 'warn', msg: ui().sign };
     if (e !== 0 && near(x, e, 0.05)) return { cls: 'warn', msg: ui().close };
     return { cls: 'bad', msg: ui().wrong };

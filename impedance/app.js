@@ -138,7 +138,7 @@
   function markWrong() {
     const el = $(`.cand[data-k="${st.wrong}"]`);
     if (el) el.classList.add('bad');
-    $('#cand-fb').innerHTML = M.mismatch(ex, st.wrong);
+    $('#cand-fb').innerHTML = M.mismatch(ex, st.wrong, M.letter, !st.solved && !st.revealed);
   }
 
   // ---------------------------------------------------------------- hints and solution

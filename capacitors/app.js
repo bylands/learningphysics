@@ -90,13 +90,18 @@
     return m[2] ? Number(m[1]) / Number(m[2]) : Number(m[1]);
   }
 
+  // While the exercise is open, a wrong answer gets the nudge of its trap or option (if it has
+  // one) instead of the explanation, which would give the answer away.
+  const unsolved = () => !!st && !st.solved && !st.revealed;
+  const whyOf = (o) => (unsolved() && o.nudge) || o.why;
+
   // Right within the field's tolerance (a value read from a graph has a larger one); else the
   // answer under a typical wrong idea, a sign or a rounding error.
   function judgeNum(x, f) {
     if (Number.isNaN(x)) return { cls: 'bad', msg: ui().number };
     const e = f.value, near = (y, z, tol) => Math.abs(y - z) <= tol * Math.abs(z) + 1e-9;
     if (near(x, e, f.tol) || Math.abs(x - e) < 0.005) return { cls: 'ok', msg: ui().correct };
-    for (const t of f.traps) if (near(x, t.value, Math.max(f.tol, 0.01))) return { cls: 'bad', msg: t.why || ui().wrong };
+    for (const t of f.traps) if (near(x, t.value, Math.max(f.tol, 0.01))) return { cls: 'bad', msg: whyOf(t) || ui().wrong };
     if (near(-x, e, f.tol)) return { cls: 'warn', msg: ui().sign };
     if (near(x, e, Math.max(0.05, 2 * f.tol))) return { cls: 'warn', msg: ui().close };
     return { cls: 'bad', msg: ui().wrong };
@@ -130,7 +135,7 @@
     if (f.type === 'num') return judgeNum(parse(val), f);
     if (val === f.value) return { cls: 'ok', msg: ui().correct };
     const o = f.options.find((x) => x.v === val);
-    return { cls: 'bad', msg: (o && o.why) || ui().wrong };
+    return { cls: 'bad', msg: (o && whyOf(o)) || ui().wrong };
   }
 
   // ---------------------------------------------------------------- exercise lifecycle

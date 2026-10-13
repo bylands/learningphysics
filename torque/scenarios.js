@@ -335,6 +335,8 @@
     },
     traps: ['swap'],
     why: { swap: () => L('Reversed: the heavier mass needs the shorter lever arm.', 'Umgekehrt: Die schwerere Masse braucht den kürzeren Hebelarm.') },
+    // in practice, where the reason would give the answer away
+    nudge: { swap: () => L('Which lever arm belongs to which mass? Check which side turns the beam more.', 'Welcher Hebelarm gehört zu welcher Masse? Prüfe, welche Seite den Balken stärker dreht.') },
     fields: (p) => (p.find === 'x' ? [{ key: 'x', sym: ['x'], unit: 'cm', dec: 1, what: L('distance from the support', 'Abstand von der Stütze') }]
       : [{ key: 'm', sym: ['m', 2], unit: 'kg', dec: 2, what: L('mass on the right', 'Masse rechts') }]),
     title: () => L('Balancing a lever', 'Ein Hebel im Gleichgewicht'),
@@ -626,6 +628,10 @@
     why: {
       cos: () => L('Cosine instead of sine? Only the component of F perpendicular to the beam turns it.', 'Kosinus statt Sinus? Nur die Komponente von F senkrecht zum Balken dreht ihn.'),
       noAngle: () => L('F pulls at an angle: its lever arm is b · sin α, not b.', 'F zieht schräg: Ihr Hebelarm ist b · sin α, nicht b.'),
+    },
+    nudge: {
+      cos: () => L('Only the component of F perpendicular to the beam turns it. Where is α, and which function of α gives that component?', 'Nur die Komponente von F senkrecht zum Balken dreht ihn. Wo liegt α, und welche Winkelfunktion gibt diese Komponente?'),
+      noAngle: () => L('F pulls at an angle: is its lever arm really b? Measure it at a right angle to the line of action.', 'F zieht schräg: Ist ihr Hebelarm wirklich b? Miss ihn rechtwinklig zur Wirkungslinie.'),
     },
     fields: () => [{ key: 'F', sym: ['F'], unit: 'N', dec: 1, what: L('force', 'Kraft') }],
     // the lever arm, chosen among four segments drawn in (see angleCands); its value is then given

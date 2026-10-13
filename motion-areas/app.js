@@ -181,30 +181,27 @@
   }
 
   function whyInt(code, p) {
-    const g = Q(ex.from), G = Q(ex.to), dG = area(p), pos = dG > 0;
+    const g = Q(ex.from), G = Q(ex.to);
     switch (code) {
       case 'sign': return p.g0 * p.g1 < 0
-        ? L(`${G} changes the wrong way. The area ${pos ? 'above' : 'below'} the <i>t</i> axis is larger than the one ${pos ? 'below' : 'above'}, so ${G} ${pos ? 'increases' : 'decreases'} overall.`,
-          `${G} ändert sich in die falsche Richtung. Die Fläche ${pos ? 'über' : 'unter'} der <i>t</i>-Achse ist grösser als jene ${pos ? 'darunter' : 'darüber'}, also nimmt ${G} insgesamt ${pos ? 'zu' : 'ab'}.`)
-        : L(`${G} changes the wrong way: ${g} is ${pos ? 'positive' : 'negative'} here, so ${G} ${pos ? 'increases' : 'decreases'}.`,
-          `${G} ändert sich in die falsche Richtung: ${g} ist hier ${pos ? 'positiv' : 'negativ'}, also nimmt ${G} ${pos ? 'zu' : 'ab'}.`);
+        ? L(`Check the direction of ${G}: is the area above or below the <i>t</i> axis larger in this piece, and what does that mean for the change of ${G}?`,
+          `Prüfe die Richtung von ${G}: Ist in diesem Stück die Fläche über oder unter der <i>t</i>-Achse grösser, und was bedeutet das für die Änderung von ${G}?`)
+        : L(`Check the direction of ${G}: is ${g} positive or negative here, and so does ${G} increase or decrease?`,
+          `Prüfe die Richtung von ${G}: Ist ${g} hier positiv oder negativ, und nimmt ${G} also zu oder ab?`);
       case 'rectStart': case 'rectEnd': {
         const t = code === 'rectStart' ? p.t0 : p.t1;
-        return L(`Your change of ${G} is ${at(ex.from, t)} · Δ<i>t</i>. But ${g} changes in this piece: Δ${G} is the area of the trapezoid under the ${g} graph, (${at(ex.from, p.t0)} + ${at(ex.from, p.t1)})/2 · Δ<i>t</i>.`,
-          `Deine Änderung von ${G} ist ${at(ex.from, t)} · Δ<i>t</i>. Aber ${g} ändert sich in diesem Stück: Δ${G} ist die Fläche des Trapezes unter dem ${g}-Graphen, (${at(ex.from, p.t0)} + ${at(ex.from, p.t1)})/2 · Δ<i>t</i>.`);
+        return L(`Your change of ${G} is ${at(ex.from, t)} · Δ<i>t</i>, a rectangle. But ${g} changes in this piece: what shape does the area under the ${g} graph have?`,
+          `Deine Änderung von ${G} ist ${at(ex.from, t)} · Δ<i>t</i>, ein Rechteck. Aber ${g} ändert sich in diesem Stück: Welche Form hat die Fläche unter dem ${g}-Graphen?`);
       }
       case 'unsigned': return L(`${g} changes sign in this piece: the area below the <i>t</i> axis counts negative.`, `${g} wechselt in diesem Stück das Vorzeichen: Die Fläche unter der <i>t</i>-Achse zählt negativ.`);
       case 'area': return L(`Check the change of ${G}: Δ${G} is the area between the ${g} graph and the <i>t</i> axis from ${p.t0} s to ${p.t1} s.`,
         `Prüfe die Änderung von ${G}: Δ${G} ist die Fläche zwischen dem ${g}-Graphen und der <i>t</i>-Achse von ${p.t0} s bis ${p.t1} s.`);
-      case 'straight': return L(`${g} is constant here, so ${G} is a straight line: drag the diamond back onto the line between the ends.`,
-        `${g} ist hier konstant, also ist ${G} eine Gerade: Zieh die Raute zurück auf die Linie zwischen den Enden.`);
-      case 'curve': return L(`${g} changes here, so ${G} is curved (a parabola): drag the diamond to bend the piece.`,
-        `${g} ändert sich hier, also ist ${G} gekrümmt (eine Parabel): Zieh an der Raute, um das Stück zu biegen.`);
-      case 'bendDir': return p.g1 > p.g0
-        ? L(`${g} increases here, so the slope of ${G} increases: ${G} curves upward (the middle lies below the straight line between the ends).`,
-          `${g} nimmt hier zu, also nimmt die Steigung von ${G} zu: ${G} krümmt sich nach oben (die Mitte liegt unter der Geraden zwischen den Enden).`)
-        : L(`${g} decreases here, so the slope of ${G} decreases: ${G} curves downward (the middle lies above the straight line between the ends).`,
-          `${g} nimmt hier ab, also nimmt die Steigung von ${G} ab: ${G} krümmt sich nach unten (die Mitte liegt über der Geraden zwischen den Enden).`);
+      case 'straight': return L(`${g} is constant here: does the slope of ${G} change in this piece, and what shape does ${G} have?`,
+        `${g} ist hier konstant: Ändert sich die Steigung von ${G} in diesem Stück, und welche Form hat ${G} also?`);
+      case 'curve': return L(`${g} changes here: can the slope of ${G} stay the same in this piece? The diamond in the middle sets how the piece bends.`,
+        `${g} ändert sich hier: Kann die Steigung von ${G} in diesem Stück gleich bleiben? Mit der Raute in der Mitte stellst du ein, wie sich das Stück biegt.`);
+      case 'bendDir': return L(`Check how ${G} bends: does ${g} increase or decrease in this piece? ${g} is the slope of ${G}: which way must ${G} curve then?`,
+        `Prüfe, wie sich ${G} biegt: Nimmt ${g} in diesem Stück zu oder ab? ${g} ist die Steigung von ${G}: In welche Richtung muss sich ${G} dann krümmen?`);
       default: return L(`${G} bends the right way, but too ${code === 'bendMore' ? 'little' : 'much'}. The diamond in the middle belongs at ${G} at the start of the piece plus the area under ${g} over the first half of the piece (a trapezoid of half the width).`,
         `${G} krümmt sich in die richtige Richtung, aber zu ${code === 'bendMore' ? 'wenig' : 'stark'}. Die Raute in der Mitte gehört auf ${G} am Anfang des Stücks plus die Fläche unter ${g} über die erste Hälfte des Stücks (ein Trapez der halben Breite).`);
     }

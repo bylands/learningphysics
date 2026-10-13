@@ -196,12 +196,13 @@
   const times = (f, sym) => (Math.abs(f - 1) < 1e-9 ? it(sym) : f > 1 ? `${nice(f)}${it(sym)}` : `${it(sym)}/${nice(1 / f)}`);
   const whole = (x) => [x, 1 / x].some((y) => Math.abs(y - Math.round(y)) < 1e-9);
   const FILL = [2, 0.5, 4, 0.25, 1, 3, 1 / 3, 6, 1 / 6, 8, 1 / 8];
-  // the right factor, the tempting ones ([x, why, tag]), then fillers: four options in order
+  // the right factor, the tempting ones ([x, why, tag, nudge]: nudge, if given, is the feedback in
+  // practice instead of the why), then fillers: four options in order
   function factors(right, tempt, how) {
     const out = [{ x: right, ok: true }];
-    for (const [x, why, tag] of tempt) if (out.length < 4 && whole(x) && !out.some((o) => Math.abs(o.x - x) < 1e-9)) out.push({ x, why: `${why} ${how}`, tag });
+    for (const [x, why, tag, nudge] of tempt) if (out.length < 4 && whole(x) && !out.some((o) => Math.abs(o.x - x) < 1e-9)) out.push({ x, why: `${why} ${how}`, tag, nudge });
     for (const x of FILL) if (out.length < 4 && !out.some((o) => Math.abs(o.x - x) < 1e-9)) out.push({ x, why: how, tag: 'other' });
-    return out.sort((p, q) => p.x - q.x).map((o) => ({ label: frac(o.x), ok: !!o.ok, tag: o.ok ? undefined : o.tag, why: o.ok ? '' : o.why }));
+    return out.sort((p, q) => p.x - q.x).map((o) => ({ label: frac(o.x), ok: !!o.ok, tag: o.ok ? undefined : o.tag, why: o.ok ? '' : o.why, ...(o.nudge && !o.ok ? { nudge: o.nudge } : {}) }));
   }
   // The torque M = q·E·d·sin φ of two dipoles compared (φ: between the rod and the field).
   const SIN = { 90: 1, 30: 0.5, 150: 0.5 };
@@ -222,9 +223,11 @@
     if (a1 !== a2) parts.push(L(`sin ${a2}° / sin ${a1}° = ${nice(SIN[a2])}/${nice(SIN[a1])}, so ${frac(SIN[a2] / SIN[a1])}`, `sin ${a2}° / sin ${a1}° = ${nice(SIN[a2])}/${nice(SIN[a1])}, also ${frac(SIN[a2] / SIN[a1])}`));
     const how = L(`Each end feels the force q·E; the lever arm of the pair is d·sin φ, so M = q·E·d·sin φ: ${parts.join('; ')}. Together: ${frac(k)}.`, `Jedes Ende spürt die Kraft q·E; der Hebelarm des Paars ist d·sin φ, also M = q·E·d·sin φ: ${parts.join('; ')}. Zusammen: ${frac(k)}.`);
     const tempt = [
-      [(f.q * f.d * f.E), L('The angle counts: the torque is largest at right angles to the field and zero along it.', 'Der Winkel zählt: Das Drehmoment ist senkrecht zum Feld am grössten und längs des Feldes null.'), 'angle'],
-      [(f.q * f.E * SIN[a2]) / (f.d * SIN[a1]), L('A longer rod gives a longer lever arm: more torque.', 'Ein längerer Stab ergibt einen längeren Hebelarm: mehr Drehmoment.'), 'torque'],
-      [1 / k, L('Upside down.', 'Gerade umgekehrt.'), 'other'],
+      [(f.q * f.d * f.E), L('The angle counts: the torque is largest at right angles to the field and zero along it.', 'Der Winkel zählt: Das Drehmoment ist senkrecht zum Feld am grössten und längs des Feldes null.'), 'angle',
+        L('Does the angle between the rod and the field matter? Compare the two angles.', 'Spielt der Winkel zwischen Stab und Feld eine Rolle? Vergleiche die beiden Winkel.')],
+      [(f.q * f.E * SIN[a2]) / (f.d * SIN[a1]), L('A longer rod gives a longer lever arm: more torque.', 'Ein längerer Stab ergibt einen längeren Hebelarm: mehr Drehmoment.'), 'torque',
+        L('How does the lever arm depend on the length of the rod?', 'Wie hängt der Hebelarm von der Länge des Stabs ab?')],
+      [1 / k, L('Upside down.', 'Gerade umgekehrt.'), 'other', L('Check the way round: the question compares dipole 2 with dipole 1.', 'Prüfe die Richtung des Vergleichs: Gefragt ist Dipol 2 verglichen mit Dipol 1.')],
     ];
     const rows = [
       [L('charge at each end', 'Ladung an jedem Ende'), `±${it('q')}`, `±${times(f.q, 'q')}`],
@@ -300,6 +303,11 @@
     swap: () => L('This pattern belongs to another arrangement.', 'Dieses Muster gehört zu einer anderen Anordnung.'),
     bunched: () => L('Between the plates the field is uniform: for equal steps of potential the equipotentials are equally far apart.', 'Zwischen den Platten ist das Feld homogen: Für gleiche Potentialschritte liegen die Äquipotentiallinien gleich weit auseinander.'),
   };
+  // the nudges in practice where the why would give the right diagram away
+  const NUDGEE = {
+    even: () => L('These circles are evenly spaced. How does V = k·Q/r change with the distance, and what does that mean for equal steps of potential?', 'Diese Kreise liegen gleich weit auseinander. Wie ändert sich V = k·Q/r mit dem Abstand, und was bedeutet das für gleiche Potentialschritte?'),
+    bunched: () => L('What is the field like between the plates? What does that mean for the spacing of the equipotentials?', 'Wie ist das Feld zwischen den Platten? Was bedeutet das für die Abstände der Äquipotentiallinien?'),
+  };
   function equiPick(seed) {
     const r = rng(seed * 53 + 23), key = r.pick(Object.keys(EQ)), Q = EQ[key], box = BOX, small = (c, o) => C.fig(c, { box, small: true, ...o });
     const cp = key === 'plates', right = { html: small(Q.c, cp ? { given: capEqui(Q.c), equiLines: true } : { equi: Q.lv }), ok: true }, cands = [];
@@ -312,7 +320,7 @@
     return {
       kind: 'equi', title: L('Equipotential lines', 'Äquipotentiallinien'),
       text: L(`<p>Which diagram shows equipotential lines (equal steps of potential) of ${Q.name()}?</p>`, `<p>Welches Diagramm zeigt Äquipotentiallinien (gleiche Potentialschritte) für ${Q.name()}?</p>`), figs: '',
-      questions: [{ type: 'pick', key: 'd', label: L('Which diagram is right?', 'Welches Diagramm stimmt?'), options: r.shuffle(opts).map((o) => ({ html: o.html, ok: !!o.ok, tag: o.tag, why: o.ok ? '' : `${WHYE[o.tag]()} ${PERP()}` })) }],
+      questions: [{ type: 'pick', key: 'd', label: L('Which diagram is right?', 'Welches Diagramm stimmt?'), options: r.shuffle(opts).map((o) => ({ html: o.html, ok: !!o.ok, tag: o.tag, why: o.ok ? '' : `${WHYE[o.tag]()} ${PERP()}`, ...(!o.ok && NUDGEE[o.tag] ? { nudge: NUDGEE[o.tag]() } : {}) })) }],
       hints: [L('Sketch the field lines first; the equipotentials cross them at right angles.', 'Skizziere zuerst die Feldlinien; die Äquipotentiallinien kreuzen sie senkrecht.'), L('Around a single point charge, equipotentials are circles: V = k·Q/r.', 'Um eine einzelne Punktladung sind Äquipotentiallinien Kreise: V = k·Q/r.')],
       solution: [PERP()], solFig: fig(C.fig(Q.c, cp ? { box, given: capEqui(Q.c), equiLines: true, extra: capLines(Q.c) } : { box, equi: Q.lv, lines: true })), p: { key, s: seed % 5 },
     };
@@ -346,11 +354,13 @@
       along: L('These run along the equipotentials; field lines cross them at right angles.', 'Diese verlaufen längs der Äquipotentiallinien; Feldlinien kreuzen sie senkrecht.'),
       slant: L('These cross the equipotentials at an angle, not at right angles.', 'Diese kreuzen die Äquipotentiallinien schräg, nicht senkrecht.'),
     };
+    // in practice, instead of the why of up (which says which way is right)
+    const nudgeUp = L('These point from low to high potential. Does the field point towards higher or lower potential?', 'Diese zeigen von tiefem zu hohem Potential. Zeigt das Feld zu höherem oder zu tieferem Potential?');
     return {
       kind: 'equi', title: L('Field lines from equipotentials', 'Feldlinien aus Äquipotentiallinien'),
       text: L('<p>The figure shows equipotential lines (orange) with their potentials. Which diagram shows the field lines (blue)?</p>', '<p>Die Abbildung zeigt Äquipotentiallinien (orange) mit ihren Potentialen. Welches Diagramm zeigt die Feldlinien (blau)?</p>'),
       figs: fig(given),
-      questions: [{ type: 'pick', key: 'd', label: L('Which diagram is right?', 'Welches Diagramm stimmt?'), options: r.shuffle(opts).map((o) => ({ html: o.html, ok: !!o.ok, tag: o.tag, why: o.ok ? '' : `${W[o.tag]} ${how}` })) }],
+      questions: [{ type: 'pick', key: 'd', label: L('Which diagram is right?', 'Welches Diagramm stimmt?'), options: r.shuffle(opts).map((o) => ({ html: o.html, ok: !!o.ok, tag: o.tag, why: o.ok ? '' : `${W[o.tag]} ${how}`, ...(o.tag === 'up' ? { nudge: nudgeUp } : {}) })) }],
       hints: [L('Field lines and equipotentials meet at right angles.', 'Feldlinien und Äquipotentiallinien treffen sich senkrecht.'), L('The field points from high to low potential.', 'Das Feld zeigt von hohem zu tiefem Potential.')],
       solution: [how], p: { kind, hiLeft, s: seed % 5 },
     };

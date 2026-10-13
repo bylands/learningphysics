@@ -21,6 +21,7 @@
 //   error-charge, error-current    find the wrong step in a student's hand rule
 //   stmts                          which statements are correct?
 // A tiles question with wide: the options are sentences, one per row.
+// A wrong option may carry a nudge: shown in practice in place of a why that gives the answer away.
 (function (root) {
   'use strict';
 
@@ -87,13 +88,22 @@
     none: () => L('There is a force: the charge moves across the field.', 'Es gibt eine Kraft: Die Ladung bewegt sich quer zum Feld.'),
     some: () => L('Check whether the charge moves across the field at all.', 'Prüfe, ob sich die Ladung überhaupt quer zum Feld bewegt.'),
   };
+  // In practice, while the exercise is open, a nudge in place of a reason that would give the answer
+  // away (app.js); the reason itself stays for the check and once the exercise is solved.
+  const NUDGE = {
+    hand: () => L('Which hand is the right one here? Check the sign of the charge (a current counts as positive).', 'Welche Hand ist hier die richtige? Prüfe das Vorzeichen der Ladung (ein Strom zählt als positiv).'),
+    gripB: () => L('Check with the right-hand grip rule: which way do your fingers curl around wire 1 at the place of wire 2?', 'Prüfe mit der Rechte-Hand-Regel: In welche Richtung krümmen sich deine Finger um Draht 1 am Ort von Draht 2?'),
+    grip: () => L('Check the sense of the arrows: grip the conductor with your right hand, thumb along the current. Which way do the fingers curl?', 'Prüfe den Umlaufsinn der Pfeile: Umfasse den Leiter mit der rechten Hand, Daumen in Stromrichtung. Wohin zeigen die gekrümmten Finger?'),
+    gripAt: () => L('Mind the right hand: thumb along the current, which way do the fingers curl at this point?', 'Achte auf die rechte Hand: Daumen in Stromrichtung, wohin zeigen die gekrümmten Finger an dieser Stelle?'),
+    ns: () => L('From which pole to which do the field lines run outside a magnet, and which way is that here?', 'Von welchem Pol zu welchem laufen die Feldlinien ausserhalb eines Magneten, und welche Richtung ist das hier?'),
+  };
 
   // Four options for a force (or field): the right one, then tempting wrong ones.
   function forceOptions(r, right, tempt, how, extraNone = L('no force', 'keine Kraft')) {
     const out = [{ d: right, ok: true }], has = (d) => out.some((o) => key(o.d) === key(d));
     for (const [d, tag] of tempt) if (out.length < 4 && !has(d)) out.push({ d, ok: false, tag });
     for (const d of r.shuffle([...AXES, null])) if (out.length < 4 && !has(d)) out.push({ d, ok: false, tag: d ? 'other' : 'none' });
-    return r.shuffle(out).map((o) => ({ html: tile(o.d, extraNone), ok: o.ok, tag: o.tag, why: o.ok ? '' : `${o.tag && WHYF[o.tag] ? WHYF[o.tag]() + ' ' : ''}${how}` }));
+    return r.shuffle(out).map((o) => ({ html: tile(o.d, extraNone), ok: o.ok, tag: o.tag, why: o.ok ? '' : `${o.tag && WHYF[o.tag] ? WHYF[o.tag]() + ' ' : ''}${how}`, ...(o.tag === 'hand' ? { nudge: NUDGE.hand() } : {}) }));
   }
   const neg = (d) => d && d.map((x) => (x === 0 ? 0 : -x));
   const tiles = (key2, label, options, multi = false) => ({ type: 'tiles', key: key2, label, multi, options });
@@ -183,7 +193,7 @@
       const howB = L(`Right hand around wire 1, thumb along its current (${dirName(d1)}): at wire 2 the fingers point ${dirName(Bz)}.`, `Rechte Hand um Draht 1, Daumen in seiner Stromrichtung (${dirName(d1)}): Bei Draht 2 zeigen die Finger ${dirName(Bz)}.`);
       const howF = howForce(1, 'I', d2, Bz);
       const radial = P.map((x) => Math.sign(Math.round(x * 10))), qB = tiles('B', L('(a) In which direction does the field of wire 1 point at wire 2?', '(a) In welche Richtung zeigt das Feld von Draht 1 bei Draht 2?'),
-        forceOptions(r, Bz, [[neg(Bz), 'hand'], ...(AXES.some((x) => same(x, radial)) ? [[AXES.find((x) => same(x, radial)), 'radial']] : []), [d1, 'along']], howB, L('no field', 'kein Feld')).map((o) => ({ ...o, why: o.ok ? '' : `${o.tag && WHYB[o.tag] ? WHYB[o.tag]() + ' ' : ''}${howB}` })));
+        forceOptions(r, Bz, [[neg(Bz), 'hand'], ...(AXES.some((x) => same(x, radial)) ? [[AXES.find((x) => same(x, radial)), 'radial']] : []), [d1, 'along']], howB, L('no field', 'kein Feld')).map((o) => ({ ...o, why: o.ok ? '' : `${o.tag && WHYB[o.tag] ? WHYB[o.tag]() + ' ' : ''}${howB}`, nudge: o.tag === 'hand' ? NUDGE.gripB() : undefined })));
       const qF = tiles('F', L('(b) In which direction does the magnetic force on wire 2 point?', '(b) In welche Richtung zeigt die magnetische Kraft auf Draht 2?'),
         forceOptions(r, F, [[neg(F), 'hand'], [d2, 'alongV'], [Bz, 'alongB'], [null, 'none']], howF));
       const items = [{ kind: 'wire', d: d1, at: [0, 0], name: '1' }, { kind: kind === 'parallel' ? 'wire' : 'piece', d: d2, at: [P[0], P[1]], name: '2' }];
@@ -254,7 +264,7 @@
         : L(`Grip rule at each conductor: between the ${src === 'loop' ? 'two conductors' : 'two rows'} the fields add up and point ${dirName(inside)}. Outside, the lines come back round: every line is closed. ${src === 'solenoid' ? 'The end where the field lines come out acts as a north pole: the solenoid’s field outside is like that of a bar magnet.' : ''}`,
           `Rechte-Hand-Regel bei jedem Leiter: Zwischen den ${src === 'loop' ? 'beiden Leitern' : 'beiden Reihen'} addieren sich die Felder und zeigen ${dirName(inside)}. Aussen laufen die Linien zurück: Jede Linie ist geschlossen. ${src === 'solenoid' ? 'Das Ende, wo die Feldlinien austreten, wirkt als Nordpol: Aussen ist das Feld der Spule wie das eines Stabmagneten.' : ''}`);
     const opts = [{ wrong: null, ok: true }, ...wrongs.map(([wrong, tag]) => ({ wrong, tag }))];
-    const qp = { type: 'pick', key: 'p', label: L('(a) Which drawing shows its field lines?', '(a) Welche Zeichnung zeigt seine Feldlinien?'), options: r.shuffle(opts).map((o) => ({ html: drawLines({ ...base, wrong: o.wrong }), ok: !!o.ok, tag: o.tag, why: o.ok ? '' : `${WHYL[o.tag]()} ${how}` })) };
+    const qp = { type: 'pick', key: 'p', label: L('(a) Which drawing shows its field lines?', '(a) Welche Zeichnung zeigt seine Feldlinien?'), options: r.shuffle(opts).map((o) => ({ html: drawLines({ ...base, wrong: o.wrong }), ok: !!o.ok, tag: o.tag, why: o.ok ? '' : `${WHYL[o.tag]()} ${how}`, ...(NUDGE[o.tag] ? { nudge: NUDGE[o.tag]() } : {}) })) };
     // (b) the field at a point
     const at = r.pick(Object.keys(AT[src])), A = AT[src][at];
     let where, B, oppTag, howB;
@@ -277,7 +287,8 @@
     const qb = tiles('B', L(`(b) Which way does the field point ${where}?`, `(b) In welche Richtung zeigt das Feld ${where}?`), r.shuffle(IN.map((d) => {
       const ok = same(d, B), tag = ok ? undefined : same(d, neg(B)) ? oppTag : src === 'wire' ? 'radial' : 'other';
       const pre = tag === 'grip' ? WHYAT.grip() : tag === 'radial' ? WHYL.radial() : tag === 'other' ? WHYAT.across() : tag ? WHYL[tag]() : '';
-      return { html: tile(d), ok, tag, why: ok ? '' : `${pre} ${howB}` };
+      const nudge = tag === 'grip' ? NUDGE.gripAt() : tag === 'ns' ? NUDGE.ns() : undefined;
+      return { html: tile(d), ok, tag, why: ok ? '' : `${pre} ${howB}`, ...(nudge ? { nudge } : {}) };
     })));
     return {
       kind: 'lines', title: L(`The field of ${what}`, `Das Feld ${what}`), text, figs: `<div class="fig">${linesFig({ ...base, wrong: 'none' })}</div>`,

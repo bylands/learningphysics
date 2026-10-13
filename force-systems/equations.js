@@ -43,11 +43,18 @@
     motion: () => L('There is no “force of motion”: every force comes from a body that pushes or pulls (or from the Earth), and nothing pushes in the direction of motion here.', 'Es gibt keine „Bewegungskraft“: Jede Kraft kommt von einem Körper, der drückt oder zieht (oder von der Erde), und hier drückt nichts in Bewegungsrichtung.'),
   };
 
-  // An equation to choose: wrongs [[TeX, flag, why]] (why: if the flag's does not say it well).
+  // The nudge after a wrong choice in practice, where the flag's why would give the answer away.
+  const NUDGE = {
+    swap: () => L('Where is the angle α? Check which component lies next to it and which opposite it.', 'Wo liegt der Winkel α? Prüfe, welche Komponente an ihm liegt und welche ihm gegenüber.'),
+    stretch: () => L('Is the spring stretched or compressed here? Does it pull or push then, and which way?', 'Ist die Feder hier gedehnt oder gestaucht? Zieht oder drückt sie dann, und in welche Richtung?'),
+  };
+
+  // An equation to choose: wrongs [[TeX, flag, why, nudge]] (why: if the flag's does not say it
+  // well; nudge: shown in practice instead of why, where why would give the answer away).
   // The options are sorted by their text, so that the right one is not always first; n is their
   // place before (0 the right one), the same in both languages.
   function eq(key, what, right, note, wrongs, more = {}) {
-    const options = [{ html: `$${right}$`, right: true, n: 0 }, ...wrongs.map(([tex, flag, why], k) => ({ html: `$${tex}$`, right: false, flag, why: why || WHY[flag](), n: k + 1 }))];
+    const options = [{ html: `$${right}$`, right: true, n: 0 }, ...wrongs.map(([tex, flag, why, nudge], k) => ({ html: `$${tex}$`, right: false, flag, why: why || WHY[flag](), nudge: nudge || (NUDGE[flag] ? NUDGE[flag]() : ''), n: k + 1 }))];
     options.sort((a, b) => (a.html < b.html ? -1 : 1));
     return { key, what, options, value: `$${right}$. ${note}`, ...more };
   }
@@ -143,10 +150,11 @@
     },
     'table-pulley': (p, N, R, S, K, F) => {
       const only = L('Only the box on the table rubs, and its normal force is its own weight.', 'Nur die Kiste auf dem Tisch reibt, und ihre Normalkraft ist ihre eigene Gewichtskraft.');
+      const onlyN = L('Which box rubs on a surface, and how large is its normal force?', 'Welche Kiste reibt auf einer Unterlage, und wie gross ist ihre Normalkraft?');
       return [
         eq('fric', L('The friction on the box on the table:', 'Die Reibung auf die Kiste auf dem Tisch:'), `${R} = ${T('mu')}\\,${mg(1)}`,
           L('The table is level, so the normal force on the box equals its weight.', 'Der Tisch ist waagrecht, also ist die Normalkraft auf die Kiste gleich ihrer Gewichtskraft.'),
-          [[`${R} = ${T('mu')}\\,(m_1 + m_2)\\,g`, 'fric', only], [`${R} = ${T('mu')}\\,${mg(2)}`, 'fric', only], [`${R} = ${T('mu')}\\,${ma(1)}`, 'fric']]),
+          [[`${R} = ${T('mu')}\\,(m_1 + m_2)\\,g`, 'fric', only, onlyN], [`${R} = ${T('mu')}\\,${mg(2)}`, 'fric', only, onlyN], [`${R} = ${T('mu')}\\,${ma(1)}`, 'fric']]),
         eq('table', L('The box on the table alone, horizontally (towards the pulley positive):', 'Die Kiste auf dem Tisch allein, waagrecht (zur Rolle hin positiv):'), `${S} - ${R} = ${ma(1)}`,
           L('The rope pulls the box forward, friction holds it back.', 'Das Seil zieht die Kiste nach vorn, die Reibung hält sie zurück.'),
           [[`${mg(2)} - ${R} = ${ma(1)}`, 'rope'], [`${S} = ${ma(1)}`, 'noFric'], [`${S} - ${R} = ${Ma}`, 'mass']],
@@ -219,10 +227,10 @@
         hooke(Fs),
         eq('fric', L('The friction on the box:', 'Die Reibung auf die Kiste:'), `${R} = ${T('mu')}\\,${mg()}`,
           L('Kinetic friction: the friction coefficient times the normal force, which here equals the weight.', 'Gleitreibung: die Reibungszahl mal die Normalkraft, die hier gleich der Gewichtskraft ist.'),
-          [[`${R} = ${T('mu')}\\,${Fs}`, 'fric'], [`${R} = ${T('mu')}\\,${ma()}`, 'fric'], [`${R} = ${Fs}`, 'balance', L('The box accelerates: friction is smaller than the spring force; it is μ times the normal force.', 'Die Kiste wird beschleunigt: Die Reibung ist kleiner als die Federkraft; sie ist μ mal die Normalkraft.')]]),
+          [[`${R} = ${T('mu')}\\,${Fs}`, 'fric'], [`${R} = ${T('mu')}\\,${ma()}`, 'fric'], [`${R} = ${Fs}`, 'balance', L('The box accelerates: friction is smaller than the spring force; it is μ times the normal force.', 'Die Kiste wird beschleunigt: Die Reibung ist kleiner als die Federkraft; sie ist μ mal die Normalkraft.'), L('The box accelerates: do the forces along the motion balance then? And how is kinetic friction worked out?', 'Die Kiste wird beschleunigt: Heben sich die Kräfte entlang der Bewegung dann auf? Und wie berechnet man die Gleitreibung?')]]),
         eq('h', L('The box, horizontally (in the direction it starts to move positive):', 'Die Kiste, waagrecht (in die Richtung, in die sie sich zu bewegen beginnt, positiv):'), `${Fs} - ${R} = ${ma()}`,
           L('The spring force, back towards the relaxed length, minus friction accelerates the box.', 'Die Federkraft zurück zur entspannten Länge minus die Reibung beschleunigt die Kiste.'),
-          [[`-${Fs} - ${R} = ${ma()}`, 'stretch'], [`${Fs} = ${ma()}`, 'noFric'], [`${Fs} + ${R} = ${ma()}`, 'dir', L('Friction acts against the motion: it counts negative.', 'Die Reibung wirkt gegen die Bewegung: Sie zählt negativ.')]]),
+          [[`-${Fs} - ${R} = ${ma()}`, 'stretch'], [`${Fs} = ${ma()}`, 'noFric'], [`${Fs} + ${R} = ${ma()}`, 'dir', L('Friction acts against the motion: it counts negative.', 'Die Reibung wirkt gegen die Bewegung: Sie zählt negativ.'), L('Friction acts against the motion: which sign does it get then?', 'Die Reibung wirkt gegen die Bewegung: Welches Vorzeichen bekommt sie dann?')]]),
       ];
     },
     'drag-fall': (p, N, R, S, K, F) => {
@@ -230,19 +238,19 @@
       if (p.phase === 'early') {
         return [eq('v', L('The skydiver (downwards positive):', 'Die Fallschirmspringerin (nach unten positiv):'), `${mg()} - ${D} = ${ma()}`,
           L('She still gets faster: the air resistance is smaller than her weight.', 'Sie wird noch schneller: Der Luftwiderstand ist kleiner als ihre Gewichtskraft.'),
-          [[`${mg()} + ${D} = ${ma()}`, 'dir', L('Air resistance acts against the velocity: up, so it counts negative.', 'Der Luftwiderstand wirkt gegen die Geschwindigkeit: nach oben, er zählt also negativ.')],
+          [[`${mg()} + ${D} = ${ma()}`, 'dir', L('Air resistance acts against the velocity: up, so it counts negative.', 'Der Luftwiderstand wirkt gegen die Geschwindigkeit: nach oben, er zählt also negativ.'), L('Air resistance acts against the velocity: which way does it point, and which sign does it get then?', 'Der Luftwiderstand wirkt gegen die Geschwindigkeit: In welche Richtung zeigt er, und welches Vorzeichen bekommt er dann?')],
             [`${mg()} - ${D} = 0`, 'terminal'], [`${mg()} = ${ma()}`, 'noDrag']])];
       }
       if (p.phase === 'terminal') {
         return [eq('v', L('The skydiver (downwards positive):', 'Die Fallschirmspringerin (nach unten positiv):'), `${mg()} - ${D} = 0`,
           L('Constant speed: the air resistance balances her weight.', 'Konstante Geschwindigkeit: Der Luftwiderstand hält ihrer Gewichtskraft das Gleichgewicht.'),
           [[`${mg()} + ${F} - ${D} = 0`, 'motion', L('There is no “force of motion”: at a constant speed the forces balance, and nothing needs to push her down besides the Earth.', 'Es gibt keine „Bewegungskraft“: Bei konstanter Geschwindigkeit heben sich die Kräfte auf, und ausser der Erde muss nichts sie nach unten ziehen.')],
-            [`${mg()} + ${D} = 0`, 'dir', L('Air resistance acts against the velocity: up, so it counts negative.', 'Der Luftwiderstand wirkt gegen die Geschwindigkeit: nach oben, er zählt also negativ.')],
+            [`${mg()} + ${D} = 0`, 'dir', L('Air resistance acts against the velocity: up, so it counts negative.', 'Der Luftwiderstand wirkt gegen die Geschwindigkeit: nach oben, er zählt also negativ.'), L('Air resistance acts against the velocity: which way does it point, and which sign does it get then?', 'Der Luftwiderstand wirkt gegen die Geschwindigkeit: In welche Richtung zeigt er, und welches Vorzeichen bekommt er dann?')],
             [`${mg()} = ${ma()}`, 'noDrag']])];
       }
       return [eq('v', L('The skydiver (upwards positive):', 'Die Fallschirmspringerin (nach oben positiv):'), `${D} - ${mg()} = ${ma()}`,
         L('She slows down: the air resistance, still up against her velocity, is larger than her weight.', 'Sie wird langsamer: Der Luftwiderstand, immer noch nach oben gegen ihre Geschwindigkeit, ist grösser als ihre Gewichtskraft.'),
-        [[`-${D} - ${mg()} = ${ma()}`, 'accel', L('Air resistance acts against the velocity, not against the acceleration: she still moves down, so it points up.', 'Der Luftwiderstand wirkt gegen die Geschwindigkeit, nicht gegen die Beschleunigung: Sie bewegt sich noch nach unten, also zeigt er nach oben.')],
+        [[`-${D} - ${mg()} = ${ma()}`, 'accel', L('Air resistance acts against the velocity, not against the acceleration: she still moves down, so it points up.', 'Der Luftwiderstand wirkt gegen die Geschwindigkeit, nicht gegen die Beschleunigung: Sie bewegt sich noch nach unten, also zeigt er nach oben.'), L('Air resistance acts against the velocity, not against the acceleration: which way is she moving?', 'Der Luftwiderstand wirkt gegen die Geschwindigkeit, nicht gegen die Beschleunigung: In welche Richtung bewegt sie sich?')],
           [`${D} - ${mg()} = 0`, 'terminal'], [`${D} = ${ma()}`, 'other', L('Her weight is missing.', 'Ihre Gewichtskraft fehlt.')]])];
     },
     'drag-bike': (p, N, R, S, K, F) => {
@@ -254,7 +262,7 @@
             [`${N} + ${D} - ${mg()} = 0`, 'other', L('Air resistance acts horizontally, not vertically.', 'Der Luftwiderstand wirkt waagrecht, nicht senkrecht.')]]),
         eq('h', L('The cyclist, horizontally (backwards positive):', 'Die Radfahrerin, waagrecht (nach hinten positiv):'), `${D} = ${ma()}`,
           L('Air resistance is the only horizontal force: it slows her down.', 'Der Luftwiderstand ist die einzige waagrechte Kraft: Er bremst sie ab.'),
-          [[`-${D} = ${ma()}`, 'accel', L('Air resistance acts against the velocity, not against the acceleration: she moves forwards, so it points backwards.', 'Der Luftwiderstand wirkt gegen die Geschwindigkeit, nicht gegen die Beschleunigung: Sie fährt vorwärts, also zeigt er nach hinten.')],
+          [[`-${D} = ${ma()}`, 'accel', L('Air resistance acts against the velocity, not against the acceleration: she moves forwards, so it points backwards.', 'Der Luftwiderstand wirkt gegen die Geschwindigkeit, nicht gegen die Beschleunigung: Sie fährt vorwärts, also zeigt er nach hinten.'), L('Air resistance acts against the velocity, not against the acceleration: which way is she moving?', 'Der Luftwiderstand wirkt gegen die Geschwindigkeit, nicht gegen die Beschleunigung: In welche Richtung bewegt sie sich?')],
             [`${D} - ${F} = ${ma()}`, 'motion', L('There is no “force of motion”: once she stops pedalling, nothing pushes her forwards.', 'Es gibt keine „Bewegungskraft“: Sobald sie nicht mehr tritt, treibt sie nichts mehr nach vorn an.')],
             [`${D} - ${mg()} = ${ma()}`, 'other', L('Her weight acts vertically, not along the road.', 'Ihre Gewichtskraft wirkt senkrecht, nicht entlang der Strasse.')]]),
       ];
@@ -272,20 +280,21 @@
       const Fs = T('Fs'), FG = p.m * FS.G, dm = v.dx / 100;
       const unit = L('Δx comes out in metres; in centimetres it is a hundred times as much.', 'Δx ergibt sich in Metern; in Zentimetern ist es hundertmal so viel.');
       const flip = L('The law of the spring is F = k Δx: the force divided by k gives Δx, not k divided by the force.', 'Das Federgesetz lautet F = k Δx: Die Kraft geteilt durch k ergibt Δx, nicht k geteilt durch die Kraft.');
+      const flipN = L('The law of the spring is F = k Δx: solve it for the wanted quantity.', 'Das Federgesetz lautet F = k Δx: Löse es nach der gesuchten Grösse auf.');
       const mass = L('The spring force is the weight m g, in newtons, not the mass.', 'Die Federkraft ist die Gewichtskraft m g, in Newton, nicht die Masse.');
       if (p.given === 'k') {
         const dx = (x) => `\\Delta x = ${x}`;
         return [eq('dx', L('The extension or compression:', 'Die Dehnung bzw. Stauchung:'), dx(`\\frac{${Fs}}{k} = \\frac{${tq(FG, 'N')}}{${tq(p.k, 'Nm')}} = ${FS.texNum(dm, 3)}\\,\\mathrm{m} = ${tq(v.dx, 'cm')}`),
           L('The spring force equals the weight; Δx in metres, then in centimetres.', 'Die Federkraft ist gleich der Gewichtskraft; Δx in Metern, dann in Zentimetern.'),
           [[dx(`\\frac{${Fs}}{k} = \\frac{${tq(FG, 'N')}}{${tq(p.k, 'Nm')}} = ${FS.texNum(dm, 3)}\\,\\mathrm{cm}`), 'hooke', unit],
-            [dx(`\\frac{k}{${Fs}} = \\frac{${tq(p.k, 'Nm')}}{${tq(FG, 'N')}} = ${FS.texNum(p.k / FG, 2)}\\,\\mathrm{cm}`), 'hooke', flip],
+            [dx(`\\frac{k}{${Fs}} = \\frac{${tq(p.k, 'Nm')}}{${tq(FG, 'N')}} = ${FS.texNum(p.k / FG, 2)}\\,\\mathrm{cm}`), 'hooke', flip, flipN],
             [dx(`\\frac{m}{k} = \\frac{${tq(p.m, 'kg')}}{${tq(p.k, 'Nm')}} = ${FS.texNum(v.dx / FS.G, 2)}\\,\\mathrm{cm}`), 'hooke', mass]])];
       }
       const k = (x) => `k = ${x}`;
       return [eq('k', L('The spring constant:', 'Die Federkonstante:'), k(`\\frac{${Fs}}{\\Delta x} = \\frac{${tq(FG, 'N')}}{${FS.texNum(dm, 3)}\\,\\mathrm{m}} = ${tq(p.k, 'Nm')}`),
         L('The spring force equals the weight; Δx in metres.', 'Die Federkraft ist gleich der Gewichtskraft; Δx in Metern.'),
         [[k(`\\frac{${Fs}}{\\Delta x} = \\frac{${tq(FG, 'N')}}{${tq(v.dx, 'cm')}} = ${tq(FG / v.dx, 'Nm')}`), 'hooke', L('Δx must be in metres, not centimetres.', 'Δx muss in Metern stehen, nicht in Zentimetern.')],
-          [k(`${Fs}\\,\\Delta x = ${tq(FG, 'N')}\\cdot${FS.texNum(dm, 3)}\\,\\mathrm{m} = ${FS.texNum(FG * dm, 3)}\\,\\mathrm{N/m}`), 'hooke', flip],
+          [k(`${Fs}\\,\\Delta x = ${tq(FG, 'N')}\\cdot${FS.texNum(dm, 3)}\\,\\mathrm{m} = ${FS.texNum(FG * dm, 3)}\\,\\mathrm{N/m}`), 'hooke', flip, flipN],
           [k(`\\frac{m}{\\Delta x} = \\frac{${tq(p.m, 'kg')}}{${FS.texNum(dm, 3)}\\,\\mathrm{m}} = ${tq(p.k / FS.G, 'Nm')}`), 'hooke', mass]])];
     },
     'spring-floor': (p, v) => {
@@ -293,7 +302,7 @@
       return [eq('a', L('The acceleration:', 'Die Beschleunigung:'), a(`\\frac{${Fs} - ${R}}{m} = \\frac{${tq(v.Fs, 'N')} - ${tq(v.R, 'N')}}{${tq(p.m, 'kg')}} = ${tq(v.a, 'a')}`),
         L('The spring force minus friction, divided by the mass.', 'Die Federkraft minus die Reibung, geteilt durch die Masse.'),
         [[a(`\\frac{${Fs}}{m} = \\frac{${tq(v.Fs, 'N')}}{${tq(p.m, 'kg')}} = ${tq(v.Fs / p.m, 'a')}`), 'noFric'],
-          [a(`\\frac{${Fs} + ${R}}{m} = \\frac{${tq(v.Fs, 'N')} + ${tq(v.R, 'N')}}{${tq(p.m, 'kg')}} = ${tq((v.Fs + v.R) / p.m, 'a')}`), 'dir', L('Friction acts against the motion: subtract it.', 'Die Reibung wirkt gegen die Bewegung: Zieh sie ab.')],
+          [a(`\\frac{${Fs} + ${R}}{m} = \\frac{${tq(v.Fs, 'N')} + ${tq(v.R, 'N')}}{${tq(p.m, 'kg')}} = ${tq((v.Fs + v.R) / p.m, 'a')}`), 'dir', L('Friction acts against the motion: subtract it.', 'Die Reibung wirkt gegen die Bewegung: Zieh sie ab.'), L('Friction acts against the motion: which sign does it get then?', 'Die Reibung wirkt gegen die Bewegung: Welches Vorzeichen bekommt sie dann?')],
           [a(`\\frac{k\\,\\Delta x - ${R}}{m} = \\frac{${tq(p.k, 'Nm')}\\cdot${tq(p.dx, 'cm')} - ${tq(v.R, 'N')}}{${tq(p.m, 'kg')}} = ${tq((p.k * p.dx - v.R) / p.m, 'a')}`), 'hooke', L('Δx must be in metres, not centimetres.', 'Δx muss in Metern stehen, nicht in Zentimetern.')]])];
     },
     'drag-fall': (p, v) => {
@@ -303,24 +312,25 @@
         return [
           eq('D', L('The air resistance:', 'Der Luftwiderstand:'), d(`${mg()} = ${tq(p.m, 'kg')}\\cdot${tq(FS.G, 'a')} = ${tq(FG, 'N')}`),
             L('At terminal velocity, the air resistance balances her weight.', 'Bei der Endgeschwindigkeit hält der Luftwiderstand ihrer Gewichtskraft das Gleichgewicht.'),
-            [[d(`0\\,\\mathrm{N}`), 'noDrag', L('Air resistance does not vanish at a constant speed: it balances her weight.', 'Der Luftwiderstand verschwindet bei konstanter Geschwindigkeit nicht: Er hält ihrer Gewichtskraft das Gleichgewicht.')],
-              [d(`m\\,v = ${tq(p.m, 'kg')}\\cdot${tq(p.u, 'v')} = ${tq(p.m * p.u, 'N')}`), 'motion', L('There is no force m v: at a constant speed the forces balance, so the air resistance equals her weight.', 'Es gibt keine Kraft m v: Bei konstanter Geschwindigkeit heben sich die Kräfte auf, also ist der Luftwiderstand gleich ihrer Gewichtskraft.')],
+            [[d(`0\\,\\mathrm{N}`), 'noDrag', L('Air resistance does not vanish at a constant speed: it balances her weight.', 'Der Luftwiderstand verschwindet bei konstanter Geschwindigkeit nicht: Er hält ihrer Gewichtskraft das Gleichgewicht.'), L('Air resistance does not vanish at a constant speed. What holds for the forces on her then?', 'Der Luftwiderstand verschwindet bei konstanter Geschwindigkeit nicht. Was gilt dann für die Kräfte auf sie?')],
+              [d(`m\\,v = ${tq(p.m, 'kg')}\\cdot${tq(p.u, 'v')} = ${tq(p.m * p.u, 'N')}`), 'motion', L('There is no force m v: at a constant speed the forces balance, so the air resistance equals her weight.', 'Es gibt keine Kraft m v: Bei konstanter Geschwindigkeit heben sich die Kräfte auf, also ist der Luftwiderstand gleich ihrer Gewichtskraft.'), L('There is no force m v. What holds for the forces at a constant speed?', 'Es gibt keine Kraft m v. Was gilt für die Kräfte bei konstanter Geschwindigkeit?')],
               [d(`m = ${tq(p.m, 'N')}`), 'other', L('Her weight is m g, in newtons: the mass times g.', 'Ihre Gewichtskraft ist m g, in Newton: die Masse mal g.')]]),
           eq('res', L('The net force on her:', 'Die resultierende Kraft auf sie:'), `${Fn} = ${mg()} - ${D} = 0\\,\\mathrm{N}`,
             L('Her speed is constant: no net force.', 'Ihre Geschwindigkeit ist konstant: keine resultierende Kraft.'),
-            [[`${Fn} = ${mg()} = ${tq(FG, 'N')}`, 'noDrag', L('The air resistance acts on her as well; at a constant speed it cancels her weight.', 'Der Luftwiderstand wirkt auch auf sie; bei konstanter Geschwindigkeit hebt er ihre Gewichtskraft auf.')],
-              [`${Fn} = ${mg()} + ${D} = ${tq(2 * FG, 'N')}`, 'dir', L('Weight and air resistance point in opposite directions: subtract them.', 'Gewichtskraft und Luftwiderstand zeigen in entgegengesetzte Richtungen: Zieh sie voneinander ab.')],
-              [`${Fn} = m\\,v = ${tq(p.m * p.u, 'N')}`, 'motion', L('There is no force m v: a constant speed needs no net force.', 'Es gibt keine Kraft m v: Eine konstante Geschwindigkeit braucht keine resultierende Kraft.')]]),
+            [[`${Fn} = ${mg()} = ${tq(FG, 'N')}`, 'noDrag', L('The air resistance acts on her as well; at a constant speed it cancels her weight.', 'Der Luftwiderstand wirkt auch auf sie; bei konstanter Geschwindigkeit hebt er ihre Gewichtskraft auf.'), L('The air resistance acts on her as well. What holds for the forces at a constant speed?', 'Der Luftwiderstand wirkt auch auf sie. Was gilt für die Kräfte bei konstanter Geschwindigkeit?')],
+              [`${Fn} = ${mg()} + ${D} = ${tq(2 * FG, 'N')}`, 'dir', L('Weight and air resistance point in opposite directions: subtract them.', 'Gewichtskraft und Luftwiderstand zeigen in entgegengesetzte Richtungen: Zieh sie voneinander ab.'), L('Do weight and air resistance point the same way? What does that mean for the net force?', 'Zeigen Gewichtskraft und Luftwiderstand in dieselbe Richtung? Was heisst das für die resultierende Kraft?')],
+              [`${Fn} = m\\,v = ${tq(p.m * p.u, 'N')}`, 'motion', L('There is no force m v: a constant speed needs no net force.', 'Es gibt keine Kraft m v: Eine konstante Geschwindigkeit braucht keine resultierende Kraft.'), L('There is no force m v. Does a constant speed need a net force?', 'Es gibt keine Kraft m v. Braucht eine konstante Geschwindigkeit eine resultierende Kraft?')]]),
         ];
       }
       const early = p.phase === 'early', dir = L('Weight and air resistance point in opposite directions: subtract them.', 'Gewichtskraft und Luftwiderstand zeigen in entgegengesetzte Richtungen: Zieh sie voneinander ab.');
+      const dirN = L('Do weight and air resistance point the same way? What does that mean for the net force?', 'Zeigen Gewichtskraft und Luftwiderstand in dieselbe Richtung? Was heisst das für die resultierende Kraft?');
       const terminal = L('Her speed changes: the forces do not balance, so the net force is not zero.', 'Ihre Geschwindigkeit ändert sich: Die Kräfte heben sich nicht auf, also ist die resultierende Kraft nicht null.');
       const net = early ? `${mg()} - ${D} = ${tq(FG, 'N')} - ${tq(p.D, 'N')}` : `${D} - ${mg()} = ${tq(p.D, 'N')} - ${tq(FG, 'N')}`;
       const a = (x) => `a = ${x}`;
       return [
         eq('res', L('The net force on her:', 'Die resultierende Kraft auf sie:'), `${Fn} = ${net} = ${tq(v.res, 'N')}`,
           early ? L('Her weight minus the air resistance.', 'Ihre Gewichtskraft minus der Luftwiderstand.') : L('The air resistance minus her weight.', 'Der Luftwiderstand minus ihre Gewichtskraft.'),
-          [[`${Fn} = ${mg()} + ${D} = ${tq(FG + p.D, 'N')}`, 'dir', dir], [`${Fn} = 0\\,\\mathrm{N}`, 'terminal', terminal],
+          [[`${Fn} = ${mg()} + ${D} = ${tq(FG + p.D, 'N')}`, 'dir', dir, dirN], [`${Fn} = 0\\,\\mathrm{N}`, 'terminal', terminal],
             [`${Fn} = ${D} = ${tq(p.D, 'N')}`, 'other', L('The air resistance alone is not the net force: her weight acts too.', 'Der Luftwiderstand allein ist nicht die resultierende Kraft: Ihre Gewichtskraft wirkt auch.')]]),
         eq('a', early ? L('Her acceleration (downwards):', 'Ihre Beschleunigung (nach unten):') : L('Her acceleration (upwards):', 'Ihre Beschleunigung (nach oben):'), a(`\\frac{${Fn}}{m} = \\frac{${tq(v.res, 'N')}}{${tq(p.m, 'kg')}} = ${tq(v.a, 'a')}`),
           L('The net force divided by her mass.', 'Die resultierende Kraft geteilt durch ihre Masse.'),
@@ -340,6 +350,6 @@
   };
   const claims = (id, p, v) => (CLAIMS[id] ? CLAIMS[id](p, v) : []);
 
-  root.Equations = { of, claims, WHY };
+  root.Equations = { of, claims, WHY, NUDGE };
   if (typeof module !== 'undefined') module.exports = root.Equations;
 })(typeof window !== 'undefined' ? window : globalThis);
