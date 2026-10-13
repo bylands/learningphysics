@@ -22,10 +22,12 @@ cards in its order, shows their tags, and lets visitors filter by tag. This serv
                          anew, if asked), their alternatives, each objective's exercises; nothing is saved
     /admin/api/preview   GET ?keys=a,b  the exercises as HTML (text and solution), for KaTeX
     /admin/api/texercises POST a TeXercises export (zip): its exercises by the teacher are kept for
-                         the sheets (hub-data/texercises/), all others are left out; ?image=<name>: an
-                         image of the TeXercises gallery, or a .zip of them (hub-data/sheet-images/)
+                         the sheets (hub-data/texercises/), all others are left out; ?image=<file name>
+                         &keys=a,b[&gallery=<name>]: an image of the TeXercises gallery that these
+                         exercises use, or a .zip of them, kept under a name made of the exercise's
+                         title and id (hub-data/sheet-images/)
     /admin/api/images    GET ?keys=a,b  the gallery images these exercises use, and which are there
-                         POST {"name": ...} /admin/api/images/fetch: fetch one from TeXercises
+                         POST {"name": ..., "keys": [...]} /admin/api/images/fetch: fetch one from TeXercises
     /admin/sheet/<id>.pdf, /admin/sheet/<id>-solutions.pdf   the saved sheet's PDF, made when first
                          asked for (a page that reloads itself until it is there)
     /admin/sheet/s/<secret>   a shared sheet's online version: its exercises, no solutions, one per
@@ -676,8 +678,9 @@ class Admin:
         return {"exercises": out}
 
     # ------------------------------------------------------------------ images of the sheets
-    def images_of(self, keys: List[str]) -> Dict[str, object]:
-        """The gallery images the exercises use: [{name, have, exercises: [titles], gallery: url}]."""
+    def image_uses(self, keys: List[str]) -> Dict[str, Dict[str, object]]:
+        """The gallery images the exercises use: name -> {"titles": [...], "stem": the file name it is
+        kept as, made of the title and id of the first exercise that uses it}."""
         sheetlib, pool, have, _ = self.sheet_context()
         lib = sheets_module("preview")
         found: Dict[str, Dict[str, object]] = {}
@@ -685,31 +688,56 @@ class Admin:
             if k not in have or lib is None:
                 continue
             parts = lib.read_exercise(have[k])
-            title = str((parts.get("meta") or {}).get("title") or k)
-            for name in lib.images_used(str(parts.get("text") or "") + "\n" + str(parts.get("solution") or "")):
-                e = found.setdefault(name, {"name": name, "have": bool(sheetlib.find_image(self.sheet_images, name)),
-                                            "pdf": bool(sheetlib.find_image(self.sheet_images, name, latex=True)),
-                                            "exercises": [], "gallery": sheetlib.GALLERY.format(quote(name))})
-                if title not in e["exercises"]:
-                    e["exercises"].append(title)
-        return {"images": list(found.values())}
+            meta = parts.get("meta") or {}
+            title = str(meta.get("title") or k)
+            names = lib.images_used(str(parts.get("text") or "") + "\n" + str(parts.get("solution") or ""))
+            for n, name in enumerate(names, 1):
+                e = found.setdefault(name, {"titles": [], "stem": sheetlib.image_stem(title, str(meta.get("id") or k), n, len(names))})
+                if title not in e["titles"]:
+                    e["titles"].append(title)
+        return found
 
-    def store_images(self, filename: str, data: bytes) -> Dict[str, object]:
+    def images_of(self, keys: List[str]) -> Dict[str, object]:
+        """The gallery images the exercises use: [{name, have, file, pdf, exercises: [titles], gallery: url}]."""
+        sheetlib = sheets_module()
+        out = []
+        for name, e in self.image_uses(keys).items():
+            f = sheetlib.find_image(self.sheet_images, name)
+            out.append({"name": name, "have": bool(f), "file": f.name if f else e["stem"],
+                        "pdf": bool(sheetlib.find_image(self.sheet_images, name, latex=True)),
+                        "exercises": e["titles"], "gallery": sheetlib.GALLERY.format(quote(name))})
+        return {"images": out}
+
+    def store_images(self, filename: str, data: bytes, keys: List[str], gallery: Optional[str] = None) -> Dict[str, object]:
+        """An uploaded image (gallery: of which gallery name), or a .zip of them, for the images of these
+        exercises: each kept under a name made of its exercise's title and id."""
         sheetlib = sheets_module()
         if sheetlib is None:
             raise ValueError("exercise sheets are not installed")
-        return {"kept": sheetlib.store_images(self.sheet_images, filename, data)}
+        targets = {n: str(e["stem"]) for n, e in self.image_uses(keys).items()}
+        if not targets:
+            raise ValueError("the exercises of this sheet use no images")
+        return sheetlib.store_images(self.sheet_images, filename, data, targets, gallery)
 
-    def fetch_image(self, name: str) -> Dict[str, object]:
+    def fetch_image(self, name: str, keys: List[str]) -> Dict[str, object]:
         sheetlib = sheets_module()
         if sheetlib is None:
             raise ValueError("exercise sheets are not installed")
-        ok, what = sheetlib.fetch_image(self.sheet_images, name)
+        use = self.image_uses(keys).get(name)
+        if use is None:
+            return {"ok": False, "error": "no exercise of this sheet uses this image"}
+        ok, what = sheetlib.fetch_image(self.sheet_images, name, str(use["stem"]))
         return {"ok": ok, "name": what} if ok else {"ok": False, "error": what}
 
     def image_file(self, name: str) -> Optional[Path]:
+        """The file kept for a gallery image."""
         sheetlib = sheets_module()
         return sheetlib.find_image(self.sheet_images, name) if sheetlib else None
+
+    def kept_image(self, filename: str) -> Optional[Path]:
+        """An image file of the folder, by its own name."""
+        sheetlib = sheets_module()
+        return sheetlib.kept_file(self.sheet_images, filename) if sheetlib else None
 
     def sheet_chosen(self, s: Dict[str, object], sheetlib, pool) -> List[Tuple[str, str]]:
         apps = [m.get("id") for m in s.get("modules", []) if isinstance(m, dict)]
@@ -972,8 +1000,8 @@ def make_handler(admin: Admin):
             m = re.fullmatch(r"(?:s/([A-Za-z0-9_-]{32})/)?img/([^/]{1,160})", rest)
             if m:
                 ok = admin.sheet_by_token(m.group(1)) is not None if m.group(1) else self.logged_in()
-                f = admin.image_file(unquote(m.group(2))) if ok else None
-                if f is None or f.name != unquote(m.group(2)):
+                f = admin.kept_image(unquote(m.group(2))) if ok else None
+                if f is None:
                     self.send(404, "Not found", "text/plain; charset=utf-8")
                 else:
                     self.send(200, f.read_bytes(), IMAGE_TYPES.get(f.suffix.lower(), "application/octet-stream"), MEDIA_HEADERS)
@@ -1133,7 +1161,8 @@ def make_handler(admin: Admin):
                 if body is None:
                     return
                 try:
-                    self.json(200, admin.fetch_image(str(body.get("name") or "")))
+                    keys = body.get("keys") if isinstance(body.get("keys"), list) else []
+                    self.json(200, admin.fetch_image(str(body.get("name") or ""), [k for k in keys if isinstance(k, str)]))
                 except ValueError as e:
                     self.json(400, {"error": str(e)})
                 except OSError:
@@ -1151,9 +1180,13 @@ def make_handler(admin: Admin):
                 if n <= 0 or n > MAX_UPLOAD:
                     self.json(413, {"error": "the file is too large (at most 64 MB)"})
                     return
-                image = parse_qs(self.path.partition("?")[2]).get("image")
+                query = parse_qs(self.path.partition("?")[2])
+                image = query.get("image")
+                keys = [k for k in (query.get("keys") or [""])[0].split(",") if k]
+                gallery = (query.get("gallery") or [None])[0]
                 try:
-                    self.json(200, admin.store_images(image[0], self.rfile.read(n)) if image else admin.store_texercises(self.rfile.read(n)))
+                    self.json(200, admin.store_images(image[0], self.rfile.read(n), keys, gallery) if image
+                              else admin.store_texercises(self.rfile.read(n)))
                 except ValueError as e:
                     self.json(400, {"error": str(e)})
                 except OSError:
@@ -1516,6 +1549,10 @@ h2.section { font-size: 1.15rem; margin: 28px 0 4px; }
 .imglist li { margin: 3px 0; }
 .imglist .ok { color: var(--ok); font-weight: 600; }
 .imglist .bad { color: var(--bad); font-weight: 600; }
+.imglist label.button { display: inline-block; border: 1px solid var(--line); border-radius: 6px; padding: 0 8px; font-size: 0.82rem; cursor: pointer; background: var(--card); }
+.imglist label.button:hover { border-color: var(--accent); }
+.imglist label.button:focus-within { outline: 2px solid var(--accent); outline-offset: 1px; }
+.visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 .obs { margin: 2px 0 0; font-size: 0.82rem; }
 .alts { list-style: none; margin: 8px 0 2px; padding: 6px 0 0 12px; border-left: 3px solid var(--accent); display: grid; gap: 6px; font-size: 0.95rem; }
 .prev { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 6px 12px; margin: 8px 0 4px; }
@@ -2129,26 +2166,34 @@ SHEETS_JS = r"""
       if (!imgList) { box.replaceChildren(el('p', { class: 'note' }, 'Loading…')); return; }
       if (!imgList.length) { box.replaceChildren(el('p', { class: 'note' }, cur.exercises.length ? 'The exercises of this sheet use no images.' : 'No exercises yet.')); return; }
       const missing = imgList.filter((x) => !x.have);
-      const file = el('input', { type: 'file', multiple: true, accept: 'image/*,.svg,.pdf,.zip', 'aria-label': 'Images to upload' });
-      const upload = async () => {
-        if (!file.files.length) { msg.textContent = 'Choose the files first.'; return; }
-        let kept = 0, failed = 0;
-        for (const f of file.files) {
+      // a file for one image (gallery: its gallery name), or files named as in the gallery, or a .zip of them
+      const send = async (files, gallery) => {
+        let kept = 0, skipped = [], failed = '';
+        for (const f of files) {
           msg.textContent = `Uploading ${f.name}…`;
           try {
-            const r = await fetch(`/admin/api/texercises?image=${encodeURIComponent(f.name)}`, { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/octet-stream' }, body: f });
+            const r = await fetch(`/admin/api/texercises?image=${encodeURIComponent(f.name)}&keys=${encodeURIComponent(keys)}${gallery ? `&gallery=${encodeURIComponent(gallery)}` : ''}`,
+              { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/octet-stream' }, body: f });
             const d = await r.json().catch(() => ({}));
-            if (r.ok) kept += d.kept.length; else failed += 1;
-          } catch (e) { failed += 1; }
+            if (r.ok) { kept += d.kept.length; skipped = skipped.concat(d.skipped); } else failed = d.error || r.statusText;
+          } catch (e) { failed = e.message; }
         }
-        status(`Kept ${kept} image${kept === 1 ? '' : 's'}${failed ? `; ${failed} file${failed === 1 ? ' was' : 's were'} no image` : ''}.`, failed ? 'bad' : 'ok');
+        msg.textContent = '';
+        status(`Kept ${kept} image${kept === 1 ? '' : 's'}${skipped.length ? `; not of this sheet: ${skipped.join(', ')}` : ''}${failed ? `; ${failed}` : ''}.`, failed || skipped.length ? 'bad' : 'ok');
         refresh(true);
+      };
+      const file = el('input', { type: 'file', multiple: true, accept: 'image/*,.svg,.pdf,.zip', 'aria-label': 'Images to upload' });
+      const upload = () => { if (!file.files.length) { msg.textContent = 'Choose the files first.'; return; } send([...file.files]); };
+      const one = (x) => {
+        const inp = el('input', { type: 'file', accept: 'image/*,.svg,.pdf', class: 'visually-hidden', 'aria-label': `Image ${x.name}` });
+        inp.addEventListener('change', () => { if (inp.files.length) send([inp.files[0]], x.name); });
+        return el('label', { class: 'button small' }, inp, x.have ? 'Replace…' : 'Upload…');
       };
       const fetchAll = async () => {
         let ok = 0, why = '';
         for (const x of missing) {
           msg.textContent = `Fetching ${x.name} from TeXercises…`;
-          try { const d = await api('/admin/api/images/fetch', { name: x.name }); if (d.ok) ok += 1; else why = d.error; } catch (e) { why = e.message; }
+          try { const d = await api('/admin/api/images/fetch', { name: x.name, keys: keys.split(',') }); if (d.ok) ok += 1; else why = d.error; } catch (e) { why = e.message; }
         }
         status(`Fetched ${ok} of ${missing.length} images from TeXercises.${why ? ` Not all: ${why}.` : ''}`, ok === missing.length ? 'ok' : 'bad');
         refresh(true);
@@ -2157,12 +2202,12 @@ SHEETS_JS = r"""
         el('ul', { class: 'imglist' }, ...imgList.map((x) => el('li', {},
           el('span', { class: x.have ? 'ok' : 'bad' }, x.have ? '✓' : '✗'), ' ',
           el('code', {}, x.name), ' ',
-          el('span', { class: 'note' }, x.exercises.join(' · ')), ' ',
+          el('span', { class: 'note' }, `${x.exercises.join(' · ')} → ${x.have ? x.file : x.file + '.…'}`), ' ',
           x.have && !x.pdf ? el('span', { class: 'note' }, '(not in the PDF: LaTeX needs a PNG, JPEG or PDF of it)') : '',
-          x.have ? '' : el('a', { href: x.gallery, target: '_blank', rel: 'noopener' }, 'download from TeXercises ↗')))),
+          x.have ? '' : el('a', { href: x.gallery, target: '_blank', rel: 'noopener' }, 'download from TeXercises ↗'), ' ', one(x)))),
         missing.length ? el('div', { class: 'addapp' }, el('button', { type: 'button', onclick: fetchAll }, `Fetch the ${missing.length} missing from TeXercises`)) : '',
         el('div', { class: 'addapp' }, file, el('button', { type: 'button', onclick: upload }, 'Upload'), msg),
-        el('p', { class: 'note' }, 'Images keep the name they have in the TeXercises gallery (the extension may differ); a .zip of them works too. They show in the preview, the online version and the PDF.'));
+        el('p', { class: 'note' }, 'Upload an image at its line, or several at once (or a .zip) named as in the TeXercises gallery (any extension). Each is kept under a name made of its exercise’s title and id, as shown after the arrow. They show in the preview, the online version and the PDF.'));
     };
     const refresh = (changed) => {
       api(`/admin/api/images?keys=${encodeURIComponent(keys)}`).then((d) => {
