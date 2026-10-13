@@ -4,8 +4,9 @@ Exercises from the old Aufgaben sheets (lecture-notes, one `Aufgaben` folder
 per topic), rewritten as TeXercises exercises in the bulk-import format (see
 `texercises-drafts/README.md`). The selection and grouping follow the reviewed
 overview of the 445 sheet exercises; this first batch is the collection
-**Freier Fall** (13 exercises, German, private, no `"id"`, so an upload
-creates them).
+**Freier Fall** (13 exercises, German, private). They carry the `"id"`s of
+their uploaded copies (exercises 24627 to 24639, collection 5851), so an
+upload updates them in place.
 
 ## Upload
 
