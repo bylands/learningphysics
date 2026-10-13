@@ -62,8 +62,9 @@ def rename_primitives(e):
 
 def images(tex):
     # TeXercises writes #image_path:<name># for its gallery images; they are not in the export,
-    # so they point to images/<name> (put the files there, or the package prints a placeholder)
-    return re.sub(r'#image_path:([^#]+)#', r'images/\1', tex)
+    # so they point to images/<name> (put the files there, or the package prints a placeholder);
+    # LaTeX cannot read SVG, GIF or WebP: without that extension it finds a PDF or PNG copy
+    return re.sub(r'#image_path:([^#]+?)(?:\.(?:svg|gif|webp))?#', r'images/\1', tex, flags=re.I)
 
 MATH_ENVS = {'align', 'align*', 'equation', 'equation*', 'gather', 'gather*', 'multline', 'multline*', 'eqnarray', 'eqnarray*'}
 

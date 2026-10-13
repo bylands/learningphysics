@@ -11,7 +11,9 @@ TeXercises export (only the teacher's exercises kept, nothing written outside it
 preview (sheets/preview.py: the arithmetic of the solver part, numbers and units, text to HTML,
 everything escaped, and every draft of this repository), and the service: a sheet created, changed,
 shared, duplicated and deleted, everything only when logged in except a shared sheet's online
-version, which shows no solutions.
+version, which shows no solutions; the figures (the LaTeX of an exercise's TikZ pictures, their
+hash and cache) and the gallery images (uploaded, as a .zip, fetched from TeXercises, served only
+to the panel and a shared sheet, never outside their folder), and both in the preview's HTML.
 """
 import io
 import zipfile
@@ -372,6 +374,60 @@ class Sheets(unittest.TestCase):
                 S.store_export(b"not a zip", export, "by")
             self.assertEqual([p.name for p in (export / "exercises").iterdir()], ["e4-mine"])  # kept
 
+    def test_images(self):
+        png = b"\x89PNG\r\n\x1a\n" + b"\0" * 40
+        with tempfile.TemporaryDirectory() as tmp:
+            images = Path(tmp) / "img"
+            self.assertEqual(S.store_images(images, "coil", png), ["coil.png"])  # the content says which
+            self.assertEqual(S.store_images(images, "x/y/wire.PNG", png), ["wire.PNG"])
+            self.assertEqual(S.find_image(images, "coil"), images / "coil.png")
+            self.assertEqual(S.find_image(images, "coil.png"), images / "coil.png")
+            self.assertIsNone(S.find_image(images, "../img/coil.png"))
+            self.assertIsNone(S.find_image(images, "nope"))
+            svg = b'<?xml version="1.0"?><svg xmlns="http://www.w3.org/2000/svg"></svg>'
+            S.store_images(images, "lens.svg", svg)
+            self.assertEqual(S.find_image(images, "lens"), images / "lens.svg")
+            if not shutil.which("rsvg-convert"):  # no PDF copy: not for LaTeX
+                self.assertIsNone(S.find_image(images, "lens", latex=True))
+            self.assertEqual(S.find_image(images, "coil", latex=True), images / "coil.png")
+            buf = io.BytesIO()
+            with zipfile.ZipFile(buf, "w") as z:
+                z.writestr("gallery/a1.png", png)
+                z.writestr("gallery/../../evil.png", png)
+                z.writestr("notes.txt", b"hello")
+                z.writestr("__MACOSX/._a1.png", png)
+            self.assertEqual(sorted(S.store_images(images, "all.zip", buf.getvalue())), ["a1.png", "evil.png"])
+            self.assertFalse((Path(tmp) / "evil.png").exists())
+            self.assertEqual(sorted(p.name for p in images.iterdir()), sorted(["coil.png", "wire.PNG", "lens.svg", "a1.png", "evil.png"]))
+            for bad in (b"hello", b"<html><body>login</body></html>"):
+                with self.assertRaises(ValueError):
+                    S.store_images(images, "x.png", bad)
+            with self.assertRaises(ValueError):
+                S.store_images(images, "..png", png)
+
+            # fetched from TeXercises: an image is kept, a login page is not
+            class Resp(io.BytesIO):
+                def __enter__(self):
+                    return self
+
+                def __exit__(self, *a):
+                    return False
+            with mock.patch.object(S.urllib.request, "urlopen", return_value=Resp(png)) as op:
+                self.assertEqual(S.fetch_image(images, "magnet"), (True, "magnet.png"))
+                self.assertEqual(op.call_args[0][0].full_url, "https://texercises.com/gallery/image/file/magnet/")
+            with mock.patch.object(S.urllib.request, "urlopen", return_value=Resp(b"<!doctype html><p>Access without login")):
+                ok, why = S.fetch_image(images, "secret")
+                self.assertFalse(ok)
+                self.assertIn("login", why)
+            with mock.patch.object(S.urllib.request, "urlopen", side_effect=urllib.error.URLError("down")):
+                self.assertFalse(S.fetch_image(images, "down")[0])
+            self.assertFalse(S.fetch_image(images, "../x")[0])
+            # the PDF's hash changes with the images
+            coll = S.collection("T", [], {})
+            a = S.fingerprint(coll, {}, "exercises", {}, images)
+            S.store_images(images, "late", png)
+            self.assertNotEqual(a, S.fingerprint(coll, {}, "exercises", {}, images))
+
     def test_pool_file(self):
         pool = S.load_pool()
         objectives = json.loads((ROOT / "hub" / "objectives.json").read_text())
@@ -540,6 +596,62 @@ class Preview(unittest.TestCase):
         for junk in ("\\textbf{", "$x", "\\begin{align} a", "{" * 500 + "x", "\\SI{", "\\NewQty", "}}}}"):
             self.assertIsInstance(P.convert(self.ex(), junk), str)
         self.assertIsInstance(P.Exercise("\\NewQty{a}{1}[\\m]\\SolQty{b}{\\aX*(2+1}").q["b"].x, float)
+
+    def test_figures_and_images(self):
+        # with the panel's Media: a drawn figure, one being drawn, an uploaded image
+        class Media(P.Media):
+            def __init__(self, state):
+                self.state, self.asked = state, []
+
+            def figure(self, preamble, lang, env, body):
+                self.asked.append((preamble, lang, env, body))
+                return self.state
+
+            def image(self, name):
+                return "/admin/sheet/img/" + name + ".png" if name == "coil" else None
+        m = Media({"url": "/admin/sheet/fig/" + "a" * 32 + ".svg", "width": 100})
+        e = P.Exercise("\\NewQty{d}{2}[\\m]", "en", "/exercise/test-ex/", m)
+        h = e.html("A \\begin{tikzpicture}\\draw (0,0) -- (\\dX,1);\\end{tikzpicture} and \\tikz[scale=2]{\\draw (0,0)--(1,0);} "
+                   "\\includegraphics[width=3cm]{#image_path:coil#} \\includegraphics{#image_path:other#}")
+        self.assertIn(f'<img class="tx-img" src="/admin/sheet/fig/{"a" * 32}.svg" alt="figure" width="160">', h)
+        self.assertEqual([(a[1], a[2]) for a in m.asked], [("en", "tikzpicture"), ("en", "tikz")])
+        self.assertEqual(m.asked[0][0], "\\NewQty{d}{2}[\\m]")  # the solver part: a figure may print its quantities
+        self.assertEqual(m.asked[1][3], "\\tikz[scale=2]{\\draw (0,0)--(1,0);}")
+        self.assertIn('<img class="tx-img tx-photo" src="/admin/sheet/img/coil.png" alt="image">', h)
+        self.assertIn("image on TeXercises", h)  # the one not uploaded
+        self.assertEqual(e.fallbacks, ["image"])
+        pend = P.Exercise("", "de", "", Media({"pending": True}))
+        self.assertIn("tx-pending", pend.html("\\begin{circuitikz}x\\end{circuitikz}"))
+        self.assertEqual(pend.fallbacks, ["pending"])
+        self.assertIn("Abbildung im PDF", P.Exercise("", "de", "", Media({})).html("\\begin{tikzpicture}x\\end{tikzpicture}"))
+        bad = P.Exercise("", "en", "", Media({"url": '"><script>x</script>', "width": 1}))
+        self.assertNotIn("<script", bad.html("\\begin{tikzpicture}x\\end{tikzpicture}"))
+        # the names of gallery images
+        self.assertEqual(P.images_used("#image_path:a.png# \\includegraphics[w=1]{#image_path:b#} \\includegraphics{images/c} #image_path:a.png#"),
+                         ["a.png", "b", "c"])
+        self.assertEqual([P.image_name(x) for x in ("../etc/passwd", "a/b", "#image_path:..x#", "ok_1-2.svg")], ["", "", "", "ok_1-2.svg"])
+
+    def test_figure_document(self):
+        # the LaTeX of an exercise's figures: its solver part first (quietly), then a page per figure
+        from sheets import figures as F
+        src = F.figure_source("tikzpicture", "\\draw (0,0) -- (1,1);")
+        doc = F.document("\\NewQty{a}{1}[\\m]", "de", [src, F.figure_source("tikz", "\\tikz\\draw (0,0)--(1,0);")])
+        self.assertIn("\\documentclass[border=2bp,multi=lpfig]{standalone}", doc)
+        self.assertIn("\\usepackage{texercises-lp}", doc)
+        self.assertIn("\\txlang{de}\\lpquiet\n\\NewQty{a}{1}[\\m]\n\\lpendquiet", doc)
+        self.assertEqual(doc.count("\\begin{lpfig}"), 2)
+        self.assertIn("\\begin{lpfig}\\begin{tikzpicture}\\draw (0,0) -- (1,1);\\end{tikzpicture}\\end{lpfig}", doc)
+        self.assertIn("\\begin{tikzpicture}\\begin{axis}x\\end{axis}\\end{tikzpicture}", F.figure_source("axis", "x"))
+        # the hash: everything a figure is made of
+        k = F.key("p", "en", src)
+        self.assertRegex(k, r"^[0-9a-f]{32}$")
+        self.assertEqual(len({k, F.key("q", "en", src), F.key("p", "de", src), F.key("p", "en", src + " ")}), 4)
+        with tempfile.TemporaryDirectory() as tmp:
+            cache = Path(tmp)
+            (cache / f"{k}.svg").write_text('<?xml version="1.0"?>\n<svg xmlns="http://www.w3.org/2000/svg" width="120.5" height="60" viewBox="0 0 120.5 60"></svg>')
+            self.assertEqual(F.figure(cache, "p", "en", src), {"svg": f"{k}.svg", "width": 120.5, "height": 60.0})
+            with mock.patch.object(F, "available", return_value=False):
+                self.assertEqual(F.figure(cache, "q", "en", src), {})  # no LaTeX: a placeholder
 
     def test_table_and_macros(self):
         e = self.ex("\\newcommand{\\twice}[1]{2#1}\\def\\half{\\frac12}")
@@ -839,6 +951,69 @@ class Service(unittest.TestCase):
         self.assertIn(b"/katex/katex.min.js", body)
         self.assertEqual(self.req("/static/sheets.js")[0], 200)
         self.assertEqual(self.req("/static/online.js")[0], 200)
+
+    def test_sheet_images_and_figures(self):
+        pool = S.load_pool()
+        key = next(k for k in pool["coulomb"]["exercises"] if k.startswith("coulomb-"))
+        png = b"\x89PNG\r\n\x1a\n" + b"\0" * 40
+        j = lambda o: json.dumps(o).encode()
+        # an export whose exercise uses a gallery image
+        buf = io.BytesIO()
+        with zipfile.ZipFile(io.BytesIO(self.drafts_zip(key))) as src, zipfile.ZipFile(buf, "w") as z:
+            for n in src.namelist():
+                data = src.read(n)
+                z.writestr(n, data + b"\n\\includegraphics[width=4cm]{#image_path:coil-1#}\n" if n.endswith("/text.tex") else data)
+        for path in ("/api/images?keys=" + key, "/sheet/img/coil-1.png"):
+            self.assertIn(self.req(path)[0], (403, 404), path)
+        self.assertEqual(self.req("/api/texercises?image=coil-1", png, "application/octet-stream")[0], 403)
+        self.assertEqual(self.req("/api/images/fetch", j({"name": "coil-1"}), "application/json")[0], 403)
+        cookie = self.login()[1]["Set-Cookie"].split(";")[0]
+        self.assertEqual(self.req("/api/texercises", buf.getvalue(), "application/zip", cookie)[0], 200)
+        listed = json.loads(self.req("/api/images?keys=" + key, cookie=cookie)[2])["images"]
+        self.assertEqual([(x["name"], x["have"]) for x in listed], [("coil-1", False)])
+        self.assertEqual(listed[0]["gallery"], "https://texercises.com/gallery/image/file/coil-1/")
+        # uploaded: listed, served to the panel, in the preview and the online version
+        self.assertEqual(self.req("/api/texercises?image=notes.txt", b"hello", "application/octet-stream", cookie)[0], 400)
+        st, _, body = self.req("/api/texercises?image=coil-1", png, "application/octet-stream", cookie)
+        self.assertEqual((st, json.loads(body)), (200, {"kept": ["coil-1.png"]}))
+        self.assertTrue(json.loads(self.req("/api/images?keys=" + key, cookie=cookie)[2])["images"][0]["have"])
+        st, headers, body = self.req("/sheet/img/coil-1.png", cookie=cookie)
+        self.assertEqual((st, headers["Content-Type"], body), (200, "image/png", png))
+        self.assertIn("sandbox", headers["Content-Security-Policy"])
+        self.assertEqual(self.req("/sheet/img/coil-1.png")[0], 404)  # not without the login
+        self.assertEqual(self.req("/sheet/img/..%2Fexercise-sheets.json", cookie=cookie)[0], 404)
+        self.assertEqual(self.req("/sheet/img/coil-1", cookie=cookie)[0], 404)  # the file's own name only
+        prev = json.loads(self.req("/api/preview?keys=" + key, cookie=cookie)[2])["exercises"][key]
+        self.assertIn('src="/admin/sheet/img/coil-1.png"', prev["text"])
+        st, _, body = self.req("/api/sheets/new", j({"sheet": {"title": "Bilder", "lang": "de", "modules": [{"id": "coulomb"}], "exercises": [key]}}),
+                               "application/json", cookie)
+        sid = json.loads(body)["id"]
+        token = json.loads(self.req(f"/api/sheets/{sid}", j({"action": "share"}), "application/json", cookie)[2])["token"]
+        page_ = self.req(f"/sheet/s/{token}")[2].decode()
+        self.assertIn(f'src="/admin/sheet/s/{token}/img/coil-1.png"', page_)
+        self.assertEqual(self.req(f"/sheet/s/{token}/img/coil-1.png")[2], png)
+        self.assertEqual(self.req("/sheet/s/" + "x" * 32 + "/img/coil-1.png")[0], 404)
+        # one exercise per screen: numbered, with the pager (online.js) and the footer as on the PDF
+        self.assertIn('<article class="exercise tx" id="a1" data-n="1">', page_)
+        self.assertIn('<p class="module">', page_)
+        self.assertIn("Übungen Bilder", page_)
+        self.assertIn("MNG Rämibühl · ByS · ", page_)
+        self.assertIn("/admin/static/online.css", page_)
+        # fetched from TeXercises (here: refused)
+        with mock.patch.object(S.urllib.request, "urlopen", side_effect=urllib.error.URLError("no network")):
+            got = json.loads(self.req("/api/images/fetch", j({"name": "coil-2"}), "application/json", cookie)[2])
+        self.assertFalse(got["ok"])
+        # drawn figures are public by their hash; fonts only those of the sheets
+        figs = Path(self.dir.name) / "data" / "sheet-figures"
+        figs.mkdir(parents=True)
+        (figs / ("b" * 32 + ".svg")).write_text("<svg xmlns='http://www.w3.org/2000/svg'/>")
+        st, headers, _ = self.req(f"/sheet/fig/{'b' * 32}.svg")
+        self.assertEqual((st, headers["Content-Type"]), (200, "image/svg+xml"))
+        self.assertIn("sandbox", headers["Content-Security-Policy"])
+        self.assertEqual(self.req(f"/sheet/fig/{'c' * 32}.svg")[0], 404)
+        self.assertEqual(self.req("/sheet/fig/../exercise-sheets.json")[0], 404)
+        self.assertEqual(self.req("/static/fonts/..%2F..%2Fetc%2Fpasswd")[0], 404)
+        self.assertEqual(self.req("/static/fonts/hubadmin.py")[0], 404)
 
     def test_rate_limit(self):
         for _ in range(H.LOGIN_ATTEMPTS):

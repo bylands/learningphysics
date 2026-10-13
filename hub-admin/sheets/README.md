@@ -18,16 +18,30 @@ in order, kept in `hub-data/exercise-sheets.json` (not served).
   turns the TeXercises LaTeX into HTML. It evaluates the solver part (`\NewQty`, `\SolQty`,
   `\ConvTo`; the xfp arithmetic by a small parser of its own, never `eval`), prints the quantities
   (`\xO`, `\x`, `\xP{p}{n}`, ...) as numbers with units, turns siunitx into plain math and text mode
-  into HTML, and leaves the math to KaTeX (`/katex/`) on the page. TikZ pictures and images are a
-  placeholder ("figure in the PDF", an image links to its TeXercises page); an unknown macro shows as
-  its source. All 156 drafts of this repository render without anything shown as source (46 have a
-  figure placeholder).
+  into HTML, and leaves the math to KaTeX (`/katex/`) on the page; an unknown macro shows as its
+  source. All 156 drafts of this repository render without anything shown as source.
+- **Figures**: `figures.py` draws the TikZ pictures (and circuitikz, pgfplots) with LuaLaTeX, as in the
+  PDF (`texercises-lp.sty`, the PDF's fonts), and `pdftocairo` (or `dvisvgm`) turns them into SVG for
+  the browser, kept in `hub-data/sheet-figures/` by a hash of what they are made of (the solver part,
+  the language, the figure). The first time, a page shows "The figure is being drawn …" and asks again
+  until it is there (all figures of an exercise in one LaTeX run, a few seconds). A figure LaTeX
+  cannot draw stays a placeholder; without LaTeX or pdftocairo, all are ("figure in the PDF").
+- **Images**: a TeXercises export has no gallery images. The Sheets tab lists the images of a sheet's
+  exercises, which are there and which not; **Fetch from TeXercises** asks TeXercises for the missing
+  ones (`texercises.com/gallery/image/file/<name>/`; TeXercises asks for no login from Switzerland,
+  where the server is, so this should work; if it asks for one, the panel says so), or the teacher downloads them there and uploads them (files,
+  or a .zip; the gallery's name, any extension). They are kept in `hub-data/sheet-images/` and show in
+  the preview, the online version and the PDF. LaTeX cannot read SVG: an SVG image gets a PDF copy
+  where `rsvg-convert` is installed, else it is missing in the PDF only (the panel says so).
 - **Download PDF** and **PDF with solutions**: made of the saved sheet with `build_sheet.py` and
   LuaLaTeX, in the background the first time (the page reloads itself until the PDF is there), then
   cached in `hub-data/sheets/` by a hash of everything it is made of.
 - **Online version**: a secret link (`learningphysics.ch/admin/sheet/s/<secret>`) for the students: the
-  exercises without solutions, set with KaTeX, also for printing; it needs no login. **New link**
-  replaces the secret (the old link stops working), **Stop sharing** removes it.
+  exercises without solutions, in the look of the PDF (Erewhon, Fira Sans, the accent colour; the fonts
+  come from the server's TeX Live), one exercise per screen: the arrows, the numbers at the top, the
+  arrow keys and swiping move between them, and the address (`#a3`) keeps the place. Printed, it shows
+  all of them. It needs no login. **New link** replaces the secret (the old link stops working),
+  **Stop sharing** removes it.
 
 ## How the exercises are chosen
 
@@ -52,7 +66,8 @@ in order, kept in `hub-data/exercise-sheets.json` (not served).
   own: `OWN_CREATOR` in hubadmin.py), and the drafts that `deploy.sh` copies to `hub-admin/sheets/drafts/`.
   Neither is served by nginx. Exercise texts and solutions never go into this public repository: `pool.json`
   holds only keys, titles and objectives.
-- Images are not in a TeXercises export: a sheet shows a framed placeholder that links to the exercise.
+- Images are not in a TeXercises export: uploaded or fetched (above), else a sheet shows a framed
+  placeholder that links to the exercise.
 
 ## On the server (once, with sudo)
 
@@ -62,9 +77,14 @@ in order, kept in `hub-data/exercise-sheets.json` (not served).
          texlive-science texlive-pictures texlive-fonts-recommended texlive-fonts-extra texlive-lang-german \
          texlive-plain-generic texlive-games lmodern
 
+   For the figures in the browser and SVG images in the PDF (small):
+
+       sudo apt install --no-install-recommends poppler-utils librsvg2-bin
+
 2. nginx: the site in `deploy/nginx/learningphysics.conf` has two locations for the sheets (the upload, up to
-   64 MB, and `/admin/sheet/`: the PDFs and the online versions). Install it as described in the top-level
-   README.
+   64 MB, and `/admin/sheet/`: the PDFs, the online versions, their figures and images). Install it as
+   described in the top-level README. (Images are uploaded through the export's location, so they too
+   may be up to 64 MB.)
 3. Deploy (a push to main), then test as the service's user; the first run fills the font cache (a minute):
 
        sudo -u hubadmin python3 /var/www/teachingphysics/hub-admin/sheets/sheets.py /var/www/teachingphysics/hub-data
@@ -72,6 +92,8 @@ in order, kept in `hub-data/exercise-sheets.json` (not served).
 4. In the admin panel (Sheets), upload a TeXercises export (TeXercises: Settings → Export,
    the .zip). Upload it again whenever exercises change.
 
-Without LaTeX the admin panel says so; everything else (suggestions, preview, online version) works.
+Without LaTeX the admin panel says so; everything else (suggestions, preview, online version) works,
+with placeholders for the figures. The panel's first line says whether LaTeX is there and whether
+figures are drawn for the browser.
 The sheets made per set before the Sheets tab (`hub-data/sheets.json`, `hub-data/sheets/made/`) are no
 longer used and can be deleted.

@@ -508,10 +508,11 @@ RESERVED = {"value", "par", "item", "text", "label", "ref", "begin", "end", "the
 class Exercise:
     """One exercise's quantities and macros, and its parts converted (text_html, math_tex)."""
 
-    def __init__(self, preamble: str = "", lang: str = "en", url: str = "") -> None:
+    def __init__(self, preamble: str = "", lang: str = "en", url: str = "", media: Optional["Media"] = None) -> None:
         self.q: Dict[str, Qty] = {}
         self.macros: Dict[str, Tuple[int, str]] = {}
         self.lang, self.url = lang, url
+        self.preamble, self.media = preamble, media
         self.fallbacks: List[str] = []
         self.depth = 0
         self.solver(strip_comments(preamble))
@@ -1038,8 +1039,9 @@ class Exercise:
                 i = j
             elif c == "#" and s.startswith("#image_path:", i):
                 k = s.find("#", i + 1)
+                name = s[i + len("#image_path:"):k] if k > 0 else ""
                 i = n if k < 0 else k + 1
-                self.image(out)
+                self.image(out, name)
             else:
                 j = i
                 while j < n and s[j] not in "\\${}~\n#":
@@ -1169,10 +1171,11 @@ class Exercise:
             return j
         if name == "includegraphics":
             _, j = read_opt(s, j)
-            _, j = read_group(s, j)
-            self.image(out)
+            a, j = read_group(s, j)
+            self.image(out, a or "")
             return j
         if name == "tikz":
+            start = i
             _, j = read_opt(s, j)
             k = skip_space(s, j)
             if k < n and s[k] == "{":
@@ -1180,7 +1183,7 @@ class Exercise:
             else:
                 e = s.find(";", j)
                 j = n if e < 0 else e + 1
-            self.figure(out)
+            self.figure(out, "tikz", s[start:j])
             return j
         if name in ("item", "abc"):
             _, j = read_opt(s, j)
@@ -1227,8 +1230,11 @@ class Exercise:
             return after
         start, after = find_end(s, i, env)
         body = s[i:start]
+        if env == "figure*":  # a float: what is in it
+            out.block(self.html(body))
+            return after
         if env in FIGURES:
-            self.figure(out)
+            self.figure(out, env, body)
             return after
         if env in LISTS:
             _, k = read_opt(body, 0)
@@ -1290,11 +1296,29 @@ class Exercise:
             rows.append("<tr>" + "".join(cells) + "</tr>")
         return '<table class="tx-table">' + "".join(rows) + "</table>"
 
-    def figure(self, out: "Html") -> None:
+    def figure(self, out: "Html", env: str = "", body: str = "") -> None:
+        """A TikZ picture: drawn as SVG by the media hook (figures.py), else a placeholder."""
+        de = self.lang == "de"
+        got = self.media.figure(self.preamble, self.lang, env, body) if self.media and env else None
+        if got and got.get("url"):
+            w = int(float(got.get("width") or 0) * PX_PER_PT)
+            out.block(f'<div class="tx-figure"><img class="tx-img" src="{escape(str(got["url"]))}" alt="{"Abbildung" if de else "figure"}"'
+                      + (f' width="{w}"' if w > 0 else "") + "></div>")
+            return
+        if got and got.get("pending"):
+            self.fallback("pending")
+            out.block(f'<div class="tx-fig tx-pending">{"Die Abbildung wird gezeichnet …" if de else "The figure is being drawn …"}</div>')
+            return
         self.fallback("figure")
-        out.block(f'<div class="tx-fig">{"Abbildung im PDF" if self.lang == "de" else "figure in the PDF"}</div>')
+        out.block(f'<div class="tx-fig">{"Abbildung im PDF" if de else "figure in the PDF"}</div>')
 
-    def image(self, out: "Html") -> None:
+    def image(self, out: "Html", name: str = "") -> None:
+        """An image of the TeXercises gallery: the uploaded file (media hook), else a placeholder."""
+        name = image_name(name)
+        url = self.media.image(name) if self.media and name else None
+        if url:
+            out.block(f'<div class="tx-figure"><img class="tx-img tx-photo" src="{escape(url)}" alt="{"Bild" if self.lang == "de" else "image"}"></div>')
+            return
         self.fallback("image")
         label = "Bild auf TeXercises ↗" if self.lang == "de" else "image on TeXercises ↗"
         if re.fullmatch(r"/exercise/[A-Za-z0-9_-]+/?", self.url or ""):
@@ -1627,6 +1651,38 @@ MATH_SIMPLE = {"e": r"\mathrm{e}", "ds": r"\displaystyle ", "mustbe": r"\overset
                "qquad": r"\qquad "}
 
 
+# ---------------------------------------------------------------------- figures and images
+PX_PER_PT = 1.6  # a figure's labels about as large as the text around it
+
+
+class Media:
+    """What the page can show of figures and images (hubadmin.py gives it); without it, placeholders.
+    figure(preamble, lang, env, body) -> {"url", "width" (pt)} | {"pending": True} | {} (see
+    figures.py); image(name) -> the URL of the uploaded image, or None."""
+
+    def figure(self, preamble: str, lang: str, env: str, body: str) -> Dict[str, object]:
+        return {}
+
+    def image(self, name: str) -> Optional[str]:
+        return None
+
+
+def image_name(arg: str) -> str:
+    """The gallery name in \\includegraphics{#image_path:<name>#} or {images/<name>}; '' if none."""
+    a = arg.strip()
+    m = re.fullmatch(r"#image_path:([^#]+)#", a)
+    a = m.group(1) if m else a
+    a = a[len("images/"):] if a.startswith("images/") else a
+    return a if re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]{0,150}", a) and ".." not in a else ""
+
+
+def images_used(tex: str) -> List[str]:
+    """The gallery images a part names, in order, each once."""
+    names = [image_name(m) for m in re.findall(r"#image_path:[^#]+#", tex)]
+    names += [image_name(m) for m in re.findall(r"\\includegraphics\s*(?:\[[^\]]*\])?\s*\{([^{}]*)\}", tex)]
+    return list(dict.fromkeys(n for n in names if n))
+
+
 # ---------------------------------------------------------------------- an exercise
 def read_exercise(folder: Path) -> Dict[str, object]:
     def rd(name: str) -> str:
@@ -1643,14 +1699,14 @@ def read_exercise(folder: Path) -> Dict[str, object]:
             "solution": rd("solution.tex"), "short": rd("short_solution.tex")}
 
 
-def render_parts(parts: Dict[str, object], solution: bool = True) -> Dict[str, object]:
+def render_parts(parts: Dict[str, object], solution: bool = True, media: Optional[Media] = None) -> Dict[str, object]:
     meta = parts.get("meta") or {}
     lang = "de" if meta.get("language") == "GER" else "en"
     url = str((meta.get("info") or {}).get("url") or "") if isinstance(meta.get("info"), dict) else ""
     try:
-        ex = Exercise(str(parts.get("preamble") or ""), lang, url)
+        ex = Exercise(str(parts.get("preamble") or ""), lang, url, media)
     except Exception:  # an unreadable solver part: the exercise without its quantities
-        ex = Exercise("", lang, url)
+        ex = Exercise("", lang, url, media)
         ex.fallback("error")
     out: Dict[str, object] = {"title": str(meta.get("title") or ""), "lang": lang,
                               "text": convert(ex, str(parts.get("text") or ""))}
@@ -1669,9 +1725,9 @@ def convert(ex: Exercise, tex: str) -> str:
         return '<pre class="tx-raw">' + escape(tex) + "</pre>"
 
 
-def render(folder: Path, solution: bool = True) -> Dict[str, object]:
+def render(folder: Path, solution: bool = True, media: Optional[Media] = None) -> Dict[str, object]:
     """The exercise in folder (exercise.json, preamble.tex, text.tex, solution.tex) as HTML."""
-    return render_parts(read_exercise(folder), solution)
+    return render_parts(read_exercise(folder), solution, media)
 
 
 if __name__ == "__main__":
