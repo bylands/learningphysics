@@ -5,7 +5,7 @@
 // - the worked solution reaches every unknown, using only givens and earlier steps,
 // - both diagrams render,
 // - the tutorial has a frame for the task, each group, each step and the results,
-// - the meters (an ammeter and a voltmeter, or one of them connected the wrong way) show what a
+// - the meters (an ammeter and a voltmeter, one meter in its place, or meters connected the wrong way) show what a
 //   nodal analysis of the circuit with nearly ideal meters in it gives.
 'use strict';
 
@@ -52,7 +52,7 @@ for (const level of Object.keys(LEVELS)) {
       const x = fval(c.nodes[Number(g.slice(1))][g[0]]);
       if (!isHalf(x) || x <= 0) fail(`${tag}: given ${g} = ${x} is not nice`);
     }
-    for (const f of ex.fields) if (!isHalf(f.value) || f.value <= 0) fail(`${tag}: answer ${f.key} = ${f.value} is not nice`);
+    for (const f of ex.fields.filter((x) => !x.choice)) if (!isHalf(f.value) || f.value <= 0) fail(`${tag}: answer ${f.key} = ${f.value} is not nice`);
 
     const known = new Set(ex.givens);
     const g = (k) => fval(c.nodes[Number(k.slice(1))][k[0]]);
@@ -134,7 +134,7 @@ function meterNetlist(c, ms) {
   return E;
 }
 const kinds = {};
-for (const stage of ['read', 'wrong']) {
+for (const stage of ['read', 'place', 'wrong']) {
   for (let seed = 1; seed <= SAMPLES; seed++) {
     const tag = `meters ${stage} seed ${seed}`;
     let ex;
@@ -147,7 +147,11 @@ for (const stage of ['read', 'wrong']) {
       if (m.key && Math.abs(fval(ex.circuit.nodes[Number(m.key.slice(1))][m.key[0]]) - m.value) > 1e-9) fail(`${tag}: reading of ${m.m} is not ${m.key}`);
     }
     if (stage === 'read' && !(ex.meters.length === 2 && ex.meters.every((m) => m.key))) fail(`${tag}: not an ammeter and a voltmeter in their places`);
-    for (const f of ex.fields) if (!isHalf(f.value) || f.value < 0 || (f.value === 0 && ex.kind !== 'vseries')) fail(`${tag}: reading ${f.key} = ${f.value} is not nice`);
+    if (stage === 'place') {
+      const how = ex.fields.find((f) => f.choice), m = ex.meters[0];
+      if (ex.meters.length !== 1 || !m.key || !how || how.value !== (m.across ? 'across' : 'series') || how.options.length !== 4) fail(`${tag}: not one meter in its place, with the way to connect it asked`);
+    }
+    for (const f of ex.fields.filter((x) => !x.choice)) if (!isHalf(f.value) || f.value < 0 || (f.value === 0 && ex.kind !== 'vseries')) fail(`${tag}: reading ${f.key} = ${f.value} is not nice`);
     const known = new Set(ex.givens), g = (k) => fval(ex.circuit.nodes[Number(k.slice(1))][k[0]]);
     for (const st of ex.steps) {
       for (const k of st.from) if (!known.has(k)) fail(`${tag}: step for ${st.key} uses unknown ${k}`);
@@ -156,7 +160,7 @@ for (const stage of ['read', 'wrong']) {
     }
     for (const sol of [false, true]) {
       const html = ex.figure(sol, 'A');
-      if (!html.includes('<svg') || /NaN|undefined/.test(html) || (html.match(/class="lbl meter-l"/g) || []).length !== ex.meters.length) fail(`${tag}: bad figure`);
+      if (!html.includes('<svg') || /NaN|undefined/.test(html) || (html.match(/class="lbl meter-l"/g) || []).length !== (stage === 'place' && !sol ? 0 : ex.meters.length)) fail(`${tag}: bad figure`);
     }
     if (!ex.plain(ex.circuit.leaves[0].id).includes('<svg')) fail(`${tag}: bad plain figure`);
     for (const t of [...ex.hints, ...ex.solution, ex.text, ex.results]) if (/undefined|NaN|\[object/.test(t)) fail(`${tag}: bad text: ${t.slice(0, 120)}`);

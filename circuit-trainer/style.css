@@ -1,4 +1,4 @@
-/* Resistor Circuit Trainer: its colours, circuit diagrams and tutor marks; the general look is in
+/* Resistor Circuits: its colours, circuit diagrams and tutor marks; the general look is in
    ui.css (shared by the apps). */
 :root {
   --cur: #1f5fd6;
@@ -55,3 +55,14 @@ svg .mark { fill: var(--mark); }
 
 /* meters: a circle with A or V */
 svg .meter-l { font-size: 15px; font-weight: 600; fill: var(--ink); }
+/* answers that are no numbers: a choice of words, statements (one below the other) or graphs */
+.field.choice { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; }
+.field.choice .what { margin-right: 4px; }
+.field.choice.wide { flex-direction: column; align-items: stretch; }
+/* every answer part on its own row of the grid of fields (ui.css) */
+.fields > .field.choice { grid-column: 1 / -1; }
+.field.choice .choices.levels { flex-wrap: wrap; flex-shrink: 1; }
+.choices { flex-wrap: wrap; }
+.choices.stack { flex-direction: column; align-items: stretch; }
+.choices.stack > label > span { border-left: 0; border-top: 1px solid var(--line); text-align: left; padding: 6px 12px; white-space: normal; }
+.choices.stack > label:first-child > span { border-top: 0; }

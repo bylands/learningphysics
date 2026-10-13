@@ -908,12 +908,76 @@
   }
   const resTex = (x, unit) => M`\htmlClass{result}{${fmt(x)}\,\mathrm{${unit}}}`;
 
+  // The circuit with the branch of leaf b cut off (a voltmeter in series there blocks it): the
+  // resistances (null: no current) and the voltages of its nodes, as maps.
+  function openBranch(c, b) {
+    const R = new Map(), V = new Map();
+    (function res(n) {
+      let x;
+      if (n === b) x = null;
+      else if (n.t === 'R') x = n.R;
+      else {
+        const rs = n.kids.map(res), on = rs.filter(Boolean);
+        x = n.t === 'S' ? (rs.includes(null) ? null : rs.reduce(fadd))
+          : on.length ? fdiv(F(1), on.reduce((sum, y) => fadd(sum, fdiv(F(1), y)), F(0))) : null;
+      }
+      R.set(n, x);
+      return x;
+    })(c.root);
+    (function volt(n, v) {
+      V.set(n, v);
+      if (n.t === 'R' || R.get(n) === null) return;
+      if (n.t === 'P') n.kids.forEach((k) => volt(k, v));
+      else { const I = fdiv(v, R.get(n)); n.kids.forEach((k) => volt(k, fmul(I, R.get(k)))); }
+    })(c.root, c.root.V);
+    return { R, V };
+  }
+
+  // The ways to connect a meter to measure the voltage across R (volt) or the current through it:
+  // { v, html, correct, flag (the wrong idea behind it), why (what is wrong) }, the right one first.
+  function placeOptions(volt, R) {
+    const across = { v: 'across', html: L(`across ${R}, in parallel: connected to its two ends`, `parallel zu ${R}: an seine beiden Enden angeschlossen`) };
+    const series = { v: 'series', html: L(`in series with ${R}, in its branch`, `in Serie zu ${R}, in dessen Zweig`) };
+    const mainLine = { v: 'main', html: L('in series with the battery, in the main line', 'in Serie zur Batterie, in der Hauptleitung') };
+    const battery = { v: 'battery', html: L('across the battery, connected to its two terminals', 'parallel zur Batterie, an ihre beiden Pole angeschlossen') };
+    return volt ? [
+      { ...across, correct: true },
+      { ...series, flag: 'vseries', why: L(`In series, the voltmeter ($R_\\text{V} \\to \\infty$) blocks the current through ${R}; it does not show the voltage across ${R}.`, `In Serie sperrt das Voltmeter ($R_\\text{V} \\to \\infty$) den Strom durch ${R}; es zeigt nicht die Spannung an ${R}.`) },
+      { ...mainLine, flag: 'vseries', why: L('In the main line, the voltmeter blocks the current of the whole circuit and shows the battery voltage.', 'In der Hauptleitung sperrt das Voltmeter den Strom der ganzen Schaltung und zeigt die Batteriespannung.') },
+      { ...battery, flag: 'whole', why: L(`There it shows the battery voltage, not the share of it across ${R}.`, `Dort zeigt es die Batteriespannung, nicht deren Anteil an ${R}.`) },
+    ] : [
+      { ...series, correct: true },
+      { ...across, flag: 'aparallel', why: L(`Across ${R}, the ammeter ($R_\\text{A} \\approx 0$) short-circuits it: the current flows through the meter instead of ${R}.`, `Parallel zu ${R} schliesst das Amperemeter ($R_\\text{A} \\approx 0$) diesen kurz: Der Strom fliesst durchs Messgerät statt durch ${R}.`) },
+      { ...battery, flag: 'aparallel', why: L('Across the battery, the ammeter short-circuits it: a very large current flows.', 'Parallel zur Batterie schliesst das Amperemeter sie kurz: Es fliesst ein sehr grosser Strom.') },
+      { ...mainLine, flag: 'whole', why: L(`There it shows the whole battery current, not the part of it through ${R}.`, `Dort zeigt es den ganzen Batteriestrom, nicht den Teil davon durch ${R}.`) },
+    ];
+  }
+  // Why a meter goes where it does, and what it shows there (s = v: its reading).
+  function placeWhy(volt, R, s, v) {
+    return volt ? L(`A voltmeter compares the two ends of a part: it goes across ${R}, in parallel, without opening the circuit. Its resistance $R_\\text{V} \\to \\infty$ lets (almost) no current through it, so it changes nothing. Here it shows $${s} = ${v}$.`,
+      `Ein Voltmeter vergleicht die beiden Enden eines Teils: Es wird parallel zu ${R} angeschlossen, ohne den Stromkreis aufzutrennen. Sein Widerstand $R_\\text{V} \\to \\infty$ lässt (fast) keinen Strom durch, also verändert es nichts. Hier zeigt es $${s} = ${v}$.`)
+      : L(`The current through ${R} has to flow through the ammeter: it goes in series with ${R}, in its branch. Its resistance $R_\\text{A} \\approx 0$ changes nothing. Here it shows $${s} = ${v}$.`,
+        `Der Strom durch ${R} muss durch das Amperemeter fliessen: Es kommt in Serie zu ${R}, in dessen Zweig. Sein Widerstand $R_\\text{A} \\approx 0$ verändert nichts. Hier zeigt es $${s} = ${v}$.`);
+  }
+
   // An exercise on meters: stage 'read' (an ammeter and a voltmeter in the right places: what do
-  // they show?) or 'wrong' (a voltmeter in series in the main line, or an ammeter across a resistor).
-  function meters(stage, seed) {
+  // they show?), 'place' (how to connect a meter to measure a given current or voltage, and what
+  // it shows) or 'wrong': a voltmeter in series in the main line, an ammeter across a resistor of
+  // the main line (alone, or with a voltmeter rightly across another one, whose reading changes),
+  // or a voltmeter in series in a parallel branch (with an ammeter rightly in the main line).
+  // kinds: the kinds of 'wrong' to draw from (all if not given).
+  function meters(stage, seed, kinds) {
     const r = rng(seed), level = r.next() < 0.4 ? 'easy' : 'medium';
-    const kase = stage === 'read' ? 'read' : r.next() < 0.5 ? 'vseries' : 'ashort';
+    const wrong = kinds || ['vseries', 'ashort', 'ashortv', 'vbranch'];
+    const kase = stage === 'read' || stage === 'place' ? stage : wrong[Math.floor(r.next() * wrong.length)];
     const pick = {
+      // one meter, for the current through a resistor or the voltage across it (not the battery's)
+      place: (c, rr) => {
+        const volt = rr.next() < 0.5, n = rr.pick(c.leaves), q = volt ? 'V' : 'I';
+        if (fval(n[q]) === fval(c.root[q])) return null;
+        const m = volt ? { m: 'V', at: n.id, across: true, key: 'V' + n.id, value: fval(n.V) } : { m: 'A', at: n.id, key: 'I' + n.id, value: fval(n.I) };
+        return { meters: [m], keys: [m.key], n, volt };
+      },
       read: (c, rr) => {
         const ls = rr.shuffle(c.leaves.slice()), a = rr.next() < 0.3 ? c.root : ls[1], v = ls[0];
         const A = { m: 'A', at: a.id, key: 'I' + a.id, value: fval(a.I) }, V = { m: 'V', at: v.id, across: true, key: 'V' + v.id, value: fval(v.V) };
@@ -929,6 +993,24 @@
         // (resistances as decimals: no fractions to work with)
         if (!isHalf(I) || fval(I) > 100 || 100 % R.d || 100 % c.root.R.d) return null;
         return { meters: [{ m: 'A', at: k.id, across: true, key: null, value: fval(I) }], keys: ['R0'], show: [], k, R, I };
+      },
+      // the same, with a voltmeter rightly across another resistor of the main line
+      ashortv: (c, rr) => {
+        const ks = c.root.t === 'S' ? c.root.kids.filter((n) => n.t === 'R') : [];
+        if (ks.length < 2) return null;
+        const [k, j] = rr.shuffle(ks.slice()), R = fsub(c.root.R, k.R), I = fdiv(c.root.V, R), Vj = fmul(j.R, I);
+        if (!isHalf(I) || fval(I) > 100 || !isHalf(Vj) || 100 % R.d || 100 % c.root.R.d) return null;
+        return { meters: [{ m: 'A', at: k.id, across: true, key: null, value: fval(I) }, { m: 'V', at: j.id, across: true, key: null, value: fval(Vj) }],
+          keys: ['R0'], show: [], k, j, R, I, Vj };
+      },
+      // a voltmeter in series in a branch of a parallel group (the whole circuit, or a part of the
+      // main line), an ammeter rightly in the main line
+      vbranch: (c, rr) => {
+        const bs = c.leaves.filter((n) => n.parent && n.parent.t === 'P' && (n.parent === c.root || (n.parent.parent === c.root && c.root.t === 'S')));
+        if (!bs.length) return null;
+        const b = rr.pick(bs), g = b.parent, o = openBranch(c, b), Rp = o.R.get(c.root), Rg = o.R.get(g), I = fdiv(c.root.V, Rp), Vg = o.V.get(g);
+        if (!isHalf(I) || fval(I) > 100 || !isHalf(Vg) || 100 % Rp.d || 100 % Rg.d || 100 % c.root.R.d || 100 % g.R.d) return null;
+        return { meters: [{ m: 'A', at: 0, key: null, value: fval(I) }, { m: 'V', at: b.id, key: null, value: fval(Vg) }], keys: [], show: [], b, g, Rp, Rg, I, Vg };
       },
     }[kase];
     const { c, prob, nm, set } = meterBuild(level, r, pick);
@@ -951,6 +1033,45 @@
         ...steps.map((st) => stepText(st, nm)),
         L(`So the ammeter shows $${sym(A.key)} = ${qt(A.key)}$, and the voltmeter $${sym(V.key)} = ${qt(V.key)}$.`, `Das Amperemeter zeigt also $${sym(A.key)} = ${qt(A.key)}$, das Voltmeter $${sym(V.key)} = ${qt(V.key)}$.`)];
       difficulty = steps.length <= 2 ? 1 : steps.length <= 4 ? 2 : 3;
+    } else if (kase === 'place') {
+      const m = ms[0], n = set.n, volt = set.volt, R = `$R_{${n.idx}}$`;
+      const opts = placeOptions(volt, R), turn = seed % 4; // the options in an order of their own
+      fields = [{ key: 'how', choice: true, what: L('Connect it', 'Anschliessen'), value: volt ? 'across' : 'series',
+        options: [...opts.slice(turn), ...opts.slice(0, turn)].map((o) => ({ v: o.v, html: o.html, why: o.why || null })) }, field(m)];
+      text = volt ? L(`With a voltmeter, you want to measure the voltage across ${R} (highlighted). How do you connect the voltmeter, and what does it show? The meter is ideal.`,
+        `Mit einem Voltmeter willst du die Spannung an ${R} (hervorgehoben) messen. Wie schliesst du das Voltmeter an, und was zeigt es an? Das Messgerät ist ideal.`)
+        : L(`With an ammeter, you want to measure the current through ${R} (highlighted). How do you connect the ammeter, and what does it show? The meter is ideal.`,
+          `Mit einem Amperemeter willst du den Strom durch ${R} (hervorgehoben) messen. Wie schliesst du das Amperemeter an, und was zeigt es an? Das Messgerät ist ideal.`);
+      const real = steps.filter((st) => st.rel.kind !== 'eq');
+      hints = [volt ? L(`A voltmeter compares the two ends of ${R}. Does it have to be part of the path of the current, or beside it?`, `Ein Voltmeter vergleicht die beiden Enden von ${R}. Muss es im Weg des Stroms liegen oder daneben?`)
+        : L(`The current through ${R} has to flow through the ammeter. Where does it have to go for that?`, `Der Strom durch ${R} muss durch das Amperemeter fliessen. Wo muss es dafür hin?`),
+      `${L('Break the circuit down', 'Zerlege die Schaltung')}: ${struct.join('; ')}.`];
+      if (real.length) hints.push(`${L('First steps', 'Erste Schritte')}:${list(real.slice(0, 3).map((st) => `${formula(st)} &nbsp;(${SHORT()[st.rel.rule]})`))}`);
+      solution = [placeWhy(volt, R, sym(m.key), qt(m.key)) + ' ' + IDEAL(), `${L('Structure of the circuit', 'Aufbau der Schaltung')}: ${struct.join('; ')}.`,
+        ...steps.map((st) => stepText(st, nm)),
+        volt ? L(`So the voltmeter shows $${sym(m.key)} = ${qt(m.key)}$.`, `Das Voltmeter zeigt also $${sym(m.key)} = ${qt(m.key)}$.`) : L(`So the ammeter shows $${sym(m.key)} = ${qt(m.key)}$.`, `Das Amperemeter zeigt also $${sym(m.key)} = ${qt(m.key)}$.`)];
+      difficulty = steps.length <= 2 ? 1 : steps.length <= 4 ? 2 : 3;
+    } else if (kase === 'vbranch') {
+      const { b, g, Rp, Rg, I, Vg } = set, Rb = `$R_{${b.idx}}$`, whole = g === c.root;
+      const RgS = sym('R' + g.id), VgS = sym('V' + g.id), Ip = M`I'`;
+      fields = [field(A), field(V)];
+      text = L('The ammeter and the voltmeter are ideal. Look closely at how they are connected: what do they show?', 'Das Amperemeter und das Voltmeter sind ideal. Schau genau, wie sie angeschlossen sind: Was zeigen sie an?');
+      hints = [L('Is each meter connected the right way? An ammeter belongs in series, a voltmeter in parallel.', 'Ist jedes Messgerät richtig angeschlossen? Ein Amperemeter gehört in Serie, ein Voltmeter parallel.'),
+        L(M`The voltmeter is in series with ${Rb}, in its branch. With $R_\text{V} \to \infty$, it blocks the current there: the branch drops out. What is the total resistance without it?`,
+          M`Das Voltmeter ist in Serie zu ${Rb}, in dessen Zweig. Mit $R_\text{V} \to \infty$ sperrt es dort den Strom: Der Zweig fällt weg. Wie gross ist der Gesamtwiderstand ohne ihn?`),
+        L(`Without a current there is no voltage across ${Rb}: the voltmeter has the whole voltage of its branch, the voltage across ${nm.who(g)}.`, `Ohne Strom gibt es keine Spannung an ${Rb}: Am Voltmeter liegt die ganze Spannung seines Zweigs, die Spannung an ${nm.who(g)}.`)];
+      solution = [L(M`The ammeter is in the main line, in series with the battery: it is connected the right way and shows the battery current. The voltmeter, however, is in series with ${Rb}, in its branch. With its (almost) infinite resistance, $R_\text{V} \to \infty$, it blocks the current there: no current flows through ${Rb}, and its branch drops out of the circuit.`,
+        M`Das Amperemeter ist in der Hauptleitung, in Serie zur Batterie: Es ist richtig angeschlossen und zeigt den Batteriestrom. Das Voltmeter aber ist in Serie zu ${Rb}, in dessen Zweig. Mit seinem (fast) unendlich grossen Widerstand, $R_\text{V} \to \infty$, sperrt es dort den Strom: Durch ${Rb} fliesst kein Strom, und sein Zweig fällt aus der Schaltung.`),
+      (whole ? L(`Without the branch of ${Rb}, the circuit has the resistance`, `Ohne den Zweig von ${Rb} hat die Schaltung den Widerstand`) + al(M`R' &= ${ftex(Rp)}\,\mathrm{k\Omega}`) + L(`instead of $${RgS} = ${qt('R' + g.id)}$.`, `statt $${RgS} = ${qt('R' + g.id)}$.`)
+        : L(`Without the branch of ${Rb}, ${nm.who(g)} has the resistance $${RgS}' = ${ftex(Rg)}\\,\\mathrm{k\\Omega}$ instead of $${RgS} = ${qt('R' + g.id)}$, and the whole circuit`, `Ohne den Zweig von ${Rb} hat ${nm.who(g)} den Widerstand $${RgS}' = ${ftex(Rg)}\\,\\mathrm{k\\Omega}$ statt $${RgS} = ${qt('R' + g.id)}$, und die ganze Schaltung`)
+          + al(M`R' &= ${sym('R0')} - ${RgS} + ${RgS}' = ${qt('R0')} - ${qt('R' + g.id)} + ${ftex(Rg)}\,\mathrm{k\Omega} = ${ftex(Rp)}\,\mathrm{k\Omega}`)),
+      L('The ammeter shows the battery current', 'Das Amperemeter zeigt den Batteriestrom') + al(M`${Ip} &= \frac{${U}}{R'} = \frac{${qt('V0')}}{${ftex(Rp)}\,\mathrm{k\Omega}} = ${resTex(fval(I), 'mA')}`),
+      (whole ? L(M`Without a current there is no voltage across ${Rb} ($V = R\,I = 0$), so the voltmeter has the whole voltage of its branch, the battery voltage: it shows $${U} = ${resTex(fval(Vg), 'V')}$.`,
+        M`Ohne Strom gibt es keine Spannung an ${Rb} ($U = R\,I = 0$), also liegt am Voltmeter die ganze Spannung seines Zweigs, die Batteriespannung: Es zeigt $${U} = ${resTex(fval(Vg), 'V')}$.`)
+        : L(M`Without a current there is no voltage across ${Rb} ($V = R\,I = 0$), so the voltmeter has the whole voltage of its branch, the voltage across ${nm.who(g)}:`, M`Ohne Strom gibt es keine Spannung an ${Rb} ($U = R\,I = 0$), also liegt am Voltmeter die ganze Spannung seines Zweigs, die Spannung an ${nm.who(g)}:`)
+          + al(M`${VgS}' &= ${RgS}' \cdot ${Ip} = ${ftex(Rg)}\,\mathrm{k\Omega} \cdot ${fmt(fval(I))}\,\mathrm{mA} = ${resTex(fval(Vg), 'V')}`)),
+      L(`To measure the voltage across ${Rb}, connect the voltmeter across it, in parallel. In series in a branch, it cuts that branch off.`, `Um die Spannung an ${Rb} zu messen, schliesst man das Voltmeter parallel dazu an. In Serie in einem Zweig trennt es diesen Zweig ab.`)];
+      difficulty = 3;
     } else if (kase === 'vseries') {
       const k = nm.nodeOf('I' + A.at), Rk = `$R_{${k.idx}}$`;
       fields = [field(A), field(V)];
@@ -966,12 +1087,14 @@
       difficulty = 1;
     } else {
       const k = set.k, Rk = `R_{${k.idx}}`, Rt = sym('R0'), Rk0 = 'R' + k.id;
-      const Rp = M`R'`, Ip = M`I'`;
-      fields = [field(A)];
-      text = L('The ammeter is ideal. Look closely at how it is connected: what does it show?', 'Das Amperemeter ist ideal. Schau genau, wie es angeschlossen ist: Was zeigt es an?');
-      hints = [L(M`The ammeter is connected across $${Rk}$, in parallel to it. What does its resistance $R_\text{A} \approx 0$ do there?`, M`Das Amperemeter ist parallel zu $${Rk}$ angeschlossen. Was bewirkt dort sein Widerstand $R_\text{A} \approx 0$?`),
+      const Rp = M`R'`, Ip = M`I'`, j = set.j;
+      fields = j ? [field(A), field(V)] : [field(A)];
+      text = j ? L('The ammeter and the voltmeter are ideal. Look closely at how they are connected: what do they show?', 'Das Amperemeter und das Voltmeter sind ideal. Schau genau, wie sie angeschlossen sind: Was zeigen sie an?')
+        : L('The ammeter is ideal. Look closely at how it is connected: what does it show?', 'Das Amperemeter ist ideal. Schau genau, wie es angeschlossen ist: Was zeigt es an?');
+      hints = [...(j ? [L('Is each meter connected the right way? An ammeter belongs in series, a voltmeter in parallel.', 'Ist jedes Messgerät richtig angeschlossen? Ein Amperemeter gehört in Serie, ein Voltmeter parallel.')] : []),L(M`The ammeter is connected across $${Rk}$, in parallel to it. What does its resistance $R_\text{A} \approx 0$ do there?`, M`Das Amperemeter ist parallel zu $${Rk}$ angeschlossen. Was bewirkt dort sein Widerstand $R_\text{A} \approx 0$?`),
         L(`The ammeter short-circuits $${Rk}$: the current takes the path without resistance, and $${Rk}$ drops out of the circuit. What is the total resistance now?`, `Das Amperemeter schliesst $${Rk}$ kurz: Der Strom nimmt den Weg ohne Widerstand, und $${Rk}$ fällt aus der Schaltung. Wie gross ist der Gesamtwiderstand jetzt?`),
         L(`Without $${Rk}$: $${Rp} = ${Rt} - ${Rk} = ${ftex(set.R)}\\,\\mathrm{k\\Omega}$.`, `Ohne $${Rk}$: $${Rp} = ${Rt} - ${Rk} = ${ftex(set.R)}\\,\\mathrm{k\\Omega}$.`)];
+      if (j) hints.push(L(`The voltmeter across $R_{${j.idx}}$ is connected the right way: it shows $R_{${j.idx}} \\cdot ${Ip}$, with the new current $${Ip}$.`, `Das Voltmeter an $R_{${j.idx}}$ ist richtig angeschlossen: Es zeigt $R_{${j.idx}} \\cdot ${Ip}$, mit dem neuen Strom $${Ip}$.`));
       solution = [L(M`The ammeter is connected across $${Rk}$, in parallel to it. An ideal ammeter has (almost) no resistance, $R_\text{A} \approx 0$: it short-circuits $${Rk}$. All the current takes the path through the ammeter, none flows through $${Rk}$, and $${Rk}$ drops out of the circuit.`,
         M`Das Amperemeter ist parallel zu $${Rk}$ angeschlossen. Ein ideales Amperemeter hat (fast) keinen Widerstand, $R_\text{A} \approx 0$: Es schliesst $${Rk}$ kurz. Der ganze Strom nimmt den Weg durchs Amperemeter, durch $${Rk}$ fliesst keiner, und $${Rk}$ fällt aus der Schaltung.`),
       `${L('The total resistance of the circuit without the meter', 'Der Gesamtwiderstand der Schaltung ohne Messgerät')}: ${struct.join('; ')}.`,
@@ -980,6 +1103,9 @@
       L(`The battery drives the current`, `Die Batterie treibt den Strom`) + al(M`${Ip} &= \frac{${U}}{${Rp}} = \frac{${qt('V0')}}{${ftex(set.R)}\,\mathrm{k\Omega}} = ${resTex(fval(set.I), 'mA')}`) +
         L(`through the circuit, all of it through the ammeter: it shows $${fmt(fval(set.I))}\\,\\mathrm{mA}$, more than the $${sym('I' + k.id)} = ${qt('I' + k.id)}$ through $${Rk}$ without the meter.`,
           `durch die Schaltung, ganz durchs Amperemeter: Es zeigt $${fmt(fval(set.I))}\\,\\mathrm{mA}$, mehr als die $${sym('I' + k.id)} = ${qt('I' + k.id)}$ durch $${Rk}$ ohne Messgerät.`),
+      ...(j ? [L(M`The voltmeter across $R_{${j.idx}}$ is connected the right way. With the new current it shows`, M`Das Voltmeter an $R_{${j.idx}}$ ist richtig angeschlossen. Mit dem neuen Strom zeigt es`)
+        + al(M`${sym('V' + j.id)}' &= R_{${j.idx}} \cdot ${Ip} = ${qt('R' + j.id)} \cdot ${fmt(fval(set.I))}\,\mathrm{mA} = ${resTex(fval(set.Vj), 'V')}`)
+        + L(`more than the $${sym('V' + j.id)} = ${qt('V' + j.id)}$ without the ammeter.`, `mehr als die $${sym('V' + j.id)} = ${qt('V' + j.id)}$ ohne das Amperemeter.`)] : []),
       L('To measure the current through a resistor, connect the ammeter in series with it. Across the battery itself, an ammeter short-circuits the battery: a very large current flows, and the fuse of the meter blows.',
         'Um den Strom durch einen Widerstand zu messen, schliesst man das Amperemeter in Serie dazu an. Direkt an der Batterie schliesst ein Amperemeter die Batterie kurz: Es fliesst ein sehr grosser Strom, und die Sicherung des Messgeräts brennt durch.')];
       difficulty = steps.length <= 2 ? 2 : 3;
@@ -992,12 +1118,13 @@
       text: `${text}`,
       fields, tol: 0.01,
       // ask: the letter of a meter to highlight (a question of the check)
-      figure: (sol, ask) => `<div class="fig">${meterFig(sol, ask).toSVG()}</div>`,
+      // (where a meter goes: before the solution, the resistor without the meter)
+      figure: (sol, ask) => `<div class="fig">${(kase === 'place' && !sol ? draw(c, nm, prob, { known: givenOnly(prob), mark: new Map([[set.n.id, 'strong']]) }) : meterFig(sol, ask)).toSVG()}</div>`,
       // the circuit without meters, a resistor highlighted (where to connect a meter)
       plain: (id) => `<div class="fig">${draw(c, nm, prob, { known: givenOnly(prob), mark: new Map([[id, 'strong']]) }).toSVG()}</div>`,
       hints,
       solution,
-      results: fields.map((f) => `${METER()[f.key]}: $${fmt(f.value)}\\,\\mathrm{${f.unit}}$`).join(', '),
+      results: fields.map((f) => (f.choice ? `${f.what}: ${f.options.find((o) => o.v === f.value).html}` : `${METER()[f.key]}: $${fmt(f.value)}\\,\\mathrm{${f.unit}}$`)).join(', '),
       // for the check and the tests
       circuit: c, meters: ms, steps, givens: prob.givens, sym, shorted: kase === 'ashort' ? { k: set.k, R: set.R, I: set.I } : null,
     };
@@ -1091,7 +1218,7 @@
     };
   }
 
-  const api = { LEVELS, generate, tutorial, meters, meterTutorial, padded, F, fval, fmt, ftex };
+  const api = { LEVELS, generate, tutorial, meters, meterTutorial, placeOptions, placeWhy, padded, F, fval, fmt, ftex };
   root.Generator = api;
   if (typeof module !== 'undefined') module.exports = api;
 })(typeof window !== 'undefined' ? window : globalThis);

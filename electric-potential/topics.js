@@ -32,8 +32,9 @@
 //   T.next(last)              a new exercise of the current topic and stage, its id 'p3.2-seed'
 //                             (topic 3, stage 2) or 'mix-seed'
 //   T.parse(id)               the exercise of such an id (and its topic and stage chosen), or null
-//   T.shown(ex)               an exercise is shown (for the link to its worked example); exercises
-//                             of T.next and T.parse carry ptopic and pstage
+//   T.shown(ex)               an exercise is shown (for the link to its worked example, and its
+//                             first answer, a text field, takes the focus); exercises of T.next
+//                             and T.parse carry ptopic and pstage
 //   T.solved(st)              the current exercise is solved; once per exercise (st.won), not after
 //                             the solution was shown, and a win only at the first try without hints.
 //                             Returns a text when the stage is done, or when the solve did not count.
@@ -167,6 +168,15 @@
         (suggest && suggest.topic === t && suggest.stage === cur.stage && linked ? `<p class="topic-note tip">${esc(X.newWorked(wk.i + 1, wk.name()))} <button type="button" class="linklike worked">📖 ${esc(X.worked(wk.i + 1, wk.name()))}</button></p>` : '');
     }
 
+    // The first answer of the exercise just shown takes the focus if it is a text field, so the
+    // student can type at once (not a choice, a slider or a figure to click: those come first).
+    function focusFirst() {
+      if (typeof document === 'undefined') return;
+      const first = [...document.querySelectorAll('#task input:not([type="hidden"]), #task select, #task textarea, #task button:not(.sign)')]
+        .find((e) => e.offsetParent !== null && !e.disabled);
+      if (first && first.matches('input[type="text"], input:not([type]), textarea')) first.focus({ preventScroll: true });
+    }
+
     function choose(t, s) {
       cur = { topic: t, stage: t < 0 ? 0 : Math.max(0, Math.min(s, stagesOf(t).length - 1)) };
       if (suggest && (suggest.topic !== cur.topic || suggest.stage !== cur.stage)) suggest = null;
@@ -229,6 +239,7 @@
       shown(ex) {
         const t = ex && ex.ptopic >= 0 ? ex.ptopic : topicOfType(o.typeOf(ex));
         if (t !== shownTopic) { shownTopic = Math.max(0, t); if (cur.topic < 0) render(); }
+        focusFirst();
       },
       solved(st, ex) {
         if (!st || st.won || st.revealed || !ex || !(ex.ptopic >= 0)) return '';
