@@ -611,10 +611,13 @@
   // (else in series), l: label, hl }]; a resistor with a meter shows no current or voltage.
   // view.slots: the spots where a meter can be placed (ids of slotsOf, see meters), drawn as
   // dashed circles, and view.slotLabel(id) their names.
+  // view.notes: key → the value a student noted (text, without unit), drawn like a given value in
+  // the colour of notes (arrows for currents and voltages, a zone with a caption for a group);
+  // with it, the resistors can be picked (data-node).
   function draw(c, nm, prob, view) {
     const s = new Circuit.Sketch();
     s.autoDots = true;
-    const L = c.layout, mark = view.mark || new Map(), focus = view.focus || new Map(), meters = view.meters || [];
+    const L = c.layout, mark = view.mark || new Map(), focus = view.focus || new Map(), meters = view.meters || [], notes = view.notes || new Map();
     const meterAt = (id, across) => meters.find((m) => m.at === id && !!m.across === across);
     const at = new Map(); // node id → corners of the area of its resistors and labels
     const lab = (node, p, q) => {
@@ -622,7 +625,11 @@
       const t = labels(c, nm, prob, node, view.known);
       const f = (q, l) => (l != null && focus.has(q + node.id) ? { t: l, cls: focus.get(q + node.id) } : l);
       const metered = node !== c.root && meters.some((m) => m.at === node.id);
-      return { r: f('R', t.r), i: metered ? null : f('I', t.i), v: metered ? null : f('V', t.v), hl: mark.has(node.id) };
+      const note = (q, l) => {
+        const k = q + node.id, v = notes.get(k);
+        return v == null || view.known(k) ? l : { t: `${prob.targets.includes(k) ? `$${nm.sym(k)}$ = ` : ''}${v} ${UNIT[q]}`, cls: 'note' };
+      };
+      return { r: f('R', t.r), i: metered ? null : f('I', note('I', t.i)), v: metered ? null : f('V', note('V', t.v)), hl: mark.has(node.id) };
     };
     lab.at = at;
     // A resistor from p to q, its label on side ls, with its meters: one in series after it, one
@@ -630,7 +637,7 @@
     const slots = view.slots ? new Set(view.slots) : null, slotLabel = view.slotLabel || ((id) => id);
     lab.res = (node, p, q, t, ls, out) => {
       const ser = meterAt(node.id, false), acr = meterAt(node.id, true), m = ser ? lerp(p, q, 0.55) : q;
-      s.res(p, m, { l: t.r, ls, hl: t.hl });
+      s.res(p, m, { l: t.r, ls, hl: t.hl, id: view.notes ? node.id : null, name: `R${node.idx}` });
       if (ser) s.meter(m, q, ser.m, { l: ser.l, ls, hl: ser.hl });
       const d = out[0] ? BRIDGE.v : BRIDGE.h, a = [p[0] + out[0] * d, p[1] + out[1] * d], b = [q[0] + out[0] * d, q[1] + out[1] * d];
       if (acr) s.wire(p, a).meter(a, b, acr.m, { l: acr.l, ls: out, hl: acr.hl }).wire(b, q);
@@ -681,15 +688,18 @@
   // captioned with its resistance and the focused quantities. The zone of the whole circuit
   // spans the corners in whole, battery included; its voltage and current are labelled there.
   function zones(s, c, nm, view, at, whole) {
-    const mark = view.mark || new Map(), focus = view.focus || new Map();
+    const mark = view.mark || new Map(), focus = view.focus || new Map(), notes = view.notes || new Map();
     const shown = new Map([...mark].filter(([id]) => c.nodes[id].t !== 'R'));
-    for (const k of focus.keys()) {
-      const n = nm.nodeOf(k);
-      if (n.t !== 'R' && (n !== c.root || k[0] === 'R') && !shown.has(n.id)) shown.set(n.id, 'light');
+    for (const [keys, cls] of [[focus.keys(), 'light'], [notes.keys(), 'note']]) {
+      for (const k of keys) {
+        const n = nm.nodeOf(k);
+        if (n.t !== 'R' && (n !== c.root || k[0] === 'R') && !shown.has(n.id)) shown.set(n.id, cls);
+      }
     }
-    const sym = (k) => nm.sym(k).replace('_\\text{tot}', '_{tot}');
-    const caption = (n) => ['R' + n.id, ...(n === c.root ? [] : ['V' + n.id, 'I' + n.id].filter((k) => focus.has(k)))].map((k) => {
+    const sym = (k) => nm.sym(k).replace('_\\text{tot}', '_{tot}').replace('_\\text{ges}', '_{ges}');
+    const caption = (n) => ['R' + n.id, ...(n === c.root ? [] : ['V' + n.id, 'I' + n.id].filter((k) => focus.has(k) || notes.has(k)))].map((k) => {
       const v = nm.valueOf(k), num = v.d === 1 || 100 % v.d === 0 ? fmt(fval(v)) : `${v.n}/${v.d}`; // as in the text (ftex)
+      if (!view.known(k) && notes.has(k)) return { t: `$${sym(k)}$ = ${notes.get(k)} ${UNIT[k[0]]}`, cls: 'note' };
       const t = view.known(k) ? `$${sym(k)}$ = ${num} ${UNIT[k[0]]}` : `$${sym(k)}$${focus.has(k) ? ' = ?' : ''}`;
       return focus.has(k) ? { t, cls: focus.get(k) } : t;
     });
@@ -740,8 +750,22 @@
       text: taskText(targets, nm),
       fields: targets.map((t) => ({ key: t, sym: nm.sym(t), unit: UNIT[t[0]], value: fval(nm.valueOf(t)) })),
       tol: 0.01,
-      // asked: the key of an unknown to show in its own colour (the arcade's question)
-      figure: (sol, asked) => `<div class="fig">${draw(c, nm, prob, { known: sol ? all : givenOnly(prob), focus: asked ? new Map([[asked, 'ask']]) : undefined }).toSVG()}</div>`,
+      // asked: the key of an unknown to show in its own colour (the arcade's question); notes:
+      // key → the value a student noted (the resistors can then be picked), sel: the resistor
+      // picked (highlighted)
+      figure: (sol, asked, notes, sel) => `<div class="fig">${draw(c, nm, prob, { known: sol ? all : givenOnly(prob), focus: asked ? new Map([[asked, 'ask']]) : undefined,
+        notes: sol ? undefined : notes, mark: sel != null ? new Map([[sel, 'strong']]) : undefined }).toSVG()}</div>`,
+      // what a student can note at resistor id: a row for it and for each group it is part of,
+      // up to the whole circuit: { name, cells: [{ key, sym, unit }] } (not the given values)
+      noteRows: (id) => {
+        const rows = [];
+        for (let n = c.nodes[id]; n; n = n.parent) {
+          const cells = ['R', 'I', 'V'].map((q) => q + n.id).filter((k) => !prob.givens.has(k)).map((k) => ({ key: k, sym: nm.sym(k), unit: UNIT[k[0]] }));
+          const name = n === c.root ? L('the whole circuit', 'die ganze Schaltung') : nm.who(n);
+          if (cells.length) rows.push({ name: cap(name), cells });
+        }
+        return rows;
+      },
       hints,
       solution: [`${L('Structure of the circuit', 'Aufbau der Schaltung')}: ${struct.join('; ')}.`, ...steps.map((st) => stepText(st, nm))],
       results: targets.map((t) => `$${nm.sym(t)} = ${nm.qtex(t)}$`).join(', '),

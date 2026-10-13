@@ -62,8 +62,9 @@
   const len = (a) => Math.hypot(a[0], a[1]);
   const unit = (a) => mul(a, 1 / len(a));
   const lerp = (a, b, t) => add(a, mul(sub(b, a), t));
-  // ' ask' for the label of the quantity a question asks for, else ''
-  const asked = (label) => (label && typeof label === 'object' && / ask\b/.test(' ' + label.cls) ? ' ask' : '');
+  // ' ask' for the label of the quantity a question asks for, ' note' for a value a student noted
+  // (circuit-trainer), else ''
+  const asked = (label) => (label && typeof label === 'object' ? [' ask', ' note'].find((c) => new RegExp(`${c}\\b`).test(' ' + label.cls)) || '' : '');
 
   function sideVec(side) {
     if (typeof side === 'string') return SIDES[side];
@@ -184,14 +185,17 @@
     _defaultSide(d) { return Math.abs(d[0]) >= Math.abs(d[1]) ? 'above' : 'right'; }
 
     // Resistor (European box). o.l label, o.ls label side, o.i current label, o.is side, o.it position (0..1),
-    // o.hl highlights the box.
+    // o.hl highlights the box; o.id: it can be picked (a wider area around it, data-node = o.id,
+    // named o.name).
     res(p, q, o = {}) {
       const g = this._two(p, q, Math.min(0.9, len(sub(q, p)) * 0.5));
       const [x, y] = this.P(g.m);
       this.P(g.a); this.P(g.b);
       const ang = Math.atan2(-g.d[1], g.d[0]) * 180 / Math.PI;
       const w = len(sub(g.b, g.a)) * S, h = 0.3 * S;
-      this.els.push(`<rect class="c${o.hl ? ' hl' : ''}" x="${(-w / 2).toFixed(1)}" y="${(-h / 2).toFixed(1)}" width="${w.toFixed(1)}" height="${h.toFixed(1)}" transform="translate(${x.toFixed(1)} ${y.toFixed(1)}) rotate(${ang.toFixed(2)})"/>`);
+      const at = `transform="translate(${x.toFixed(1)} ${y.toFixed(1)}) rotate(${ang.toFixed(2)})"`;
+      this.els.push(`<rect class="c${o.hl ? ' hl' : ''}" x="${(-w / 2).toFixed(1)}" y="${(-h / 2).toFixed(1)}" width="${w.toFixed(1)}" height="${h.toFixed(1)}" ${at}/>`);
+      if (o.id != null) this.els.push(`<rect class="pick" data-node="${o.id}" tabindex="0" role="button" aria-label="${esc(o.name || '')}" x="${(-w / 2 - 8).toFixed(1)}" y="${(-h / 2 - 12).toFixed(1)}" width="${(w + 16).toFixed(1)}" height="${(h + 24).toFixed(1)}" rx="6" ${at}/>`);
       const n = normalTowards(g.d, o.ls || this._defaultSide(g.d));
       this._text(add(g.m, mul(n, 0.3)), n, o.l, 'lbl');
       if (o.i != null) this.cur(p, q, o.i, o.is || o.ls || this._defaultSide(g.d), o.it || 0.84);

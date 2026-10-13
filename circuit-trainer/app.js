@@ -1,7 +1,7 @@
 (function () {
   'use strict';
 
-  const { generate, tutorial, meters, meterTutorial, placeOptions, placeWhy, fval, ftex } = window.Generator;
+  const { generate, tutorial, meters, meterTutorial, placeOptions, placeWhy, fval, fmt, ftex } = window.Generator;
   const { esc, fitText } = window.Circuit;
   const Lang = window.Lang, Check = window.Check, L = Lang.L;
   const $ = (sel) => document.querySelector(sel);
@@ -19,6 +19,8 @@
       solNoteMeters: 'The diagram shows what the meters read.',
       place: (m) => (m ? `Drag the ${m} into the circuit: where it can go, a circle appears as it comes close. To move it, drag it again.`
         : 'Drag each meter into the circuit: where it can go, a circle appears as it comes close. To move one, drag it again.'),
+      notesHint: 'Notes: tap a resistor in the circuit to note currents, voltages and combined resistances there.',
+      notesTitle: 'Notes', notesDone: 'Done', notesClear: 'Clear all notes',
       levels: { easy: 'Easy', medium: 'Medium', hard: 'Hard', mixed: 'Mixed' },
       stars: (d) => `Difficulty: ${d} of 5`,
       score: (s, c) => `Solved: ${s} · first try without hints: ${c}`,
@@ -38,6 +40,8 @@
       solNoteMeters: 'Das Schaltbild zeigt, was die Messgeräte anzeigen.',
       place: (m) => (m ? `Ziehe das ${m} in die Schaltung: Wo es hin kann, erscheint ein Kreis, sobald es nahe ist. Um es zu verschieben, ziehe es erneut.`
         : 'Ziehe jedes Messgerät in die Schaltung: Wo es hin kann, erscheint ein Kreis, sobald es nahe ist. Um eines zu verschieben, ziehe es erneut.'),
+      notesHint: 'Notizen: Tippe auf einen Widerstand in der Schaltung, um dort Ströme, Spannungen und Ersatzwiderstände zu notieren.',
+      notesTitle: 'Notizen', notesDone: 'Fertig', notesClear: 'Alle Notizen löschen',
       levels: { easy: 'Einfach', medium: 'Mittel', hard: 'Schwierig', mixed: 'Gemischt' },
       stars: (d) => `Schwierigkeit: ${d} von 5`,
       score: (s, c) => `Gelöst: ${s} · beim ersten Versuch ohne Tipps: ${c}`,
@@ -135,7 +139,7 @@
   function open(exercise) {
     finish(); // the student moves on
     ex = exercise;
-    st = { tries: 0, hints: 0, solved: false, revealed: false, checked: false, status: null, placed: {} };
+    st = { tries: 0, hints: 0, solved: false, revealed: false, checked: false, status: null, placed: {}, notes: new Map(), noteAt: null };
     const hash = `#${ex.id}`;
     if (location.hash !== hash) history.replaceState(null, '', hash);
     render();
@@ -157,7 +161,8 @@
   function render() {
     $('#title').innerHTML = `${esc(ex.title)} ${starsOf(ex.difficulty)}`;
     $('#prompt').innerHTML = ex.text;
-    $('#figure').innerHTML = ex.slots ? ex.placeFig(st.placed) : ex.figure(false);
+    drawFigure();
+    showNotes();
     $('#fields').innerHTML = ex.fields.map((f) => (f.place ? `
       <div class="field choice wide place" data-key="${f.key}"><span class="what">${esc(f.what)}</span><span class="place-row">
         <button type="button" class="meter-chip" data-meter="${f.meter}" aria-label="${esc(f.what)}">${f.meter}</button>${f === ex.fields.find((x) => x.place) ? `<span class="note">${esc(ui().place(ex.fields.filter((x) => x.place).length > 1 ? null : meterName(f.meter)))}</span>` : ''}</span>
@@ -212,6 +217,60 @@
     if (r) r.checked = true;
   }
 
+  // The figure of the task: with the meters placed, or with the student's notes.
+  function drawFigure() {
+    $('#figure').innerHTML = ex.slots ? ex.placeFig(st.placed) : ex.noteRows ? ex.figure(false, null, st.notes, st.noteAt) : ex.figure(false);
+    const svg = $('#figure svg');
+    if (svg) fitText(svg);
+    markScrollable();
+  }
+
+  // Notes on the circuit: a student picks a resistor and notes values there and at the groups it
+  // is part of (ex.noteRows); the figure shows them like given values, in the colour of notes.
+  function showNotes() {
+    const box = $('#notes');
+    box.hidden = !ex.noteRows;
+    box.classList.toggle('open', st.noteAt != null);
+    if (box.hidden) return;
+    if (st.noteAt == null) {
+      box.innerHTML = `<p class="note notes-hint">${esc(ui().notesHint)}</p>`;
+      return;
+    }
+    const rows = ex.noteRows(st.noteAt);
+    box.innerHTML = `<div class="notes-head">✎ ${esc(ui().notesTitle)}</div>` + rows.map((r) => `
+      <div class="note-row"><span class="note-who">${r.name}</span>${r.cells.map((c) => `
+        <label class="note-cell"><span class="sym">$${c.sym}$&nbsp;=</span><input type="text" inputmode="decimal" autocomplete="off" spellcheck="false" data-key="${c.key}" value="${esc(st.notes.get(c.key) || '')}"><span class="unit">${esc(c.unit)}</span></label>`).join('')}</div>`).join('') + `
+      <div class="notes-actions"><button type="button" class="notes-done">${esc(ui().notesDone)}</button><button type="button" class="notes-clear">${esc(ui().notesClear)}</button></div>`;
+    math(box);
+  }
+  function pickNote(id) {
+    st.noteAt = id;
+    drawFigure();
+    showNotes();
+    const first = $('#notes input');
+    if (first) first.focus({ preventScroll: true });
+  }
+  function notesEvents() {
+    const fig = $('#figure'), box = $('#notes');
+    const pick = (evt) => { const r = ex && ex.noteRows && evt.target.closest('.pick'); if (r) pickNote(Number(r.dataset.node)); return !!r; };
+    fig.addEventListener('click', pick);
+    fig.addEventListener('keydown', (evt) => { if ((evt.key === 'Enter' || evt.key === ' ') && pick(evt)) evt.preventDefault(); });
+    box.addEventListener('input', (evt) => {
+      const inp = evt.target.closest('input[data-key]');
+      if (!inp) return;
+      const x = parse(inp.value);
+      if (inp.value.trim() && !Number.isNaN(x)) st.notes.set(inp.dataset.key, fmt(x)); else st.notes.delete(inp.dataset.key);
+      inp.classList.toggle('bad', !!inp.value.trim() && Number.isNaN(x));
+      drawFigure();
+    });
+    box.addEventListener('keydown', (evt) => { if (evt.key === 'Enter' && evt.target.closest('input')) { evt.preventDefault(); done(); } });
+    const done = () => { const id = st.noteAt; st.noteAt = null; drawFigure(); showNotes(); const r = $(`#figure .pick[data-node="${id}"]`); if (r) r.focus({ preventScroll: true }); };
+    box.addEventListener('click', (evt) => {
+      if (evt.target.closest('.notes-done')) done();
+      else if (evt.target.closest('.notes-clear')) { st.notes.clear(); drawFigure(); showNotes(); }
+    });
+  }
+
   // Where does the meter go: a meter (A or V) is placed at a spot of the figure (ex.slots) by
   // dragging it from its button; the spots show only when it comes close. By the keyboard: Enter
   // on the button, then Tab to a spot (shown when focused) and Enter.
@@ -222,8 +281,7 @@
     if (!ex.slots || !ex.slots.includes(id) || (!force && (st.solved || st.revealed))) return;
     if (Object.entries(st.placed).some(([k, x]) => k !== m && x === id)) return; // the other meter is there
     st.placed[m] = id;
-    $('#figure').innerHTML = ex.placeFig(st.placed);
-    markScrollable();
+    drawFigure();
     const f = ex.fields.find((x) => x.place && x.meter === m), row = f && $('#fields').querySelector(`.field[data-key="${f.key}"]`);
     if (row) { row.className = 'field choice wide place'; row.querySelector('.fb').textContent = ''; }
   }
@@ -622,6 +680,7 @@
     topics.mount($('#levels'));
     $('#new').addEventListener('click', fresh);
     placeEvents();
+    notesEvents();
     $('#answers').addEventListener('submit', check);
     $('#hint').addEventListener('click', hint);
     $('#reveal').addEventListener('click', reveal);

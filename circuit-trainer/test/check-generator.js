@@ -76,6 +76,16 @@ for (const level of Object.keys(LEVELS)) {
       const html = ex.figure(sol);
       if (!html.includes('<svg') || html.includes('NaN') || html.includes('undefined')) fail(`${tag}: bad figure`);
     }
+    // notes of a student: every resistor can be picked, every quantity noted there (not a given
+    // one) is drawn as a note
+    const noted = new Map();
+    for (const leaf of c.leaves) {
+      const rows = ex.noteRows(leaf.id);
+      if (!rows.length || rows.some((r) => !r.cells.length || /undefined|NaN/.test(r.name)) || rows.flatMap((r) => r.cells).some((x) => ex.givens.has(x.key))) fail(`${tag}: bad note rows at R${leaf.idx}`);
+      for (const x of rows.flatMap((r) => r.cells)) noted.set(x.key, '1.5');
+    }
+    const nhtml = ex.figure(false, null, noted, c.leaves[0].id), nNotes = (nhtml.match(/class="[^"]*\bnote\b[^"]*"/g) || []).length;
+    if (/NaN|undefined/.test(nhtml) || (nhtml.match(/class="pick"/g) || []).length !== c.leaves.length || nNotes < noted.size) fail(`${tag}: bad figure with notes`);
     for (const t of [...ex.hints, ...ex.solution, ex.text, ex.results]) {
       if (/undefined|NaN|\[object/.test(t)) fail(`${tag}: bad text: ${t.slice(0, 120)}`);
     }
