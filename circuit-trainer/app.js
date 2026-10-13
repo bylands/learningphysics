@@ -17,8 +17,8 @@
       revealNote: 'The worked solution unlocks once you have solved the exercise, used all hints or made three attempts.',
       solNote: 'The diagram shows all currents (<span class="c-cur">blue</span>) and voltages (<span class="c-vol">red</span>) in the circuit.',
       solNoteMeters: 'The diagram shows what the meters read.',
-      place: (m) => (m ? `Drag the ${m} into the circuit: where it can go, a circle appears as it comes close. To move it, drag it again.`
-        : 'Drag each meter into the circuit: where it can go, a circle appears as it comes close. To move one, drag it again.'),
+      place: (m) => (m ? `Drag the ${m} into the circuit: where it can go, a circle appears as it comes close. To move it, drag it to another place.`
+        : 'Drag each meter into the circuit: where it can go, a circle appears as it comes close. To move one, drag it to another place.'),
       notesHint: 'Notes: tap a resistor in the circuit to note currents, voltages and combined resistances there.',
       notesTitle: 'Notes', notesDone: 'Done', notesClear: 'Clear all notes',
       levels: { easy: 'Easy', medium: 'Medium', hard: 'Hard', mixed: 'Mixed' },
@@ -38,8 +38,8 @@
       revealNote: 'Die ausführliche Lösung wird freigeschaltet, sobald du die Aufgabe gelöst, alle Tipps genutzt oder drei Versuche gemacht hast.',
       solNote: 'Das Schaltbild zeigt alle Ströme (<span class="c-cur">blau</span>) und Spannungen (<span class="c-vol">rot</span>) in der Schaltung.',
       solNoteMeters: 'Das Schaltbild zeigt, was die Messgeräte anzeigen.',
-      place: (m) => (m ? `Ziehe das ${m} in die Schaltung: Wo es hin kann, erscheint ein Kreis, sobald es nahe ist. Um es zu verschieben, ziehe es erneut.`
-        : 'Ziehe jedes Messgerät in die Schaltung: Wo es hin kann, erscheint ein Kreis, sobald es nahe ist. Um eines zu verschieben, ziehe es erneut.'),
+      place: (m) => (m ? `Ziehe das ${m} in die Schaltung: Wo es hin kann, erscheint ein Kreis, sobald es nahe ist. Um es zu verschieben, ziehe es an einen anderen Ort.`
+        : 'Ziehe jedes Messgerät in die Schaltung: Wo es hin kann, erscheint ein Kreis, sobald es nahe ist. Um eines zu verschieben, ziehe es an einen anderen Ort.'),
       notesHint: 'Notizen: Tippe auf einen Widerstand in der Schaltung, um dort Ströme, Spannungen und Ersatzwiderstände zu notieren.',
       notesTitle: 'Notizen', notesDone: 'Fertig', notesClear: 'Alle Notizen löschen',
       levels: { easy: 'Einfach', medium: 'Mittel', hard: 'Schwierig', mixed: 'Gemischt' },
@@ -279,7 +279,8 @@
   let armed = null; // the meter the keyboard places
   function place(m, id, force) {
     if (!ex.slots || !ex.slots.includes(id) || (!force && (st.solved || st.revealed))) return;
-    if (Object.entries(st.placed).some(([k, x]) => k !== m && x === id)) return; // the other meter is there
+    const spots = (x) => (/^[bs]\d/.test(x) ? ['b', 's'].map((k) => k + x.slice(1)) : [x]); // in series: before and after the resistor alike
+    if (Object.entries(st.placed).some(([k, x]) => k !== m && x && spots(x).includes(id))) return; // the other meter is there
     st.placed[m] = id;
     drawFigure();
     const f = ex.fields.find((x) => x.place && x.meter === m), row = f && $('#fields').querySelector(`.field[data-key="${f.key}"]`);
@@ -304,15 +305,16 @@
       const g = $('#figure .slot');
       if (g) g.focus();
     });
-    // dragging: a copy of the meter follows the pointer; it lands on the nearest spot (within reach)
-    $('#fields').addEventListener('pointerdown', (evt) => {
-      const chip = evt.target.closest('.meter-chip');
-      if (!chip || evt.button > 0) return;
+    // dragging: a copy of the meter follows the pointer; it lands on the nearest spot (within
+    // reach). From its button, or a meter placed in the circuit (el) to another spot.
+    const drag = (evt, m, chip, el) => {
+      if (evt.button > 0) return;
       evt.preventDefault();
       const ghost = document.createElement('div');
       ghost.className = 'meter-ghost';
-      ghost.textContent = chip.textContent;
+      ghost.textContent = m;
       document.body.append(ghost);
+      if (el) el.classList.add('lifted');
       const x0 = evt.clientX, y0 = evt.clientY;
       let near = null, moved = false;
       // shows the spots within sight of the meter; returns the nearest one within reach
@@ -337,15 +339,21 @@
         document.removeEventListener('pointerup', up);
         document.removeEventListener('pointercancel', up);
         ghost.remove();
+        if (el) el.classList.remove('lifted');
         for (const g of document.querySelectorAll('#figure .slot.close')) g.classList.remove('close', 'near');
-        if (near) place(chip.dataset.meter, near.dataset.slot);
+        if (near) place(m, near.dataset.slot);
         // a tap on the button: point to how it works
-        else if (!moved) { const note = $('#fields .place-row .note'); if (note) { note.classList.remove('pulse'); void note.offsetWidth; note.classList.add('pulse'); } }
+        else if (!moved && chip) { const note = $('#fields .place-row .note'); if (note) { note.classList.remove('pulse'); void note.offsetWidth; note.classList.add('pulse'); } }
       };
       move(evt);
       document.addEventListener('pointermove', move);
       document.addEventListener('pointerup', up);
       document.addEventListener('pointercancel', up);
+    };
+    $('#fields').addEventListener('pointerdown', (evt) => { const chip = evt.target.closest('.meter-chip'); if (chip) drag(evt, chip.dataset.meter, chip, null); });
+    fig.addEventListener('pointerdown', (evt) => {
+      const g = evt.target.closest('.placed');
+      if (g && ex.slots && !st.solved && !st.revealed) drag(evt, g.dataset.meter, null, g);
     });
   }
 

@@ -87,6 +87,8 @@ svg .slot.near .slot-lead, svg .slot:focus-visible .slot-lead { opacity: 1; }
 .meter-chip { cursor: grab; touch-action: none; padding: 0; }
 .meter-ghost { position: fixed; z-index: 50; pointer-events: none; transform: translate(-50%, -50%); box-shadow: 0 4px 14px rgb(0 0 0 / 0.2); }
 svg.circuit text { pointer-events: none; } /* the spots under a label stay clickable */
+svg .placed { cursor: grab; touch-action: none; }
+svg .placed.lifted { opacity: 0.35; }
 /* notes of the student on the circuit: like given values, in green, the arrows dashed; the resistors
    can be picked (circuit.js res, o.id) */
 svg .cur.note, svg .vol.note { stroke: var(--note); stroke-dasharray: 5 3; }

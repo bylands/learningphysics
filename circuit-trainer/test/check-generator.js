@@ -171,7 +171,7 @@ for (const stage of ['read', 'place', 'wrong']) {
         const how = hows.find((f) => f.meter === m.m), other = ex.meters.find((x) => x !== m), target = ex.fields.find((f) => !f.place && f.key === m.m).value;
         if (!m.key || !how || how.value !== (m.across ? 'a' : 's') + m.at || !ex.placeCheck(how.value, m.m).ok) { fail(`${tag}: the ${m.m} meter is not in its place, with the spot asked`); continue; }
         for (const id of ex.slots) {
-          if (other && id === (other.across ? 'a' : 's') + other.at) continue;
+          if (other && (other.across ? [`a${other.at}`] : [`b${other.at}`, `s${other.at}`]).includes(id)) continue; // taken by the other meter
           const sol = solve(meterNetlist(ex.circuit, [{ m: m.m, ...spot(id) }, ...(other ? [other] : [])]));
           const shown = m.m === 'A' ? Math.abs(sol.i('M' + m.m)) : Math.abs(sol.i('M' + m.m)) * RV;
           const same = Is(sol).every((x, k) => Math.abs(x - Is(base)[k]) < 1e-3 * Math.max(1, x)), right = same && Math.abs(shown - target) < 1e-3 * Math.max(1, target);
@@ -180,7 +180,7 @@ for (const stage of ['read', 'place', 'wrong']) {
           if (!r.ok && !r.why) fail(`${tag}: ${m.m} at ${id} is wrong without a reason`);
           if (!r.ok && right) fail(`${tag}: ${m.m} at ${id} counts as wrong, but it shows the quantity and changes nothing`);
           const placed = { [m.m]: id, ...(other ? { [other.m]: hows.find((f) => f.meter === other.m).value } : {}) };
-          const html = ex.placeFig(placed), free = ex.slots.length - new Set(Object.values(placed)).size;
+          const html = ex.placeFig(placed), gone = new Set(Object.values(placed).flatMap((x) => (/^[bs]\d/.test(x) ? ['b', 's'].map((k) => k + x.slice(1)) : [x]))), free = ex.slots.length - gone.size; // a meter in series takes both spots, before and after the resistor
           if (!html.includes('<svg') || /NaN|undefined/.test(html) || (html.match(/class="slot"/g) || []).length !== free || (html.match(/class="lbl meter-l"/g) || []).length !== ex.meters.length) fail(`${tag}: bad figure with the meters at ${JSON.stringify(placed)}`);
         }
       }
