@@ -167,14 +167,14 @@
     const ch = c.charges[0], pm = (v) => (v > 0 ? L('positive', 'positive') : L('negative', 'negative')), qn = `${label(ch.q)}q`;
     if (c.plates.length === 1) {
       const p = c.plates[0], up = ch.y > p.y;
-      return L(`a large ${pm(p.s)} plate and a point charge ${qn} ${up ? 'above' : 'below'} it`, `eine grosse ${pm(p.s)} Platte und eine Punktladung ${qn} ${up ? 'über' : 'unter'} ihr`);
+      return L(`a large ${pm(p.s)} metal plate and a point charge ${qn} ${up ? 'above' : 'below'} it`, `eine grosse ${pm(p.s)} Metallplatte und eine Punktladung ${qn} ${up ? 'über' : 'unter'} ihr`);
     }
     const [p1, p2] = [...c.plates].sort((a, b) => b.y - a.y), inside = ch.y < p1.y && ch.y > p2.y, top = p1.s > 0;
     const cap = L(`a plate capacitor (its ${top ? 'upper' : 'lower'} plate positive)`, `einen Plattenkondensator (seine ${top ? 'obere' : 'untere'} Platte positiv)`);
     return inside ? L(`${cap} with a point charge ${qn} between its plates`, `${cap} mit einer Punktladung ${qn} zwischen seinen Platten`)
       : L(`${cap} and a point charge ${qn} ${ch.y > p1.y ? 'above' : 'below'} it`, `${cap} und eine Punktladung ${qn} ${ch.y > p1.y ? 'über' : 'unter'} ihm`);
   }
-  const PLATE = () => L('A large plate sends its lines out at right angles, evenly spaced, on both sides; near the charge they bend towards it (or away from it), as the two fields add up.', 'Eine grosse Platte schickt ihre Linien senkrecht und gleichmässig verteilt nach beiden Seiten; nahe der Ladung biegen sie zu ihr hin (oder von ihr weg), weil sich die beiden Felder addieren.');
+  const PLATE = () => L('A metal plate is an equipotential: the field lines meet its surface at right angles, also next to the charge. The charge on the plate shifts towards a charge of the other sign (away from one of the same sign): there the lines are denser. Away from the plate the lines bend towards the charge (or away from it), as the fields add up.', 'Eine Metallplatte ist eine Äquipotentialfläche: Die Feldlinien treffen senkrecht auf ihre Oberfläche, auch neben der Ladung. Die Ladung auf der Platte verschiebt sich zu einer Ladung mit anderem Vorzeichen hin (von einer gleichnamigen weg): Dort liegen die Linien dichter. Weg von der Platte biegen sich die Linien zur Ladung hin (oder von ihr weg), weil sich die Felder addieren.');
   function linesMix(seed) {
     const r = rng(seed * 47 + 19), cf = r.pick(MIX), flip = r.next() < 0.5, mirror = r.next() < 0.5, c = mixConf(cf, flip, mirror), labels = mixLabels(c);
     const small = (given, o = {}) => C.fig(c, { box: BOX, given, small: true, labels, ...o });
@@ -185,7 +185,7 @@
       kind: 'lines', title: L('Plates and charges', 'Platten und Ladungen'),
       text: L(`<p>Which diagram shows the field lines of ${mixName(c)}?</p>`, `<p>Welches Diagramm zeigt die Feldlinien für ${mixName(c)}?</p>`), figs: '',
       questions: [{ type: 'pick', key: 'd', label: L('Which diagram is right?', 'Welches Diagramm stimmt?'), options: r.shuffle(opts).map((o) => ({ html: o.html, ok: !!o.ok, tag: o.tag, why: o.ok ? '' : `${WHYL[o.tag]()} ${LINES()}` })) }],
-      hints: [L('Where do the lines start, where do they end? Check the plates and the charge.', 'Wo beginnen die Linien, wo enden sie? Prüfe die Platten und die Ladung.'), L('Can two lines cross?', 'Können sich zwei Linien kreuzen?'), LINES()],
+      hints: [L('Where do the lines start, where do they end? Check the plates and the charge.', 'Wo beginnen die Linien, wo enden sie? Prüfe die Platten und die Ladung.'), L('At which angle does a field line meet a metal plate?', 'Unter welchem Winkel trifft eine Feldlinie auf eine Metallplatte?'), L('Can two lines cross?', 'Können sich zwei Linien kreuzen?'), LINES()],
       solution: [PLATE(), LINES()], solFig: fig(C.fig(c, { box: BOX, given: right, labels })), p: { cf: cf.id, flip, mirror },
     };
   }
@@ -225,7 +225,7 @@
       const dirs = [[u, undefined], [[-u[0], -u[1]], 'against'], [[-u[1], u[0]], 'perp'], [[u[1], -u[0]], 'perp']];
       return {
         kind: 'read', title: L('Reading field lines', 'Feldlinien lesen'),
-        text: mix ? L('<p>The diagram shows the field lines of a large charged plate A and a point charge B (their signs are hidden) and four points.</p>', '<p>Das Diagramm zeigt die Feldlinien einer grossen geladenen Platte A und einer Punktladung B (ihre Vorzeichen sind verdeckt) und vier Punkte.</p>')
+        text: mix ? L('<p>The diagram shows the field lines of a large charged metal plate A and a point charge B (their signs are hidden) and four points.</p>', '<p>Das Diagramm zeigt die Feldlinien einer grossen geladenen Metallplatte A und einer Punktladung B (ihre Vorzeichen sind verdeckt) und vier Punkte.</p>')
           : L('<p>The diagram shows the field lines of two charges A and B (their signs are hidden) and four points.</p>', '<p>Das Diagramm zeigt die Feldlinien zweier Ladungen A und B (ihre Vorzeichen sind verdeckt) und vier Punkte.</p>'),
         figs: fig(C.fig(c, { box: BOX, given: lns, unknown: true, points })),
         questions: [
@@ -424,7 +424,7 @@
       kind: 'equi', title: L('Equipotentials of plates and charges', 'Äquipotentiallinien von Platten und Ladungen'),
       text: L(`<p>Which diagram shows equipotential lines (equal steps of potential) of ${mixName(c)}?</p>`, `<p>Welches Diagramm zeigt Äquipotentiallinien (gleiche Potentialschritte) für ${mixName(c)}?</p>`), figs: '',
       questions: [{ type: 'pick', key: 'd', label: L('Which diagram is right?', 'Welches Diagramm stimmt?'), options: r.shuffle(opts).map((o) => ({ html: o.html, ok: !!o.ok, tag: o.tag, why: o.ok ? '' : `${WHYE[o.tag]()} ${PERP()}` })) }],
-      hints: [L('Sketch the field lines first; the equipotentials cross them at right angles.', 'Skizziere zuerst die Feldlinien; die Äquipotentiallinien kreuzen sie senkrecht.'), L('Close to the charge its own potential wins; close to a large plate, the plate’s.', 'Nahe der Ladung überwiegt ihr eigenes Potential, nahe einer grossen Platte das der Platte.')],
+      hints: [L('Sketch the field lines first; the equipotentials cross them at right angles.', 'Skizziere zuerst die Feldlinien; die Äquipotentiallinien kreuzen sie senkrecht.'), L('Close to the charge its own potential wins. A metal plate is one potential: what does that mean for the equipotentials next to it?', 'Nahe der Ladung überwiegt ihr eigenes Potential. Eine Metallplatte hat überall dasselbe Potential: Was bedeutet das für die Äquipotentiallinien neben ihr?')],
       solution: [how, PERP()], solFig: fig(C.fig(c, { box: BOX, equi: lv, lines: true, labels })), p: { cf: cf.id, flip, mirror },
     };
   }

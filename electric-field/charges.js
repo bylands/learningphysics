@@ -13,9 +13,11 @@
 //                                                           uniform field E0 along x
 //     { kind: 'uniform', E: [ex, ey] }
 //     { kind: 'mixed', charges: [{ q, x, y, name }], plates: [{ y, a, b, s, name }] }
-//                                                           point charges and horizontal plates at
-//                                                           height y from x = a to b with the charge
-//                                                           s per area (long across the page: strips)
+//                                                           point charges and horizontal metal plates
+//                                                           at height y from x = a to b with the
+//                                                           charge s per area on average (long across
+//                                                           the page: strips); the charge on each
+//                                                           plate spreads so that it is an equipotential
 //   field(c, x, y) → [Ex, Ey], potential(c, x, y)
 //   lines(c, box, o)       field lines: arrays of points, from + to − (or to the edge)
 //   contours(c, box, levels)  equipotential segments
@@ -51,11 +53,45 @@
     const d = Math.abs(lift(y, p)), F = (t) => t * Math.log(t * t + d * d) - 2 * t + 2 * d * Math.atan(t / d);
     return -p.s * (F(p.b - x) - F(p.a - x));
   }
+  // The plates of a 'mixed' arrangement are conductors: each is cut into narrow strips (narrower at
+  // its ends, where the charge crowds), and their charges are those that make every plate one
+  // potential (its own unknown) with each plate's total charge as given. Solved once per arrangement.
+  const solved = new WeakMap();
+  function strips(c) {
+    if (solved.has(c)) return solved.get(c);
+    const segs = [], m = c.plates.length, N = 48;
+    c.plates.forEach((p, k) => {
+      const at = (i) => (p.a + p.b) / 2 - ((p.b - p.a) / 2) * Math.cos((Math.PI * i) / N);
+      for (let i = 0; i < N; i++) segs.push({ k, y: p.y, a: at(i), b: at(i + 1), s: 0 });
+    });
+    const n = segs.length, A = [], pts = { kind: 'points', charges: c.charges };
+    // at the middle of each strip: the potential of all strips minus that of its plate = minus that of the charges
+    segs.forEach((sj) => {
+      const xm = (sj.a + sj.b) / 2, row = segs.map((si) => stripPotential({ ...si, s: 1 }, xm, sj.y));
+      for (let k = 0; k < m; k++) row.push(k === sj.k ? -1 : 0);
+      row.push(-potential(pts, xm, sj.y)); A.push(row);
+    });
+    // each plate's charge
+    c.plates.forEach((p, k) => { const row = segs.map((si) => (si.k === k ? si.b - si.a : 0)); for (let q = 0; q < m; q++) row.push(0); row.push(p.s * (p.b - p.a)); A.push(row); });
+    // Gaussian elimination with partial pivoting
+    const D = n + m;
+    for (let i = 0; i < D; i++) {
+      let piv = i;
+      for (let r = i + 1; r < D; r++) if (Math.abs(A[r][i]) > Math.abs(A[piv][i])) piv = r;
+      [A[i], A[piv]] = [A[piv], A[i]];
+      for (let r = i + 1; r < D; r++) { const f = A[r][i] / A[i][i]; if (f) for (let k = i; k <= D; k++) A[r][k] -= f * A[i][k]; }
+    }
+    const x = new Array(D).fill(0);
+    for (let i = D - 1; i >= 0; i--) { let t = A[i][D]; for (let k = i + 1; k < D; k++) t -= A[i][k] * x[k]; x[i] = t / A[i][i]; }
+    segs.forEach((sg, i) => { sg.s = x[i]; });
+    solved.set(c, segs);
+    return segs;
+  }
   function field(c, x, y) {
     if (c.kind === 'uniform') return [...c.E];
     if (c.kind === 'mixed') {
       const f = field({ kind: 'points', charges: c.charges }, x, y);
-      for (const p of c.plates) { const g = stripField(p, x, y); f[0] += g[0]; f[1] += g[1]; }
+      for (const p of strips(c)) { const g = stripField(p, x, y); f[0] += g[0]; f[1] += g[1]; }
       return f;
     }
     if (c.kind === 'cylinder' || c.kind === 'flow') {
@@ -76,7 +112,7 @@
   }
   function potential(c, x, y) {
     if (c.kind === 'uniform') return -(c.E[0] * x + c.E[1] * y);
-    if (c.kind === 'mixed') return c.plates.reduce((v, p) => v + stripPotential(p, x, y), potential({ kind: 'points', charges: c.charges }, x, y));
+    if (c.kind === 'mixed') return strips(c).reduce((v, p) => v + stripPotential(p, x, y), potential({ kind: 'points', charges: c.charges }, x, y));
     if (c.kind === 'cylinder' || c.kind === 'flow') { const r = Math.hypot(x, y); return r < c.a ? 0 : -c.E0 * (r + (c.kind === 'flow' ? 1 : -1) * (c.a * c.a) / r) * (x / r); }
     let v = 0;
     for (const s of sources(c)) v += s.q / (Math.hypot(x - s.x, y - s.y) || 1e-9);
@@ -100,6 +136,9 @@
       x += (h / 6) * (k1[0] + 2 * k2[0] + 2 * k3[0] + k4[0]); y += (h / 6) * (k1[1] + 2 * k2[1] + 2 * k3[1] + k4[1]);
       pts.push([x, y]);
       if (i > 2 && blocked(c, x, y, box, sinkR)) break;
+      // a line that runs into a point where the field vanishes ends there (it would creep on along
+      // the numerical noise); with plates the fields are about 1
+      if (c.kind === 'mixed' && i > 2 && Math.hypot(...field(c, x, y)) < 0.04) break;
     }
     return pts;
   }
@@ -165,9 +204,9 @@
     return out;
   }
   // Point charges and plates: lines from the positive charges (o.per·√q of them, evenly spread) and
-  // from the faces of the positive plates (one for every o.gap of a lone plate's field, spaced by
-  // the field leaving the face: denser where it is stronger); then backwards from the negative
-  // charges and faces where no line has arrived.
+  // from the faces of the plates where the field leaves them (one for every o.gap of a lone plate's
+  // field, spaced by the field: denser where it is stronger); then backwards from the negative
+  // charges and the faces where the field enters, where no line has arrived.
   function mixedLines(c, box, o) {
     const per = o.per || 8, r0 = 0.12, out = [], gap = o.gap || 0.42, arrived = new Map(), at = new Map();
     const faceKey = (i, side) => `${i}${side}`;
@@ -176,16 +215,17 @@
       const e = pts[pts.length - 1], sink = c.charges.find((t) => t.q < 0 && Math.hypot(e[0] - t.x, e[1] - t.y) < 0.2);
       if (sink) { if (!arrived.has(sink)) arrived.set(sink, []); arrived.get(sink).push(Math.atan2(e[1] - sink.y, e[0] - sink.x)); return; }
       c.plates.forEach((p, i) => {
-        if (p.s >= 0 || Math.abs(e[1] - p.y) > 0.08 || e[0] < p.a - 0.05 || e[0] > p.b + 0.05) return;
+        if (Math.abs(e[1] - p.y) > 0.08 || e[0] < p.a - 0.05 || e[0] > p.b + 0.05) return;
         const prev = pts[Math.max(0, pts.length - 4)], k = faceKey(i, prev[1] >= p.y ? 1 : -1);
         if (!at.has(k)) at.set(k, []); at.get(k).push(e[0]);
       });
     };
-    // the start points on a face: at equal steps of the field through it
+    // the start points on a face: at equal steps of the field through it (none where it is weak: there
+    // the charge on a metal plate changes sign, and a line would creep along the surface)
     const starts = (p, side, sign) => {
       const lo = Math.max(p.a, box[0] - 0.2), hi = Math.min(p.b, box[1] + 0.2), dx = 0.01, flux = [];
       let tot = 0;
-      for (let x = lo + dx / 2; x < hi; x += dx) { const En = side * sign * field(c, x, p.y + side * 0.04)[1]; tot += Math.max(0, En) * dx; flux.push([x, tot, En > 0]); }
+      for (let x = lo + dx / 2; x < hi; x += dx) { const En = side * sign * field(c, x, p.y + side * 0.04)[1]; tot += Math.max(0, En) * dx; flux.push([x, tot, En > 0.15 * Math.PI * Math.abs(p.s)]); }
       const n = Math.round(tot / (2 * Math.PI * Math.abs(p.s) * gap)), xs = [];
       for (let k = 0; k < n; k++) { const want = (tot * (k + 0.5)) / n, f = flux.find((z) => z[1] >= want); if (f && f[2]) xs.push(f[0]); }
       return xs;
@@ -195,7 +235,10 @@
       const n = Math.max(1, Math.round(per * Math.sqrt(s.q)));
       for (const a of ring(s, n, o.offset || Math.PI / n / 2)) { const pts = trace(c, s.x + r0 * Math.cos(a), s.y + r0 * Math.sin(a), 1, box); out.push(pts); land(pts); }
     }
-    c.plates.forEach((p) => { if (p.s > 0) for (const side of [1, -1]) for (const x of starts(p, side, 1)) { const pts = trace(c, x, p.y + side * 0.04, 1, box); out.push(pts); land(pts); } });
+    // (a metal plate can carry charge of both signs: induced by a charge nearby)
+    // (a short stub into a point where the field vanishes is left out: it looks like a line ending in space)
+    const stub = (pts) => pts.length < 30 && Math.hypot(...field(c, ...pts[pts.length - 1])) < 0.05;
+    c.plates.forEach((p) => { for (const side of [1, -1]) for (const x of starts(p, side, 1)) { const pts = trace(c, x, p.y + side * 0.04, 1, box); if (stub(pts)) continue; out.push(pts); land(pts); } });
     for (const s of c.charges.filter((t) => t.q < 0)) {
       const n = Math.max(1, Math.round(per * Math.sqrt(-s.q))), got = arrived.get(s) || [], g = Math.PI / n;
       for (const a of ring(s, n, o.offset || g / 2)) {
@@ -204,9 +247,10 @@
       }
     }
     c.plates.forEach((p, i) => {
-      if (p.s < 0) for (const side of [1, -1]) for (const x of starts(p, side, -1)) {
+      for (const side of [1, -1]) for (const x of starts(p, side, -1)) {
         if ((at.get(faceKey(i, side)) || []).some((u) => Math.abs(u - x) < gap * 0.6)) continue;
-        out.push(trace(c, x, p.y + side * 0.04, -1, box).reverse());
+        const pts = trace(c, x, p.y + side * 0.04, -1, box);
+        if (!stub(pts)) out.push(pts.reverse());
       }
     });
     return out;
