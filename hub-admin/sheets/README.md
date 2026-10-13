@@ -29,8 +29,11 @@ in order, kept in `hub-data/exercise-sheets.json` (not served).
 - **Images**: a TeXercises export has no gallery images. The Sheets tab lists the images of a sheet's
   exercises, which are there and which not; **Fetch from TeXercises** asks TeXercises for the missing
   ones (`texercises.com/gallery/image/file/<name>/`; TeXercises asks for no login from Switzerland,
-  where the server is, so this should work; if it asks for one, the panel says so), or the teacher downloads them there and uploads them (files,
-  or a .zip; the gallery's name, any extension). They are kept in `hub-data/sheet-images/` and show in
+  where the server is, so this should work; if it asks for one, the panel says so), or the teacher
+  downloads them there and uploads them: one at its line (any file name), or several, or a .zip, named
+  as in the gallery (any extension). Each is kept under a name made of its exercise's title and id
+  (`magnetfeld-einer-spule-1234.png`; `-2`, `-3` for an exercise's further images; `image_stem`), with
+  `index.json` saying which gallery image it is, in `hub-data/sheet-images/`. They show in
   the preview, the online version and the PDF. LaTeX cannot read SVG: an SVG image gets a PDF copy
   where `rsvg-convert` is installed, else it is missing in the PDF only (the panel says so).
 - **Download PDF** and **PDF with solutions**: made of the saved sheet with `build_sheet.py` and

@@ -21,7 +21,8 @@ teacher's own, see store_export) and from the drafts that deploy.sh puts next to
 and built in the background (request_pdf).
 
 Images: TeXercises does not export its gallery images. The teacher uploads them in the admin panel
-(store_images: files or a .zip, named as in the gallery) or the server fetches them from TeXercises
+(store_images: files or a .zip, named as in the gallery; each is kept under a name made of its
+exercise's title and id, image_stem) or the server fetches them from TeXercises
 (fetch_image: TeXercises asks for no login from Switzerland, where the server is); they are kept in one folder
 (hub-data/sheet-images/) that the PDF (images/ next to the .tex) and the pages use.
 """
@@ -38,6 +39,7 @@ import sys
 import tarfile
 import tempfile
 import threading
+import unicodedata
 import urllib.error
 import urllib.request
 import zipfile
@@ -57,6 +59,7 @@ IMAGE_NAME = re.compile(r"[A-Za-z0-9][A-Za-z0-9._-]{0,150}")
 IMAGE_EXT = (".png", ".jpg", ".jpeg", ".svg", ".gif", ".webp", ".pdf")
 WEB_EXT = IMAGE_EXT[:-1]  # what a browser shows (not .pdf)
 LATEX_EXT = (".png", ".jpg", ".jpeg", ".pdf")  # what LaTeX reads
+INDEX = "index.json"  # in the images folder: gallery name -> file
 MAX_IMAGE = 10 * 1024 * 1024
 GALLERY = "https://texercises.com/gallery/image/file/{}/"
 
@@ -288,9 +291,8 @@ def make_pdf(title: str, chosen: List[Tuple[str, str]], names: Dict[str, str], e
             work = Path(tmp)
             if images and images.is_dir():  # build_sheet.py points the gallery images to images/<name>
                 (work / "images").mkdir()
-                for f in images.iterdir():  # what LaTeX can read (an SVG has its PDF copy)
-                    if f.suffix.lower() in LATEX_EXT and not f.name.startswith("."):
-                        (work / "images" / f.name).symlink_to(f.resolve())
+                for name, f in latex_links(images).items():  # by gallery name, what LaTeX can read
+                    (work / "images" / name).symlink_to(f.resolve())
             (work / "coll.json").write_text(json.dumps(coll, ensure_ascii=False), encoding="utf-8")
             args = [sys.executable, str(HERE / "build_sheet.py"), os.pathsep.join(str(s) for s in sources(export)),
                     str(work / "coll.json"), str(work / "sheet.tex"), "--font=modern", f"--part={part}"]
@@ -452,49 +454,142 @@ def valid_name(name: str) -> bool:
     return bool(IMAGE_NAME.fullmatch(name or "")) and ".." not in name
 
 
+def _index(images: Path) -> Dict[str, str]:
+    """index.json: gallery name -> the file it is kept as (named after its exercise)."""
+    try:
+        data = json.loads((images / INDEX).read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return {}
+    return {g: f for g, f in data.items() if isinstance(g, str) and isinstance(f, str) and valid_name(g) and valid_name(f)} \
+        if isinstance(data, dict) else {}
+
+
+def _write_index(images: Path, index: Dict[str, str]) -> None:
+    tmp = images / f".{INDEX}.tmp"
+    tmp.write_text(json.dumps(index, indent=1, sort_keys=True, ensure_ascii=False), encoding="utf-8")
+    os.replace(tmp, images / INDEX)
+
+
 def find_image(images: Path, name: str, latex: bool = False) -> Optional[Path]:
-    """The uploaded file of a gallery image: <name> itself or <name>.<ext>, one a browser shows (latex:
-    one LaTeX reads, an SVG's PDF copy too)."""
+    """The file a gallery image is kept as, one a browser shows (latex: one LaTeX reads, an SVG's PDF
+    copy too); images kept under their gallery name (before index.json) are found too."""
     if not valid_name(name) or not images.is_dir():
         return None
     exts = LATEX_EXT if latex else WEB_EXT
-    for cand in [name] + [name + e for e in exts]:
+    kept = _index(images).get(name)
+    cands = [kept, os.path.splitext(kept)[0] + ".pdf"] if kept else []
+    cands += [name] + [name + e for e in exts]
+    for cand in cands:
         p = images / cand
         if p.is_file() and p.suffix.lower() in exts:
             return p
     return None
 
 
-def _store_one(images: Path, filename: str, data: bytes, as_name: Optional[str] = None) -> Optional[str]:
-    """Keep one image (its type checked by its content); the name kept, or None if it is no image."""
+def kept_file(images: Path, filename: str) -> Optional[Path]:
+    """An image file in the folder by its own name (one a browser shows), or None."""
+    p = images / filename
+    return p if valid_name(filename) and p.suffix.lower() in WEB_EXT and p.is_file() else None
+
+
+def latex_links(images: Path) -> Dict[str, Path]:
+    """The names LaTeX looks for (images/<gallery name>, see build_sheet.py) -> the files kept."""
+    out: Dict[str, Path] = {}
+    if not images.is_dir():
+        return out
+    for f in images.iterdir():  # kept under their gallery name (before index.json)
+        if f.suffix.lower() in LATEX_EXT and not f.name.startswith("."):
+            out[f.name] = f
+    for gallery in _index(images):
+        f = find_image(images, gallery, latex=True)
+        if f is None:
+            continue
+        stem, ext = os.path.splitext(gallery)
+        if ext.lower() not in IMAGE_EXT:
+            stem = gallery
+        out[stem + f.suffix.lower()] = f
+        if ext.lower() in LATEX_EXT:
+            out[gallery] = f
+    return out
+
+
+def image_stem(title: str, exercise_id: str, n: int = 1, total: int = 1) -> str:
+    """The file name (without extension) of an exercise's image: its title and id, and the image's number
+    if it has several: "magnetic-field-of-a-coil-1234" or "...-1234-2"."""
+    t = title.lower()
+    for a, b in (("ä", "ae"), ("ö", "oe"), ("ü", "ue"), ("ß", "ss")):
+        t = t.replace(a, b)
+    t = unicodedata.normalize("NFKD", t).encode("ascii", "ignore").decode("ascii")
+    slug = re.sub(r"[^a-z0-9]+", "-", t).strip("-")[:60].strip("-") or "exercise"
+    ident = re.sub(r"[^A-Za-z0-9_-]+", "-", str(exercise_id)).strip("-")[:60] or "x"
+    return f"{slug}-{ident}" + (f"-{n}" if total > 1 else "")
+
+
+def _store_one(images: Path, gallery: str, stem: str, data: bytes) -> Optional[str]:
+    """Keep one gallery image as <stem>.<its type> (the type checked by its content), replacing what was
+    kept for it before; the file name, or None if it is no image."""
     kind = image_kind(data)
-    if kind is None or len(data) > MAX_IMAGE:
+    if kind is None or len(data) > MAX_IMAGE or not valid_name(gallery):
         return None
-    name = as_name or Path(filename.replace("\\", "/")).name
-    if os.path.splitext(name)[1].lower() not in IMAGE_EXT:  # no extension (as in the gallery): the content's
-        name += kind
+    name = stem + kind
     if not valid_name(name):
         return None
     images.mkdir(parents=True, exist_ok=True)
-    tmp = images / f".{name}.tmp"
-    tmp.write_bytes(data)
-    os.replace(tmp, images / name)
+    with _lock("images"):
+        index = _index(images)
+        old = index.get(gallery)
+        tmp = images / f".{name}.tmp"
+        tmp.write_bytes(data)
+        os.replace(tmp, images / name)
+        if old and old != name:  # the file kept before (and its PDF copy), unless another image uses it
+            others = {f for g, f in index.items() if g != gallery}
+            for f in (old, os.path.splitext(old)[0] + ".pdf"):
+                if f != name and f not in others and valid_name(f):
+                    try:
+                        (images / f).unlink()
+                    except OSError:
+                        pass
+        index[gallery] = name
+        _write_index(images, index)
     if kind == ".svg":  # LaTeX cannot read SVG: a PDF copy, if the server can make one
         conv = shutil.which("rsvg-convert")
         if conv:
             try:
-                subprocess.run([conv, "-f", "pdf", "-o", str(images / (os.path.splitext(name)[0] + ".pdf")), str(images / name)],
+                subprocess.run([conv, "-f", "pdf", "-o", str(images / (stem + ".pdf")), str(images / name)],
                                capture_output=True, timeout=30)
             except (subprocess.SubprocessError, OSError):
                 pass
     return name
 
 
-def store_images(images: Path, filename: str, data: bytes) -> List[str]:
-    """Keep an uploaded image, or the images in an uploaded .zip; the names kept. ValueError: none."""
+def _gallery_of(filename: str, targets: Dict[str, str]) -> Optional[str]:
+    """The gallery name an uploaded file is (its name, with or without its extension), if a target."""
+    base = Path(filename.replace("\\", "/")).name
+    for cand in (base, os.path.splitext(base)[0]):
+        if cand in targets:
+            return cand
+    stem = os.path.splitext(base)[0]
+    return next((g for g in targets if os.path.splitext(g)[0] == stem), None)
+
+
+def store_images(images: Path, filename: str, data: bytes, targets: Dict[str, str],
+                 gallery: Optional[str] = None) -> Dict[str, List[str]]:
+    """Keep an uploaded image, or the images in an uploaded .zip. targets: the gallery names the sheet's
+    exercises use -> the file name each is kept as (image_stem); a file is the image of its gallery
+    name (gallery: given for a single file). {"kept": file names, "skipped": names of no target}.
+    ValueError: nothing kept."""
     if len(data) > MAX_UPLOAD:
         raise ValueError("the file is too large")
     kept: List[str] = []
+    skipped: List[str] = []
+
+    def one(name: str, content: bytes, g: Optional[str]) -> None:
+        g = g if g in targets else _gallery_of(name, targets)
+        got = _store_one(images, g, targets[g], content) if g else None
+        if got:
+            kept.append(got)
+        elif image_kind(content):
+            skipped.append(Path(name.replace("\\", "/")).name)
     if data[:4] == b"PK\x03\x04":
         try:
             with zipfile.ZipFile(io.BytesIO(data)) as zf:
@@ -502,23 +597,20 @@ def store_images(images: Path, filename: str, data: bytes) -> List[str]:
                     base = Path(info.filename.replace("\\", "/")).name
                     if info.is_dir() or base.startswith(".") or info.file_size > MAX_IMAGE:
                         continue
-                    got = _store_one(images, base, zf.read(info))
-                    if got:
-                        kept.append(got)
+                    one(base, zf.read(info), None)
         except zipfile.BadZipFile:
             raise ValueError("not a .zip")
     else:
-        got = _store_one(images, filename, data)
-        if got:
-            kept.append(got)
+        one(filename, data, gallery)
     if not kept:
-        raise ValueError("no image in the file (PNG, JPEG, SVG, GIF, WebP or PDF)")
-    return kept
+        raise ValueError("no image of this sheet's exercises in the file (named as in the TeXercises gallery)"
+                         if skipped else "no image in the file (PNG, JPEG, SVG, GIF, WebP or PDF)")
+    return {"kept": kept, "skipped": skipped}
 
 
-def fetch_image(images: Path, name: str, timeout: float = 20) -> Tuple[bool, str]:
-    """Fetch a gallery image from TeXercises (which redirects to the file); (True, the name kept) or
-    (False, why not)."""
+def fetch_image(images: Path, name: str, stem: str, timeout: float = 20) -> Tuple[bool, str]:
+    """Fetch a gallery image from TeXercises (which redirects to the file) and keep it as <stem>.<type>;
+    (True, the file name) or (False, why not)."""
     if not valid_name(name):
         return False, "not an image name"
     req = urllib.request.Request(GALLERY.format(name), headers={"User-Agent": "learningphysics.ch exercise sheets"})
@@ -531,7 +623,7 @@ def fetch_image(images: Path, name: str, timeout: float = 20) -> Tuple[bool, str
         return False, "too large"
     if image_kind(data) is None:
         return False, "TeXercises asks for a login (download it there and upload it here)"
-    got = _store_one(images, name, data, as_name=name)
+    got = _store_one(images, name, stem, data)
     return (True, got) if got else (False, "not an image")
 
 

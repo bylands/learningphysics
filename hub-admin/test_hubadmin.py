@@ -376,34 +376,46 @@ class Sheets(unittest.TestCase):
 
     def test_images(self):
         png = b"\x89PNG\r\n\x1a\n" + b"\0" * 40
+        self.assertEqual(S.image_stem("Magnetfeld einer Spule: Größe?", "1234"), "magnetfeld-einer-spule-groesse-1234")
+        self.assertEqual(S.image_stem("Two Charges", "abc", 2, 3), "two-charges-abc-2")
+        self.assertEqual(S.image_stem("***", "../x"), "exercise-x")
+        targets = {"coil": "magnetic-coil-12-1", "wire.png": "magnetic-coil-12-2", "lens": "optics-7"}
         with tempfile.TemporaryDirectory() as tmp:
             images = Path(tmp) / "img"
-            self.assertEqual(S.store_images(images, "coil", png), ["coil.png"])  # the content says which
-            self.assertEqual(S.store_images(images, "x/y/wire.PNG", png), ["wire.PNG"])
-            self.assertEqual(S.find_image(images, "coil"), images / "coil.png")
-            self.assertEqual(S.find_image(images, "coil.png"), images / "coil.png")
-            self.assertIsNone(S.find_image(images, "../img/coil.png"))
-            self.assertIsNone(S.find_image(images, "nope"))
-            svg = b'<?xml version="1.0"?><svg xmlns="http://www.w3.org/2000/svg"></svg>'
-            S.store_images(images, "lens.svg", svg)
-            self.assertEqual(S.find_image(images, "lens"), images / "lens.svg")
-            if not shutil.which("rsvg-convert"):  # no PDF copy: not for LaTeX
-                self.assertIsNone(S.find_image(images, "lens", latex=True))
-            self.assertEqual(S.find_image(images, "coil", latex=True), images / "coil.png")
+            # one file for a given gallery name: kept under the exercise's name, whatever it was called
+            self.assertEqual(S.store_images(images, "IMG_0042.png", png, targets, "coil"), {"kept": ["magnetic-coil-12-1.png"], "skipped": []})
+            self.assertEqual(S.find_image(images, "coil"), images / "magnetic-coil-12-1.png")
+            self.assertEqual(S.kept_file(images, "magnetic-coil-12-1.png"), images / "magnetic-coil-12-1.png")
+            self.assertIsNone(S.kept_file(images, "index.json"))
+            self.assertIsNone(S.kept_file(images, "../img/magnetic-coil-12-1.png"))
+            # files named as in the gallery (with or without an extension), and a .zip of them
+            self.assertEqual(S.store_images(images, "x/y/wire.png", png, targets)["kept"], ["magnetic-coil-12-2.png"])
             buf = io.BytesIO()
             with zipfile.ZipFile(buf, "w") as z:
-                z.writestr("gallery/a1.png", png)
-                z.writestr("gallery/../../evil.png", png)
+                z.writestr("gallery/lens.png", png)
+                z.writestr("gallery/../../other.png", png)
                 z.writestr("notes.txt", b"hello")
-                z.writestr("__MACOSX/._a1.png", png)
-            self.assertEqual(sorted(S.store_images(images, "all.zip", buf.getvalue())), ["a1.png", "evil.png"])
-            self.assertFalse((Path(tmp) / "evil.png").exists())
-            self.assertEqual(sorted(p.name for p in images.iterdir()), sorted(["coil.png", "wire.PNG", "lens.svg", "a1.png", "evil.png"]))
+                z.writestr("__MACOSX/._lens.png", png)
+            self.assertEqual(S.store_images(images, "all.zip", buf.getvalue(), targets), {"kept": ["optics-7.png"], "skipped": ["other.png"]})
+            self.assertFalse((Path(tmp) / "other.png").exists())
+            self.assertEqual(sorted(p.name for p in images.iterdir()),
+                             ["index.json", "magnetic-coil-12-1.png", "magnetic-coil-12-2.png", "optics-7.png"])
+            # replaced by an SVG: the PNG goes
+            svg = b'<?xml version="1.0"?><svg xmlns="http://www.w3.org/2000/svg"></svg>'
+            S.store_images(images, "lens.svg", svg, targets)
+            self.assertEqual(S.find_image(images, "lens"), images / "optics-7.svg")
+            self.assertFalse((images / "optics-7.png").exists())
+            if not shutil.which("rsvg-convert"):  # no PDF copy: not for LaTeX
+                self.assertIsNone(S.find_image(images, "lens", latex=True))
+            # what LaTeX looks for: images/<gallery name>(.ext)
+            links = S.latex_links(images)
+            self.assertEqual(links["coil.png"], images / "magnetic-coil-12-1.png")
+            self.assertEqual(links["wire.png"], images / "magnetic-coil-12-2.png")
             for bad in (b"hello", b"<html><body>login</body></html>"):
                 with self.assertRaises(ValueError):
-                    S.store_images(images, "x.png", bad)
-            with self.assertRaises(ValueError):
-                S.store_images(images, "..png", png)
+                    S.store_images(images, "coil.png", bad, targets)
+            with self.assertRaises(ValueError):  # no image of the sheet
+                S.store_images(images, "unrelated.png", png, targets)
 
             # fetched from TeXercises: an image is kept, a login page is not
             class Resp(io.BytesIO):
@@ -413,19 +425,20 @@ class Sheets(unittest.TestCase):
                 def __exit__(self, *a):
                     return False
             with mock.patch.object(S.urllib.request, "urlopen", return_value=Resp(png)) as op:
-                self.assertEqual(S.fetch_image(images, "magnet"), (True, "magnet.png"))
+                self.assertEqual(S.fetch_image(images, "magnet", "magnets-5"), (True, "magnets-5.png"))
                 self.assertEqual(op.call_args[0][0].full_url, "https://texercises.com/gallery/image/file/magnet/")
+            self.assertEqual(S.find_image(images, "magnet"), images / "magnets-5.png")
             with mock.patch.object(S.urllib.request, "urlopen", return_value=Resp(b"<!doctype html><p>Access without login")):
-                ok, why = S.fetch_image(images, "secret")
+                ok, why = S.fetch_image(images, "secret", "s-1")
                 self.assertFalse(ok)
                 self.assertIn("login", why)
             with mock.patch.object(S.urllib.request, "urlopen", side_effect=urllib.error.URLError("down")):
-                self.assertFalse(S.fetch_image(images, "down")[0])
-            self.assertFalse(S.fetch_image(images, "../x")[0])
+                self.assertFalse(S.fetch_image(images, "down", "d-1")[0])
+            self.assertFalse(S.fetch_image(images, "../x", "x")[0])
             # the PDF's hash changes with the images
             coll = S.collection("T", [], {})
             a = S.fingerprint(coll, {}, "exercises", {}, images)
-            S.store_images(images, "late", png)
+            S.store_images(images, "coil", png + b"1", targets)
             self.assertNotEqual(a, S.fingerprint(coll, {}, "exercises", {}, images))
 
     def test_pool_file(self):
@@ -971,28 +984,34 @@ class Service(unittest.TestCase):
         self.assertEqual(self.req("/api/texercises", buf.getvalue(), "application/zip", cookie)[0], 200)
         listed = json.loads(self.req("/api/images?keys=" + key, cookie=cookie)[2])["images"]
         self.assertEqual([(x["name"], x["have"]) for x in listed], [("coil-1", False)])
+        title = json.loads(next(ROOT.glob(f"texercises-drafts*/exercises/{key}")).joinpath("exercise.json").read_text())["title"]
+        stem = S.image_stem(title, key)
+        self.assertEqual(listed[0]["file"], stem)
         self.assertEqual(listed[0]["gallery"], "https://texercises.com/gallery/image/file/coil-1/")
         # uploaded: listed, served to the panel, in the preview and the online version
-        self.assertEqual(self.req("/api/texercises?image=notes.txt", b"hello", "application/octet-stream", cookie)[0], 400)
-        st, _, body = self.req("/api/texercises?image=coil-1", png, "application/octet-stream", cookie)
-        self.assertEqual((st, json.loads(body)), (200, {"kept": ["coil-1.png"]}))
+        self.assertEqual(self.req(f"/api/texercises?image=notes.txt&keys={key}", b"hello", "application/octet-stream", cookie)[0], 400)
+        self.assertEqual(self.req("/api/texercises?image=coil-1.png", png, "application/octet-stream", cookie)[0], 400)  # no exercise
+        st, _, body = self.req(f"/api/texercises?image=photo.png&keys={key}&gallery=coil-1", png, "application/octet-stream", cookie)
+        self.assertEqual((st, json.loads(body)), (200, {"kept": [stem + ".png"], "skipped": []}))
         self.assertTrue(json.loads(self.req("/api/images?keys=" + key, cookie=cookie)[2])["images"][0]["have"])
-        st, headers, body = self.req("/sheet/img/coil-1.png", cookie=cookie)
+        self.assertEqual(json.loads(self.req("/api/images?keys=" + key, cookie=cookie)[2])["images"][0]["file"], stem + ".png")
+        st, headers, body = self.req(f"/sheet/img/{stem}.png", cookie=cookie)
         self.assertEqual((st, headers["Content-Type"], body), (200, "image/png", png))
         self.assertIn("sandbox", headers["Content-Security-Policy"])
-        self.assertEqual(self.req("/sheet/img/coil-1.png")[0], 404)  # not without the login
+        self.assertEqual(self.req(f"/sheet/img/{stem}.png")[0], 404)  # not without the login
         self.assertEqual(self.req("/sheet/img/..%2Fexercise-sheets.json", cookie=cookie)[0], 404)
+        self.assertEqual(self.req("/sheet/img/index.json", cookie=cookie)[0], 404)
         self.assertEqual(self.req("/sheet/img/coil-1", cookie=cookie)[0], 404)  # the file's own name only
         prev = json.loads(self.req("/api/preview?keys=" + key, cookie=cookie)[2])["exercises"][key]
-        self.assertIn('src="/admin/sheet/img/coil-1.png"', prev["text"])
+        self.assertIn(f'src="/admin/sheet/img/{stem}.png"', prev["text"])
         st, _, body = self.req("/api/sheets/new", j({"sheet": {"title": "Bilder", "lang": "de", "modules": [{"id": "coulomb"}], "exercises": [key]}}),
                                "application/json", cookie)
         sid = json.loads(body)["id"]
         token = json.loads(self.req(f"/api/sheets/{sid}", j({"action": "share"}), "application/json", cookie)[2])["token"]
         page_ = self.req(f"/sheet/s/{token}")[2].decode()
-        self.assertIn(f'src="/admin/sheet/s/{token}/img/coil-1.png"', page_)
-        self.assertEqual(self.req(f"/sheet/s/{token}/img/coil-1.png")[2], png)
-        self.assertEqual(self.req("/sheet/s/" + "x" * 32 + "/img/coil-1.png")[0], 404)
+        self.assertIn(f'src="/admin/sheet/s/{token}/img/{stem}.png"', page_)
+        self.assertEqual(self.req(f"/sheet/s/{token}/img/{stem}.png")[2], png)
+        self.assertEqual(self.req("/sheet/s/" + "x" * 32 + f"/img/{stem}.png")[0], 404)
         # one exercise per screen: numbered, with the pager (online.js) and the footer as on the PDF
         self.assertIn('<article class="exercise tx" id="a1" data-n="1">', page_)
         self.assertIn('<p class="module">', page_)
@@ -1001,8 +1020,10 @@ class Service(unittest.TestCase):
         self.assertIn("/admin/static/online.css", page_)
         # fetched from TeXercises (here: refused)
         with mock.patch.object(S.urllib.request, "urlopen", side_effect=urllib.error.URLError("no network")):
-            got = json.loads(self.req("/api/images/fetch", j({"name": "coil-2"}), "application/json", cookie)[2])
+            got = json.loads(self.req("/api/images/fetch", j({"name": "coil-1", "keys": [key]}), "application/json", cookie)[2])
         self.assertFalse(got["ok"])
+        self.assertIn("did not answer", got["error"])
+        self.assertIn("no exercise", json.loads(self.req("/api/images/fetch", j({"name": "coil-9", "keys": [key]}), "application/json", cookie)[2])["error"])
         # drawn figures are public by their hash; fonts only those of the sheets
         figs = Path(self.dir.name) / "data" / "sheet-figures"
         figs.mkdir(parents=True)
