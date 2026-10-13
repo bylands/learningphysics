@@ -23,6 +23,7 @@
   function equip(input) {
     if (input.dataset.sign) return;
     input.dataset.sign = '1';
+    const had = input === document.activeElement; // moving the field takes its focus
     const wrap = document.createElement('span');
     wrap.className = 'num';
     input.replaceWith(wrap);
@@ -37,6 +38,7 @@
     btn.addEventListener('mousedown', (evt) => evt.preventDefault());
     btn.addEventListener('click', () => { flip(input); input.focus(); });
     wrap.append(input, btn);
+    if (had) input.focus({ preventScroll: true });
   }
 
   function scan(node) {
