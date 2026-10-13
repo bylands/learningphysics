@@ -205,8 +205,20 @@ class Unit(unittest.TestCase):
             self.assertTrue(a.valid_session(s))
             self.assertFalse(a.valid_session(s[:-1] + ("0" if s[-1] != "0" else "1")))
             self.assertFalse(a.valid_session("1.abc"))
-            pw.write_text(hash_password("new pass") + "\n")  # a new password ends the session
+            # the file's password became the superuser's own: the file is not read again
+            self.assertEqual(a.read_super()["hash"], pw.read_text().strip())
+            pw.write_text(hash_password("new pass") + "\n")
+            self.assertTrue(a.valid_session(s))
+            self.assertEqual(a.login("", "new pass"), None)
+            pw.unlink()
+            self.assertEqual(a.login("", "secret pass"), "bys")
+            a.change_password("bys", "secret pass", "my own pass")  # a new password ends the session
             self.assertFalse(a.valid_session(s))
+            self.assertEqual(a.login("samuel.byland", "my own pass"), "bys")
+            # without the file and without a password of their own, no one logs in as the superuser
+            b = H.Admin(None, Path(d) / "hub", Path(d) / "x" / "apps.json")
+            self.assertEqual(b.stored_hash(), "")
+            self.assertIsNone(b.login("", ""))
 
 
 def export_zip(exercises):
@@ -1249,6 +1261,20 @@ class Service(unittest.TestCase):
         self.teachers({"action": "update", "id": "abc", "school": "KS Z"}, boss)
         self.assertEqual(me(boss)["school"], "KS Y")
         self.cookie_of("s.byland", "my own password")
+
+    def test_back_to_the_game(self):
+        # the crossword generator, the quiz and the game send teachers here with ?next=
+        st, _, body = self.req("/?next=/crosswords/")
+        self.assertIn(b'name="next" value="/crosswords/"', body)
+        st, headers, _ = self.req("/login", b"user=samuel.byland&password=teacher pw&next=/crosswords/", "application/x-www-form-urlencoded")
+        self.assertEqual((st, headers["Location"]), (303, "/crosswords/"))
+        boss = headers["Set-Cookie"].split(";")[0]
+        st, headers, _ = self.req("/?next=/electric-circuits/host", cookie=boss)
+        self.assertEqual((st, headers["Location"]), (303, "/electric-circuits/host"))
+        for bad in ("//evil.example/", "https://evil.example/", "/\\evil.example"):
+            st, headers, _ = self.req("/login", f"user=samuel.byland&password=teacher pw&next={bad}".encode(), "application/x-www-form-urlencoded")
+            self.assertEqual(headers["Location"], "/admin/", bad)
+        self.assertNotIn(b'name="next"', self.req("/?next=//evil.example/")[2])
 
     def test_profile(self):
         self.assertEqual(H.profile({"name": "Anna Maria Beispiel"}), {"first": "Anna Maria", "last": "Beispiel", "school": ""})
