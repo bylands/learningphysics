@@ -13,6 +13,17 @@ const topics = [
 ];
 assert.strictEqual(S.stageKey(topics[0].stages[1]), 'a2+a3');
 assert(S.NAME.test('3a-elektro') && !S.NAME.test('3A') && !S.NAME.test('-a'));
+assert(S.NAME.test('abc/3a-elektro') && !S.NAME.test('ab/3a') && !S.NAME.test('abcd/3a') && !S.NAME.test('abc/') && !S.NAME.test('a/b/c'));
+// a set by its name: a teacher's (xyz/name), the default teacher's without one, or as written before there were teachers
+const file = { default: 'bys', sets: { 'bys/3a': { title: 'A' }, 'abc/3a': { title: 'B' }, 'abc/x': [] } };
+assert.strictEqual(S.find(file, 'bys/3a').title, 'A');
+assert.strictEqual(S.find(file, '3a').title, 'A');
+assert.strictEqual(S.find(file, 'abc/3a').title, 'B');
+assert.strictEqual(S.find(file, 'abc/nope'), null);
+assert.strictEqual(S.find(file, 'x'), null);
+assert.strictEqual(S.find(file, 'abc/x'), null, 'not a set');
+assert.strictEqual(S.find({ sets: { '3a': { title: 'old' } } }, '3a').title, 'old');
+assert.strictEqual(S.find(null, '3a'), null);
 
 // a set's objectives: their worked examples and topics, sorted and each once
 const objectives = [{ id: 'x', tutor: 0, topic: 0 }, { id: 'y', tutor: 3, topic: 2 }, { id: 'z', tutor: 2, topic: 2 }, { id: 'w' }];

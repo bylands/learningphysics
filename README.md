@@ -10,6 +10,10 @@ Besides its folder, a new app needs its card on the hub page (`hub/index.html`),
 
 The admin panel's Sheets tab makes exercise sheets from the teacher's TeXercises exercises: choose modules and learning objectives, let it suggest a balanced sheet, replace exercises by suggested alternatives, preview them (KaTeX), then download the PDF (with or without solutions, made with LaTeX on the server) or share an online version at a secret link that needs no login and shows no solutions. See `hub-admin/sheets/README.md` (setup, and `pool.json`, which says which exercises practise which learning objective).
 
+## Teachers
+
+The admin panel (`/admin/`) has an account per teacher, each with a three-letter identifier. The superuser (`bys`, who logs in with the crossword app's teacher password) creates the accounts in the Teachers tab; a new account's password is shown once, and the teacher can change it under Account. Every teacher makes their own sets, opened at learningphysics.ch/*identifier*/*name*; the superuser's are also at learningphysics.ch/*name*, as before. The order and tags of the apps and the exercise sheets are the superuser's only.
+
 ## Tests and deployment
 
 - `node <app>/test/check-generator.js` tests one app. `shared/sync.sh --check` checks that the copies match `shared/`, and `node hub/build-objectives.js --check` that `hub/objectives.json` matches the apps' objectives (run it without `--check` after changing an objective).
@@ -20,7 +24,7 @@ The admin panel's Sheets tab makes exercise sheets from the teacher's TeXercises
 The nginx site is kept in `deploy/nginx/`:
 
 - `learningphysics.conf`: the site. It serves every folder in the web root, so a new app needs no change here. It proxies the services (live quiz, crosswords, millionaire, admin panel), and redirects www.learningphysics.ch and the old domain teachingphysics.ch.
-  Any other address that looks like a name (learningphysics.ch/3a-elektro) gets the hub page, which shows the teacher's set of that name (made in the admin panel, saved as `hub-data/sets.json`, served as `/sets.json`).
+  Any other address that looks like a name, with a teacher's three-letter identifier before it or not (learningphysics.ch/abc/3a-elektro, or learningphysics.ch/3a-elektro: the superuser's), gets the hub page, which shows the teacher's set of that name (made in the admin panel, saved as `hub-data/sets.json`, served as `/sets.json`).
 - `gzip.conf`: compression of CSS, JS, JSON and SVG for all sites.
 
 To install a change (on the server, with sudo):

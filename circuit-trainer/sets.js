@@ -1,7 +1,8 @@
 // Shared by the learningphysics.ch apps (canonical copy in shared/, copied by sync.sh).
 // Sets of apps for a class: in the admin panel (/admin/), the teacher chooses some apps and, in
 // each, its modes (tutor, practice, check) and its learning objectives. The set is opened at
-// /<name>: the hub page with only its apps, which link to /<app>/?set=<name>. Here, in the app, the
+// /<teacher>/<name> (or /<name>: the default teacher's): the hub page with only its apps, which link
+// to /<app>/?set=<teacher>/<name> (or ?set=<name>). Here, in the app, the
 // set hides what it leaves out (it is a view, not access control): with objectives chosen, the
 // tutor shows only their worked examples, practice offers only their topics, and the check asks
 // only them. It is remembered for the tab (sessionStorage lp-set: { name, set }, written by the hub
@@ -33,7 +34,15 @@
 (function (root) {
   'use strict';
 
-  const KEY = 'lp-set', NAME = /^[a-z0-9][a-z0-9-]{0,39}$/;
+  const KEY = 'lp-set', NAME = /^(?:[a-z]{3}\/)?[a-z0-9][a-z0-9-]{0,39}$/;
+  // a set of /sets.json by its name: "xyz/name", or "name", the default teacher's (in a file written
+  // before there were teachers, "name" itself)
+  function find(d, name) {
+    const sets = d && d.sets && typeof d.sets === 'object' ? d.sets : {};
+    const own = (k) => (Object.prototype.hasOwnProperty.call(sets, k) ? sets[k] : null);
+    const s = own(name) || (!name.includes('/') && d && typeof d.default === 'string' ? own(`${d.default}/${name}`) : null);
+    return s && typeof s === 'object' && !Array.isArray(s) ? s : null;
+  }
   const stageKey = (stage) => stage.types.join('+');
   // What a set's objectives (ids) leave of the app's objectives ([{ id, tutor, topic }]): the
   // objectives, the worked examples and the practice topics, the indices sorted; null if the set
@@ -45,7 +54,7 @@
     const of = (k) => [...new Set(chosen.map((o) => o[k]).filter(Number.isInteger))].sort((a, b) => a - b);
     return { objectives: chosen, tutor: of('tutor'), topics: of('topic') };
   }
-  const pure = { stageKey, limits, NAME };
+  const pure = { stageKey, limits, NAME, find };
   if (typeof document === 'undefined') { if (typeof module !== 'undefined') module.exports = pure; return; }
 
   const read = () => { try { return JSON.parse(sessionStorage.getItem(KEY)); } catch (e) { return null; } };
@@ -63,7 +72,7 @@
   // a set not yet known in this tab: wait for it (the page hidden), then reload with it
   function fetchSet(then) {
     fetch('/sets.json', { cache: 'no-cache' }).then((r) => (r.ok ? r.json() : null)).then((d) => {
-      then(d && d.sets && typeof d.sets === 'object' && d.sets[name] && typeof d.sets[name] === 'object' ? d.sets[name] : null);
+      then(find(d, name));
     }).catch(() => then(undefined));
   }
   if (name && !set) {

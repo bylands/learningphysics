@@ -7,8 +7,11 @@ cards in its order, shows their tags, and lets visitors filter by tag. This serv
 /admin/ behind nginx, lets the teacher edit that file:
 
     /admin/              login page, or the panel once logged in
-    /admin/login         POST password=...          sets the session cookie
+    /admin/login         POST teacher=xyz&password=...   sets the session cookie (no teacher: the superuser)
     /admin/logout        POST                       ends the session
+    /admin/api/teachers  GET  the accounts (the superuser only)
+                         POST {"action": "create", "id", "name"} | {"action": "reset" | "rename" | "delete", "id"}
+    /admin/api/password  POST {"current", "new"}    a teacher's own new password
     /admin/api/config    GET  the apps of the hub page with their order and tags
                          POST {"order": [id, ...], "tags": {id: [key, ...]},
                                "labels": {key: {"en": name, "de": name}}}      saves apps.json
@@ -47,10 +50,20 @@ see sheets/README.md; without it the panel says so), cached in hub-data/sheets/.
 drawn as SVG for the browser (sheets/figures.py, hub-data/sheet-figures/); the TeXercises gallery
 images, which an export lacks, are uploaded or fetched (hub-data/sheet-images/).
 
-A set is opened at learningphysics.ch/<name> (nginx serves the hub page for it, which then shows
-only the set's apps; see hub/index.html and shared/sets.js, which applies the set in the apps):
+Teachers: every teacher has an account with a three-letter identifier (xyz) and their own sets.
+The superuser (--super, default bys) logs in with the crossword app's teacher password and alone
+edits the order and tags of the apps, the exercise sheets and the other accounts (hub-data/
+teachers.json, not served: their names and password hashes); a new account gets a password shown
+once, which the teacher can change. A session belongs to one teacher and ends when their password
+changes.
 
-    {"sets": {"3a-elektro": {"title": "Klasse 3a", "lang": "de", "apps": [
+A set is opened at learningphysics.ch/<teacher>/<name>, and the superuser's also at
+learningphysics.ch/<name>, as before there were teachers (nginx serves the hub page for it, which
+then shows only the set's apps; see hub/index.html and shared/sets.js, which applies the set in the
+apps). sets.json has every teacher's sets, under "teacher/name" (a file written before, with names
+alone, is the superuser's: rewritten so at start):
+
+    {"default": "bys", "sets": {"bys/3a-elektro": {"title": "Klasse 3a", "lang": "de", "apps": [
         {"id": "electric-field", "modes": ["tutor", "practice", "check"], "objectives": ["sketch", "read"]}]}}}
 
 The language, if the set fixes it ("en" or "de"; without it, the students choose); the apps in
@@ -69,9 +82,9 @@ the app. Their modes "arcade" (a timed game, now the check) and "real" (problems
 become "check" and "practice".
 
 The apps and their names come from the hub page itself (its <a class="app" href="/id/"> cards),
-so a new app needs no change here. The password is the crossword app's teacher password: the
-same salted PBKDF2 hash file (crosswords-web set-password), read on every use, so a new password
-takes effect at once and ends every session. Standard library only.
+so a new app needs no change here. The superuser's password is the crossword app's teacher password:
+the same salted PBKDF2 hash file (crosswords-web set-password), read on every use, so a new password
+takes effect at once and ends every session of the superuser. Standard library only.
 
     python3 hubadmin.py --port 8040 --password-file /opt/crosswords/teacher-password \
         --hub /var/www/teachingphysics/index.html --config /var/www/teachingphysics/hub-data/apps.json \
@@ -146,6 +159,14 @@ SHEET_TOKEN = re.compile(r"[A-Za-z0-9_-]{32}")
 MAX_SHEETS, MAX_MODULES, MAX_SHEET_EXERCISES = 200, 40, 40
 TEXERCISES = "https://texercises.com"
 LOGIN_ATTEMPTS, LOGIN_WINDOW = 10, 15 * 60  # failed logins per address and window (s)
+# teacher accounts: each has a three-letter identifier, the start of its sets' addresses
+# (learningphysics.ch/xyz/name). The superuser (SUPER, --super) logs in with the crossword app's
+# teacher password and creates the others; a set address without an identifier is the superuser's.
+SUPER = "bys"
+TEACHER_ID = re.compile(r"[a-z]{3}")
+MAX_TEACHERS, MAX_TEACHER_NAME = 100, 80
+MIN_PASSWORD, MAX_PASSWORD = 8, 200
+PASSWORD_ITERATIONS = 310000
 
 
 # ---------------------------------------------------------------------- passwords (as crosswords)
@@ -158,6 +179,13 @@ def verify_password(password: str, stored: str) -> bool:
         return hmac.compare_digest(test.hex(), digest)
     except (ValueError, TypeError):
         return False
+
+
+def hash_password(password: str, iterations: int = PASSWORD_ITERATIONS) -> str:
+    """In the format verify_password reads (that of crosswords-web set-password)."""
+    salt = secrets.token_bytes(16)
+    digest = hashlib.pbkdf2_hmac("sha256", password.encode("utf-8"), salt, iterations)
+    return f"pbkdf2_sha256${iterations}${salt.hex()}${digest.hex()}"
 
 
 # ---------------------------------------------------------------------- the hub's apps
@@ -386,6 +414,19 @@ def normalize_sets(data: object, apps: List[Dict[str, object]], taken=lambda nam
     return {"sets": out}
 
 
+def clean_text(text: object, limit: int) -> str:
+    """Text as stored: no control characters or angle brackets, spaces collapsed, at most limit."""
+    if not isinstance(text, str):
+        return ""
+    return re.sub(r"\s+", " ", re.sub(r"[\x00-\x1f\x7f<>]", "", text)).strip()[:limit].strip()
+
+
+def new_password() -> str:
+    """A first password for an account: 12 characters, easy to type (no 0/O, 1/l/I)."""
+    alphabet = "abcdefghijkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789"
+    return "".join(secrets.choice(alphabet) for _ in range(12))
+
+
 def read_config(path: Path) -> object:
     try:
         return json.loads(path.read_text(encoding="utf-8"))
@@ -415,10 +456,14 @@ def write_config(path: Path, config: Dict[str, object], mode: int = 0o644) -> No
 # ---------------------------------------------------------------------- the service
 class Admin:
     def __init__(self, password_file: Path, hub: Path, config: Path, sets: Optional[Path] = None,
-                 own: str = OWN_CREATOR) -> None:
+                 own: str = OWN_CREATOR, superuser: str = SUPER) -> None:
         self.password_file, self.hub, self.config = password_file, hub, config
         self.sets = sets or config.parent / "sets.json"
         self.failures: Dict[str, List[float]] = {}
+        # the teacher accounts besides the superuser (with their password hashes: not readable by others)
+        self.super = superuser
+        self.teachers_file = config.parent / "teachers.json"
+        self.accounts_lock = threading.Lock()  # the accounts and the sets, read and written together
         # exercise sheets: the uploaded exercises, the sheets (with the secrets of their online
         # versions: not readable by others) and the cached PDFs, next to the sets
         self.texercises = config.parent / "texercises"
@@ -429,34 +474,151 @@ class Admin:
         self.sheets_lock = threading.Lock()
         self.own = own
 
-    def stored_hash(self) -> str:
-        """Read on every use, so a new password takes effect without a restart."""
-        try:
-            return self.password_file.read_text().strip()
-        except OSError:
-            return ""
+    def stored_hash(self, teacher: Optional[str] = None) -> str:
+        """The password hash of a teacher (the superuser's without one): the superuser's is the
+        crossword app's, the others' are in teachers.json. Read on every use, so a new password
+        takes effect without a restart."""
+        if teacher is None or teacher == self.super:
+            try:
+                return self.password_file.read_text().strip()
+            except OSError:
+                return ""
+        entry = self.read_teachers().get(teacher)
+        return str(entry.get("hash") or "") if entry else ""
 
     def _session_key(self, stored: str) -> bytes:
         # Derived from the password hash: changing the password ends every session.
         return hashlib.sha256(b"hub-admin-session|" + stored.encode()).digest()
 
-    def new_session(self) -> str:
-        expires = str(int(time.time()) + SESSION_DAYS * 86400)
-        sig = hmac.new(self._session_key(self.stored_hash()), expires.encode(), "sha256").hexdigest()
-        return f"{expires}.{sig}"
+    def new_session(self, teacher: Optional[str] = None) -> str:
+        """A session cookie's value: <teacher>.<expires>.<signature>."""
+        teacher = teacher or self.super
+        signed = f"{teacher}.{int(time.time()) + SESSION_DAYS * 86400}"
+        sig = hmac.new(self._session_key(self.stored_hash(teacher)), signed.encode(), "sha256").hexdigest()
+        return f"{signed}.{sig}"
+
+    def session_teacher(self, value: str) -> Optional[str]:
+        """The teacher a session cookie belongs to, if it is valid."""
+        try:
+            teacher, expires, sig = (value or "").split(".")
+            if not TEACHER_ID.fullmatch(teacher) or int(expires) < time.time():
+                return None
+        except ValueError:
+            return None
+        stored = self.stored_hash(teacher)
+        if not stored:
+            return None
+        want = hmac.new(self._session_key(stored), f"{teacher}.{expires}".encode(), "sha256").hexdigest()
+        return teacher if hmac.compare_digest(want, sig) else None
 
     def valid_session(self, value: str) -> bool:
-        stored = self.stored_hash()
-        if not stored or not value:
-            return False
-        try:
-            expires, sig = value.split(".", 1)
-            if int(expires) < time.time():
-                return False
-        except ValueError:
-            return False
-        want = hmac.new(self._session_key(stored), expires.encode(), "sha256").hexdigest()
-        return hmac.compare_digest(want, sig)
+        return self.session_teacher(value) is not None
+
+    def login(self, teacher: str, password: str) -> Optional[str]:
+        """The teacher whose password this is (no identifier: the superuser), or None."""
+        teacher = (teacher or "").strip().lower() or self.super
+        stored = self.stored_hash(teacher) if TEACHER_ID.fullmatch(teacher) else ""
+        return teacher if stored and verify_password(password, stored) else None
+
+    # ------------------------------------------------------------------ teacher accounts
+    def read_teachers(self) -> Dict[str, Dict[str, object]]:
+        """{id: {"name", "hash", "created"}}: the accounts besides the superuser."""
+        data = read_config(self.teachers_file)
+        found = data.get("teachers") if isinstance(data, dict) else None
+        return {t: e for t, e in found.items() if TEACHER_ID.fullmatch(t) and t != self.super and isinstance(e, dict)} \
+            if isinstance(found, dict) else {}
+
+    def teacher_name(self, teacher: str) -> str:
+        entry = self.read_teachers().get(teacher)
+        return str(entry.get("name") or "") if entry else ""
+
+    def teacher_problem(self, teacher: object) -> Optional[str]:
+        """Why a new teacher cannot have this identifier, or None: three letters, and the start of
+        no address of the site (an app, a file or folder in the web root, a service)."""
+        if not isinstance(teacher, str) or not TEACHER_ID.fullmatch(teacher):
+            return "an identifier is three lower-case letters, e.g. abc"
+        if teacher == self.super or teacher in self.read_teachers():
+            return f"there is already a teacher “{teacher}”"
+        if teacher in RESERVED or teacher in [a["id"] for a in self.apps()] or self.taken(teacher):
+            return f"“{teacher}” is taken by the site"
+        return None
+
+    def teachers_state(self) -> Dict[str, object]:
+        sets = self.read_all_sets()
+        return {"super": self.super, "teachers": [
+            {"id": t, "name": str(e.get("name") or ""), "created": e.get("created", 0), "sets": len(sets.get(t, {}))}
+            for t, e in sorted(self.read_teachers().items())], "super_sets": len(sets.get(self.super, {}))}
+
+    def change_teachers(self, change) -> object:
+        """Read, change and write the accounts under the lock: change(teachers) returns the answer."""
+        with self.accounts_lock:
+            teachers = self.read_teachers()
+            out = change(teachers)
+            write_config(self.teachers_file, {"teachers": teachers}, 0o600)
+            return out
+
+    def create_teacher(self, teacher: object, name: object) -> Dict[str, str]:
+        """A new account; its first password (shown once). ValueError: why not."""
+        problem = self.teacher_problem(teacher)
+        if problem:
+            raise ValueError(problem)
+        name = clean_text(name, MAX_TEACHER_NAME)
+        password = new_password()
+
+        def change(teachers):
+            if teacher in teachers:
+                raise ValueError(f"there is already a teacher “{teacher}”")
+            if len(teachers) >= MAX_TEACHERS:
+                raise ValueError(f"at most {MAX_TEACHERS} teachers")
+            teachers[teacher] = {"name": name, "hash": hash_password(password), "created": int(time.time())}
+            return {"id": teacher, "password": password}
+        return self.change_teachers(change)
+
+    def reset_password(self, teacher: str) -> Dict[str, str]:
+        """A new password for a teacher (shown once): their sessions end. KeyError: no such teacher."""
+        password = new_password()
+
+        def change(teachers):
+            if teacher not in teachers:
+                raise KeyError(teacher)
+            teachers[teacher]["hash"] = hash_password(password)
+            return {"id": teacher, "password": password}
+        return self.change_teachers(change)
+
+    def rename_teacher(self, teacher: str, name: object) -> Dict[str, str]:
+        def change(teachers):
+            if teacher not in teachers:
+                raise KeyError(teacher)
+            teachers[teacher]["name"] = clean_text(name, MAX_TEACHER_NAME)
+            return {"id": teacher, "name": teachers[teacher]["name"]}
+        return self.change_teachers(change)
+
+    def delete_teacher(self, teacher: str) -> Dict[str, str]:
+        """The account and its sets (their addresses stop working). KeyError: no such teacher."""
+        def change(teachers):
+            if teacher not in teachers:
+                raise KeyError(teacher)
+            del teachers[teacher]
+            sets = self.read_all_sets()
+            sets.pop(teacher, None)
+            self.write_all_sets(sets)
+            return {"deleted": teacher}
+        return self.change_teachers(change)
+
+    def change_password(self, teacher: str, current: object, new: object) -> None:
+        """A teacher's own new password (not the superuser's: that is the crossword app's)."""
+        if teacher == self.super:
+            raise ValueError("your password is the teacher password of the crossword app: change it there")
+        if not isinstance(new, str) or not MIN_PASSWORD <= len(new) <= MAX_PASSWORD:
+            raise ValueError(f"a password has {MIN_PASSWORD} to {MAX_PASSWORD} characters")
+        if not isinstance(current, str) or not self.login(teacher, current):
+            raise PermissionError("the current password is wrong")
+
+        def change(teachers):
+            if teacher not in teachers:
+                raise KeyError(teacher)
+            teachers[teacher]["hash"] = hash_password(new)
+        self.change_teachers(change)
 
     def blocked(self, addr: str) -> bool:
         now = time.time()
@@ -505,17 +667,56 @@ class Admin:
         order = normalize(read_config(self.config), [a["id"] for a in apps])["order"]
         return sorted(apps, key=lambda a: order.index(a["id"]) if a["id"] in order else len(order))
 
-    def current_sets(self) -> Dict[str, object]:
-        apps = self.standard_apps()
-        return {"apps": apps, **normalize_sets(read_config(self.sets), apps, self.taken, strict=False)}
+    def read_all_sets(self) -> Dict[str, Dict[str, object]]:
+        """{teacher: {name: set}} as sets.json has them (unchecked): "xyz/name" is teacher xyz's set,
+        a name without a teacher (a file written before there were accounts) the superuser's. Sets
+        of teachers that no longer exist are left out."""
+        data = read_config(self.sets)
+        found = data.get("sets") if isinstance(data, dict) and isinstance(data.get("sets"), dict) else {}
+        teachers = {self.super, *self.read_teachers()}
+        out: Dict[str, Dict[str, object]] = {}
+        for key, s in found.items():
+            teacher, _, name = key.rpartition("/") if isinstance(key, str) else ("", "", "")
+            teacher = teacher or self.super
+            if teacher in teachers and name:
+                out.setdefault(teacher, {})[name] = s
+        return out
 
-    def save_sets(self, data: object) -> Dict[str, object]:
+    def write_all_sets(self, sets: Dict[str, Dict[str, object]]) -> None:
+        """sets.json: {"default": the superuser, "sets": {"xyz/name": set}}, the superuser's first.
+        The hub page opens learningphysics.ch/xyz/name, and learningphysics.ch/name as default/name."""
+        order = [self.super] + sorted(t for t in sets if t != self.super)
+        write_config(self.sets, {"default": self.super, "sets": {f"{t}/{n}": s for t in order for n, s in sets.get(t, {}).items()}})
+
+    def migrate_sets(self) -> None:
+        """A sets.json written before there were accounts (names without a teacher) as it is now."""
+        data = read_config(self.sets)
+        if isinstance(data, dict) and isinstance(data.get("sets"), dict) and (
+                data.get("default") != self.super or any("/" not in k for k in data["sets"])):
+            with self.accounts_lock:
+                self.write_all_sets(self.read_all_sets())
+
+    def current_sets(self, teacher: Optional[str] = None) -> Dict[str, object]:
+        """The apps, and the sets of a teacher (the superuser's without one) by their names."""
+        teacher = teacher or self.super
+        apps = self.standard_apps()
+        own = self.read_all_sets().get(teacher, {})
+        return {"apps": apps, "teacher": teacher, **normalize_sets({"sets": own}, apps, self.taken, strict=False)}
+
+    def save_sets(self, data: object, teacher: Optional[str] = None) -> Dict[str, object]:
+        """A teacher's sets (the superuser's without one), replacing theirs; the others' stay."""
+        teacher = teacher or self.super
         apps = self.standard_apps()
         if not apps:
             raise ValueError("the hub page lists no apps")
         sets = normalize_sets(data, apps, self.taken)
-        write_config(self.sets, sets)
-        return {"apps": apps, **sets}
+        with self.accounts_lock:
+            if teacher != self.super and teacher not in self.read_teachers():
+                raise ValueError("this account no longer exists")
+            every = self.read_all_sets()
+            every[teacher] = sets["sets"]
+            self.write_all_sets(every)
+        return {"apps": apps, "teacher": teacher, **sets}
 
     # ------------------------------------------------------------------ exercise sheets
     def sheet_apps(self, sheetlib=None, have=None) -> List[Dict[str, object]]:
@@ -926,8 +1127,17 @@ def make_handler(admin: Admin):
                     return v
             return ""
 
+        def teacher(self) -> Optional[str]:
+            """The teacher logged in, or None."""
+            return admin.session_teacher(self.cookie())
+
         def logged_in(self) -> bool:
-            return admin.valid_session(self.cookie())
+            return self.teacher() is not None
+
+        def is_super(self) -> bool:
+            """The superuser: the order and tags of the apps, the exercise sheets and the accounts
+            are theirs only."""
+            return self.teacher() == admin.super
 
         def send(self, status: int, body: str | bytes, ctype: str = "text/html; charset=utf-8", headers: Optional[Dict[str, str]] = None) -> None:
             data = body.encode("utf-8") if isinstance(body, str) else body
@@ -960,8 +1170,7 @@ def make_handler(admin: Admin):
         def redirect(self, cookie: Optional[str] = None) -> None:
             headers = {"Location": "/admin/"}
             if cookie is not None:
-                headers["Set-Cookie"] = f"{COOKIE}={cookie}; Path=/admin/; HttpOnly; Secure; SameSite=Strict" + \
-                    (f"; Max-Age={SESSION_DAYS * 86400}" if cookie else "; Max-Age=0")
+                headers["Set-Cookie"] = set_cookie(cookie)
             self.send(HTTPStatus.SEE_OTHER, "", headers=headers)
 
         def json_body(self) -> Optional[object]:
@@ -999,7 +1208,7 @@ def make_handler(admin: Admin):
                 return
             m = re.fullmatch(r"(?:s/([A-Za-z0-9_-]{32})/)?img/([^/]{1,160})", rest)
             if m:
-                ok = admin.sheet_by_token(m.group(1)) is not None if m.group(1) else self.logged_in()
+                ok = admin.sheet_by_token(m.group(1)) is not None if m.group(1) else self.is_super()
                 f = admin.kept_image(unquote(m.group(2))) if ok else None
                 if f is None:
                     self.send(404, "Not found", "text/plain; charset=utf-8")
@@ -1017,7 +1226,7 @@ def make_handler(admin: Admin):
             if not m:
                 self.send(404, "Not found", "text/plain; charset=utf-8")
                 return
-            if not self.logged_in():  # the PDFs are the teacher's: made in the admin panel only
+            if not self.is_super():  # the PDFs are the teacher's: made in the admin panel only
                 self.send(403, page("Exercise sheet", '<p class="lead">Exercise sheets are made in the admin panel: '
                                     '<a href="/admin/">log in</a>, then open the link again.</p>'))
                 return
@@ -1039,8 +1248,8 @@ def make_handler(admin: Admin):
                                     '<p><a href="">Try again</a> · <a href="/admin/#sheets">admin panel</a></p>'))
 
         def sheets_get(self, path: str) -> None:
-            """/api/sheets, /api/sheets/<id>, /api/preview?keys=a,b (logged in)."""
-            if not self.logged_in():
+            """/api/sheets, /api/sheets/<id>, /api/preview?keys=a,b (the superuser)."""
+            if not self.is_super():
                 self.json(403, {"error": "login"})
                 return
             try:
@@ -1064,7 +1273,7 @@ def make_handler(admin: Admin):
             """/api/sheets/new {"sheet": ...}: a new sheet; /api/sheets/<id> {"action": "save", "sheet": ...}
             or {"action": "delete" | "duplicate" | "share" | "unshare"}; /api/plan {"sheet": ..., "suggest":
             bool, "count": n}: a sheet's exercises (suggested, if asked), their alternatives, ... unsaved."""
-            if not self.logged_in():
+            if not self.is_super():
                 self.json(403, {"error": "login"})
                 return
             body = self.json_body()
@@ -1092,6 +1301,69 @@ def make_handler(admin: Admin):
             except OSError:
                 self.json(500, {"error": "could not write the sheets"})
 
+        def teachers_post(self) -> None:
+            """/api/teachers (the superuser): {"action": "create", "id", "name"} (the answer has the first
+            password, shown once), {"action": "reset", "id"} (a new password), {"action": "rename", "id",
+            "name"} or {"action": "delete", "id"} (and the teacher's sets)."""
+            if not self.is_super():
+                self.json(403, {"error": "login"})
+                return
+            body = self.json_body()
+            if body is None:
+                return
+            action, teacher = body.get("action"), body.get("id")
+            try:
+                if action == "create":
+                    out = admin.create_teacher(teacher, body.get("name"))
+                elif not isinstance(teacher, str) or not TEACHER_ID.fullmatch(teacher):
+                    raise KeyError(teacher)
+                elif action == "reset":
+                    out = admin.reset_password(teacher)
+                elif action == "rename":
+                    out = admin.rename_teacher(teacher, body.get("name"))
+                elif action == "delete":
+                    out = admin.delete_teacher(teacher)
+                else:
+                    raise ValueError("action: create, reset, rename or delete")
+                self.json(200, {**out, **admin.teachers_state()})
+            except KeyError:
+                self.json(404, {"error": "no such teacher"})
+            except ValueError as e:
+                self.json(400, {"error": str(e)})
+            except OSError:
+                self.json(500, {"error": "could not write the accounts"})
+
+        def password_post(self) -> None:
+            """/api/password {"current", "new"}: a teacher's own new password. Their other sessions
+            end; this one goes on with a new cookie."""
+            teacher = self.teacher()
+            if not teacher:
+                self.json(403, {"error": "login"})
+                return
+            body = self.json_body()
+            if body is None:
+                return
+            if admin.blocked(self.addr()):
+                self.json(429, {"error": "too many attempts: try again in a few minutes"})
+                return
+            try:
+                admin.change_password(teacher, body.get("current"), body.get("new"))
+            except PermissionError as e:
+                admin.failed(self.addr())
+                self.json(400, {"error": str(e)})
+                return
+            except KeyError:
+                self.json(404, {"error": "no such teacher"})
+                return
+            except ValueError as e:
+                self.json(400, {"error": str(e)})
+                return
+            except OSError:
+                self.json(500, {"error": "could not write the accounts"})
+                return
+            self.send(200, json.dumps({"ok": True}), "application/json; charset=utf-8",
+                      {"Set-Cookie": set_cookie(admin.new_session(teacher))})
+
         # -------------------------------------------------------------- routes
         def do_HEAD(self) -> None:
             self.do_GET()
@@ -1099,13 +1371,17 @@ def make_handler(admin: Admin):
         def do_GET(self) -> None:
             path = self.path.split("?", 1)[0]
             if path == "/":
-                self.send(200, panel_page() if self.logged_in() else login_page(bool(admin.stored_hash())))
+                teacher = self.teacher()
+                self.send(200, panel_page(teacher, teacher == admin.super, admin.teacher_name(teacher)) if teacher
+                          else login_page(bool(admin.stored_hash())))
             elif path == "/static/admin.js":
                 self.send(200, ADMIN_JS, "text/javascript; charset=utf-8")
             elif path == "/static/drag.js":
                 self.send(200, DRAG_JS, "text/javascript; charset=utf-8")
             elif path == "/static/sets.js":
                 self.send(200, SETS_JS, "text/javascript; charset=utf-8")
+            elif path == "/static/accounts.js":
+                self.send(200, ACCOUNTS_JS, "text/javascript; charset=utf-8")
             elif path == "/static/sheets.js":
                 self.send(200, SHEETS_JS, "text/javascript; charset=utf-8")
             elif path == "/static/online.js":
@@ -1124,11 +1400,17 @@ def make_handler(admin: Admin):
                     self.send(200, f.read_bytes(), "font/otf", {"Cache-Control": "public, max-age=604800"})
             elif path == "/static/admin.css":
                 self.send(200, ADMIN_CSS, "text/css; charset=utf-8")
-            elif path in API:
-                if not self.logged_in():
+            elif path == "/api/teachers":
+                if not self.is_super():
                     self.json(403, {"error": "login"})
                 else:
-                    self.json(200, admin.current() if path == "/api/config" else admin.current_sets())
+                    self.json(200, admin.teachers_state())
+            elif path in API:
+                teacher = self.teacher()
+                if not teacher or (path == "/api/config" and teacher != admin.super):
+                    self.json(403, {"error": "login"})
+                else:
+                    self.json(200, admin.current() if path == "/api/config" else admin.current_sets(teacher))
             else:
                 self.send(404, "Not found", "text/plain; charset=utf-8")
 
@@ -1142,19 +1424,23 @@ def make_handler(admin: Admin):
                 if admin.blocked(self.addr()):
                     self.send(429, login_page(True, "Too many attempts. Try again in a few minutes."))
                     return
-                password = (parse_qs(data.decode("utf-8", "replace")).get("password") or [""])[0]
-                stored = admin.stored_hash()
-                if stored and verify_password(password, stored):
-                    self.redirect(admin.new_session())
+                form = parse_qs(data.decode("utf-8", "replace"))
+                teacher = admin.login((form.get("teacher") or [""])[0], (form.get("password") or [""])[0])
+                if teacher:
+                    self.redirect(admin.new_session(teacher))
                 else:
                     admin.failed(self.addr())
-                    self.send(403, login_page(bool(stored), "Wrong password."))
+                    self.send(403, login_page(bool(admin.stored_hash()), "Wrong identifier or password."))
             elif path == "/logout":
                 self.redirect("")
+            elif path == "/api/teachers":
+                self.teachers_post()
+            elif path == "/api/password":
+                self.password_post()
             elif path == "/api/plan" or path.startswith("/api/sheets/"):
                 self.sheets_post(path)
             elif path == "/api/images/fetch":
-                if not self.logged_in():
+                if not self.is_super():
                     self.json(403, {"error": "login"})
                     return
                 body = self.json_body()
@@ -1170,7 +1456,7 @@ def make_handler(admin: Admin):
             elif path == "/api/texercises":
                 # the uploads of the sheets (nginx lets 64 MB through here): a TeXercises export, or with
                 # ?image=<file name> an image of the gallery or a .zip of them
-                if not self.logged_in():
+                if not self.is_super():
                     self.json(403, {"error": "login"})
                     return
                 try:
@@ -1193,7 +1479,8 @@ def make_handler(admin: Admin):
                     self.json(500, {"error": "could not store the " + ("images" if image else "exercises")})
             elif path in API:
                 # JSON only: a form on another site cannot send it (and the cookie is SameSite=Strict)
-                if not self.logged_in():
+                teacher = self.teacher()
+                if not teacher or (path == "/api/config" and teacher != admin.super):
                     self.json(403, {"error": "login"})
                     return
                 if not (self.headers.get("Content-Type") or "").startswith("application/json"):
@@ -1205,7 +1492,7 @@ def make_handler(admin: Admin):
                     return
                 try:
                     body = json.loads(data.decode("utf-8"))
-                    self.json(200, admin.save(body) if path == "/api/config" else admin.save_sets(body))
+                    self.json(200, admin.save(body) if path == "/api/config" else admin.save_sets(body, teacher))
                 except ValueError as e:
                     self.json(400, {"error": str(e)})
                 except OSError:
@@ -1214,6 +1501,12 @@ def make_handler(admin: Admin):
                 self.send(404, "Not found", "text/plain; charset=utf-8")
 
     return Handler
+
+
+def set_cookie(value: str) -> str:
+    """The session cookie (an empty value ends it)."""
+    return f"{COOKIE}={value}; Path=/admin/; HttpOnly; Secure; SameSite=Strict" + \
+        (f"; Max-Age={SESSION_DAYS * 86400}" if value else "; Max-Age=0")
 
 
 # ---------------------------------------------------------------------- pages
@@ -1230,7 +1523,7 @@ def page(title: str, body: str, script: bool = False, refresh: int = 0) -> str:
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
   <link rel="stylesheet" href="/admin/static/admin.css">
-  {'<link rel="stylesheet" href="/katex/katex.min.css"><script defer src="/katex/katex.min.js"></script><script defer src="/admin/static/drag.js"></script><script defer src="/admin/static/admin.js"></script><script defer src="/admin/static/sets.js"></script><script defer src="/admin/static/sheets.js"></script>' if script else ''}
+  {'<link rel="stylesheet" href="/katex/katex.min.css"><script defer src="/katex/katex.min.js"></script><script defer src="/admin/static/drag.js"></script><script defer src="/admin/static/admin.js"></script><script defer src="/admin/static/sets.js"></script><script defer src="/admin/static/sheets.js"></script><script defer src="/admin/static/accounts.js"></script>' if script else ''}
 </head>
 <body>
   <header class="wrap">
@@ -1306,26 +1599,57 @@ def login_page(ready: bool, error: str = "") -> str:
     err = f'<p class="error" role="alert">{escape(error)}</p>' if error else ""
     return page("Admin", f"""
     <form class="card login" method="post" action="/admin/login">
-      <p>The teacher password, the same as for the crosswords.</p>
+      <p>Your identifier (three letters, e.g. bys) and your password.</p>
       {err}
-      <label class="field"><span>Password</span><input type="password" name="password" required autofocus autocomplete="current-password"></label>
+      <label class="field"><span>Identifier</span><input type="text" name="teacher" required autofocus maxlength="3" autocomplete="username" autocapitalize="none" spellcheck="false"></label>
+      <label class="field"><span>Password</span><input type="password" name="password" required autocomplete="current-password"></label>
       <button type="submit" class="primary">Log in</button>
     </form>""")
 
 
-def panel_page() -> str:
-    return page("Admin", """
+def panel_page(teacher: str = SUPER, superuser: bool = True, name: str = "") -> str:
+    """The panel of a teacher: the sets for everyone; the order and tags of the apps, the exercise
+    sheets and the teachers' accounts for the superuser only; a teacher's own password (Account)."""
+    who = escape(f"{name} ({teacher})" if name else teacher)
+    tabs = ('<a href="#quizzes" data-view="quizzes">Quizzes</a><a href="#games" data-view="games">Games</a>'
+            '<a href="#sets" data-view="sets">Sets</a>'
+            + ('<a href="#sheets" data-view="sheets">Sheets</a><a href="#apps" data-view="apps">Apps &amp; tags</a>'
+               '<a href="#teachers" data-view="teachers">Teachers</a>' if superuser else
+               '<a href="#account" data-view="account">Account</a>'))
+    return page("Admin", f"""
     <div class="bar top">
-      <nav class="tabs" aria-label="Sections">
-        <a href="#quizzes" data-view="quizzes">Quizzes</a>
-        <a href="#games" data-view="games">Games</a>
-        <a href="#sets" data-view="sets">Sets</a>
-        <a href="#sheets" data-view="sheets">Sheets</a>
-        <a href="#apps" data-view="apps">Apps &amp; tags</a>
-      </nav>
+      <nav class="tabs" aria-label="Sections">{tabs}</nav>
       <a class="view" href="/" target="_blank" rel="noopener">View the hub page ↗</a>
+      <span class="who" data-teacher="{escape(teacher)}">{who}</span>
       <form method="post" action="/admin/logout" class="logout"><button type="submit">Log out</button></form>
-    </div>
+    </div>""" + (SUPER_SECTIONS if superuser else ACCOUNT_SECTION) + COMMON_SECTIONS, script=True)
+
+
+TEACHERS_SECTION = """
+    <section id="view-teachers" hidden>
+      <p class="lead">The teachers who may use this panel. Each has a three-letter identifier and makes their own sets, opened at learningphysics.ch/<i>identifier</i>/<i>name</i>. A new account gets a password shown once: give it to the teacher, who can change it under Account.</p>
+      <form id="teacher-new" class="card teacherform">
+        <label class="field"><span>Identifier (three letters)</span><input type="text" name="id" required maxlength="3" pattern="[a-z]{3}" autocomplete="off" spellcheck="false" autocapitalize="none" placeholder="abc"></label>
+        <label class="field"><span>Name</span><input type="text" name="name" maxlength="80" autocomplete="off" placeholder="e.g. Anna Beispiel"></label>
+        <button type="submit" class="primary">Create account</button>
+      </form>
+      <p id="teachers-status" class="status" aria-live="polite"></p>
+      <div id="teacher-list"></div>
+    </section>"""
+
+ACCOUNT_SECTION = """
+    <section id="view-account" hidden>
+      <p class="lead">Change your password. Your other sessions end; this one goes on.</p>
+      <form id="password-form" class="card login">
+        <label class="field"><span>Current password</span><input type="password" name="current" required autocomplete="current-password"></label>
+        <label class="field"><span>New password (at least 8 characters)</span><input type="password" name="new" required minlength="8" maxlength="200" autocomplete="new-password"></label>
+        <label class="field"><span>New password again</span><input type="password" name="again" required minlength="8" maxlength="200" autocomplete="new-password"></label>
+        <button type="submit" class="primary">Change password</button>
+        <p id="password-status" class="status" aria-live="polite"></p>
+      </form>
+    </section>"""
+
+SUPER_SECTIONS = """
     <section id="view-apps" hidden>
       <p class="lead">Put the apps in order (drag them, use the arrows, or type a new position into the number before a name and press Enter) and give them tags, e.g. physics topics. On the hub page, visitors can filter the apps by tag, in English or German.</p>
       <div class="bar">
@@ -1339,15 +1663,6 @@ def panel_page() -> str:
       <table id="tags" class="tagtable"><thead><tr><th scope="col">English</th><th scope="col">German</th><th scope="col">Apps</th></tr></thead><tbody></tbody></table>
       <p id="no-tags" class="note" hidden>No tags yet: add one to an app above.</p>
     </section>
-    <section id="view-sets" hidden>
-      <p class="lead">A set is a selection of apps for a class, opened at learningphysics.ch/<i>name</i>: the apps you choose, in your order, and in each the modes (tutor, practice, check) and the learning objectives. With some objectives chosen, the app shows only their worked examples, offers only their practice topics, and its check asks only them. The apps stay open to everyone at their usual addresses: a set is a view, not a lock.</p>
-      <div class="bar">
-        <button type="button" id="sets-save" class="primary" disabled>Save</button>
-        <span id="sets-status" class="status" aria-live="polite"></span>
-      </div>
-      <div id="set-list" class="setlist"></div>
-      <div id="set-edit"></div>
-    </section>
     <section id="view-sheets" hidden>
       <p class="lead">Exercise sheets from your TeXercises exercises: choose modules and their learning objectives, let the panel suggest a balanced sheet, replace or reorder its exercises, and preview them. Then download it as a PDF (with or without the solutions) or share an online version with your students: a secret link that works without logging in and shows no solutions.</p>
       <div id="sheets-state" class="sheetstate"><p class="note">Loading…</p></div>
@@ -1357,6 +1672,17 @@ def panel_page() -> str:
       </div>
       <div id="sheet-list" class="setlist"></div>
       <div id="sheet-edit"></div>
+    </section>""" + TEACHERS_SECTION
+
+COMMON_SECTIONS = """
+    <section id="view-sets" hidden>
+      <p class="lead">A set is a selection of apps for a class, opened at learningphysics.ch/<span class="prefix"></span><i>name</i>: the apps you choose, in your order, and in each the modes (tutor, practice, check) and the learning objectives. With some objectives chosen, the app shows only their worked examples, offers only their practice topics, and its check asks only them. The apps stay open to everyone at their usual addresses: a set is a view, not a lock.</p>
+      <div class="bar">
+        <button type="button" id="sets-save" class="primary" disabled>Save</button>
+        <span id="sets-status" class="status" aria-live="polite"></span>
+      </div>
+      <div id="set-list" class="setlist"></div>
+      <div id="set-edit"></div>
     </section>
     <section id="view-quizzes">
       <p class="lead">Live classroom quizzes: students join on their phones, the teacher screen runs on the projector.</p>
@@ -1383,7 +1709,7 @@ def panel_page() -> str:
           <p class="note">learningphysics.ch/crosswords/ · the generator asks for its own teacher password; puzzle links are public</p>
         </li>
       </ul>
-    </section>""", script=True)
+    </section>"""
 
 
 TX_CSS = r"""
@@ -1450,6 +1776,15 @@ button.primary { background: var(--accent); border-color: var(--accent); color: 
 .status.bad { color: var(--bad); }
 .view { margin-left: auto; color: var(--accent); }
 .logout { margin: 0; }
+.who { color: var(--muted); font-size: 0.9rem; }
+.teacherform { display: grid; grid-template-columns: 1fr 2fr auto; gap: 0 14px; align-items: end; margin: 0 0 10px; }
+.teacherform .field { margin: 0; }
+.teachers { list-style: none; margin: 10px 0; padding: 0; display: grid; gap: 10px; }
+.teacher .head { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+.teacher .head input { width: auto; flex: 1; min-width: 10em; }
+.teacher .tid { font-size: 1.1rem; font-family: ui-monospace, monospace; }
+.teacher .password code { font-size: 1.05rem; background: var(--chip); padding: 1px 6px; border-radius: 4px; user-select: all; }
+.teacher .setactions { margin: 8px 0 0; }
 .apps { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
 .app { display: grid; grid-template-columns: auto 1fr; gap: 6px 14px; align-items: start; background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; }
 .app.moved { border-color: var(--accent); }
@@ -1571,7 +1906,7 @@ h2.section { font-size: 1.15rem; margin: 28px 0 4px; }
 .share { margin-top: 10px; }
 .share .url { word-break: break-all; }
 .share .addapp { margin-top: 6px; }
-@media (max-width: 560px) { .view { margin-left: 0; } .add input { width: 9em; } .setform { grid-template-columns: 1fr; } .exmain .tools { margin-left: 0; } }
+@media (max-width: 560px) { .teacherform { grid-template-columns: 1fr; gap: 10px; } .view { margin-left: 0; } .add input { width: 9em; } .setform { grid-template-columns: 1fr; } .exmain .tools { margin-left: 0; } }
 """ + TX_CSS
 
 ONLINE_CSS = r"""
@@ -1721,6 +2056,7 @@ ADMIN_JS = r"""
 (function () {
   'use strict';
   const $ = (s) => document.querySelector(s);
+  if (!$('#view-apps')) return; // the superuser's only
   const MAX_TAGS = 8, MAX_LEN = 32;
   let apps = [], order = [], tags = {}, labels = {}, dirty = false, fresh = null;
 
@@ -2396,8 +2732,9 @@ ONLINE_JS = r"""
 
 SETS_JS = r"""
 // The sets of the admin panel, and the switch between its views (#quizzes, the first, and #games:
-// links to them; #sets; #sheets: the exercise sheets, see sheets.js; #apps: the order and tags of the
-// apps on the hub page, see admin.js). A set is
+// links to them; #sets: the sets of the teacher logged in; the superuser's: #sheets: the exercise
+// sheets, see sheets.js; #apps: the order and tags of the apps on the hub page, see admin.js;
+// #teachers: the accounts, see accounts.js; another teacher's: #account, see accounts.js). A set is
 // { title, lang?, apps: [{ id, modes, objectives? }] } under its name; lang fixes the language
 // ('en', 'de'; without it, the students choose); objectives lists the learning objectives (ids) of
 // the app in the set, all of them without the list. The objectives of an app, with their worked
@@ -2411,6 +2748,10 @@ SETS_JS = r"""
   const MODES = { tutor: 'Tutor', practice: 'Practice', check: 'Check' };
   const KEY = /^[a-z0-9][a-z0-9-]{0,39}$/, MAX_TITLE = 80;
   let apps = [], sets = [], sel = -1, dirty = false, loaded = false;
+  // a set's address: learningphysics.ch/<teacher>/<name> (the teacher logged in)
+  const teacher = ($('.who') || { dataset: {} }).dataset.teacher || '';
+  const path = (name) => (teacher ? `${teacher}/${name}` : name);
+  document.querySelectorAll('#view-sets .prefix').forEach((e) => { e.textContent = teacher ? `${teacher}/` : ''; });
   const outlines = {}; // app id → Promise of its outline
   const shown = new Set(); // apps whose sections are open, as 'set index:app id'
   const added = new Map(); // set → the app last added to it, whose next one the list of apps offers first
@@ -2474,7 +2815,7 @@ SETS_JS = r"""
       s.name = name.value.toLowerCase().replace(/[^a-z0-9-]/g, '-');
       if (name.value !== s.name) name.value = s.name;
       name.classList.toggle('bad', !!problem(i));
-      $('#set-url').replaceWith(el('span', { class: 'note', id: 'set-url' }, `learningphysics.ch/${s.name}`)); // a link once saved
+      $('#set-url').replaceWith(el('span', { class: 'note', id: 'set-url' }, `learningphysics.ch/${path(s.name)}`)); // a link once saved
       changed();
       renderList();
     });
@@ -2493,7 +2834,7 @@ SETS_JS = r"""
         el('label', { class: 'field' }, el('span', {}, 'Title on the set’s page (optional)'), title),
         el('label', { class: 'field' }, el('span', {}, 'Language'), lang)),
       el('div', { class: 'setactions' },
-        s.saved && s.saved === s.name ? el('a', { href: `/${s.name}`, target: '_blank', rel: 'noopener', id: 'set-url' }, `learningphysics.ch/${s.name} ↗`) : el('span', { class: 'note', id: 'set-url' }, `learningphysics.ch/${s.name}`),
+        s.saved && s.saved === s.name ? el('a', { href: `/${path(s.name)}`, target: '_blank', rel: 'noopener', id: 'set-url' }, `learningphysics.ch/${path(s.name)} ↗`) : el('span', { class: 'note', id: 'set-url' }, `learningphysics.ch/${path(s.name)}`),
         el('button', { type: 'button', onclick: () => duplicate(i) }, 'Duplicate'),
         el('button', { type: 'button', class: 'danger', onclick: () => remove(i) }, 'Delete set')),
       s.apps.length ? el('ol', { class: 'setapps' }, ...s.apps.map((a, k) => appRow(s, a, k))) : el('p', { class: 'empty' }, 'No apps yet: add some below.'),
@@ -2655,9 +2996,11 @@ SETS_JS = r"""
   }
 
   // ---------------------------------------------------------------- the views
+  // (the views of this panel: its tabs; the superuser has more)
+  const views = [...document.querySelectorAll('.tabs a')].map((a) => a.dataset.view);
   function view() {
-    const v = ['#games', '#sets', '#sheets', '#apps'].includes(location.hash) ? location.hash.slice(1) : 'quizzes';
-    ['quizzes', 'games', 'sets', 'sheets', 'apps'].forEach((x) => { $(`#view-${x}`).hidden = v !== x; });
+    const v = views.includes(location.hash.slice(1)) ? location.hash.slice(1) : 'quizzes';
+    views.forEach((x) => { const sec = $(`#view-${x}`); if (sec) sec.hidden = v !== x; });
     document.querySelectorAll('.tabs a').forEach((a) => { if (a.dataset.view === v) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
     if (v === 'sets' && !loaded) load().catch(() => status('Could not load the sets.', 'bad'));
     window.dispatchEvent(new CustomEvent('admin-view', { detail: v })); // the sheets load when shown (sheets.js)
@@ -2676,6 +3019,103 @@ SETS_JS = r"""
 """
 
 
+ACCOUNTS_JS = r"""
+// The accounts: #teachers (the superuser's) lists the teachers, creates one (its first password is
+// shown once), gives one a new password, renames or deletes one (with their sets); #account (another
+// teacher's) changes their own password.
+(function () {
+  'use strict';
+  const $ = (s) => document.querySelector(s);
+  function el(tag, attrs, ...kids) {
+    const e = document.createElement(tag);
+    Object.entries(attrs || {}).forEach(([k, v]) => {
+      if (v === false || v == null) return;
+      if (k === 'class') e.className = v; else if (k.startsWith('on')) e.addEventListener(k.slice(2), v); else e.setAttribute(k, v === true ? '' : v);
+    });
+    kids.forEach((k) => { if (k !== '' && k != null) e.append(k); });
+    return e;
+  }
+  async function post(url, body) {
+    const r = await fetch(url, { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+    const d = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(r.status === 403 && d.error === 'login' ? 'logged out: log in again' : d.error || r.statusText);
+    return d;
+  }
+
+  // ---------------------------------------------------------------- the teachers (the superuser)
+  if ($('#view-teachers')) {
+    let state = null, loaded = false, shown = null; // shown: { id, password } just made
+    const status = (text, cls) => { const e = $('#teachers-status'); e.textContent = text; e.className = `status ${cls || ''}`; };
+    const sets = (n) => `${n} set${n === 1 ? '' : 's'}`;
+    function render() {
+      const rows = state.teachers.map((t) => {
+        const name = el('input', { type: 'text', value: t.name, maxlength: '80', 'aria-label': `Name of ${t.id}`, placeholder: 'Name' });
+        const rename = async () => {
+          if (name.value.trim() === t.name) return;
+          try { state = await post('/admin/api/teachers', { action: 'rename', id: t.id, name: name.value }); status(`Renamed ${t.id}.`, 'ok'); render(); } catch (e) { status(`Not renamed: ${e.message}`, 'bad'); }
+        };
+        name.addEventListener('change', rename);
+        const reset = async () => {
+          if (!confirm(`A new password for ${t.id}? The old one stops working, and ${t.id} is logged out.`)) return;
+          try { const d = await post('/admin/api/teachers', { action: 'reset', id: t.id }); state = d; shown = { id: d.id, password: d.password }; status('', ''); render(); } catch (e) { status(`Error: ${e.message}`, 'bad'); }
+        };
+        const remove = async () => {
+          if (!confirm(`Delete the account ${t.id}${t.name ? ` (${t.name})` : ''} and its ${sets(t.sets)}? Their addresses stop working.`)) return;
+          try { state = await post('/admin/api/teachers', { action: 'delete', id: t.id }); if (shown && shown.id === t.id) shown = null; status(`Deleted ${t.id}.`, 'ok'); render(); } catch (e) { status(`Error: ${e.message}`, 'bad'); }
+        };
+        return el('li', { class: 'card teacher' },
+          el('div', { class: 'head' }, el('strong', { class: 'tid' }, t.id), name, el('span', { class: 'note' }, sets(t.sets))),
+          shown && shown.id === t.id ? el('p', { class: 'password' }, 'Password: ', el('code', {}, shown.password), el('span', { class: 'note' }, ' (shown once: give it to the teacher, who logs in with the identifier and this password)')) : '',
+          el('div', { class: 'setactions' },
+            el('span', { class: 'note' }, `learningphysics.ch/${t.id}/…`),
+            el('button', { type: 'button', onclick: reset }, 'New password'),
+            el('button', { type: 'button', class: 'danger', onclick: remove }, 'Delete account')));
+      });
+      $('#teacher-list').replaceChildren(
+        el('p', { class: 'note' }, `You: ${state.super}, ${sets(state.super_sets)}, with the crossword app’s teacher password.`),
+        rows.length ? el('ul', { class: 'teachers' }, ...rows) : el('p', { class: 'empty' }, 'No other teachers yet.'));
+    }
+    async function load() {
+      const r = await fetch('/admin/api/teachers', { credentials: 'same-origin' });
+      if (r.status === 403) { location.reload(); return; }
+      state = await r.json();
+      loaded = true;
+      render();
+    }
+    $('#teacher-new').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const f = e.target, id = f.elements.id.value.trim().toLowerCase();
+      try {
+        const d = await post('/admin/api/teachers', { action: 'create', id, name: f.elements.name.value });
+        state = d; shown = { id: d.id, password: d.password };
+        f.reset();
+        status(`Account ${d.id} created.`, 'ok');
+        render();
+      } catch (err) { status(`Not created: ${err.message}`, 'bad'); }
+    });
+    const show = (v) => { if (v === 'teachers' && !loaded) load().catch(() => status('Could not load the teachers.', 'bad')); };
+    window.addEventListener('admin-view', (e) => show(e.detail));
+    show(location.hash.slice(1));
+  }
+
+  // ---------------------------------------------------------------- a teacher's own password
+  if ($('#password-form')) {
+    const status = (text, cls) => { const e = $('#password-status'); e.textContent = text; e.className = `status ${cls || ''}`; };
+    $('#password-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const f = e.target;
+      if (f.elements.new.value !== f.elements.again.value) { status('The new passwords differ.', 'bad'); return; }
+      try {
+        await post('/admin/api/password', { current: f.elements.current.value, new: f.elements.new.value });
+        f.reset();
+        status('Changed.', 'ok');
+      } catch (err) { status(`Not changed: ${err.message}`, 'bad'); }
+    });
+  }
+})();
+"""
+
+
 def main(argv: Optional[List[str]] = None) -> int:
     p = argparse.ArgumentParser(description="Admin panel of the learningphysics.ch hub (tags and order of the apps, sets for classes).")
     p.add_argument("--host", default="127.0.0.1")
@@ -2684,8 +3124,12 @@ def main(argv: Optional[List[str]] = None) -> int:
     p.add_argument("--hub", type=Path, required=True, help="the hub page, whose cards list the apps")
     p.add_argument("--config", type=Path, required=True, help="where to write apps.json (served as /apps.json)")
     p.add_argument("--sets", type=Path, help="where to write sets.json (served as /sets.json; default: next to apps.json)")
+    p.add_argument("--super", default=SUPER, help=f"the identifier of the superuser, who logs in with --password-file (default: {SUPER})")
     args = p.parse_args(argv)
-    admin = Admin(args.password_file, args.hub, args.config, args.sets)
+    if not TEACHER_ID.fullmatch(args.super):
+        p.error("--super: three lower-case letters")
+    admin = Admin(args.password_file, args.hub, args.config, args.sets, superuser=args.super)
+    admin.migrate_sets()
     server = ThreadingHTTPServer((args.host, args.port), make_handler(admin))
     print(f"hub admin on http://{args.host}:{args.port}/", file=sys.stderr)
     try:
