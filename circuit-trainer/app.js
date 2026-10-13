@@ -10,7 +10,7 @@
   // ---------------------------------------------------------------- interface texts
   const UI = {
     en: {
-      title: 'Resistor Circuit Trainer', mode: 'Mode', difficulty: 'Difficulty', example: 'Example',
+      title: 'Resistor Circuits', mode: 'Mode', difficulty: 'Difficulty', example: 'Example',
       tutor: 'Tutor', practice: 'Practice', checkMode: 'Check', new: 'New exercise',
       tutorNote: 'Use the arrow keys ← → to step through. In the diagram, the parts combined in a step are <span class="k-strong">highlighted</span>, the group they belong to is <span class="k-light">shaded</span>, the value just found is <span class="k-new">marked</span> and the values used are <b>bold</b>.',
       check: 'Check', reveal: 'Show solution', hints: 'Hints', solution: 'Solution', results: 'Results',

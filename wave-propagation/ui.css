@@ -339,7 +339,7 @@ svg .rp-finger { fill: var(--rp-skin); stroke: #b98d6a; stroke-width: 1; }
 svg .rp-bus { fill: var(--rp-yellow); stroke: var(--rp-outline); stroke-width: 1.2; }
 svg .rp-com { fill: var(--card); stroke: var(--ink); stroke-width: 2; }
 
-/* pictures for circuits (Resistor Circuit Trainer's problems) */
+/* pictures for circuits (Resistor Circuits's problems) */
 svg .rp-cable { fill: none; stroke: #2f343a; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
 svg .rp-cable.red { stroke: var(--rp-red); }
 svg .rp-cable.white { stroke: #f4f5f6; }
