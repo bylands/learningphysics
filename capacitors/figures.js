@@ -16,7 +16,7 @@
 //   Uq()              the letter of a voltage, as SVG: ΔV in English, U in German
 //
 // Reading a graph: one listener for the page shows, while the pointer is over a graph with
-// o.read, the coordinates of that point with lines to the axes (m 'xy'), or the tangent to the
+// o.read, the coordinates of the nearest point of the curve with lines to the axes (m 'xy'), or the tangent to the
 // curve U₀·e^(−t/τ) or U₀·(1 − e^(−t/τ)) at that time (m 'tan'), drawn to the level it heads
 // for, which it reaches one τ later.
 (function (root) {
@@ -157,15 +157,22 @@
     const PW = W - ML - MR, PH = H - MT - MB, t = ((sx - ML) / PW) * d.T, v = ((MT + PH - sy) / PH) * d.Y;
     const x = (tt) => f1(ML + (tt / d.T) * PW), y = (vv) => f1(MT + PH - (vv / d.Y) * PH);
     if (t < 0 || t > d.T || v < 0 || v > 1.08 * d.Y) { g.innerHTML = ''; return; }
+    const f = (tt) => (d.charge ? d.U0 * (1 - Math.exp(-tt / d.tau)) : d.U0 * Math.exp(-tt / d.tau));
     if (d.m === 'xy') {
-      const st = d.ts / 10, tr = Math.round(t / st) * st, vr = Math.round(v * 10) / 10;
-      g.innerHTML = `<line class="rdl" x1="${x(tr)}" y1="${y(0)}" x2="${x(tr)}" y2="${y(vr)}"/><line class="rdl" x1="${x(0)}" y1="${y(vr)}" x2="${x(tr)}" y2="${y(vr)}"/>` +
-        `<circle class="rdp" cx="${x(tr)}" cy="${y(vr)}" r="3.5"/>` +
+      // the point of the curve nearest the pointer, on the grid of the readout (a tenth of a step)
+      const st = d.ts / 10, px = ML + (t / d.T) * PW, py = MT + PH - (v / d.Y) * PH;
+      let tr = 0, best = Infinity;
+      for (let k = 0; k * st <= d.T + 1e-9; k++) {
+        const dx = x(k * st) - px, dy = y(f(k * st)) - py, dd = dx * dx + dy * dy;
+        if (dd < best) { best = dd; tr = k * st; }
+      }
+      const vr = Math.round(f(tr) * 10) / 10;
+      g.innerHTML = `<line class="rdl" x1="${x(tr)}" y1="${y(0)}" x2="${x(tr)}" y2="${y(f(tr))}"/><line class="rdl" x1="${x(0)}" y1="${y(f(tr))}" x2="${x(tr)}" y2="${y(f(tr))}"/>` +
+        `<circle class="rdp" cx="${x(tr)}" cy="${y(f(tr))}" r="3.5"/>` +
         `<text class="rdt" x="${W - MR}" y="${MT + 6}" text-anchor="end"><tspan class="it">t</tspan> = ${num(tr)} ${d.tu}, ${Uq()}<tspan class="sub" dy="4">${d.i}</tspan><tspan dy="-4"> = ${num(vr)} V</tspan></text>`;
       return;
     }
     // the tangent at t: it reaches the level the curve heads for (U₀ or 0) at t + τ
-    const f = (tt) => (d.charge ? d.U0 * (1 - Math.exp(-tt / d.tau)) : d.U0 * Math.exp(-tt / d.tau));
     const y0 = f(t), goal = d.charge ? d.U0 : 0, slope = (goal - y0) / d.tau, ta = Math.max(0, t - 0.4 * d.tau), tb = Math.min(d.T, t + 1.3 * d.tau);
     const at = (tt) => (tt <= t + d.tau ? y0 + slope * (tt - t) : goal);
     g.innerHTML = `<polyline class="rdl tanl" points="${x(ta)},${y(at(ta))} ${x(Math.min(tb, t + d.tau))},${y(at(Math.min(tb, t + d.tau)))}"/>` +
