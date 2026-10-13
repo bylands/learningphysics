@@ -44,7 +44,7 @@
     {
       // meters: where an ammeter and a voltmeter go and what they show (meterTutorial in generator.js)
       name: { en: 'Meters', de: 'Messgeräte' }, level: 'medium', seed: 10, meters: true,
-      practice: [{ types: ['meter:read'] }, { en: 'where does the meter go?', de: 'wo kommt das Messgerät hin?', types: ['meter:place'] }, { en: 'wrongly connected meters', de: 'falsch angeschlossene Messgeräte', types: ['meter:wrong'] }],
+      practice: [{ types: ['meter:read'] }, { en: 'where do the meters go?', de: 'wo kommen die Messgeräte hin?', types: ['meter:place'] }, { en: 'wrongly connected meters', de: 'falsch angeschlossene Messgeräte', types: ['meter:wrong'] }],
       idea: { en: 'An ammeter goes in series, a voltmeter in parallel. Ideal meters change nothing, so they show currents and voltages you find with the rules. Connected the wrong way, a voltmeter blocks the current and an ammeter short-circuits a part.',
         de: 'Ein Amperemeter kommt in Serie, ein Voltmeter parallel. Ideale Messgeräte verändern nichts, also zeigen sie Ströme und Spannungen, die du mit den Regeln findest. Falsch angeschlossen sperrt ein Voltmeter den Strom, und ein Amperemeter schliesst einen Teil kurz.' },
       path: [['R23:invR'], ['V1:vdiv'], ['V23:sumV', 'V3:eqV'], ['I3:ohm']],

@@ -17,7 +17,8 @@
       revealNote: 'The worked solution unlocks once you have solved the exercise, used all hints or made three attempts.',
       solNote: 'The diagram shows all currents (<span class="c-cur">blue</span>) and voltages (<span class="c-vol">red</span>) in the circuit.',
       solNoteMeters: 'The diagram shows what the meters read.',
-      place: (m) => `Drag the ${m} into the circuit: where it can go, a circle appears as it comes close. To move it, drag it again.`,
+      place: (m) => (m ? `Drag the ${m} into the circuit: where it can go, a circle appears as it comes close. To move it, drag it again.`
+        : 'Drag each meter into the circuit: where it can go, a circle appears as it comes close. To move one, drag it again.'),
       levels: { easy: 'Easy', medium: 'Medium', hard: 'Hard', mixed: 'Mixed' },
       stars: (d) => `Difficulty: ${d} of 5`,
       score: (s, c) => `Solved: ${s} · first try without hints: ${c}`,
@@ -35,7 +36,8 @@
       revealNote: 'Die ausführliche Lösung wird freigeschaltet, sobald du die Aufgabe gelöst, alle Tipps genutzt oder drei Versuche gemacht hast.',
       solNote: 'Das Schaltbild zeigt alle Ströme (<span class="c-cur">blau</span>) und Spannungen (<span class="c-vol">rot</span>) in der Schaltung.',
       solNoteMeters: 'Das Schaltbild zeigt, was die Messgeräte anzeigen.',
-      place: (m) => `Ziehe das ${m} in die Schaltung: Wo es hin kann, erscheint ein Kreis, sobald es nahe ist. Um es zu verschieben, ziehe es erneut.`,
+      place: (m) => (m ? `Ziehe das ${m} in die Schaltung: Wo es hin kann, erscheint ein Kreis, sobald es nahe ist. Um es zu verschieben, ziehe es erneut.`
+        : 'Ziehe jedes Messgerät in die Schaltung: Wo es hin kann, erscheint ein Kreis, sobald es nahe ist. Um eines zu verschieben, ziehe es erneut.'),
       levels: { easy: 'Einfach', medium: 'Mittel', hard: 'Schwierig', mixed: 'Gemischt' },
       stars: (d) => `Schwierigkeit: ${d} von 5`,
       score: (s, c) => `Gelöst: ${s} · beim ersten Versuch ohne Tipps: ${c}`,
@@ -133,7 +135,7 @@
   function open(exercise) {
     finish(); // the student moves on
     ex = exercise;
-    st = { tries: 0, hints: 0, solved: false, revealed: false, checked: false, status: null };
+    st = { tries: 0, hints: 0, solved: false, revealed: false, checked: false, status: null, placed: {} };
     const hash = `#${ex.id}`;
     if (location.hash !== hash) history.replaceState(null, '', hash);
     render();
@@ -155,10 +157,10 @@
   function render() {
     $('#title').innerHTML = `${esc(ex.title)} ${starsOf(ex.difficulty)}`;
     $('#prompt').innerHTML = ex.text;
-    $('#figure').innerHTML = ex.slots ? ex.placeFig(st.placed || null) : ex.figure(false);
+    $('#figure').innerHTML = ex.slots ? ex.placeFig(st.placed) : ex.figure(false);
     $('#fields').innerHTML = ex.fields.map((f) => (f.place ? `
       <div class="field choice wide place" data-key="${f.key}"><span class="what">${esc(f.what)}</span><span class="place-row">
-        <button type="button" class="meter-chip" aria-label="${esc(f.what)}">${f.meter}</button><span class="note">${esc(ui().place(meterName(f.meter)))}</span></span>
+        <button type="button" class="meter-chip" data-meter="${f.meter}" aria-label="${esc(f.what)}">${f.meter}</button>${f === ex.fields.find((x) => x.place) ? `<span class="note">${esc(ui().place(ex.fields.filter((x) => x.place).length > 1 ? null : meterName(f.meter)))}</span>` : ''}</span>
         <span class="fb" aria-live="polite"></span></div>` : f.choice ? `
       <div class="field choice wide" data-key="${f.key}"><span class="what">${esc(f.what)}</span><span class="choices levels small stack" role="radiogroup">${f.options.map((o) =>
         `<label><input type="radio" name="in-${f.key}" value="${o.v}"><span>${o.html}</span></label>`).join('')}</span><span class="fb" aria-live="polite"></span></div>` : `
@@ -197,35 +199,52 @@
 
   // The answer in a field: the text typed, or the value of the option chosen (null if none).
   function valueOf(f) {
-    if (f.place) return st.placed || null;
+    if (f.place) return st.placed[f.meter] || null;
     if (!f.choice) return $(`#in-${f.key}`).value;
     const r = document.querySelector(`input[name="in-${f.key}"]:checked`);
     return r ? r.value : null;
   }
   function setValue(f, v) {
     if (v == null) return;
-    if (f.place) { place(v); return; }
+    if (f.place) { place(f.meter, v, true); return; }
     if (!f.choice) { $(`#in-${f.key}`).value = v; return; }
     const r = document.querySelector(`input[name="in-${f.key}"][value="${v}"]`);
     if (r) r.checked = true;
   }
 
-  // Where does the meter go: the meter is placed at a spot of the figure (ex.slots) by dragging it
-  // from its button; the spots show only when it comes close (or by the keyboard: Tab, Enter).
+  // Where does the meter go: a meter (A or V) is placed at a spot of the figure (ex.slots) by
+  // dragging it from its button; the spots show only when it comes close. By the keyboard: Enter
+  // on the button, then Tab to a spot (shown when focused) and Enter.
+  // force: also once solved (the same exercise in the other language)
   const meterName = (m) => (m === 'A' ? L('ammeter', 'Amperemeter') : L('voltmeter', 'Voltmeter'));
-  function place(id) {
-    if (!ex.slots || !ex.slots.includes(id) || st.solved || st.revealed) return;
-    st.placed = id;
-    $('#figure').innerHTML = ex.placeFig(id);
+  let armed = null; // the meter the keyboard places
+  function place(m, id, force) {
+    if (!ex.slots || !ex.slots.includes(id) || (!force && (st.solved || st.revealed))) return;
+    if (Object.entries(st.placed).some(([k, x]) => k !== m && x === id)) return; // the other meter is there
+    st.placed[m] = id;
+    $('#figure').innerHTML = ex.placeFig(st.placed);
     markScrollable();
-    const f = ex.fields.find((x) => x.place), row = f && $('#fields').querySelector(`.field[data-key="${f.key}"]`);
+    const f = ex.fields.find((x) => x.place && x.meter === m), row = f && $('#fields').querySelector(`.field[data-key="${f.key}"]`);
     if (row) { row.className = 'field choice wide place'; row.querySelector('.fb').textContent = ''; }
   }
   function placeEvents() {
     const fig = $('#figure');
     fig.addEventListener('keydown', (evt) => {
       const g = evt.target.closest('.slot');
-      if (g && (evt.key === 'Enter' || evt.key === ' ')) { evt.preventDefault(); place(g.dataset.slot); const again = $(`#figure .slot`); if (again) again.focus({ preventScroll: true }); }
+      if (g && armed && (evt.key === 'Enter' || evt.key === ' ')) {
+        evt.preventDefault();
+        place(armed, g.dataset.slot);
+        const chip = $(`#fields .meter-chip[data-meter="${armed}"]`);
+        if (chip) chip.focus({ preventScroll: true });
+      }
+    });
+    // Enter on a button: its meter goes where the keyboard picks next
+    $('#fields').addEventListener('click', (evt) => {
+      const chip = evt.target.closest('.meter-chip');
+      if (!chip || evt.detail !== 0) return;
+      armed = chip.dataset.meter;
+      const g = $('#figure .slot');
+      if (g) g.focus();
     });
     // dragging: a copy of the meter follows the pointer; it lands on the nearest spot (within reach)
     $('#fields').addEventListener('pointerdown', (evt) => {
@@ -261,9 +280,9 @@
         document.removeEventListener('pointercancel', up);
         ghost.remove();
         for (const g of document.querySelectorAll('#figure .slot.close')) g.classList.remove('close', 'near');
-        if (near) place(near.dataset.slot);
+        if (near) place(chip.dataset.meter, near.dataset.slot);
         // a tap on the button: point to how it works
-        else if (!moved) { const note = chip.parentNode.querySelector('.note'); note.classList.remove('pulse'); void note.offsetWidth; note.classList.add('pulse'); }
+        else if (!moved) { const note = $('#fields .place-row .note'); if (note) { note.classList.remove('pulse'); void note.offsetWidth; note.classList.add('pulse'); } }
       };
       move(evt);
       document.addEventListener('pointermove', move);
@@ -280,7 +299,7 @@
       const raw = valueOf(f), base = f.place ? 'field choice wide place' : f.choice ? 'field choice wide' : 'field';
       if (raw == null || !raw.trim()) { anyEmpty = true; allOk = false; row.className = base; row.querySelector('.fb').textContent = ''; continue; }
       // a choice: the explanation of a wrong one (after Check, so it gives nothing away before)
-      const pc = f.place && ex.placeCheck(raw);
+      const pc = f.place && ex.placeCheck(raw, f.meter);
       const r = f.place ? (pc.ok ? { cls: 'ok', msg: ui().correct } : { cls: 'bad', msg: pc.why || ui().wrong }) : f.choice ? (raw === f.value ? { cls: 'ok', msg: ui().correct } : { cls: 'bad', msg: (f.options.find((o) => o.v === raw) || {}).why || ui().wrong })
         : judge(parse(raw), f.value, ex.tol);
       row.className = `${base} ${r.cls}`;

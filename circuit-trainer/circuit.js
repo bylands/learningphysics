@@ -237,7 +237,7 @@
       return this;
     }
 
-    // A spot where a meter can be placed (circuit-trainer's "where does the meter go?"): a dashed
+    // A spot where a meter can be placed (circuit-trainer's "where do the meters go?"): a dashed
     // circle at c (units), with dashed leads (a path of points) for a meter across a part; id
     // (data-slot) and label (aria-label) for the page, which places the meter on a click.
     slot(c, id, label, lead = null) {
