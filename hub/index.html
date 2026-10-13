@@ -891,7 +891,8 @@
     // key "xyz/name"); learningphysics.ch/name is the default teacher's (sets.json's "default"):
     // its title, and only its apps, in its order, with its modes; they link to /app/?set=xyz/name, and
     // the set is remembered for the tab (sessionStorage lp-set) so that the apps apply it at once
-    // (see shared/sets.js). No filters there. The page at / leaves any set.
+    // (see shared/sets.js). No filters there. The page at / leaves any set. An address that is no set
+    // may be a teacher's short link of a crossword (/crosswords/api/link): the page opens it.
     // Each card lists the module's learning objectives (/objectives.json, read from the apps by
     // hub/build-objectives.js; on a set's page, those of the set), folded under a short line, and,
     // once the student has taken the module's check, how many of them they master: the apps keep the
@@ -1217,7 +1218,11 @@
             const sets = d && d.sets && typeof d.sets === 'object' ? d.sets : {};
             const own = (k) => (Object.prototype.hasOwnProperty.call(sets, k) ? sets[k] : null);
             const s = own(setName) || (!setName.includes('/') && d && typeof d.default === 'string' ? own(`${d.default}/${setName}`) : null);
-            showSet(s && typeof s === 'object' && !Array.isArray(s) ? s : null);
+            if (s && typeof s === 'object' && !Array.isArray(s)) return showSet(s);
+            // no set of that name: a crossword's short link, perhaps (the crossword generator's)
+            return fetch(`/crosswords/api/link?name=${encodeURIComponent(setName)}`, { cache: 'no-cache' })
+              .then((r) => (r.ok ? r.json() : null))
+              .then((x) => { if (x && typeof x.code === 'string') location.replace(`/crosswords/play/#p=${x.code}`); else showSet(null); });
           })
           .catch(() => showSet(null));
         return;
