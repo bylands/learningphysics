@@ -21,7 +21,7 @@ confirming.
   never to typed numbers.
 - g = 9.81 m/s², defined in each preamble as `gE`.
 - Constants and look-up values from Formeln, Tabellen, Begriffe (7th ed.):
-  Olten from the Swiss table (p. 204), Mars from the planet table (p. 212),
+  Olten from the Swiss table (p. 204), Mars from the planet table (p. 212, looked up, not computed),
   g(φ, h) from p. 209. The book prints k2 = −3.15·10⁻⁶ m⁻¹; that is ten times
   the free-air gradient and misses the Olten table value by 0.011 m/s², so the
   exercise uses k2 = −3.15·10⁻⁷ m⁻¹ (Olten: 9.8071 vs 9.80688 in the table).
