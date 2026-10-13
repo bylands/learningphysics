@@ -1,7 +1,7 @@
 (function () {
   'use strict';
 
-  const { generate, tutorial, meters, meterTutorial, fval, ftex } = window.Generator;
+  const { generate, tutorial, meters, meterTutorial, placeOptions, placeWhy, fval, ftex } = window.Generator;
   const { esc, fitText } = window.Circuit;
   const Lang = window.Lang, Check = window.Check, L = Lang.L;
   const $ = (sel) => document.querySelector(sel);
@@ -136,7 +136,6 @@
     if (location.hash !== hash) history.replaceState(null, '', hash);
     render();
     topics.shown(ex);
-    $(`#in-${ex.fields[0].key}`).focus({ preventScroll: true });
   }
 
   // A new exercise of the topic and stage chosen (topics.js), of another type than the current
@@ -155,13 +154,15 @@
     $('#title').innerHTML = `${esc(ex.title)} ${starsOf(ex.difficulty)}`;
     $('#prompt').innerHTML = ex.text;
     $('#figure').innerHTML = ex.figure(false);
-    $('#fields').innerHTML = ex.fields.map((f) => `
+    $('#fields').innerHTML = ex.fields.map((f) => (f.choice ? `
+      <div class="field choice wide" data-key="${f.key}"><span class="what">${esc(f.what)}</span><span class="choices levels small stack" role="radiogroup">${f.options.map((o) =>
+        `<label><input type="radio" name="in-${f.key}" value="${o.v}"><span>${o.html}</span></label>`).join('')}</span><span class="fb" aria-live="polite"></span></div>` : `
       <div class="field" data-key="${f.key}">
         <label for="in-${f.key}" class="sym">$${f.sym}$&nbsp;=</label>
         <input id="in-${f.key}" type="text" inputmode="decimal" autocomplete="off" enterkeyhint="done" spellcheck="false">
         <span class="unit">${esc(f.unit)}</span>
         <span class="fb" aria-live="polite"></span>
-      </div>`).join('');
+      </div>`)).join('');
     $('#hint-list').innerHTML = '';
     $('#hints').hidden = true;
     $('#solution').hidden = true;
@@ -189,16 +190,31 @@
     $('#check').classList.toggle('new-btn', st.solved);
   }
 
+  // The answer in a field: the text typed, or the value of the option chosen (null if none).
+  function valueOf(f) {
+    if (!f.choice) return $(`#in-${f.key}`).value;
+    const r = document.querySelector(`input[name="in-${f.key}"]:checked`);
+    return r ? r.value : null;
+  }
+  function setValue(f, v) {
+    if (v == null) return;
+    if (!f.choice) { $(`#in-${f.key}`).value = v; return; }
+    const r = document.querySelector(`input[name="in-${f.key}"][value="${v}"]`);
+    if (r) r.checked = true;
+  }
+
   // Marks every field; true if all are right, null if some are empty.
   function feedback() {
     let allOk = true, anyEmpty = false;
     for (const f of ex.fields) {
       const row = $('#fields').querySelector(`.field[data-key="${f.key}"]`);
-      const raw = row.querySelector('input').value;
-      if (!raw.trim()) { anyEmpty = true; allOk = false; row.className = 'field'; row.querySelector('.fb').textContent = ''; continue; }
-      const r = judge(parse(raw), f.value, ex.tol);
-      row.className = `field ${r.cls}`;
-      row.querySelector('.fb').textContent = r.msg;
+      const raw = valueOf(f), base = f.choice ? 'field choice wide' : 'field';
+      if (raw == null || !raw.trim()) { anyEmpty = true; allOk = false; row.className = base; row.querySelector('.fb').textContent = ''; continue; }
+      // a choice: the explanation of a wrong one (after Check, so it gives nothing away before)
+      const r = f.choice ? (raw === f.value ? { cls: 'ok', msg: ui().correct } : { cls: 'bad', msg: (f.options.find((o) => o.v === raw) || {}).why || ui().wrong })
+        : judge(parse(raw), f.value, ex.tol);
+      row.className = `${base} ${r.cls}`;
+      if (f.choice) { row.querySelector('.fb').innerHTML = r.msg; math(row.querySelector('.fb')); } else row.querySelector('.fb').textContent = r.msg;
       if (r.cls !== 'ok') allOk = false;
     }
     return allOk ? true : anyEmpty ? null : false;
@@ -368,21 +384,7 @@
         if (n.t === 'R' && fval(n[q]) !== fval(e.circuit.root[q])) break;
       }
       const R = Rn(n), s = e.sym(q + n.id), val = `${num(fval(n[q]))}\\,\\mathrm{${volt ? 'V' : 'mA'}}`;
-      const across = { html: L(`across ${R}, in parallel: connected to its two ends`, `parallel zu ${R}: an seine beiden Enden angeschlossen`) };
-      const series = { html: L(`in series with ${R}, in its branch`, `in Serie zu ${R}, in dessen Zweig`) };
-      const mainLine = { html: L('in series with the battery, in the main line', 'in Serie zur Batterie, in der Hauptleitung') };
-      const battery = { html: L('across the battery, connected to its two terminals', 'parallel zur Batterie, an ihre beiden Pole angeschlossen') };
-      const options = volt ? [
-        { ...across, correct: true },
-        { ...series, flag: 'vseries', why: L(`In series, the voltmeter ($R_\\text{V} \\to \\infty$) blocks the current through ${R}; it does not show the voltage across ${R}.`, `In Serie sperrt das Voltmeter ($R_\\text{V} \\to \\infty$) den Strom durch ${R}; es zeigt nicht die Spannung an ${R}.`) },
-        { ...mainLine, flag: 'vseries', why: L('In the main line, the voltmeter blocks the current of the whole circuit and shows the battery voltage.', 'In der Hauptleitung sperrt das Voltmeter den Strom der ganzen Schaltung und zeigt die Batteriespannung.') },
-        { ...battery, flag: 'whole', why: L(`There it shows the battery voltage, not the share of it across ${R}.`, `Dort zeigt es die Batteriespannung, nicht deren Anteil an ${R}.`) },
-      ] : [
-        { ...series, correct: true },
-        { ...across, flag: 'aparallel', why: L(`Across ${R}, the ammeter ($R_\\text{A} \\approx 0$) short-circuits it: the current flows through the meter instead of ${R}.`, `Parallel zu ${R} schliesst das Amperemeter ($R_\\text{A} \\approx 0$) diesen kurz: Der Strom fliesst durchs Messgerät statt durch ${R}.`) },
-        { ...battery, flag: 'aparallel', why: L('Across the battery, the ammeter short-circuits it: a very large current flows.', 'Parallel zur Batterie schliesst das Amperemeter sie kurz: Es fliesst ein sehr grosser Strom.') },
-        { ...mainLine, flag: 'whole', why: L(`There it shows the whole battery current, not the part of it through ${R}.`, `Dort zeigt es den ganzen Batteriestrom, nicht den Teil davon durch ${R}.`) },
-      ];
+      const options = placeOptions(volt, R).map(({ v, ...o }) => o);
       const turn = seed % 4; // the options in an order of their own
       return {
         title: L('Where does the meter go?', 'Wo kommt das Messgerät hin?'),
@@ -391,15 +393,11 @@
         figure: e.plain(n.id),
         ask: volt ? L('How do you connect the voltmeter?', 'Wie schliesst du das Voltmeter an?') : L('How do you connect the ammeter?', 'Wie schliesst du das Amperemeter an?'),
         options: [...options.slice(turn), ...options.slice(0, turn)].map((o) => ({ correct: false, flag: null, why: null, ...o })),
-        explain: () => `<div class="figs">${e.figure(true)}</div><div class="steps"><p>${volt
-          ? L(`A voltmeter compares the two ends of a part: it goes across ${R}, in parallel, without opening the circuit. Its resistance $R_\\text{V} \\to \\infty$ lets (almost) no current through it, so it changes nothing. Here it shows $${s} = ${val}$.`,
-            `Ein Voltmeter vergleicht die beiden Enden eines Teils: Es wird parallel zu ${R} angeschlossen, ohne den Stromkreis aufzutrennen. Sein Widerstand $R_\\text{V} \\to \\infty$ lässt (fast) keinen Strom durch, also verändert es nichts. Hier zeigt es $${s} = ${val}$.`)
-          : L(`The current through ${R} has to flow through the ammeter: it goes in series with ${R}, in its branch. Its resistance $R_\\text{A} \\approx 0$ changes nothing. Here it shows $${s} = ${val}$.`,
-            `Der Strom durch ${R} muss durch das Amperemeter fliessen: Es kommt in Serie zu ${R}, in dessen Zweig. Sein Widerstand $R_\\text{A} \\approx 0$ verändert nichts. Hier zeigt es $${s} = ${val}$.`)}</p></div>`,
+        explain: () => `<div class="figs">${e.figure(true)}</div><div class="steps"><p>${placeWhy(volt, R, s, val)}</p></div>`,
         key: `place|${e.id}|${q}`,
       };
     }
-    const e = meters(kind === 'meter:wrong' ? 'wrong' : 'read', seed), c = e.circuit;
+    const e = meters(kind === 'meter:wrong' ? 'wrong' : 'read', seed, ['vseries', 'ashort']), c = e.circuit; // the check asks about one meter: the kinds with distractors of their own
     // the meter asked about: the voltmeter or the ammeter, where there are both
     const m = e.meters.length > 1 && seed % 2 === 1 ? e.meters.find((x) => x.m === 'V') : e.meters.find((x) => x.m === 'A');
     const q = m.m === 'V' ? 'V' : 'I', node = c.nodes[m.at];
@@ -457,11 +455,11 @@
     applyStatic();
     showScore();
     if (ex) {
-      const values = ex.fields.map((f) => $(`#in-${f.key}`).value), keep = st;
+      const values = ex.fields.map(valueOf), keep = st;
       ex = again(ex);
       render();
       st = keep;
-      ex.fields.forEach((f, k) => { $(`#in-${f.key}`).value = values[k]; });
+      ex.fields.forEach((f, k) => setValue(f, values[k]));
       if (st.checked) feedback();
       showStatus(st.status);
       showHints();
