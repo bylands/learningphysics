@@ -1,0 +1,51 @@
+{
+  "title": "Freier Fall – Aufgaben aus den Aufgabenblättern",
+  "description": "Freier Fall und senkrechter Wurf aus den Aufgabenblättern K2/K3: Einheiten, Fallgesetze, Fallbeschleunigung an verschiedenen Orten. Rechnen Sie mit g = 9.81 m/s²; Werte aus der Formelsammlung.",
+  "kind": "sheet",
+  "is_private": true,
+  "tags": [
+    "freier fall",
+    "kinematik"
+  ],
+  "items": [
+    {
+      "exercise": "freier-fall-01-groessen-vergleichen"
+    },
+    {
+      "exercise": "freier-fall-02-einheiten-von-parametern"
+    },
+    {
+      "exercise": "freier-fall-03-fallbeschleunigung-an-verschiedenen-orten"
+    },
+    {
+      "exercise": "freier-fall-04-fallzeit-aequator-nordpol"
+    },
+    {
+      "exercise": "freier-fall-05-ohne-taschenrechner"
+    },
+    {
+      "exercise": "freier-fall-06-fallstrecke-erste-vier-sekunden"
+    },
+    {
+      "exercise": "freier-fall-07-fallstrecke-dritte-sekunde"
+    },
+    {
+      "exercise": "freier-fall-08-halbe-fallhoehe"
+    },
+    {
+      "exercise": "freier-fall-09-wurfhoehen"
+    },
+    {
+      "exercise": "freier-fall-10-senkrechter-wurf"
+    },
+    {
+      "exercise": "freier-fall-11-stuntman"
+    },
+    {
+      "exercise": "freier-fall-12-treffpunkt-auf-halber-hoehe"
+    },
+    {
+      "exercise": "freier-fall-13-fallschirmsprung-im-diagramm"
+    }
+  ]
+}

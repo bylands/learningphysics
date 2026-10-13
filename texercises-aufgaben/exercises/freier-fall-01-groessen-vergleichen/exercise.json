@@ -1,0 +1,18 @@
+{
+  "title": "Grössen vergleichen (freier Fall)",
+  "note": "aus den Aufgabenblättern (K3 Freier Fall, Nr. 1)",
+  "language": "GER",
+  "type": 1,
+  "default_difficulty": 1,
+  "default_points": 0,
+  "tags": [
+    "einheiten",
+    "freier fall",
+    "grössenvergleich",
+    "kinematik"
+  ],
+  "subbranches": [
+    "Kinematics"
+  ],
+  "youtube": ""
+}
