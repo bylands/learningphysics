@@ -501,6 +501,8 @@
   // the distance of a meter across a resistor from it: beside a vertical one, above or below a
   // horizontal one
   const BRIDGE = { v: 0.8, h: 1.0 };
+  // a meter across the battery: left of it, beyond its voltage
+  const BAT_BRIDGE = 2.2;
   const lerp = (a, b, t) => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t];
 
   function labelWidths(node, c, nm, prob) {
@@ -607,6 +609,8 @@
   // view.focus: key → 'new' | 'use' (labels highlighted); the arcade sets 'ask' for its question.
   // view.meters: [{ m: 'A' | 'V', at: node id (0: in the main line, beside the battery), across
   // (else in series), l: label, hl }]; a resistor with a meter shows no current or voltage.
+  // view.slots: the spots where a meter can be placed (ids of slotsOf, see meters), drawn as
+  // dashed circles, and view.slotLabel(id) their names.
   function draw(c, nm, prob, view) {
     const s = new Circuit.Sketch();
     s.autoDots = true;
@@ -623,14 +627,18 @@
     lab.at = at;
     // A resistor from p to q, its label on side ls, with its meters: one in series after it, one
     // across it (on side out, a unit vector).
+    const slots = view.slots ? new Set(view.slots) : null, slotLabel = view.slotLabel || ((id) => id);
     lab.res = (node, p, q, t, ls, out) => {
       const ser = meterAt(node.id, false), acr = meterAt(node.id, true), m = ser ? lerp(p, q, 0.55) : q;
       s.res(p, m, { l: t.r, ls, hl: t.hl });
       if (ser) s.meter(m, q, ser.m, { l: ser.l, ls, hl: ser.hl });
-      if (acr) {
-        const d = out[0] ? BRIDGE.v : BRIDGE.h, a = [p[0] + out[0] * d, p[1] + out[1] * d], b = [q[0] + out[0] * d, q[1] + out[1] * d];
-        s.wire(p, a).meter(a, b, acr.m, { l: acr.l, ls: out, hl: acr.hl }).wire(b, q);
-      }
+      const d = out[0] ? BRIDGE.v : BRIDGE.h, a = [p[0] + out[0] * d, p[1] + out[1] * d], b = [q[0] + out[0] * d, q[1] + out[1] * d];
+      if (acr) s.wire(p, a).meter(a, b, acr.m, { l: acr.l, ls: out, hl: acr.hl }).wire(b, q);
+      if (!slots) return;
+      // in series: on the wire after the resistor's box; across: beside it, with its leads
+      const length = Math.hypot(q[0] - p[0], q[1] - p[1]), free = (length - Math.min(0.9, length * 0.5)) / 2;
+      if (!ser && slots.has('s' + node.id)) s.slot(lerp(q, p, free / 2 / length), 's' + node.id, slotLabel('s' + node.id));
+      if (!acr && slots.has('a' + node.id)) s.slot(lerp(a, b, 0.5), 'a' + node.id, slotLabel('a' + node.id), [p, a, b, q]);
     };
     const bl = lab(c.root);
     s.wire([0, 0], [L.x0, 0]).cur([0, 0], [L.x0, 0], meterAt(0, false) ? null : bl.i, 'above');
@@ -658,9 +666,12 @@
     }
     s.wire([x, -L.bottomY], [0, -L.bottomY]);
     // a meter in the main line: above the battery
-    const main = meterAt(0, false);
+    const main = meterAt(0, false), across = meterAt(0, true), bx = -BAT_BRIDGE;
     if (main) s.bat([0, -L.bottomY], [0, -L.bottomY / 2]).meter([0, -L.bottomY / 2], [0, 0], main.m, { l: main.l, ls: 'right', hl: main.hl });
     else s.bat([0, -L.bottomY], [0, 0]);
+    if (across) s.wire([0, 0], [bx, 0]).meter([bx, 0], [bx, -L.bottomY], across.m, { l: across.l, ls: 'left', hl: across.hl }).wire([bx, -L.bottomY], [0, -L.bottomY]);
+    if (slots && !main && slots.has('main')) s.slot([0, -Math.min(0.55, 0.22 * L.bottomY)], 'main', slotLabel('main'));
+    if (slots && !across && slots.has('battery')) s.slot([bx, -L.bottomY / 2], 'battery', slotLabel('battery'), [[0, 0], [bx, 0], [bx, -L.bottomY], [0, -L.bottomY]]);
     s.vol([0, 0], [0, -L.bottomY], bl.v, 'left');
     zones(s, c, nm, view, at, [[0, 0], [L.width, -L.bottomY]]);
     return s;
@@ -892,6 +903,8 @@
       const nm = namer(c, set.show || set.keys);
       c.bridges = new Map();
       for (const m of set.meters.filter((x) => x.across)) c.bridges.set(m.at, Math.max(c.bridges.get(m.at) || 0, UNITS(reading(m))));
+      // where a meter is to be placed: room for one across every resistor
+      if (set.everywhere) for (const l of c.leaves) if (!c.bridges.has(l.id)) c.bridges.set(l.id, 0);
       c.layout = layout(c, nm, prob);
       if (c.layout.width > MAX_WIDTH) continue;
       return { c, prob, nm, set };
@@ -931,6 +944,37 @@
       else { const I = fdiv(v, R.get(n)); n.kids.forEach((k) => volt(k, fmul(I, R.get(k)))); }
     })(c.root, c.root.V);
     return { R, V };
+  }
+
+  // Where a meter can go: in the main line, across the battery, and in series with or across each
+  // resistor: [{ id, at, across }].
+  const slotsOf = (c) => [{ id: 'main', at: 0, across: false }, { id: 'battery', at: 0, across: true },
+    ...c.leaves.flatMap((n) => [{ id: 's' + n.id, at: n.id, across: false }, { id: 'a' + n.id, at: n.id, across: true }])];
+  function slotName(c, id) {
+    if (id === 'main') return L('in the main line, beside the battery', 'in der Hauptleitung, neben der Batterie');
+    if (id === 'battery') return L('across the battery', 'parallel zur Batterie');
+    const R = `R${c.nodes[Number(id.slice(1))].idx}`;
+    return id[0] === 's' ? L(`in series with ${R}`, `in Serie zu ${R}`) : L(`across ${R}`, `parallel zu ${R}`);
+  }
+  // The node whose current a resistor shares (up through series groups), and the one whose
+  // voltage it shares (up through parallel groups): a meter there measures the same.
+  const topI = (n) => { while (n.parent && n.parent.t === 'S') n = n.parent; return n; };
+  const topV = (n) => { while (n.parent && n.parent.t === 'P') n = n.parent; return n; };
+  // Whether a voltmeter (volt) or an ammeter at spot id measures the voltage across resistor n or
+  // the current through it, without changing the circuit: { ok, why (what is wrong) }.
+  function placeCheck(c, n, volt, id) {
+    const R = `$R_{${n.idx}}$`, opts = placeOptions(volt, R), why = (v) => opts.find((o) => o.v === v).why;
+    const j = id === 'main' || id === 'battery' ? null : c.nodes[Number(id.slice(1))], Rj = j && `$R_{${j.idx}}$`;
+    if (volt) {
+      if (id === 'battery') return topV(n) === c.root ? { ok: true } : { ok: false, why: why('battery') };
+      if (id === 'main') return { ok: false, why: why('main') };
+      if (id[0] === 'a') return topV(j) === topV(n) ? { ok: true } : { ok: false, why: L(`Across ${Rj}, the voltmeter shows the voltage across ${Rj}, not the one across ${R}.`, `Parallel zu ${Rj} zeigt das Voltmeter die Spannung an ${Rj}, nicht die an ${R}.`) };
+      return j === n ? { ok: false, why: why('series') } : { ok: false, why: L(`In series, the voltmeter ($R_\\text{V} \\to \\infty$) blocks the current through ${Rj}, and it does not show the voltage across ${R}.`, `In Serie sperrt das Voltmeter ($R_\\text{V} \\to \\infty$) den Strom durch ${Rj}, und es zeigt nicht die Spannung an ${R}.`) };
+    }
+    if (id === 'main') return topI(n) === c.root ? { ok: true } : { ok: false, why: why('main') };
+    if (id === 'battery') return { ok: false, why: why('battery') };
+    if (id[0] === 's') return topI(j) === topI(n) ? { ok: true } : { ok: false, why: L(`There the ammeter shows the current through ${Rj}, which is not the current through ${R}.`, `Dort zeigt das Amperemeter den Strom durch ${Rj}, und der ist nicht der Strom durch ${R}.`) };
+    return j === n ? { ok: false, why: why('across') } : { ok: false, why: L(`Across ${Rj}, the ammeter ($R_\\text{A} \\approx 0$) short-circuits ${Rj}, and it does not show the current through ${R}.`, `Parallel zu ${Rj} schliesst das Amperemeter ($R_\\text{A} \\approx 0$) ${Rj} kurz, und es zeigt nicht den Strom durch ${R}.`) };
   }
 
   // The ways to connect a meter to measure the voltage across R (volt) or the current through it:
@@ -975,8 +1019,12 @@
       place: (c, rr) => {
         const volt = rr.next() < 0.5, n = rr.pick(c.leaves), q = volt ? 'V' : 'I';
         if (fval(n[q]) === fval(c.root[q])) return null;
+        // no other resistor shows the same value without being in the same place (a spot that
+        // is wrong would read right)
+        const top = volt ? topV : topI;
+        if (c.leaves.some((j) => top(j) !== top(n) && fval(j[q]) === fval(n[q]))) return null;
         const m = volt ? { m: 'V', at: n.id, across: true, key: 'V' + n.id, value: fval(n.V) } : { m: 'A', at: n.id, key: 'I' + n.id, value: fval(n.I) };
-        return { meters: [m], keys: [m.key], n, volt };
+        return { meters: [m], keys: [m.key], n, volt, everywhere: true };
       },
       read: (c, rr) => {
         const ls = rr.shuffle(c.leaves.slice()), a = rr.next() < 0.3 ? c.root : ls[1], v = ls[0];
@@ -1035,9 +1083,8 @@
       difficulty = steps.length <= 2 ? 1 : steps.length <= 4 ? 2 : 3;
     } else if (kase === 'place') {
       const m = ms[0], n = set.n, volt = set.volt, R = `$R_{${n.idx}}$`;
-      const opts = placeOptions(volt, R), turn = seed % 4; // the options in an order of their own
-      fields = [{ key: 'how', choice: true, what: L('Connect it', 'Anschliessen'), value: volt ? 'across' : 'series',
-        options: [...opts.slice(turn), ...opts.slice(0, turn)].map((o) => ({ v: o.v, html: o.html, why: o.why || null })) }, field(m)];
+      fields = [{ key: 'how', place: true, meter: m.m, value: (volt ? 'a' : 's') + n.id, what: volt ? L('Where does the voltmeter go?', 'Wo kommt das Voltmeter hin?') : L('Where does the ammeter go?', 'Wo kommt das Amperemeter hin?'),
+        answer: cap(`${METER()[m.m]} ${placeOptions(volt, R)[0].html}`) }, field(m)];
       text = volt ? L(`With a voltmeter, you want to measure the voltage across ${R} (highlighted). How do you connect the voltmeter, and what does it show? The meter is ideal.`,
         `Mit einem Voltmeter willst du die Spannung an ${R} (hervorgehoben) messen. Wie schliesst du das Voltmeter an, und was zeigt es an? Das Messgerät ist ideal.`)
         : L(`With an ammeter, you want to measure the current through ${R} (highlighted). How do you connect the ammeter, and what does it show? The meter is ideal.`,
@@ -1047,7 +1094,10 @@
         : L(`The current through ${R} has to flow through the ammeter. Where does it have to go for that?`, `Der Strom durch ${R} muss durch das Amperemeter fliessen. Wo muss es dafür hin?`),
       `${L('Break the circuit down', 'Zerlege die Schaltung')}: ${struct.join('; ')}.`];
       if (real.length) hints.push(`${L('First steps', 'Erste Schritte')}:${list(real.slice(0, 3).map((st) => `${formula(st)} &nbsp;(${SHORT()[st.rel.rule]})`))}`);
-      solution = [placeWhy(volt, R, sym(m.key), qt(m.key)) + ' ' + IDEAL(), `${L('Structure of the circuit', 'Aufbau der Schaltung')}: ${struct.join('; ')}.`,
+      const also = c.leaves.filter((j) => j !== n && placeCheck(c, n, volt, (volt ? 'a' : 's') + j.id).ok).map((j) => `$R_{${j.idx}}$`);
+      solution = [placeWhy(volt, R, sym(m.key), qt(m.key)) + ' ' + IDEAL() + (!also.length ? '' : volt
+        ? ' ' + L(`It may just as well go across ${listing(also)}, in parallel to ${R}: the same voltage is across ${also.length > 1 ? 'them' : 'it'}.`, `Es kann ebenso gut parallel zu ${listing(also)} angeschlossen werden, parallel zu ${R}: Dort liegt dieselbe Spannung.`)
+        : ' ' + L(`It may just as well go in series with ${listing(also)}, in the same branch as ${R}: the same current flows there.`, `Es kann ebenso gut in Serie zu ${listing(also)} kommen, im selben Zweig wie ${R}: Dort fliesst derselbe Strom.`)), `${L('Structure of the circuit', 'Aufbau der Schaltung')}: ${struct.join('; ')}.`,
         ...steps.map((st) => stepText(st, nm)),
         volt ? L(`So the voltmeter shows $${sym(m.key)} = ${qt(m.key)}$.`, `Das Voltmeter zeigt also $${sym(m.key)} = ${qt(m.key)}$.`) : L(`So the ammeter shows $${sym(m.key)} = ${qt(m.key)}$.`, `Das Amperemeter zeigt also $${sym(m.key)} = ${qt(m.key)}$.`)];
       difficulty = steps.length <= 2 ? 1 : steps.length <= 4 ? 2 : 3;
@@ -1110,6 +1160,11 @@
         'Um den Strom durch einen Widerstand zu messen, schliesst man das Amperemeter in Serie dazu an. Direkt an der Batterie schliesst ein Amperemeter die Batterie kurz: Es fliesst ein sehr grosser Strom, und die Sicherung des Messgeräts brennt durch.')];
       difficulty = steps.length <= 2 ? 2 : 3;
     }
+    const placeFig = (id) => {
+      const spot = id && slotsOf(c).find((x) => x.id === id);
+      return `<div class="fig">${draw(c, nm, prob, { known: givenOnly(prob), mark: new Map([[set.n.id, 'strong']]), slots: slotsOf(c).map((x) => x.id), slotLabel: (x) => slotName(c, x),
+        meters: spot ? [{ m: ms[0].m, at: spot.at, across: spot.across, hl: true }] : [] }).toSVG()}</div>`;
+    };
     const meterFig = (sol, ask, extra = {}) => draw(c, nm, prob, { known: givenOnly(prob), meters: ms.map((m) => ({ ...m, l: sol ? reading(m) : null, hl: m.m === ask })), ...extra });
     return {
       id: `meter-${stage}-${seed}`,
@@ -1119,12 +1174,15 @@
       fields, tol: 0.01,
       // ask: the letter of a meter to highlight (a question of the check)
       // (where a meter goes: before the solution, the resistor without the meter)
-      figure: (sol, ask) => `<div class="fig">${(kase === 'place' && !sol ? draw(c, nm, prob, { known: givenOnly(prob), mark: new Map([[set.n.id, 'strong']]) }) : meterFig(sol, ask)).toSVG()}</div>`,
+      figure: (sol, ask) => (kase === 'place' && !sol ? placeFig(null) : `<div class="fig">${meterFig(sol, ask).toSVG()}</div>`),
+      // where a meter is to be placed: the circuit with the meter at spot id (or none) and the
+      // spots, and whether a spot is right ({ ok, why })
+      placeFig, placeCheck: (id) => placeCheck(c, set.n, set.volt, id), slots: kase === 'place' ? slotsOf(c).map((x) => x.id) : null,
       // the circuit without meters, a resistor highlighted (where to connect a meter)
       plain: (id) => `<div class="fig">${draw(c, nm, prob, { known: givenOnly(prob), mark: new Map([[id, 'strong']]) }).toSVG()}</div>`,
       hints,
       solution,
-      results: fields.map((f) => (f.choice ? `${f.what}: ${f.options.find((o) => o.v === f.value).html}` : `${METER()[f.key]}: $${fmt(f.value)}\\,\\mathrm{${f.unit}}$`)).join(', '),
+      results: fields.map((f) => (f.place ? f.answer : f.choice ? `${f.what}: ${f.options.find((o) => o.v === f.value).html}` : `${METER()[f.key]}: $${fmt(f.value)}\\,\\mathrm{${f.unit}}$`)).join(', '),
       // for the check and the tests
       circuit: c, meters: ms, steps, givens: prob.givens, sym, shorted: kase === 'ashort' ? { k: set.k, R: set.R, I: set.I } : null,
     };
@@ -1218,7 +1276,7 @@
     };
   }
 
-  const api = { LEVELS, generate, tutorial, meters, meterTutorial, placeOptions, placeWhy, padded, F, fval, fmt, ftex };
+  const api = { LEVELS, generate, tutorial, meters, meterTutorial, placeOptions, placeWhy, slotsOf, padded, F, fval, fmt, ftex };
   root.Generator = api;
   if (typeof module !== 'undefined') module.exports = api;
 })(typeof window !== 'undefined' ? window : globalThis);
