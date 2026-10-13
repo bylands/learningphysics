@@ -1,5 +1,8 @@
 \NewQty{gE}{9.81}[\mpss]
-\NewQty{td}{3}[\s]
 \NewQty{tz}{2}[\s]
+\NewQty{td}{3}[\s]
 
-\SolQty{ds}[\frac{1}{2}g\left(t_3^2-t_2^2\right)]{0.5*\gEX*(\tdX^2-\tzX^2)}[\m]
+\SolQty{vz}[g\,t_2]{\gEX*\tzX}[\mps]
+\SolQty{vd}[g\,t_3]{\gEX*\tdX}[\mps]
+\SolQty{vm}[\frac{v_2+v_3}{2}]{(\vzX+\vdX)/2}[\mps]
+\SolQty{ds}[\bar v\cdot\left(t_3-t_2\right)]{\vmX*(\tdX-\tzX)}[\m]

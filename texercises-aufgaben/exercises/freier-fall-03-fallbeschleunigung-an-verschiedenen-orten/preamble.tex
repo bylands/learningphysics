@@ -1,10 +1,11 @@
 \NewQty{gol}{9.80688}[\mpss]
-\NewQty{MM}{6.42e23}[\kg]
-\NewQty{rM}{3.39e6}[\m]
+\NewQty{MM}{6.4169e23}[\kg]
+\NewQty{rM}{3.3962e6}[\m]
+\NewQty{gaeq}{9.7803}[\mpss]
+\NewQty{ka}{5.3e-3}
+\NewQty{kb}{-3.15e-7}[\per\meter]
 \NewQty{br}{27.988}[\degree]
 \NewQty{hev}{8844.43}[\m]
-\NewQty{gaeq}{9.780327}[\mpss]
 
 \SolQty{gma}[\frac{G\,M_\mathrm{M}}{r_\mathrm{M}^2}]{\ncGX*\MMX/\rMX^2}[\mpss]
-\SolQty{gnu}[g_\mathrm{e}\left(1+0.0053024\sin^2\varphi-0.0000058\sin^2 2\varphi\right)]{\gaeqX*(1+0.0053024*sin(\brX*pi/180)^2-0.0000058*sin(2*\brX*pi/180)^2)}[\mpss]
-\SolQty{gev}[g_0\left(\frac{r_\mathrm{E}}{r_\mathrm{E}+h}\right)^2]{\gnuX*(\rEarX/(\rEarX+\hevX))^2}[\mpss]
+\SolQty{gev}[\left(1+k_1\sin^2\varphi+k_2\,h\right)\cdot g_\text{Ä}]{(1+\kaX*sin(\brX*pi/180)^2+\kbX*\hevX)*\gaeqX}[\mpss]

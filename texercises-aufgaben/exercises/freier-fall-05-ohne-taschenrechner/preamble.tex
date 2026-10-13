@@ -1,8 +1,13 @@
 \NewQty{gE}{9.81}[\mpss]
+\NewQty{gz}{10}[\mpss]
 \NewQty{ta}{5}[\s]
 \NewQty{tb}{4}[\s]
 \NewQty{hc}{30}[\m]
 
+\SolQty{vaz}[g\,t]{\gzX*\taX}[\mps]
 \SolQty{va}[g\,t]{\gEX*\taX}[\mps]
+\SolQty{hbz}[\frac{1}{2}g\,t^2]{0.5*\gzX*\tbX^2}[\m]
 \SolQty{hb}[\frac{1}{2}g\,t^2]{0.5*\gEX*\tbX^2}[\m]
+\SolQty{tqz}[\frac{2h}{g}]{2*\hcX/\gzX}[\second\squared]
+\SolQty{tcz}[\sqrt{\frac{2h}{g}}]{sqrt(2*\hcX/\gzX)}[\s]
 \SolQty{tc}[\sqrt{\frac{2h}{g}}]{sqrt(2*\hcX/\gEX)}[\s]

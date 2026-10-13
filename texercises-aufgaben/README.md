@@ -16,16 +16,19 @@ confirming.
 
 ## Conventions
 
+- Every quantity is defined in the solver (`\NewQty`, `\SolQty`, `\ConvTo`);
+  text and solution only refer to it (`\XO`, `\XF`, `\X`, `\XP{..}{..}`),
+  never to typed numbers.
 - g = 9.81 m/s², defined in each preamble as `gE`.
-- Constants and look-up values from the Formelsammlung (Formeln, Tabellen,
-  Begriffe): Olten 9.806 88 m/s² (Geophysikalische Daten der Schweiz, p. 204).
-  Values the Formelsammlung extract does not contain are given in the
-  exercise text (g at the equator and pole) or in the solution (Mars mass and
-  radius, the international normal gravity formula for the Everest).
-- Schematic diagrams are new TikZ pictures. Each has a large-screen version
-  (inline in the solution) and a small-screen version, both as standalone
-  sources in `figures/<exercise>-gross.tex` and `-klein.tex`.
+- Constants and look-up values from Formeln, Tabellen, Begriffe (7th ed.):
+  Olten from the Swiss table (p. 204), Mars from the planet table (p. 212),
+  g(φ, h) from p. 209. The book prints k2 = −3.15·10⁻⁶ m⁻¹; that is ten times
+  the free-air gradient and misses the Olten table value by 0.011 m/s², so the
+  exercise uses k2 = −3.15·10⁻⁷ m⁻¹ (Olten: 9.8071 vs 9.80688 in the table).
+- Uniformly accelerated intervals use the average velocity: velocities at
+  the start and end, their mean, times the interval.
+- Schematic diagrams are new TikZ pictures sized for large screens.
 - Quantity names avoid LaTeX and siunitx commands (`g`, `s`, `T`, `d`, `h`,
-  `sf`, `to`, `th` are commands or units).
+  `sf`, `to`, `th`, `dB` are commands or units).
 - Every number comes from the solver; the results were recomputed
   independently. **No LaTeX was compiled**: look at the preview.

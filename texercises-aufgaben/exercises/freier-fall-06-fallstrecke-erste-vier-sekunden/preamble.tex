@@ -2,6 +2,9 @@
 \NewQty{tv}{4}[\s]
 \NewQty{td}{3}[\s]
 
-\SolQty{sv}[\frac{1}{2}g\,t_4^2]{0.5*\gEX*\tvX^2}[\m]
-\SolQty{sd}[\frac{1}{2}g\,t_3^2]{0.5*\gEX*\tdX^2}[\m]
-\SolQty{ds}[s_4-s_3]{\svX-\sdX}[\m]
+\SolQty{vv}[g\,t_4]{\gEX*\tvX}[\mps]
+\SolQty{vd}[g\,t_3]{\gEX*\tdX}[\mps]
+\SolQty{vmv}[\frac{0+v_4}{2}]{\vvX/2}[\mps]
+\SolQty{sv}[\bar v\cdot t_4]{\vmvX*\tvX}[\m]
+\SolQty{vmd}[\frac{v_3+v_4}{2}]{(\vdX+\vvX)/2}[\mps]
+\SolQty{ds}[\bar v\cdot\left(t_4-t_3\right)]{\vmdX*(\tvX-\tdX)}[\m]

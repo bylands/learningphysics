@@ -4,4 +4,7 @@
 
 \SolQty{vo}[g\,t_\mathrm{o}]{\gEX*\tobX}[\mps]
 \SolQty{vt}[v_0-g\,t]{\voX-\gEX*\tgsX}[\mps]
-\SolQty{y}[v_0\,t-\frac{1}{2}g\,t^2]{\voX*\tgsX-0.5*\gEX*\tgsX^2}[\m]
+\ConvTo{vab}{-1}{vt}{\mps}
+\SolQty{vm}[\frac{v_0+v}{2}]{(\voX+\vtX)/2}[\mps]
+\SolQty{y}[\bar v\cdot t]{\vmX*\tgsX}[\m]
+\ConvTo{yab}{-1}{y}{\m}
