@@ -161,8 +161,8 @@
       // and to the next worked example the topics have (the next one the set shows)
       const nx = linked ? examples().find((e) => e.i > wk.i && tutorHas(e.i)) : null;
       el.innerHTML = `<label class="topic-pick"><span>${X.topic}</span><select id="topic-pick">${opts}</select></label>${stages}` +
-        (linked ? `<button type="button" class="linklike worked">📖 ${esc(X.worked(wk.i + 1, wk.name()))}</button>` : '') +
-        (nx ? `<button type="button" class="linklike worked next-worked" data-i="${nx.i}">${esc(X.nextWorked(nx.i + 1, nx.name()))}</button>` : '') +
+        (linked ? `<div class="worked-links"><button type="button" class="linklike worked">📖 ${esc(X.worked(wk.i + 1, wk.name()))}</button>` +
+          (nx ? `<button type="button" class="linklike worked next-worked" data-i="${nx.i}">${esc(X.nextWorked(nx.i + 1, nx.name()))}</button>` : '') + '</div>' : '') +
         (runOut ? `<p class="topic-note">${last ? X.noneLast : X.none}</p>` : '') +
         (suggest && suggest.topic === t && suggest.stage === cur.stage && linked ? `<p class="topic-note tip">${esc(X.newWorked(wk.i + 1, wk.name()))} <button type="button" class="linklike worked">📖 ${esc(X.worked(wk.i + 1, wk.name()))}</button></p>` : '');
     }
