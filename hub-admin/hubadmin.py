@@ -27,6 +27,7 @@ cards in its order, shows their tags, and lets visitors filter by tag. This serv
                          exercises use, or a .zip of them, kept under a name made of the exercise's
                          title and id (hub-data/sheet-images/)
     /admin/api/images    GET ?keys=a,b  the gallery images these exercises use, and which are there
+                         GET /admin/api/images/all: every image kept, and the sheets that use it
                          POST {"name": ..., "keys": [...]} /admin/api/images/fetch: fetch one from TeXercises
     /admin/sheet/<id>.pdf, /admin/sheet/<id>-solutions.pdf   the saved sheet's PDF, made when first
                          asked for (a page that reloads itself until it is there)
@@ -561,6 +562,7 @@ class Admin:
         figs = sheets_module("figures")
         state["figures"] = bool(figs and figs.available())
         state["own"] = self.own
+        state["images"] = len(sheetlib.kept_images(self.sheet_images)) if sheetlib else 0
         state["max"] = MAX_SHEET_EXERCISES
         return state
 
@@ -728,6 +730,27 @@ class Admin:
             return {"ok": False, "error": "no exercise of this sheet uses this image"}
         ok, what = sheetlib.fetch_image(self.sheet_images, name, str(use["stem"]))
         return {"ok": ok, "name": what} if ok else {"ok": False, "error": what}
+
+    def all_images(self) -> Dict[str, object]:
+        """Every image kept on the server, newest first, with the saved sheets that use it:
+        [{file, gallery, size, modified, pdf, web: a browser shows it, sheets: [titles]}]."""
+        sheetlib = sheets_module()
+        if sheetlib is None:
+            return {"images": []}
+        used: Dict[str, List[str]] = {}
+        for s in sorted(self.read_sheets().values(), key=lambda s: -int(s.get("updated") or 0)):
+            keys = [k for k in s.get("exercises", []) if isinstance(k, str)]
+            title = str(s.get("title") or "(no title)")
+            for name in self.image_uses(keys) if keys else {}:
+                for latex in (False, True):
+                    f = sheetlib.find_image(self.sheet_images, name, latex=latex)
+                    if f and title not in used.setdefault(f.name, []):
+                        used[f.name].append(title)
+        out = sheetlib.kept_images(self.sheet_images)
+        for x in out:
+            x["web"] = os.path.splitext(x["file"])[1].lower() in sheetlib.WEB_EXT
+            x["sheets"] = used.get(x["file"], [])
+        return {"images": out}
 
     def image_file(self, name: str) -> Optional[Path]:
         """The file kept for a gallery image."""
@@ -1046,6 +1069,8 @@ def make_handler(admin: Admin):
             try:
                 if path == "/api/sheets":
                     self.json(200, admin.sheets_state())
+                elif path == "/api/images/all":
+                    self.json(200, admin.all_images())
                 elif path in ("/api/preview", "/api/images"):
                     query = parse_qs(self.path.partition("?")[2])
                     keys = [k for k in (query.get("keys") or [""])[0].split(",") if k]
@@ -1114,7 +1139,7 @@ def make_handler(admin: Admin):
                 self.send(200, ONLINE_CSS, "text/css; charset=utf-8")
             elif path.startswith("/sheet/"):
                 self.sheet_route(path[len("/sheet/"):])
-            elif path in ("/api/sheets", "/api/preview", "/api/images") or path.startswith("/api/sheets/"):
+            elif path in ("/api/sheets", "/api/preview", "/api/images", "/api/images/all") or path.startswith("/api/sheets/"):
                 self.sheets_get(path)
             elif path.startswith("/static/fonts/"):
                 f = font_file(path[len("/static/fonts/"):])
@@ -1552,6 +1577,11 @@ h2.section { font-size: 1.15rem; margin: 28px 0 4px; }
 .imglist label.button { display: inline-block; border: 1px solid var(--line); border-radius: 6px; padding: 0 8px; font-size: 0.82rem; cursor: pointer; background: var(--card); }
 .imglist label.button:hover { border-color: var(--accent); }
 .imglist label.button:focus-within { outline: 2px solid var(--accent); outline-offset: 1px; }
+.imggrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 12px; margin: 8px 0; }
+.imggrid figure { margin: 0; border: 1px solid var(--line); border-radius: 8px; background: var(--card); overflow: hidden; display: flex; flex-direction: column; }
+.imggrid .thumb { display: flex; align-items: center; justify-content: center; height: 130px; background: #fff; border-bottom: 1px solid var(--line); }
+.imggrid .thumb img { max-width: 100%; max-height: 130px; object-fit: contain; }
+.imggrid figcaption { padding: 6px 8px; display: flex; flex-direction: column; gap: 2px; font-size: 0.8rem; overflow-wrap: anywhere; }
 .visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 .obs { margin: 2px 0 0; font-size: 0.82rem; }
 .alts { list-style: none; margin: 8px 0 2px; padding: 6px 0 0 12px; border-left: 3px solid var(--accent); display: grid; gap: 6px; font-size: 0.95rem; }
@@ -1955,9 +1985,36 @@ SHEETS_JS = r"""
     };
     box.replaceChildren(
       el('p', { class: 'note' }, `LaTeX on the server: ${st.latex ? 'yes' : 'no (PDFs need it; see hub-admin/sheets/README.md)'} · figures drawn for the browser: ${st.figures ? 'yes' : 'no (needs LaTeX and pdftocairo)'} · exercises there: ${st.exercises} (export uploaded: ${up}) · of the pool: ${st.in_pool} of ${st.pool}`),
+      allImages(),
       el('details', { class: 'upload' }, el('summary', {}, 'Upload a TeXercises export'),
         el('p', { class: 'note' }, `TeXercises: Settings → Export, the .zip. Only your own exercises (creator “${st.own}”) are kept; upload it again whenever your exercises change.`),
         el('div', { class: 'addapp' }, file, el('button', { type: 'button', onclick: send }, 'Upload'), msg)));
+  }
+  // every image kept on the server, with the sheets that use it (loaded when opened)
+  function allImages() {
+    const box = el('div', { class: 'imggrid' });
+    const sum = el('summary', {}, `Images on the server (${st.images || 0})`);
+    const d = el('details', { class: 'upload' }, sum, box);
+    const kb = (n) => (n < 1024 * 1024 ? `${Math.max(1, Math.round(n / 1024))} KB` : `${(n / 1024 / 1024).toFixed(1)} MB`);
+    d.addEventListener('toggle', () => {
+      if (!d.open) return;
+      box.replaceChildren(el('p', { class: 'note' }, 'Loading…'));
+      api('/admin/api/images/all').then((r) => {
+        sum.textContent = `Images on the server (${r.images.length})`;
+        if (!r.images.length) { box.replaceChildren(el('p', { class: 'note' }, 'No images yet: upload them in a sheet, under Images.')); return; }
+        box.replaceChildren(...r.images.map((x) => {
+          const url = `/admin/sheet/img/${encodeURIComponent(x.file)}`;
+          return el('figure', {},
+            x.web ? el('a', { href: url, target: '_blank', rel: 'noopener', class: 'thumb' }, el('img', { src: url, alt: x.file, loading: 'lazy' }))
+              : el('div', { class: 'thumb' }, el('span', { class: 'note' }, 'PDF')),
+            el('figcaption', {},
+              el('code', {}, x.file),
+              el('span', { class: 'note' }, `${x.gallery ? `gallery: ${x.gallery} · ` : ''}${kb(x.size)} · ${new Date(x.modified * 1000).toLocaleDateString()}${x.pdf ? '' : ' · not in the PDF'}`),
+              el('span', { class: 'note' }, x.sheets.length ? `in: ${x.sheets.join(' · ')}` : 'in no saved sheet')));
+        }));
+      }).catch((e) => box.replaceChildren(el('p', { class: 'error' }, `Could not list the images: ${e.message}`)));
+    });
+    return d;
   }
   function renderList() {
     $('#sheet-list').replaceChildren(
@@ -2506,6 +2563,32 @@ SETS_JS = r"""
     if (focus && focus.move) { const b = box.querySelectorAll('.setapp')[focus.move.k]; if (b) b.querySelectorAll('.move button')[focus.move.up ? 0 : 1].focus(); }
   }
   // only the buttons of the list (typing in the editor keeps its focus)
+  // every image kept on the server, with the sheets that use it (loaded when opened)
+  function allImages() {
+    const box = el('div', { class: 'imggrid' });
+    const sum = el('summary', {}, `Images on the server (${st.images || 0})`);
+    const d = el('details', { class: 'upload' }, sum, box);
+    const kb = (n) => (n < 1024 * 1024 ? `${Math.max(1, Math.round(n / 1024))} KB` : `${(n / 1024 / 1024).toFixed(1)} MB`);
+    d.addEventListener('toggle', () => {
+      if (!d.open) return;
+      box.replaceChildren(el('p', { class: 'note' }, 'Loading…'));
+      api('/admin/api/images/all').then((r) => {
+        sum.textContent = `Images on the server (${r.images.length})`;
+        if (!r.images.length) { box.replaceChildren(el('p', { class: 'note' }, 'No images yet: upload them in a sheet, under Images.')); return; }
+        box.replaceChildren(...r.images.map((x) => {
+          const url = `/admin/sheet/img/${encodeURIComponent(x.file)}`;
+          return el('figure', {},
+            x.web ? el('a', { href: url, target: '_blank', rel: 'noopener', class: 'thumb' }, el('img', { src: url, alt: x.file, loading: 'lazy' }))
+              : el('div', { class: 'thumb' }, el('span', { class: 'note' }, 'PDF')),
+            el('figcaption', {},
+              el('code', {}, x.file),
+              el('span', { class: 'note' }, `${x.gallery ? `gallery: ${x.gallery} · ` : ''}${kb(x.size)} · ${new Date(x.modified * 1000).toLocaleDateString()}${x.pdf ? '' : ' · not in the PDF'}`),
+              el('span', { class: 'note' }, x.sheets.length ? `in: ${x.sheets.join(' · ')}` : 'in no saved sheet')));
+        }));
+      }).catch((e) => box.replaceChildren(el('p', { class: 'error' }, `Could not list the images: ${e.message}`)));
+    });
+    return d;
+  }
   function renderList() {
     $('#set-list').querySelectorAll('button[aria-pressed]').forEach((b, i) => {
       b.replaceChildren(sets[i].name || '(no name)', sets[i].title ? el('span', { class: 'title' }, sets[i].title) : '');

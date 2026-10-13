@@ -400,6 +400,8 @@ class Sheets(unittest.TestCase):
             self.assertFalse((Path(tmp) / "other.png").exists())
             self.assertEqual(sorted(p.name for p in images.iterdir()),
                              ["index.json", "magnetic-coil-12-1.png", "magnetic-coil-12-2.png", "optics-7.png"])
+            self.assertEqual(sorted((x["file"], x["gallery"]) for x in S.kept_images(images)),
+                             [("magnetic-coil-12-1.png", "coil"), ("magnetic-coil-12-2.png", "wire.png"), ("optics-7.png", "lens")])
             # replaced by an SVG: the PNG goes
             svg = b'<?xml version="1.0"?><svg xmlns="http://www.w3.org/2000/svg"></svg>'
             S.store_images(images, "lens.svg", svg, targets)
@@ -1012,6 +1014,12 @@ class Service(unittest.TestCase):
         self.assertIn(f'src="/admin/sheet/s/{token}/img/{stem}.png"', page_)
         self.assertEqual(self.req(f"/sheet/s/{token}/img/{stem}.png")[2], png)
         self.assertEqual(self.req("/sheet/s/" + "x" * 32 + f"/img/{stem}.png")[0], 404)
+        # every image kept, with the saved sheets that use it (logged in only)
+        self.assertEqual(self.req("/api/images/all")[0], 403)
+        kept = json.loads(self.req("/api/images/all", cookie=cookie)[2])["images"]
+        self.assertEqual([(x["file"], x["gallery"], x["web"], x["pdf"], x["sheets"]) for x in kept],
+                         [(stem + ".png", "coil-1", True, True, ["Bilder"])])
+        self.assertEqual(json.loads(self.req("/api/sheets", cookie=cookie)[2])["images"], 1)
         # one exercise per screen: numbered, with the pager (online.js) and the footer as on the PDF
         self.assertIn('<article class="exercise tx" id="a1" data-n="1">', page_)
         self.assertIn('<p class="module">', page_)

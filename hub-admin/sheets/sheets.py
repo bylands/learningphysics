@@ -486,6 +486,25 @@ def find_image(images: Path, name: str, latex: bool = False) -> Optional[Path]:
     return None
 
 
+def kept_images(images: Path) -> List[Dict[str, object]]:
+    """Every image in the folder, newest first: [{file, gallery: its gallery name or None, size: bytes,
+    modified: s, pdf: LaTeX can use it (an SVG's PDF copy is not listed on its own)}]."""
+    if not images.is_dir():
+        return []
+    named = {f: g for g, f in _index(images).items()}
+    files = {f.name: f for f in images.iterdir() if f.is_file() and not f.name.startswith(".")
+             and f.suffix.lower() in IMAGE_EXT and valid_name(f.name)}
+    out = []
+    for name, f in files.items():
+        stem, ext = os.path.splitext(name)
+        if ext.lower() == ".pdf" and any(stem + e in files for e in WEB_EXT):
+            continue  # the PDF copy of an SVG
+        st = f.stat()
+        out.append({"file": name, "gallery": named.get(name), "size": st.st_size, "modified": int(st.st_mtime),
+                    "pdf": ext.lower() in LATEX_EXT or stem + ".pdf" in files})
+    return sorted(out, key=lambda x: (-x["modified"], x["file"]))
+
+
 def kept_file(images: Path, filename: str) -> Optional[Path]:
     """An image file in the folder by its own name (one a browser shows), or None."""
     p = images / filename
