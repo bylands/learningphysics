@@ -238,9 +238,10 @@
     const row = $(`.field[data-key="${q.key}"]`);
     row.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }
-  // The held-back question replaces the ones already answered right, so it sits next to the figure.
+  // The held-back question replaces the ones already answered right, so it sits next to the figure;
+  // once the exercise is solved, all of them are shown again.
   function showUnveiled() {
-    for (const q of ex.questions) { const row = $(`.field[data-key="${q.key}"]`); if (row) row.hidden = q.key !== st.unveiled; }
+    for (const q of ex.questions) { const row = $(`.field[data-key="${q.key}"]`); if (row) row.hidden = !st.solved && q.key !== st.unveiled; }
   }
 
   function solved() {
@@ -252,6 +253,7 @@
       showScore();
     }
     st.solved = true;
+    if (st.unveiled) showUnveiled();
     Practice.markSolved(PRACTICE, ex.id);
     finish();
     st.advance = topics.solved(st, ex);

@@ -57,6 +57,31 @@ for (const key of ['point', 'dipole', 'like']) {
   if (out > -inside[0][1] / 3) fail('the field outside a capacitor is not weak');
 }
 
+{
+  // plates and charges: the field is minus the gradient of the potential, near a large plate it is
+  // 2π·s across it, the drawn equipotentials are across the field and the field lines start on +
+  // (a positive charge or plate) or come in from the edge, and end on − or leave
+  for (const cf of X.MIX) for (const flip of [false, true]) {
+    const c = X.mixConf(cf, flip, flip), tag = `mixed ${cf.id}${flip ? ' flipped' : ''}`, h = 1e-5;
+    for (const [x, y] of [[0.7, 0.9], [-2.1, -0.4], [1.6, -1.9], [2.6, 1.7]]) {
+      const f = C.field(c, x, y), g = [-(C.potential(c, x + h, y) - C.potential(c, x - h, y)) / (2 * h), -(C.potential(c, x, y + h) - C.potential(c, x, y - h)) / (2 * h)];
+      if (Math.hypot(f[0] - g[0], f[1] - g[1]) > 1e-4 * (1 + Math.hypot(...f))) { fail(`${tag}: the field is not minus the gradient of the potential`); break; }
+    }
+    // (not near a point where the field vanishes: there the grid cannot follow the saddle)
+    const strong = ([p, q]) => Math.hypot(...C.field(c, (p[0] + q[0]) / 2, (p[1] + q[1]) / 2)) > 0.6;
+    if (C.contours(c, box, X.levelsOf(c), { n: 70 }).some((sg) => strong(sg) && Math.abs(cosTo(c, sg)) > 0.2)) fail(`${tag}: an equipotential is not across the field`);
+    const onPlate = ([x, y], sg) => c.plates.some((p) => Math.sign(p.s) === sg && Math.abs(y - p.y) < 0.1 && x >= p.a - 0.05 && x <= p.b + 0.05);
+    const onCharge = ([x, y], sg) => c.charges.some((ch) => Math.sign(ch.q) === sg && Math.hypot(x - ch.x, y - ch.y) < 0.25);
+    const edge = ([x, y]) => Math.abs(x) > 2.9 || Math.abs(y) > 2.1;
+    for (const ln of C.lines(c, box)) {
+      const a = ln[0], b = ln[ln.length - 1];
+      if (!((onPlate(a, 1) || onCharge(a, 1) || edge(a)) && (onPlate(b, -1) || onCharge(b, -1) || edge(b) || Math.hypot(...C.field(c, ...b)) < 0.05))) { fail(`${tag}: a field line does not run from + to −`); break; }
+    }
+  }
+  const big = { kind: 'mixed', charges: [], plates: [{ y: 0, a: -50, b: 50, s: 0.25 }] }, [ex, ey] = C.field(big, 0.3, 0.2);
+  if (!(near(ey, 2 * Math.PI * 0.25, 0.01) && Math.abs(ex) < 0.01)) fail('the field of a large plate');
+}
+
 // ---------------------------------------------------------------- the exercises
 function checkQuestions(tag, e) {
   for (const q of e.questions) {
@@ -73,7 +98,7 @@ function checkQuestions(tag, e) {
   }
 }
 // the questions of the check (app.js): every question of these types, of the wire and the capacitor only the diagram
-const CHECK = { 'lines-pick': null, 'lines-wire': 'd', 'lines-cap': 'd', 'lines-read': null, 'dipole-uniform': null, 'dipole-torque': null, 'equi-pick': null, 'lines-equi': null, error: null };
+const CHECK = { 'lines-pick': null, 'lines-wire': 'd', 'lines-cap': 'd', 'lines-mix': null, 'lines-read': null, 'read-mix': null, 'equi-mix': null, 'dipole-uniform': null, 'dipole-torque': null, 'equi-pick': null, 'lines-equi': null, error: null };
 const rightOf = (e, key) => { const q = e.questions.find((x) => x.key === key), o = q.options.find((x) => x.ok); return o.label || o.html; };
 const rad = (a) => (a * Math.PI) / 180;
 for (const lang of ['en', 'de']) {
@@ -90,9 +115,9 @@ for (const lang of ['en', 'de']) {
       }
       if (lang === 'de') continue;
       if (type === 'lines-wire' && rightOf(e, 'E') !== '×1/2') fail(`${tag}: the field of a wire at twice the distance`);
-      if (type === 'lines-read') {
+      if (type === 'lines-read' || type === 'read-mix') {
         // the strongest of the four points, independently
-        const c = X.pts2([[e.p.qa, -1], [e.p.qb, 1]]), pts = e.p.pts.split(';').map((s) => s.split(',').map(Number));
+        const c = e.p.c || X.pts2([[e.p.qa, -1], [e.p.qb, 1]]), pts = e.p.pts.split(';').map((s) => s.split(',').map(Number));
         const mags = pts.map(([x, y]) => Math.hypot(...C.field(c, x, y))), best = 'PQRS'[mags.indexOf(Math.max(...mags))];
         if (!rightOf(e, 'P').includes(`<b>${best}</b>`)) fail(`${tag}: the strongest point is ${best}`);
         if (rightOf(e, 'sg') !== `A ${e.p.qa > 0 ? '+' : '−'}, B ${e.p.qb > 0 ? '+' : '−'}`) fail(`${tag}: the signs`);
@@ -164,16 +189,32 @@ function crossings(lines, c) {
 }
 for (const key of ['dipole', 'like', 'plates']) {
   for (const flip of key === 'dipole' ? [false] : [false, true]) {
-    for (const err of Object.keys(X.FEAT)) {
+    for (const err of [null, ...X.errsOf(key)]) {
       const { c, o } = X.sketch(key, err, flip), tag = `sketch ${key}${flip ? ' flipped' : ''} ${err}`;
       const field = o.equiLines ? o.extra : o.given, n = crossings(field, c);
       if ((err === 'cross') !== (n > 0)) fail(`${tag}: ${n} crossings of field lines`);
+      // equipotentials that cross: the circles drawn round each charge (contours of one potential never do)
+      if (err === 'eqcross') {
+        const rings = (o.centres || []).flatMap(([x, y]) => o.circles.map((rr) => Array.from({ length: 73 }, (z, k) => [x + rr * Math.cos((k * Math.PI) / 36), y + rr * Math.sin((k * Math.PI) / 36)])));
+        if (!crossings(rings, c)) fail(`${tag}: no equipotentials cross`);
+      }
+      // the wrong spacing: outwards from a charge the equipotentials get closer together, between plates they are uneven
+      if (err === 'eqspace') {
+        if (c.kind === 'plates') { const ys = o.given.map((ln) => ln[0][1]).sort((a, b) => a - b), d = ys.slice(1).map((y, i) => y - ys[i]); if (Math.max(...d) < 1.5 * Math.min(...d)) fail(`${tag}: the equipotentials are evenly spaced`); }
+        else {
+          // where each level crosses the axis left of the left charge
+          const xs = o.equi.filter((v) => v * c.charges[0].q > 0).map((v) => { let x = -1.05; while (x > -3 && (C.potential(c, x, 0) - v) * c.charges[0].q > 0) x -= 0.001; return -1 - x; }).sort((a, b) => a - b);
+          const d = xs.slice(1).map((x, i) => x - xs[i]);
+          if (!(d[d.length - 1] < d[0])) fail(`${tag}: the equipotentials do not get closer outwards`);
+        }
+      }
       // the equipotentials along the field lines: the drawn ones mostly parallel to the field
       if (err === 'equi') {
         const segs = o.given.flatMap((ln) => ln.slice(1).map((p, i) => [ln[i], p])).filter(([p]) => Math.abs(p[0]) < 3 && Math.abs(p[1]) < 2.2);
         const along = segs.filter((sg) => Math.abs(cosTo(c, sg)) > 0.9).length;
         if (along < 0.8 * segs.length) fail(`${tag}: the equipotentials do not run along the field lines`);
       }
+      if (err === null && o.equi && C.contours(c, box, o.equi, { n: 70 }).slice(0, 300).some((sg) => Math.abs(cosTo(c, sg)) > 0.2)) fail(`${tag}: the right sketch has equipotentials not across the field`);
       if (err === 'end') {
         const ends = field.filter((ln) => { const [x, y] = ln[ln.length - 1]; return Math.abs(x) < 2.8 && Math.abs(y) < 2 && (c.kind === 'plates' ? Math.abs(Math.abs(y) - c.h) > 0.2 : c.charges.every((ch) => Math.hypot(x - ch.x, y - ch.y) > 0.3)); });
         if (!ends.length) fail(`${tag}: no line ends in empty space`);
