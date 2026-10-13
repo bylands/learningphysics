@@ -163,18 +163,13 @@
 
   // Marks the checked answers right or wrong, with the explanations; a question whose answer
   // changed since the last check stays unmarked.
-  // While the exercise is open, a wrong answer gets a nudge, not the solution: sentences of the
-  // worked solution are taken out of its remark (the name of the misconception stays), and the
-  // single statements of a true-or-false question are not marked.
+  // While the exercise is open, a wrong answer gets a nudge, not the solution: its explanation
+  // (which says what is right) is held back until the exercise is solved or the solution shown;
+  // only the misconception behind it is named. The single statements of a true-or-false
+  // question are not marked.
   function soften(qu, ev) {
     if (st.solved || st.revealed) return ev;
-    const steps = ex.steps.map((x) => String(x.text || ''));
-    const nudge = (fb) => {
-      let t = String(fb || '');
-      for (const s of steps) for (const x of s.split(/(?<=[.!?])\s+/)) if (x.length > 12) t = t.split(x).join('');
-      t = t.replace(/\s+/g, ' ').trim();
-      return t.replace(/<span class="tag"[\s\S]*$/, '').trim() ? t : `${ui().notThis}${t ? ` ${t}` : ''}`;
-    };
+    const nudge = (fb) => { const tag = String(fb || '').match(/<span class="tag"[\s\S]*$/); return `${ui().notThis}${tag ? ` ${tag[0]}` : ''}`; };
     if (qu.type === 'tf') {
       const wrong = ev.marks.filter((m) => typeof m.where === 'number' && !m.ok).length;
       const marks = ev.marks.filter((m) => typeof m.where !== 'number');

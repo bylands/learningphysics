@@ -14,7 +14,7 @@
       tutorNote: 'Use the arrow keys ← → to step through. Arrows in the pictures: <span class="k-f">forces</span>, <span class="k-v">velocities</span>, <span class="k-a">accelerations</span> and the <span class="k-net">net force</span>.',
       check: 'Check', reveal: 'Show solution', hints: 'Hints', solution: 'Solution', reset: 'Reset', close: 'Close',
       revealNote: 'The worked solution unlocks once you have solved the exercise, used all hints or made three attempts.',
-      profile: 'Your typical slips', correct: 'Correct:', notThis: 'Not this one: check your reasoning, or take a hint.', tfWrong: (n) => (n === 1 ? 'One statement is judged wrong.' : `${n} statements are judged wrong.`),
+      profile: 'Your typical slips', correct: 'Correct:', wrongIdea: 'Wrong idea:', notThis: 'Not this one: check your reasoning, or take a hint.', tfWrong: (n) => (n === 1 ? 'One statement is judged wrong.' : `${n} statements are judged wrong.`),
       profileEmpty: 'Nothing recorded yet. Wrong answers that stem from a misconception, and exercise types you find hard, will show up here.',
       profileNote: 'How often each misconception was behind one of your wrong answers, and what is correct instead. The exercises are written in the spirit of the Force Concept Inventory; they are not its items.',
       score: (s, c) => `Solved: ${s} · first try without hints: ${c}`,
@@ -34,7 +34,7 @@
       tutorNote: 'Mit den Pfeiltasten ← → blätterst du weiter. Pfeile in den Bildern: <span class="k-f">Kräfte</span>, <span class="k-v">Geschwindigkeiten</span>, <span class="k-a">Beschleunigungen</span> und die <span class="k-net">resultierende Kraft</span>.',
       check: 'Prüfen', reveal: 'Lösung zeigen', hints: 'Tipps', solution: 'Lösung', reset: 'Zurücksetzen', close: 'Schliessen',
       revealNote: 'Die ausführliche Lösung wird freigeschaltet, sobald du die Aufgabe gelöst, alle Tipps genutzt oder drei Versuche gemacht hast.',
-      profile: 'Deine typischen Fehler', correct: 'Richtig:', notThis: 'Das stimmt nicht: Überprüfe deine Überlegung, oder nimm einen Hinweis.', tfWrong: (n) => (n === 1 ? 'Eine Aussage ist falsch beurteilt.' : `${n} Aussagen sind falsch beurteilt.`),
+      profile: 'Deine typischen Fehler', correct: 'Richtig:', wrongIdea: 'Falsche Vorstellung:', notThis: 'Das stimmt nicht: Überprüfe deine Überlegung, oder nimm einen Hinweis.', tfWrong: (n) => (n === 1 ? 'Eine Aussage ist falsch beurteilt.' : `${n} Aussagen sind falsch beurteilt.`),
       profileEmpty: 'Noch nichts erfasst. Falsche Antworten, hinter denen eine Fehlvorstellung steckt, und Aufgabentypen, die dir schwerfallen, erscheinen hier.',
       profileNote: 'Wie oft jede Fehlvorstellung hinter einer deiner falschen Antworten steckte, und was stattdessen richtig ist. Die Aufgaben sind im Sinne des Force Concept Inventory geschrieben; sie stammen nicht daraus.',
       score: (s, c) => `Gelöst: ${s} · beim ersten Versuch ohne Tipps: ${c}`,
@@ -76,7 +76,7 @@
     $('#profile-badge').textContent = slips;
     $('#profile-badge').hidden = !slips;
     $('#profile-list').innerHTML = rows.map(([c, k]) =>
-      `<li><span class="count">${k}×</span> <b>${FC.mis(c).name}</b>: ${FC.mis(c).text}<span class="fix"><b>${ui().correct}</b> ${FC.mis(c).fix}</span></li>`).join('');
+      `<li><span class="count">${k}×</span> <b>${FC.misLabel(c)}</b><span class="claim"><b>${ui().wrongIdea}</b> ${FC.mis(c).text}</span><span class="fix"><b>${ui().correct}</b> ${FC.mis(c).fix}</span></li>`).join('');
     $('#profile-mis').hidden = !rows.length;
     $('#profile-types').hidden = !hard.length;
     $('#profile-types-list').innerHTML = hard.map(([g, x]) => `<li><b>${FC.typeName(g)}</b> <span class="count">${ui().often(FC.weightOf(stored('fc-types', {}), g))}</span></li>`).join('');
@@ -163,18 +163,13 @@
 
   // Marks the checked answers right or wrong, with the explanations; a question whose answer
   // changed since the last check stays unmarked.
-  // While the exercise is open, a wrong answer gets a nudge, not the solution: sentences of the
-  // worked solution are taken out of its remark (the name of the misconception stays), and the
-  // single statements of a true-or-false question are not marked.
+  // While the exercise is open, a wrong answer gets a nudge, not the solution: its explanation
+  // (which says what is right) is held back until the exercise is solved or the solution shown;
+  // only the misconception behind it is named. The single statements of a true-or-false
+  // question are not marked.
   function soften(qu, ev) {
     if (st.solved || st.revealed) return ev;
-    const steps = ex.steps.map((x) => String(x.text || ''));
-    const nudge = (fb) => {
-      let t = String(fb || '');
-      for (const s of steps) for (const x of s.split(/(?<=[.!?])\s+/)) if (x.length > 12) t = t.split(x).join('');
-      t = t.replace(/\s+/g, ' ').trim();
-      return t.replace(/<span class="tag"[\s\S]*$/, '').trim() ? t : `${ui().notThis}${t ? ` ${t}` : ''}`;
-    };
+    const nudge = (fb) => { const tag = String(fb || '').match(/<span class="tag"[\s\S]*$/); return `${ui().notThis}${tag ? ` ${tag[0]}` : ''}`; };
     if (qu.type === 'tf') {
       const wrong = ev.marks.filter((m) => typeof m.where === 'number' && !m.ok).length;
       const marks = ev.marks.filter((m) => typeof m.where !== 'number');
@@ -314,7 +309,7 @@
     objectives: window.Lessons.OBJECTIVES.map((o) => ({ ...o, name: () => o.name[FC.getLang()] })),
     question: checkQuestion,
     concept: Object.fromEntries(Object.keys(FC.MIS).map((c) => [c, c])),
-    concepts: () => Object.fromEntries(Object.keys(FC.MIS).map((c) => [c, FC.getLang() === 'de' ? FC.mis(c).name : FC.mis(c).name.toLowerCase()])), // German nouns keep their capitals
+    concepts: () => Object.fromEntries(Object.keys(FC.MIS).map((c) => [c, FC.getLang() === 'de' ? `„${FC.mis(c).name}“` : `“${FC.mis(c).name}”`])),
   };
 
   // ---------------------------------------------------------------- language

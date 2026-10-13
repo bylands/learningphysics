@@ -75,6 +75,8 @@
     },
   };
   const mis = (code) => (MIS[code] ? { name: MIS[code][getLang()][0], text: MIS[code][getLang()][1], fix: MIS[code][getLang()][2] } : null);
+  // A misconception's name, quoted and labelled, so it never reads as a statement to learn.
+  const misLabel = (code) => (getLang() === 'de' ? `Fehlvorstellung: „${mis(code).name}“` : `Misconception: “${mis(code).name}”`);
 
   // ---------------------------------------------------------------- random numbers
   function rng(seed) {
@@ -313,7 +315,7 @@
   }
 
   const api = {
-    LANGS, setLang, getLang, T, DIFFICULTY, MIS, mis, POOLS, GENS, rng,
+    LANGS, setLang, getLang, T, DIFFICULTY, MIS, mis, misLabel, POOLS, GENS, rng,
     it, F, FL, list, cap, num, qty, deg, noun, o, q, stmt, tf, rank, match, two, ranksOf, rankText, answerText, misreads,
     checkQuestions, checkQuestion, register, generateGen, build, TYPE_NAMES, typeName, recordResult, weightOf,
   };
