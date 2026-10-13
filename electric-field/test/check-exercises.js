@@ -58,9 +58,11 @@ for (const key of ['point', 'dipole', 'like']) {
 }
 
 {
-  // plates and charges: the field is minus the gradient of the potential, near a large plate it is
-  // 2π·s across it, the drawn equipotentials are across the field and the field lines start on +
-  // (a positive charge or plate) or come in from the edge, and end on − or leave
+  // plates and charges: the field is minus the gradient of the potential; the plates are metal: each
+  // one potential, the field leaving it at right angles; in the middle of a wide lone plate the charge
+  // is 2/π of its average (it crowds at the edges, as on a conducting strip), so the field is 4·s;
+  // the drawn equipotentials are across the field and the field lines start on a positive charge or a
+  // plate (or come in from the edge), and end on a negative charge or a plate (or leave)
   for (const cf of X.MIX) for (const flip of [false, true]) {
     const c = X.mixConf(cf, flip, flip), tag = `mixed ${cf.id}${flip ? ' flipped' : ''}`, h = 1e-5;
     for (const [x, y] of [[0.7, 0.9], [-2.1, -0.4], [1.6, -1.9], [2.6, 1.7]]) {
@@ -68,18 +70,25 @@ for (const key of ['point', 'dipole', 'like']) {
       if (Math.hypot(f[0] - g[0], f[1] - g[1]) > 1e-4 * (1 + Math.hypot(...f))) { fail(`${tag}: the field is not minus the gradient of the potential`); break; }
     }
     // (not near a point where the field vanishes: there the grid cannot follow the saddle)
-    const strong = ([p, q]) => Math.hypot(...C.field(c, (p[0] + q[0]) / 2, (p[1] + q[1]) / 2)) > 0.6;
-    if (C.contours(c, box, X.levelsOf(c), { n: 70 }).some((sg) => strong(sg) && Math.abs(cosTo(c, sg)) > 0.2)) fail(`${tag}: an equipotential is not across the field`);
-    const onPlate = ([x, y], sg) => c.plates.some((p) => Math.sign(p.s) === sg && Math.abs(y - p.y) < 0.1 && x >= p.a - 0.05 && x <= p.b + 0.05);
+    // (nor at the edges of the plates, where the field grows without end)
+    const strong = ([p, q]) => { const m = [(p[0] + q[0]) / 2, (p[1] + q[1]) / 2]; return Math.hypot(...C.field(c, ...m)) > 0.8 && c.plates.every((pl) => Math.hypot(m[0] - pl.a, m[1] - pl.y) > 0.25 && Math.hypot(m[0] - pl.b, m[1] - pl.y) > 0.25); };
+    if (C.contours(c, box, X.levelsOf(c), { n: 70 }).some((sg) => strong(sg) && Math.abs(cosTo(c, sg)) > 0.25)) fail(`${tag}: an equipotential is not across the field`);
+    for (const pl of c.plates) {
+      const xs = [0.15, 0.35, 0.5, 0.65, 0.85].map((t) => Math.max(pl.a, -3) + t * (Math.min(pl.b, 3) - Math.max(pl.a, -3))), v = xs.map((x) => C.potential(c, x, pl.y));
+      if (Math.max(...v) - Math.min(...v) > 1e-3 * (1 + Math.abs(v[0]))) fail(`${tag}: a plate is not one potential`);
+      // at its surface, away from its edges (where the field bends round them), within 5°
+      for (let x = Math.max(pl.a, -3) + 0.3; x < Math.min(pl.b, 3) - 0.3; x += 0.05) if ([0.03, -0.03].some((d) => { const [ex, ey] = C.field(c, x, pl.y + d); return Math.abs(ex) > Math.tan((5 * Math.PI) / 180) * Math.abs(ey); })) { fail(`${tag}: the field does not leave a plate at right angles`); break; }
+    }
+    const onPlate = ([x, y]) => c.plates.some((p) => Math.abs(y - p.y) < 0.1 && x >= p.a - 0.05 && x <= p.b + 0.05);
     const onCharge = ([x, y], sg) => c.charges.some((ch) => Math.sign(ch.q) === sg && Math.hypot(x - ch.x, y - ch.y) < 0.25);
     const edge = ([x, y]) => Math.abs(x) > 2.9 || Math.abs(y) > 2.1;
     for (const ln of C.lines(c, box)) {
       const a = ln[0], b = ln[ln.length - 1];
-      if (!((onPlate(a, 1) || onCharge(a, 1) || edge(a)) && (onPlate(b, -1) || onCharge(b, -1) || edge(b) || Math.hypot(...C.field(c, ...b)) < 0.05))) { fail(`${tag}: a field line does not run from + to −`); break; }
+      if (!((onPlate(a) || onCharge(a, 1) || edge(a)) && (onPlate(b) || onCharge(b, -1) || edge(b) || Math.hypot(...C.field(c, ...b)) < 0.05))) { fail(`${tag}: a field line does not run from + to −`); break; }
     }
   }
   const big = { kind: 'mixed', charges: [], plates: [{ y: 0, a: -50, b: 50, s: 0.25 }] }, [ex, ey] = C.field(big, 0.3, 0.2);
-  if (!(near(ey, 2 * Math.PI * 0.25, 0.01) && Math.abs(ex) < 0.01)) fail('the field of a large plate');
+  if (!(near(ey, 4 * 0.25, 0.01) && Math.abs(ex) < 0.01)) fail('the field of a large plate');
 }
 
 // ---------------------------------------------------------------- the exercises
