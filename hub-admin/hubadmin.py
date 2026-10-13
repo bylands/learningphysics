@@ -13,7 +13,8 @@ cards in its order, shows their tags, and lets visitors filter by tag. This serv
                          POST {"action": "create", "id", "user", "first", "last", "school"} |
                               {"action": "update", "id", ...} | {"action": "reset" | "delete", "id"}
     /admin/api/password  POST {"current", "new"}    a teacher's own new password
-    /admin/api/me        GET  the teacher logged in (the crossword generator asks it, with the cookie)
+    /admin/api/account   POST {"user", "first", "last", "school"}  a teacher's own details
+    /admin/api/me        GET  the teacher logged in (the crossword generator and the quiz ask it, with the cookie)
     /admin/api/config    GET  the apps of the hub page with their order and tags
                          POST {"order": [id, ...], "tags": {id: [key, ...]},
                                "labels": {key: {"en": name, "de": name}}}      saves apps.json
@@ -54,10 +55,11 @@ images, which an export lacks, are uploaded or fetched (hub-data/sheet-images/).
 
 Teachers: every teacher has an account with a user name (to log in), a three-letter identifier (xyz)
 and their own sets. The superuser (--super, default bys; user name --super-user, default
-samuel.byland) logs in with the crossword app's teacher password and alone
-edits the order and tags of the apps, the exercise sheets and the other accounts (hub-data/
+samuel.byland) logs in with the crossword app's teacher password (until they set their own under
+Account) and alone edits the order and tags of the apps, the exercise sheets and the other accounts (hub-data/
 teachers.json, not served: their user names, first and last names, schools and password hashes); a new account gets a password shown
-once, which the teacher can change. A session belongs to one teacher and ends when their password
+once. Every teacher, the superuser too, changes their own user name, names, school and password
+under Account (the superuser's in teachers.json's "super"). A session belongs to one teacher and ends when their password
 changes.
 
 A set is opened at learningphysics.ch/<teacher>/<name>, and the superuser's also at
@@ -85,8 +87,8 @@ the app. Their modes "arcade" (a timed game, now the check) and "real" (problems
 become "check" and "practice".
 
 The apps and their names come from the hub page itself (its <a class="app" href="/id/"> cards),
-so a new app needs no change here. The superuser's password is the crossword app's teacher password:
-the same salted PBKDF2 hash file (crosswords-web set-password), read on every use, so a new password
+so a new app needs no change here. The superuser's password is the crossword app's teacher password
+until they set their own: the same salted PBKDF2 hash file (crosswords-web set-password), read on every use, so a new password
 takes effect at once and ends every session of the superuser. Standard library only.
 
     python3 hubadmin.py --port 8040 --password-file /opt/crosswords/teacher-password \
@@ -168,7 +170,7 @@ TEXERCISES = "https://texercises.com"
 LOGIN_ATTEMPTS, LOGIN_WINDOW = 10, 15 * 60  # failed logins per address and window (s)
 # teacher accounts: each has a user name to log in with and a three-letter identifier, the start of
 # its sets' addresses (learningphysics.ch/xyz/name). The superuser (SUPER, --super; user name
-# SUPER_USER, --super-user) logs in with the crossword app's teacher password and creates the
+# SUPER_USER, --super-user; both until they change them) logs in with the crossword app's teacher password and creates the
 # others; a set address without an identifier is the superuser's.
 SUPER, SUPER_USER = "bys", "samuel.byland"
 TEACHER_ID = re.compile(r"[a-z]{3}")
@@ -249,7 +251,19 @@ def hub_apps(hub_html: str) -> List[Dict[str, object]]:
     of its data-modes, in the order of MODES; tags: the starter tags of its data-tags, if any)."""
     p = _Cards()
     p.feed(hub_html)
-    return [{"id": a["id"], "name": a["name"].strip() or a["id"], "modes": a["modes"], **({"tags": a["tags"]} if a["tags"] else {})} for a in p.apps]
+    de = german_names(hub_html)
+    return [{"id": a["id"], "name": a["name"].strip() or a["id"], **({"de": de[a["id"]]} if a["id"] in de else {}),
+             "modes": a["modes"], **({"tags": a["tags"]} if a["tags"] else {})} for a in p.apps]
+
+
+def german_names(hub_html: str) -> Dict[str, str]:
+    """The German names of the apps, {id: name}: the first text of each entry of the hub page's
+    German texts (const DE = { id: ['name', 'description', ...], ... })."""
+    m = re.search(r"const DE = \{(.*?)\n\s*\};", hub_html, re.S)
+    if not m:
+        return {}
+    found = re.findall(r"^\s*'?([a-z0-9-]+)'?: \['((?:[^'\\]|\\.)*)'", m.group(1), re.M)
+    return {k: v.replace("\\'", "'").strip() for k, v in found if v.strip()}
 
 
 # ---------------------------------------------------------------------- the configuration
@@ -508,10 +522,14 @@ class Admin:
         self.own = own
 
     def stored_hash(self, teacher: Optional[str] = None) -> str:
-        """The password hash of a teacher (the superuser's without one): the superuser's is the
-        crossword app's, the others' are in teachers.json. Read on every use, so a new password
-        takes effect without a restart."""
+        """The password hash of a teacher (the superuser's without one): the others' are in
+        teachers.json; the superuser's is the crossword app's teacher password until they set one
+        of their own (then in teachers.json too). Read on every use, so a new password takes
+        effect without a restart."""
         if teacher is None or teacher == self.super:
+            own = str(self.read_super().get("hash") or "")
+            if own:
+                return own
             try:
                 return self.password_file.read_text().strip()
             except OSError:
@@ -550,7 +568,7 @@ class Admin:
     def teacher_of(self, user: str) -> Optional[str]:
         """The identifier of the account with this user name (or, failing that, this identifier)."""
         user = (user or "").strip().lower()
-        if user == self.super_user:
+        if user == self.user_of(self.super):
             return self.super
         teachers = self.read_teachers()
         found = next((t for t, e in teachers.items() if user_name(t, e) == user), None)
@@ -574,22 +592,35 @@ class Admin:
 
     # ------------------------------------------------------------------ teacher accounts
     def read_teachers(self) -> Dict[str, Dict[str, object]]:
-        """{id: {"name", "hash", "created"}}: the accounts besides the superuser."""
+        """{id: {"user", "first", "last", "school", "hash", "created"}}: the accounts besides the superuser."""
         data = read_config(self.teachers_file)
         found = data.get("teachers") if isinstance(data, dict) else None
         return {t: e for t, e in found.items() if TEACHER_ID.fullmatch(t) and t != self.super and isinstance(e, dict)} \
             if isinstance(found, dict) else {}
 
+    def read_super(self) -> Dict[str, object]:
+        """What the superuser changed of their own account ({"user", "first", "last", "school",
+        "hash"}, each if set): teachers.json's "super"."""
+        data = read_config(self.teachers_file)
+        found = data.get("super") if isinstance(data, dict) else None
+        return found if isinstance(found, dict) else {}
+
+    def entry(self, teacher: str) -> Optional[Dict[str, object]]:
+        """A teacher's account as stored (the superuser's: what they changed of it), or None."""
+        return self.read_super() if teacher == self.super else self.read_teachers().get(teacher)
+
     def me(self, teacher: str) -> Dict[str, object]:
-        """Who a teacher is: for the crossword generator, which asks with the session cookie."""
-        entry = self.read_teachers().get(teacher)
+        """Who a teacher is (for their Account, and for the crossword generator and the quiz, which
+        ask with the session cookie)."""
+        entry = self.entry(teacher)
         return {"teacher": teacher, "user": self.user_of(teacher), "super": teacher == self.super,
-                **(profile(entry) if entry else {})}
+                **profile(entry or {})}
 
     def user_of(self, teacher: str) -> str:
         """A teacher's user name."""
         if teacher == self.super:
-            return self.super_user
+            user = self.read_super().get("user")
+            return user if isinstance(user, str) and USER_NAME.fullmatch(user) else self.super_user
         entry = self.read_teachers().get(teacher)
         return user_name(teacher, entry) if entry else teacher
 
@@ -608,16 +639,17 @@ class Admin:
 
     def teachers_state(self) -> Dict[str, object]:
         sets = self.read_all_sets()
-        return {"super": self.super, "super_user": self.super_user, "teachers": [
+        return {"super": self.super, "super_user": self.user_of(self.super), "teachers": [
             {"id": t, "user": user_name(t, e), **profile(e), "created": e.get("created", 0), "sets": len(sets.get(t, {}))}
             for t, e in sorted(self.read_teachers().items())], "super_sets": len(sets.get(self.super, {}))}
 
-    def change_teachers(self, change) -> object:
-        """Read, change and write the accounts under the lock: change(teachers) returns the answer."""
+    def change_teachers(self, change, own: bool = False) -> object:
+        """Read, change and write the accounts under the lock: change(teachers) returns the answer
+        (own: change(teachers, the superuser's entry), which it may change too)."""
         with self.accounts_lock:
-            teachers = self.read_teachers()
-            out = change(teachers)
-            write_config(self.teachers_file, {"teachers": teachers}, 0o600)
+            teachers, mine = self.read_teachers(), dict(self.read_super())
+            out = change(teachers, mine) if own else change(teachers)
+            write_config(self.teachers_file, {"teachers": teachers, **({"super": mine} if mine else {})}, 0o600)
             return out
 
     def create_teacher(self, teacher: object, user: object = None, **details: object) -> Dict[str, str]:
@@ -652,9 +684,9 @@ class Admin:
         return self.change_teachers(change)
 
     def update_teacher(self, teacher: str, user: object = None, **details: object) -> Dict[str, str]:
-        """A teacher's new user name, first name, last name or school (those not given stay as they
-        are). KeyError: no such teacher."""
-        if teacher not in self.read_teachers():
+        """A teacher's (or the superuser's own) new user name, first name, last name or school
+        (those not given stay as they are). KeyError: no such teacher."""
+        if teacher != self.super and teacher not in self.read_teachers():
             raise KeyError(teacher)
         if user is not None:
             user = user.strip().lower() if isinstance(user, str) else user
@@ -662,10 +694,10 @@ class Admin:
             if problem:
                 raise ValueError(problem)
 
-        def change(teachers):
-            if teacher not in teachers:
+        def change(teachers, mine):
+            if teacher != self.super and teacher not in teachers:
                 raise KeyError(teacher)
-            entry = teachers[teacher]
+            entry = mine if teacher == self.super else teachers[teacher]
             entry.update(profile(entry))  # (one name, as written before: as first and last name)
             entry.pop("name", None)
             for k, n in PROFILE.items():
@@ -674,7 +706,7 @@ class Admin:
             if user is not None:
                 entry["user"] = user
             return {"id": teacher, "user": user_name(teacher, entry), **profile(entry)}
-        return self.change_teachers(change)
+        return self.change_teachers(change, own=True)
 
     def delete_teacher(self, teacher: str) -> Dict[str, str]:
         """The account and its sets (their addresses stop working). KeyError: no such teacher."""
@@ -689,19 +721,21 @@ class Admin:
         return self.change_teachers(change)
 
     def change_password(self, teacher: str, current: object, new: object) -> None:
-        """A teacher's own new password (not the superuser's: that is the crossword app's)."""
-        if teacher == self.super:
-            raise ValueError("your password is the teacher password of the crossword app: change it there")
+        """A teacher's own new password. The superuser's is then theirs alone: the crossword app's
+        teacher password stays as it is (and logs in there, and in the quiz, as the superuser)."""
         if not isinstance(new, str) or not MIN_PASSWORD <= len(new) <= MAX_PASSWORD:
             raise ValueError(f"a password has {MIN_PASSWORD} to {MAX_PASSWORD} characters")
         if not isinstance(current, str) or not self.login(teacher, current):
             raise PermissionError("the current password is wrong")
 
-        def change(teachers):
-            if teacher not in teachers:
+        def change(teachers, mine):
+            if teacher == self.super:
+                mine["hash"] = hash_password(new)
+            elif teacher in teachers:
+                teachers[teacher]["hash"] = hash_password(new)
+            else:
                 raise KeyError(teacher)
-            teachers[teacher]["hash"] = hash_password(new)
-        self.change_teachers(change)
+        self.change_teachers(change, own=True)
 
     def blocked(self, addr: str) -> bool:
         now = time.time()
@@ -833,7 +867,7 @@ class Admin:
             if not objs and a["id"] in pool:  # no objectives.json: the pool's ids
                 objs = [{"id": o, "en": o, "de": o} for o in pool[a["id"]].get("objectives", {}) if OBJECTIVE.fullmatch(o)]
             n = len([k for k in pool.get(a["id"], {}).get("exercises", {}) if have is None or k in have])
-            out.append({"id": a["id"], "name": a["name"], "objectives": objs, "exercises": n})
+            out.append({"id": a["id"], "name": a["name"], **({"de": a["de"]} if a.get("de") else {}), "objectives": objs, "exercises": n})
         return out
 
     def read_sheets(self) -> Dict[str, Dict[str, object]]:
@@ -1520,6 +1554,26 @@ def make_handler(admin: Admin):
             except OSError:
                 self.json(500, {"error": "could not write the accounts"})
 
+        def account_post(self) -> None:
+            """/api/account {any of "user", "first", "last", "school"}: a teacher's own details (the
+            answer: as /api/me)."""
+            teacher = self.teacher()
+            if not teacher:
+                self.json(403, {"error": "login"})
+                return
+            body = self.json_body()
+            if body is None:
+                return
+            try:
+                admin.update_teacher(teacher, body.get("user"), **{k: body.get(k) for k in PROFILE})
+                self.json(200, admin.me(teacher))
+            except KeyError:
+                self.json(404, {"error": "no such teacher"})
+            except ValueError as e:
+                self.json(400, {"error": str(e)})
+            except OSError:
+                self.json(500, {"error": "could not write the accounts"})
+
         def password_post(self) -> None:
             """/api/password {"current", "new"}: a teacher's own new password. Their other sessions
             end; this one goes on with a new cookie."""
@@ -1630,6 +1684,8 @@ def make_handler(admin: Admin):
                 self.teachers_post()
             elif path == "/api/password":
                 self.password_post()
+            elif path == "/api/account":
+                self.account_post()
             elif path == "/api/plan" or path.startswith("/api/sheets/"):
                 self.sheets_post(path)
             elif path == "/api/images/fetch":
@@ -1803,20 +1859,22 @@ def login_page(ready: bool, error: str = "") -> str:
 
 def panel_page(teacher: str = SUPER, superuser: bool = True, user: str = "") -> str:
     """The panel of a teacher: the sets for everyone; the order and tags of the apps, the exercise
-    sheets and the teachers' accounts for the superuser only; a teacher's own password (Account)."""
+    sheets and the teachers' accounts for the superuser only; everyone's own details and password (Account)."""
     who = escape(f"{user} ({teacher})" if user and user != teacher else teacher)
     tabs = ('<a href="#quizzes" data-view="quizzes">Quizzes</a><a href="#games" data-view="games">Games</a>'
             '<a href="#sets" data-view="sets">Sets</a>'
             + ('<a href="#sheets" data-view="sheets">Sheets</a><a href="#apps" data-view="apps">Apps &amp; tags</a>'
-               '<a href="#teachers" data-view="teachers">Teachers</a>' if superuser else
-               '<a href="#account" data-view="account">Account</a>'))
+               '<a href="#teachers" data-view="teachers">Teachers</a>' if superuser else '')
+            + '<a href="#account" data-view="account">Account</a>')
     return page("Admin", f"""
     <div class="bar top">
       <nav class="tabs" aria-label="Sections">{tabs}</nav>
       <a class="view" href="/" target="_blank" rel="noopener">View the hub page ↗</a>
+      <label class="names" title="The language of the names of the apps, learning objectives and topics in this panel">Names
+        <select id="names-lang"><option value="en">English</option><option value="de">Deutsch</option></select></label>
       <span class="who" data-teacher="{escape(teacher)}">{who}</span>
       <form method="post" action="/admin/logout" class="logout"><button type="submit">Log out</button></form>
-    </div>""" + (SUPER_SECTIONS if superuser else ACCOUNT_SECTION) + COMMON_SECTIONS, script=True)
+    </div>""" + (SUPER_SECTIONS if superuser else "") + ACCOUNT_SECTION + COMMON_SECTIONS, script=True)
 
 
 TEACHERS_SECTION = """
@@ -1836,7 +1894,18 @@ TEACHERS_SECTION = """
 
 ACCOUNT_SECTION = """
     <section id="view-account" hidden>
-      <p class="lead">Change your password. Your other sessions end; this one goes on.</p>
+      <h2 class="section">Your details</h2>
+      <form id="account-form" class="card teacherform">
+        <label class="field"><span>Identifier</span><input type="text" name="id" disabled></label>
+        <label class="field"><span>User name (to log in)</span><input type="text" name="user" required maxlength="40" autocomplete="username" spellcheck="false" autocapitalize="none"></label>
+        <label class="field"><span>First name</span><input type="text" name="first" maxlength="60" autocomplete="given-name"></label>
+        <label class="field"><span>Last name</span><input type="text" name="last" maxlength="60" autocomplete="family-name"></label>
+        <label class="field wide"><span>School</span><input type="text" name="school" maxlength="100" autocomplete="organization"></label>
+        <button type="submit" class="primary">Save</button>
+        <p id="account-status" class="status wide" aria-live="polite"></p>
+      </form>
+      <h2 class="section">Your password</h2>
+      <p class="lead">Your other sessions end; this one goes on.</p>
       <form id="password-form" class="card login">
         <label class="field"><span>Current password</span><input type="password" name="current" required autocomplete="current-password"></label>
         <label class="field"><span>New password (at least 8 characters)</span><input type="password" name="new" required minlength="8" maxlength="200" autocomplete="new-password"></label>
@@ -1888,7 +1957,7 @@ COMMON_SECTIONS = """
           <h2>Electric Circuits: the quiz</h2>
           <p>A live quiz in the style of Kahoot on DC circuits: charge, current, voltage, power, resistance, resistor circuits and meters, in 21 questions. Points for difficulty and speed, a ranking after every question, and at the end personal feedback for every student and class statistics with a CSV export for the teacher.</p>
           <p class="links"><a href="/electric-circuits/host" target="_blank" rel="noopener">Teacher screen ↗</a> <a href="/electric-circuits/" target="_blank" rel="noopener">Student page ↗</a></p>
-          <p class="note">learningphysics.ch/electric-circuits/ · students join there (the lobby shows a QR code); one game at a time, and a new deploy waits until no one is playing</p>
+          <p class="note">learningphysics.ch/electric-circuits/ · students join there with the game code of your lobby (its QR code carries it); every teacher has a game of their own, and you're logged in there with this account</p>
         </li>
       </ul>
     </section>
@@ -1975,6 +2044,8 @@ button.primary { background: var(--accent); border-color: var(--accent); color: 
 .view { margin-left: auto; color: var(--accent); }
 .logout { margin: 0; }
 .who { color: var(--muted); font-size: 0.9rem; }
+.names { color: var(--muted); font-size: 0.9rem; display: inline-flex; gap: 6px; align-items: center; }
+.names select { font-size: 0.9rem; }
 .teacherform { display: grid; grid-template-columns: 1fr 1.6fr 1.4fr 1.4fr; gap: 10px 14px; align-items: end; margin: 0 0 10px; }
 .teacherform .wide { grid-column: 1 / 4; }
 .teacher .fields { display: grid; grid-template-columns: 1fr 1fr 1.6fr; gap: 6px 10px; margin-top: 8px; }
@@ -2260,10 +2331,11 @@ ADMIN_JS = r"""
   'use strict';
   const $ = (s) => document.querySelector(s);
   if (!$('#view-apps')) return; // the superuser's only
+  const names = () => { try { return localStorage.getItem('admin-names') === 'de' ? 'de' : 'en'; } catch (e) { return 'en'; } };
   const MAX_TAGS = 8, MAX_LEN = 32;
   let apps = [], order = [], tags = {}, labels = {}, dirty = false, fresh = null;
 
-  const nameOf = (id) => (apps.find((a) => a.id === id) || { name: id }).name;
+  const nameOf = (id) => { const a = apps.find((x) => x.id === id) || { name: id }; return (names() === 'de' && a.de) || a.name; };
   const status = (text, cls) => { const el = $('#status'); el.textContent = text; el.className = `status ${cls || ''}`; };
   function changed() { dirty = true; $('#save').disabled = false; status('Unsaved changes'); }
   const fold = (t) => t.trim().toLowerCase();
@@ -2399,6 +2471,7 @@ ADMIN_JS = r"""
   }
 
   $('#save').addEventListener('click', save);
+  window.addEventListener('admin-names', () => { if (apps.length) renderApps(); }); // the switch in the top bar (sets.js)
   window.addEventListener('beforeunload', (e) => { if (dirty) { e.preventDefault(); e.returnValue = ''; } });
   load().catch(() => status('Could not load the apps.', 'bad'));
 })();
@@ -2462,6 +2535,7 @@ SHEETS_JS = r"""
 
   // ---------------------------------------------------------------- what is known of apps and exercises
   const appOf = (id) => (st.apps.find((a) => a.id === id) || { id, name: id, objectives: [], exercises: 0 });
+  const appName = (a) => (cur && cur.lang === 'de' && a.de) || a.name; // in the sheet's language, as its objectives
   const obName = (app, ob) => { const o = appOf(app).objectives.find((x) => x.id === ob); return o ? o[cur.lang] || o.en : ob; };
   const det = (k) => (plan && plan.details[k]) || { title: k, available: false };
   let refused = new Set(); // exercises with an image TeXercises refused FETCH_TRIES times (from the image list)
@@ -2473,7 +2547,7 @@ SHEETS_JS = r"""
       refused.has(k) ? el('span', { class: 'chip bad', title: 'TeXercises refused its image three times: download it there and upload it under Images' }, 'image refused')
         : d.images ? el('span', { class: 'chip warn', title: 'Has an image: TeXercises does not export it; upload or fetch it under Images' }, 'image') : '',
       d.available === false ? el('span', { class: 'chip bad', title: 'Not in the uploaded export: left out of the PDF and the online version' }, 'missing') : '',
-      d.app ? el('span', { class: 'chip quiet' }, appOf(d.app).name) : '');
+      d.app ? el('span', { class: 'chip quiet' }, appName(appOf(d.app))) : '');
   }
   const objectiveLine = (k) => {
     const d = det(k);
@@ -2546,12 +2620,12 @@ SHEETS_JS = r"""
         changed(true);
         render();
       });
-      return el('label', { class: a.exercises ? '' : 'none', title: `${a.exercises} exercises in the pool` }, box, a.name, el('span', { class: 'n' }, String(a.exercises)));
+      return el('label', { class: a.exercises ? '' : 'none', title: `${a.exercises} exercises in the pool` }, box, appName(a), el('span', { class: 'n' }, String(a.exercises)));
     }));
     const objs = cur.modules.map((m) => {
       const app = appOf(m.id);
       const d = el('details', { class: 'modobjs', open: true },
-        el('summary', {}, `${app.name}: ${m.objectives.length === app.objectives.length ? 'all' : m.objectives.length + ' of'} ${app.objectives.length} learning objectives`));
+        el('summary', {}, `${appName(app)}: ${m.objectives.length === app.objectives.length ? 'all' : m.objectives.length + ' of'} ${app.objectives.length} learning objectives`));
       if (!app.objectives.length) { d.append(el('p', { class: 'note' }, 'This module has no learning objectives: its exercises count as one.')); return d; }
       const targets = plan ? plan.targets.filter((t) => t.app === m.id) : [];
       d.append(el('ul', { class: 'tree' }, ...app.objectives.map((o) => {
@@ -2618,7 +2692,7 @@ SHEETS_JS = r"""
   // an exercise of an objective (or of a module as a whole) to add
   function adder() {
     if (!plan || !plan.targets.length) return '';
-    const label = (t) => `${appOf(t.app).name}${t.objective ? ' · ' + obName(t.app, t.objective) : ''}`;
+    const label = (t) => `${appName(appOf(t.app))}${t.objective ? ' · ' + obName(t.app, t.objective) : ''}`;
     const tsel = el('select', { 'aria-label': 'Objective' }, ...plan.targets.map((t, i) => el('option', { value: String(i) }, `${label(t).slice(0, 90)} (${t.keys.filter((k) => !cur.exercises.includes(k)).length})`)));
     const ksel = el('select', { 'aria-label': 'Exercise to add' });
     const fill = () => {
@@ -2971,6 +3045,7 @@ SETS_JS = r"""
 // objectives are chosen for it.
 (function () {
   'use strict';
+  const names = () => { try { return localStorage.getItem('admin-names') === 'de' ? 'de' : 'en'; } catch (e) { return 'en'; } };
   const $ = (s) => document.querySelector(s);
   const MODES = { tutor: 'Tutor', practice: 'Practice', check: 'Check' };
   const KEY = /^[a-z0-9][a-z0-9-]{0,39}$/, MAX_TITLE = 80;
@@ -2979,10 +3054,22 @@ SETS_JS = r"""
   const teacher = ($('.who') || { dataset: {} }).dataset.teacher || '';
   const path = (name) => (teacher ? `${teacher}/${name}` : name);
   document.querySelectorAll('.prefix').forEach((e) => { e.textContent = teacher ? `${teacher}/` : ''; });
-  const outlines = {}; // app id → Promise of its outline
+  const outlines = {}; // 'app id:language' → Promise of its outline
   const shown = new Set(); // apps whose sections are open, as 'set index:app id'
   const added = new Map(); // set → the app last added to it, whose next one the list of apps offers first
   const LANGS = { '': 'English or German (students choose)', en: 'English only', de: 'German only' };
+  // the language of the names of the apps, objectives and topics (the switch in the top bar, remembered)
+  let lang = names();
+  const sw = $('#names-lang');
+  if (sw) {
+    sw.value = lang;
+    sw.addEventListener('change', () => {
+      lang = sw.value === 'de' ? 'de' : 'en';
+      try { localStorage.setItem('admin-names', lang); } catch (e) { /* storage unavailable */ }
+      if (loaded) render();
+      window.dispatchEvent(new CustomEvent('admin-names', { detail: lang })); // the apps' view (admin.js)
+    });
+  }
 
   function el(tag, attrs, ...kids) {
     const e = document.createElement(tag);
@@ -2994,6 +3081,7 @@ SETS_JS = r"""
     return e;
   }
   const appOf = (id) => apps.find((a) => a.id === id) || { id, name: id, modes: [] };
+  const appName = (a) => (lang === 'de' && a.de) || a.name;
   const status = (text, cls) => { const e = $('#sets-status'); e.textContent = text; e.className = `status ${cls || ''}`; };
   // why a name cannot be, or ''
   function problem(i) {
@@ -3011,10 +3099,11 @@ SETS_JS = r"""
   }
 
   // ---------------------------------------------------------------- the outline of an app
-  function outline(id) {
+  function outline(app) {
+    const id = `${app}:${lang}`;
     if (outlines[id]) return outlines[id];
     outlines[id] = new Promise((resolve, reject) => {
-      const frame = el('iframe', { class: 'outline-frame', src: `/${id}/?outline=1&lang=en`, title: 'outline', 'aria-hidden': 'true', tabindex: '-1' });
+      const frame = el('iframe', { class: 'outline-frame', src: `/${app}/?outline=1&lang=${lang}`, title: 'outline', 'aria-hidden': 'true', tabindex: '-1' });
       const done = (v) => { clearTimeout(timer); window.removeEventListener('message', on); frame.remove(); if (v) resolve(v); else reject(new Error('no outline')); };
       const on = (e) => { if (e.origin === location.origin && e.source === frame.contentWindow && e.data && e.data.type === 'lp-outline') done(e.data); };
       const timer = setTimeout(() => done(null), 20000);
@@ -3054,7 +3143,7 @@ SETS_JS = r"""
     const unused = apps.filter((a) => !s.apps.some((x) => x.id === a.id));
     const last = apps.findIndex((a) => a.id === (added.get(s) || (s.apps.length ? s.apps[s.apps.length - 1].id : null)));
     const next = unused.find((a) => apps.indexOf(a) > last) || unused[0];
-    const pick = el('select', { 'aria-label': 'App to add' }, ...unused.map((a) => el('option', { value: a.id, selected: a === next }, a.name)));
+    const pick = el('select', { 'aria-label': 'App to add' }, ...unused.map((a) => el('option', { value: a.id, selected: a === next }, appName(a))));
     box.replaceChildren(el('div', { class: 'card' },
       el('div', { class: 'setform' },
         el('label', { class: 'field' }, el('span', {}, 'Name (the address)'), name),
@@ -3081,7 +3170,8 @@ SETS_JS = r"""
   }
 
   function appRow(s, a, k) {
-    const info = appOf(a.id), key = `${sel}:${a.id}`;
+    const info = { ...appOf(a.id) }, key = `${sel}:${a.id}`;
+    info.name = appName(info);
     const move = (d) => { const j = k + d; [s.apps[k], s.apps[j]] = [s.apps[j], s.apps[k]]; changed(); render({ move: { k: j, up: d < 0 } }); };
     const modes = el('div', { class: 'checks', role: 'group', 'aria-label': `Modes of ${info.name}` }, ...info.modes.map((m) => {
       const box = el('input', { type: 'checkbox', checked: a.modes.includes(m) });
@@ -3248,8 +3338,8 @@ SETS_JS = r"""
 
 ACCOUNTS_JS = r"""
 // The accounts: #teachers (the superuser's) lists the teachers, creates one (its first password is
-// shown once), gives one a new password, renames or deletes one (with their sets); #account (another
-// teacher's) changes their own password.
+// shown once), gives one a new password, renames or deletes one (with their sets); #account (every
+// teacher's, the superuser's too) changes their own details and password.
 (function () {
   'use strict';
   const $ = (s) => document.querySelector(s);
@@ -3305,7 +3395,7 @@ ACCOUNTS_JS = r"""
             el('button', { type: 'button', class: 'danger', onclick: remove }, 'Delete account')));
       });
       $('#teacher-list').replaceChildren(
-        el('p', { class: 'note' }, `You: ${state.super_user} (${state.super}), ${sets(state.super_sets)}, with the crossword app’s teacher password.`),
+        el('p', { class: 'note' }, `You: ${state.super_user} (${state.super}), ${sets(state.super_sets)}. Your own details and password: Account.`),
         rows.length ? el('ul', { class: 'teachers' }, ...rows) : el('p', { class: 'empty' }, 'No other teachers yet.'));
     }
     async function load() {
@@ -3327,6 +3417,35 @@ ACCOUNTS_JS = r"""
       } catch (err) { status(`Not created: ${err.message}`, 'bad'); }
     });
     const show = (v) => { if (v === 'teachers' && !loaded) load().catch(() => status('Could not load the teachers.', 'bad')); };
+    window.addEventListener('admin-view', (e) => show(e.detail));
+    show(location.hash.slice(1));
+  }
+
+  // ---------------------------------------------------------------- a teacher's own details
+  if ($('#account-form')) {
+    const f = $('#account-form'), FIELDS = ['user', 'first', 'last', 'school'];
+    let loaded = false;
+    const status = (text, cls) => { const e = $('#account-status'); e.textContent = text; e.className = `status wide ${cls || ''}`; };
+    const fill = (me) => {
+      f.elements.id.value = me.teacher;
+      FIELDS.forEach((k) => { f.elements[k].value = me[k] || ''; });
+      const who = $('.who');
+      if (who) who.textContent = me.user && me.user !== me.teacher ? `${me.user} (${me.teacher})` : me.teacher;
+    };
+    async function load() {
+      const r = await fetch('/admin/api/me', { credentials: 'same-origin' });
+      if (r.status === 403) { location.reload(); return; }
+      fill(await r.json());
+      loaded = true;
+    }
+    f.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      try {
+        fill(await post('/admin/api/account', Object.fromEntries(FIELDS.map((k) => [k, k === 'user' ? f.elements[k].value.trim().toLowerCase() : f.elements[k].value]))));
+        status('Saved.', 'ok');
+      } catch (err) { status(`Not saved: ${err.message}`, 'bad'); }
+    });
+    const show = (v) => { if (v === 'account' && !loaded) load().catch(() => status('Could not load your details.', 'bad')); };
     window.addEventListener('admin-view', (e) => show(e.detail));
     show(location.hash.slice(1));
   }
