@@ -52,7 +52,7 @@ for (const level of Object.keys(LEVELS)) {
       const x = fval(c.nodes[Number(g.slice(1))][g[0]]);
       if (!isHalf(x) || x <= 0) fail(`${tag}: given ${g} = ${x} is not nice`);
     }
-    for (const f of ex.fields.filter((x) => !x.choice)) if (!isHalf(f.value) || f.value <= 0) fail(`${tag}: answer ${f.key} = ${f.value} is not nice`);
+    for (const f of ex.fields.filter((x) => !x.choice && !x.place)) if (!isHalf(f.value) || f.value <= 0) fail(`${tag}: answer ${f.key} = ${f.value} is not nice`);
 
     const known = new Set(ex.givens);
     const g = (k) => fval(c.nodes[Number(k.slice(1))][k[0]]);
@@ -116,7 +116,9 @@ const RA = 1e-7, RV = 1e9;
 function meterNetlist(c, ms) {
   const E = [], main = ms.find((m) => m.at === 0 && !m.across);
   let next = 3;
-  if (main) { E.push(['V', 'V', 2, 0, fval(c.root.V)], ['R', 'M' + main.m, 2, 1, main.m === 'A' ? RA : RV]); } else E.push(['V', 'V', 1, 0, fval(c.root.V)]);
+  if (main) { E.push(['V', 'V', 2, 0, fval(c.root.V)], ['R', 'M' + main.m, 2, 1, main.m === 'A' ? RA : RV]); } else E.push(['V', 'V', 2, 0, fval(c.root.V)], ['R', 'w0', 2, 1, RA]); // (node 2 in use either way)
+  const bat = ms.find((m) => m.at === 0 && m.across);
+  if (bat) E.push(['R', 'M' + bat.m, main ? 2 : 1, 0, bat.m === 'A' ? RA : RV]);
   (function place(node, a, b) {
     if (node.t === 'R') {
       const ser = ms.find((m) => m.at === node.id && !m.across), acr = ms.find((m) => m.at === node.id && m.across);
@@ -143,15 +145,30 @@ for (const stage of ['read', 'place', 'wrong']) {
     const s = solve(meterNetlist(ex.circuit, ex.meters));
     for (const m of ex.meters) {
       const shown = m.m === 'A' ? Math.abs(s.i('M' + m.m)) : Math.abs(s.i('M' + m.m)) * RV;
-      if (Math.abs(shown - m.value) > 1e-3 * Math.max(1, m.value)) fail(`${tag}: the ${m.m} meter shows ${shown}, not ${m.value}`);
+      if (!(Math.abs(shown - m.value) <= 1e-3 * Math.max(1, m.value))) fail(`${tag}: the ${m.m} meter shows ${shown}, not ${m.value}`);
       if (m.key && Math.abs(fval(ex.circuit.nodes[Number(m.key.slice(1))][m.key[0]]) - m.value) > 1e-9) fail(`${tag}: reading of ${m.m} is not ${m.key}`);
     }
     if (stage === 'read' && !(ex.meters.length === 2 && ex.meters.every((m) => m.key))) fail(`${tag}: not an ammeter and a voltmeter in their places`);
     if (stage === 'place') {
-      const how = ex.fields.find((f) => f.choice), m = ex.meters[0];
-      if (ex.meters.length !== 1 || !m.key || !how || how.value !== (m.across ? 'across' : 'series') || how.options.length !== 4) fail(`${tag}: not one meter in its place, with the way to connect it asked`);
+      // every spot: a meter there that counts as right shows the quantity asked for and changes
+      // no current in the circuit; the spot of the meter in the figure counts as right
+      const how = ex.fields.find((f) => f.place), m = ex.meters[0], target = ex.fields.find((f) => !f.place).value;
+      if (ex.meters.length !== 1 || !m.key || !how || how.value !== (m.across ? 'a' : 's') + m.at || !ex.placeCheck(how.value).ok) fail(`${tag}: not one meter in its place, with the spot asked`);
+      const base = solve(meterNetlist(ex.circuit, [])), Is = (sol) => ex.circuit.leaves.map((n) => Math.abs(sol.i('n' + n.id)));
+      for (const id of ex.slots) {
+        const at = id === 'main' || id === 'battery' ? 0 : Number(id.slice(1)), across = id === 'battery' || id[0] === 'a';
+        const sol = solve(meterNetlist(ex.circuit, [{ m: m.m, at, across }]));
+        const shown = m.m === 'A' ? Math.abs(sol.i('M' + m.m)) : Math.abs(sol.i('M' + m.m)) * RV;
+        const same = Is(sol).every((x, k) => Math.abs(x - Is(base)[k]) < 1e-3 * Math.max(1, x)), right = same && Math.abs(shown - target) < 1e-3 * Math.max(1, target);
+        const r = ex.placeCheck(id);
+        if (r.ok && !right) fail(`${tag}: spot ${id} counts as right, but the meter there shows ${shown}${same ? '' : ' and changes the circuit'}`);
+        if (!r.ok && !r.why) fail(`${tag}: spot ${id} is wrong without a reason`);
+        if (!r.ok && right) fail(`${tag}: spot ${id} counts as wrong, but the meter there shows the quantity and changes nothing`);
+        const html = ex.placeFig(id);
+        if (!html.includes('<svg') || /NaN|undefined/.test(html) || (html.match(/class="slot"/g) || []).length !== ex.slots.length - 1) fail(`${tag}: bad figure with the meter at ${id}`);
+      }
     }
-    for (const f of ex.fields.filter((x) => !x.choice)) if (!isHalf(f.value) || f.value < 0 || (f.value === 0 && ex.kind !== 'vseries')) fail(`${tag}: reading ${f.key} = ${f.value} is not nice`);
+    for (const f of ex.fields.filter((x) => !x.choice && !x.place)) if (!isHalf(f.value) || f.value < 0 || (f.value === 0 && ex.kind !== 'vseries')) fail(`${tag}: reading ${f.key} = ${f.value} is not nice`);
     const known = new Set(ex.givens), g = (k) => fval(ex.circuit.nodes[Number(k.slice(1))][k[0]]);
     for (const st of ex.steps) {
       for (const k of st.from) if (!known.has(k)) fail(`${tag}: step for ${st.key} uses unknown ${k}`);

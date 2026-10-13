@@ -237,6 +237,17 @@
       return this;
     }
 
+    // A spot where a meter can be placed (circuit-trainer's "where does the meter go?"): a dashed
+    // circle at c (units), with dashed leads (a path of points) for a meter across a part; id
+    // (data-slot) and label (aria-label) for the page, which places the meter on a click.
+    slot(c, id, label, lead = null) {
+      const r = 0.28, [x, y] = this.P(c);
+      this.P(add(c, [r, r])); this.P(sub(c, [r, r]));
+      const path = lead ? `<path class="slot-lead" d="${lead.map((p, i) => { const [px, py] = this.P(p); return `${i ? 'L' : 'M'}${px.toFixed(1)} ${py.toFixed(1)}`; }).join('')}"/>` : '';
+      this.els.push(`<g class="slot" data-slot="${esc(id)}" tabindex="0" role="button" aria-label="${esc(label)}">${path}<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${(r * S).toFixed(1)}"/></g>`);
+      return this;
+    }
+
     // Current arrow (blue) on the segment p→q, centred at fraction t.
     cur(p, q, label, side, t = 0.5) {
       if (label == null) return this;

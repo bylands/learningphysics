@@ -17,6 +17,7 @@
       revealNote: 'The worked solution unlocks once you have solved the exercise, used all hints or made three attempts.',
       solNote: 'The diagram shows all currents (<span class="c-cur">blue</span>) and voltages (<span class="c-vol">red</span>) in the circuit.',
       solNoteMeters: 'The diagram shows what the meters read.',
+      place: (m) => `Drag the ${m} onto a dashed circle in the circuit, or tap the circle. To move it, place it again.`,
       levels: { easy: 'Easy', medium: 'Medium', hard: 'Hard', mixed: 'Mixed' },
       stars: (d) => `Difficulty: ${d} of 5`,
       score: (s, c) => `Solved: ${s} · first try without hints: ${c}`,
@@ -34,6 +35,7 @@
       revealNote: 'Die ausführliche Lösung wird freigeschaltet, sobald du die Aufgabe gelöst, alle Tipps genutzt oder drei Versuche gemacht hast.',
       solNote: 'Das Schaltbild zeigt alle Ströme (<span class="c-cur">blau</span>) und Spannungen (<span class="c-vol">rot</span>) in der Schaltung.',
       solNoteMeters: 'Das Schaltbild zeigt, was die Messgeräte anzeigen.',
+      place: (m) => `Ziehe das ${m} auf einen gestrichelten Kreis in der Schaltung, oder tippe auf den Kreis. Um es zu verschieben, setze es neu.`,
       levels: { easy: 'Einfach', medium: 'Mittel', hard: 'Schwierig', mixed: 'Gemischt' },
       stars: (d) => `Schwierigkeit: ${d} von 5`,
       score: (s, c) => `Gelöst: ${s} · beim ersten Versuch ohne Tipps: ${c}`,
@@ -153,8 +155,11 @@
   function render() {
     $('#title').innerHTML = `${esc(ex.title)} ${starsOf(ex.difficulty)}`;
     $('#prompt').innerHTML = ex.text;
-    $('#figure').innerHTML = ex.figure(false);
-    $('#fields').innerHTML = ex.fields.map((f) => (f.choice ? `
+    $('#figure').innerHTML = ex.slots ? ex.placeFig(st.placed || null) : ex.figure(false);
+    $('#fields').innerHTML = ex.fields.map((f) => (f.place ? `
+      <div class="field choice wide place" data-key="${f.key}"><span class="what">${esc(f.what)}</span><span class="place-row">
+        <button type="button" class="meter-chip" aria-label="${esc(f.what)}">${f.meter}</button><span class="note">${esc(ui().place(meterName(f.meter)))}</span></span>
+        <span class="fb" aria-live="polite"></span></div>` : f.choice ? `
       <div class="field choice wide" data-key="${f.key}"><span class="what">${esc(f.what)}</span><span class="choices levels small stack" role="radiogroup">${f.options.map((o) =>
         `<label><input type="radio" name="in-${f.key}" value="${o.v}"><span>${o.html}</span></label>`).join('')}</span><span class="fb" aria-live="polite"></span></div>` : `
       <div class="field" data-key="${f.key}">
@@ -192,15 +197,77 @@
 
   // The answer in a field: the text typed, or the value of the option chosen (null if none).
   function valueOf(f) {
+    if (f.place) return st.placed || null;
     if (!f.choice) return $(`#in-${f.key}`).value;
     const r = document.querySelector(`input[name="in-${f.key}"]:checked`);
     return r ? r.value : null;
   }
   function setValue(f, v) {
     if (v == null) return;
+    if (f.place) { place(v); return; }
     if (!f.choice) { $(`#in-${f.key}`).value = v; return; }
     const r = document.querySelector(`input[name="in-${f.key}"][value="${v}"]`);
     if (r) r.checked = true;
+  }
+
+  // Where does the meter go: the meter is placed at a spot of the figure (ex.slots), by a tap on
+  // the spot (or Enter on it), or by dragging the meter from its button onto it.
+  const meterName = (m) => (m === 'A' ? L('ammeter', 'Amperemeter') : L('voltmeter', 'Voltmeter'));
+  function place(id) {
+    if (!ex.slots || !ex.slots.includes(id) || st.solved || st.revealed) return;
+    st.placed = id;
+    $('#figure').innerHTML = ex.placeFig(id);
+    markScrollable();
+    const f = ex.fields.find((x) => x.place), row = f && $('#fields').querySelector(`.field[data-key="${f.key}"]`);
+    if (row) { row.className = 'field choice wide place'; row.querySelector('.fb').textContent = ''; }
+  }
+  function placeEvents() {
+    const fig = $('#figure');
+    fig.addEventListener('click', (evt) => { const g = evt.target.closest('.slot'); if (g) place(g.dataset.slot); });
+    fig.addEventListener('keydown', (evt) => {
+      const g = evt.target.closest('.slot');
+      if (g && (evt.key === 'Enter' || evt.key === ' ')) { evt.preventDefault(); place(g.dataset.slot); const again = $(`#figure .slot`); if (again) again.focus({ preventScroll: true }); }
+    });
+    // dragging: a copy of the meter follows the pointer; it lands on the nearest spot (within reach)
+    $('#fields').addEventListener('pointerdown', (evt) => {
+      const chip = evt.target.closest('.meter-chip');
+      if (!chip || evt.button > 0) return;
+      evt.preventDefault();
+      const ghost = document.createElement('div');
+      ghost.className = 'meter-ghost';
+      ghost.textContent = chip.textContent;
+      document.body.append(ghost);
+      const x0 = evt.clientX, y0 = evt.clientY;
+      let near = null, moved = false;
+      const nearest = (x, y) => {
+        let best = null, bd = 56;
+        for (const g of document.querySelectorAll('#figure .slot')) {
+          const b = g.querySelector('circle').getBoundingClientRect(), d = Math.hypot(b.left + b.width / 2 - x, b.top + b.height / 2 - y);
+          if (d < bd) { bd = d; best = g; }
+        }
+        return best;
+      };
+      const move = (e) => {
+        if (Math.hypot(e.clientX - x0, e.clientY - y0) > 4) moved = true;
+        ghost.style.left = `${e.clientX}px`;
+        ghost.style.top = `${e.clientY}px`;
+        const g = nearest(e.clientX, e.clientY);
+        if (g !== near) { if (near) near.classList.remove('near'); near = g; if (g) g.classList.add('near'); }
+      };
+      const up = () => {
+        document.removeEventListener('pointermove', move);
+        document.removeEventListener('pointerup', up);
+        document.removeEventListener('pointercancel', up);
+        ghost.remove();
+        if (near) place(near.dataset.slot);
+        // a tap on the button: show where it can go
+        else if (!moved) for (const g of document.querySelectorAll('#figure .slot')) { g.classList.remove('pulse'); void g.getBBox(); g.classList.add('pulse'); }
+      };
+      move(evt);
+      document.addEventListener('pointermove', move);
+      document.addEventListener('pointerup', up);
+      document.addEventListener('pointercancel', up);
+    });
   }
 
   // Marks every field; true if all are right, null if some are empty.
@@ -208,13 +275,14 @@
     let allOk = true, anyEmpty = false;
     for (const f of ex.fields) {
       const row = $('#fields').querySelector(`.field[data-key="${f.key}"]`);
-      const raw = valueOf(f), base = f.choice ? 'field choice wide' : 'field';
+      const raw = valueOf(f), base = f.place ? 'field choice wide place' : f.choice ? 'field choice wide' : 'field';
       if (raw == null || !raw.trim()) { anyEmpty = true; allOk = false; row.className = base; row.querySelector('.fb').textContent = ''; continue; }
       // a choice: the explanation of a wrong one (after Check, so it gives nothing away before)
-      const r = f.choice ? (raw === f.value ? { cls: 'ok', msg: ui().correct } : { cls: 'bad', msg: (f.options.find((o) => o.v === raw) || {}).why || ui().wrong })
+      const pc = f.place && ex.placeCheck(raw);
+      const r = f.place ? (pc.ok ? { cls: 'ok', msg: ui().correct } : { cls: 'bad', msg: pc.why || ui().wrong }) : f.choice ? (raw === f.value ? { cls: 'ok', msg: ui().correct } : { cls: 'bad', msg: (f.options.find((o) => o.v === raw) || {}).why || ui().wrong })
         : judge(parse(raw), f.value, ex.tol);
       row.className = `${base} ${r.cls}`;
-      if (f.choice) { row.querySelector('.fb').innerHTML = r.msg; math(row.querySelector('.fb')); } else row.querySelector('.fb').textContent = r.msg;
+      if (f.choice || f.place) { row.querySelector('.fb').innerHTML = r.msg; math(row.querySelector('.fb')); } else row.querySelector('.fb').textContent = r.msg;
       if (r.cls !== 'ok') allOk = false;
     }
     return allOk ? true : anyEmpty ? null : false;
@@ -532,6 +600,7 @@
     });
     topics.mount($('#levels'));
     $('#new').addEventListener('click', fresh);
+    placeEvents();
     $('#answers').addEventListener('submit', check);
     $('#hint').addEventListener('click', hint);
     $('#reveal').addEventListener('click', reveal);

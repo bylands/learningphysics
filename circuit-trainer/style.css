@@ -66,3 +66,18 @@ svg .meter-l { font-size: 15px; font-weight: 600; fill: var(--ink); }
 .choices.stack { flex-direction: column; align-items: stretch; }
 .choices.stack > label > span { border-left: 0; border-top: 1px solid var(--line); text-align: left; padding: 6px 12px; white-space: normal; }
 .choices.stack > label:first-child > span { border-top: 0; }
+/* where does the meter go: the spots in the circuit (circuit.js slot), the meter to drag */
+svg .slot { cursor: pointer; outline: none; }
+svg .slot circle { fill: var(--card); stroke: var(--accent); stroke-width: 1.6; stroke-dasharray: 4 3; }
+svg .slot-lead { fill: none; stroke: var(--accent); stroke-width: 1.2; stroke-dasharray: 4 3; opacity: 0; } /* the leads of a spot across a part: shown when it is pointed at */
+svg .slot:hover circle, svg .slot:focus-visible circle, svg .slot.near circle { fill: color-mix(in srgb, var(--accent) 22%, var(--card)); stroke-dasharray: none; stroke-width: 2.2; }
+svg .slot:hover .slot-lead, svg .slot:focus-visible .slot-lead, svg .slot.near .slot-lead { opacity: 1; }
+svg .slot.pulse circle { animation: slot-pulse 0.9s ease-in-out 2; }
+@keyframes slot-pulse { 50% { fill: color-mix(in srgb, var(--accent) 35%, var(--card)); } }
+.place-row { display: flex; align-items: center; gap: 12px; }
+.place-row .note { margin: 0; color: var(--muted); font-size: 0.9rem; }
+.meter-chip, .meter-ghost { width: 44px; height: 44px; flex: none; border-radius: 50%; border: 2px solid var(--ink); background: var(--card); color: var(--ink);
+  font: 600 18px/1 Georgia, 'Times New Roman', serif; display: inline-flex; align-items: center; justify-content: center; }
+.meter-chip { cursor: grab; touch-action: none; padding: 0; }
+.meter-ghost { position: fixed; z-index: 50; pointer-events: none; transform: translate(-50%, -50%); box-shadow: 0 4px 14px rgb(0 0 0 / 0.2); }
+svg.circuit text { pointer-events: none; } /* the spots under a label stay clickable */
