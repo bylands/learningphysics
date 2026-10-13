@@ -55,8 +55,7 @@ images, which an export lacks, are uploaded or fetched (hub-data/sheet-images/).
 
 Teachers: every teacher has an account with a user name (to log in), a three-letter identifier (xyz)
 and their own sets. The superuser (--super, default bys; user name --super-user, default
-samuel.byland) logs in with the crossword app's teacher password (until they set their own under
-Account) and alone edits the order and tags of the apps, the exercise sheets and the other accounts (hub-data/
+samuel.byland) alone edits the order and tags of the apps, the exercise sheets and the other accounts (hub-data/
 teachers.json, not served: their user names, first and last names, schools and password hashes); a new account gets a password shown
 once. Every teacher, the superuser too, changes their own user name, names, school and password
 under Account (the superuser's in teachers.json's "super"). A session belongs to one teacher and ends when their password
@@ -87,9 +86,11 @@ the app. Their modes "arcade" (a timed game, now the check) and "real" (problems
 become "check" and "practice".
 
 The apps and their names come from the hub page itself (its <a class="app" href="/id/"> cards),
-so a new app needs no change here. The superuser's password is the crossword app's teacher password
-until they set their own: the same salted PBKDF2 hash file (crosswords-web set-password), read on every use, so a new password
-takes effect at once and ends every session of the superuser. Standard library only.
+so a new app needs no change here. Every password is a teacher's own, in teachers.json; there is no
+shared teacher password. The superuser's first one is the hash in --password-file (the old shared
+teacher password, written by crosswords-web set-password), taken over once if they have none: they
+change it under Account. The crossword generator and the quiz log teachers in through this panel
+(/api/me). Standard library only.
 
     python3 hubadmin.py --port 8040 --password-file /opt/crosswords/teacher-password \
         --hub /var/www/teachingphysics/index.html --config /var/www/teachingphysics/hub-data/apps.json \
@@ -170,8 +171,8 @@ TEXERCISES = "https://texercises.com"
 LOGIN_ATTEMPTS, LOGIN_WINDOW = 10, 15 * 60  # failed logins per address and window (s)
 # teacher accounts: each has a user name to log in with and a three-letter identifier, the start of
 # its sets' addresses (learningphysics.ch/xyz/name). The superuser (SUPER, --super; user name
-# SUPER_USER, --super-user; both until they change them) logs in with the crossword app's teacher password and creates the
-# others; a set address without an identifier is the superuser's.
+# SUPER_USER, --super-user, until they change it) creates the others; a set address without an
+# identifier is the superuser's.
 SUPER, SUPER_USER = "bys", "samuel.byland"
 TEACHER_ID = re.compile(r"[a-z]{3}")
 USER_NAME = re.compile(r"[a-z0-9](?:[a-z0-9._-]{0,38}[a-z0-9])?")
@@ -522,18 +523,28 @@ class Admin:
         self.own = own
 
     def stored_hash(self, teacher: Optional[str] = None) -> str:
-        """The password hash of a teacher (the superuser's without one): the others' are in
-        teachers.json; the superuser's is the crossword app's teacher password until they set one
-        of their own (then in teachers.json too). Read on every use, so a new password takes
-        effect without a restart."""
+        """The password hash of a teacher (the superuser's without one), from teachers.json. Read on
+        every use, so a new password takes effect without a restart. The superuser without one
+        takes over the hash of --password-file (the old shared teacher password) once: from then on
+        it is theirs alone, and the file is not read again."""
         if teacher is None or teacher == self.super:
             own = str(self.read_super().get("hash") or "")
-            if own:
+            if own or not self.password_file:
                 return own
             try:
-                return self.password_file.read_text().strip()
+                first = self.password_file.read_text().strip()
             except OSError:
                 return ""
+            if not first.startswith("pbkdf2_sha256$"):
+                return ""
+
+            def adopt(teachers, mine):
+                mine.setdefault("hash", first)
+                return mine["hash"]
+            try:
+                return self.change_teachers(adopt, own=True)
+            except OSError:
+                return first
         entry = self.read_teachers().get(teacher)
         return str(entry.get("hash") or "") if entry else ""
 
@@ -721,8 +732,7 @@ class Admin:
         return self.change_teachers(change)
 
     def change_password(self, teacher: str, current: object, new: object) -> None:
-        """A teacher's own new password. The superuser's is then theirs alone: the crossword app's
-        teacher password stays as it is (and logs in there, and in the quiz, as the superuser)."""
+        """A teacher's own new password (the superuser's too)."""
         if not isinstance(new, str) or not MIN_PASSWORD <= len(new) <= MAX_PASSWORD:
             raise ValueError(f"a password has {MIN_PASSWORD} to {MAX_PASSWORD} characters")
         if not isinstance(current, str) or not self.login(teacher, current):
@@ -1386,8 +1396,8 @@ def make_handler(admin: Admin):
                 return None
             return self.rfile.read(n)
 
-        def redirect(self, cookie: Optional[str] = None) -> None:
-            headers: Dict[str, object] = {"Location": "/admin/"}
+        def redirect(self, cookie: Optional[str] = None, to: str = "") -> None:
+            headers: Dict[str, object] = {"Location": back_to(to) or "/admin/"}
             if cookie is not None:
                 # (and the cookie of before, at /admin/ only: gone)
                 headers["Set-Cookie"] = [set_cookie(cookie), set_cookie("", "/admin/")]
@@ -1613,8 +1623,12 @@ def make_handler(admin: Admin):
             path = self.path.split("?", 1)[0]
             if path == "/":
                 teacher = self.teacher()
+                back = back_to((parse_qs(self.path.partition("?")[2]).get("next") or [""])[0])
+                if teacher and back:  # (already logged in: straight back to the page that sent them)
+                    self.redirect(to=back)
+                    return
                 self.send(200, panel_page(teacher, teacher == admin.super, admin.user_of(teacher)) if teacher
-                          else login_page(bool(admin.stored_hash())))
+                          else login_page(bool(admin.stored_hash()), next_page=back))
             elif path == "/static/admin.js":
                 self.send(200, ADMIN_JS, "text/javascript; charset=utf-8")
             elif path == "/static/drag.js":
@@ -1673,11 +1687,12 @@ def make_handler(admin: Admin):
                     return
                 form = parse_qs(data.decode("utf-8", "replace"))
                 teacher = admin.login((form.get("user") or form.get("teacher") or [""])[0], (form.get("password") or [""])[0])
+                back = back_to((form.get("next") or [""])[0])
                 if teacher:
-                    self.redirect(admin.new_session(teacher))
+                    self.redirect(admin.new_session(teacher), back)
                 else:
                     admin.failed(self.addr())
-                    self.send(403, login_page(bool(admin.stored_hash()), "Wrong user name or password."))
+                    self.send(403, login_page(bool(admin.stored_hash()), "Wrong user name or password.", back))
             elif path == "/logout":
                 self.redirect("")
             elif path == "/api/teachers":
@@ -1843,9 +1858,15 @@ def online_page(sheet: Dict[str, object], exercises: List[Dict[str, object]], op
 </html>"""
 
 
-def login_page(ready: bool, error: str = "") -> str:
+def back_to(path: str) -> str:
+    """Where to go after logging in (the crossword generator, the quiz or the game that sent the
+    teacher here, ?next=/crosswords/): a path of this site only, else ""."""
+    return path if re.fullmatch(r"/(?![/\\])[A-Za-z0-9/._~%?=&#-]{0,300}", path or "") else ""
+
+
+def login_page(ready: bool, error: str = "", next_page: str = "") -> str:
     if not ready:
-        return page("Admin", '<p class="card">Teacher access hasn\'t been set up yet: set the teacher password of the crossword app.</p>')
+        return page("Admin", '<p class="card">Teacher access hasn\'t been set up yet: start the panel once with --password-file (a hash written by crosswords-web set-password), the superuser\'s first password.</p>')
     err = f'<p class="error" role="alert">{escape(error)}</p>' if error else ""
     return page("Admin", f"""
     <form class="card login" method="post" action="/admin/login">
@@ -1853,6 +1874,7 @@ def login_page(ready: bool, error: str = "") -> str:
       {err}
       <label class="field"><span>User name</span><input type="text" name="user" required autofocus maxlength="40" autocomplete="username" autocapitalize="none" spellcheck="false"></label>
       <label class="field"><span>Password</span><input type="password" name="password" required autocomplete="current-password"></label>
+      {f'<input type="hidden" name="next" value="{escape(next_page)}">' if next_page else ''}
       <button type="submit" class="primary">Log in</button>
     </form>""")
 
@@ -1967,7 +1989,7 @@ COMMON_SECTIONS = """
         <li class="card">
           <h2><a href="/millionaire/" target="_blank" rel="noopener">Who Wants to Be a Physicist? ↗</a></h2>
           <p>A quiz in the style of <i>Who Wants to Be a Millionaire</i>: 15 physics questions of rising difficulty, a ladder of famous physicists and three lifelines. As a classroom game, students join on their phones (QR code or room code), a Fastest Finger First round picks each contestant, and Ask the Audience can be a live class vote. A quick game starts without a lobby.</p>
-          <p class="note">learningphysics.ch/millionaire/ · open to everyone</p>
+          <p class="note">learningphysics.ch/millionaire/ · you're logged in there with this account; students join on their phones without one</p>
         </li>
         <li class="card">
           <h2><a href="/crosswords/" target="_blank" rel="noopener">Crossword generator ↗</a></h2>
@@ -3472,11 +3494,12 @@ def main(argv: Optional[List[str]] = None) -> int:
     p = argparse.ArgumentParser(description="Admin panel of the learningphysics.ch hub (tags and order of the apps, sets for classes).")
     p.add_argument("--host", default="127.0.0.1")
     p.add_argument("--port", type=int, default=8040)
-    p.add_argument("--password-file", type=Path, required=True, help="the teacher password hash (crosswords-web set-password)")
+    p.add_argument("--password-file", type=Path, help="the superuser's first password (a hash written by crosswords-web set-password), "
+                                                      "taken over once into teachers.json if they have none")
     p.add_argument("--hub", type=Path, required=True, help="the hub page, whose cards list the apps")
     p.add_argument("--config", type=Path, required=True, help="where to write apps.json (served as /apps.json)")
     p.add_argument("--sets", type=Path, help="where to write sets.json (served as /sets.json; default: next to apps.json)")
-    p.add_argument("--super", default=SUPER, help=f"the identifier of the superuser, who logs in with --password-file (default: {SUPER})")
+    p.add_argument("--super", default=SUPER, help=f"the identifier of the superuser (default: {SUPER})")
     p.add_argument("--super-user", default=SUPER_USER, help=f"the superuser's user name (default: {SUPER_USER})")
     p.add_argument("--crosswords-url", default="http://127.0.0.1:8020/",
                    help="the crossword generator, whose short links a set can't take the address of (empty: off)")
