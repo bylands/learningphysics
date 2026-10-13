@@ -134,10 +134,10 @@
         T(`During the collision, which forces act between the two vehicles? Name for each force who exerts it and on whom.`, 'Welche Kräfte wirken während des Zusammenstosses zwischen den beiden Fahrzeugen? Gib für jede Kraft an, wer sie auf wen ausübt.'),
         T(`Plan: the force of the truck on the car and the force of the car on the truck form an interaction pair — use the third law. For the velocity changes use the second law for each vehicle.`,
           'Plan: Die Kraft des Lastwagens auf das Auto und die Kraft des Autos auf den Lastwagen bilden ein Wechselwirkungspaar — wende das dritte Newtonsche Gesetz an. Für die Geschwindigkeitsänderungen wende das zweite Gesetz auf jedes Fahrzeug an.'),
-        T(`Third law: <i>F</i><sub>truck on car</sub> = −<i>F</i><sub>car on truck</sub>. Second law: Δ<i>v</i> = <i>F</i>·Δ<i>t</i>/<i>m</i>.`,
-          'Drittes Gesetz: <i>F</i><sub>Lastwagen→Auto</sub> = −<i>F</i><sub>Auto→Lastwagen</sub>. Zweites Gesetz: Δ<i>v</i> = <i>F</i>·Δ<i>t</i>/<i>m</i>.'),
-        T(`Here the truck has ${k} times the mass of the car${kase.startsWith('parked') ? ', and one of them is parked' : ''}. Does any of that appear in the third law? With the same <i>F</i> and Δ<i>t</i>, how do the Δ<i>v</i> compare?`,
-          `Hier hat der Lastwagen die ${k}-fache Masse des Autos${kase.startsWith('parked') ? ', und eines der beiden ist parkiert' : ''}. Kommt davon etwas im dritten Gesetz vor? Wie verhalten sich die Δ<i>v</i> bei gleichem <i>F</i> und Δ<i>t</i>?`),
+        T(`Recall the third law: what does it say about the sizes and directions of <i>F</i><sub>truck on car</sub> and <i>F</i><sub>car on truck</sub>? For the velocities, the second law gives Δ<i>v</i> = <i>F</i>·Δ<i>t</i>/<i>m</i>.`,
+          'Erinnere dich an das dritte Gesetz: Was sagt es über Grösse und Richtung von <i>F</i><sub>Lastwagen→Auto</sub> und <i>F</i><sub>Auto→Lastwagen</sub>? Für die Geschwindigkeiten liefert das zweite Gesetz Δ<i>v</i> = <i>F</i>·Δ<i>t</i>/<i>m</i>.'),
+        T(`Here the truck has ${k} times the mass of the car${kase.startsWith('parked') ? ', and one of them is parked' : ''}. Do masses or speeds appear anywhere in the third law? Then apply Δ<i>v</i> = <i>F</i>·Δ<i>t</i>/<i>m</i> to each vehicle.`,
+          `Hier hat der Lastwagen die ${k}-fache Masse des Autos${kase.startsWith('parked') ? ', und eines der beiden ist parkiert' : ''}. Kommen Massen oder Geschwindigkeiten im dritten Gesetz vor? Wende dann Δ<i>v</i> = <i>F</i>·Δ<i>t</i>/<i>m</i> auf jedes Fahrzeug an.`),
       ],
       steps,
     };
@@ -226,12 +226,12 @@
       questions,
       hints: [
         T(`While their hands touch: which force acts on ${passive}, and which on ${pusher}? Who exerts each one?`, `Solange sich die Hände berühren: Welche Kraft wirkt auf ${passive}, welche auf ${pusher}? Wer übt jede davon aus?`),
-        T(`Plan: the two forces form an interaction pair → third law. For the speeds, use the second law for each skater, with the same force and the same time.`,
-          'Plan: Die beiden Kräfte bilden ein Wechselwirkungspaar → drittes Newtonsches Gesetz. Für die Geschwindigkeiten wende das zweite Gesetz auf jede Person an, mit gleicher Kraft und gleicher Zeit.'),
-        T(`Third law: <i>F</i><sub>${pusher} on ${passive}</sub> = −<i>F</i><sub>${passive} on ${pusher}</sub>. Second law: <i>a</i> = <i>F</i>/<i>m</i>.`,
-          `Drittes Gesetz: <i>F</i><sub>${pusher}→${passive}</sub> = −<i>F</i><sub>${passive}→${pusher}</sub>. Zweites Gesetz: <i>a</i> = <i>F</i>/<i>m</i>.`),
-        T(`Here ${heavy} has ${ratio} times the mass of ${light}. Same force, same time: whose speed gets larger, and by how much?`,
-          `Hier hat ${heavy} die ${ratio}-fache Masse von ${light}. Gleiche Kraft, gleiche Zeit: Wessen Geschwindigkeit wird grösser, und um welchen Faktor?`),
+        T(`Plan: the two forces form an interaction pair → third law. For the speeds, use the second law for each skater; the push lasts equally long for both.`,
+          'Plan: Die beiden Kräfte bilden ein Wechselwirkungspaar → drittes Newtonsches Gesetz. Für die Geschwindigkeiten wende das zweite Gesetz auf jede Person an; der Stoss dauert für beide gleich lang.'),
+        T(`Recall the third law: how do <i>F</i><sub>${pusher} on ${passive}</sub> and <i>F</i><sub>${passive} on ${pusher}</sub> compare in size and direction? Does it matter who pushes? Second law: <i>a</i> = <i>F</i>/<i>m</i>.`,
+          `Erinnere dich an das dritte Gesetz: Wie verhalten sich <i>F</i><sub>${pusher}→${passive}</sub> und <i>F</i><sub>${passive}→${pusher}</sub> in Grösse und Richtung? Spielt es eine Rolle, wer stösst? Zweites Gesetz: <i>a</i> = <i>F</i>/<i>m</i>.`),
+        T(`Here ${heavy} has ${ratio} times the mass of ${light}. Once you know how the two forces compare, apply <i>a</i> = <i>F</i>/<i>m</i> to each skater.`,
+          `Hier hat ${heavy} die ${ratio}-fache Masse von ${light}. Wenn du weisst, wie sich die beiden Kräfte verhalten, wende <i>a</i> = <i>F</i>/<i>m</i> auf jede Person an.`),
       ],
       steps,
     };
@@ -311,10 +311,10 @@
       hints: [
         T(`Name the forces: which force acts on the van, which on the car? Which two of them form an interaction pair?`, 'Benenne die Kräfte: Welche Kraft wirkt auf den Lieferwagen, welche auf das Auto? Welche zwei davon bilden ein Wechselwirkungspaar?'),
         T(`Plan: for the pair, use the third law. For the motion of the van, use the second law with the forces acting on the van only.`, 'Plan: Für das Paar gilt das dritte Newtonsche Gesetz. Für die Bewegung des Lieferwagens wende das zweite Gesetz an, nur mit den Kräften auf den Lieferwagen.'),
-        T(`Third law: <i>F</i><sub>car on van</sub> = −<i>F</i><sub>van on car</sub>. Second law for the van: ${Fpush} − ${FRv} = <i>m</i><sub>van</sub>·<i>a</i>.`,
-          `Drittes Gesetz: <i>F</i><sub>Auto→Lieferwagen</sub> = −<i>F</i><sub>Lieferwagen→Auto</sub>. Zweites Gesetz für den Lieferwagen: ${Fpush} − ${FRv} = <i>m</i><sub>LW</sub>·<i>a</i>.`),
-        T(`Here the van ${does}, so its acceleration ${acc ? `points ${acc > 0 ? fwd : back}` : 'is zero'}. The pair forces act on different bodies and never cancel.`,
-          `Hier ${does} der Lieferwagen, also ${acc ? `zeigt seine Beschleunigung ${acc > 0 ? fwd : back}` : 'ist seine Beschleunigung null'}. Die Kräfte des Paars wirken auf verschiedene Körper und heben sich nie auf.`),
+        T(`Recall the third law: how do <i>F</i><sub>car on van</sub> and <i>F</i><sub>van on car</sub> compare? Second law for the van: ${Fpush} − ${FRv} = <i>m</i><sub>van</sub>·<i>a</i>.`,
+          `Erinnere dich an das dritte Gesetz: Wie verhalten sich <i>F</i><sub>Auto→Lieferwagen</sub> und <i>F</i><sub>Lieferwagen→Auto</sub>? Zweites Gesetz für den Lieferwagen: ${Fpush} − ${FRv} = <i>m</i><sub>LW</sub>·<i>a</i>.`),
+        T(`Here the van ${does}. What does that tell you about its acceleration? And on which bodies do the two forces of the pair act: can they cancel each other?`,
+          `Hier ${does} der Lieferwagen. Was sagt dir das über seine Beschleunigung? Und auf welche Körper wirken die beiden Kräfte des Paars: Können sie sich gegenseitig aufheben?`),
       ],
       steps,
     };
@@ -345,7 +345,7 @@
     // ---------------------------------------------------------- figure
     function figure(o = {}) {
       let g = '';
-      let cx, cy, top, bottom;
+      let cx, cy, top, bottom, half = 0;
       if (hang) {
         g += D.ceiling(110, 250, 18) + D.line(180, 18, 180, 104, 'cable');
         if (obj === 'lamp') g += `<polygon class="obj" points="164,104 196,104 214,140 146,140"/>` + D.ball(180, 144, 6, 'lit');
@@ -358,17 +358,19 @@
         if (!floor) g += sup === 'shelf' ? D.rect(110, ty, 140, 8, 'solid', 1) + D.line(110, ty + 8, 110, 60, 'gline') : D.table(100, ty, 160, 190);
         const h = obj === 'book' ? 14 : obj === 'laptop' ? 8 : obj === 'vase' ? 40 : 34, w = obj === 'vase' ? 26 : obj === 'box' ? 46 : 54;
         g += obj === 'vase' ? `<path class="obj" d="M${180 - 10} ${ty} Q${180 - 20} ${ty - 22} ${180 - 6} ${ty - h} H${180 + 6} Q${180 + 20} ${ty - 22} ${180 + 10} ${ty} Z"/>` : D.rect(180 - w / 2, ty - h, w, h, 'obj', 2);
-        cx = 180; cy = ty - h / 2; top = ty - h; bottom = ty;
+        cx = 180; cy = ty - h / 2; top = ty - h; bottom = ty; half = w / 2;
       }
+      // Leave room for the partner arrow, which starts where the object touches its support.
+      const px = cx + Math.min(20, half - 2), gx = hang ? cx + 14 : Math.min(cx + 8, px - 12);
       if (o.forces) {
-        g += D.arrow(cx + 8, cy, cx + 8, cy + 50, 'f', 'F_G', { at: [cx + 16, cy + 48], anchor: 'start' });
+        g += D.arrow(gx, cy, gx, cy + 50, 'f', 'F_G', hang ? { at: [gx + 8, cy + 48], anchor: 'start' } : { at: [gx - 8, cy + 48], anchor: 'end' });
         g += hang ? D.arrow(cx - 8, top + 4, cx - 8, top - 42, 'f', Ssym, { at: [cx - 16, top - 30], anchor: 'end' }) : D.arrow(cx - 8, bottom, cx - 8, bottom - 50 - (bottom - top), 'f', Ssym, { at: [cx - 16, top - 28], anchor: 'end' });
       }
       if (o.partners) {
         const oName = T(obj, O.word), sName = T(sup, S.word);
         if (ask === 'weight') g += D.arrow(70, hang ? 232 : obj === 'box' ? 150 : 190, 70, hang ? 186 : obj === 'box' ? 104 : 144, 'f', '', { cls: 'pair' }) + D.words(78, hang ? 206 : obj === 'box' ? 126 : 166, onWord(oName, T('Earth', 'Erde')), 'start');
-        else g += hang ? D.arrow(cx + 44, top - 2, cx + 44, top + 36, 'f', '', { cls: 'pair' }) + D.words(cx + 52, top + 24, onWord(oName, sName), 'start')
-          : D.arrow(cx + 40, bottom, cx + 40, bottom + 40, 'f', '', { cls: 'pair' }) + D.words(cx + 48, bottom + 30, onWord(oName, sName), 'start');
+        else g += hang ? D.arrow(cx, obj === 'lamp' ? top : 90, cx, top + 30, 'f', '', { cls: 'pair' }) + D.words(cx - 26, top + 58, onWord(oName, sName), 'end')
+          : D.arrow(px, bottom, px, bottom + 40, 'f', '', { cls: 'pair' }) + D.words(cx + 40, bottom + 30, onWord(oName, sName), 'start');
       }
       if (hang) g += D.ground(30, 330, 232);
       return D.svg(360, hang ? 248 : 206, g, hang ? T(`A ${obj} hanging from a ${sup}`, `${cap(O.ein)} hängt an ${S.einem}`) : T(`A ${obj} resting on a ${sup}`, `${cap(O.ein)} liegt auf ${S.einem}`));
@@ -440,10 +442,10 @@
         T(`Which bodies interact with the ${obj}? What touches it, and what acts on it from a distance?`, `Welche Körper wechselwirken mit ${O.dat}? Was berührt ${O.ihn}, und was wirkt aus der Ferne?`),
         T(`Plan: list the forces on the ${obj} and use the first law (it is at rest). For the partner, find the interaction the force belongs to and swap the two bodies.`,
           `Plan: Zähle die Kräfte auf ${O.acc} auf und wende das erste Newtonsche Gesetz an (${O.er} ist in Ruhe). Für die Gegenkraft: Finde die Wechselwirkung, zu der die Kraft gehört, und vertausche die beiden Körper.`),
-        T(`First law: at rest → net force zero. Third law: if A exerts a force on B, then B exerts an equally large, opposite force on A — on the other body.`,
-          'Erstes Gesetz: in Ruhe → resultierende Kraft null. Drittes Gesetz: Übt A eine Kraft auf B aus, dann übt B eine gleich grosse, entgegengesetzte Kraft auf A aus — auf den anderen Körper.'),
-        T(`Here: the ${ask === 'weight' ? `weight is an interaction between the Earth and the ${obj}` : `force ${FS} is an interaction between the ${sup} and the ${obj}`}. Swap the two bodies to find the partner.`,
-          `Hier ist ${ask === 'weight' ? `die Gewichtskraft eine Wechselwirkung zwischen der Erde und ${O.dat}` : `die Kraft ${FS} eine Wechselwirkung zwischen ${S.dat} und ${O.dat}`}. Vertausche die beiden Körper, um die Gegenkraft zu finden.`),
+        T(`Recall the first law: what does “at rest” tell you about the net force? And the third law: if A exerts a force on B, which body exerts the partner, and on which body does it act?`,
+          'Erinnere dich an das erste Gesetz: Was sagt „in Ruhe“ über die resultierende Kraft? Und an das dritte Gesetz: Übt A eine Kraft auf B aus, welcher Körper übt dann die Gegenkraft aus, und auf welchen wirkt sie?'),
+        T(`Here: for ${ask === 'weight' ? 'the weight' : `the force ${FS}`}, write down who exerts it and on whom. Then look for the force with exactly these two bodies swapped.`,
+          `Hier: Schreibe für ${ask === 'weight' ? 'die Gewichtskraft' : `die Kraft ${FS}`} auf, wer sie auf wen ausübt. Suche dann die Kraft, bei der genau diese beiden Körper vertauscht sind.`),
       ],
       steps,
     };

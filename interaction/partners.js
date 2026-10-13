@@ -27,8 +27,8 @@
         draw: (f) => {
           let g = D.ground(0, 360, 170) + D.car(140, 170, 150) + D.dot(262, 110, 3.5, 'pt') + D.arrow(60, 60, 110, 60, 'v', 'v');
           g += D.words(262, 84, T('mosquito', 'Mücke'));
-          if (f.force) g += D.arrow(268, 112, 318, 112, 'f', '') + D.words(352, 102, T('screen on mosquito', 'Scheibe → Mücke'), 'end');
-          if (f.partner) g += D.arrow(254, 116, 206, 116, 'f', '', { cls: 'pair' }) + D.words(214, 92, T('mosquito on screen', 'Mücke → Scheibe'), 'end');
+          if (f.force) g += D.arrow(264, 110, 314, 110, 'f', '') + D.words(352, 102, T('screen on mosquito', 'Scheibe → Mücke'), 'end');
+          if (f.partner) g += D.arrow(260, 110, 212, 110, 'f', '', { cls: 'pair' }) + D.words(214, 92, T('mosquito on screen', 'Mücke → Scheibe'), 'end');
           return D.svg(360, 190, g, T('A car with a mosquito on its windscreen', 'Ein Auto mit einer Mücke auf der Windschutzscheibe'));
         },
         wrong: [
@@ -91,8 +91,8 @@
         bodies: T('the Earth and the dancer', 'der Erde und der Tänzerin'),
         draw: (f) => {
           let g = D.rect(0, 170, 360, 12, 'ice', 0) + D.line(0, 170, 360, 170, 'gline') + D.person(180, 168, 110, 1, 'down', true) + D.arrow(220, 60, 270, 60, 'v', 'v');
-          if (f.force) g += D.arrow(194, 104, 194, 152, 'f', '') + D.words(200, 146, T('Earth on dancer', 'Erde → Tänzerin'), 'start');
-          if (f.partner) g += D.arrow(60, 230, 60, 190, 'f', '', { cls: 'pair' }) + D.words(68, 214, T('dancer on Earth', 'Tänzerin → Erde'), 'start');
+          if (f.force) g += D.arrow(180, 118, 180, 164, 'f', '') + D.words(200, 146, T('Earth on dancer', 'Erde → Tänzerin'), 'start');
+          if (f.partner) g += D.arrow(180, 230, 180, 190, 'f', '', { cls: 'pair' }) + D.words(188, 214, T('dancer on Earth', 'Tänzerin → Erde'), 'start');
           return D.svg(360, 236, g, T('An ice dancer gliding on the ice', 'Eine Eistänzerin gleitet über das Eis'));
         },
         wrong: [
@@ -123,8 +123,8 @@
         draw: (f) => {
           let g = D.rect(90, 150, 180, 50, 'obj', 2) + D.rect(177, 112, 6, 46, 'solid', 1) + D.rect(171, 108, 18, 5, 'solid', 1);
           g += D.rect(150, 72, 60, 34, 'solid', 3) + D.rect(205, 82, 110, 12, 'obj', 4) + D.words(250, 222, T('wood', 'Holz'));
-          if (f.force) g += D.arrow(196, 114, 196, 156, 'f', '') + D.words(204, 136, T('hammer on nail', 'Hammer → Nagel'), 'start');
-          if (f.partner) g += D.arrow(160, 100, 160, 52, 'f', '', { cls: 'pair' }) + D.words(152, 60, T('nail on hammer', 'Nagel → Hammer'), 'end');
+          if (f.force) g += D.arrow(180, 108, 180, 150, 'f', '') + D.words(192, 136, T('hammer on nail', 'Hammer → Nagel'), 'start');
+          if (f.partner) g += D.arrow(180, 106, 180, 58, 'f', '', { cls: 'pair' }) + D.words(144, 60, T('nail on hammer', 'Nagel → Hammer'), 'end');
           return D.svg(360, 230, g, T('A hammer hitting a nail', 'Ein Hammer trifft einen Nagel'));
         },
         wrong: [
@@ -187,8 +187,8 @@
         draw: (f) => {
           let g = D.ground(0, 360, 200) + D.line(160, 118, 120, 178, 'body') + `<ellipse class="obj" cx="170" cy="92" rx="14" ry="28"/>` + D.ball(196, 92, 9, 'lit');
           g += D.words(196, 70, T('ball', 'Ball')) + D.words(118, 194, T('racket', 'Schläger'), 'end');
-          if (f.force) g += D.arrow(206, 92, 256, 92, 'f', '') + D.words(264, 88, T('racket on ball', 'Schläger → Ball'), 'start');
-          if (f.partner) g += D.arrow(160, 100, 112, 100, 'f', '', { cls: 'pair' }) + D.words(108, 90, T('ball on racket', 'Ball → Schläger'), 'end');
+          if (f.force) g += D.arrow(188, 92, 240, 92, 'f', '') + D.words(248, 88, T('racket on ball', 'Schläger → Ball'), 'start');
+          if (f.partner) g += D.arrow(184, 92, 132, 92, 'f', '', { cls: 'pair' }) + D.words(128, 84, T('ball on racket', 'Ball → Schläger'), 'end');
           return D.svg(360, 210, g, T('A racket hitting a tennis ball', 'Ein Schläger trifft einen Tennisball'));
         },
         wrong: [
@@ -219,8 +219,8 @@
         draw: (f) => {
           let g = D.ground(60, 300, 190) + D.rect(168, 16, 24, 40, 'mag-s', 1) + D.rect(168, 56, 24, 40, 'mag-n', 1) + D.text(180, 41, 'S', 'lbl small') + D.text(180, 81, 'N', 'lbl small');
           g += D.rect(173, 134, 14, 32, 'thin', 6) + D.rect(176, 140, 8, 20, 'thin', 4) + D.words(152, 158, T('clip', 'Klammer'), 'end') + D.arrow(244, 178, 244, 140, 'm', '', { head: 7 });
-          if (f.force) g += D.arrow(196, 150, 196, 112, 'f', '') + D.words(204, 124, T('magnet on clip', 'Magnet → Klammer'), 'start');
-          if (f.partner) g += D.arrow(160, 66, 160, 112, 'f', '', { cls: 'pair' }) + D.words(152, 100, T('clip on magnet', 'Klammer → Magnet'), 'end');
+          if (f.force) g += D.arrow(180, 150, 180, 118, 'f', '') + D.words(196, 124, T('magnet on clip', 'Magnet → Klammer'), 'start');
+          if (f.partner) g += D.arrow(180, 70, 180, 104, 'f', '', { cls: 'pair' }) + D.words(162, 100, T('clip on magnet', 'Klammer → Magnet'), 'end');
           return D.svg(360, 200, g, T('A bar magnet above a paper clip', 'Ein Stabmagnet über einer Büroklammer'));
         },
         wrong: [
@@ -251,8 +251,8 @@
         draw: (f) => {
           let g = D.rect(0, 170, 360, 12, 'ice', 0) + D.line(0, 170, 230, 170, 'gline') + D.ground(230, 360, 170) + D.rect(230, 40, 20, 130, 'solid', 0) + D.person(190, 168, 110, 1, 'push', true);
           g += D.words(240, 32, T('wall', 'Bande'));
-          if (f.force) g += D.arrow(234, 96, 278, 96, 'f', '') + D.words(256, 84, T('skater on wall', 'Läuferin → Bande'), 'start');
-          if (f.partner) g += D.arrow(226, 112, 140, 112, 'f', '', { cls: 'pair' }) + D.words(134, 116, T('wall on skater', 'Bande → Läuferin'), 'end');
+          if (f.force) g += D.arrow(230, 87, 278, 87, 'f', '') + D.words(256, 76, T('skater on wall', 'Läuferin → Bande'), 'start');
+          if (f.partner) g += D.arrow(229, 87, 181, 87, 'f', '', { cls: 'pair' }) + D.words(170, 78, T('wall on skater', 'Bande → Läuferin'), 'end');
           return D.svg(360, 196, g, T('A skater pushing herself off the wall of the rink', 'Eine Eisläuferin stösst sich von der Bande ab'));
         },
         wrong: [
@@ -282,9 +282,9 @@
         bodies: T('the child and the cart', 'dem Kind und dem Wagen'),
         draw: (f) => {
           let g = D.ground(0, 360, 180) + D.rect(50, 128, 110, 34, 'obj', 2) + D.ball(75, 168, 11, 'wheel') + D.ball(135, 168, 11, 'wheel');
-          g += D.line(160, 140, 226, 106, 'cable') + D.person(258, 178, 104, -1, 'hold') + D.arrow(30, 40, 80, 40, 'm', '', { head: 7 }) + D.words(88, 44, T('speeding up', 'wird schneller'), 'start');
-          if (f.force) g += D.arrow(110, 120, 156, 120, 'f', '') + D.words(104, 116, T('child on cart', 'Kind → Wagen'), 'end');
-          if (f.partner) g += D.arrow(226, 96, 182, 96, 'f', '', { cls: 'pair' }) + D.words(176, 92, T('cart on child', 'Wagen → Kind'), 'end');
+          g += D.line(160, 140, 251, 105, 'cable') + D.person(282, 178, 104, -1, 'hold') + D.arrow(30, 40, 80, 40, 'm', '', { head: 7 }) + D.words(88, 44, T('speeding up', 'wird schneller'), 'start');
+          if (f.force) g += D.arrow(160, 140, 199, 125, 'f', '') + D.words(170, 158, T('child on cart', 'Kind → Wagen'), 'start');
+          if (f.partner) g += D.arrow(251, 105, 212, 120, 'f', '', { cls: 'pair' }) + D.words(236, 94, T('cart on child', 'Wagen → Kind'), 'end');
           return D.svg(360, 196, g, T('A child pulling a cart', 'Ein Kind zieht einen Leiterwagen'));
         },
         wrong: [
@@ -346,8 +346,8 @@
         bodies: T('the floor and the girl', 'dem Boden und dem Mädchen'),
         draw: (f) => {
           let g = D.ground(40, 320, 180) + D.person(170, 178, 110, 1, 'down') + D.arrow(300, 110, 300, 64, 'v', 'v');
-          if (f.force) g += D.arrow(200, 178, 200, 132, 'f', '') + D.words(208, 146, T('floor on girl', 'Boden → Mädchen'), 'start');
-          if (f.partner) g += D.arrow(140, 184, 140, 226, 'f', '', { cls: 'pair' }) + D.words(132, 214, T('girl on floor', 'Mädchen → Boden'), 'end');
+          if (f.force) g += D.arrow(184, 178, 184, 132, 'f', '') + D.words(192, 146, T('floor on girl', 'Boden → Mädchen'), 'start');
+          if (f.partner) g += D.arrow(157, 180, 157, 222, 'f', '', { cls: 'pair' }) + D.words(149, 214, T('girl on floor', 'Mädchen → Boden'), 'end');
           return D.svg(360, 236, g, T('A girl jumping up from the floor', 'Ein Mädchen springt vom Boden hoch'));
         },
         wrong: [
@@ -378,8 +378,8 @@
         draw: (f) => {
           let g = `<path class="trace" d="M160 128 v44 M180 132 v44 M200 128 v44"/>` + `<ellipse class="obj" cx="180" cy="100" rx="24" ry="10"/>` + D.ball(206, 92, 7, 'obj') + D.line(213, 92, 236, 96, 'ln');
           g += `<polygon class="obj" points="172,94 150,58 192,92"/>` + `<polygon class="obj" points="176,108 150,128 190,106"/>`;
-          if (f.force) g += D.arrow(126, 104, 126, 60, 'f', '') + D.words(118, 74, T('air on bird', 'Luft → Vogel'), 'end');
-          if (f.partner) g += D.arrow(226, 128, 226, 172, 'f', '', { cls: 'pair' }) + D.words(234, 160, T('bird on air', 'Vogel → Luft'), 'start');
+          if (f.force) g += D.arrow(180, 100, 180, 54, 'f', '') + D.words(144, 74, T('air on bird', 'Luft → Vogel'), 'end');
+          if (f.partner) g += D.arrow(190, 114, 190, 160, 'f', '', { cls: 'pair' }) + D.words(208, 150, T('bird on air', 'Vogel → Luft'), 'start');
           return D.svg(360, 190, g, T('A hummingbird hovering in the air', 'Ein Kolibri schwebt in der Luft'));
         },
         wrong: [
@@ -423,8 +423,9 @@
       hints: [
         T('Who exerts the force in the picture, and on whom?', 'Wer übt die Kraft im Bild aus, und auf wen?'),
         T('Plan: name the two bodies of the interaction, swap them to get the partner, then use the third law for its size.', 'Plan: Nenne die beiden Körper der Wechselwirkung, vertausche sie, um die Gegenkraft zu erhalten, und wende dann für ihre Grösse das dritte Gesetz an.'),
-        third(),
-        T(`Here the interaction is between ${sc.bodies}.`, `Hier besteht die Wechselwirkung zwischen ${sc.bodies}.`),
+        T('Recall the third law: what does it say about the size and direction of the partner, compared with the force in the picture? Does it depend on mass, charge or motion?',
+          'Erinnere dich an das dritte Gesetz: Was sagt es über Grösse und Richtung der Gegenkraft, verglichen mit der Kraft im Bild? Hängt das von Masse, Ladung oder Bewegung ab?'),
+        T('Here: for each option, name who exerts the force and on whom. Is it the same pair of bodies as in the picture, swapped?', 'Hier: Nenne bei jeder Antwort, wer die Kraft auf wen ausübt. Sind es dieselben zwei Körper wie im Bild, vertauscht?'),
       ],
       steps: [
         { title: T('The interaction', 'Die Wechselwirkung'), figure: figure({ force: true }),
@@ -455,11 +456,11 @@
           eb: [T('the Earth pulls the book down', 'die Erde zieht das Buch nach unten'), [172, 112, 172, 158]],
           be: [T('the book pulls the Earth up', 'das Buch zieht die Erde nach oben'), [40, 236, 40, 200]],
           tb: [T('the table pushes the book up', 'der Tisch drückt das Buch nach oben'), [188, 120, 188, 74]],
-          bt: [T('the book pushes the table down', 'das Buch drückt den Tisch nach unten'), [222, 126, 222, 166]],
-          et: [T('the Earth pulls the table down', 'die Erde zieht den Tisch nach unten'), [150, 130, 150, 176]],
+          bt: [T('the book pushes the table down', 'das Buch drückt den Tisch nach unten'), [204, 120, 204, 162]],
+          et: [T('the Earth pulls the table down', 'die Erde zieht den Tisch nach unten'), [150, 124, 150, 170]],
           te: [T('the table pulls the Earth up', 'der Tisch zieht die Erde nach oben'), [70, 236, 70, 200]],
-          ft: [T('the floor pushes the table up', 'der Boden drückt den Tisch nach oben'), [256, 200, 256, 156]],
-          tf: [T('the table pushes the floor down', 'der Tisch drückt den Boden nach unten'), [270, 196, 270, 236]],
+          ft: [T('the floor pushes the table up', 'der Boden drückt den Tisch nach oben'), [248, 200, 248, 156]],
+          tf: [T('the table pushes the floor down', 'der Tisch drückt den Boden nach unten'), [240, 202, 240, 242]],
         },
         pairs: [['eb', 'be', 'mass-wins'], ['tb', 'bt', 'obstacle'], ['et', 'te', 'mass-wins'], ['ft', 'tf', 'obstacle']],
         wrongs: [
@@ -476,10 +477,10 @@
         forces: {
           el: [T('the Earth pulls the lamp down', 'die Erde zieht die Lampe nach unten'), [172, 134, 172, 182]],
           le: [T('the lamp pulls the Earth up', 'die Lampe zieht die Erde nach oben'), [50, 258, 50, 222]],
-          cl: [T('the cord pulls the lamp up', 'das Kabel zieht die Lampe nach oben'), [190, 120, 190, 76]],
-          lc: [T('the lamp pulls the cord down', 'die Lampe zieht das Kabel nach unten'), [204, 72, 204, 110]],
-          hc: [T('the ceiling pulls the cord up', 'die Decke zieht das Kabel nach oben'), [172, 70, 172, 34]],
-          ch: [T('the cord pulls the ceiling down', 'das Kabel zieht die Decke nach unten'), [222, 12, 222, 48]],
+          cl: [T('the cord pulls the lamp up', 'das Kabel zieht die Lampe nach oben'), [174, 116, 174, 72]],
+          lc: [T('the lamp pulls the cord down', 'die Lampe zieht das Kabel nach unten'), [186, 116, 186, 152]],
+          hc: [T('the ceiling pulls the cord up', 'die Decke zieht das Kabel nach oben'), [174, 30, 174, 2]],
+          ch: [T('the cord pulls the ceiling down', 'das Kabel zieht die Decke nach unten'), [186, 30, 186, 66]],
         },
         pairs: [['el', 'le', 'mass-wins'], ['cl', 'lc', 'obstacle'], ['hc', 'ch', 'obstacle']],
         wrongs: [
@@ -495,16 +496,16 @@
         draw: () => D.rect(0, 186, 360, 12, 'ice', 0) + D.line(0, 186, 360, 186, 'gline') + D.person(140, 184, 100, 1, 'push', true) + D.person(212, 184, 100, -1, 'hold', true) +
           D.words(140, 70, a) + D.words(212, 70, b),
         forces: {
-          ea: [T(`the Earth pulls ${a} down`, `die Erde zieht ${a} nach unten`), [126, 120, 126, 166]],
+          ea: [T(`the Earth pulls ${a} down`, `die Erde zieht ${a} nach unten`), [140, 144, 140, 182]],
           ae: [T(`${a} pulls the Earth up`, `${a} zieht die Erde nach oben`), [30, 250, 30, 212]],
           ia: [T(`the ice pushes ${a} up`, `das Eis drückt ${a} nach oben`), [154, 186, 154, 140]],
-          ai: [T(`${a} pushes the ice down`, `${a} drückt das Eis nach unten`), [110, 192, 110, 232]],
+          ai: [T(`${a} pushes the ice down`, `${a} drückt das Eis nach unten`), [128, 188, 128, 228]],
           ab: [T(`${a} pushes ${b} to the right`, `${a} drückt ${b} nach rechts`), [180, 104, 224, 104]],
           ba: [T(`${b} pushes ${a} to the left`, `${b} drückt ${a} nach links`), [174, 116, 130, 116]],
-          eb: [T(`the Earth pulls ${b} down`, `die Erde zieht ${b} nach unten`), [226, 120, 226, 166]],
+          eb: [T(`the Earth pulls ${b} down`, `die Erde zieht ${b} nach unten`), [212, 144, 212, 182]],
           be: [T(`${b} pulls the Earth up`, `${b} zieht die Erde nach oben`), [330, 250, 330, 212]],
           ib: [T(`the ice pushes ${b} up`, `das Eis drückt ${b} nach oben`), [198, 186, 198, 140]],
-          bi: [T(`${b} pushes the ice down`, `${b} drückt das Eis nach unten`), [244, 192, 244, 232]],
+          bi: [T(`${b} pushes the ice down`, `${b} drückt das Eis nach unten`), [224, 188, 224, 228]],
         },
         pairs: [['ea', 'ae', 'mass-wins'], ['ia', 'ai', 'obstacle'], ['ab', 'ba', 'active-wins'], ['eb', 'be', 'mass-wins'], ['ib', 'bi', 'obstacle']],
         wrongs: [
@@ -522,7 +523,7 @@
           ec: [T('the Earth pulls the car down', 'die Erde zieht das Auto nach unten'), [180, 126, 180, 168]],
           ce: [T('the car pulls the Earth up', 'das Auto zieht die Erde nach oben'), [40, 216, 40, 180]],
           rc: [T('the road pushes the car up', 'die Strasse drückt das Auto nach oben'), [222, 168, 222, 126]],
-          cr: [T('the car pushes the road down', 'das Auto drückt die Strasse nach unten'), [276, 172, 276, 210]],
+          cr: [T('the car pushes the road down', 'das Auto drückt die Strasse nach unten'), [214, 172, 214, 212]],
           dc: [T('the road pushes the tyres forward', 'die Strasse drückt die Reifen nach vorn'), [146, 168, 190, 168]],
           cd: [T('the tyres push the road backward', 'die Reifen drücken die Strasse nach hinten'), [146, 180, 102, 180]],
           ac: [T('the air pushes the car backward', 'die Luft drückt das Auto nach hinten'), [250, 130, 214, 130]],
@@ -592,8 +593,8 @@
       hints: [
         T('For each pair, ask of both forces: who exerts it, and on which body does it act?', 'Frage bei jedem Paar für beide Kräfte: Wer übt sie aus, und auf welchen Körper wirkt sie?'),
         T('Plan: in a right pair, the two bodies are swapped: “A on B” ↔ “B on A”, and each force has only one partner. Look for the pair where that is not so.', 'Plan: In einem richtigen Paar sind die beiden Körper vertauscht: „A auf B“ ↔ „B auf A“, und jede Kraft hat nur eine Gegenkraft. Suche das Paar, bei dem das nicht so ist.'),
-        T('Third law: partners act on two different bodies. Two forces on the same body, even if they balance, are never partners.', 'Drittes Gesetz: Kraft und Gegenkraft wirken auf zwei verschiedene Körper. Zwei Kräfte auf denselben Körper sind nie ein Paar, auch wenn sie sich aufheben.'),
-        T(`Here: on which body do the two forces of pair ${k} act?`, `Hier: Auf welchen Körper wirken die beiden Kräfte von Paar ${k}?`),
+        T('Recall the third law: on how many bodies do the two forces of a pair act? Can two forces that balance each other be a pair?', 'Erinnere dich an das dritte Gesetz: Auf wie viele Körper wirken die beiden Kräfte eines Paars? Können zwei Kräfte, die sich aufheben, ein Paar sein?'),
+        T('Here: write next to every force of every pair the body it acts on. Which pair breaks the rule?', 'Hier: Schreibe zu jeder Kraft jedes Paars den Körper, auf den sie wirkt. Welches Paar verletzt die Regel?'),
       ],
       steps: [
         { title: T('Check each pair', 'Jedes Paar prüfen'), figure: figure({ wrong: true }),

@@ -242,7 +242,8 @@ button.close:hover:not(:disabled) { color: var(--ink); }
 #profile-list li, #profile-types-list li { margin: 4px 0; }
 #profile-list .count { display: inline-block; min-width: 2.2em; font-variant-numeric: tabular-nums; color: var(--muted); }
 #profile-list li { margin: 10px 0; }
-#profile-list .fix { display: block; margin: 2px 0 0 2.2em; }
+#profile-list .claim, #profile-list .fix { display: block; margin: 2px 0 0 2.2em; }
+#profile-list .claim b { color: var(--bad); }
 #profile-list .fix b { color: var(--ok); }
 
 /* tutor mode */
