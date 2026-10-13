@@ -17,7 +17,7 @@
       revealNote: 'The worked solution unlocks once you have solved the exercise, used all hints or made three attempts.',
       solNote: 'The diagram shows all currents (<span class="c-cur">blue</span>) and voltages (<span class="c-vol">red</span>) in the circuit.',
       solNoteMeters: 'The diagram shows what the meters read.',
-      place: (m) => `Drag the ${m} onto a dashed circle in the circuit, or tap the circle. To move it, place it again.`,
+      place: (m) => `Drag the ${m} into the circuit: where it can go, a circle appears as it comes close. To move it, drag it again.`,
       levels: { easy: 'Easy', medium: 'Medium', hard: 'Hard', mixed: 'Mixed' },
       stars: (d) => `Difficulty: ${d} of 5`,
       score: (s, c) => `Solved: ${s} · first try without hints: ${c}`,
@@ -35,7 +35,7 @@
       revealNote: 'Die ausführliche Lösung wird freigeschaltet, sobald du die Aufgabe gelöst, alle Tipps genutzt oder drei Versuche gemacht hast.',
       solNote: 'Das Schaltbild zeigt alle Ströme (<span class="c-cur">blau</span>) und Spannungen (<span class="c-vol">rot</span>) in der Schaltung.',
       solNoteMeters: 'Das Schaltbild zeigt, was die Messgeräte anzeigen.',
-      place: (m) => `Ziehe das ${m} auf einen gestrichelten Kreis in der Schaltung, oder tippe auf den Kreis. Um es zu verschieben, setze es neu.`,
+      place: (m) => `Ziehe das ${m} in die Schaltung: Wo es hin kann, erscheint ein Kreis, sobald es nahe ist. Um es zu verschieben, ziehe es erneut.`,
       levels: { easy: 'Einfach', medium: 'Mittel', hard: 'Schwierig', mixed: 'Gemischt' },
       stars: (d) => `Schwierigkeit: ${d} von 5`,
       score: (s, c) => `Gelöst: ${s} · beim ersten Versuch ohne Tipps: ${c}`,
@@ -210,8 +210,8 @@
     if (r) r.checked = true;
   }
 
-  // Where does the meter go: the meter is placed at a spot of the figure (ex.slots), by a tap on
-  // the spot (or Enter on it), or by dragging the meter from its button onto it.
+  // Where does the meter go: the meter is placed at a spot of the figure (ex.slots) by dragging it
+  // from its button; the spots show only when it comes close (or by the keyboard: Tab, Enter).
   const meterName = (m) => (m === 'A' ? L('ammeter', 'Amperemeter') : L('voltmeter', 'Voltmeter'));
   function place(id) {
     if (!ex.slots || !ex.slots.includes(id) || st.solved || st.revealed) return;
@@ -223,7 +223,6 @@
   }
   function placeEvents() {
     const fig = $('#figure');
-    fig.addEventListener('click', (evt) => { const g = evt.target.closest('.slot'); if (g) place(g.dataset.slot); });
     fig.addEventListener('keydown', (evt) => {
       const g = evt.target.closest('.slot');
       if (g && (evt.key === 'Enter' || evt.key === ' ')) { evt.preventDefault(); place(g.dataset.slot); const again = $(`#figure .slot`); if (again) again.focus({ preventScroll: true }); }
@@ -239,10 +238,12 @@
       document.body.append(ghost);
       const x0 = evt.clientX, y0 = evt.clientY;
       let near = null, moved = false;
+      // shows the spots within sight of the meter; returns the nearest one within reach
       const nearest = (x, y) => {
         let best = null, bd = 56;
         for (const g of document.querySelectorAll('#figure .slot')) {
           const b = g.querySelector('circle').getBoundingClientRect(), d = Math.hypot(b.left + b.width / 2 - x, b.top + b.height / 2 - y);
+          g.classList.toggle('close', d < 110);
           if (d < bd) { bd = d; best = g; }
         }
         return best;
@@ -259,9 +260,10 @@
         document.removeEventListener('pointerup', up);
         document.removeEventListener('pointercancel', up);
         ghost.remove();
+        for (const g of document.querySelectorAll('#figure .slot.close')) g.classList.remove('close', 'near');
         if (near) place(near.dataset.slot);
-        // a tap on the button: show where it can go
-        else if (!moved) for (const g of document.querySelectorAll('#figure .slot')) { g.classList.remove('pulse'); void g.getBBox(); g.classList.add('pulse'); }
+        // a tap on the button: point to how it works
+        else if (!moved) { const note = chip.parentNode.querySelector('.note'); note.classList.remove('pulse'); void note.offsetWidth; note.classList.add('pulse'); }
       };
       move(evt);
       document.addEventListener('pointermove', move);
