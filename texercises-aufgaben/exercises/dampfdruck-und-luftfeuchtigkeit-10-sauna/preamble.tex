@@ -1,0 +1,10 @@
+\NewQty{VS}{22}[\meter\cubed]
+\NewQty{thS}{90}[\degreeCelsius]
+\NewQty{fiA}{2}[\percent]
+\NewQty{VWa}{2}[\deci\liter][e-4][\meter\cubed]
+\NewQty{rWa}{998}[\kilogram\per\meter\cubed]
+\NewQty{rsS}{0.424}[\kilogram\per\meter\cubed]
+
+\SolQty{mWa}[\rho_\text{W}V_\text{W}]{\rWaX*\VWaX}[\kilogram]
+\SolQty{mDa}[\varphi_1\,\rho_\text{s}\,V]{\fiAX/100*\rsSX*\VSX}[\kilogram]
+\SolQty{fiB}[\varphi_1+\frac{m_\text{W}}{\rho_\text{s}V}]{\fiAX+100*\mWaX/(\rsSX*\VSX)}[\percent]

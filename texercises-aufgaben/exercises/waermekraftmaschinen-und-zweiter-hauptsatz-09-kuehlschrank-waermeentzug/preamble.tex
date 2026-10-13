@@ -1,0 +1,10 @@
+\NewQty{tk}{4.5}[\degreeCelsius]
+\NewQty{tw}{20}[\degreeCelsius]
+\NewQty{fr}{6.5}[\percent][e-2]
+\NewQty{Pk}{22}[\watt]
+\NewQty*{td}{1}[\day][86400][\second]
+
+\SolQty{Tk}[\vartheta_\text{k}+\SI{273.15}{\kelvin}]{\tkX+273.15}[\kelvin]
+\SolQty{Tw}[\vartheta_\text{w}+\SI{273.15}{\kelvin}]{\twX+273.15}[\kelvin]
+\SolQty{eK}[f\,\frac{T_\text{k}}{T_\text{w}-T_\text{k}}]{\frX*\TkX/(\TwX-\TkX)}
+\SolQty{Qk}[f\,\frac{T_\text{k}}{T_\text{w}-T_\text{k}}\,P\,t]{\eKX*\PkX*\tdX}[\joule]

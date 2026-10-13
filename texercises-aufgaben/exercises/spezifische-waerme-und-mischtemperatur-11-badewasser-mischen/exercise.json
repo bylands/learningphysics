@@ -1,0 +1,18 @@
+{
+  "title": "Badewasser mischen",
+  "note": "aus den Aufgabenblättern (W3 Spezifische und latente Wärme, Nr. 6; W3 Spezifische und latente Wärme (2007), Nr. 5)",
+  "language": "GER",
+  "type": 1,
+  "default_difficulty": 2,
+  "default_points": 0,
+  "tags": [
+    "abschätzung",
+    "alltag",
+    "mischtemperatur",
+    "wärme"
+  ],
+  "subbranches": [
+    "Temperatur & Heat"
+  ],
+  "youtube": ""
+}

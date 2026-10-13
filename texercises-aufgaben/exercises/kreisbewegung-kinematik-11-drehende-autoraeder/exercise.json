@@ -1,0 +1,19 @@
+{
+  "title": "Drehende Autoräder",
+  "note": "aus den Aufgabenblättern (K5 Kreisbewegung, Nr. 11)",
+  "language": "GER",
+  "type": 1,
+  "default_difficulty": 2,
+  "default_points": 0,
+  "tags": [
+    "abschätzen",
+    "kinematik",
+    "kreisbewegung",
+    "radialbeschleunigung",
+    "umlaufzeit"
+  ],
+  "subbranches": [
+    "Circular Motion"
+  ],
+  "youtube": ""
+}

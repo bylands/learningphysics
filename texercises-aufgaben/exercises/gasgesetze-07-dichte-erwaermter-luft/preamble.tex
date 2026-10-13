@@ -1,0 +1,7 @@
+\NewQty{thEi}{15}[\degreeCelsius]
+\NewQty{thZw}{31}[\degreeCelsius]
+
+\SolQty{TEi}[\vartheta_1+\SI{273.15}{\kelvin}]{\thEiX+273.15}[\kelvin]
+\SolQty{TZw}[\vartheta_2+\SI{273.15}{\kelvin}]{\thZwX+273.15}[\kelvin]
+\SolQty{rq}[\frac{T_1}{T_2}]{\TEiX/\TZwX}
+\SolQty{drr}[\frac{T_1}{T_2}-1]{100*(\rqX-1)}[\percent]

@@ -1,0 +1,19 @@
+{
+  "title": "Snowboarderin in Senke und Buckel",
+  "note": "aus den Aufgabenblättern (D6_Zentripetalkraft, Nr. 10; D6 Zentripetalkraft, Nr. 13; D6 KS Kreisbewegung, Nr. 14; D6KS_Kreisbewegung, Nr. 13)",
+  "language": "GER",
+  "type": 2,
+  "default_difficulty": 3,
+  "default_points": 0,
+  "tags": [
+    "kreisbewegung",
+    "normalkraft",
+    "resultierende kraft",
+    "zentripetalkraft"
+  ],
+  "subbranches": [
+    "Circular Motion",
+    "Dynamics"
+  ],
+  "youtube": ""
+}

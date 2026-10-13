@@ -1,0 +1,42 @@
+{
+  "title": "Gravitationsenergie – Aufgaben aus den Aufgabenblättern",
+  "description": "Gravitationsenergie aus den Aufgabenblättern G2/G3: Hubarbeit im Gravitationsfeld, Fluchtgeschwindigkeit, Schwarzschildradius, Energieerhaltung auf Ellipsenbahnen (Helios, Hohmann-Transfer). Konstanten und Bahndaten aus Formeln, Tabellen, Begriffe (7. Aufl.).",
+  "kind": "sheet",
+  "is_private": true,
+  "tags": [
+    "gravitation",
+    "gravitationsenergie"
+  ],
+  "items": [
+    {
+      "exercise": "gravitationsenergie-01-energie-fuer-einen-satelliten"
+    },
+    {
+      "exercise": "gravitationsenergie-02-gravitationsenergie-bei-doppelter-flughoehe"
+    },
+    {
+      "exercise": "gravitationsenergie-03-fluchtgeschwindigkeit-von-der-sonne"
+    },
+    {
+      "exercise": "gravitationsenergie-04-schwarzschildradius-eines-supermassiven-lochs"
+    },
+    {
+      "exercise": "gravitationsenergie-05-schwarzes-loch-in-der-galaxie-m84"
+    },
+    {
+      "exercise": "gravitationsenergie-06-gueltigkeit-von-mgh"
+    },
+    {
+      "exercise": "gravitationsenergie-07-aufprallgeschwindigkeit-eines-meteors"
+    },
+    {
+      "exercise": "gravitationsenergie-08-mittlere-dichte-eines-schwarzen-lochs"
+    },
+    {
+      "exercise": "gravitationsenergie-09-sonnensonde-helios"
+    },
+    {
+      "exercise": "gravitationsenergie-10-hohmann-transfer-eines-satelliten"
+    }
+  ]
+}

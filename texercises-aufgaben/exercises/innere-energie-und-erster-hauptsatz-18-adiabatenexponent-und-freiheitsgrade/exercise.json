@@ -1,0 +1,18 @@
+{
+  "title": "Adiabatenexponent und Freiheitsgrade",
+  "note": "aus den Aufgabenblättern (W3 Spezifische Wärme, Nr. 14)",
+  "language": "GER",
+  "type": 2,
+  "default_difficulty": 3,
+  "default_points": 0,
+  "tags": [
+    "adiabatenexponent",
+    "freiheitsgrade",
+    "ideales gas",
+    "molare wärme"
+  ],
+  "subbranches": [
+    "Laws of Thermodynamics"
+  ],
+  "youtube": ""
+}

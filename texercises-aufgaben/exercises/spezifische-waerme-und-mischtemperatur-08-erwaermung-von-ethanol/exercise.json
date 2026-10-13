@@ -1,0 +1,17 @@
+{
+  "title": "Erwärmung einer Flüssigkeit",
+  "note": "aus den Aufgabenblättern (W3 Spezifische und latente Wärme, Nr. 3)",
+  "language": "GER",
+  "type": 1,
+  "default_difficulty": 1,
+  "default_points": 0,
+  "tags": [
+    "dichte",
+    "spezifische wärme",
+    "wärme"
+  ],
+  "subbranches": [
+    "Temperatur & Heat"
+  ],
+  "youtube": ""
+}

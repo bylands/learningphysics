@@ -1,0 +1,19 @@
+{
+  "title": "Astronaut auf dem Mond",
+  "note": "aus den Aufgabenblättern (D4 Normal- & Reibungskraft, Nr. 2)",
+  "language": "GER",
+  "type": 2,
+  "default_difficulty": 1,
+  "default_points": 0,
+  "tags": [
+    "dynamik",
+    "formelsammlung",
+    "gewichtskraft",
+    "mond",
+    "normalkraft"
+  ],
+  "subbranches": [
+    "Dynamics"
+  ],
+  "youtube": ""
+}

@@ -1,0 +1,18 @@
+{
+  "title": "Vollbremsung und Inertialsystem",
+  "note": "aus den Aufgabenblättern (D1 Masse und Dichte, Nr. 4; D1 Masse, Dichte & Impuls, Nr. 2; D1_Dichte, Nr. 3)",
+  "language": "GER",
+  "type": 0,
+  "default_difficulty": 1,
+  "default_points": 0,
+  "tags": [
+    "bezugssystem",
+    "dynamik",
+    "inertialsystem",
+    "trägheitsgesetz"
+  ],
+  "subbranches": [
+    "Dynamics"
+  ],
+  "youtube": ""
+}

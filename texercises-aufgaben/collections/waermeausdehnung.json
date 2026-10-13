@@ -1,0 +1,54 @@
+{
+  "title": "Wärmeausdehnung – Aufgaben aus den Aufgabenblättern",
+  "description": "Längen- und Volumenausdehnung aus den Aufgabenblättern T1/W1: Ausdehnungskoeffizienten, Längen- und Volumenänderungen, Dichte bei anderer Temperatur, Abschätzungen. Stoffwerte aus Formeln, Tabellen, Begriffe (7. Aufl.).",
+  "kind": "sheet",
+  "is_private": true,
+  "tags": [
+    "wärmeausdehnung",
+    "temperatur"
+  ],
+  "items": [
+    {
+      "exercise": "waermeausdehnung-01-material-eines-metallstabs"
+    },
+    {
+      "exercise": "waermeausdehnung-02-ausdehnung-einer-stahlbruecke"
+    },
+    {
+      "exercise": "waermeausdehnung-03-kupferstab-bei-tiefer-temperatur"
+    },
+    {
+      "exercise": "waermeausdehnung-04-volumenzunahme-eines-aluminiumwuerfels"
+    },
+    {
+      "exercise": "waermeausdehnung-05-erwaermung-von-glycerin"
+    },
+    {
+      "exercise": "waermeausdehnung-06-ausgleichsgefaess-einer-zentralheizung"
+    },
+    {
+      "exercise": "waermeausdehnung-07-erwaermtes-quecksilberkuegelchen"
+    },
+    {
+      "exercise": "waermeausdehnung-08-dichte-von-heissem-glycerin"
+    },
+    {
+      "exercise": "waermeausdehnung-09-luecken-in-eisenbahnschienen"
+    },
+    {
+      "exercise": "waermeausdehnung-10-durchhang-von-stromleitungen"
+    },
+    {
+      "exercise": "waermeausdehnung-11-lochdurchmesser-eines-erhitzten-rings"
+    },
+    {
+      "exercise": "waermeausdehnung-12-volumen-von-warmem-methanol"
+    },
+    {
+      "exercise": "waermeausdehnung-13-steigroehrchen-eines-fluessigkeitsthermometers"
+    },
+    {
+      "exercise": "waermeausdehnung-14-meeresspiegelanstieg-durch-erwaermung"
+    }
+  ]
+}

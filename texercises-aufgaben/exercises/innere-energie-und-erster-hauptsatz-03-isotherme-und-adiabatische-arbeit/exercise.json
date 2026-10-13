@@ -1,0 +1,19 @@
+{
+  "title": "Isotherme und adiabatische Arbeit",
+  "note": "aus den Aufgabenblättern (W1 Temperatur und Wärme, Nr. 5; W1 Innere Energie, Nr. 2; W1 Wärme, Nr. 2)",
+  "language": "GER",
+  "type": 7,
+  "default_difficulty": 2,
+  "default_points": 0,
+  "tags": [
+    "adiabatisch",
+    "erster hauptsatz",
+    "innere energie",
+    "isotherm",
+    "thermodynamik"
+  ],
+  "subbranches": [
+    "Laws of Thermodynamics"
+  ],
+  "youtube": ""
+}

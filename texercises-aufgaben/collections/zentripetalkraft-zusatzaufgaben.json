@@ -1,0 +1,33 @@
+{
+  "title": "Zentripetalkraft (Zusatzaufgaben) – Aufgaben aus den Aufgabenblättern",
+  "description": "Zusatzaufgaben zur Kreisbewegung und Zentripetalkraft aus den Aufgabenblättern D6: Hammerwerfen, Looping, Bob, Snowboarderin, Festplatte, Bremsen oder Ausweichen. Rechnen Sie mit g = 9.81 m/s².",
+  "kind": "sheet",
+  "is_private": true,
+  "tags": [
+    "kreisbewegung",
+    "zentripetalkraft"
+  ],
+  "items": [
+    {
+      "exercise": "zentripetalkraft-zusatzaufgaben-01-hammerwerfen"
+    },
+    {
+      "exercise": "zentripetalkraft-zusatzaufgaben-02-achterbahn-im-looping"
+    },
+    {
+      "exercise": "zentripetalkraft-zusatzaufgaben-03-bob-in-der-kurve"
+    },
+    {
+      "exercise": "zentripetalkraft-zusatzaufgaben-04-snowboarderin-senke-und-buckel"
+    },
+    {
+      "exercise": "zentripetalkraft-zusatzaufgaben-05-kraefte-im-vertikalen-looping"
+    },
+    {
+      "exercise": "zentripetalkraft-zusatzaufgaben-06-festplatte-im-computer"
+    },
+    {
+      "exercise": "zentripetalkraft-zusatzaufgaben-07-bremsen-oder-ausweichen"
+    }
+  ]
+}

@@ -1,0 +1,9 @@
+\NewQty{VWa}{5.5}[\deci\liter][e-4][\m\cubed]
+\NewQty*{tMi}{3}[\minute][60][\s]
+\NewQty{Ta}{20}[\celsius]
+\NewQty{Tb}{80}[\celsius]
+\NewQty{rhW}{998}[\kilogram\per\meter\cubed]
+\NewQty{cW}{4182}[\joule\per\kilogram\per\kelvin]
+
+\SolQty{dT}[\vartheta_2-\vartheta_1]{\TbX-\TaX}[\kelvin]
+\SolQty{PN}[\frac{\rho\,V c\,\Delta\vartheta}{t}]{\rhWX*\VWaX*\cWX*\dTX/\tMiX}[\watt]

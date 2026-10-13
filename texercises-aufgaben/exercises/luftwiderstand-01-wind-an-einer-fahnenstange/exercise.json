@@ -1,0 +1,18 @@
+{
+  "title": "Wind an einer Fahnenstange",
+  "note": "aus den Aufgabenblättern (D5 Kräfte am Hang & Luftwiderstand, Nr. 7)",
+  "language": "GER",
+  "type": 1,
+  "default_difficulty": 1,
+  "default_points": 0,
+  "tags": [
+    "dynamik",
+    "formelsammlung",
+    "luftwiderstand",
+    "widerstandszahl"
+  ],
+  "subbranches": [
+    "Dynamics"
+  ],
+  "youtube": ""
+}

@@ -1,0 +1,54 @@
+{
+  "title": "Gleichmässig beschleunigte Bewegung – Aufgaben aus den Aufgabenblättern",
+  "description": "Gleichmässig beschleunigte Bewegung aus den Aufgabenblättern K2/K2a: Beschleunigung, Bremsen, mittlere Geschwindigkeit, Einholen und Begegnen (graphisch und algebraisch), Diagramme und Messtabellen, Anhalteweg, Einheiten und Grössenvergleiche.",
+  "kind": "sheet",
+  "is_private": true,
+  "tags": [
+    "gleichmässig beschleunigte bewegung",
+    "kinematik"
+  ],
+  "items": [
+    {
+      "exercise": "gleichmaessig-beschleunigte-bewegung-01-beschleunigung-auto"
+    },
+    {
+      "exercise": "gleichmaessig-beschleunigte-bewegung-02-bremsende-velofahrerin"
+    },
+    {
+      "exercise": "gleichmaessig-beschleunigte-bewegung-03-kugel-auf-schiefer-ebene"
+    },
+    {
+      "exercise": "gleichmaessig-beschleunigte-bewegung-04-messtabelle"
+    },
+    {
+      "exercise": "gleichmaessig-beschleunigte-bewegung-05-anfangsgeschwindigkeit-aus-sekundenstrecken"
+    },
+    {
+      "exercise": "gleichmaessig-beschleunigte-bewegung-06-gleichfoermig-gegen-beschleunigt"
+    },
+    {
+      "exercise": "gleichmaessig-beschleunigte-bewegung-07-durchschnittsgeschwindigkeit-naechste-fuenf-sekunden"
+    },
+    {
+      "exercise": "gleichmaessig-beschleunigte-bewegung-08-einholen-beim-autorennen"
+    },
+    {
+      "exercise": "gleichmaessig-beschleunigte-bewegung-09-diagramm-nachweisen"
+    },
+    {
+      "exercise": "gleichmaessig-beschleunigte-bewegung-10-anhalteweg"
+    },
+    {
+      "exercise": "gleichmaessig-beschleunigte-bewegung-11-motorrad-und-fahrrad-am-pass"
+    },
+    {
+      "exercise": "gleichmaessig-beschleunigte-bewegung-12-st-und-vt-diagramme-zuordnen"
+    },
+    {
+      "exercise": "gleichmaessig-beschleunigte-bewegung-13-groessen-vergleichen"
+    },
+    {
+      "exercise": "gleichmaessig-beschleunigte-bewegung-14-einheiten-von-parametern"
+    }
+  ]
+}

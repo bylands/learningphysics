@@ -1,0 +1,17 @@
+\NewQty{aL}{3.5}[\N]
+\NewQty{aR}{350}[\gram][e-3][\kg]
+\NewQty*{bL}{5.3}[\gram\per\liter][1][\kilo\gram\per\cubic\meter]
+\NewQty{bR}{5.3}[\kilo\gram\per\cubic\meter]
+\NewQty{cM}{1.5}[\kg]
+\NewQty{cA}{7}[\mpss]
+\NewQty{cR}{105}[\N]
+\NewQty{dP}{45}[\kilo\gram\centi\meter\per\second][e-2][\kilo\gram\meter\per\second]
+\NewQty{dR}{0.45}[\newton\second]
+\NewQty*{eL}{72}[\meter\per\hour][1/3600][\mps]
+\NewQty{eR}{2}[\milli\meter\per\second][e-3][\mps]
+\NewQty{fL}{35}[\milli\meter\cubed][e-9][\cubic\meter]
+\NewQty{fR}{0.35}[\deci\liter][e-4][\cubic\meter]
+
+\SolQty{cL}[m\,a]{\cMX*\cAX}[\N]
+\ConvTo{dPs}{1}{dP}{\newton\second}
+\ConvTo{eLs}{1}{eL}{\mps}

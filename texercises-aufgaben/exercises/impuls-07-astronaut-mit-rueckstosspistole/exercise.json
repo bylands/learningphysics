@@ -1,0 +1,17 @@
+{
+  "title": "Astronaut mit Rückstosspistole",
+  "note": "aus den Aufgabenblättern (D2 Impuls, Nr. 10; D1 Masse, Dichte & Impuls, Nr. 12; D2 Impuls (2007), Nr. 8)",
+  "language": "GER",
+  "type": 1,
+  "default_difficulty": 2,
+  "default_points": 0,
+  "tags": [
+    "impuls",
+    "impulserhaltung",
+    "rückstoss"
+  ],
+  "subbranches": [
+    "Momentum"
+  ],
+  "youtube": ""
+}

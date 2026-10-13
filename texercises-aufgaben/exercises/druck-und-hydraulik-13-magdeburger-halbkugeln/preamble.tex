@@ -1,0 +1,7 @@
+\NewQty{nPf}{8}
+\NewQty{FPf}{3}[\kilo\newton][e3][\newton]
+\NewQty{pnm}{1.013}[\bar][e5][\pascal]
+
+\SolQty{FZu}[n\,F_1]{\nPfX*\FPfX}[\newton]
+\SolQty{rmh}[\sqrt{\frac{n\,F_1}{\pi\,p_0}}]{sqrt(\nPfX*\FPfX/(pi*\pnmX))}[\meter]
+\SolQty{dmh}[2r]{2*\rmhX}[\meter]

@@ -1,0 +1,18 @@
+{
+  "title": "Abwärme eines Automotors",
+  "note": "aus den Aufgabenblättern (W1 Temperatur und Wärme, Nr. 7; W4 Wärmetransport, Nr. 1)",
+  "language": "GER",
+  "type": 0,
+  "default_difficulty": 1,
+  "default_points": 0,
+  "tags": [
+    "konvektion",
+    "wärmeleitung",
+    "wärmestrahlung",
+    "wärmetransport"
+  ],
+  "subbranches": [
+    "Heat Transfer"
+  ],
+  "youtube": ""
+}

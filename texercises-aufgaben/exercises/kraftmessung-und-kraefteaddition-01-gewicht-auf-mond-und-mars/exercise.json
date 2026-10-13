@@ -1,0 +1,19 @@
+{
+  "title": "Gewicht auf der Erde, dem Mond und dem Mars",
+  "note": "aus den Aufgabenblättern (D3 Kraftmessung & Kräfteaddition, Nr. 2)",
+  "language": "GER",
+  "type": 1,
+  "default_difficulty": 1,
+  "default_points": 0,
+  "tags": [
+    "dynamik",
+    "fallbeschleunigung",
+    "formelsammlung",
+    "gewichtskraft",
+    "masse"
+  ],
+  "subbranches": [
+    "Dynamics"
+  ],
+  "youtube": ""
+}

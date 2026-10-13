@@ -1,0 +1,21 @@
+\begin{center}
+\begin{tikzpicture}[>=stealth]
+ \draw[->] (0,0) -- (8.5,0) node[below] {$x$};
+ \draw[->] (0,0) -- (0,5) node[left] {$y$};
+ \draw[->, thick, blue] (0,0) -- (6.71,0) node[midway, below] {$v_x$};
+ \draw[->, thick, blue] (6.71,0) -- (6.71,4.36) node[midway, right] {$v_y$};
+ \draw[->, very thick, red] (0,0) -- (6.71,4.36) node[midway, above left] {$\vec v_0$};
+ \draw (1.6,0) arc (0:33:1.6);
+ \node at (2.0,0.55) {$\alpha$};
+\end{tikzpicture}
+\end{center}
+
+Der Geschwindigkeitsvektor $\vec v_0$ ist die Hypotenuse eines rechtwinkligen Dreiecks mit den Katheten $v_x$ (parallel zur Erdoberfläche) und $v_y$ (senkrecht dazu):
+\begin{align}
+ v_x &= \vxF \\
+   &= \vab\cdot\cos\left(\alO\right) \\
+   &= \vx \approx \result{\vxP{0}{2}} \\
+ v_y &= \vyF \\
+   &= \vab\cdot\sin\left(\alO\right) \\
+   &= \vy \approx \result{\vyP{0}{2}}
+\end{align}

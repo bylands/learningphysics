@@ -1,0 +1,12 @@
+\NewQty{mE}{35}[\gram][e-3][\kg]
+\NewQty{TE}{-8}[\celsius]
+\NewQty{VC}{2.5}[\deci\liter][e-4][\m\cubed]
+\NewQty{TC}{25}[\celsius]
+\NewQty{Tn}{0}[\celsius]
+\NewQty{rhW}{998}[\kilogram\per\meter\cubed]
+\NewQty{cW}{4182}[\joule\per\kilogram\per\kelvin]
+\NewQty{cE}{2100}[\joule\per\kilogram\per\kelvin]
+\NewQty{LfE}{3.338e5}[\joule\per\kilogram]
+
+\SolQty{mCo}[\rho\,V]{\rhWX*\VCX}[\kg]
+\SolQty{Tm}[\frac{m_\text{C}c_\text{W}\vartheta_\text{C}+m_\text{E}c_\text{W}\vartheta_0-m_\text{E}\left(c_\text{E}\left(\vartheta_0-\vartheta_\text{E}\right)+L_\text{f}\right)}{\left(m_\text{C}+m_\text{E}\right)c_\text{W}}]{(\mCoX*\cWX*\TCX+\mEX*\cWX*\TnX-\mEX*(\cEX*(\TnX-\TEX)+\LfEX))/((\mCoX+\mEX)*\cWX)}[\celsius]

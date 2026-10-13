@@ -1,0 +1,19 @@
+{
+  "title": "Meeresspiegelanstieg durch Erwärmung",
+  "note": "aus den Aufgabenblättern (W1 Temperatur und Wärme, Nr. 14; T1 Längen- und Volumenausdehnung, Nr. 15)",
+  "language": "GER",
+  "type": 1,
+  "default_difficulty": 2,
+  "default_points": 0,
+  "tags": [
+    "abschätzung",
+    "klima",
+    "volumenausdehnung",
+    "wasser",
+    "wärmeausdehnung"
+  ],
+  "subbranches": [
+    "Thermal Expansion"
+  ],
+  "youtube": ""
+}

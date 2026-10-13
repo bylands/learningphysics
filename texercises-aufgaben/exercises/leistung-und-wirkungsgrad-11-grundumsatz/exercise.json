@@ -1,0 +1,17 @@
+{
+  "title": "Grundumsatz des Menschen",
+  "note": "aus den Aufgabenblättern (E3 Energetik, Nr. 11)",
+  "language": "GER",
+  "type": 1,
+  "default_difficulty": 1,
+  "default_points": 0,
+  "tags": [
+    "einheiten",
+    "leistung",
+    "stoffwechsel"
+  ],
+  "subbranches": [
+    "Work, Energy, Power"
+  ],
+  "youtube": ""
+}

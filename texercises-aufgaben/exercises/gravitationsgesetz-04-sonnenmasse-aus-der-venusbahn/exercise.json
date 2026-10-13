@@ -1,0 +1,21 @@
+{
+  "title": "Sonnenmasse aus der Venusbahn",
+  "note": "aus den Aufgabenblättern (G2 Gravitation, Nr. 7; G2 Gravitationsgesetz, Nr. 4)",
+  "language": "GER",
+  "type": 1,
+  "default_difficulty": 1,
+  "default_points": 0,
+  "tags": [
+    "formelsammlung",
+    "gravitation",
+    "gravitationsgesetz",
+    "kreisbahn",
+    "planetenbahn",
+    "sonnenmasse"
+  ],
+  "subbranches": [
+    "Gravitation",
+    "Gravitation/Celestial mechanics"
+  ],
+  "youtube": ""
+}

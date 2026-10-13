@@ -1,0 +1,43 @@
+\begin{abcliste}
+\abc Im tiefsten Punkt zeigt die Geschwindigkeit bei Drehung im Gegenuhrzeigersinn horizontal nach rechts, $\vec v_0 = \left(\vkO\,\middle|\,0\right)$. Die Bewegung ist gleichförmig, der Betrag bleibt $v = \vkO$. Man zeichnet einen Kreis mit Radius $v$ um den Anfangspunkt von $\vec v_0$ und sucht den Punkt mit der horizontalen Komponente $v_x = \vxeO$. Die vertikale Komponente ist dann
+\begin{align}
+ v_y &= \vyeF = \sqrt{\left(\vk\right)^2-\left(\vxe\right)^2} = \vye
+\end{align}
+(nach oben, weil der Körper nach dem tiefsten Punkt aufsteigt). Der Geschwindigkeitsvektor dreht sich gleich wie der Radius, der Winkel zwischen $\vec v_0$ und $\vec v$ ist also der gesuchte Drehwinkel:
+\begin{center}
+\begin{tikzpicture}[>=stealth]
+ \draw[gray] (0,0) circle (5);
+ \draw[->, very thick, red] (0,0) -- (5,0) node[below] {$\vec v_0$};
+ \draw[->, very thick, red] (0,0) -- (3,4) node[above right] {$\vec v$};
+ \draw[dashed] (3,0) -- (3,4);
+ \draw[|<->|] (0,-0.5) -- (3,-0.5) node[midway, below] {$v_x$};
+ \draw (1.4,0) arc (0:53.13:1.4);
+ \node at (1.65,0.75) {$\varphi$};
+\end{tikzpicture}
+\hspace{1cm}
+\begin{tikzpicture}[>=stealth, scale=0.16]
+ \draw[thick] (0,27) circle (27);
+ \fill (0,27) circle (0.4);
+ \draw[dashed] (0,27) -- (0,0) node[midway, left] {$r$};
+ \draw[dashed] (0,27) -- (21.6,10.8);
+ \draw (0,21) arc (270:323.13:6);
+ \node at (3.6,19.6) {$\varphi$};
+ \fill (0,0) circle (0.6);
+ \draw[->, very thick, red] (0,0) -- (10,0) node[below] {$\vec v_0$};
+ \fill (21.6,10.8) circle (0.6);
+ \draw[->, very thick, red] (21.6,10.8) -- (27.6,18.8) node[right] {$\vec v$};
+\end{tikzpicture}
+\end{center}
+Aus der Zeichnung oder mit $\cos\varphi = v_x/v$:
+\begin{align}
+ \varphi &= \phkF = \arccos\frac{\vxe}{\vk} = \phk \approx \result{\phkP{0}{2}} \;\left(\phkdP{0}{2}\right)
+\end{align}
+Dabei ist angenommen, dass der Körper weniger als eine Viertelumdrehung zurückgelegt hat.
+
+\abc Die Winkelgeschwindigkeit ist $\omega = \varphi/t = \omk$. Mit $v = \omega\,r$ folgt für den Radius
+\begin{align}
+ r &= \frac{v}{\omega} = \rkF \\
+   &= \frac{\vk\cdot\tk}{\phk} \\
+   &= \rk \approx \result{\rkP{0}{2}}
+\end{align}
+\end{abcliste}

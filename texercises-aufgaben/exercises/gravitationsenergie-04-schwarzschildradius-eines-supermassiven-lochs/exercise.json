@@ -1,0 +1,19 @@
+{
+  "title": "Schwarzschildradius eines supermassiven Schwarzen Lochs",
+  "note": "aus den Aufgabenblättern (G2 Gravitation, Nr. 11; G3 Gravitationsenergie, Nr. 4)",
+  "language": "GER",
+  "type": 1,
+  "default_difficulty": 1,
+  "default_points": 0,
+  "tags": [
+    "fluchtgeschwindigkeit",
+    "gravitation",
+    "schwarzes loch",
+    "schwarzschildradius"
+  ],
+  "subbranches": [
+    "Gravitation",
+    "Work, Energy, Power"
+  ],
+  "youtube": ""
+}

@@ -1,0 +1,18 @@
+{
+  "title": "Wasserkanister erhitzen",
+  "note": "aus den Aufgabenblättern (D1 Dichte, Nr. 11; D1 Dichte KS, Nr. 8)",
+  "language": "GER",
+  "type": 1,
+  "default_difficulty": 2,
+  "default_points": 0,
+  "tags": [
+    "dichte",
+    "formelsammlung",
+    "temperatur",
+    "wasser"
+  ],
+  "subbranches": [
+    "Dynamics"
+  ],
+  "youtube": ""
+}

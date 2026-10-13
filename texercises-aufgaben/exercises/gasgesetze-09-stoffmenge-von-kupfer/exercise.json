@@ -1,0 +1,17 @@
+{
+  "title": "Stoffmenge von Kupfer",
+  "note": "aus den Aufgabenblättern (G1 Gasgesetze, Nr. 7)",
+  "language": "GER",
+  "type": 1,
+  "default_difficulty": 1,
+  "default_points": 0,
+  "tags": [
+    "mol",
+    "molare masse",
+    "stoffmenge"
+  ],
+  "subbranches": [
+    "Gas Laws"
+  ],
+  "youtube": ""
+}

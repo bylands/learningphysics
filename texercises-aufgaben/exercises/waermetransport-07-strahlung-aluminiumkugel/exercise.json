@@ -1,0 +1,17 @@
+{
+  "title": "Strahlung einer Aluminiumkugel",
+  "note": "aus den Aufgabenblättern (W4 Wärmetransport, Nr. 6)",
+  "language": "GER",
+  "type": 1,
+  "default_difficulty": 2,
+  "default_points": 0,
+  "tags": [
+    "emissionszahl",
+    "stefan-boltzmann-gesetz",
+    "wärmestrahlung"
+  ],
+  "subbranches": [
+    "Heat Transfer"
+  ],
+  "youtube": ""
+}

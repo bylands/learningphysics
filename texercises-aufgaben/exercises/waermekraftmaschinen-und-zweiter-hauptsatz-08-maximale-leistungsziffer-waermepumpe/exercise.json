@@ -1,0 +1,17 @@
+{
+  "title": "Maximale Leistungsziffer einer Wärmepumpe",
+  "note": "aus den Aufgabenblättern (W2 Wärmekraftmaschinen, Nr. 8)",
+  "language": "GER",
+  "type": 1,
+  "default_difficulty": 1,
+  "default_points": 0,
+  "tags": [
+    "leistungsziffer",
+    "wärmepumpe",
+    "zweiter hauptsatz"
+  ],
+  "subbranches": [
+    "Laws of Thermodynamics"
+  ],
+  "youtube": ""
+}

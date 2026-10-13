@@ -1,0 +1,18 @@
+{
+  "title": "U-Rohr mit zwei Flüssigkeiten",
+  "note": "aus den Aufgabenblättern (H2 Schweredruck, Nr. 8; H12 Druck und Schweredruck, Nr. 11; H Hydrostatik, Nr. 9; H1 Hydrostatik, Nr. 9)",
+  "language": "GER",
+  "type": 1,
+  "default_difficulty": 2,
+  "default_points": 0,
+  "tags": [
+    "hydrostatik",
+    "schweredruck",
+    "u-rohr",
+    "verbundene gefässe"
+  ],
+  "subbranches": [
+    "Hydrostatics"
+  ],
+  "youtube": ""
+}

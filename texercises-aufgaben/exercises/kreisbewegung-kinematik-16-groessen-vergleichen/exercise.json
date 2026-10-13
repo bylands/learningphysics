@@ -1,0 +1,19 @@
+{
+  "title": "Grössen vergleichen (Kreisbewegung)",
+  "note": "aus den Aufgabenblättern (K5 Kreisbewegung, Nr. 1)",
+  "language": "GER",
+  "type": 1,
+  "default_difficulty": 1,
+  "default_points": 0,
+  "tags": [
+    "bogenmass",
+    "einheiten",
+    "grössenvergleich",
+    "kinematik",
+    "kreisbewegung"
+  ],
+  "subbranches": [
+    "Kinematics"
+  ],
+  "youtube": ""
+}

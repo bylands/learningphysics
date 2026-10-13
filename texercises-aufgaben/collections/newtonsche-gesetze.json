@@ -1,0 +1,58 @@
+{
+  "title": "Newtonsche Gesetze – Aufgaben aus den Aufgabenblättern",
+  "description": "Trägheitsgesetz und Inertialsysteme, Aktionsprinzip F = m a, Wechselwirkungsprinzip und Kräftepläne aus den Aufgabenblättern D1, D3 und D4. Rechnen Sie mit g = 9.81 m/s².",
+  "kind": "sheet",
+  "is_private": true,
+  "tags": [
+    "dynamik",
+    "newtonsche gesetze",
+    "kraft"
+  ],
+  "items": [
+    {
+      "exercise": "newtonsche-gesetze-01-inertialsysteme-erkennen"
+    },
+    {
+      "exercise": "newtonsche-gesetze-02-vollbremsung-und-inertialsystem"
+    },
+    {
+      "exercise": "newtonsche-gesetze-03-bolzen-einer-armbrust"
+    },
+    {
+      "exercise": "newtonsche-gesetze-04-bremsender-supertanker"
+    },
+    {
+      "exercise": "newtonsche-gesetze-05-normalkraft-und-reaktionskraft"
+    },
+    {
+      "exercise": "newtonsche-gesetze-06-turnerin-beim-pferdsprung"
+    },
+    {
+      "exercise": "newtonsche-gesetze-07-absprung-nach-oben"
+    },
+    {
+      "exercise": "newtonsche-gesetze-08-reissende-schnur"
+    },
+    {
+      "exercise": "newtonsche-gesetze-09-klimmzug-an-der-reckstange"
+    },
+    {
+      "exercise": "newtonsche-gesetze-10-gewichtheber-mit-hantel"
+    },
+    {
+      "exercise": "newtonsche-gesetze-11-normalkraft-beim-skisprung"
+    },
+    {
+      "exercise": "newtonsche-gesetze-12-landung-eines-kunstturners"
+    },
+    {
+      "exercise": "newtonsche-gesetze-13-gegen-eine-wand-druecken"
+    },
+    {
+      "exercise": "newtonsche-gesetze-14-kraftgesetz-von-professor-siebenschlau"
+    },
+    {
+      "exercise": "newtonsche-gesetze-15-abbremsende-last-am-kran"
+    }
+  ]
+}

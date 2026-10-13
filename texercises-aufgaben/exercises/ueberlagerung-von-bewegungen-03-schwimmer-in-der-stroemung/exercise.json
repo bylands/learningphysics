@@ -1,0 +1,18 @@
+{
+  "title": "Schwimmer in der Strömung",
+  "note": "aus den Aufgabenblättern (K4 Zusammengesetzte Bewegungen, Nr. 4)",
+  "language": "GER",
+  "type": 1,
+  "default_difficulty": 2,
+  "default_points": 0,
+  "tags": [
+    "kinematik",
+    "relativgeschwindigkeit",
+    "vektoren",
+    "überlagerung von bewegungen"
+  ],
+  "subbranches": [
+    "Kinematics"
+  ],
+  "youtube": ""
+}

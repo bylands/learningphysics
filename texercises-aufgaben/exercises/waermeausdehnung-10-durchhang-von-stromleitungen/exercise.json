@@ -1,0 +1,19 @@
+{
+  "title": "Durchhang von Stromleitungen",
+  "note": "aus den Aufgabenblättern (W1 Temperatur und Wärme, Nr. 13; T1 Längen- und Volumenausdehnung, Nr. 11)",
+  "language": "GER",
+  "type": 1,
+  "default_difficulty": 3,
+  "default_points": 0,
+  "tags": [
+    "abschätzung",
+    "formelsammlung",
+    "längenausdehnung",
+    "pythagoras",
+    "wärmeausdehnung"
+  ],
+  "subbranches": [
+    "Thermal Expansion"
+  ],
+  "youtube": ""
+}

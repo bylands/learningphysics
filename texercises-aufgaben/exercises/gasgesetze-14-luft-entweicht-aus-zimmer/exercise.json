@@ -1,0 +1,17 @@
+{
+  "title": "Luft entweicht aus warmem Zimmer",
+  "note": "aus den Aufgabenblättern (G1 Gasgesetze, Nr. 12)",
+  "language": "GER",
+  "type": 1,
+  "default_difficulty": 2,
+  "default_points": 0,
+  "tags": [
+    "gasgesetze",
+    "gay-lussac",
+    "isobar"
+  ],
+  "subbranches": [
+    "Gas Laws"
+  ],
+  "youtube": ""
+}

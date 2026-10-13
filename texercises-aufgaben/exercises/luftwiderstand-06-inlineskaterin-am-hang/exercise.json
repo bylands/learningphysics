@@ -1,0 +1,19 @@
+{
+  "title": "Inlineskaterin am Hang",
+  "note": "aus den Aufgabenblättern (D5 Kräfte am Hang & Luftwiderstand, Nr. 14)",
+  "language": "GER",
+  "type": 1,
+  "default_difficulty": 3,
+  "default_points": 0,
+  "tags": [
+    "dynamik",
+    "endgeschwindigkeit",
+    "hangabtriebskraft",
+    "luftwiderstand",
+    "schiefe ebene"
+  ],
+  "subbranches": [
+    "Dynamics"
+  ],
+  "youtube": ""
+}

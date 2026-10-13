@@ -1,0 +1,53 @@
+{
+  "title": "Latente Wärme – Aufgaben aus den Aufgabenblättern",
+  "description": "Schmelz- und Verdampfungswärme aus den Aufgabenblättern W3 und A1: Phasenübergänge berechnen, Mischungen mit Eis und Dampf, Abschätzungen und Erklärungen aus dem Alltag. Stoffwerte aus Formeln, Tabellen, Begriffe (7. Aufl.).",
+  "kind": "sheet",
+  "is_private": true,
+  "tags": [
+    "latente wärme",
+    "schmelzwärme",
+    "verdampfungswärme",
+    "wärme"
+  ],
+  "items": [
+    {
+      "exercise": "latente-waerme-01-schwitzen-bei-fieber"
+    },
+    {
+      "exercise": "latente-waerme-02-verdunstender-alkohol-in-schale"
+    },
+    {
+      "exercise": "latente-waerme-03-schmelzwaermeanteil-beim-eisen"
+    },
+    {
+      "exercise": "latente-waerme-04-eis-und-wasser-zum-sieden"
+    },
+    {
+      "exercise": "latente-waerme-05-druck-unter-der-schlittschuhkufe"
+    },
+    {
+      "exercise": "latente-waerme-06-verdampfen-von-siedendem-wasser"
+    },
+    {
+      "exercise": "latente-waerme-07-eisen-im-schmelzofen"
+    },
+    {
+      "exercise": "latente-waerme-08-kondensation-beim-destillieren"
+    },
+    {
+      "exercise": "latente-waerme-09-eiswuerfel-in-cola"
+    },
+    {
+      "exercise": "latente-waerme-10-frostschutz-durch-wasser"
+    },
+    {
+      "exercise": "latente-waerme-11-erstarrender-bleitropfen-in-wasser"
+    },
+    {
+      "exercise": "latente-waerme-12-wasserdampf-trifft-auf-eis"
+    },
+    {
+      "exercise": "latente-waerme-13-abkuehlung-der-haut-durch-alkohol"
+    }
+  ]
+}

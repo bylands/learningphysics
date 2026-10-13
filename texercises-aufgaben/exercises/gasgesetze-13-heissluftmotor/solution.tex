@@ -1,0 +1,43 @@
+\begin{abcliste}
+\abc Mit $T_1 = \TEiF = \TEi$ liefert die ideale Gasgleichung
+\begin{align}
+ n &= \nLuF = \frac{\pEi\cdot\VEi}{\ncR\cdot\TEi} = \nLu \approx \result{\nLuP{-3}{2}} \\
+ m &= \mLuF = \nLu\cdot\MLu = \mLug \approx \result{\mLugP{-3}{2}}
+\end{align}
+
+\abc Zustand 1: $V_1 = \VEiO$, $p_1 = \pEibP{0}{2}$, $T_1 = \TEi$.
+
+Zustand 2 (isotherm, Boyle-Mariotte):
+\begin{align}
+ p_2 &= \pZwF = \frac{\pEi\cdot\VEi}{\VZw} = \pZw \approx \result{\pZwbP{0}{2}}
+\end{align}
+Zustand 3 (isochor bei $V_2 = \VZwO$ auf $T_3 = \TDrF = \TDr$ abgekühlt):
+\begin{align}
+ p_3 &= \pDrF = \pZw\cdot\frac{\TDr}{\TEi} = \pDr \approx \result{\pDrbP{0}{2}}
+\end{align}
+Zustand 4 (isotherm bei $T_3$ zurück auf $V_1$):
+\begin{align}
+ p_4 &= \pViF = \pDr\cdot\frac{\VZw}{\VEi} = \pVi \approx \result{\pVibP{0}{2}}
+\end{align}
+
+\begin{center}
+\begin{tikzpicture}[>=stealth, xscale=0.05, yscale=1.6]
+ \draw[gray!30, xstep=25, ystep=0.5] (0,0) grid (200,4);
+ \draw[->] (0,0) -- (215,0) node[right] {$V$ in \si{\centi\meter\cubed}};
+ \draw[->] (0,0) -- (0,4.4) node[above] {$p$ in \si{\bar}};
+ \foreach \x in {50,100,150,200} \node[below] at (\x,0) {\x};
+ \foreach \y in {1,2,3,4} \node[left] at (0,\y) {\y};
+ \draw[very thick, red, ->, domain=75:180, samples=60] plot (\x, {270/\x});
+ \draw[very thick, ->] (180,1.5) -- (180,0.9485);
+ \draw[very thick, blue, <-, domain=75:180, samples=60] plot (\x, {170.73/\x});
+ \draw[thick, dashed, ->] (75,2.2763) -- (75,3.6);
+ \node[circle, fill, inner sep=1.5pt, label=above right:{1}] at (75,3.6) {};
+ \node[circle, fill, inner sep=1.5pt, label=above right:{2}] at (180,1.5) {};
+ \node[circle, fill, inner sep=1.5pt, label=below right:{3}] at (180,0.9485) {};
+ \node[circle, fill, inner sep=1.5pt, label=below left:{4}] at (75,2.2763) {};
+ \node[red, above right] at (120,2.25) {$T_1$};
+ \node[blue, below left] at (120,1.42) {$T_3$};
+\end{tikzpicture}
+\end{center}
+Die Zustände 1 und 2 liegen auf der Isotherme $T_1$, die Zustände 3 und 4 auf der Isotherme $T_3$ (Hyperbeln $pV = \text{konst.}$). Das isochore Erwärmen von 4 nach 1 (gestrichelt) schliesst den Kreisprozess des Heissluftmotors (Stirling-Prozess).
+\end{abcliste}

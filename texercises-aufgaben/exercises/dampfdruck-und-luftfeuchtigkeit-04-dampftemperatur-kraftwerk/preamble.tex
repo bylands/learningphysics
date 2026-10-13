@@ -1,0 +1,9 @@
+\NewQty{pK}{50}[\bar][e5][\pascal]
+\NewQty{thA}{250}[\degreeCelsius]
+\NewQty{psA}{3975.4}[\kilo\pascal][e3][\pascal]
+\NewQty{thB}{300}[\degreeCelsius]
+\NewQty{psB}{8590.3}[\kilo\pascal][e3][\pascal]
+
+\ConvTo{psAb}{1e-5}{psA}{\bar}
+\ConvTo{psBb}{1e-5}{psB}{\bar}
+\SolQty{thK}[\vartheta_1+\left(\vartheta_2-\vartheta_1\right)\frac{p-p_1}{p_2-p_1}]{\thAX+(\thBX-\thAX)*(\pKX-\psAX)/(\psBX-\psAX)}[\degreeCelsius]

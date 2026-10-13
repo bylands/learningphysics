@@ -1,0 +1,28 @@
+Bei $p_0 = \pwaO$ (praktisch Normaldruck) und \TwO\ ist $\rho_0 = \rhoWO$ (FoTaBe S.~192), die Kompressibilität ist $\chi = \chiWO$ (FoTaBe S.~188). Die Masse bleibt gleich, das Volumen nimmt um $\chi\,V_0\left(p-p_0\right)$ ab:
+\begin{align}
+ \rho(p) &= \frac{\rho_0}{1-\chi\left(p-p_0\right)}
+\end{align}
+Bei $p = \pwbO$ ist
+\begin{align}
+ \rho &= \rhobF = \rhob
+\end{align}
+\begin{center}
+\begin{tikzpicture}[>=stealth]
+ \draw[->] (0,0) -- (9,0) node[below] {$p$ in \si{\bar}};
+ \draw[->] (0,0) -- (0,5) node[left] {$\rho$ in \si{\kilo\gram\per\meter\cubed}};
+ \foreach \x in {1,2,...,10} \draw (0.8*\x,0.1) -- (0.8*\x,-0.1) node[below] {\x};
+ \foreach \y/\lab in {0.8/998.2,2.4/998.4,4.0/998.6} \draw (0.1,\y) -- (-0.1,\y) node[left] {\lab};
+ \fill[white] (-0.2,0.25) rectangle (0.2,0.4);
+ \draw (-0.2,0.2) -- (0.2,0.3);
+ \draw (-0.2,0.35) -- (0.2,0.45);
+ \draw[blue, very thick] (0.8,0.85) -- (8,4.05);
+\end{tikzpicture}
+\end{center}
+Weil $x = \chi\left(p-p_0\right)$ höchstens $\xw$ ist, kann man $\frac{1}{1-x}\approx 1+x$ setzen; der relative Fehler ist etwa $x^2 = \xwq$. Die Kurve ist also sehr genau eine \result{Gerade}:
+\begin{align}
+ \rho(p) &\approx \rho_0 + \rho_0\,\chi\left(p-p_0\right)
+\end{align}
+Die Dichte nimmt zwischen \pwaO\ und \pwbO\ nur um $\Delta\rho = \drwF = \drw$ zu. Die Steigung der Geraden ist $\rho_0\,\chi = \stw \approx \stwbP{0}{2}$. Die Kompressibilität ist also die \result{Steigung geteilt durch die Dichte $\rho_0$}:
+\begin{align}
+ \chi &= \frac{1}{\rho_0}\frac{\Delta\rho}{\Delta p}
+\end{align}

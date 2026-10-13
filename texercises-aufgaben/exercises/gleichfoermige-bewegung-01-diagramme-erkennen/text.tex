@@ -1,0 +1,46 @@
+Welche der folgenden Diagramme stellen eine gleichförmige Bewegung dar? Beschreiben Sie die ungleichförmigen Bewegungen in Worten.
+
+\begin{center}
+\begin{tikzpicture}[>=stealth]
+ \draw[->] (0,0) -- (3.4,0) node[below] {$t$};
+ \draw[->] (0,0) -- (0,2.4) node[above] {$s(t)$};
+ \node[anchor=east] at (-0.3,2.4) {a)};
+ \draw[very thick] (0,1.9) -- (2.5,0);
+\end{tikzpicture}
+\hspace{8mm}
+\begin{tikzpicture}[>=stealth]
+ \draw[->] (0,0) -- (3.4,0) node[below] {$t$};
+ \draw[->] (0,0) -- (0,2.4) node[above] {$v(t)$};
+ \node[anchor=east] at (-0.3,2.4) {b)};
+ \draw[very thick] (0,0) -- (3,1.6);
+\end{tikzpicture}
+\hspace{8mm}
+\begin{tikzpicture}[>=stealth]
+ \draw[->] (0,0) -- (3.4,0) node[below] {$t$};
+ \draw[->] (0,0) -- (0,2.4) node[above] {$s(t)$};
+ \node[anchor=east] at (-0.3,2.4) {c)};
+ \draw[very thick, domain=0:3, samples=40] plot (\x, {0.4+0.17*\x*\x});
+\end{tikzpicture}
+
+\vspace{6mm}
+\begin{tikzpicture}[>=stealth]
+ \draw[->] (0,0) -- (3.4,0) node[below] {$t$};
+ \draw[->] (0,0) -- (0,2.4) node[above] {$s(t)$};
+ \node[anchor=east] at (-0.3,2.4) {d)};
+ \draw[very thick] (0,1.1) -- (2.6,1.1);
+\end{tikzpicture}
+\hspace{8mm}
+\begin{tikzpicture}[>=stealth]
+ \draw[->] (0,0) -- (3.4,0) node[below] {$t$};
+ \draw[->] (0,0) -- (0,2.4) node[above] {$v(t)$};
+ \node[anchor=east] at (-0.3,2.4) {e)};
+ \draw[very thick] (0,1.6) -- (2.8,1.6);
+\end{tikzpicture}
+\hspace{8mm}
+\begin{tikzpicture}[>=stealth]
+ \draw[->] (0,0) -- (3.4,0) node[below] {$t$};
+ \draw[->] (0,0) -- (0,2.4) node[above] {$s(t)$};
+ \node[anchor=east] at (-0.3,2.4) {f)};
+ \draw[very thick] (0,0) -- (1.7,0.5) -- (2.7,1.7);
+\end{tikzpicture}
+\end{center}

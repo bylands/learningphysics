@@ -1,0 +1,19 @@
+{
+  "title": "Temperatur der Erdoberfläche",
+  "note": "aus den Aufgabenblättern (W1 Temperatur und Wärme, Nr. 17; W4 Wärmetransport, Nr. 13)",
+  "language": "GER",
+  "type": 1,
+  "default_difficulty": 3,
+  "default_points": 0,
+  "tags": [
+    "schwarzer körper",
+    "solarkonstante",
+    "stefan-boltzmann-gesetz",
+    "strahlungsgleichgewicht",
+    "wärmestrahlung"
+  ],
+  "subbranches": [
+    "Heat Transfer"
+  ],
+  "youtube": ""
+}

@@ -1,0 +1,19 @@
+\NewQty{TH}{300}[\kelvin]
+\NewQty{vgA}{1000}[\mps]
+\NewQty{vgB}{4000}[\mps]
+\NewQty{MHa}{1.00794}[\gram\per\mole][e-3][\kilogram\per\mole]
+\NewQty{MOa}{15.9994}[\gram\per\mole][e-3][\kilogram\per\mole]
+\NewQty{anB}{15}[\percent]
+\NewQty{anC}{0.48}[\percent]
+\NewQty{anD}{99.5}[\percent]
+\NewQty{vFl}{11.19}[\kilo\meter\per\second][e3][\mps]
+
+\SolQty{MHy}[2M_\text{H}]{2*\MHaX}[\kilogram\per\mole]
+\SolQty{MOz}[2M_\text{O}]{2*\MOaX}[\kilogram\per\mole]
+\SolQty{vwH}[\sqrt{\frac{2RT}{M}}]{sqrt(2*\ncRX*\THX/\MHyX)}[\mps]
+\SolQty{vmH}[\sqrt{\frac{8RT}{\pi M}}]{sqrt(8*\ncRX*\THX/(pi*\MHyX))}[\mps]
+\SolQty{vq}[\frac{\bar v}{v_\text{w}}]{\vmHX/\vwHX}
+\SolQty{vwO}[\sqrt{\frac{2RT}{M}}]{sqrt(2*\ncRX*\THX/\MOzX)}[\mps]
+\ConvTo{anBr}{1}{anB}{\percent}
+\ConvTo{anCr}{1}{anC}{\percent}
+\ConvTo{anDr}{1}{anD}{\percent}

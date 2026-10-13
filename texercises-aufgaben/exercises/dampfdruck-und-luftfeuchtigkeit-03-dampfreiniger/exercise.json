@@ -1,0 +1,17 @@
+{
+  "title": "Druck im Dampfreiniger",
+  "note": "aus den Aufgabenblättern (G2 Gaskinetik & Dampfdruck, Nr. 8)",
+  "language": "GER",
+  "type": 1,
+  "default_difficulty": 1,
+  "default_points": 0,
+  "tags": [
+    "dampfdruck",
+    "dampfdruckkurve",
+    "diagramm lesen"
+  ],
+  "subbranches": [
+    "Vapor Pressure & Humidity"
+  ],
+  "youtube": ""
+}

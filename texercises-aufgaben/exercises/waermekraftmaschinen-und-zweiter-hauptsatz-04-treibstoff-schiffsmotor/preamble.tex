@@ -1,0 +1,8 @@
+\NewQty*{Pm}{117000}[PS][735.49875][\watt]
+\NewQty{etM}{50}[\percent][e-2]
+\NewQty*{tS}{1}[\hour][3600][\second]
+\NewQty{Hu}{42.7e6}[\joule\per\kilogram]
+\NewQty{rhoH}{0.86e3}[\kilogram\per\meter\cubed]
+
+\SolQty{Vol}[\frac{P\,t}{\eta\,H\,\rho}]{\PmX*\tSX/(\etMX*\HuX*\rhoHX)}[\meter\cubed]
+\ConvTo{VL}{1e3}{Vol}{\liter}

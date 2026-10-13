@@ -1,0 +1,6 @@
+\NewQty{cpC}{837}[\joule\per\kilogram\per\kelvin]
+\NewQty{MC}{44.01}[\gram\per\mole][e-3][\kilogram\per\mole]
+
+\SolQty{CpC}[c_p\,M]{\cpCX*\MCX}[\joule\per\mole\per\kelvin]
+\SolQty{CvC}[c_p\,M-R]{\CpCX-\ncRX}[\joule\per\mole\per\kelvin]
+\SolQty{fCO}[\frac{2\left(c_p\,M-R\right)}{R}]{2*\CvCX/\ncRX}

@@ -1,0 +1,18 @@
+{
+  "title": "Druckausgleich zweier Gefässe",
+  "note": "aus den Aufgabenblättern (G1 Gasgesetze, Nr. 15)",
+  "language": "GER",
+  "type": 1,
+  "default_difficulty": 2,
+  "default_points": 0,
+  "tags": [
+    "boyle-mariotte",
+    "gasgesetze",
+    "isotherm",
+    "stoffmenge"
+  ],
+  "subbranches": [
+    "Gas Laws"
+  ],
+  "youtube": ""
+}

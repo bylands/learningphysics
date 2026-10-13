@@ -1,0 +1,17 @@
+{
+  "title": "Strahlungsintensität bei Temperaturerhöhung",
+  "note": "aus den Aufgabenblättern (W1 Temperatur und Wärme, Nr. 11; W1 Wärme, Nr. 7; W4 Wärmetransport (pdf), Nr. 6)",
+  "language": "GER",
+  "type": 1,
+  "default_difficulty": 2,
+  "default_points": 0,
+  "tags": [
+    "absolute temperatur",
+    "stefan-boltzmann-gesetz",
+    "wärmestrahlung"
+  ],
+  "subbranches": [
+    "Heat Transfer"
+  ],
+  "youtube": ""
+}

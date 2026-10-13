@@ -1,0 +1,18 @@
+{
+  "title": "Kiste am Hang festhalten",
+  "note": "aus den Aufgabenblättern (D5 Kräfte am Hang & Luftwiderstand, Nr. 2; D5 Kräfte am Hang, Nr. 3; D4 Hangkräfte, Nr. 3; D3 Kräfte 1, Nr. 10)",
+  "language": "GER",
+  "type": 1,
+  "default_difficulty": 2,
+  "default_points": 0,
+  "tags": [
+    "dynamik",
+    "kraftzerlegung",
+    "kräftegleichgewicht",
+    "schiefe ebene"
+  ],
+  "subbranches": [
+    "Dynamics"
+  ],
+  "youtube": ""
+}

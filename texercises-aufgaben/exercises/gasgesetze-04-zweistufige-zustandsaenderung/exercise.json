@@ -1,0 +1,18 @@
+{
+  "title": "Zweistufige Zustandsänderung",
+  "note": "aus den Aufgabenblättern (G1 Gasgesetze, ältere Version, Nr. 4)",
+  "language": "GER",
+  "type": 1,
+  "default_difficulty": 2,
+  "default_points": 0,
+  "tags": [
+    "allgemeine gasgleichung",
+    "gasgesetze",
+    "isochor",
+    "isotherm"
+  ],
+  "subbranches": [
+    "Gas Laws"
+  ],
+  "youtube": ""
+}

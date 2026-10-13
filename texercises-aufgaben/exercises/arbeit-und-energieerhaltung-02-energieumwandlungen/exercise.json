@@ -1,0 +1,17 @@
+{
+  "title": "Energieumwandlungen beschreiben",
+  "note": "aus den Aufgabenblättern (E3 Energetik, Nr. 2; E1 Energie, Nr. 1)",
+  "language": "GER",
+  "type": 0,
+  "default_difficulty": 1,
+  "default_points": 0,
+  "tags": [
+    "energieerhaltung",
+    "energieformen",
+    "energieumwandlung"
+  ],
+  "subbranches": [
+    "Work, Energy, Power"
+  ],
+  "youtube": ""
+}

@@ -1,0 +1,35 @@
+\begin{center}
+\begin{tikzpicture}[>=stealth]
+ \draw[thick] (-4.5,0) -- (0,0) -- (4.5,1.892);
+ \draw[dashed] (0,0) -- (3.5,0);
+ \draw (2,0) arc (0:22.8:2);
+ \node at (2.3,0.4) {$\alpha$};
+ \draw[gray, thick] (0,0) -- (0,-1.6);
+ \draw[gray, thick] (-0.6,-1.6) -- (0.5,-1.6) -- (0.5,-1.1);
+ \draw[->, very thick, red] (0,0) -- (-2.4,0);
+ \node[red, above] at (-1.2,0) {$\vec F_1$};
+ \draw[->, very thick, red] (0,0) -- (2.39,1.006);
+ \node[red, above left] at (1.6,0.7) {$\vec F_2$};
+ \draw[->, very thick, red] (0.15,0) -- (0.15,-1.0);
+ \node[red, right] at (0.15,-0.6) {$\vec F_\text{G}$};
+\end{tikzpicture}
+\end{center}
+
+Am Aufhängepunkt des Sessels greifen drei Kräfte an: die Gewichtskraft $F_\text{G} = m\,g$, die Kraft $\vec F_1$ des horizontalen Seilstücks vor dem Sessel und die Kraft $\vec F_2$ des ansteigenden Seilstücks. Im Gleichgewicht heben sich die Komponenten auf:
+\begin{align}
+ \text{vertikal:}\quad F_2\sin\alpha &= m\,g \\
+ \text{horizontal:}\quad F_2\cos\alpha &= F_1
+\end{align}
+Mit $F_\text{G} = \FGSF = \mSk\cdot\gE = \FGS$ folgt für den Winkel
+\begin{align}
+ \alpha &= \alSF \\
+   &= \arcsin\frac{\FGS}{\FSz} \\
+   &= \alS \approx \result{\alSP{0}{2}}
+\end{align}
+und für die Kraft des Seilstücks vor dem Sessel
+\begin{align}
+ F_1 &= \FSvF \\
+   &= \sqrt{\left(\FSz\right)^2-\left(\FGS\right)^2} \\
+   &= \FSv \approx \result{\FSvP{3}{2}}
+\end{align}
+Mit gleich grosser Kraft zieht der Sessel nach dem Wechselwirkungsprinzip am Seilstück vor dem Sessel.

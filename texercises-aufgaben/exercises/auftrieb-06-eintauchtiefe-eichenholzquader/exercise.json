@@ -1,0 +1,19 @@
+{
+  "title": "Eintauchtiefe eines Eichenholzquaders",
+  "note": "aus den Aufgabenblättern (H3 Auftrieb, Nr. 7; H Hydrostatik, Nr. 13; H1 Hydrostatik, Nr. 13)",
+  "language": "GER",
+  "type": 1,
+  "default_difficulty": 1,
+  "default_points": 0,
+  "tags": [
+    "archimedes",
+    "auftrieb",
+    "formelsammlung",
+    "hydrostatik",
+    "schwimmen"
+  ],
+  "subbranches": [
+    "Hydrostatics"
+  ],
+  "youtube": ""
+}

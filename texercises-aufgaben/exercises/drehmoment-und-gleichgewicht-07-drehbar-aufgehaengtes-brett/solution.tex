@@ -1,0 +1,19 @@
+\begin{center}
+\begin{tikzpicture}[>=stealth]
+ \draw (0,0) rectangle (7.5,0.3);
+ \fill (0.15,0.15) circle (0.08) node[left=4pt] {D};
+ \draw[->, very thick] (5.0,0.15) -- (5.0,2.0) node[above] {$\vec F$};
+ \draw[->, very thick] (3.75,0.15) -- (3.75,-1.5) node[below] {$\vec F_\mathrm{G}$};
+ \draw[|<->|] (0.15,0.75) -- (5.0,0.75) node[midway, above] {$\frac{2}{3}L$};
+ \draw[|<->|] (0.15,-0.4) -- (3.75,-0.4) node[midway, below] {$\frac{1}{2}L$};
+\end{tikzpicture}
+\end{center}
+
+Die Gewichtskraft $F_\mathrm{G} = m\,g$ greift im Schwerpunkt in der Mitte des Bretts an, also im Abstand $L/2$ vom Drehpunkt. Die Kraft $F$ greift im Abstand $\frac{2}{3}L$ an. Gleichgewicht der Drehmomente um D:
+\begin{align}
+ F\cdot\frac{2}{3}L &= m\,g\cdot\frac{1}{2}L
+\end{align}
+Die Länge kürzt sich:
+\begin{align}
+ F &= \FBrF = \frac{3}{4}\cdot\mBr\cdot\gE = \FBr \approx \result{\FBrP{0}{2}}
+\end{align}

@@ -1,0 +1,9 @@
+\NewQty{dP}{25}[\centi\meter][e-2][\meter]
+\NewQty{tP}{250}[\degreeCelsius]
+\NewQty*{tS}{1}[\hour][3600][\second]
+\NewQty{sig}{5.670367e-8}[\Wpqmkv]
+\NewQty{bW}{2.8977729e-3}[\meter\kelvin]
+
+\SolQty{TP}[\vartheta+\SI{273.15}{\kelvin}]{\tPX+273.15}[\kelvin]
+\SolQty{EP}[\sigma\,\frac{\pi d^2}{4}\,T^4\,t]{\sigX*pi*\dPX^2/4*\TPX^4*\tSX}[\joule]
+\SolQty{lP}[\frac{b}{T}]{\bWX/\TPX}[\meter]

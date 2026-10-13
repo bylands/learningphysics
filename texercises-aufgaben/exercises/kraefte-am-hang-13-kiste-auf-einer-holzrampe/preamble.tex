@@ -1,0 +1,11 @@
+\NewQty{gE}{9.81}[\mpss]
+\NewQty{mKi}{50}[\kg]
+\NewQty{muH}{0.4}
+\NewQty{wiA}{40}[\degree]
+\NewQty{wiB}{20}[\degree]
+
+\SolQty{FuA}[m\,g\left(\sin\alpha-\mu_\mathrm{H}\cos\alpha\right)]{\mKiX*\gEX*(sin(\wiAX*pi/180)-\muHX*cos(\wiAX*pi/180))}[\newton]
+\SolQty{FoA}[m\,g\left(\sin\alpha+\mu_\mathrm{H}\cos\alpha\right)]{\mKiX*\gEX*(sin(\wiAX*pi/180)+\muHX*cos(\wiAX*pi/180))}[\newton]
+\SolQty{FuB}[m\,g\left(\sin\alpha-\mu_\mathrm{H}\cos\alpha\right)]{\mKiX*\gEX*(sin(\wiBX*pi/180)-\muHX*cos(\wiBX*pi/180))}[\newton]
+\SolQty{FoB}[m\,g\left(\sin\alpha+\mu_\mathrm{H}\cos\alpha\right)]{\mKiX*\gEX*(sin(\wiBX*pi/180)+\muHX*cos(\wiBX*pi/180))}[\newton]
+\ConvTo{FuBb}{-1}{FuB}{\newton}

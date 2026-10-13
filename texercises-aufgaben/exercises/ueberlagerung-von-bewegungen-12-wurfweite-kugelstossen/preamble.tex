@@ -1,0 +1,9 @@
+\NewQty{gE}{9.81}[\mpss]
+\NewQty{hk}{1.7}[\m]
+\NewQty{al}{42}[\degree]
+\NewQty{vk}{12}[\mps]
+
+\SolQty{vxk}[v_0\cos\alpha]{\vkX*cos(\alX*pi/180)}[\mps]
+\SolQty{vyk}[v_0\sin\alpha]{\vkX*sin(\alX*pi/180)}[\mps]
+\SolQty{tk}[\frac{v_y+\sqrt{v_y^2+2gh}}{g}]{(\vykX+sqrt(\vykX^2+2*\gEX*\hkX))/\gEX}[\s]
+\SolQty{xk}[v_x\,t]{\vxkX*\tkX}[\m]

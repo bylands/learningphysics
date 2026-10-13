@@ -1,0 +1,10 @@
+\NewQty{gE}{9.81}[\mpss]
+\NewQty{mMo}{210}[\kg]
+\NewQty{stg}{12}[\percent]
+\NewQty{tMo}{5}[\s]
+\NewQty*{vAn}{30}[\kmph][1/3.6][\mps]
+\NewQty*{vEn}{50}[\kmph][1/3.6][\mps]
+
+\SolQty{wi}[\arctan p]{atan(\stgX/100)*180/pi}[\degree]
+\SolQty{aMo}[\frac{v_2-v_1}{t}]{(\vEnX-\vAnX)/\tMoX}[\mpss]
+\SolQty{FAn}[m\left(\frac{v_2-v_1}{t}+g\sin\alpha\right)]{\mMoX*(\aMoX+\gEX*sin(\wiX*pi/180))}[\newton]

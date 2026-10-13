@@ -1,0 +1,18 @@
+{
+  "title": "Backstein und Backsteinmauer",
+  "note": "aus den Aufgabenblättern (W1 Temperatur und Wärme, Nr. 10)",
+  "language": "GER",
+  "type": 2,
+  "default_difficulty": 2,
+  "default_points": 0,
+  "tags": [
+    "wärmedurchgangskoeffizient",
+    "wärmeleitfähigkeit",
+    "wärmeleitung",
+    "wärmeübergang"
+  ],
+  "subbranches": [
+    "Heat Transfer"
+  ],
+  "youtube": ""
+}

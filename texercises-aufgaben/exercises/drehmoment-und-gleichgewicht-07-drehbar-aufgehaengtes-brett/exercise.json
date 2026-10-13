@@ -1,0 +1,18 @@
+{
+  "title": "Drehbar aufgehängtes Brett",
+  "note": "aus den Aufgabenblättern (S1 Drehmoment & Gleichgewicht, Nr. 7; S1_Hebelgesetz, Nr. 6; S1_StarrerKörper, Nr. 6)",
+  "language": "GER",
+  "type": 1,
+  "default_difficulty": 2,
+  "default_points": 0,
+  "tags": [
+    "drehmoment",
+    "gleichgewicht",
+    "hebelgesetz",
+    "schwerpunkt"
+  ],
+  "subbranches": [
+    "Lever"
+  ],
+  "youtube": ""
+}

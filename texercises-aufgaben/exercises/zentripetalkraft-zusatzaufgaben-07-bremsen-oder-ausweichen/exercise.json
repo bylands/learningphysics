@@ -1,0 +1,19 @@
+{
+  "title": "Bremsen oder ausweichen",
+  "note": "aus den Aufgabenblättern (D6KS_Kreisbewegung, Nr. 12)",
+  "language": "GER",
+  "type": 7,
+  "default_difficulty": 3,
+  "default_points": 0,
+  "tags": [
+    "bremsweg",
+    "haftreibung",
+    "kreisbewegung",
+    "zentripetalkraft"
+  ],
+  "subbranches": [
+    "Circular Motion",
+    "Dynamics"
+  ],
+  "youtube": ""
+}

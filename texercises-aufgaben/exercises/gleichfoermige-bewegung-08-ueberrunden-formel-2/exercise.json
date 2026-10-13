@@ -1,0 +1,19 @@
+{
+  "title": "Überrunden beim Formel-2-Rennen",
+  "note": "aus den Aufgabenblättern (K1 Gleichförmige Bewegung, Nr. 11)",
+  "language": "GER",
+  "type": 1,
+  "default_difficulty": 3,
+  "default_points": 0,
+  "tags": [
+    "durchschnittsgeschwindigkeit",
+    "gleichförmige bewegung",
+    "graphische lösung",
+    "kinematik",
+    "relativgeschwindigkeit"
+  ],
+  "subbranches": [
+    "Kinematics"
+  ],
+  "youtube": ""
+}

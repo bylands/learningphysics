@@ -1,0 +1,18 @@
+{
+  "title": "Dampfdruckkurve eines ungesättigten Dampfes",
+  "note": "aus den Aufgabenblättern (A1 Übergangswärme und Dampfdruck, Nr. 8)",
+  "language": "GER",
+  "type": 0,
+  "default_difficulty": 2,
+  "default_points": 0,
+  "tags": [
+    "dampfdruck",
+    "gesättigter dampf",
+    "taupunkt",
+    "ungesättigter dampf"
+  ],
+  "subbranches": [
+    "Vapor Pressure & Humidity"
+  ],
+  "youtube": ""
+}

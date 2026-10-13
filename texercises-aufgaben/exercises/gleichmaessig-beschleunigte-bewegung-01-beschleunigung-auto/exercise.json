@@ -1,0 +1,17 @@
+{
+  "title": "Beschleunigung eines Autos",
+  "note": "aus den Aufgabenblättern (K2 Beschleunigte Bewegung, Nr. 2; K2 ks, Nr. 4; K2a Beschleunigte Bewegung, Nr. 1)",
+  "language": "GER",
+  "type": 1,
+  "default_difficulty": 1,
+  "default_points": 0,
+  "tags": [
+    "beschleunigung",
+    "gleichmässig beschleunigte bewegung",
+    "kinematik"
+  ],
+  "subbranches": [
+    "Kinematics"
+  ],
+  "youtube": ""
+}

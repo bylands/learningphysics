@@ -1,0 +1,19 @@
+{
+  "title": "Masse eines kreisenden Steins",
+  "note": "aus den Aufgabenblättern (D6 Zentripetalkraft, Nr. 4; D6 KS Kreisbewegung, Nr. 8; D6KS_Kreisbewegung, Nr. 8; D6_Zentripetalkraft, Nr. 4)",
+  "language": "GER",
+  "type": 1,
+  "default_difficulty": 2,
+  "default_points": 0,
+  "tags": [
+    "frequenz",
+    "kreisbewegung",
+    "winkelgeschwindigkeit",
+    "zentripetalkraft"
+  ],
+  "subbranches": [
+    "Circular Motion",
+    "Dynamics"
+  ],
+  "youtube": ""
+}

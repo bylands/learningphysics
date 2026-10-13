@@ -1,0 +1,17 @@
+{
+  "title": "Pressluft hebt einen Lift",
+  "note": "aus den Aufgabenblättern (W2 Wärmemaschinen, Nr. 8)",
+  "language": "GER",
+  "type": 0,
+  "default_difficulty": 2,
+  "default_points": 0,
+  "tags": [
+    "entropie",
+    "isotherme expansion",
+    "zweiter hauptsatz"
+  ],
+  "subbranches": [
+    "Laws of Thermodynamics"
+  ],
+  "youtube": ""
+}

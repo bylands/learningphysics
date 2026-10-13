@@ -1,0 +1,16 @@
+{
+  "title": "Flughöhe einer Feuerwerksrakete",
+  "note": "aus den Aufgabenblättern (E3 Energetik, Nr. 6; E1 Energie, Nr. 8)",
+  "language": "GER",
+  "type": 1,
+  "default_difficulty": 1,
+  "default_points": 0,
+  "tags": [
+    "energieerhaltung",
+    "senkrechter wurf"
+  ],
+  "subbranches": [
+    "Work, Energy, Power"
+  ],
+  "youtube": ""
+}

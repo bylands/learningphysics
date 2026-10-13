@@ -1,0 +1,19 @@
+{
+  "title": "Energieverlust beim zentralen Stoss",
+  "note": "aus den Aufgabenblättern (E1 Energie, Nr. 10)",
+  "language": "GER",
+  "type": 7,
+  "default_difficulty": 2,
+  "default_points": 0,
+  "tags": [
+    "energieverlust",
+    "impulserhaltung",
+    "kinetische energie",
+    "stoss"
+  ],
+  "subbranches": [
+    "Momentum",
+    "Work, Energy, Power"
+  ],
+  "youtube": ""
+}

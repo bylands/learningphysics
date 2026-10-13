@@ -1,0 +1,9 @@
+\NewQty{poe}{15}[\bar][e5][\pascal]
+\NewQty{dVo}{5}[\milli\liter][e-6][\meter\cubed]
+\NewQty{chiO}{6e-10}[\per\pascal]
+
+\SolQty{Voe}[\frac{\Delta V}{\chi\,\Delta p}]{\dVoX/(\chiOX*\poeX)}[\meter\cubed]
+\ConvTo{Voel}{1e3}{Voe}{\liter}
+\NewQty{pno}{1.013}[\bar][e5][\pascal]
+\SolQty{Voa}[\frac{\Delta V}{\chi\left(p-p_\mathrm{n}\right)}]{\dVoX/(\chiOX*(\poeX-\pnoX))}[\meter\cubed]
+\ConvTo{Voal}{1e3}{Voa}{\liter}

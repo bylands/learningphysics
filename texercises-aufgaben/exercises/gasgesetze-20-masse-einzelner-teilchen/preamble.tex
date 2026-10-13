@@ -1,0 +1,12 @@
+\NewQty{MWo}{183.84}[\gram\per\mole][e-3][\kilogram\per\mole]
+\NewQty{MOa}{15.9994}[\gram\per\mole][e-3][\kilogram\per\mole]
+\NewQty{MCa}{12.0107}[\gram\per\mole][e-3][\kilogram\per\mole]
+\NewQty{MHa}{1.00794}[\gram\per\mole][e-3][\kilogram\per\mole]
+
+\SolQty{MOz}[2M_\text{O}]{2*\MOaX}[\kilogram\per\mole]
+\SolQty{MGl}[6M_\text{C}+12M_\text{H}+6M_\text{O}]{6*\MCaX+12*\MHaX+6*\MOaX}[\kilogram\per\mole]
+\ConvTo{MOzg}{1e3}{MOz}{\gram\per\mole}
+\ConvTo{MGlg}{1e3}{MGl}{\gram\per\mole}
+\SolQty{mWo}[\frac{M}{N_\text{A}}]{\MWoX/\ncNAX}[\kilogram]
+\SolQty{mOz}[\frac{M}{N_\text{A}}]{\MOzX/\ncNAX}[\kilogram]
+\SolQty{mGl}[\frac{M}{N_\text{A}}]{\MGlX/\ncNAX}[\kilogram]

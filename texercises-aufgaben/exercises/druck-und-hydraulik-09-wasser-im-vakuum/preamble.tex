@@ -1,0 +1,8 @@
+\NewQty{Vwv}{1}[\liter][e-3][\meter\cubed]
+\NewQty{pnv}{1.013}[\bar][e5][\pascal]
+\NewQty{chiW}{4.45e-10}[\per\pascal]
+
+\SolQty{dVw}[\chi\,V\,\Delta p]{\chiWX*\VwvX*\pnvX}[\meter\cubed]
+\ConvTo{dVwm}{1e6}{dVw}{\milli\liter}
+\ConvTo{dVwc}{1e9}{dVw}{\milli\meter\cubed}
+\SolQty{rVw}[\chi\,\Delta p]{\chiWX*\pnvX}

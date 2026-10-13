@@ -1,0 +1,21 @@
+\begin{center}
+\begin{tikzpicture}[>=stealth]
+ \draw (0,0) rectangle (7.3,0.3);
+ \fill (0.15,0.15) circle (0.08) node[left=4pt] {D};
+ \draw[->, very thick] (2.4,0.15) -- (2.4,-2.2) node[below] {$F_1$};
+ \draw[->, very thick] (6.9,0.15) -- (6.9,0.95) node[above] {$F_2$};
+ \draw[|<->|] (0.15,0.75) -- (2.4,0.75) node[midway, above] {$a_1$};
+ \draw[|<->|] (2.4,-0.4) -- (6.9,-0.4) node[midway, below] {$d$};
+\end{tikzpicture}
+\end{center}
+
+Damit sich die Drehmomente um die Drehachse D aufheben, müssen die beiden Kräfte in entgegengesetzte Richtungen zeigen, und die grössere Kraft $F_1 = \kHbO\cdot F_2$ greift näher bei der Achse an, im Abstand $a_1$. Die kleinere Kraft greift im Abstand $a_2 = a_1 + d$ an. Das Hebelgesetz lautet
+\begin{align}
+ F_1\cdot a_1 &= F_2\cdot\left(a_1 + d\right) \\
+ k\,F_2\cdot a_1 &= F_2\cdot a_1 + F_2\cdot d
+\end{align}
+mit $k = F_1/F_2 = \kHbO$. Aufgelöst:
+\begin{align}
+ a_1 &= \aHbF = \frac{\dHb}{\kHb-1} = \aHb \approx \result{\aHbP{-2}{2}}
+\end{align}
+Die kleinere Kraft greift dann im Abstand $a_2 = \bHbP{-2}{2}$ an.

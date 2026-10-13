@@ -1,0 +1,18 @@
+{
+  "title": "Dichte aus der Druckzunahme",
+  "note": "aus den Aufgabenblättern (H2 Schweredruck, Nr. 2; H12 Druck und Schweredruck, Nr. 6; H Hydrostatik, Nr. 6; H1 Hydrostatik, Nr. 6)",
+  "language": "GER",
+  "type": 1,
+  "default_difficulty": 1,
+  "default_points": 0,
+  "tags": [
+    "dichte",
+    "formelsammlung",
+    "hydrostatik",
+    "schweredruck"
+  ],
+  "subbranches": [
+    "Hydrostatics"
+  ],
+  "youtube": ""
+}

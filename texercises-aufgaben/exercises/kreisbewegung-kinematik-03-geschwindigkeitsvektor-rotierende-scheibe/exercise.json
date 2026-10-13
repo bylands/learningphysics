@@ -1,0 +1,18 @@
+{
+  "title": "Geschwindigkeitsvektor auf rotierender Scheibe",
+  "note": "aus den Aufgabenblättern (K5 Kreisbewegung, ältere Version, Nr. 4)",
+  "language": "GER",
+  "type": 1,
+  "default_difficulty": 2,
+  "default_points": 0,
+  "tags": [
+    "geschwindigkeitsvektor",
+    "kinematik",
+    "kreisbewegung",
+    "vektoren"
+  ],
+  "subbranches": [
+    "Circular Motion"
+  ],
+  "youtube": ""
+}

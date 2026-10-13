@@ -1,0 +1,18 @@
+{
+  "title": "Planet entfernt sich von der Sonne",
+  "note": "aus den Aufgabenblättern (G2 Gravitation, Nr. 5; G2 Gravitationsgesetz, Nr. 2)",
+  "language": "GER",
+  "type": 1,
+  "default_difficulty": 1,
+  "default_points": 0,
+  "tags": [
+    "gravitation",
+    "gravitationsgesetz",
+    "proportionalität",
+    "prozent"
+  ],
+  "subbranches": [
+    "Gravitation"
+  ],
+  "youtube": ""
+}

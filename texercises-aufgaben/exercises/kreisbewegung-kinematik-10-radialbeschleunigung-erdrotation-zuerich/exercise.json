@@ -1,0 +1,20 @@
+{
+  "title": "Radialbeschleunigung der Erdrotation in Zürich",
+  "note": "aus den Aufgabenblättern (K5 Kreisbewegung, Nr. 10)",
+  "language": "GER",
+  "type": 1,
+  "default_difficulty": 2,
+  "default_points": 0,
+  "tags": [
+    "erdrotation",
+    "fallbeschleunigung",
+    "formelsammlung",
+    "kinematik",
+    "kreisbewegung",
+    "radialbeschleunigung"
+  ],
+  "subbranches": [
+    "Circular Motion"
+  ],
+  "youtube": ""
+}

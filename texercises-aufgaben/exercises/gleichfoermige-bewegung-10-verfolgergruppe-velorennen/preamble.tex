@@ -1,0 +1,8 @@
+\NewQty*{vAu}{42}[\kmph][1/3.6][\mps]
+\NewQty{sV}{5}[\km][e3][\m]
+\NewQty{tV}{35}[\s]
+
+\SolQty{tAu}[\frac{s}{v_\mathrm{A}}]{\sVX/\vAuX}[\s]
+\SolQty{tVe}[\frac{s}{v_\mathrm{A}}-\Delta t]{\tAuX-\tVX}[\s]
+\SolQty{vV}[\frac{s}{\frac{s}{v_\mathrm{A}}-\Delta t}]{\sVX/\tVeX}[\mps]
+\ConvTo{vVk}{3.6}{vV}{\kmph}

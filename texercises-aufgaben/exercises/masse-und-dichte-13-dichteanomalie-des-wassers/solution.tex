@@ -1,0 +1,19 @@
+Das Diagramm zeigt die Werte der Tabelle \emph{Dichte von Wasser und von Quecksilber} (FoTaBe S.~192). Die Dichte steigt von \tdNO\ bis \tdMO\ an, erreicht dort ihr Maximum \rWmO\ und nimmt danach immer schneller ab (Dichteanomalie des Wassers).
+
+\begin{center}
+\begin{tikzpicture}[>=stealth, xscale=0.45, yscale=2]
+ \draw[->] (0,0) -- (21.5,0) node[below left] {$\vartheta$ in \si{\degreeCelsius}};
+ \draw[->] (0,0) -- (0,2.3) node[above right] {$\rho$ in \si{\kilo\gram\per\meter\cubed}};
+ \foreach \x in {0,4,10,15,20} \draw (\x,0.04) -- (\x,-0.04) node[below] {$\x$};
+ \draw (0.3,0) -- (-0.3,0) node[left] {$998$};
+ \draw (0.3,1) -- (-0.3,1) node[left] {$999$};
+ \draw (0.3,2) -- (-0.3,2) node[left] {$1000$};
+ \draw[dashed] (4,0) -- (4,1.972);
+ \draw[blue, very thick] plot[smooth] coordinates {(0,1.840) (3,1.964) (4,1.972) (5,1.964) (10,1.700) (15,1.101) (20,0.206)};
+ \foreach \x/\y in {0/1.840, 4/1.972, 10/1.700, 15/1.101, 20/0.206} \fill (\x,\y) circle[x radius=0.13, y radius=0.03];
+\end{tikzpicture}
+\end{center}
+
+Ein Flüssigkeitsthermometer zeigt die Temperatur über das Volumen der Flüssigkeit an. Bei Wasser gehört aber dasselbe Volumen zu zwei verschiedenen Temperaturen: Zum Beispiel hat Wasser bei \tdAO\ und bei \tdBO\ dieselbe Dichte \rWaO. Die Anzeige wäre also $\result{\text{nicht eindeutig}}$. Ausserdem ändert sich das Volumen in der Nähe von \tdMO\ kaum, das Thermometer wäre dort sehr unempfindlich.
+
+Bei Quecksilber tritt das Problem $\result{\text{nicht}}$ auf: Seine Dichte nimmt im ganzen Bereich gleichmässig ab (von \rHgnO\ bei \tdNO\ auf \rHgzO\ bei \tdZO), das Volumen wächst also eindeutig mit der Temperatur.

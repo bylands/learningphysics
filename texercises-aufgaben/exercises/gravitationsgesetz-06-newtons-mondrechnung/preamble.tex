@@ -1,0 +1,9 @@
+\NewQty{rEM}{3.844e8}[\m]
+\NewQty{TM}{27.321662}[\day][86400][\s]
+\NewQty{REr}{6.371e6}[\m]
+\NewQty{gE}{9.81}[\mpss]
+
+\SolQty{aR}[\frac{4\pi^2\,r_\mathrm{EM}}{T^2}]{4*pi^2*\rEMX/\TMX^2}[\mpss]
+\SolQty{qa}[\frac{g}{a_R}]{\gEX/\aRX}
+\SolQty{qb}[\left(\frac{r_\mathrm{EM}}{r_\mathrm{E}}\right)^2]{(\rEMX/\RErX)^2}
+\SolQty{dq}[\frac{(r_\mathrm{EM}/r_\mathrm{E})^2}{g/a_R}-1]{100*(\qbX/\qaX-1)}[\percent]

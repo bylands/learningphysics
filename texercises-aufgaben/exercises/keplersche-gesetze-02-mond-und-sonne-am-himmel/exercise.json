@@ -1,0 +1,19 @@
+{
+  "title": "Mond und Sonne am Himmel",
+  "note": "aus den Aufgabenblättern (G1 Kepler, Nr. 2)",
+  "language": "GER",
+  "type": 2,
+  "default_difficulty": 1,
+  "default_points": 0,
+  "tags": [
+    "astronomie",
+    "formelsammlung",
+    "mond",
+    "sehwinkel",
+    "sonne"
+  ],
+  "subbranches": [
+    "Gravitation/Celestial mechanics"
+  ],
+  "youtube": ""
+}

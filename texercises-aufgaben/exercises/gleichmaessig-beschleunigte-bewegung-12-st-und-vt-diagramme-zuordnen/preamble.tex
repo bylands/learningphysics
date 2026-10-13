@@ -1,0 +1,10 @@
+\NewQty{sWo}{5}[\m]
+\NewQty{vWo}{3}[\mps]
+\NewQty{tWa}{0.3}[\s]
+\NewQty{tWe}{1.2}[\s]
+
+\SolQty{aW}[\frac{v_\mathrm{max}}{t_1}]{\vWoX/\tWaX}[\mpss]
+\SolQty{sWa}[s_0+\frac{1}{2}v_\mathrm{max}\,t_1]{\sWoX+0.5*\vWoX*\tWaX}[\m]
+\SolQty{sWb}[s_0+v_\mathrm{max}\,t_1]{\sWoX+\vWoX*\tWaX}[\m]
+\SolQty{sWc}[s_\mathrm{max}-\frac{1}{2}a\left(t_\mathrm{e}-2t_1\right)^2]{\sWbX-0.5*\aWX*(\tWeX-2*\tWaX)^2}[\m]
+\ConvTo{tWb}{2}{tWa}{\s}

@@ -1,0 +1,52 @@
+{
+  "title": "Kinetische Gastheorie – Aufgaben aus den Aufgabenblättern",
+  "description": "Kinetische Gastheorie aus den Aufgabenblättern G2: mittlere kinetische Energie, mittlere und wahrscheinlichste Schnelligkeit, Maxwell-Boltzmann-Verteilung, mittlere freie Weglänge, Brown'sche Bewegung. Formeln und Werte aus Formeln, Tabellen, Begriffe (7. Auflage, S. 171).",
+  "kind": "sheet",
+  "is_private": true,
+  "tags": [
+    "kinetische gastheorie",
+    "gase",
+    "thermodynamik"
+  ],
+  "items": [
+    {
+      "exercise": "kinetische-gastheorie-01-kinetische-energie-wassermolekuel"
+    },
+    {
+      "exercise": "kinetische-gastheorie-02-butangas"
+    },
+    {
+      "exercise": "kinetische-gastheorie-03-erwaermung-und-schnelligkeit"
+    },
+    {
+      "exercise": "kinetische-gastheorie-04-sauerstoff-und-stickstoff"
+    },
+    {
+      "exercise": "kinetische-gastheorie-05-geschwindigkeitsverteilung-sauerstoff"
+    },
+    {
+      "exercise": "kinetische-gastheorie-06-wahrscheinlichste-geschwindigkeit"
+    },
+    {
+      "exercise": "kinetische-gastheorie-07-brownsche-bewegung"
+    },
+    {
+      "exercise": "kinetische-gastheorie-08-propan-und-butan"
+    },
+    {
+      "exercise": "kinetische-gastheorie-09-erdgas"
+    },
+    {
+      "exercise": "kinetische-gastheorie-10-zeit-zwischen-stoessen"
+    },
+    {
+      "exercise": "kinetische-gastheorie-11-energiezufuhr-helium"
+    },
+    {
+      "exercise": "kinetische-gastheorie-12-wasserdampf-im-druckgefaess"
+    },
+    {
+      "exercise": "kinetische-gastheorie-13-geschwindigkeitsverteilung-wasserstoff"
+    }
+  ]
+}

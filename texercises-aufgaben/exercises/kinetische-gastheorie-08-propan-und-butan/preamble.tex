@@ -1,0 +1,14 @@
+\NewQty{thN}{0}[\degreeCelsius]
+\NewQty{MCa}{12.0107}[\gram\per\mole][e-3][\kilogram\per\mole]
+\NewQty{MHa}{1.00794}[\gram\per\mole][e-3][\kilogram\per\mole]
+\NewQty{rBu}{2.732}[\kilogram\per\meter\cubed]
+\NewQty{rPr}{2.010}[\kilogram\per\meter\cubed]
+
+\SolQty{MBu}[4M_\text{C}+10M_\text{H}]{4*\MCaX+10*\MHaX}[\kilogram\per\mole]
+\SolQty{MPr}[3M_\text{C}+8M_\text{H}]{3*\MCaX+8*\MHaX}[\kilogram\per\mole]
+\ConvTo{MBug}{1e3}{MBu}{\gram\per\mole}
+\ConvTo{MPrg}{1e3}{MPr}{\gram\per\mole}
+\SolQty{vq}[\sqrt{\frac{M_\text{B}}{M_\text{P}}}]{sqrt(\MBuX/\MPrX)}
+\SolQty{dvr}[\frac{\bar v_\text{P}}{\bar v_\text{B}}-1]{100*(\vqX-1)}[\percent]
+\SolQty{vqr}[\sqrt{\frac{\rho_\text{B}}{\rho_\text{P}}}]{sqrt(\rBuX/\rPrX)}
+\SolQty{dvrr}[\sqrt{\frac{\rho_\text{B}}{\rho_\text{P}}}-1]{100*(\vqrX-1)}[\percent]

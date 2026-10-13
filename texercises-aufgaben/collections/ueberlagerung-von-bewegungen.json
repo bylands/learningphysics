@@ -1,0 +1,55 @@
+{
+  "title": "Überlagerung von Bewegungen – Aufgaben aus den Aufgabenblättern",
+  "description": "Überlagerung von Bewegungen aus dem Aufgabenblatt K4: Teilgeschwindigkeiten und Vektoraddition, horizontaler und schräger Wurf, Wurfhöhe und Wurfweite. Rechnen Sie mit g = 9.81 m/s²; der Luftwiderstand wird vernachlässigt.",
+  "kind": "sheet",
+  "is_private": true,
+  "tags": [
+    "kinematik",
+    "überlagerung von bewegungen",
+    "wurf"
+  ],
+  "items": [
+    {
+      "exercise": "ueberlagerung-von-bewegungen-01-teilgeschwindigkeiten-schraeger-wurf"
+    },
+    {
+      "exercise": "ueberlagerung-von-bewegungen-02-vertikale-teilgeschwindigkeit"
+    },
+    {
+      "exercise": "ueberlagerung-von-bewegungen-03-schwimmer-in-der-stroemung"
+    },
+    {
+      "exercise": "ueberlagerung-von-bewegungen-04-summe-gleich-langer-vektoren"
+    },
+    {
+      "exercise": "ueberlagerung-von-bewegungen-05-billardkugel-ueber-den-tisch"
+    },
+    {
+      "exercise": "ueberlagerung-von-bewegungen-06-horizontaler-wurf-aufprallwinkel"
+    },
+    {
+      "exercise": "ueberlagerung-von-bewegungen-07-reichweite-pistolenkugel"
+    },
+    {
+      "exercise": "ueberlagerung-von-bewegungen-08-schraeger-wurf-aus-teilgeschwindigkeiten"
+    },
+    {
+      "exercise": "ueberlagerung-von-bewegungen-09-wurfhoehe-und-weite-fussball"
+    },
+    {
+      "exercise": "ueberlagerung-von-bewegungen-10-sprungweite-skispringer"
+    },
+    {
+      "exercise": "ueberlagerung-von-bewegungen-11-abwurf-rettungskapsel"
+    },
+    {
+      "exercise": "ueberlagerung-von-bewegungen-12-wurfweite-kugelstossen"
+    },
+    {
+      "exercise": "ueberlagerung-von-bewegungen-13-maximale-wurfweite-bei-45-grad"
+    },
+    {
+      "exercise": "ueberlagerung-von-bewegungen-14-groessen-vergleichen"
+    }
+  ]
+}

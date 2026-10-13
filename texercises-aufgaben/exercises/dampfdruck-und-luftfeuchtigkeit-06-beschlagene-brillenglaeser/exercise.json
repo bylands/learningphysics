@@ -1,0 +1,17 @@
+{
+  "title": "Beschlagene Brillengläser",
+  "note": "aus den Aufgabenblättern (G2 Gaskinetik & Dampfdruck, Nr. 11)",
+  "language": "GER",
+  "type": 0,
+  "default_difficulty": 1,
+  "default_points": 0,
+  "tags": [
+    "kondensation",
+    "luftfeuchtigkeit",
+    "taupunkt"
+  ],
+  "subbranches": [
+    "Vapor Pressure & Humidity"
+  ],
+  "youtube": ""
+}

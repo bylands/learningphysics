@@ -1,0 +1,18 @@
+{
+  "title": "Verbesserter Wirkungsgrad",
+  "note": "aus den Aufgabenblättern (W2 Wärmekraftmaschinen, Nr. 5; W2 Wärmemaschinen, Nr. 4)",
+  "language": "GER",
+  "type": 1,
+  "default_difficulty": 2,
+  "default_points": 0,
+  "tags": [
+    "abwärme",
+    "energieerhaltung",
+    "wirkungsgrad",
+    "wärmekraftmaschine"
+  ],
+  "subbranches": [
+    "Laws of Thermodynamics"
+  ],
+  "youtube": ""
+}

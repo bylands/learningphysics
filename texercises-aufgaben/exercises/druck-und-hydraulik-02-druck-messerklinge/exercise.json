@@ -1,0 +1,16 @@
+{
+  "title": "Druck einer Messerklinge",
+  "note": "aus den Aufgabenblättern (H1 Hydrostatik, Nr. 2; H1 Druck, Nr. 1; H12 Druck und Schweredruck, Nr. 1)",
+  "language": "GER",
+  "type": 1,
+  "default_difficulty": 1,
+  "default_points": 0,
+  "tags": [
+    "druck",
+    "einheiten"
+  ],
+  "subbranches": [
+    "Hydrostatics"
+  ],
+  "youtube": ""
+}

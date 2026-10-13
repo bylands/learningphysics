@@ -1,0 +1,8 @@
+\NewQty{lMa}{100}[\m]
+\NewQty{TKa}{-50}[\degreeCelsius]
+\NewQty{THe}{40}[\degreeCelsius]
+\NewQty{alAl}{23.8e-6}[\per\kelvin]
+
+\SolQty{dTs}[\vartheta_2-\vartheta_1]{\THeX-\TKaX}[\kelvin]
+\SolQty{dlL}[\alpha\,l\,\Delta\vartheta]{\alAlX*\lMaX*\dTsX}[\m]
+\SolQty{hDu}[\sqrt{\left(\frac{l+\Delta l}{2}\right)^2-\left(\frac{l}{2}\right)^2}]{sqrt(((\lMaX+\dlLX)/2)^2-(\lMaX/2)^2)}[\m]

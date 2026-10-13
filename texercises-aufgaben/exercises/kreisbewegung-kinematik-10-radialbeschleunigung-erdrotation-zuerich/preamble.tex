@@ -1,0 +1,10 @@
+\NewQty{rE}{6378}[\kilo\meter][e3][\m]
+\NewQty{br}{47.41}[\degree]
+\NewQty{gZ}{9.80648}[\mpss]
+\NewQty*{Te}{24}[\hour][3600][\s]
+\NewQty{Ts}{86164}[\s]
+
+\SolQty{rz}[R\cos\varphi]{\rEX*cos(\brX*pi/180)}[\m]
+\SolQty{az}[\frac{4\pi^2 R\cos\varphi}{T^2}]{4*pi^2*\rzX/\TeX^2}[\mpss]
+\SolQty{pa}[\frac{a_\text{r}}{g}]{100*\azX/\gZX}[\percent]
+\SolQty{pas}[\frac{4\pi^2 R\cos\varphi}{T_\text{s}^2\,g}]{100*4*pi^2*\rzX/(\TsX^2*\gZX)}[\percent]

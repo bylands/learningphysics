@@ -1,0 +1,17 @@
+{
+  "title": "Aluminiumwürfel",
+  "note": "aus den Aufgabenblättern (D1 Masse und Dichte, Nr. 8; D1 KS Masse und Dichte, Nr. 5; D1 Dichte, Nr. 5; D1 Dichte KS, Nr. 2)",
+  "language": "GER",
+  "type": 1,
+  "default_difficulty": 1,
+  "default_points": 0,
+  "tags": [
+    "dichte",
+    "masse",
+    "volumen"
+  ],
+  "subbranches": [
+    "Dynamics"
+  ],
+  "youtube": ""
+}

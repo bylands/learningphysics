@@ -1,0 +1,19 @@
+{
+  "title": "Turnerin beim Pferdsprung",
+  "note": "aus den Aufgabenblättern (D3 Kraft, Nr. 9)",
+  "language": "GER",
+  "type": 1,
+  "default_difficulty": 2,
+  "default_points": 0,
+  "tags": [
+    "aktionsprinzip",
+    "beschleunigung",
+    "dynamik",
+    "gewichtskraft",
+    "grundgesetz der mechanik"
+  ],
+  "subbranches": [
+    "Dynamics"
+  ],
+  "youtube": ""
+}

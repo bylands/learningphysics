@@ -1,0 +1,18 @@
+{
+  "title": "Reibungskraft im F(t)-Diagramm",
+  "note": "aus den Aufgabenblättern (D5a Reibung, Nr. 1)",
+  "language": "GER",
+  "type": 0,
+  "default_difficulty": 2,
+  "default_points": 0,
+  "tags": [
+    "diagramm",
+    "dynamik",
+    "gleitreibung",
+    "haftreibung"
+  ],
+  "subbranches": [
+    "Dynamics"
+  ],
+  "youtube": ""
+}

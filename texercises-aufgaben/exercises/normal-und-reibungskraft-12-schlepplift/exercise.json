@@ -1,0 +1,18 @@
+{
+  "title": "Schlepplift",
+  "note": "aus den Aufgabenblättern (D4 Reibung und Luftwiderstand, Nr. 3; D4a Reibung und Luftwiderstand, Nr. 3)",
+  "language": "GER",
+  "type": 1,
+  "default_difficulty": 1,
+  "default_points": 0,
+  "tags": [
+    "dynamik",
+    "formelsammlung",
+    "gleitreibung",
+    "kräftegleichgewicht"
+  ],
+  "subbranches": [
+    "Dynamics"
+  ],
+  "youtube": ""
+}

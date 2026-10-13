@@ -1,0 +1,56 @@
+\begin{abcliste}
+\abc Annahmen: Masse mit Bleiakku $m = \meaO$, Rollwiderstandszahl $\mu_\mathrm{R} = \muRO$ (FoTaBe S.~189), Widerstandszahl $c_w = \cwaO$ (FoTaBe S.~189), Stirnfläche $A = \AstO$, Luftdichte $\rho = \rhoLO$, Wirkungsgrad von Motor und Antrieb $\eta = \etaMO$.
+
+Bei konstanter Geschwindigkeit muss der Motor den Rollwiderstand und den Luftwiderstand überwinden:
+\begin{align}
+ F_\mathrm{R} &= \FRoF = \muR\cdot\mea\cdot\gE = \FRo \\
+ F_\mathrm{L} &= \FLwF = \frac{1}{2}\cdot\cwa\cdot\Ast\cdot\rhoL\cdot\left(\vfa\right)^2 = \FLw
+\end{align}
+Der Akku muss die mechanische Leistung $(F_\mathrm{R}+F_\mathrm{L})\,v$ (geteilt durch den Wirkungsgrad) und die Grundversorgung $P_0 = \PgvO$ liefern:
+\begin{align}
+ P &= \PtotF \\
+   &= \Pgv+\frac{\left(\FRo+\FLw\right)\cdot\vfa}{\etaM} = \Ptot
+\end{align}
+Der Akku ist nach $t = E/P$ leer, die Reichweite ist $s = v\,t$:
+\begin{align}
+ s &= \sreF \\
+   &= \frac{\Eak\cdot\vfa}{\Ptot} \\
+   &= \sre \approx \result{\sreP{3}{2}}
+\end{align}
+
+\abc Allgemein ist die Reichweite
+\begin{align}
+ s(v) &= \frac{E\,v}{P_0+\frac{\left(F_\mathrm{R}+\frac{1}{2}c_w A\rho v^2\right)v}{\eta}} = \frac{E}{\frac{P_0}{v}+\frac{F_\mathrm{R}}{\eta}+\frac{c_w A\rho\,v^2}{2\eta}}
+\end{align}
+\begin{center}
+\begin{tikzpicture}[>=stealth]
+ \draw[->] (0,0) -- (10.6,0) node[below] {$v$ in \si{\kmph}};
+ \draw[->] (0,0) -- (0,6.4) node[left] {$s$ in \si{\kilo\meter}};
+ \foreach \x in {30,60,90,120,150} \draw (\x/15,0.1) -- (\x/15,-0.1) node[below] {\x};
+ \foreach \y in {50,100,150,200,250,300} \draw (0.1,\y/50) -- (-0.1,\y/50) node[left] {\y};
+ \draw[blue, very thick, domain=2:150, samples=150] plot ({\x/15}, {64800/(1800/\x+147.15+0.45*\x*\x/12.96)/50});
+ \draw[dashed] (1.97,0) -- (1.97,5.44) -- (0,5.44);
+ \fill (1.97,5.44) circle (0.07);
+ \fill (5.33,3.31) circle (0.07) node[above right] {\vfaO};
+\end{tikzpicture}
+\end{center}
+Die Reichweite ist maximal, wenn der Nenner $\frac{P_0}{v}+\frac{c_w A\rho\,v^2}{2\eta}$ minimal ist. Ableiten und Nullsetzen ergibt $-\frac{P_0}{v^2}+\frac{c_w A\rho\,v}{\eta} = 0$, also
+\begin{align}
+ v_\mathrm{opt} &= \voptF \\
+   &= \sqrt[3]{\frac{\etaM\cdot\Pgv}{\cwa\cdot\Ast\cdot\rhoL}} \\
+   &= \vopt \approx \result{\voptkP{0}{2}}
+\end{align}
+mit der maximalen Reichweite
+\begin{align}
+ s_\mathrm{max} &= \smaxF = \smax \approx \result{\smaxP{3}{2}}
+\end{align}
+
+\abc Im Optimum ist $\frac{P_0}{v_\mathrm{opt}} = \frac{c_w A\rho\,v_\mathrm{opt}^2}{\eta}$, also $s_\mathrm{max} = \dfrac{E}{\frac{3}{2}\frac{P_0}{v_\mathrm{opt}}+\frac{F_\mathrm{R}}{\eta}}$ mit $v_\mathrm{opt} \propto \sqrt[3]{\eta P_0/(c_w A)}$.
+\begin{itemize}
+\item Grösserer Energieinhalt $E$: $s_\mathrm{max}$ wächst proportional, $v_\mathrm{opt}$ bleibt gleich.
+\item Kleinere Grundlast $P_0$: $v_\mathrm{opt}$ wird kleiner, $s_\mathrm{max}$ grösser.
+\item Kleineres $c_w A$ (Stromlinienform): $v_\mathrm{opt}$ wird grösser, $s_\mathrm{max}$ grösser.
+\item Kleinere Masse oder Rollwiderstandszahl: $v_\mathrm{opt}$ bleibt gleich, $s_\mathrm{max}$ wird grösser. Bei den angenommenen Werten ist der Rollwiderstand im Optimum der grösste Posten.
+\item Höherer Wirkungsgrad $\eta$: $v_\mathrm{opt}$ und $s_\mathrm{max}$ werden grösser.
+\end{itemize}
+\end{abcliste}

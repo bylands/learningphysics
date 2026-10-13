@@ -1,0 +1,19 @@
+{
+  "title": "Was ist die Zentripetalkraft?",
+  "note": "aus den Aufgabenblättern (D6KS_Kreisbewegung, Nr. 6; D6 KS Kreisbewegung, Nr. 7; D6 Zentripetalkraft, Nr. 2; D6_Zentripetalkraft, Nr. 2)",
+  "language": "GER",
+  "type": 0,
+  "default_difficulty": 2,
+  "default_points": 0,
+  "tags": [
+    "kreisbewegung",
+    "kräfte",
+    "normalkraft",
+    "zentripetalkraft"
+  ],
+  "subbranches": [
+    "Circular Motion",
+    "Dynamics"
+  ],
+  "youtube": ""
+}

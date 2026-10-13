@@ -1,0 +1,17 @@
+{
+  "title": "Lochdurchmesser eines erhitzten Rings",
+  "note": "aus den Aufgabenblättern (T1 Längen- und Volumenausdehnung, Nr. 12)",
+  "language": "GER",
+  "type": 7,
+  "default_difficulty": 3,
+  "default_points": 0,
+  "tags": [
+    "herleitung",
+    "längenausdehnung",
+    "wärmeausdehnung"
+  ],
+  "subbranches": [
+    "Thermal Expansion"
+  ],
+  "youtube": ""
+}

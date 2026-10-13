@@ -1,0 +1,18 @@
+{
+  "title": "Festplatte im Computer",
+  "note": "aus den Aufgabenblättern (D6KS_Kreisbewegung, Nr. 11)",
+  "language": "GER",
+  "type": 2,
+  "default_difficulty": 2,
+  "default_points": 0,
+  "tags": [
+    "bahngeschwindigkeit",
+    "drehzahl",
+    "kreisbewegung",
+    "umlaufzeit"
+  ],
+  "subbranches": [
+    "Circular Motion"
+  ],
+  "youtube": ""
+}

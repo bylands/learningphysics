@@ -1,0 +1,11 @@
+\NewQty{sM}{15}[\km][e3][\m]
+\NewQty{sZ}{42.195}[\km][e3][\m]
+\NewQty*{vM}{9.5}[\kmph][1/3.6][\mps]
+\NewQty*{tMh}{10}[\hour][3600][\s]
+\NewQty*{tMm}{20}[\minute][60][\s]
+
+\SolQty{dtM}[\frac{s_\mathrm{Z}-s_\mathrm{M}}{v}]{(\sZX-\sMX)/\vMX}[\s]
+\ConvTo{dtMm}{1/60}{dtM}{\minute}
+\SolQty{tZ}[t_0+\Delta t]{\tMhX+\tMmX+\dtMX}[\s]
+\SolQty{hZ}[\text{Stunden}]{trunc(\tZX/3600)}
+\SolQty{mZ}[\text{Minuten}]{round((\tZX-3600*trunc(\tZX/3600))/60,0)}

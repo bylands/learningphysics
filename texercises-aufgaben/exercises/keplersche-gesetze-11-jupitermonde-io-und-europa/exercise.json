@@ -1,0 +1,19 @@
+{
+  "title": "Jupitermonde Io und Europa",
+  "note": "aus den Aufgabenblättern (G2 Gravitation, Nr. 3)",
+  "language": "GER",
+  "type": 1,
+  "default_difficulty": 1,
+  "default_points": 0,
+  "tags": [
+    "drittes kepler-gesetz",
+    "jupiter",
+    "kepler-gesetze",
+    "mond",
+    "umlaufzeit"
+  ],
+  "subbranches": [
+    "Gravitation/Celestial mechanics"
+  ],
+  "youtube": ""
+}

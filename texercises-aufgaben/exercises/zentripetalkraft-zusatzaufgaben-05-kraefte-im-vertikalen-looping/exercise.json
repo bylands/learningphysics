@@ -1,0 +1,19 @@
+{
+  "title": "Kräfte im vertikalen Looping",
+  "note": "aus den Aufgabenblättern (D6_Zentripetalkraft, Nr. 11; D6 Zentripetalkraft, Nr. 14)",
+  "language": "GER",
+  "type": 2,
+  "default_difficulty": 3,
+  "default_points": 0,
+  "tags": [
+    "kreisbewegung",
+    "looping",
+    "normalkraft",
+    "zentripetalkraft"
+  ],
+  "subbranches": [
+    "Circular Motion",
+    "Dynamics"
+  ],
+  "youtube": ""
+}

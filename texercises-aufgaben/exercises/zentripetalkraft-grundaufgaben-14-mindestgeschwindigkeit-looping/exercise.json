@@ -1,0 +1,19 @@
+{
+  "title": "Mindestgeschwindigkeit im Looping",
+  "note": "aus den Aufgabenblättern (D6 Zentripetalkraft, Nr. 9)",
+  "language": "GER",
+  "type": 2,
+  "default_difficulty": 2,
+  "default_points": 0,
+  "tags": [
+    "kreisbewegung",
+    "looping",
+    "normalkraft",
+    "zentripetalkraft"
+  ],
+  "subbranches": [
+    "Circular Motion",
+    "Dynamics"
+  ],
+  "youtube": ""
+}

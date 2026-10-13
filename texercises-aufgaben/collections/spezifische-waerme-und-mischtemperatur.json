@@ -1,0 +1,61 @@
+{
+  "title": "Spezifische Wärme und Mischtemperatur – Aufgaben aus den Aufgabenblättern",
+  "description": "Spezifische Wärme, Mischtemperatur und Heizwert aus den Aufgabenblättern W1, W3 und A1: Wärme berechnen, Kalorimetrie, Abschätzungen aus dem Alltag. Stoffwerte aus Formeln, Tabellen, Begriffe (7. Aufl.).",
+  "kind": "sheet",
+  "is_private": true,
+  "tags": [
+    "spezifische wärme",
+    "mischtemperatur",
+    "wärme"
+  ],
+  "items": [
+    {
+      "exercise": "spezifische-waerme-und-mischtemperatur-01-mischtemperatur-zweier-wassermengen"
+    },
+    {
+      "exercise": "spezifische-waerme-und-mischtemperatur-02-milch-in-heissen-kaffee"
+    },
+    {
+      "exercise": "spezifische-waerme-und-mischtemperatur-03-spezifische-waerme-von-petroleum"
+    },
+    {
+      "exercise": "spezifische-waerme-und-mischtemperatur-04-wasser-und-eis-gefrieren"
+    },
+    {
+      "exercise": "spezifische-waerme-und-mischtemperatur-05-betriebsdauer-gaskartusche"
+    },
+    {
+      "exercise": "spezifische-waerme-und-mischtemperatur-06-erwaermung-eines-bleiklotzes"
+    },
+    {
+      "exercise": "spezifische-waerme-und-mischtemperatur-07-unbekanntes-metallstueck"
+    },
+    {
+      "exercise": "spezifische-waerme-und-mischtemperatur-08-erwaermung-von-ethanol"
+    },
+    {
+      "exercise": "spezifische-waerme-und-mischtemperatur-09-nutzleistung-mikrowellenofen"
+    },
+    {
+      "exercise": "spezifische-waerme-und-mischtemperatur-10-sand-und-wasser-am-meer"
+    },
+    {
+      "exercise": "spezifische-waerme-und-mischtemperatur-11-badewasser-mischen"
+    },
+    {
+      "exercise": "spezifische-waerme-und-mischtemperatur-12-wasser-in-heisser-gusseisenpfanne"
+    },
+    {
+      "exercise": "spezifische-waerme-und-mischtemperatur-13-erwaermung-eines-fallenden-apfels"
+    },
+    {
+      "exercise": "spezifische-waerme-und-mischtemperatur-14-erwaermung-des-zuerichsees"
+    },
+    {
+      "exercise": "spezifische-waerme-und-mischtemperatur-15-luftkuehlung-eines-motorrads"
+    },
+    {
+      "exercise": "spezifische-waerme-und-mischtemperatur-16-temperaturausgleich-beim-baden"
+    }
+  ]
+}

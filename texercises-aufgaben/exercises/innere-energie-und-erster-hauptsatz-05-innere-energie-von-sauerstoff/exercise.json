@@ -1,0 +1,18 @@
+{
+  "title": "Innere Energie von Sauerstoff",
+  "note": "aus den Aufgabenblättern (W1 Innere Energie, Nr. 4)",
+  "language": "GER",
+  "type": 1,
+  "default_difficulty": 2,
+  "default_points": 0,
+  "tags": [
+    "freiheitsgrade",
+    "ideales gas",
+    "innere energie",
+    "thermodynamik"
+  ],
+  "subbranches": [
+    "Laws of Thermodynamics"
+  ],
+  "youtube": ""
+}

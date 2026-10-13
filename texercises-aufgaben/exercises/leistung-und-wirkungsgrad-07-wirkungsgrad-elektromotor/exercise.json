@@ -1,0 +1,17 @@
+{
+  "title": "Wirkungsgrad eines Elektromotors",
+  "note": "aus den Aufgabenblättern (E2 Arbeit und Leistung, Nr. 10; E3 Energetik (2009), Nr. 11)",
+  "language": "GER",
+  "type": 1,
+  "default_difficulty": 1,
+  "default_points": 0,
+  "tags": [
+    "hubarbeit",
+    "leistung",
+    "wirkungsgrad"
+  ],
+  "subbranches": [
+    "Work, Energy, Power"
+  ],
+  "youtube": ""
+}

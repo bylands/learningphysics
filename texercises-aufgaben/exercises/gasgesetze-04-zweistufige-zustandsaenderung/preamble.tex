@@ -1,0 +1,7 @@
+\NewQty{dVr}{10}[\percent]
+\NewQty{dTr}{20}[\percent]
+
+\SolQty{pqa}[\frac{V_1}{V_2}]{1/(1+\dVrX/100)}
+\SolQty{pqb}[\frac{T_3}{T_2}]{1-\dTrX/100}
+\SolQty{pq}[\frac{p_2}{p_1}\cdot\frac{p_3}{p_2}]{\pqaX*\pqbX}
+\SolQty{dpr}[\frac{p_3}{p_1}-1]{100*(\pqX-1)}[\percent]

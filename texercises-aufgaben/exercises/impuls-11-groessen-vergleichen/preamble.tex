@@ -1,0 +1,17 @@
+\NewQty{aL}{27}[\nano\second][e-9][\second]
+\NewQty{aR}{2.7e-10}[\second]
+\NewQty{bL}{5.3}[\gram\per\milli\liter][e3][\kgpmk]
+\NewQty{bR}{5.3e3}[\kgpmk]
+\NewQty{cL}{3.4e-5}[\kg]
+\NewQty{cR}{34}[\milli\gram][e-6][\kg]
+\NewQty{dL}{1.5}[\kg]
+\NewQty{dR}{15}[\deci\liter]
+\NewQty{eL}{0.15}[\kgmps]
+\NewQty*{eR}{150}[\gram\kilo\meter\per\hour][1/3600][\kgmps]
+\NewQty{fL}{3.5}[\centi\meter\cubed][e-6][\meter\cubed]
+\NewQty{fR}{35}[\centi\liter][e-5][\meter\cubed]
+
+\ConvTo{aRs}{1}{aR}{\second}
+\ConvTo{bRs}{1}{bR}{\kgpmk}
+\ConvTo{cLs}{1}{cL}{\kg}
+\ConvTo{eLs}{1}{eL}{\kgmps}

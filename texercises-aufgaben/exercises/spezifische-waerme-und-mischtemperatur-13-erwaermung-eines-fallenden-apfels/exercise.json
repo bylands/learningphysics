@@ -1,0 +1,19 @@
+{
+  "title": "Erwärmung eines fallenden Apfels",
+  "note": "aus den Aufgabenblättern (W3 Spezifische und latente Wärme, Nr. 14; W3 Spezifische Wärme, Nr. 11)",
+  "language": "GER",
+  "type": 1,
+  "default_difficulty": 2,
+  "default_points": 0,
+  "tags": [
+    "abschätzung",
+    "energieerhaltung",
+    "spezifische wärme",
+    "wärme"
+  ],
+  "subbranches": [
+    "Temperatur & Heat",
+    "Work, Energy, Power"
+  ],
+  "youtube": ""
+}

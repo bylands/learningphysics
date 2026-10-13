@@ -1,0 +1,7 @@
+\NewQty{Vk}{150}[\liter][e-3][\m\cubed]
+\NewQty{Tk}{12}[\celsius]
+\NewQty{Th}{100}[\celsius]
+\NewQty{Tm}{37}[\celsius]
+
+\SolQty{Vh}[V_\text{k}\,\frac{\vartheta-\vartheta_\text{k}}{\vartheta_\text{h}-\vartheta}]{\VkX*(\TmX-\TkX)/(\ThX-\TmX)}[\m\cubed]
+\ConvTo{Vhl}{1e3}{Vh}{\liter}

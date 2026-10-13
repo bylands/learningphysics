@@ -1,0 +1,16 @@
+{
+  "title": "Felsstück aus zwei Steinen",
+  "note": "aus den Aufgabenblättern (D1 Dichte, Nr. 8; D1 Dichte KS, Nr. 5)",
+  "language": "GER",
+  "type": 7,
+  "default_difficulty": 2,
+  "default_points": 0,
+  "tags": [
+    "dichte",
+    "mittlere dichte"
+  ],
+  "subbranches": [
+    "Dynamics"
+  ],
+  "youtube": ""
+}

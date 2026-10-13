@@ -1,0 +1,19 @@
+{
+  "title": "Wirkungsgrad reversibler Maschinen",
+  "note": "aus den Aufgabenblättern (W2 Wärmemaschinen, Nr. 12)",
+  "language": "GER",
+  "type": 0,
+  "default_difficulty": 3,
+  "default_points": 0,
+  "tags": [
+    "carnot-wirkungsgrad",
+    "gedankenexperiment",
+    "reversibler prozess",
+    "stirlingmotor",
+    "zweiter hauptsatz"
+  ],
+  "subbranches": [
+    "Laws of Thermodynamics"
+  ],
+  "youtube": ""
+}

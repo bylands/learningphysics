@@ -1,0 +1,36 @@
+\begin{center}
+\begin{tikzpicture}[>=stealth]
+ \draw (0,0) ellipse (4 and 3);
+ \fill[orange] (2.646,0) circle (0.15);
+ \node[below] at (2.646,-0.2) {Sonne};
+ \fill (4,0) circle (0.07) node[right] {P};
+ \fill (-4,0) circle (0.07) node[left] {A};
+ \draw[->] (2.646,0) -- (3.93,0) node[midway, above] {$r_\text{P}$};
+ \draw[->] (2.646,0) -- (-3.93,0) node[midway, above] {$r_\text{A}$};
+ \draw[->, very thick, red] (4,0) -- (4,1.6) node[right] {$v_\text{P}$};
+ \draw[->, very thick, red] (-4,0) -- (-4,-1.05) node[left] {$v_\text{A}$};
+\end{tikzpicture}
+\end{center}
+
+Nach dem zweiten Kepler'schen Gesetz überstreicht der Fahrstrahl Sonne--Planet in gleichen Zeiten gleiche Flächen. Im Perihel P und im Aphel A steht die Geschwindigkeit senkrecht zum Fahrstrahl; in der kurzen Zeit $\Delta t$ überstreicht er ein schmales Dreieck mit der Fläche $\frac{1}{2}r\,v\,\Delta t$. Zu prüfen ist also (FoTaBe S.~160)
+\begin{align}
+ \frac{\Delta A}{\Delta t} &= \frac{1}{2}r_\text{P}\,v_\text{P} = \frac{1}{2}r_\text{A}\,v_\text{A}
+\end{align}
+Die Abstände folgen aus der grossen Halbachse $a$ und der numerischen Exzentrizität $\varepsilon$ (FoTaBe S.~212): $r_\text{P} = a - c = a\left(1-\varepsilon\right)$, $r_\text{A} = a + c = a\left(1+\varepsilon\right)$.
+
+\emph{Merkur} ($a = \aMeO$, $\varepsilon = \exMeO$):
+\begin{align}
+ r_\text{P} &= \rPMeF = \rPMe, \qquad r_\text{A} = \rAMeF = \rAMe \\
+ \frac{1}{2}r_\text{P}\,v_\text{P} &= \frac{1}{2}\cdot\rPMe\cdot\vPMe = \fPMe \\
+ \frac{1}{2}r_\text{A}\,v_\text{A} &= \frac{1}{2}\cdot\rAMe\cdot\vAMe = \fAMe \\
+ \frac{r_\text{A}\,v_\text{A}}{r_\text{P}\,v_\text{P}} &= \qMe \approx \result{\qMeP{0}{3}}
+\end{align}
+
+\emph{Mars} ($a = \aMaO$, $\varepsilon = \exMaO$):
+\begin{align}
+ r_\text{P} &= \rPMaF = \rPMa, \qquad r_\text{A} = \rAMaF = \rAMa \\
+ \frac{1}{2}r_\text{P}\,v_\text{P} &= \frac{1}{2}\cdot\rPMa\cdot\vPMa = \fPMa \\
+ \frac{1}{2}r_\text{A}\,v_\text{A} &= \frac{1}{2}\cdot\rAMa\cdot\vAMa = \fAMa \\
+ \frac{r_\text{A}\,v_\text{A}}{r_\text{P}\,v_\text{P}} &= \qMa \approx \result{\qMaP{0}{3}}
+\end{align}
+Bei beiden Planeten ist die Flächengeschwindigkeit im Perihel und im Aphel gleich (im Rahmen der Rundung der Daten): Das zweite Kepler'sche Gesetz ist erfüllt. Die Flächengeschwindigkeiten der beiden Planeten sind aber verschieden; das Gesetz gilt jeweils nur für einen Planeten.

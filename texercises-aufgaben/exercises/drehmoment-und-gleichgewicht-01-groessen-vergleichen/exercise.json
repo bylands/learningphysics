@@ -1,0 +1,17 @@
+{
+  "title": "Grössen vergleichen (Drehmoment)",
+  "note": "aus den Aufgabenblättern (S1 Drehmoment & Gleichgewicht, Nr. 1)",
+  "language": "GER",
+  "type": 1,
+  "default_difficulty": 1,
+  "default_points": 0,
+  "tags": [
+    "drehmoment",
+    "einheiten",
+    "grössenvergleich"
+  ],
+  "subbranches": [
+    "Lever"
+  ],
+  "youtube": ""
+}

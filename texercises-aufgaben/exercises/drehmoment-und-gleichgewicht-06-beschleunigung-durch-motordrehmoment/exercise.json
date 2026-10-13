@@ -1,0 +1,18 @@
+{
+  "title": "Beschleunigung durch Motordrehmoment",
+  "note": "aus den Aufgabenblättern (S1 Drehmoment & Gleichgewicht, Nr. 6; S1_Hebelgesetz, Nr. 5; S1_StarrerKörper, Nr. 5)",
+  "language": "GER",
+  "type": 1,
+  "default_difficulty": 2,
+  "default_points": 0,
+  "tags": [
+    "beschleunigung",
+    "drehmoment",
+    "newtonsche gesetze"
+  ],
+  "subbranches": [
+    "Lever",
+    "Dynamics"
+  ],
+  "youtube": ""
+}

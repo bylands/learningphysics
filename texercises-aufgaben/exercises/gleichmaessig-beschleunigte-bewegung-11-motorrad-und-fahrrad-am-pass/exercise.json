@@ -1,0 +1,20 @@
+{
+  "title": "Motorrad und Fahrrad am Pass",
+  "note": "aus den Aufgabenblättern (K2a Beschleunigte Bewegung, Nr. 6)",
+  "language": "GER",
+  "type": 1,
+  "default_difficulty": 3,
+  "default_points": 0,
+  "tags": [
+    "begegnung",
+    "gleichförmige bewegung",
+    "gleichmässig beschleunigte bewegung",
+    "graphische lösung",
+    "kinematik",
+    "quadratische gleichung"
+  ],
+  "subbranches": [
+    "Kinematics"
+  ],
+  "youtube": ""
+}

@@ -1,0 +1,19 @@
+{
+  "title": "Wasser und Eis gefrieren",
+  "note": "aus den Aufgabenblättern (A1 Übergangswärme/Dampfdruck, Nr. 11)",
+  "language": "GER",
+  "type": 1,
+  "default_difficulty": 3,
+  "default_points": 0,
+  "tags": [
+    "eis",
+    "latente wärme",
+    "mischtemperatur",
+    "schmelzwärme",
+    "wärme"
+  ],
+  "subbranches": [
+    "Temperatur & Heat"
+  ],
+  "youtube": ""
+}

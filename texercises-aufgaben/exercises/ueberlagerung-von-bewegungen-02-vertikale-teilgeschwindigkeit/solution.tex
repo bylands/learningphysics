@@ -1,0 +1,16 @@
+\begin{center}
+\begin{tikzpicture}[>=stealth]
+ \draw[->, thick, blue] (0,0) -- (6,0) node[midway, below] {$v_x$};
+ \draw[->, thick, blue] (6,0) -- (6,4.5) node[midway, right] {$v_y$};
+ \draw[->, very thick, red] (0,0) -- (6,4.5) node[midway, above left] {$v$};
+ \draw (5.7,0) -- (5.7,0.3) -- (6,0.3);
+\end{tikzpicture}
+\end{center}
+
+Die Teilgeschwindigkeiten $v_x$ und $v_y$ stehen senkrecht aufeinander. Nach Pythagoras ist $v^2 = v_x^2 + v_y^2$, also
+\begin{align}
+ v_y &= \vyF \\
+   &= \sqrt{\left(\vr\right)^2-\left(\vx\right)^2} \\
+   &= \vy \approx \result{\vyP{0}{2}}
+\end{align}
+Der Ball kann sich dabei nach oben oder nach unten bewegen.

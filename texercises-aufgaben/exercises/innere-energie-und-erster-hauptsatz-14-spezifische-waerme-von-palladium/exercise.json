@@ -1,0 +1,17 @@
+{
+  "title": "Spezifische Wärme von Palladium",
+  "note": "aus den Aufgabenblättern (W3 Spezifische Wärme, Nr. 4)",
+  "language": "GER",
+  "type": 1,
+  "default_difficulty": 1,
+  "default_points": 0,
+  "tags": [
+    "dulong-petit",
+    "molare wärme",
+    "spezifische wärme"
+  ],
+  "subbranches": [
+    "Temperatur & Heat"
+  ],
+  "youtube": ""
+}

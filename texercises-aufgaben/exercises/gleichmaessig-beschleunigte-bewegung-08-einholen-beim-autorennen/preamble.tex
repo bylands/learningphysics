@@ -1,0 +1,9 @@
+\NewQty{aRa}{4.7}[\mpss]
+\NewQty{dtR}{3.5}[\s]
+\NewQty{vRb}{31}[\mps]
+\NewQty{aRb}{5.2}[\mpss]
+
+\SolQty{pR}[v_2-a_1\,\Delta t]{\vRbX-\aRaX*\dtRX}[\mps]
+\SolQty{tauR}[\frac{-\left(v_2-a_1\Delta t\right)+\sqrt{\left(v_2-a_1\Delta t\right)^2+\left(a_2-a_1\right)a_1\Delta t^2}}{a_2-a_1}]{(-\pRX+sqrt(\pRX^2+(\aRbX-\aRaX)*\aRaX*\dtRX^2))/(\aRbX-\aRaX)}[\s]
+\SolQty{tR}[\tau+\Delta t]{\tauRX+\dtRX}[\s]
+\SolQty{sR}[\frac{1}{2}a_1\,t^2]{0.5*\aRaX*\tRX^2}[\m]

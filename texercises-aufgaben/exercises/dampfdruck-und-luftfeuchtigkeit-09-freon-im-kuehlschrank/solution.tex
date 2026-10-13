@@ -1,0 +1,14 @@
+Im Verdampfer im Kühlraum siedet das Kältemittel bei tiefem Druck und entzieht dabei dem Kühlraum Wärme. Der Kompressor verdichtet den Dampf, und im Kondensator an der Rückseite des Kühlschranks kondensiert er bei hohem Druck und gibt die Wärme an die Küche ab.
+
+Kälter als das siedende Kältemittel im Verdampfer kann der Kühlraum nicht werden. Der Druck im Verdampfer soll nicht unter den äusseren Luftdruck $p_0 = \ncpo$ fallen (sonst würden bei Undichtigkeiten Luft und Feuchtigkeit in den Kreislauf gesaugt). Nach der Tabelle für Freon~22 (FoTaBe S.~192) liegt dieser Druck zwischen $p_1 = \psAO$ bei $\vartheta_1 = \thAO$ und $p_2 = \psBO$ bei $\vartheta_2 = \thBO$:
+\begin{align}
+ \vartheta_\text{min} &= \thVF \\
+   &= \thA + \left(\thB-\left(\thA\right)\right)\cdot\frac{\ncpo-\psA}{\psB-\psA} \\
+   &= \thV \approx \result{\thVP{0}{2}}
+\end{align}
+
+Im Kondensator muss der Dampf bei Raumtemperatur ($\vartheta_\text{R} \approx \thRO$) oder darüber kondensieren, damit er seine Wärme an die Küche abgeben kann. Dazu muss der Druck mindestens gleich dem Sättigungsdampfdruck bei \thRO\ sein:
+\begin{align}
+ p_\text{K} &\geq \psR \approx \result{\psRrP{0}{2}}
+\end{align}
+In der Praxis ist der Kondensator etwas wärmer als die Küche und der Druck entsprechend etwas höher.

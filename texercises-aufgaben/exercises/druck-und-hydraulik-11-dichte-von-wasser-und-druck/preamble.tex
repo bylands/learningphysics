@@ -1,0 +1,12 @@
+\NewQty{rhoW}{998.206}[\kilo\gram\per\meter\cubed]
+\NewQty{chiW}{4.45e-10}[\per\pascal]
+\NewQty{pwa}{1}[\bar][e5][\pascal]
+\NewQty{pwb}{10}[\bar][e5][\pascal]
+\NewQty{Tw}{20}[\celsius]
+
+\SolQty{rhob}[\frac{\rho_0}{1-\chi\left(p-p_0\right)}]{\rhoWX/(1-\chiWX*(\pwbX-\pwaX))}[\kilo\gram\per\meter\cubed]
+\SolQty{drw}[\rho_0\,\chi\left(p-p_0\right)]{\rhoWX*\chiWX*(\pwbX-\pwaX)}[\kilo\gram\per\meter\cubed]
+\SolQty{xw}[\chi\left(p-p_0\right)]{\chiWX*(\pwbX-\pwaX)}
+\SolQty{xwq}[x^2]{\xwX^2}
+\SolQty{stw}[\rho_0\,\chi]{\rhoWX*\chiWX}[\second\squared\per\meter\squared]
+\ConvTo{stwb}{1e5}{stw}{\kilo\gram\per\meter\cubed\per\bar}

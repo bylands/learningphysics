@@ -1,0 +1,19 @@
+{
+  "title": "Lineare Exzentrizität der Erdbahn",
+  "note": "aus den Aufgabenblättern (G1 Kepler, Nr. 3; G Gravitation, Nr. 1)",
+  "language": "GER",
+  "type": 1,
+  "default_difficulty": 1,
+  "default_points": 0,
+  "tags": [
+    "ellipse",
+    "erdbahn",
+    "exzentrizität",
+    "formelsammlung",
+    "kepler-gesetze"
+  ],
+  "subbranches": [
+    "Gravitation/Celestial mechanics"
+  ],
+  "youtube": ""
+}

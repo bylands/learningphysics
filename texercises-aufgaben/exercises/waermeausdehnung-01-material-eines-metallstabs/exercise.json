@@ -1,0 +1,18 @@
+{
+  "title": "Material eines Metallstabs",
+  "note": "aus den Aufgabenblättern (T1 Längen- und Volumenausdehnung, Nr. 2)",
+  "language": "GER",
+  "type": 1,
+  "default_difficulty": 1,
+  "default_points": 0,
+  "tags": [
+    "ausdehnungskoeffizient",
+    "formelsammlung",
+    "längenausdehnung",
+    "wärmeausdehnung"
+  ],
+  "subbranches": [
+    "Thermal Expansion"
+  ],
+  "youtube": ""
+}

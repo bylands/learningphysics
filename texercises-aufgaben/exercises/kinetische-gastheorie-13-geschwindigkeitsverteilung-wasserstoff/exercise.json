@@ -1,0 +1,19 @@
+{
+  "title": "Geschwindigkeitsverteilung von Wasserstoff",
+  "note": "aus den Aufgabenblättern (G2 Kinetische Gastheorie, Nr. 11)",
+  "language": "GER",
+  "type": 2,
+  "default_difficulty": 3,
+  "default_points": 0,
+  "tags": [
+    "atmosphäre",
+    "fluchtgeschwindigkeit",
+    "geschwindigkeitsverteilung",
+    "kinetische gastheorie",
+    "maxwell-boltzmann"
+  ],
+  "subbranches": [
+    "Gas Laws"
+  ],
+  "youtube": ""
+}

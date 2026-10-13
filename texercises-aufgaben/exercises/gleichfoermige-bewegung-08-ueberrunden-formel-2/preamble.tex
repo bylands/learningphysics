@@ -1,0 +1,21 @@
+\NewQty{NR}{63}
+\NewQty{lR}{4.6}[\km][e3][\m]
+\NewQty*{tHh}{1}[\hour][3600][\s]
+\NewQty*{tHm}{32}[\minute][60][\s]
+\NewQty{tHs}{48.379}[\s]
+\NewQty*{vJ}{180}[\kmph][1/3.6][\mps]
+
+\SolQty{tH}[t_\mathrm{H}]{\tHhX+\tHmX+\tHsX}[\s]
+\SolQty{sG}[N\,\ell]{\NRX*\lRX}[\m]
+\SolQty{vH}[\frac{N\,\ell}{t_\mathrm{H}}]{\sGX/\tHX}[\mps]
+\ConvTo{vHk}{3.6}{vH}{\kmph}
+\SolQty{dv}[v_\mathrm{H}-v_\mathrm{J}]{\vHX-\vJX}[\mps]
+\ConvTo{dvk}{3.6}{dv}{\kmph}
+\SolQty{tU}[\frac{\ell}{v_\mathrm{H}-v_\mathrm{J}}]{\lRX/\dvX}[\s]
+\ConvTo{tUm}{1/60}{tU}{\minute}
+\SolQty{nU}[\frac{v_\mathrm{H}}{v_\mathrm{H}-v_\mathrm{J}}]{\vHX/\dvX}
+\SolQty{rU}[\lceil n_1\rceil]{ceil(\nUX)}
+\SolQty{nZ}[2\,n_1]{2*\nUX}
+\SolQty{rZ}[\lceil n_2\rceil]{ceil(\nZX)}
+\SolQty{kU}[\frac{\left(v_\mathrm{H}-v_\mathrm{J}\right)t_\mathrm{H}}{\ell}]{\dvX*\tHX/\lRX}
+\SolQty{kG}[\lfloor k\rfloor]{trunc(\kUX)}

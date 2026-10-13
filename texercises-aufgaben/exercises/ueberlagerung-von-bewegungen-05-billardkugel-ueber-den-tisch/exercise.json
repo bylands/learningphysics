@@ -1,0 +1,19 @@
+{
+  "title": "Billardkugel über den Tisch",
+  "note": "aus den Aufgabenblättern (K4 Zusammengesetzte Bewegungen, Nr. 6)",
+  "language": "GER",
+  "type": 1,
+  "default_difficulty": 2,
+  "default_points": 0,
+  "tags": [
+    "gleichförmige bewegung",
+    "kinematik",
+    "komponenten",
+    "vektoren",
+    "überlagerung von bewegungen"
+  ],
+  "subbranches": [
+    "Kinematics"
+  ],
+  "youtube": ""
+}

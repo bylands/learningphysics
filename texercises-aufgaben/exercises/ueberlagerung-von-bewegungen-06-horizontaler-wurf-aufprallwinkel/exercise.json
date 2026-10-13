@@ -1,0 +1,18 @@
+{
+  "title": "Horizontaler Wurf mit Aufprallwinkel",
+  "note": "aus den Aufgabenblättern (K4 Zusammengesetzte Bewegungen, Nr. 7)",
+  "language": "GER",
+  "type": 1,
+  "default_difficulty": 2,
+  "default_points": 0,
+  "tags": [
+    "horizontaler wurf",
+    "kinematik",
+    "überlagerung von bewegungen"
+  ],
+  "subbranches": [
+    "Kinematics",
+    "Projectile Motion"
+  ],
+  "youtube": ""
+}

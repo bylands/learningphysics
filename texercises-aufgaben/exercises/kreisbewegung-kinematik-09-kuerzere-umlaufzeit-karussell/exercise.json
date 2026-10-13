@@ -1,0 +1,19 @@
+{
+  "title": "Kürzere Umlaufzeit eines Karussells",
+  "note": "aus den Aufgabenblättern (K5 Kreisbewegung, Nr. 9)",
+  "language": "GER",
+  "type": 1,
+  "default_difficulty": 2,
+  "default_points": 0,
+  "tags": [
+    "kinematik",
+    "kreisbewegung",
+    "prozentuale änderung",
+    "radialbeschleunigung",
+    "umlaufzeit"
+  ],
+  "subbranches": [
+    "Circular Motion"
+  ],
+  "youtube": ""
+}

@@ -1,0 +1,10 @@
+\NewQty{mMs}{1}[\kg]
+\NewQty{mCu}{650}[\gram][e-3][\kg]
+\NewQty{mZn}{350}[\gram][e-3][\kg]
+\NewQty{rCu}{8.92}[\gpcmk][e3][\kgpmk]
+\NewQty{rZn}{7.14}[\gpcmk][e3][\kgpmk]
+\NewQty{rTa}{8.47}[\gpcmk][e3][\kgpmk]
+
+\SolQty{rLe}[\frac{m_\text{Cu}+m_\text{Zn}}{\frac{m_\text{Cu}}{\rho_\text{Cu}}+\frac{m_\text{Zn}}{\rho_\text{Zn}}}]{(\mCuX+\mZnX)/(\mCuX/\rCuX+\mZnX/\rZnX)}[\kgpmk]
+\ConvTo{rLeg}{1e-3}{rLe}{\gpcmk}
+\SolQty{dTa}[\frac{\rho_\text{T}-\rho}{\rho}]{100*(\rTaX-\rLeX)/\rLeX}[\percent]

@@ -1,0 +1,21 @@
+{
+  "title": "Maximale Wurfweite bei 45°",
+  "note": "aus den Aufgabenblättern (K4 Zusammengesetzte Bewegungen, Nr. 14)",
+  "language": "GER",
+  "type": 7,
+  "default_difficulty": 3,
+  "default_points": 0,
+  "tags": [
+    "herleitung",
+    "kinematik",
+    "schräger wurf",
+    "wurfparabel",
+    "wurfweite",
+    "überlagerung von bewegungen"
+  ],
+  "subbranches": [
+    "Kinematics",
+    "Projectile Motion"
+  ],
+  "youtube": ""
+}

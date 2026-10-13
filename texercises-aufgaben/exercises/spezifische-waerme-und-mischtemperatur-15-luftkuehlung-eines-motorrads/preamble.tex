@@ -1,0 +1,15 @@
+\NewQty{PA}{50}[\kilo\watt][e3][\watt]
+\NewQty{Ta}{20}[\celsius]
+\NewQty{Tb}{80}[\celsius]
+\NewQty{vL}{25}[\mps]
+\NewQty{cpL}{1005}[\joule\per\kilogram\per\kelvin]
+\NewQty{rLo}{1.293}[\kilogram\per\meter\cubed]
+\NewQty{Tn}{273.15}[\kelvin]
+
+\SolQty{mf}[\frac{P}{c_p\left(\vartheta_2-\vartheta_1\right)}]{\PAX/(\cpLX*(\TbX-\TaX))}[\kilogram\per\second]
+\SolQty{TaK}[T_0+\vartheta_1]{\TnX+\TaX}[\kelvin]
+\SolQty{rLa}[\rho_0\,\frac{T_0}{T_1}]{\rLoX*\TnX/\TaKX}[\kilogram\per\meter\cubed]
+\SolQty{Vf}[\frac{\dot m}{\rho_1}]{\mfX/\rLaX}[\m\cubed\per\second]
+\ConvTo{Vfl}{1e3}{Vf}{\liter\per\second}
+\SolQty{AK}[\frac{\dot V}{v}]{\VfX/\vLX}[\m\squared]
+\ConvTo{AKc}{1e4}{AK}{\centi\meter\squared}

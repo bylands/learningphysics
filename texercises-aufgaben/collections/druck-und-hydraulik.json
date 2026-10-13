@@ -1,0 +1,53 @@
+{
+  "title": "Druck und Hydraulik – Aufgaben aus den Aufgabenblättern",
+  "description": "Druck, Druckkraft, hydraulische Kraftübertragung und Kompressibilität aus den Aufgabenblättern H1/H12/H2: Einheiten, Kolben und hydraulische Presse, Kompressibilität von Flüssigkeiten, Magdeburger Halbkugeln. Rechnen Sie mit g = 9.81 m/s²; Werte aus Formeln, Tabellen, Begriffe.",
+  "kind": "sheet",
+  "is_private": true,
+  "tags": [
+    "druck",
+    "hydraulik",
+    "hydrostatik",
+    "kompressibilität"
+  ],
+  "items": [
+    {
+      "exercise": "druck-und-hydraulik-01-einheiten-vergleichen"
+    },
+    {
+      "exercise": "druck-und-hydraulik-02-druck-messerklinge"
+    },
+    {
+      "exercise": "druck-und-hydraulik-03-gasflasche-ventil"
+    },
+    {
+      "exercise": "druck-und-hydraulik-04-luftdruck-a4-blatt"
+    },
+    {
+      "exercise": "druck-und-hydraulik-05-verbundene-zylinder"
+    },
+    {
+      "exercise": "druck-und-hydraulik-06-kompressibilitaeten-vergleichen"
+    },
+    {
+      "exercise": "druck-und-hydraulik-07-dichteaenderung-formel"
+    },
+    {
+      "exercise": "druck-und-hydraulik-08-kolben-mit-draht"
+    },
+    {
+      "exercise": "druck-und-hydraulik-09-wasser-im-vakuum"
+    },
+    {
+      "exercise": "druck-und-hydraulik-10-oel-im-hydraulischen-system"
+    },
+    {
+      "exercise": "druck-und-hydraulik-11-dichte-von-wasser-und-druck"
+    },
+    {
+      "exercise": "druck-und-hydraulik-12-hydraulische-presse"
+    },
+    {
+      "exercise": "druck-und-hydraulik-13-magdeburger-halbkugeln"
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "title": "Am Gas verrichtete Arbeit",
+  "note": "aus den Aufgabenblättern (W1 Innere Energie, Nr. 1)",
+  "language": "GER",
+  "type": 7,
+  "default_difficulty": 1,
+  "default_points": 0,
+  "tags": [
+    "erster hauptsatz",
+    "innere energie",
+    "thermodynamik"
+  ],
+  "subbranches": [
+    "Laws of Thermodynamics"
+  ],
+  "youtube": ""
+}

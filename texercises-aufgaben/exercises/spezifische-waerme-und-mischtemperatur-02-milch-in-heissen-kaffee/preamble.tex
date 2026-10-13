@@ -1,0 +1,7 @@
+\NewQty{TM}{6}[\celsius]
+\NewQty{VK}{1.8}[\deci\liter][e-4][\m\cubed]
+\NewQty{TK}{80}[\celsius]
+\NewQty{Tm}{60}[\celsius]
+
+\SolQty{VM}[V_\text{K}\,\frac{\vartheta_\text{K}-\vartheta}{\vartheta-\vartheta_\text{M}}]{\VKX*(\TKX-\TmX)/(\TmX-\TMX)}[\m\cubed]
+\ConvTo{VMl}{1e3}{VM}{\liter}

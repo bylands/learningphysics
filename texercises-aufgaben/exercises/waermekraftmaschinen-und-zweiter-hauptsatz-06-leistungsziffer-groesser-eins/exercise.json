@@ -1,0 +1,17 @@
+{
+  "title": "Leistungsziffer grösser als eins",
+  "note": "aus den Aufgabenblättern (W2 Wärmekraftmaschinen, Nr. 6; W2 Wärmemaschinen, Nr. 5)",
+  "language": "GER",
+  "type": 7,
+  "default_difficulty": 2,
+  "default_points": 0,
+  "tags": [
+    "kältemaschine",
+    "leistungsziffer",
+    "zweiter hauptsatz"
+  ],
+  "subbranches": [
+    "Laws of Thermodynamics"
+  ],
+  "youtube": ""
+}

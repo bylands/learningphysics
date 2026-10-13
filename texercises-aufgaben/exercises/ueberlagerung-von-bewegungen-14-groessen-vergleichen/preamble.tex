@@ -1,0 +1,21 @@
+\NewQty{aA}{2.5e-3}
+\NewQty{aB}{6e7}
+\NewQty{aR}{1.5e5}
+\NewQty{bL}{4.7}[\centi\meter\per\milli\second][e1][\mps]
+\NewQty{bR}{47}[\mps]
+\NewQty{cL}{15}[\micro\second][e-6][\second]
+\NewQty{cR}{1.5e-5}[\second]
+\NewQty{dL}{450}[\deci\meter][e-1][\meter]
+\NewQty{dR}{4.5e-2}[\kilo\meter][e3][\meter]
+\NewQty{eA}{3.6}[\meter]
+\NewQty{eB}{1.7}[\second]
+\NewQty{eR}{1.9}[\mps]
+\NewQty{fL}{18}[\mps]
+\NewQty{fR}{5}[\kmph]
+
+\SolQty{aL}[a\cdot b]{\aAX*\aBX}
+\ConvTo{bLs}{1}{bL}{\mps}
+\ConvTo{cRs}{1}{cR}{\second}
+\ConvTo{dLs}{1}{dL}{\meter}
+\ConvTo{dRs}{1}{dR}{\meter}
+\ConvTo{fLk}{3.6}{fL}{\kmph}

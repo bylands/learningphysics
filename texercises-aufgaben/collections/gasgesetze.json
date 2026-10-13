@@ -1,0 +1,76 @@
+{
+  "title": "Gasgesetze – Aufgaben aus den Aufgabenblättern",
+  "description": "Gasgesetze aus den Aufgabenblättern G1/G2: isotherme, isobare und isochore Zustandsänderungen, allgemeine und ideale Gasgleichung, Stoffmenge und molare Masse, Teilchenmassen. Werte aus Formeln, Tabellen, Begriffe (7. Auflage); Normaldruck 1013 hPa.",
+  "kind": "sheet",
+  "is_private": true,
+  "tags": [
+    "gasgesetze",
+    "ideale gasgleichung",
+    "thermodynamik"
+  ],
+  "items": [
+    {
+      "exercise": "gasgesetze-01-isochore-erwaermung"
+    },
+    {
+      "exercise": "gasgesetze-02-isotherme-druckabnahme"
+    },
+    {
+      "exercise": "gasgesetze-03-temperaturaenderung-ideales-gas"
+    },
+    {
+      "exercise": "gasgesetze-04-zweistufige-zustandsaenderung"
+    },
+    {
+      "exercise": "gasgesetze-05-kompression-und-erhitzung"
+    },
+    {
+      "exercise": "gasgesetze-06-gasblase-im-mineralwasser"
+    },
+    {
+      "exercise": "gasgesetze-07-dichte-erwaermter-luft"
+    },
+    {
+      "exercise": "gasgesetze-08-masse-von-traubenzucker"
+    },
+    {
+      "exercise": "gasgesetze-09-stoffmenge-von-kupfer"
+    },
+    {
+      "exercise": "gasgesetze-10-molekuele-im-hochvakuum"
+    },
+    {
+      "exercise": "gasgesetze-11-temperatur-bei-molvolumen"
+    },
+    {
+      "exercise": "gasgesetze-12-wasserstoff-im-gastank"
+    },
+    {
+      "exercise": "gasgesetze-13-heissluftmotor"
+    },
+    {
+      "exercise": "gasgesetze-14-luft-entweicht-aus-zimmer"
+    },
+    {
+      "exercise": "gasgesetze-15-druck-im-autopneu"
+    },
+    {
+      "exercise": "gasgesetze-16-flasche-auf-dem-berg"
+    },
+    {
+      "exercise": "gasgesetze-17-druckausgleich-zweier-gefaesse"
+    },
+    {
+      "exercise": "gasgesetze-18-sauerstoff-in-gasflasche"
+    },
+    {
+      "exercise": "gasgesetze-19-groessen-vergleichen"
+    },
+    {
+      "exercise": "gasgesetze-20-masse-einzelner-teilchen"
+    },
+    {
+      "exercise": "gasgesetze-21-uranisotope"
+    }
+  ]
+}

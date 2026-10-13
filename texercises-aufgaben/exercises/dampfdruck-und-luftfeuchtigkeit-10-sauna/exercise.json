@@ -1,0 +1,17 @@
+{
+  "title": "Aufguss in der Sauna",
+  "note": "aus den Aufgabenblättern (G2 Gaskinetik & Dampfdruck, Nr. 16)",
+  "language": "GER",
+  "type": 1,
+  "default_difficulty": 2,
+  "default_points": 0,
+  "tags": [
+    "absolute luftfeuchtigkeit",
+    "luftfeuchtigkeit",
+    "relative luftfeuchtigkeit"
+  ],
+  "subbranches": [
+    "Vapor Pressure & Humidity"
+  ],
+  "youtube": ""
+}

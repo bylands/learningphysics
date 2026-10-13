@@ -1,0 +1,17 @@
+{
+  "title": "Zwei Zylinder mit Hahn",
+  "note": "aus den Aufgabenblättern (H2 Schweredruck, Nr. 12; H12 Druck und Schweredruck, Nr. 15; H Hydrostatik, Nr. 15; H1 Hydrostatik, Nr. 16)",
+  "language": "GER",
+  "type": 1,
+  "default_difficulty": 2,
+  "default_points": 0,
+  "tags": [
+    "hydrostatik",
+    "verbundene gefässe",
+    "volumen"
+  ],
+  "subbranches": [
+    "Hydrostatics"
+  ],
+  "youtube": ""
+}

@@ -1,0 +1,9 @@
+\NewQty{gE}{9.81}[\mpss]
+\NewQty{stg}{16}[\percent]
+\NewQty{sSt}{350}[\m]
+
+\SolQty{wi}[\arctan p]{atan(\stgX/100)*180/pi}[\degree]
+\SolQty{aAu}[g\sin\alpha]{\gEX*sin(\wiX*pi/180)}[\mpss]
+\SolQty{tAu}[\sqrt{\frac{2s}{g\sin\alpha}}]{sqrt(2*\sStX/\aAuX)}[\s]
+\SolQty{vAu}[\sqrt{2\,g\sin\alpha\,s}]{\aAuX*\tAuX}[\mps]
+\ConvTo{vKm}{3.6}{vAu}{\kmph}

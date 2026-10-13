@@ -1,0 +1,17 @@
+{
+  "title": "Kondensation beim Destillieren",
+  "note": "aus den Aufgabenblättern (W3 Spezifische und latente Wärme, Nr. 10)",
+  "language": "GER",
+  "type": 1,
+  "default_difficulty": 1,
+  "default_points": 0,
+  "tags": [
+    "kondensation",
+    "latente wärme",
+    "verdampfungswärme"
+  ],
+  "subbranches": [
+    "Temperatur & Heat"
+  ],
+  "youtube": ""
+}

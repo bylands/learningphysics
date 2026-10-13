@@ -1,0 +1,21 @@
+\begin{center}
+\begin{tikzpicture}[>=stealth]
+ \draw[->, thick, blue] (0,0) -- (6,0) node[midway, below] {$\vec v_\text{St}$};
+ \draw[dashed] (6,0) -- (7.8,0);
+ \draw[->, thick, blue] (6,0) -- (0,3.46) node[midway, above right] {$\vec v_\text{Sw}$};
+ \draw[->, very thick, red] (0,0) -- (0,3.46) node[midway, left] {$\vec v$};
+ \draw (7,0) arc (0:150:1);
+ \node at (6.35,1.3) {$\alpha$};
+\end{tikzpicture}
+\end{center}
+
+Die Geschwindigkeit $\vec v$ des Schwimmers gegenüber dem Ufer ist die Summe aus der Strömungsgeschwindigkeit $\vec v_\text{St}$ und seiner Schwimmgeschwindigkeit $\vec v_\text{Sw}$ gegenüber dem Wasser. Die $x$-Achse zeigt in Richtung der Strömung. Damit sich der Schwimmer senkrecht zur Strömung bewegt, muss die $x$-Komponente von $\vec v$ verschwinden:
+\begin{align}
+ v_\text{St} + v_\text{Sw}\cos\alpha &= 0
+\end{align}
+Daraus folgt
+\begin{align}
+ v_\text{Sw} &= \vswF \\
+   &= -\frac{\vst}{\cos\left(\alO\right)} \\
+   &= \vsw \approx \result{\vswP{0}{2}}
+\end{align}

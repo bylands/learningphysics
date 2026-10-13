@@ -1,0 +1,8 @@
+\NewQty{pUe}{1.4}[\bar][e5][\pascal]
+\NewQty{thA}{120}[\degreeCelsius]
+\NewQty{psA}{198.53}[\kilo\pascal][e3][\pascal]
+\NewQty{thB}{130}[\degreeCelsius]
+\NewQty{psB}{270.13}[\kilo\pascal][e3][\pascal]
+
+\SolQty{pT}[p_0+p_\text{ü}]{\ncpoX+\pUeX}[\pascal]
+\SolQty{thS}[\vartheta_1+\left(\vartheta_2-\vartheta_1\right)\frac{p-p_1}{p_2-p_1}]{\thAX+(\thBX-\thAX)*(\pTX-\psAX)/(\psBX-\psAX)}[\degreeCelsius]

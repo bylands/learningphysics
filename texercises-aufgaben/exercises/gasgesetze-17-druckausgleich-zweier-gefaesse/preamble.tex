@@ -1,0 +1,7 @@
+\NewQty{VEi}{8.5}[\deci\liter][e-4][\meter\cubed]
+\NewQty{pEi}{1.1}[\bar][e5][\pascal]
+\NewQty{VZw}{4.5}[\deci\liter][e-4][\meter\cubed]
+\NewQty{pZw}{0.65}[\bar][e5][\pascal]
+
+\SolQty{pM}[\frac{p_1V_1+p_2V_2}{V_1+V_2}]{(\pEiX*\VEiX+\pZwX*\VZwX)/(\VEiX+\VZwX)}[\pascal]
+\ConvTo{pMb}{1e-5}{pM}{\bar}

@@ -1,0 +1,32 @@
+\emph{Rechnerisch:} $x$ ist der Abstand vom Pass, die Zeit wird ab dem Start des Fahrrads gezählt. Das Motorrad fährt mit $v = \vMoO = \vMo$ auf den Pass zu, das Fahrrad vom Pass weg:
+\begin{align}
+ x_\mathrm{M} &= d - v\,t, \qquad x_\mathrm{F} = \frac{1}{2}a\,t^2
+\end{align}
+Sie kreuzen sich, wenn $x_\mathrm{M} = x_\mathrm{F}$ ist, also bei $\frac{1}{2}a\,t^2+v\,t-d = 0$. Die positive Lösung ist
+\begin{align}
+ t &= \tMoF \\
+   &= \frac{-\vMo+\sqrt{\left(\vMo\right)^2+2\cdot\aFa\cdot\dMo}}{\aFa} = \tMo \approx \result{\tMoP{0}{2}}
+\end{align}
+Der Ort ist
+\begin{align}
+ x &= \xMoF = \frac{1}{2}\cdot\aFa\cdot\left(\tMo\right)^2 = \xMo \approx \result{\xMoP{0}{2}}
+\end{align}
+vom Pass entfernt.
+
+\emph{Graphisch:} Im $x(t)$-Diagramm ist das Motorrad eine fallende Gerade, das Fahrrad eine Parabel; der Schnittpunkt ist der Kreuzungspunkt.
+
+\begin{center}
+\begin{tikzpicture}[>=stealth, xscale=0.12, yscale=0.004]
+ \foreach \x in {10,20,...,80} \draw[gray!30] (\x,0) -- (\x,1500);
+ \foreach \y in {250,500,...,1500} \draw[gray!30] (0,\y) -- (82,\y);
+ \draw[->] (0,0) -- (88,0) node[below] {$t$ in \si{\second}};
+ \draw[->] (0,0) -- (0,1650) node[above] {$x$ in \si{\meter}};
+ \foreach \x in {0,10,...,80} \node[below] at (\x,0) {\x};
+ \foreach \y in {0,250,...,1500} \node[left] at (0,\y) {\y};
+ \draw[red, very thick] (0,1500) -- (82,270) node[right] {Motorrad};
+ \draw[blue, very thick, domain=0:82, samples=60] plot (\x, {0.175*\x*\x}) node[right] {Fahrrad};
+ \fill (59.16,612.6) ellipse (0.75 and 22);
+ \draw[dashed] (59.16,612.6) -- (59.16,0);
+ \draw[dashed] (59.16,612.6) -- (0,612.6);
+\end{tikzpicture}
+\end{center}

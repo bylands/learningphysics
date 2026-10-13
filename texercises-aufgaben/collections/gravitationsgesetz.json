@@ -1,0 +1,33 @@
+{
+  "title": "Gravitationsgesetz – Aufgaben aus den Aufgabenblättern",
+  "description": "Newtons Gravitationsgesetz aus den Aufgabenblättern G2: Kräfte zwischen Kugeln, Abstandsgesetz, Sonnen- und Erdmasse aus Bahndaten, Newtons Mondrechnung. Konstanten und Bahndaten aus Formeln, Tabellen, Begriffe (7. Aufl.).",
+  "kind": "sheet",
+  "is_private": true,
+  "tags": [
+    "gravitation",
+    "gravitationsgesetz"
+  ],
+  "items": [
+    {
+      "exercise": "gravitationsgesetz-01-gravitationskraft-zwischen-kugeln"
+    },
+    {
+      "exercise": "gravitationsgesetz-02-planet-entfernt-sich-von-der-sonne"
+    },
+    {
+      "exercise": "gravitationsgesetz-03-gravitationskraft-verdreifachen"
+    },
+    {
+      "exercise": "gravitationsgesetz-04-sonnenmasse-aus-der-venusbahn"
+    },
+    {
+      "exercise": "gravitationsgesetz-05-kugel-im-kraeftegleichgewicht"
+    },
+    {
+      "exercise": "gravitationsgesetz-06-newtons-mondrechnung"
+    },
+    {
+      "exercise": "gravitationsgesetz-07-erdmasse-aus-satellitenbahnen"
+    }
+  ]
+}

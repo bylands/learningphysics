@@ -1,0 +1,61 @@
+{
+  "title": "Arbeit und Energieerhaltung – Aufgaben aus den Aufgabenblättern",
+  "description": "Energieformen, Energieerhaltung und Arbeit aus den Aufgabenblättern E1–E3: potentielle, kinetische und Spannenergie, Energiesatz, Arbeit mit und ohne Reibung. Rechnen Sie mit g = 9.81 m/s² (ohne Taschenrechner mit 10 m/s²); Werte aus Formeln, Tabellen, Begriffe.",
+  "kind": "sheet",
+  "is_private": true,
+  "tags": [
+    "arbeit",
+    "energie",
+    "energieerhaltung"
+  ],
+  "items": [
+    {
+      "exercise": "arbeit-und-energieerhaltung-01-energieeinheiten-vergleichen"
+    },
+    {
+      "exercise": "arbeit-und-energieerhaltung-02-energieumwandlungen"
+    },
+    {
+      "exercise": "arbeit-und-energieerhaltung-03-bergsteiger-mount-everest"
+    },
+    {
+      "exercise": "arbeit-und-energieerhaltung-04-sprinter-kinetische-energie"
+    },
+    {
+      "exercise": "arbeit-und-energieerhaltung-05-auto-beschleunigt"
+    },
+    {
+      "exercise": "arbeit-und-energieerhaltung-06-auto-verdoppelt-geschwindigkeit"
+    },
+    {
+      "exercise": "arbeit-und-energieerhaltung-07-spannenergie-feder"
+    },
+    {
+      "exercise": "arbeit-und-energieerhaltung-08-energien-beim-freien-fall"
+    },
+    {
+      "exercise": "arbeit-und-energieerhaltung-09-feuerwerksrakete-flughoehe"
+    },
+    {
+      "exercise": "arbeit-und-energieerhaltung-10-halbe-aufprallgeschwindigkeit"
+    },
+    {
+      "exercise": "arbeit-und-energieerhaltung-11-springende-spiralfeder"
+    },
+    {
+      "exercise": "arbeit-und-energieerhaltung-12-angestossenes-fadenpendel"
+    },
+    {
+      "exercise": "arbeit-und-energieerhaltung-13-umkehrpunkte-federpendel"
+    },
+    {
+      "exercise": "arbeit-und-energieerhaltung-14-arbeit-schrottpresse"
+    },
+    {
+      "exercise": "arbeit-und-energieerhaltung-15-federkonstante-aus-spannarbeit"
+    },
+    {
+      "exercise": "arbeit-und-energieerhaltung-16-kran-oder-rampe"
+    }
+  ]
+}

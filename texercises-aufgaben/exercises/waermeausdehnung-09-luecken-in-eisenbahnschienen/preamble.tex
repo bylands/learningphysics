@@ -1,0 +1,11 @@
+\NewQty{bLu}{5}[\cm][e-2][\m]
+\NewQty{lSc}{1}[\km][e3][\m]
+\NewQty{TSo}{40}[\degreeCelsius]
+\NewQty{TWi}{-20}[\degreeCelsius]
+\NewQty{alSt}{11e-6}[\per\kelvin]
+
+\SolQty{dTr}[\vartheta_\mathrm{S}-\vartheta_\mathrm{W}]{\TSoX-\TWiX}[\kelvin]
+\SolQty{dlS}[\alpha\,l\,\Delta\vartheta]{\alStX*\lScX*\dTrX}[\m]
+\SolQty{nLu}[\frac{\Delta l}{b}]{\dlSX/\bLuX}
+\SolQty{nLa}{ceil(\nLuX)}
+\SolQty{abL}[\frac{l}{n}]{\lScX/\nLaX}[\m]

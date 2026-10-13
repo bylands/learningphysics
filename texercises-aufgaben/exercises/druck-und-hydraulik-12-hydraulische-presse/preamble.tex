@@ -1,0 +1,7 @@
+\NewQty{Rhp}{0.5}[\meter]
+\NewQty{rhp}{2.5}[\centi\meter][e-2][\meter]
+\NewQty{Fhp}{800}[\kilo\newton][e3][\newton]
+
+\SolQty{Fdk}[F_\mathrm{P}\,\frac{r^2}{R^2}]{\FhpX*\rhpX^2/\RhpX^2}[\newton]
+\SolQty{php}[\frac{F_\mathrm{P}}{\pi R^2}]{\FhpX/(pi*\RhpX^2)}[\pascal]
+\ConvTo{phpb}{1e-5}{php}{\bar}

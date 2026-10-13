@@ -1,0 +1,19 @@
+{
+  "title": "Schmelzender Eiswürfel im Glas",
+  "note": "aus den Aufgabenblättern (H3 Auftrieb, Nr. 8)",
+  "language": "GER",
+  "type": 0,
+  "default_difficulty": 2,
+  "default_points": 0,
+  "tags": [
+    "archimedes",
+    "auftrieb",
+    "eis",
+    "hydrostatik",
+    "schwimmen"
+  ],
+  "subbranches": [
+    "Hydrostatics"
+  ],
+  "youtube": ""
+}

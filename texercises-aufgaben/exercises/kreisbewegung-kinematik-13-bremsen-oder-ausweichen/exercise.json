@@ -1,0 +1,21 @@
+{
+  "title": "Bremsen oder Ausweichen",
+  "note": "aus den Aufgabenblättern (K5 Kreisbewegung, Nr. 13)",
+  "language": "GER",
+  "type": 7,
+  "default_difficulty": 3,
+  "default_points": 0,
+  "tags": [
+    "bremsweg",
+    "herleitung",
+    "kinematik",
+    "kreisbewegung",
+    "radialbeschleunigung",
+    "verkehr"
+  ],
+  "subbranches": [
+    "Circular Motion",
+    "Kinematics"
+  ],
+  "youtube": ""
+}

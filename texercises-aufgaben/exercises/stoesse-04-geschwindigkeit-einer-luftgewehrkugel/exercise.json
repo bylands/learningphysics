@@ -1,0 +1,18 @@
+{
+  "title": "Geschwindigkeit einer Luftgewehrkugel",
+  "note": "aus den Aufgabenblättern (D2 Impuls, Nr. 15; D1 Masse, Dichte & Impuls, Nr. 18; D2 Impuls (2007), Nr. 12)",
+  "language": "GER",
+  "type": 1,
+  "default_difficulty": 1,
+  "default_points": 0,
+  "tags": [
+    "impuls",
+    "impulserhaltung",
+    "luftkissenbahn",
+    "unelastischer stoss"
+  ],
+  "subbranches": [
+    "Momentum"
+  ],
+  "youtube": ""
+}

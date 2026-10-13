@@ -1,0 +1,48 @@
+{
+  "title": "Schweredruck – Aufgaben aus den Aufgabenblättern",
+  "description": "Schweredruck in Flüssigkeiten und verbundene Gefässe aus den Aufgabenblättern H2 Schweredruck, H12 Druck und Schweredruck und Hydrostatik: Blutdruck, Taucherdruck, homogene Atmosphäre, U-Rohre, Heber. Rechnen Sie mit g = 9.81 m/s²; Dichten aus Formeln, Tabellen, Begriffe.",
+  "kind": "sheet",
+  "is_private": true,
+  "tags": [
+    "hydrostatik",
+    "schweredruck"
+  ],
+  "items": [
+    {
+      "exercise": "schweredruck-01-blutdruck-kopf-bis-fuesse"
+    },
+    {
+      "exercise": "schweredruck-02-dichte-aus-druckzunahme"
+    },
+    {
+      "exercise": "schweredruck-03-gewaesser-auf-dem-mond"
+    },
+    {
+      "exercise": "schweredruck-04-tauchen-mit-schnorchel"
+    },
+    {
+      "exercise": "schweredruck-05-hoehe-homogene-atmosphaere"
+    },
+    {
+      "exercise": "schweredruck-06-dicke-von-staumauern"
+    },
+    {
+      "exercise": "schweredruck-07-u-rohr-zwei-fluessigkeiten"
+    },
+    {
+      "exercise": "schweredruck-08-regentonne-mit-schlauch"
+    },
+    {
+      "exercise": "schweredruck-09-schwimmblase-eines-fisches"
+    },
+    {
+      "exercise": "schweredruck-10-u-rohr-mit-abgesaugter-luft"
+    },
+    {
+      "exercise": "schweredruck-11-unbekannte-fluessigkeit-im-u-rohr"
+    },
+    {
+      "exercise": "schweredruck-12-zwei-zylinder-mit-hahn"
+    }
+  ]
+}

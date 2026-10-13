@@ -1,0 +1,9 @@
+\NewQty{nG}{0.73}[\mole]
+\NewQty{MC}{12.0107}[\gram\per\mole][e-3][\kilogram\per\mole]
+\NewQty{MH}{1.00794}[\gram\per\mole][e-3][\kilogram\per\mole]
+\NewQty{MO}{15.9994}[\gram\per\mole][e-3][\kilogram\per\mole]
+
+\SolQty{MG}[6M_\text{C}+12M_\text{H}+6M_\text{O}]{6*\MCX+12*\MHX+6*\MOX}[\kilogram\per\mole]
+\ConvTo{MGg}{1e3}{MG}{\gram\per\mole}
+\SolQty{mG}[n\,M]{\nGX*\MGX}[\kilogram]
+\ConvTo{mGg}{1e3}{mG}{\gram}

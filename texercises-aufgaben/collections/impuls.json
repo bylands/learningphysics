@@ -1,0 +1,46 @@
+{
+  "title": "Impuls – Aufgaben aus den Aufgabenblättern",
+  "description": "Impuls und Impulserhaltung aus den Aufgabenblättern D2: Impuls, Rückstoss, Impulserhaltung beim Abstossen und bei Stössen in einer Dimension, abgeschlossene Systeme. Werte aus Formeln, Tabellen, Begriffe (7. Auflage).",
+  "kind": "sheet",
+  "is_private": true,
+  "tags": [
+    "impuls",
+    "impulserhaltung",
+    "dynamik"
+  ],
+  "items": [
+    {
+      "exercise": "impuls-01-geschwindigkeit-aus-impuls"
+    },
+    {
+      "exercise": "impuls-02-abstossung-durch-feder"
+    },
+    {
+      "exercise": "impuls-03-stoss-mit-doppelt-so-schwerem-wagen"
+    },
+    {
+      "exercise": "impuls-04-kugel-prallt-zurueck"
+    },
+    {
+      "exercise": "impuls-05-elektron-trifft-sauerstoffmolekuel"
+    },
+    {
+      "exercise": "impuls-06-zusammenstoss-auf-dem-eis"
+    },
+    {
+      "exercise": "impuls-07-astronaut-mit-rueckstosspistole"
+    },
+    {
+      "exercise": "impuls-08-stein-im-brunnenschacht"
+    },
+    {
+      "exercise": "impuls-09-mann-auf-einem-wagen"
+    },
+    {
+      "exercise": "impuls-10-massenverhaeltnis-zweier-kugeln"
+    },
+    {
+      "exercise": "impuls-11-groessen-vergleichen"
+    }
+  ]
+}

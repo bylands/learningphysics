@@ -8,6 +8,10 @@ overview of the 445 sheet exercises; this first batch is the collection
 their uploaded copies (exercises 24627 to 24639, collection 5851), so an
 upload updates them in place.
 
+All 33 collections (443 exercises) are drafted: Freier Fall carries its
+ids; the others have none until their first upload. `STYLE.md` holds the
+house style, `tools/check.py` checks the drafts.
+
 ## Upload
 
     cd texercises-aufgaben && zip -r ../aufgaben-freier-fall.zip exercises collections

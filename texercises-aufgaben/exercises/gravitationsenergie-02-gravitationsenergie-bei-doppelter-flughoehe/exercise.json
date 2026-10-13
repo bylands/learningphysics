@@ -1,0 +1,19 @@
+{
+  "title": "Gravitationsenergie bei doppelter Flughöhe",
+  "note": "aus den Aufgabenblättern (G3 Gravitationsenergie, Nr. 2)",
+  "language": "GER",
+  "type": 1,
+  "default_difficulty": 2,
+  "default_points": 0,
+  "tags": [
+    "gravitation",
+    "gravitationsenergie",
+    "proportionalität",
+    "satellit"
+  ],
+  "subbranches": [
+    "Gravitation",
+    "Work, Energy, Power"
+  ],
+  "youtube": ""
+}

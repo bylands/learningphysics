@@ -1,0 +1,18 @@
+{
+  "title": "Volumen von warmem Methanol",
+  "note": "aus den Aufgabenblättern (T1 Längen- und Volumenausdehnung, Nr. 13)",
+  "language": "GER",
+  "type": 1,
+  "default_difficulty": 2,
+  "default_points": 0,
+  "tags": [
+    "dichte",
+    "formelsammlung",
+    "volumenausdehnung",
+    "wärmeausdehnung"
+  ],
+  "subbranches": [
+    "Thermal Expansion"
+  ],
+  "youtube": ""
+}
