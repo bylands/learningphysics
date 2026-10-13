@@ -1,3 +1,18 @@
+\begin{center}
+\begin{tikzpicture}[>=stealth]
+ \draw (-1.5,0) -- (3.5,0);
+ \draw[|<->|] (-0.8,0) -- (-0.8,4) node[midway, left] {$h$};
+ \draw[dashed] (-0.8,2) -- (3.2,2) node[right] {$h/2$};
+ \fill (0.5,4) circle (0.1) node[above] {Ball 1};
+ \node[right=4pt] at (0.5,4) {losgelassen};
+ \fill (2,0.1) circle (0.1) node[below=3pt] {Ball 2};
+ \draw[->, very thick, red] (2,0.1) -- (2,1.1) node[right] {$v_0$};
+ \draw[gray] (0.5,2) circle (0.1);
+ \draw[gray] (2,2) circle (0.1);
+ \node[gray, above] at (1.25,2) {gleichzeitig};
+\end{tikzpicture}
+\end{center}
+
 Der fallende Ball erreicht die halbe Höhe zur Zeit $t$ mit
 \begin{align}
  \frac{h}{2} &= \frac{1}{2}g\,t^2 \quad\Rightarrow\quad t = \sqrt{\frac{h}{g}}

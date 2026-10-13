@@ -20,7 +20,10 @@ confirming.
 - Every quantity is defined in the solver (`\NewQty`, `\SolQty`, `\ConvTo`);
   text and solution only refer to it (`\XO`, `\XF`, `\X`, `\XP{..}{..}`),
   never to typed numbers.
-- g = 9.81 m/s², defined in each preamble as `gE`.
+- g = 9.81 m/s², defined in each preamble as `gE`; 10 m/s² in the exercises meant
+  for working without a calculator (6, 7, 10), stated in their text.
+- `\XP{}{}` works only on solved quantities: a looked-up value that is a
+  boxed result goes through `\ConvTo{Xr}{1}{X}{unit}` first.
 - Constants and look-up values from Formeln, Tabellen, Begriffe (7th ed.):
   Olten from the Swiss table (p. 204), Mars from the planet table (p. 212, looked up, not computed),
   g(φ, h) from p. 209. The book prints k2 = −3.15·10⁻⁶ m⁻¹; that is ten times
