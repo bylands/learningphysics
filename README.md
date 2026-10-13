@@ -12,7 +12,9 @@ The admin panel's Sheets tab makes exercise sheets from the teacher's TeXercises
 
 ## Teachers
 
-The admin panel (`/admin/`) has an account per teacher, each with a user name to log in with and a three-letter identifier. The superuser (`samuel.byland`, identifier `bys`, who logs in with the crossword app's teacher password) creates the accounts in the Teachers tab; a new account's password is shown once, and the teacher can change it under Account. Every teacher makes their own sets, opened at learningphysics.ch/*identifier*/*name*; the superuser's are also at learningphysics.ch/*name*, as before. The order and tags of the apps and the exercise sheets are the superuser's only.
+The admin panel (`/admin/`) has an account per teacher, each with a user name to log in with and a three-letter identifier. The superuser (`samuel.byland`, identifier `bys`, who logs in with the crossword app's teacher password) creates the accounts in the Teachers tab; a new account's password is shown once, and the teacher can change it under Account. Every teacher makes their own sets, opened at learningphysics.ch/*identifier*/*name*; the superuser's are also at learningphysics.ch/*name*, as before. The order and tags of the apps and the exercise sheets are the superuser's only. An account holds the teacher's first and last name and school.
+
+The admin panel's login also works in the crossword generator (`/crosswords/`, its own repository): its session cookie is for the whole site, and the generator asks the admin panel (`/admin/api/me`) whose it is. There, a teacher can give a crossword a short link, learningphysics.ch/*identifier*/*name*: the hub page serves that address and, finding no set of that name, opens the crossword. A set and a crossword of a teacher can't share a name.
 
 ## Tests and deployment
 

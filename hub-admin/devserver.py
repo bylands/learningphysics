@@ -5,6 +5,8 @@ password of its own, not the server's). Standard library only.
 
     python3 hub-admin/devserver.py                     then open http://localhost:8090/admin/
     python3 hub-admin/devserver.py --password secret --port 8091 --data /tmp/hubdata
+    python3 hub-admin/devserver.py --crosswords 8020   with the crossword generator (crosswords-web, its
+                                                       own repository) at /crosswords/, as on the server
 
 Without --data, what the admin panel saves is kept in a temporary folder until the server stops.
 Run shared/sync.sh first if you changed a file in shared/.
@@ -35,13 +37,15 @@ def main() -> int:
     p.add_argument("--port", type=int, default=8090)
     p.add_argument("--password", default="test", help="the admin panel's password here (default: test)")
     p.add_argument("--data", type=Path, help="where apps.json and sets.json are kept (default: a temporary folder)")
+    p.add_argument("--crosswords", type=int, metavar="PORT", help="proxy /crosswords/ to a crossword generator on this port")
     args = p.parse_args()
     data = args.data or Path(tempfile.mkdtemp(prefix="hubdata-"))
     data.mkdir(parents=True, exist_ok=True)
     salt = secrets.token_bytes(16)
     pw = data / "password"
     pw.write_text(f"pbkdf2_sha256$1000${salt.hex()}${hashlib.pbkdf2_hmac('sha256', args.password.encode(), salt, 1000).hex()}\n")
-    admin = ThreadingHTTPServer(("127.0.0.1", 0), H.make_handler(H.Admin(pw, REPO / "hub" / "index.html", data / "apps.json", data / "sets.json")))
+    admin = ThreadingHTTPServer(("127.0.0.1", 0), H.make_handler(H.Admin(pw, REPO / "hub" / "index.html", data / "apps.json", data / "sets.json",
+                                                                         crosswords_url=f"http://127.0.0.1:{args.crosswords}/" if args.crosswords else "")))
     threading.Thread(target=admin.serve_forever, daemon=True).start()
     admin_port = admin.server_address[1]
 
@@ -70,11 +74,12 @@ def main() -> int:
             self.send_header("Cache-Control", "no-store")
             super().end_headers()
 
-        def proxy(self) -> None:  # /admin/... to the admin panel, as nginx does
+        def proxy(self) -> None:  # /admin/... to the admin panel (and /crosswords/...), as nginx does
             n = int(self.headers.get("Content-Length") or 0)
             headers = {k: v for k, v in self.headers.items() if k.lower() in ("cookie", "content-type", "content-length")}
-            c = http.client.HTTPConnection("127.0.0.1", admin_port)
-            c.request(self.command, self.path[len("/admin"):], self.rfile.read(n) if n else None, headers)
+            prefix, port = ("/admin", admin_port) if self.path.startswith("/admin/") else ("/crosswords", args.crosswords)
+            c = http.client.HTTPConnection("127.0.0.1", port)
+            c.request(self.command, self.path[len(prefix):], self.rfile.read(n) if n else None, headers)
             r = c.getresponse()
             body = r.read()
             self.send_response(r.status)
@@ -91,13 +96,13 @@ def main() -> int:
                 self.send_response(301)
                 self.send_header("Location", "/admin/")
                 self.end_headers()
-            elif self.path.startswith("/admin/"):
+            elif self.path.startswith("/admin/") or (args.crosswords and self.path.startswith("/crosswords/")):
                 self.proxy()
             else:
                 super().do_GET()
 
         def do_POST(self) -> None:
-            if self.path.startswith("/admin/"):
+            if self.path.startswith("/admin/") or (args.crosswords and self.path.startswith("/crosswords/")):
                 self.proxy()
             else:
                 self.send_error(405)

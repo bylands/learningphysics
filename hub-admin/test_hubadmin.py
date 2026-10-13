@@ -1092,11 +1092,12 @@ class Service(unittest.TestCase):
                          {"default": "bys", "sets": {"bys/3a": {"title": "3a", "apps": [{"id": "photons", "modes": ["check"]}]}}})
         # a new teacher: a password shown once
         self.assertEqual(self.req("/api/teachers")[0], 403)
-        st, d = self.teachers({"action": "create", "id": "abc", "user": " Anna.B ", "name": " Anna <B> "}, boss)
+        st, d = self.teachers({"action": "create", "id": "abc", "user": " Anna.B ", "first": " Anna <B> ", "last": "Beispiel", "school": "KS Musterstadt"}, boss)
         self.assertEqual(st, 200)
         pw = d["password"]
         self.assertEqual(len(pw), 12)
-        self.assertEqual(d["teachers"], [{"id": "abc", "user": "anna.b", "name": "Anna B", "created": d["teachers"][0]["created"], "sets": 0}])
+        self.assertEqual(d["teachers"], [{"id": "abc", "user": "anna.b", "first": "Anna B", "last": "Beispiel", "school": "KS Musterstadt",
+                                          "created": d["teachers"][0]["created"], "sets": 0}])
         self.assertNotIn(pw, self.admin.teachers_file.read_text())  # only its hash
         self.assertEqual(self.admin.teachers_file.stat().st_mode & 0o777, 0o600)
         for bad, why in [("abc", "already"), ("bys", "already"), ("ab", "three"), ("ABC", "three"), ("abcd", "three"),
@@ -1144,11 +1145,11 @@ class Service(unittest.TestCase):
         self.assertEqual(json.loads(self.req("/api/sets", cookie=anna)[2])["sets"], mine["sets"])
         self.req("/api/sets", b'{"sets": {}}', "application/json", boss)  # the superuser's go, not hers
         self.assertEqual(list(json.loads(self.sets.read_text())["sets"]), ["abc/3a"])
-        st, d = self.teachers({"action": "rename", "id": "abc", "name": "Anna Beispiel"}, boss)
-        self.assertEqual(d["teachers"][0]["name"], "Anna Beispiel")
-        self.assertEqual(self.teachers({"action": "rename", "id": "abc", "user": "samuel.byland"}, boss)[0], 400)
-        st, d = self.teachers({"action": "rename", "id": "abc", "user": "anna.beispiel"}, boss)
-        self.assertEqual((d["teachers"][0]["user"], d["teachers"][0]["name"]), ("anna.beispiel", "Anna Beispiel"))
+        st, d = self.teachers({"action": "update", "id": "abc", "first": "Anna"}, boss)
+        self.assertEqual([d["teachers"][0][k] for k in ("first", "last", "school")], ["Anna", "Beispiel", "KS Musterstadt"])
+        self.assertEqual(self.teachers({"action": "update", "id": "abc", "user": "samuel.byland"}, boss)[0], 400)
+        st, d = self.teachers({"action": "update", "id": "abc", "user": "anna.beispiel", "school": "Gymnasium X"}, boss)
+        self.assertEqual([d["teachers"][0][k] for k in ("user", "first", "school")], ["anna.beispiel", "Anna", "Gymnasium X"])
         self.assertEqual(self.req("/login", f"user=anna.b&password={pw}".encode(), "application/x-www-form-urlencoded")[0], 403)
         self.cookie_of("anna.beispiel", pw)
         self.assertEqual(d["teachers"][0]["sets"], 1)
@@ -1178,6 +1179,45 @@ class Service(unittest.TestCase):
         self.assertEqual(json.loads(self.sets.read_text())["sets"], {})
         self.assertEqual(self.req("/api/sets", cookie=anna)[0], 403)
         self.assertEqual(self.req("/static/accounts.js")[0], 200)
+
+    def test_me_and_crosswords(self):
+        st, headers, _ = self.req("/login", b"user=samuel.byland&password=teacher pw", "application/x-www-form-urlencoded")
+        self.assertIn("Path=/;", headers["Set-Cookie"])  # the whole site: the crossword generator asks /api/me
+        boss = self.cookie_of("samuel.byland", "teacher pw")
+        self.assertEqual(self.req("/api/me")[0], 403)
+        self.assertEqual(json.loads(self.req("/api/me", cookie=boss)[2]), {"teacher": "bys", "user": "samuel.byland", "super": True})
+        pw = self.teachers({"action": "create", "id": "abc", "user": "anna", "first": "Anna", "last": "B", "school": "KS"}, boss)[1]["password"]
+        anna = self.cookie_of("anna", pw)
+        self.assertEqual(json.loads(self.req("/api/me", cookie=anna)[2]),
+                         {"teacher": "abc", "user": "anna", "super": False, "first": "Anna", "last": "B", "school": "KS"})
+        # a cookie of before (Path=/admin/) sent first, and invalid: the other counts
+        self.assertEqual(self.req("/api/me", cookie="hub_admin=bys.1.x; " + anna)[0], 200)
+        # a set can't take the address of one of the teacher's crosswords
+        self.admin.crosswords_url = "http://crosswords.invalid/"
+        with mock.patch.object(self.admin, "crossword_at", side_effect=lambda t, n: (t, n) == ("abc", "optik")) as at:
+            st, _, body = self.req("/api/sets", b'{"sets": {"optik": {}}}', "application/json", anna)
+            self.assertEqual(st, 400)
+            self.assertIn("crosswords", json.loads(body)["error"])
+            self.assertEqual(self.req("/api/sets", b'{"sets": {"optik": {}}}', "application/json", boss)[0], 200)
+            self.assertEqual(self.req("/api/sets", b'{"sets": {"elektro": {}}}', "application/json", anna)[0], 200)
+            at.reset_mock()
+            self.req("/api/sets", b'{"sets": {"elektro": {"title": "x"}}}', "application/json", anna)
+            at.assert_not_called()  # (only new names are asked about)
+        self.assertFalse(self.admin.crossword_at("abc", "optik"))  # can't be asked: no
+        # logging out ends both cookies
+        st, headers, _ = self.req("/logout", b"", "application/x-www-form-urlencoded", anna)
+        self.assertIn("Max-Age=0", headers["Set-Cookie"])
+
+    def test_profile(self):
+        self.assertEqual(H.profile({"name": "Anna Maria Beispiel"}), {"first": "Anna Maria", "last": "Beispiel", "school": ""})
+        self.assertEqual(H.profile({"name": "Anna"}), {"first": "Anna", "last": "", "school": ""})
+        self.assertEqual(H.profile({"first": "A", "last": "B", "name": "x y"}), {"first": "A", "last": "B", "school": ""})
+        # an account written with one name: split on the next change, the name gone
+        boss = self.cookie_of("samuel.byland", "teacher pw")
+        H.write_config(self.admin.teachers_file, {"teachers": {"abc": {"user": "anna", "name": "Anna Beispiel", "hash": "x"}}}, 0o600)
+        st, d = self.teachers({"action": "update", "id": "abc", "school": "KS"}, boss)
+        self.assertEqual([d["teachers"][0][k] for k in ("first", "last", "school")], ["Anna", "Beispiel", "KS"])
+        self.assertNotIn("name", json.loads(self.admin.teachers_file.read_text())["teachers"]["abc"])
 
     def test_rate_limit(self):
         for _ in range(H.LOGIN_ATTEMPTS):
