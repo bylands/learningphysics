@@ -144,6 +144,7 @@ MAX_UPLOAD = 64 * 1024 * 1024  # a TeXercises export
 SHEET_ID = re.compile(r"[0-9a-f]{12}")
 SHEET_TOKEN = re.compile(r"[A-Za-z0-9_-]{32}")
 MAX_SHEETS, MAX_MODULES, MAX_SHEET_EXERCISES = 200, 40, 40
+FETCH_RETRY = 600  # s: a gallery image TeXercises did not give is asked for again after this
 TEXERCISES = "https://texercises.com"
 LOGIN_ATTEMPTS, LOGIN_WINDOW = 10, 15 * 60  # failed logins per address and window (s)
 
@@ -425,6 +426,9 @@ class Admin:
         self.sheet_cache = config.parent / "sheets"
         self.sheets_file = config.parent / "exercise-sheets.json"
         self.sheet_images = config.parent / "sheet-images"  # the gallery images, uploaded or fetched
+        self.fetching: Dict[str, str] = {}  # gallery name -> stem: being fetched from TeXercises
+        self.fetch_failed: Dict[str, Tuple[float, str]] = {}  # gallery name -> (when, why)
+        self.fetch_lock = threading.Lock()
         self.sheet_figures = config.parent / "sheet-figures"  # the TikZ figures as SVG (figures.py)
         self.sheets_lock = threading.Lock()
         self.own = own
@@ -698,15 +702,58 @@ class Admin:
         return found
 
     def images_of(self, keys: List[str]) -> Dict[str, object]:
-        """The gallery images the exercises use: [{name, have, file, pdf, exercises: [titles], gallery: url}]."""
+        """The gallery images the exercises use: [{name, have, file, pdf, exercises: [titles], gallery: url,
+        fetching: being fetched, error: why fetching failed}]. Missing ones are fetched from TeXercises
+        in the background (one that failed is tried again after FETCH_RETRY)."""
         sheetlib = sheets_module()
-        out = []
+        out, missing = [], {}
         for name, e in self.image_uses(keys).items():
             f = sheetlib.find_image(self.sheet_images, name)
             out.append({"name": name, "have": bool(f), "file": f.name if f else e["stem"],
                         "pdf": bool(sheetlib.find_image(self.sheet_images, name, latex=True)),
                         "exercises": e["titles"], "gallery": sheetlib.GALLERY.format(quote(name))})
+            if not f:
+                missing[name] = str(e["stem"])
+        self.fetch_missing(missing)
+        with self.fetch_lock:
+            for x in out:
+                if not x["have"]:
+                    x["fetching"] = x["name"] in self.fetching
+                    if x["name"] in self.fetch_failed:
+                        x["error"] = self.fetch_failed[x["name"]][1]
         return {"images": out}
+
+    def fetch_missing(self, missing: Dict[str, str]) -> None:
+        """Fetch these gallery images (name -> stem) from TeXercises in a background thread."""
+        sheetlib = sheets_module()
+        with self.fetch_lock:
+            now = time.time()
+            todo = {n: s for n, s in missing.items() if n not in self.fetching
+                    and now - self.fetch_failed.get(n, (0.0, ""))[0] > FETCH_RETRY}
+            if not todo or sheetlib is None:
+                return
+            busy = bool(self.fetching)
+            self.fetching.update(todo)
+        if busy:  # the thread already running takes them too
+            return
+
+        def work() -> None:
+            while True:
+                with self.fetch_lock:
+                    if not self.fetching:
+                        return
+                    name, stem = next(iter(self.fetching.items()))
+                try:
+                    ok, what = sheetlib.fetch_image(self.sheet_images, name, stem)
+                except Exception as e:  # noqa: BLE001 - a fetch must not stop the others
+                    ok, what = False, str(e)
+                with self.fetch_lock:
+                    self.fetching.pop(name, None)
+                    if ok:
+                        self.fetch_failed.pop(name, None)
+                    else:
+                        self.fetch_failed[name] = (time.time(), what)
+        threading.Thread(target=work, daemon=True).start()
 
     def store_images(self, filename: str, data: bytes, keys: List[str], gallery: Optional[str] = None) -> Dict[str, object]:
         """An uploaded image (gallery: of which gallery name), or a .zip of them, for the images of these
@@ -727,6 +774,9 @@ class Admin:
         if use is None:
             return {"ok": False, "error": "no exercise of this sheet uses this image"}
         ok, what = sheetlib.fetch_image(self.sheet_images, name, str(use["stem"]))
+        with self.fetch_lock:
+            if ok:
+                self.fetch_failed.pop(name, None)
         return {"ok": ok, "name": what} if ok else {"ok": False, "error": what}
 
     def image_file(self, name: str) -> Optional[Path]:
@@ -2204,10 +2254,23 @@ SHEETS_JS = r"""
           el('code', {}, x.name), ' ',
           el('span', { class: 'note' }, `${x.exercises.join(' · ')} → ${x.have ? x.file : x.file + '.…'}`), ' ',
           x.have && !x.pdf ? el('span', { class: 'note' }, '(not in the PDF: LaTeX needs a PNG, JPEG or PDF of it)') : '',
+          x.fetching ? el('span', { class: 'note' }, 'fetching from TeXercises…') : '',
+          x.error && !x.fetching ? el('span', { class: 'note' }, `(not fetched: ${x.error})`) : '', ' ',
           x.have ? '' : el('a', { href: x.gallery, target: '_blank', rel: 'noopener' }, 'download from TeXercises ↗'), ' ', one(x)))),
-        missing.length ? el('div', { class: 'addapp' }, el('button', { type: 'button', onclick: fetchAll }, `Fetch the ${missing.length} missing from TeXercises`)) : '',
+        missing.some((x) => !x.fetching) ? el('div', { class: 'addapp' }, el('button', { type: 'button', onclick: fetchAll }, `Fetch the ${missing.length} missing from TeXercises`)) : '',
         el('div', { class: 'addapp' }, file, el('button', { type: 'button', onclick: upload }, 'Upload'), msg),
-        el('p', { class: 'note' }, 'Upload an image at its line, or several at once (or a .zip) named as in the TeXercises gallery (any extension). Each is kept under a name made of its exercise’s title and id, as shown after the arrow. They show in the preview, the online version and the PDF.'));
+        el('p', { class: 'note' }, 'Missing images are fetched from TeXercises by themselves. Or upload an image at its line, or several at once (or a .zip) named as in the TeXercises gallery (any extension). Each is kept under a name made of its exercise’s title and id, as shown after the arrow. They show in the preview, the online version and the PDF.'));
+      // ask again while the server fetches; once one has come, the previews are made anew
+      if (imgList.some((x) => x.fetching)) {
+        const had = imgList.filter((x) => x.have).length;
+        setTimeout(() => {
+          if (!box.isConnected) return;
+          api(`/admin/api/images?keys=${encodeURIComponent(keys)}`).then((d) => {
+            imgList = d.images; imgKeys = keys;
+            if (d.images.filter((x) => x.have).length > had) { cur.exercises.forEach((k) => { delete previews[k]; }); render(); } else draw();
+          }).catch(() => {});
+        }, 2500);
+      }
     };
     const refresh = (changed) => {
       api(`/admin/api/images?keys=${encodeURIComponent(keys)}`).then((d) => {

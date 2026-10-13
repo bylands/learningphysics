@@ -23,6 +23,7 @@ import math
 import os
 import re
 import secrets
+import time
 import shutil
 import subprocess
 import sys
@@ -982,10 +983,22 @@ class Service(unittest.TestCase):
         self.assertEqual(self.req("/api/images/fetch", j({"name": "coil-1"}), "application/json")[0], 403)
         cookie = self.login()[1]["Set-Cookie"].split(";")[0]
         self.assertEqual(self.req("/api/texercises", buf.getvalue(), "application/zip", cookie)[0], 200)
-        listed = json.loads(self.req("/api/images?keys=" + key, cookie=cookie)[2])["images"]
-        self.assertEqual([(x["name"], x["have"]) for x in listed], [("coil-1", False)])
         title = json.loads(next(ROOT.glob(f"texercises-drafts*/exercises/{key}")).joinpath("exercise.json").read_text())["title"]
         stem = S.image_stem(title, key)
+        # a missing image is fetched from TeXercises by itself, in the background; one it does not give
+        # is not asked for again at once
+        mod = H.sheets_module()
+        with mock.patch.object(mod, "fetch_image", return_value=(False, "TeXercises asks for a login")) as fetch:
+            listed = json.loads(self.req("/api/images?keys=" + key, cookie=cookie)[2])["images"]
+            for _ in range(100):
+                if not self.admin.fetching:
+                    break
+                time.sleep(0.02)
+            fetch.assert_called_once_with(self.admin.sheet_images, "coil-1", stem)
+            again = json.loads(self.req("/api/images?keys=" + key, cookie=cookie)[2])["images"]
+            self.assertEqual((again[0]["fetching"], again[0]["error"]), (False, "TeXercises asks for a login"))
+            self.assertEqual(fetch.call_count, 1)
+        self.assertEqual([(x["name"], x["have"]) for x in listed], [("coil-1", False)])
         self.assertEqual(listed[0]["file"], stem)
         self.assertEqual(listed[0]["gallery"], "https://texercises.com/gallery/image/file/coil-1/")
         # uploaded: listed, served to the panel, in the preview and the online version

@@ -608,6 +608,9 @@ def store_images(images: Path, filename: str, data: bytes, targets: Dict[str, st
     return {"kept": kept, "skipped": skipped}
 
 
+LOGIN = "TeXercises asks for a login (download it there and upload it here)"
+
+
 def fetch_image(images: Path, name: str, stem: str, timeout: float = 20) -> Tuple[bool, str]:
     """Fetch a gallery image from TeXercises (which redirects to the file) and keep it as <stem>.<type>;
     (True, the file name) or (False, why not)."""
@@ -617,12 +620,14 @@ def fetch_image(images: Path, name: str, stem: str, timeout: float = 20) -> Tupl
     try:
         with urllib.request.urlopen(req, timeout=timeout) as r:
             data = r.read(MAX_IMAGE + 1)
+    except urllib.error.HTTPError as e:
+        return False, LOGIN if e.code in (401, 403) else f"TeXercises answered {e.code}"
     except (urllib.error.URLError, OSError, ValueError) as e:
         return False, f"TeXercises did not answer ({e.__class__.__name__})"
     if len(data) > MAX_IMAGE:
         return False, "too large"
     if image_kind(data) is None:
-        return False, "TeXercises asks for a login (download it there and upload it here)"
+        return False, LOGIN
     got = _store_one(images, name, stem, data)
     return (True, got) if got else (False, "not an image")
 
