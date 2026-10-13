@@ -60,6 +60,8 @@ class Unit(unittest.TestCase):
         self.assertEqual(len(ids), len(set(ids)))
         names = {a["id"]: a["name"] for a in apps}
         self.assertEqual(names["coe"], "Energy Conservation")
+        self.assertEqual({a["id"]: a.get("de") for a in apps}["coe"], "Energieerhaltung")  # (the hub page's German texts)
+        self.assertTrue(all(a.get("de") for a in apps))
         self.assertEqual(names["bulb-brightness"], "Bulb Brightness")
         modes = {a["id"]: a["modes"] for a in apps}
         self.assertEqual(modes["bulb-brightness"], ["tutor", "practice", "check"])
@@ -767,7 +769,7 @@ class Service(unittest.TestCase):
         self.assertEqual(st, 200)
         data = json.loads(body)
         self.assertEqual(data["sets"], {})
-        self.assertIn({"id": "torque", "name": "Torque and Equilibrium", "modes": ["tutor", "practice", "check"]}, data["apps"])
+        self.assertIn({"id": "torque", "name": "Torque and Equilibrium", "de": "Drehmoment und Gleichgewicht", "modes": ["tutor", "practice", "check"]}, data["apps"])
         new = {"sets": {"3a-elektro": {"title": "Klasse 3a", "lang": "de", "apps": [
             {"id": "electric-field", "modes": ["tutor", "practice", "check"], "tutor": [0, 1, 3], "practice": ["force-dir", "lines-pick+lines-read"]},
             {"id": "photons", "modes": ["check"]}]}}}
@@ -1122,7 +1124,7 @@ class Service(unittest.TestCase):
             self.assertNotIn(tab, body)
         st, _, body = self.req("/", cookie=boss)
         self.assertIn(b'id="view-teachers"', body)
-        self.assertNotIn(b'id="view-account"', body)
+        self.assertIn(b'id="view-account"', body)  # (the superuser's own too)
         # the superuser's things are not theirs
         for path in ("/api/config", "/api/teachers", "/api/sheets", "/api/preview?keys=x", "/sheet/0123456789ab.pdf"):
             self.assertEqual(self.req(path, cookie=anna)[0], 403, path)
@@ -1157,7 +1159,6 @@ class Service(unittest.TestCase):
         pwreq = lambda body, c: self.req("/api/password", json.dumps(body).encode(), "application/json", c)
         self.assertEqual(pwreq({"current": "wrong", "new": "a new password"}, anna)[0], 400)
         self.assertEqual(pwreq({"current": pw, "new": "short"}, anna)[0], 400)
-        self.assertEqual(pwreq({"current": "teacher pw", "new": "a new password"}, boss)[0], 400)  # the crossword app's
         st, headers, _ = pwreq({"current": pw, "new": "a new password"}, anna)
         self.assertEqual(st, 200)
         self.assertEqual(self.req("/api/sets", cookie=anna)[0], 403)  # the old session ended
@@ -1185,7 +1186,7 @@ class Service(unittest.TestCase):
         self.assertIn("Path=/;", headers["Set-Cookie"])  # the whole site: the crossword generator asks /api/me
         boss = self.cookie_of("samuel.byland", "teacher pw")
         self.assertEqual(self.req("/api/me")[0], 403)
-        self.assertEqual(json.loads(self.req("/api/me", cookie=boss)[2]), {"teacher": "bys", "user": "samuel.byland", "super": True})
+        self.assertEqual(json.loads(self.req("/api/me", cookie=boss)[2]), {"teacher": "bys", "user": "samuel.byland", "super": True, "first": "", "last": "", "school": ""})
         pw = self.teachers({"action": "create", "id": "abc", "user": "anna", "first": "Anna", "last": "B", "school": "KS"}, boss)[1]["password"]
         anna = self.cookie_of("anna", pw)
         self.assertEqual(json.loads(self.req("/api/me", cookie=anna)[2]),
@@ -1207,6 +1208,47 @@ class Service(unittest.TestCase):
         # logging out ends both cookies
         st, headers, _ = self.req("/logout", b"", "application/x-www-form-urlencoded", anna)
         self.assertIn("Max-Age=0", headers["Set-Cookie"])
+
+    def test_own_account(self):
+        boss = self.cookie_of("samuel.byland", "teacher pw")
+        pw = self.teachers({"action": "create", "id": "abc", "user": "anna", "first": "Anna"}, boss)[1]["password"]
+        anna = self.cookie_of("anna", pw)
+        account = lambda body, c: self.req("/api/account", json.dumps(body).encode(), "application/json", c)
+        me = lambda c: json.loads(self.req("/api/me", cookie=c)[2])
+        self.assertEqual(account({"first": "x"}, "")[0], 403)
+        # a teacher's own details: the user name, names and school (not the identifier)
+        st, _, body = account({"id": "zzz", "user": " Anna.Beispiel ", "last": "Beispiel", "school": "KS X"}, anna)
+        self.assertEqual(st, 200)
+        self.assertEqual(json.loads(body), {"teacher": "abc", "user": "anna.beispiel", "super": False, "first": "Anna", "last": "Beispiel", "school": "KS X"})
+        self.assertEqual(me(anna)["user"], "anna.beispiel")  # (the session goes on)
+        self.cookie_of("anna.beispiel", pw)
+        self.assertEqual(account({"user": "samuel.byland"}, anna)[0], 400)
+        # the superuser's own: kept apart from the teachers
+        st, _, body = account({"user": "s.byland", "first": "Samuel", "last": "Byland", "school": "KS Y"}, boss)
+        self.assertEqual(json.loads(body), {"teacher": "bys", "user": "s.byland", "super": True, "first": "Samuel", "last": "Byland", "school": "KS Y"})
+        self.assertEqual([t["id"] for t in json.loads(self.req("/api/teachers", cookie=boss)[2])["teachers"]], ["abc"])
+        self.assertEqual(json.loads(self.req("/api/teachers", cookie=boss)[2])["super_user"], "s.byland")
+        self.assertEqual(self.req("/login", b"user=samuel.byland&password=teacher pw", "application/x-www-form-urlencoded")[0], 403)
+        boss = self.cookie_of("s.byland", "teacher pw")
+        self.assertIn(b"s.byland (bys)", self.req("/", cookie=boss)[2])
+        self.assertEqual(account({"user": "s.byland"}, anna)[0], 400)  # taken
+        self.assertEqual(self.teachers({"action": "create", "id": "xyz", "user": "s.byland"}, boss)[0], 400)
+        # the superuser's own password: then the crossword app's no longer logs in here
+        pwreq = lambda body, c: self.req("/api/password", json.dumps(body).encode(), "application/json", c)
+        self.assertEqual(pwreq({"current": "wrong", "new": "my own password"}, boss)[0], 400)
+        st, headers, _ = pwreq({"current": "teacher pw", "new": "my own password"}, boss)
+        self.assertEqual(st, 200)
+        self.assertEqual(self.req("/api/teachers", cookie=boss)[0], 403)  # the old session ended
+        boss = headers["Set-Cookie"].split(";")[0]
+        self.assertEqual(self.req("/api/teachers", cookie=boss)[0], 200)
+        self.assertEqual(self.req("/login", b"user=s.byland&password=teacher pw", "application/x-www-form-urlencoded")[0], 403)
+        self.cookie_of("s.byland", "my own password")
+        self.cookie_of("", "my own password")
+        self.assertTrue(H.verify_password("teacher pw", self.admin.password_file.read_text().strip()))  # the crossword app's: untouched
+        # the teachers' changes keep the superuser's
+        self.teachers({"action": "update", "id": "abc", "school": "KS Z"}, boss)
+        self.assertEqual(me(boss)["school"], "KS Y")
+        self.cookie_of("s.byland", "my own password")
 
     def test_profile(self):
         self.assertEqual(H.profile({"name": "Anna Maria Beispiel"}), {"first": "Anna Maria", "last": "Beispiel", "school": ""})
