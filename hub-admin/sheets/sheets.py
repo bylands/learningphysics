@@ -250,6 +250,8 @@ def fingerprint(coll: Dict[str, object], have: Dict[str, Path], part: str, opts:
     h.update(json.dumps([coll, part, opts], sort_keys=True, ensure_ascii=False).encode("utf-8"))
     if images and images.is_dir():  # an image uploaded later makes a new PDF
         for f in sorted(images.iterdir()):
+            if f.name.startswith("."):  # notes of the panel (.fetch-failed.json), files being written
+                continue
             st = f.stat()
             h.update(f"{f.name}:{st.st_size}:{int(st.st_mtime)}".encode("utf-8"))
     for name in ENGINE:
