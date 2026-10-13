@@ -72,8 +72,8 @@
       hints: [
         T('Which force does A exert on B, and which does B exert on A? Do they belong together?', 'Welche Kraft übt A auf B aus, und welche B auf A? Gehören sie zusammen?'),
         T('Plan: the two forces form an interaction pair — use the third law. For the accelerations, use the second law for each cart.', 'Plan: Die beiden Kräfte bilden ein Wechselwirkungspaar — wende das dritte Newtonsche Gesetz an. Für die Beschleunigungen wende das zweite Gesetz auf jeden Wagen an.'),
-        T('Third law: F(A on B) = −F(B on A), whatever the bodies are made of. Second law: a = F/m.', 'Drittes Gesetz: F(A→B) = −F(B→A), egal woraus die Körper bestehen. Zweites Gesetz: a = F/m.'),
-        T(`Here ${A} has ${qty(mA, 'kg')} and ${B} ${qty(mB, 'kg')}. Which one does the same force accelerate more?`, `Hier hat ${A} ${qty(mA, 'kg')} und ${B} ${qty(mB, 'kg')}. Welchen beschleunigt dieselbe Kraft stärker?`),
+        T('Recall the third law: how do F(A on B) and F(B on A) compare in size and direction? Second law: a = F/m.', 'Erinnere dich an das dritte Gesetz: Wie verhalten sich F(A→B) und F(B→A) in Grösse und Richtung? Zweites Gesetz: a = F/m.'),
+        T(`Here ${A} has ${qty(mA, 'kg')} and ${B} ${qty(mB, 'kg')}. Once you know how the two forces compare, apply a = F/m to each cart.`, `Hier hat ${A} ${qty(mA, 'kg')} und ${B} ${qty(mB, 'kg')}. Wenn du weisst, wie sich die beiden Kräfte verhalten, wende a = F/m auf jeden Wagen an.`),
       ],
       steps: [
         { title: T('An interaction pair', 'Ein Wechselwirkungspaar'), figure: figure({ forces: true }),

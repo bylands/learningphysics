@@ -15,7 +15,7 @@
   const FC = root.FC, T = FC.T;
   const LETTERS = 'ABCDEF';
   const $q = (q) => document.querySelector(`.field[data-key="${q.key}"]`);
-  const tag = (code) => (FC.MIS[code] ? ` <span class="tag" title="${FC.mis(code).text}">${FC.mis(code).name}</span>` : '');
+  const tag = (code) => (FC.MIS[code] ? ` <span class="tag" title="${T('Wrong idea', 'Falsche Vorstellung')}: ${FC.mis(code).text}">${FC.misLabel(code)}</span>` : '');
   const right = () => T('Right.', 'Richtig.');
 
   // ---------------------------------------------------------------- drawing

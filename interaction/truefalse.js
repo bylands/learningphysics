@@ -78,8 +78,8 @@
       hints: [
         T(`Which force does ${a} exert on ${b}, and which does ${b} exert on ${a}?`, `Welche Kraft übt ${A.nom} auf ${B.acc} aus, und welche ${B.nom} auf ${A.acc}?`),
         T('Plan: the two forces form an interaction pair (third law); their effects follow from the second law, body by body.', 'Plan: Die beiden Kräfte bilden ein Wechselwirkungspaar (drittes Gesetz); ihre Wirkungen folgen aus dem zweiten Gesetz, für jeden Körper einzeln.'),
-        T('Third law: equally large, opposite, on different bodies. Second law: <i>a</i> = <i>F</i>/<i>m</i>.', 'Drittes Gesetz: gleich gross, entgegengesetzt, auf verschiedene Körper. Zweites Gesetz: <i>a</i> = <i>F</i>/<i>m</i>.'),
-        T(`Here ${a} has far more mass than ${b}: same force, very different accelerations.`, `Hier hat ${A.nom} viel mehr Masse als ${B.nom}: gleiche Kraft, sehr verschiedene Beschleunigungen.`),
+        T('Recall the third law: what does it say about the sizes and directions of the two forces of an interaction? Second law: <i>a</i> = <i>F</i>/<i>m</i>.', 'Erinnere dich an das dritte Gesetz: Was sagt es über Grösse und Richtung der beiden Kräfte einer Wechselwirkung? Zweites Gesetz: <i>a</i> = <i>F</i>/<i>m</i>.'),
+        T(`Here ${a} has far more mass than ${b}. For each statement, ask: is it about the forces or about their effects, and which law answers it?`, `Hier hat ${A.nom} viel mehr Masse als ${B.nom}. Frage dich bei jeder Aussage: Geht es um die Kräfte oder um ihre Wirkungen, und welches Gesetz beantwortet sie?`),
       ],
       steps: steps(items, draw(true)),
     };
