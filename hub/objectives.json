@@ -514,8 +514,8 @@
   "objectives": [
    {
     "id": "sketch",
-    "en": "Sketch the field lines of point charges, of a charged wire and of a plate capacitor (a uniform field).",
-    "de": "Die Feldlinien von Punktladungen, eines geladenen Drahts und eines Plattenkondensators (ein homogenes Feld) skizzieren."
+    "en": "Sketch the field lines of point charges, of a charged wire, of a plate capacitor (a uniform field) and of plates and point charges together.",
+    "de": "Die Feldlinien von Punktladungen, eines geladenen Drahts, eines Plattenkondensators (ein homogenes Feld) und von Platten und Punktladungen zusammen skizzieren."
    },
    {
     "id": "read",
@@ -534,8 +534,8 @@
    },
    {
     "id": "error",
-    "en": "Find the error in a sketch of field lines and equipotentials: lines that cross, or equipotentials not at right angles to the field lines.",
-    "de": "Den Fehler in einer Skizze von Feldlinien und Äquipotentiallinien finden: Linien, die sich kreuzen, oder Äquipotentiallinien, die nicht senkrecht zu den Feldlinien stehen."
+    "en": "Find the error in a sketch of field lines and equipotentials: lines that cross, equipotentials not at right angles to the field lines or wrongly spaced.",
+    "de": "Den Fehler in einer Skizze von Feldlinien und Äquipotentiallinien finden: Linien, die sich kreuzen, Äquipotentiallinien, die nicht senkrecht zu den Feldlinien stehen oder falsche Abstände haben."
    }
   ]
  },

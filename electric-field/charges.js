@@ -12,6 +12,10 @@
 //     { kind: 'cylinder', a, E0 }                          a conducting cylinder (radius a) in a
 //                                                           uniform field E0 along x
 //     { kind: 'uniform', E: [ex, ey] }
+//     { kind: 'mixed', charges: [{ q, x, y, name }], plates: [{ y, a, b, s, name }] }
+//                                                           point charges and horizontal plates at
+//                                                           height y from x = a to b with the charge
+//                                                           s per area (long across the page: strips)
 //   field(c, x, y) → [Ex, Ey], potential(c, x, y)
 //   lines(c, box, o)       field lines: arrays of points, from + to − (or to the edge)
 //   contours(c, box, levels)  equipotential segments
@@ -26,7 +30,7 @@
 
   // ---------------------------------------------------------------- fields and potentials
   function sources(c) {
-    if (c.kind === 'points') return c.charges;
+    if (c.kind === 'points' || c.kind === 'mixed') return c.charges;
     if (c.kind === 'image') return [c.charge, { q: -c.charge.q, x: c.charge.x, y: 2 * c.plate - c.charge.y }];
     if (c.kind === 'plates') {
       const out = [], n = 61;
@@ -35,8 +39,25 @@
     }
     return [];
   }
+  // A plate of a 'mixed' arrangement: a strip, long across the page, of line charges 2·s·du/r each
+  // (k = 1, as for the point charges), so that close to it the field is 2π·s, as for a large plate.
+  const lift = (y, p) => { const d = y - p.y; return Math.abs(d) < 1e-6 ? (d < 0 ? -1e-6 : 1e-6) : d; };
+  function stripField(p, x, y) {
+    const d = lift(y, p), xa = x - p.a, xb = x - p.b;
+    return [p.s * Math.log((xa * xa + d * d) / (xb * xb + d * d)), 2 * p.s * (Math.atan(xa / d) - Math.atan(xb / d))];
+  }
+  // its potential −2·s·∫ln r du (up to a constant: only differences count)
+  function stripPotential(p, x, y) {
+    const d = Math.abs(lift(y, p)), F = (t) => t * Math.log(t * t + d * d) - 2 * t + 2 * d * Math.atan(t / d);
+    return -p.s * (F(p.b - x) - F(p.a - x));
+  }
   function field(c, x, y) {
     if (c.kind === 'uniform') return [...c.E];
+    if (c.kind === 'mixed') {
+      const f = field({ kind: 'points', charges: c.charges }, x, y);
+      for (const p of c.plates) { const g = stripField(p, x, y); f[0] += g[0]; f[1] += g[1]; }
+      return f;
+    }
     if (c.kind === 'cylinder' || c.kind === 'flow') {
       // a conductor: outside φ = −E0·x·(1 − a²/r²), so E = E0·(1 + a²(x² − y²)/r⁴, 2a²xy/r⁴), the
       // lines ending perpendicular on it; inside no field. 'flow': the lines of a flow around the
@@ -55,6 +76,7 @@
   }
   function potential(c, x, y) {
     if (c.kind === 'uniform') return -(c.E[0] * x + c.E[1] * y);
+    if (c.kind === 'mixed') return c.plates.reduce((v, p) => v + stripPotential(p, x, y), potential({ kind: 'points', charges: c.charges }, x, y));
     if (c.kind === 'cylinder' || c.kind === 'flow') { const r = Math.hypot(x, y); return r < c.a ? 0 : -c.E0 * (r + (c.kind === 'flow' ? 1 : -1) * (c.a * c.a) / r) * (x / r); }
     let v = 0;
     for (const s of sources(c)) v += s.q / (Math.hypot(x - s.x, y - s.y) || 1e-9);
@@ -66,7 +88,8 @@
     if (c.kind === 'image' && y <= c.plate) return true;
     if ((c.kind === 'cylinder' || c.kind === 'flow') && Math.hypot(x, y) <= c.a) return true;
     if (c.kind === 'plates' && Math.abs(Math.abs(y) - c.h) < 0.02 && Math.abs(x) <= c.w) return true;
-    return (c.kind === 'points' || c.kind === 'image') && sources(c).some((s) => Math.hypot(x - s.x, y - s.y) < sinkR);
+    if (c.kind === 'mixed' && c.plates.some((p) => Math.abs(y - p.y) < 0.02 && x >= p.a && x <= p.b)) return true;
+    return (c.kind === 'points' || c.kind === 'image' || c.kind === 'mixed') && sources(c).some((s) => Math.hypot(x - s.x, y - s.y) < sinkR);
   }
   // one field line from (x, y), along the field (dir 1) or against it (−1), by RK4 on the unit field
   function trace(c, x, y, dir, box, o = {}) {
@@ -120,6 +143,7 @@
       for (const x0 of [-c.w * 0.97, c.w * 0.97]) out.push(trace(c, x0, top - dir * 0.03, 1, box));
       return out;
     }
+    if (c.kind === 'mixed') return mixedLines(c, box, o);
     const src = sources(c), shown = c.kind === 'image' ? [c.charge] : src, arrivals = new Map();
     for (const s of shown.filter((s) => s.q > 0)) {
       const n = Math.max(1, Math.round(per * Math.sqrt(s.q))), a0 = o.offset || Math.PI / n / 2;
@@ -140,12 +164,59 @@
     }
     return out;
   }
+  // Point charges and plates: lines from the positive charges (o.per·√q of them, evenly spread) and
+  // from the faces of the positive plates (one for every o.gap of a lone plate's field, spaced by
+  // the field leaving the face: denser where it is stronger); then backwards from the negative
+  // charges and faces where no line has arrived.
+  function mixedLines(c, box, o) {
+    const per = o.per || 8, r0 = 0.12, out = [], gap = o.gap || 0.42, arrived = new Map(), at = new Map();
+    const faceKey = (i, side) => `${i}${side}`;
+    // where a line ends: on a negative charge (its angle) or a negative plate's face (its x)
+    const land = (pts) => {
+      const e = pts[pts.length - 1], sink = c.charges.find((t) => t.q < 0 && Math.hypot(e[0] - t.x, e[1] - t.y) < 0.2);
+      if (sink) { if (!arrived.has(sink)) arrived.set(sink, []); arrived.get(sink).push(Math.atan2(e[1] - sink.y, e[0] - sink.x)); return; }
+      c.plates.forEach((p, i) => {
+        if (p.s >= 0 || Math.abs(e[1] - p.y) > 0.08 || e[0] < p.a - 0.05 || e[0] > p.b + 0.05) return;
+        const prev = pts[Math.max(0, pts.length - 4)], k = faceKey(i, prev[1] >= p.y ? 1 : -1);
+        if (!at.has(k)) at.set(k, []); at.get(k).push(e[0]);
+      });
+    };
+    // the start points on a face: at equal steps of the field through it
+    const starts = (p, side, sign) => {
+      const lo = Math.max(p.a, box[0] - 0.2), hi = Math.min(p.b, box[1] + 0.2), dx = 0.01, flux = [];
+      let tot = 0;
+      for (let x = lo + dx / 2; x < hi; x += dx) { const En = side * sign * field(c, x, p.y + side * 0.04)[1]; tot += Math.max(0, En) * dx; flux.push([x, tot, En > 0]); }
+      const n = Math.round(tot / (2 * Math.PI * Math.abs(p.s) * gap)), xs = [];
+      for (let k = 0; k < n; k++) { const want = (tot * (k + 0.5)) / n, f = flux.find((z) => z[1] >= want); if (f && f[2]) xs.push(f[0]); }
+      return xs;
+    };
+    const ring = (s, n, a0) => Array.from({ length: n }, (z, k) => a0 + (2 * Math.PI * k) / n);
+    for (const s of c.charges.filter((t) => t.q > 0)) {
+      const n = Math.max(1, Math.round(per * Math.sqrt(s.q)));
+      for (const a of ring(s, n, o.offset || Math.PI / n / 2)) { const pts = trace(c, s.x + r0 * Math.cos(a), s.y + r0 * Math.sin(a), 1, box); out.push(pts); land(pts); }
+    }
+    c.plates.forEach((p) => { if (p.s > 0) for (const side of [1, -1]) for (const x of starts(p, side, 1)) { const pts = trace(c, x, p.y + side * 0.04, 1, box); out.push(pts); land(pts); } });
+    for (const s of c.charges.filter((t) => t.q < 0)) {
+      const n = Math.max(1, Math.round(per * Math.sqrt(-s.q))), got = arrived.get(s) || [], g = Math.PI / n;
+      for (const a of ring(s, n, o.offset || g / 2)) {
+        if (got.some((b) => Math.abs(Math.atan2(Math.sin(a - b), Math.cos(a - b))) < g * 0.9)) continue;
+        out.push(trace(c, s.x + r0 * Math.cos(a), s.y + r0 * Math.sin(a), -1, box).reverse());
+      }
+    }
+    c.plates.forEach((p, i) => {
+      if (p.s < 0) for (const side of [1, -1]) for (const x of starts(p, side, -1)) {
+        if ((at.get(faceKey(i, side)) || []).some((u) => Math.abs(u - x) < gap * 0.6)) continue;
+        out.push(trace(c, x, p.y + side * 0.04, -1, box).reverse());
+      }
+    });
+    return out;
+  }
   // equipotential segments by marching squares on a grid
   function contours(c, box, levels, o = {}) {
     const n = o.n || 120, [x0, x1, y0, y1] = box, dx = (x1 - x0) / n, ny = Math.round((y1 - y0) / dx), segs = [];
     const V = [];
     for (let j = 0; j <= ny; j++) { V.push([]); for (let i = 0; i <= n; i++) V[j].push(potential(c, x0 + i * dx, y0 + j * dx)); }
-    const near = (x, y) => (c.kind === 'points' || c.kind === 'image') && sources(c).some((s) => Math.hypot(x - s.x, y - s.y) < 0.15);
+    const near = (x, y) => (c.kind === 'points' || c.kind === 'image' || c.kind === 'mixed') && sources(c).some((s) => Math.hypot(x - s.x, y - s.y) < 0.15);
     for (const lv0 of levels) {
       const lv = lv0 + 1e-7; // a grid point exactly on the level would break the line
       for (let j = 0; j < ny; j++) for (let i = 0; i < n; i++) {
@@ -194,6 +265,12 @@
     if (c.kind === 'image') s += `<rect class="metal" x="0" y="${f1(Y(c.plate))}" width="${W}" height="${f1(H - Y(c.plate))}"/><line class="metal-edge" x1="0" y1="${f1(Y(c.plate))}" x2="${W}" y2="${f1(Y(c.plate))}"/>`;
     if (c.kind === 'cylinder' || c.kind === 'flow') s += `<circle class="metal" cx="${f1(X(0))}" cy="${f1(Y(0))}" r="${f1(c.a * S)}"/>`;
     if (c.kind === 'plates') for (const sg of [1, -1]) s += `<rect class="plate" x="${f1(X(-c.w))}" y="${f1(Y(sg * c.h) - 3)}" width="${f1(2 * c.w * S)}" height="6"/>` + txt(X(-c.w) - 10, Y(sg * c.h) + 5, sg * c.q > 0 ? '+' : '−', 'sign big', 'end');
+    // plates of a mixed arrangement, their signs (or names) at the left, above them
+    if (c.kind === 'mixed') for (const p of c.plates) {
+      s += `<rect class="plate${o.unknown ? ' neu' : ''}" x="${f1(X(p.a))}" y="${f1(Y(p.y) - 3)}" width="${f1((p.b - p.a) * S)}" height="6"/>`;
+      const lx = Math.max(X(p.a), 4) + 4, ly = Y(p.y) - 12;
+      s += o.unknown ? txt(lx, ly, p.name || 'A', 'lbl name', 'start') : txt(lx, ly + 4, p.s > 0 ? '+' : '−', 'sign big plate-sign', 'start');
+    }
     // equipotentials: contours (of o.alt, another arrangement, for a wrong picture), given lines
     // (o.equiLines), circles around the centres, vertical lines
     if (o.equi) for (const [a, b] of contours(o.alt || c, box, o.equi, { n: o.small ? 70 : 120 })) s += `<line class="equi" x1="${f1(X(a[0]))}" y1="${f1(Y(a[1]))}" x2="${f1(X(b[0]))}" y2="${f1(Y(b[1]))}"/>`;
@@ -219,7 +296,7 @@
     }
     s += '</g>';
     // the charges, the points, the vectors
-    if (c.kind === 'points' || c.kind === 'image') {
+    if (c.kind === 'points' || c.kind === 'image' || c.kind === 'mixed') {
       const shown = c.kind === 'image' ? [c.charge] : c.charges;
       shown.forEach((ch, i) => { s += charge(X(ch.x), Y(ch.y), ch.q, { unknown: o.unknown, label: o.unknown ? ch.name || 'ABC'[i] : o.labels ? o.labels[i] : null }); });
     }

@@ -119,3 +119,26 @@ table.cmp tbody th { text-align: left; font-weight: normal; color: var(--muted);
 /* the nudge after a wrong check of statements */
 .stmts-fb { color: var(--bad); font-size: 0.9rem; margin: 4px 0 0; }
 .stmts-fb:empty { display: none; }
+
+/* the dipole animations (anim.js): the figure with a small button to replay it under it; for
+   reduced motion, faint positions along the way */
+.dip-anim-wrap { display: grid; justify-items: center; gap: 6px; }
+.dip-anim-wrap svg.ef { display: block; width: 100%; max-width: 440px; height: auto; }
+.dip-replay { font-size: 0.85rem; padding: 3px 10px; color: var(--muted); }
+.dip-replay:hover:not(:disabled) { color: var(--ink); }
+svg.ef .ghost { opacity: 0.3; }
+
+/* the probe (probe.js): a figure to measure the field or the potential in */
+svg.ef.probe { touch-action: none; cursor: crosshair; -webkit-user-select: none; user-select: none; -webkit-tap-highlight-color: transparent; }
+svg.ef.probe:focus { outline: none; }
+svg.ef.probe:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+svg.ef .pr-arrow { stroke: var(--ef-line); stroke-linecap: round; fill: none; }
+svg.ef :is(.pr-head, .pr-base) { fill: var(--ef-line); }
+svg.ef .pr-zero { fill: none; stroke: var(--ef-line); stroke-width: 1.6; }
+svg.ef .pr-dot { fill: var(--ef-equi); stroke: var(--card); stroke-width: 1; }
+svg.ef .pr-cross { fill: none; stroke: var(--ink); stroke-width: 1.3; }
+svg.ef .pr-val { fill: var(--ink); font: 600 11.5px system-ui, sans-serif; paint-order: stroke; stroke: var(--card); stroke-width: 3px; stroke-linejoin: round; pointer-events: none; }
+svg.ef .pr-val.live { fill: var(--accent); }
+.probe-bar { display: flex; align-items: center; justify-content: space-between; gap: 6px 12px; flex-wrap: wrap; max-width: 440px; margin: 6px auto 0; }
+.probe-read { flex: 1 1 200px; min-height: 1.5em; font-size: 0.95rem; font-variant-numeric: tabular-nums; }
+.probe-clear { flex: none; font-size: 0.9rem; }

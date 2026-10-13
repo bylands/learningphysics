@@ -127,6 +127,7 @@
     $('#title').innerHTML = `${ex.title} ${starsOf(ex.difficulty)}`;
     $('#prompt').innerHTML = ex.text;
     $('#figure').innerHTML = ex.figs || '';
+    window.Probe.wire($('#figure'));
     $('#fields').innerHTML = ex.questions.map(questionHtml).join('');
     $('#hint-list').innerHTML = '';
     $('#hints').hidden = true;
@@ -246,6 +247,8 @@
             half(C.fig(uni([0, 1]), { box: BOX, given: [...X.XS.map((x) => [[x, 0.15], [x, 2.7]]), ...X.XS.map((x) => [[x, -0.15], [x, -2.7]])], ...X.wire(1), small: true })) + half(C.fig({ kind: 'points', charges: [{ q: 1, x: 0, y: 0 }] }, { box: BOX, lines: true, lineOpts: { per: 12 }, small: true }))),
           frame(L('A plate capacitor', 'Ein Plattenkondensator'), `<p>${L('The charge is spread evenly over the plates: between them the lines are parallel and evenly spaced, from + to −, a uniform field. Only at the edges do they bulge out; outside, the fields of the two plates cancel: (almost) no field. Not lines from the middles of the plates, as from two point charges.', 'Die Ladung ist gleichmässig über die Platten verteilt: Dazwischen sind die Linien parallel und gleich dicht, von + nach −, ein homogenes Feld. Nur an den Rändern wölben sie sich nach aussen; ausserhalb heben sich die Felder der beiden Platten auf: (fast) kein Feld. Nicht Linien aus den Mitten der Platten wie bei zwei Punktladungen.')}</p>`,
             fig(C.fig(X.CAP(1), { box: BOX, given: X.capLines(X.CAP(1)) }))),
+          frame(L('A plate and a charge', 'Eine Platte und eine Ladung'), `<p>${L('A large positive plate and a point charge −q above it. Far from the charge the plate wins: its lines leave it at right angles, evenly spaced, on both sides. Close to the charge, the charge wins: the lines bend round and run into it. In between the two fields add up to one field: the lines bend smoothly and never cross.', 'Eine grosse positive Platte und eine Punktladung −q über ihr. Weit weg von der Ladung überwiegt die Platte: Ihre Linien verlassen sie senkrecht und gleichmässig verteilt nach beiden Seiten. Nahe bei der Ladung überwiegt die Ladung: Die Linien biegen ab und laufen in sie hinein. Dazwischen addieren sich die beiden Felder zu einem Feld: Die Linien biegen sanft ab und kreuzen sich nie.')}</p>`,
+            fig(C.fig(X.mixConf(X.MIX[0], false, false), { box: BOX, lines: true, labels: ['−'] }))),
         ];
       } },
     { topic: 1, stage: 0, name: () => L('Reading a field-line diagram', 'Ein Feldliniendiagramm lesen'), idea: () => L('The arrows give the signs and the direction, the density gives the strength.', 'Die Pfeile geben die Vorzeichen und die Richtung, die Dichte gibt die Stärke.'),
@@ -265,10 +268,12 @@
       frames: () => [
         frame(L('The forces on the ends', 'Die Kräfte auf die Enden'), `<p>${L('<span class="vec"><i>F</i></span> = q·<span class="vec"><i>E</i></span>: on the + end along the field, on the − end against it. In a uniform field both are equally strong: the net force is zero, the dipole is not pulled either way.', '<span class="vec"><i>F</i></span> = q·<span class="vec"><i>E</i></span>: auf das +-Ende in Feldrichtung, auf das −-Ende entgegen. In einem homogenen Feld sind beide gleich stark: Die Gesamtkraft ist null, der Dipol wird in keine Richtung gezogen.')}</p>`, fig(dipole(45))),
         frame(L('The torque', 'Das Drehmoment'), `<p>${L('But the two forces do not act along one line: they turn the dipole, here clockwise, until its + end points along the field.', 'Aber die beiden Kräfte wirken nicht auf einer Geraden: Sie drehen den Dipol, hier im Uhrzeigersinn, bis sein +-Ende in Feldrichtung zeigt.')}</p>`, fig(dipole(45))),
+        frame(L('In motion', 'In Bewegung'), `<p>${L('Let go, the dipole swings round the field direction like a pendulum, past it and back; with a little friction it comes to rest with its + end along the field. Its centre stays where it is: the net force is zero.', 'Losgelassen schwingt der Dipol wie ein Pendel um die Feldrichtung, über sie hinaus und zurück; mit etwas Reibung kommt er zur Ruhe, sein +-Ende in Feldrichtung. Sein Mittelpunkt bleibt, wo er ist: Die Gesamtkraft ist null.')}</p>`, fig(window.DipoleAnim.html('uniform', { angle: 65 }))),
         frame(L('Equilibrium', 'Gleichgewicht'), `<p>${L('Along the field (left) the forces act along the rod: no torque, and nudged a little, the dipole turns back: a stable equilibrium. Against the field (right) there is no torque either, but the slightest nudge turns it round: unstable.', 'In Feldrichtung (links) wirken die Kräfte längs des Stabs: kein Drehmoment, und ein wenig ausgelenkt, dreht der Dipol zurück: ein stabiles Gleichgewicht. Gegen das Feld (rechts) gibt es auch kein Drehmoment, aber der kleinste Stoss dreht ihn um: labil.')}</p>`, half(dipole(0, { small: true })) + half(dipole(180, { small: true, forces: false }))),
         frame(L('How large is the torque?', 'Wie gross ist das Drehmoment?'), `<p>${L('Each end feels q·E; the lever arm of the pair is the distance between the two lines of action, d·sin φ (φ between the rod and the field). So M = q·E·d·sin φ: largest at 90°, zero along the field.', 'Jedes Ende spürt q·E; der Hebelarm des Paars ist der Abstand der beiden Wirkungslinien, d·sin φ (φ zwischen Stab und Feld). Also M = q·E·d·sin φ: am grössten bei 90°, null in Feldrichtung.')}</p><p>${L('Compared with this dipole at 90°: twice the charge, half the field, at 30° instead: ×2 · ×1/2 · ×1/2 (sin 30° = 1/2) = ×1/2.', 'Verglichen mit diesem Dipol bei 90°: doppelte Ladung, halbes Feld, dafür bei 30°: ×2 · ×1/2 · ×1/2 (sin 30° = 1/2) = ×1/2.')}</p>`, fig(dipole(90))),
         frame(L('Near a charge', 'Nahe einer Ladung'), `<p>${L('In the field of a point charge, the nearer end is in the stronger field (denser lines): if it is the end of opposite sign, the dipole is attracted. A free dipole first turns, then is always attracted: that is why a charged rod picks up scraps of paper.', 'Im Feld einer Punktladung ist das nähere Ende im stärkeren Feld (dichtere Linien): Ist es das Ende mit entgegengesetztem Vorzeichen, wird der Dipol angezogen. Ein freier Dipol dreht sich zuerst und wird dann immer angezogen: Darum hebt ein geladener Stab Papierschnipsel auf.')}</p>`,
           fig(C.fig({ kind: 'points', charges: [{ q: 2, x: -1.8, y: 0 }] }, { box: BOX, lines: true, lineOpts: { per: 6 }, labels: ['+2'], rods: [[0.3, 0, 1.5, 0]], parts: [{ x: 0.3, y: 0, q: -1 }, { x: 1.5, y: 0, q: 1 }] }))),
+        frame(L('Turned round, then pulled in', 'Umgedreht, dann angezogen'), `<p>${L('Here the dipole starts with its + end towards the charge: that end is pushed away harder than the − end is pulled, and the pair turns it round. Once its − end is nearer, the pull wins and the dipole moves towards the charge.', 'Hier beginnt der Dipol mit seinem +-Ende zur Ladung hin: Dieses Ende wird stärker weggedrückt, als das −-Ende angezogen wird, und das Kräftepaar dreht ihn um. Sobald sein −-Ende näher ist, überwiegt die Anziehung, und der Dipol bewegt sich zur Ladung hin.')}</p>`, fig(window.DipoleAnim.html('point'))),
       ] },
     { topic: 3, stage: 0, name: () => L('Equipotential lines', 'Äquipotentiallinien'), idea: () => L('Sketch the field lines first, then the equipotentials across them at right angles.', 'Zuerst die Feldlinien skizzieren, dann die Äquipotentiallinien senkrecht dazu.'),
       frames: () => {
@@ -280,31 +285,37 @@
             fig(C.fig(X.EQ.point.c, { box: BOX, equi: X.EQ.point.lv }))),
           frame(L('A plate capacitor', 'Ein Plattenkondensator'), `<p>${L('Between the plates the field lines are parallel: the equipotentials are straight lines parallel to the plates, evenly spaced (a uniform field).', 'Zwischen den Platten sind die Feldlinien parallel: Die Äquipotentiallinien sind Geraden parallel zu den Platten, in gleichen Abständen (ein homogenes Feld).')}</p>`,
             fig(C.fig(X.CAP(1), { box: BOX, given: X.capEqui(X.CAP(1)), equiLines: true, extra: X.capLines(X.CAP(1)) }))),
+          frame(L('A plate and a charge', 'Eine Platte und eine Ladung'), `<p>${L('A large positive plate and a point charge +q above it. Near the charge its own potential wins: small closed loops round it. Near the plate the plate wins: lines along it. In between the equipotentials bend from one shape into the other, always at right angles to the field lines, and never cross.', 'Eine grosse positive Platte und eine Punktladung +q über ihr. Nahe bei der Ladung überwiegt ihr eigenes Potential: kleine geschlossene Schleifen um sie. Nahe bei der Platte überwiegt die Platte: Linien längs ihr. Dazwischen gehen die Äquipotentiallinien von der einen Form in die andere über, immer senkrecht zu den Feldlinien, und kreuzen sich nie.')}</p>`,
+            fig(C.fig(X.mixConf(X.MIX[1], false, false), { box: BOX, lines: true, labels: ['+'], equi: X.levelsOf(X.mixConf(X.MIX[1], false, false), 9, [0.3, 0.5].map((d) => C.potential(X.mixConf(X.MIX[1], false, false), d, 0.5))) }))),
           frame(L('Two charges', 'Zwei Ladungen'), `<p>${L('Sketch the field lines first, then draw the equipotentials across them at right angles: small circles round each charge, wider loops further out. Halfway between + and − the equipotential is a straight line (V = 0).', 'Skizziere zuerst die Feldlinien, dann zeichne die Äquipotentiallinien senkrecht dazu: kleine Kreise um jede Ladung, weitere Schleifen weiter aussen. In der Mitte zwischen + und − ist die Äquipotentiallinie eine Gerade (V = 0).')}</p>`,
             fig(C.fig(X.EQ.dipole.c, { box: BOX, lines: true, equi: X.EQ.dipole.lv }))),
           frame(L('From equipotentials to field lines', 'Von Äquipotentiallinien zu Feldlinien'), `<p>${L('Given the equipotentials, draw the field lines at right angles to them, pointing from high to low potential: here to the right.', 'Sind die Äquipotentiallinien gegeben, zeichne die Feldlinien senkrecht dazu, von hohem zu tiefem Potential: hier nach rechts.')}</p>`,
             fig(C.fig(uni([1, 0]), { box: BOX, given: xs.map((x) => [[x, -3], [x, 3]]), equiLines: true, extra: [-1.6, -0.8, 0, 0.8, 1.6].map((y) => [[-3, y], [3, y]]), tops }))),
         ];
       } },
-    { topic: 4, stage: 0, name: () => L('Find the error', 'Finde den Fehler'), idea: () => L('Check a sketch feature by feature: start and end, arrows, crossings, the angle of the equipotentials.', 'Eine Skizze Merkmal für Merkmal prüfen: Anfang und Ende, Pfeile, Kreuzungen, der Winkel der Äquipotentiallinien.'),
+    { topic: 4, stage: 0, name: () => L('Find the error', 'Finde den Fehler'), idea: () => L('Check a sketch feature by feature: start and end, arrows, crossings, the angle and the spacing of the equipotentials.', 'Eine Skizze Merkmal für Merkmal prüfen: Anfang und Ende, Pfeile, Kreuzungen, Winkel und Abstände der Äquipotentiallinien.'),
       frames: () => {
         const wrong = X.sketch('like', 'cross', false), right = X.sketch('like', null, false), cap = X.sketch('plates', 'equi', false);
+        const eqx = X.sketch('dipole', 'eqcross', false), eqr = X.sketch('dipole', null, false), eqs = X.sketch('like', 'eqspace', true);
         return [
           frame(L('The sketch', 'Die Skizze'), `<p>${L('A student sketched the field lines and equipotentials of two equal positive charges. One feature is wrong: check them one at a time.', 'Eine Schülerin hat die Feldlinien und Äquipotentiallinien zweier gleicher positiver Ladungen skizziert. Ein Merkmal ist falsch: Prüfe sie einzeln.')}</p>`, fig(C.fig(wrong.c, wrong.o))),
           frame(L('Start, end and arrows', 'Anfang, Ende und Pfeile'), `<p>${L('The lines start at the positive charges and run outwards, out of the picture; the arrows point away from +. That is right.', 'Die Linien beginnen bei den positiven Ladungen und laufen nach aussen, aus dem Bild; die Pfeile zeigen von + weg. Das stimmt.')}</p>`, fig(C.fig(wrong.c, wrong.o))),
           frame(L('Crossings', 'Kreuzungen'), `<p>${L('In the middle the lines of the left charge cross those of the right one: wrong. The student drew the lines of each charge on its own. But at each point the two fields add up to one field with one direction: the lines of the pair bend away from each other and never cross.', 'In der Mitte kreuzen die Linien der linken Ladung die der rechten: falsch. Die Schülerin hat die Linien jeder Ladung für sich gezeichnet. Aber in jedem Punkt addieren sich die beiden Felder zu einem Feld mit einer Richtung: Die Linien des Paars weichen sich aus und kreuzen sich nie.')}</p>`, fig(C.fig(right.c, right.o))),
+          frame(L('Crossing equipotentials', 'Sich kreuzende Äquipotentiallinien'), `<p>${L('A sketch of a dipole: the field lines are right, but the student drew circles round each charge on its own, and they cross. Equipotential lines never cross: at each point the potential has one value, the sum of the potentials of both charges. Near each charge they are almost circles; further out they bend, and halfway between + and − the equipotential is a straight line.', 'Eine Skizze eines Dipols: Die Feldlinien stimmen, aber die Schülerin hat um jede Ladung für sich Kreise gezeichnet, und diese kreuzen sich. Äquipotentiallinien kreuzen sich nie: In jedem Punkt hat das Potential einen Wert, die Summe der Potentiale beider Ladungen. Nahe bei jeder Ladung sind sie fast Kreise; weiter aussen biegen sie sich, und in der Mitte zwischen + und − ist die Äquipotentiallinie eine Gerade.')}</p>`, half(C.fig(eqx.c, { ...eqx.o, small: true })) + half(C.fig(eqr.c, { ...eqr.o, small: true }))),
+          frame(L('The spacing', 'Die Abstände'), `<p>${L('Here the equipotentials of two negative charges get closer together outwards. Wrong: for equal steps of potential they are closest where the field is strongest, near the charges, and farther apart outwards.', 'Hier liegen die Äquipotentiallinien zweier negativer Ladungen nach aussen immer dichter. Falsch: Für gleiche Potentialschritte liegen sie dort am dichtesten, wo das Feld am stärksten ist, nahe bei den Ladungen, und nach aussen immer weiter auseinander.')}</p>`, fig(C.fig(eqs.c, eqs.o))),
           frame(L('The equipotentials', 'Die Äquipotentiallinien'), `<p>${L('Another student’s sketch of a capacitor: here the orange lines run along the field lines, from plate to plate. Wrong: equipotential lines cross the field lines at right angles, so between the plates they are parallel to the plates.', 'Die Skizze eines Kondensators einer anderen Schülerin: Hier verlaufen die orangen Linien längs der Feldlinien, von Platte zu Platte. Falsch: Äquipotentiallinien kreuzen die Feldlinien senkrecht, zwischen den Platten sind sie also parallel zu den Platten.')}</p>`, fig(C.fig(cap.c, cap.o))),
         ];
       } },
   ];
   const stage = (name, types) => ({ name, types });
   const TOPICS = [
-    { name: () => L('Sketching field lines', 'Feldlinien skizzieren'), example: () => 0, stages: [stage(() => L('point charges', 'Punktladungen'), ['lines-pick']), stage(() => L('a charged wire', 'ein geladener Draht'), ['lines-wire']), stage(() => L('a plate capacitor', 'ein Plattenkondensator'), ['lines-cap'])] },
-    { name: () => L('Reading field lines', 'Feldlinien lesen'), example: () => 1, stages: [stage(null, ['lines-read'])] },
+    { name: () => L('Sketching field lines', 'Feldlinien skizzieren'), example: () => 0, stages: [stage(() => L('point charges', 'Punktladungen'), ['lines-pick']), stage(() => L('a charged wire', 'ein geladener Draht'), ['lines-wire']), stage(() => L('a plate capacitor', 'ein Plattenkondensator'), ['lines-cap']), stage(() => L('plates and charges', 'Platten und Ladungen'), ['lines-mix'])] },
+    { name: () => L('Reading field lines', 'Feldlinien lesen'), example: () => 1, stages: [stage(() => L('point charges', 'Punktladungen'), ['lines-read']), stage(() => L('plates and charges', 'Platten und Ladungen'), ['read-mix'])] },
     { name: () => L('Dipoles', 'Dipole'), example: () => 2, stages: [stage(() => L('uniform field', 'homogenes Feld'), ['dipole-uniform']), stage(() => L('the torque', 'das Drehmoment'), ['dipole-torque']), stage(() => L('near a charge', 'nahe einer Ladung'), ['dipole-point'])] },
-    { name: () => L('Equipotential lines', 'Äquipotentiallinien'), example: () => 3, stages: [stage(() => L('which diagram', 'welches Diagramm'), ['equi-pick']), stage(() => L('field lines from them', 'Feldlinien daraus'), ['lines-equi'])] },
+    { name: () => L('Equipotential lines', 'Äquipotentiallinien'), example: () => 3, stages: [stage(() => L('which diagram', 'welches Diagramm'), ['equi-pick']), stage(() => L('field lines from them', 'Feldlinien daraus'), ['lines-equi']), stage(() => L('plates and charges', 'Platten und Ladungen'), ['equi-mix'])] },
     { name: () => L('Find the error', 'Finde den Fehler'), example: () => 4, stages: [stage(null, ['error'])] },
     { name: () => L('True or false', 'Richtig oder falsch'), example: () => 0, stages: [stage(() => L('statements', 'Aussagen'), ['stmts'])] },
+    { name: () => L('Probing a field', 'Ein Feld abtasten'), example: (s) => (s ? 3 : 1), stages: [stage(() => L('field probe', 'Feldsonde'), ['probe-field']), stage(() => L('potential probe', 'Potentialsonde'), ['probe-pot'])] },
   ];
   const lessons = () => LESSONS.map((l) => ({ name: l.name(), idea: l.idea(), frames: l.frames, also: topics.also(l.topic) }));
 
@@ -314,16 +325,16 @@
   // four options (for the wire and the capacitor: the diagram); the tags of the wrong options are
   // the flags of the check.
   const OBJECTIVES = [
-    { id: 'sketch', kinds: ['lines-pick', 'lines-wire', 'lines-cap'], tutor: 0, topic: 0,
-      name: () => L('Sketch the field lines of point charges, of a charged wire and of a plate capacitor (a uniform field).', 'Die Feldlinien von Punktladungen, eines geladenen Drahts und eines Plattenkondensators (ein homogenes Feld) skizzieren.') },
-    { id: 'read', kinds: ['lines-read'], tutor: 1, topic: 1,
+    { id: 'sketch', kinds: ['lines-pick', 'lines-wire', 'lines-cap', 'lines-mix'], tutor: 0, topic: 0,
+      name: () => L('Sketch the field lines of point charges, of a charged wire, of a plate capacitor (a uniform field) and of plates and point charges together.', 'Die Feldlinien von Punktladungen, eines geladenen Drahts, eines Plattenkondensators (ein homogenes Feld) und von Platten und Punktladungen zusammen skizzieren.') },
+    { id: 'read', kinds: ['lines-read', 'read-mix'], tutor: 1, topic: 1,
       name: () => L('Read the direction and the relative strength of a field from its field lines.', 'Die Richtung und die relative Stärke eines Feldes aus seinen Feldlinien ablesen.') },
     { id: 'dipole', kinds: ['dipole-uniform', 'dipole-torque'], tutor: 2, topic: 2,
       name: () => L('Determine the force and the torque on a dipole in a uniform field.', 'Die Kraft und das Drehmoment auf einen Dipol in einem homogenen Feld bestimmen.') },
-    { id: 'equi', kinds: ['equi-pick', 'lines-equi'], tutor: 3, topic: 3,
+    { id: 'equi', kinds: ['equi-pick', 'lines-equi', 'equi-mix'], tutor: 3, topic: 3,
       name: () => L('Sketch equipotential lines at right angles to the field lines.', 'Äquipotentiallinien senkrecht zu den Feldlinien skizzieren.') },
     { id: 'error', kinds: ['error'], tutor: 4, topic: 4,
-      name: () => L('Find the error in a sketch of field lines and equipotentials: lines that cross, or equipotentials not at right angles to the field lines.', 'Den Fehler in einer Skizze von Feldlinien und Äquipotentiallinien finden: Linien, die sich kreuzen, oder Äquipotentiallinien, die nicht senkrecht zu den Feldlinien stehen.') },
+      name: () => L('Find the error in a sketch of field lines and equipotentials: lines that cross, equipotentials not at right angles to the field lines or wrongly spaced.', 'Den Fehler in einer Skizze von Feldlinien und Äquipotentiallinien finden: Linien, die sich kreuzen, Äquipotentiallinien, die nicht senkrecht zu den Feldlinien stehen oder falsche Abstände haben.') },
   ];
   const ASK = { 'lines-wire': 'd', 'lines-cap': 'd' };
   function checkQuestion(kind, seed) {
@@ -334,8 +345,8 @@
       explain: () => `${e.solFig || ''}<div class="steps">${e.solution.map((s) => `<p>${s}</p>`).join('')}</div>`,
     };
   }
-  const CONCEPT = { reverse: 'direction', sign: 'direction', against: 'direction', separate: 'cross', swap: 'direction', parallel: 'shape', point: 'shape', outside: 'shape', flat: 'shape', square: 'shape', nearplate: 'shape',
-    perp: 'tangent', density: 'density', force: 'netforce', torque: 'torque', angle: 'torque', lines: 'perp', along: 'perp', slant: 'perp', even: 'spacing', bunched: 'spacing', up: 'downhill' };
+  const CONCEPT = { reverse: 'direction', sign: 'direction', against: 'direction', separate: 'cross', swap: 'direction', parallel: 'shape', point: 'shape', outside: 'shape', circle: 'shape', past: 'shape', flat: 'shape', square: 'shape', nearplate: 'shape',
+    perp: 'tangent', density: 'density', force: 'netforce', torque: 'torque', angle: 'torque', lines: 'perp', along: 'perp', slant: 'perp', even: 'spacing', bunched: 'spacing', eqspace: 'spacing', eqcross: 'eqsum', ignore: 'eqsum', up: 'downhill' };
   const checkSource = {
     id: 'ef', objectives: OBJECTIVES, question: checkQuestion, concept: CONCEPT,
     concepts: () => ({
@@ -343,7 +354,7 @@
       shape: L('the field of a wire or a capacitor', 'das Feld eines Drahts oder eines Kondensators'), tangent: L('the field along the field line', 'das Feld längs der Feldlinie'),
       density: L('the strength from the density of the lines', 'die Stärke aus der Dichte der Linien'), netforce: L('the net force on a dipole', 'die Gesamtkraft auf einen Dipol'),
       torque: L('the torque on a dipole', 'das Drehmoment auf einen Dipol'), perp: L('equipotentials at right angles to the field lines', 'Äquipotentiallinien senkrecht zu den Feldlinien'),
-      spacing: L('the spacing of equipotentials', 'die Abstände der Äquipotentiallinien'), downhill: L('the field from high to low potential', 'das Feld von hohem zu tiefem Potential'),
+      spacing: L('the spacing of equipotentials', 'die Abstände der Äquipotentiallinien'), eqsum: L('the equipotentials of several charges together (they never cross)', 'die Äquipotentiallinien mehrerer Ladungen zusammen (sie kreuzen sich nie)'), downhill: L('the field from high to low potential', 'das Feld von hohem zu tiefem Potential'),
     }),
   };
 
@@ -430,7 +441,7 @@
     $('#hint').addEventListener('click', hint);
     $('#reveal').addEventListener('click', reveal);
     window.addEventListener('hashchange', fromHash);
-    tutor = window.createTutor(lessons(), { done: practise, practise: (i) => { topics.go(LESSONS[i].topic, LESSONS[i].stage); setMode('practice'); fresh(); } });
+    tutor = window.createTutor(lessons(), { after: () => window.DipoleAnim.start($('#t-figure')), done: practise, practise: (i) => { topics.go(LESSONS[i].topic, LESSONS[i].stage); setMode('practice'); fresh(); } });
     checker = Check.create(checkSource, {
       math: () => {}, markScrollable: () => {}, stored, store,
       tutor: (i) => { setMode('tutor'); tutor.open(i); },

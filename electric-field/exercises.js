@@ -7,12 +7,16 @@
 // The types:
 //   lines-pick, lines-wire, lines-cap   which diagram shows the field lines: of point charges, of a
 //                               charged wire (and how its field falls off), of a plate capacitor
-//   lines-read                  a diagram with hidden signs: the signs, the field at a point, where
-//                               the field is strongest
+//                               (seen from the side or end-on)
+//   lines-mix                   which diagram: plates (a large one, or a capacitor) and a point charge
+//   lines-read, read-mix        a diagram with hidden signs (two charges; a plate and a charge): the
+//                               signs, the field at a point, where the field is strongest
 //   dipole-uniform, dipole-torque, dipole-point   a dipole in a uniform field: net force and turning;
 //                               the torque q·E·d·sin φ by factors; a dipole near a point charge
 //   equi-pick, lines-equi       equipotentials of an arrangement; field lines from equipotentials
+//   equi-mix                    equipotentials of plates and a point charge
 //   error                       find the error in a student's sketch of field lines and equipotentials
+//                               (in about half of them, in the equipotentials)
 //   stmts                       which statements are correct?
 (function (root) {
   'use strict';
@@ -81,7 +85,24 @@
     const r = rng(seed * 61 + (key === 'wire' ? 31 : 37)), q = r.pick([1, -1]), small = (c, given, o = {}) => C.fig(c, { box: BOX, given, small: true, ...o });
     const out = (lns) => (q > 0 ? lns : flipAll(lns)); // drawn from + to −
     let opts, qs, how, solFig, text, W;
-    if (key === 'wire') {
+    if (key === 'wire' && r.next() < 0.5) {
+      // seen end-on: the wire runs out of the page, its lines spread out from it like spokes
+      const c = { kind: 'points', charges: [{ q, x: 0, y: 0 }] }, spokes = out(Array.from({ length: 12 }, (x, k) => { const a = (k * Math.PI) / 6 + Math.PI / 12; return [[0.2 * Math.cos(a), 0.2 * Math.sin(a)], [4 * Math.cos(a), 4 * Math.sin(a)]]; }));
+      const rings = [0.7, 1.2, 1.7, 2.2].map((rr) => Array.from({ length: 73 }, (x, k) => [rr * Math.cos((k * Math.PI) / 36), rr * Math.sin((k * Math.PI) / 36)]));
+      const past = [-1.8, -1.2, -0.6, 0.6, 1.2, 1.8].map((y) => [[-3.3, y], [3.3, y]]);
+      W = {
+        reverse: () => L(`The arrows point the wrong way: field lines run away from positive charge, towards negative charge. The wire is ${q > 0 ? 'positive' : 'negative'}.`, `Die Pfeile zeigen falsch herum: Feldlinien laufen von positiver Ladung weg, zu negativer Ladung hin. Der Draht ist ${q > 0 ? 'positiv' : 'negativ'}.`),
+        circle: () => L('Circles round a wire are the magnetic field of a current. The electric field lines of a charged wire start (or end) on its charge.', 'Kreise um einen Draht sind das Magnetfeld eines Stroms. Die elektrischen Feldlinien eines geladenen Drahts beginnen (oder enden) auf seiner Ladung.'),
+        past: () => L('Field lines start or end on the charge of the wire; they do not pass it by.', 'Feldlinien beginnen oder enden auf der Ladung des Drahts; sie laufen nicht an ihm vorbei.'),
+      };
+      opts = [{ html: small(c, spokes), ok: true }, { html: small(c, spokes, { reverse: true }), tag: 'reverse' }, { html: small(c, rings), tag: 'circle' }, { html: small(c, past), tag: 'past' }];
+      how = L(`By symmetry the lines leave the wire at right angles, evenly spread all round it like the spokes of a wheel, ${q > 0 ? 'away from the positive wire' : 'towards the negative wire'}.`, `Aus Symmetriegründen verlassen die Linien den Draht senkrecht, rundherum gleichmässig verteilt wie die Speichen eines Rads, ${q > 0 ? 'vom positiven Draht weg' : 'zum negativen Draht hin'}.`);
+      const howE = L('End-on the picture looks like that of a point charge, but the lines of a point charge spread out in all directions in space (E ∝ 1/r²), those of the wire only in the plane across it: at twice the distance they are spread over twice the circumference. E = λ/(2π·ε₀·r): half the field.', 'Von vorne sieht das Bild aus wie das einer Punktladung, aber die Linien einer Punktladung breiten sich in alle Richtungen des Raums aus (E ∝ 1/r²), die des Drahts nur in der Ebene quer zu ihm: Im doppelten Abstand verteilen sie sich auf den doppelten Umfang. E = λ/(2π·ε₀·r): halbes Feld.');
+      qs = [choice('E', L('(b) At twice the distance from the wire, the field is', '(b) Im doppelten Abstand vom Draht ist das Feld'), [[1, 'flat', L('The field gets weaker: the lines spread out.', 'Das Feld wird schwächer: Die Linien laufen auseinander.')], [0.5, undefined, ''], [0.25, 'square', L('A quarter: that is a point charge, whose lines spread out in all directions.', 'Ein Viertel: Das ist eine Punktladung, deren Linien sich in alle Richtungen ausbreiten.')], [2, 'other', '']].map(([x, tag, w0]) => ({ label: frac(x), ok: x === 0.5, tag, why: x === 0.5 ? '' : `${w0} ${howE}` })))];
+      solFig = fig(C.fig(c, { box: BOX, given: spokes }));
+      text = L(`<p>A long straight wire, evenly charged ${q > 0 ? 'positive' : 'negative'}, seen end-on: it runs straight out of the page.</p>`, `<p>Ein langer gerader Draht, gleichmässig ${q > 0 ? 'positiv' : 'negativ'} geladen, von vorne gesehen: Er zeigt senkrecht aus der Seite heraus.</p>`);
+      how = [how, howE];
+    } else if (key === 'wire') {
       const c = { kind: 'uniform', E: [0, 1] }, w = wire(q);
       const right = out([...XS.map((x) => [[x, 0.15], [x, 2.7]]), ...XS.map((x) => [[x, -0.15], [x, -2.7]])]);
       const along = [-1.8, -1.2, -0.6, 0.6, 1.2, 1.8].map((y) => [[-3.3, y], [3.3, y]]);
@@ -125,13 +146,64 @@
     };
   }
 
+  // Plates and point charges together: a large plate (wider than the picture) or a capacitor, and a
+  // charge near it, inside it or outside. [q, x, y] of the charge, [y, half width, sign] of the plates;
+  // each also with all signs the other way and upside down.
+  const MIX = [
+    { id: 'sheetOpp', ch: [-1, 0, 0.5], pl: [[-1.2, 4.5, 1]] }, { id: 'sheetLike', ch: [1, 0, 0.5], pl: [[-1.2, 4.5, 1]] },
+    { id: 'sheetSide', ch: [1, -1.2, 0.4], pl: [[-1.2, 4.5, -1]] }, { id: 'capIn', ch: [1, 0.35, 0], pl: [[1.3, 2.3, 1], [-1.3, 2.3, -1]] },
+    { id: 'capInOpp', ch: [-1, 0.35, 0], pl: [[1.3, 2.3, 1], [-1.3, 2.3, -1]] }, { id: 'capOut', ch: [-1, 0, 1.4], pl: [[0.5, 1.8, 1], [-0.7, 1.8, -1]] },
+  ];
+  const SIGMA = 0.25;
+  function mixConf(cf, flip, mirror) {
+    const f = flip ? -1 : 1, m = mirror ? -1 : 1, [q, x, y] = cf.ch;
+    return { kind: 'mixed', charges: [{ q: f * q, x, y: m * y, name: 'B' }], plates: cf.pl.map(([py, w, sg]) => ({ y: m * py, a: -w, b: w, s: f * sg * SIGMA, name: 'A' })) };
+  }
+  // the charge with its sign the other way
+  const swapCharge = (c) => ({ ...c, charges: c.charges.map((ch) => ({ ...ch, q: -ch.q })) });
+  const mixLabels = (c) => c.charges.map((ch) => label(ch.q));
+  // the arrangement in words
+  function mixName(c) {
+    const ch = c.charges[0], pm = (v) => (v > 0 ? L('positive', 'positive') : L('negative', 'negative')), qn = `${label(ch.q)}q`;
+    if (c.plates.length === 1) {
+      const p = c.plates[0], up = ch.y > p.y;
+      return L(`a large ${pm(p.s)} plate and a point charge ${qn} ${up ? 'above' : 'below'} it`, `eine grosse ${pm(p.s)} Platte und eine Punktladung ${qn} ${up ? 'über' : 'unter'} ihr`);
+    }
+    const [p1, p2] = [...c.plates].sort((a, b) => b.y - a.y), inside = ch.y < p1.y && ch.y > p2.y, top = p1.s > 0;
+    const cap = L(`a plate capacitor (its ${top ? 'upper' : 'lower'} plate positive)`, `einen Plattenkondensator (seine ${top ? 'obere' : 'untere'} Platte positiv)`);
+    return inside ? L(`${cap} with a point charge ${qn} between its plates`, `${cap} mit einer Punktladung ${qn} zwischen seinen Platten`)
+      : L(`${cap} and a point charge ${qn} ${ch.y > p1.y ? 'above' : 'below'} it`, `${cap} und eine Punktladung ${qn} ${ch.y > p1.y ? 'über' : 'unter'} ihm`);
+  }
+  const PLATE = () => L('A large plate sends its lines out at right angles, evenly spaced, on both sides; near the charge they bend towards it (or away from it), as the two fields add up.', 'Eine grosse Platte schickt ihre Linien senkrecht und gleichmässig verteilt nach beiden Seiten; nahe der Ladung biegen sie zu ihr hin (oder von ihr weg), weil sich die beiden Felder addieren.');
+  function linesMix(seed) {
+    const r = rng(seed * 47 + 19), cf = r.pick(MIX), flip = r.next() < 0.5, mirror = r.next() < 0.5, c = mixConf(cf, flip, mirror), labels = mixLabels(c);
+    const small = (given, o = {}) => C.fig(c, { box: BOX, given, small: true, labels, ...o });
+    const right = C.lines(c, BOX);
+    const sep = C.lines({ ...c, charges: [] }, BOX).concat(C.lines({ ...c, plates: [] }, BOX));
+    const opts = [{ html: small(right), ok: true }, { html: small(right, { reverse: true }), tag: 'reverse' }, { html: small(sep), tag: 'separate' }, { html: small(C.lines(swapCharge(c), BOX)), tag: 'swap' }];
+    return {
+      kind: 'lines', title: L('Plates and charges', 'Platten und Ladungen'),
+      text: L(`<p>Which diagram shows the field lines of ${mixName(c)}?</p>`, `<p>Welches Diagramm zeigt die Feldlinien für ${mixName(c)}?</p>`), figs: '',
+      questions: [{ type: 'pick', key: 'd', label: L('Which diagram is right?', 'Welches Diagramm stimmt?'), options: r.shuffle(opts).map((o) => ({ html: o.html, ok: !!o.ok, tag: o.tag, why: o.ok ? '' : `${WHYL[o.tag]()} ${LINES()}` })) }],
+      hints: [L('Where do the lines start, where do they end? Check the plates and the charge.', 'Wo beginnen die Linien, wo enden sie? Prüfe die Platten und die Ladung.'), L('Can two lines cross?', 'Können sich zwei Linien kreuzen?'), LINES()],
+      solution: [PLATE(), LINES()], solFig: fig(C.fig(c, { box: BOX, given: right, labels })), p: { cf: cf.id, flip, mirror },
+    };
+  }
+
   // A diagram with hidden signs: the signs, the field at a point, where the field is strongest.
-  function linesRead(seed) {
-    const r = rng(seed * 43 + 17);
+  // mix: a large plate A and a point charge B instead of two charges
+  const SPOTS = [[0, 0], [0, 1.6], [-2.4, 0.4], [2.4, -0.4], [-1, 1], [1, -1], [0, -1.3], [-1.6, -1.2], [1.6, 1.2], [2.2, 1.6], [-2.2, -0.2], [1.2, 0.2]];
+  function linesRead(seed, mix) {
+    const r = rng(seed * 43 + (mix ? 29 : 17));
     for (;;) {
-      const qa = r.pick([1, 2, 3]) * r.pick([1, -1]), qb = r.pick([1, 2, 3]) * r.pick([1, -1]);
-      const c = pts2([[qa, -1], [qb, 1]]), per = 6;
-      const cand = r.shuffle([[0, 0], [0, 1.6], [-2.4, 0.4], [2.4, -0.4], [-1, 1], [1, -1], [0, -1.3], [-1.6, -1.2], [1.6, 1.2]]).slice(0, 4);
+      let qa = r.pick([1, 2, 3]) * r.pick([1, -1]), qb = r.pick([1, 2, 3]) * r.pick([1, -1]), c = pts2([[qa, -1], [qb, 1]]), per = 6, spots = SPOTS.slice(0, 9);
+      if (mix) {
+        const m = r.pick([1, -1]), [x, y] = r.pick([[0, 0.5], [-1.2, 0.4], [1, 0.7]]);
+        qa = r.pick([1, -1]); qb = r.pick([1, 2]) * r.pick([1, -1]);
+        c = { kind: 'mixed', charges: [{ q: qb, x, y: m * y, name: 'B' }], plates: [{ y: m * -1.2, a: -4.5, b: 4.5, s: qa * SIGMA, name: 'A' }] };
+        spots = SPOTS.filter(([px, py]) => Math.abs(py - m * -1.2) > 0.35 && Math.hypot(px - x, py - m * y) > 0.5);
+      }
+      const cand = r.shuffle(spots.slice()).slice(0, 4);
       const mags = cand.map(([x, y]) => Math.hypot(...C.field(c, x, y)));
       const best = mags.indexOf(Math.max(...mags)), sorted = [...mags].sort((a, b) => b - a);
       if (sorted[0] < 1.4 * sorted[1]) continue;
@@ -153,7 +225,8 @@
       const dirs = [[u, undefined], [[-u[0], -u[1]], 'against'], [[-u[1], u[0]], 'perp'], [[u[1], -u[0]], 'perp']];
       return {
         kind: 'read', title: L('Reading field lines', 'Feldlinien lesen'),
-        text: L('<p>The diagram shows the field lines of two charges A and B (their signs are hidden) and four points.</p>', '<p>Das Diagramm zeigt die Feldlinien zweier Ladungen A und B (ihre Vorzeichen sind verdeckt) und vier Punkte.</p>'),
+        text: mix ? L('<p>The diagram shows the field lines of a large charged plate A and a point charge B (their signs are hidden) and four points.</p>', '<p>Das Diagramm zeigt die Feldlinien einer grossen geladenen Platte A und einer Punktladung B (ihre Vorzeichen sind verdeckt) und vier Punkte.</p>')
+          : L('<p>The diagram shows the field lines of two charges A and B (their signs are hidden) and four points.</p>', '<p>Das Diagramm zeigt die Feldlinien zweier Ladungen A und B (ihre Vorzeichen sind verdeckt) und vier Punkte.</p>'),
         figs: fig(C.fig(c, { box: BOX, given: lns, unknown: true, points })),
         questions: [
           choice('sg', L('(a) The signs of the charges', '(a) Die Vorzeichen der Ladungen'), combos.map(([a, b]) => ({ label: sl(a, b), ok: a === Math.sign(qa) && b === Math.sign(qb), tag: 'sign', why: howS }))),
@@ -161,8 +234,8 @@
           tiles('P', L('(c) Where is the field strongest?', '(c) Wo ist das Feld am stärksten?'), pn.map((n, i) => ({ html: `<span class="dtile"><b>${n}</b></span>`, ok: i === best, tag: 'density', why: howP }))),
         ],
         hints: [L('The arrows show the direction of the field: away from positive charges, towards negative ones.', 'Die Pfeile zeigen die Richtung des Feldes: von positiven Ladungen weg, zu negativen hin.'), L('The field at a point is tangent to the field line through it.', 'Das Feld in einem Punkt ist tangential zur Feldlinie durch ihn.'), LINES()],
-        solution: [howS, howD, howP], solFig: fig(C.fig(c, { box: BOX, given: lns, labels: [label(qa), label(qb)], points: [points[at]], vecs: [{ x: cand[at][0], y: cand[at][1], dx: 46 * u[0], dy: 46 * u[1], cls: 'v-field', name: 'E⃗' }] })),
-        p: { qa, qb, pts: cand.join(';'), at },
+        solution: [howS, howD, howP], solFig: fig(C.fig(c, { box: BOX, given: lns, labels: mix ? [label(qb)] : [label(qa), label(qb)], points: [points[at]], vecs: [{ x: cand[at][0], y: cand[at][1], dx: 46 * u[0], dy: 46 * u[1], cls: 'v-field', name: 'E⃗' }] })),
+        p: { qa, qb, pts: cand.join(';'), at, ...(mix ? { c } : {}) },
       };
     }
   }
@@ -302,6 +375,8 @@
     lines: () => L('These are field lines, not equipotentials: equipotentials cross the field lines at right angles.', 'Das sind Feldlinien, keine Äquipotentiallinien: Äquipotentiallinien kreuzen die Feldlinien senkrecht.'),
     swap: () => L('This pattern belongs to another arrangement.', 'Dieses Muster gehört zu einer anderen Anordnung.'),
     bunched: () => L('Between the plates the field is uniform: for equal steps of potential the equipotentials are equally far apart.', 'Zwischen den Platten ist das Feld homogen: Für gleiche Potentialschritte liegen die Äquipotentiallinien gleich weit auseinander.'),
+    ignore: () => L('These are the equipotentials of the plates alone. Near the charge its own potential wins: round it they close into small loops.', 'Das sind die Äquipotentiallinien der Platten allein. Nahe der Ladung überwiegt ihr eigenes Potential: Um sie schliessen sie sich zu kleinen Schleifen.'),
+    eqcross: () => L('Here the equipotentials of the plates and those of the charge are drawn each on their own, and they cross. Equipotential lines never cross: at each point the potential has one value, the sum of the potentials of the plates and the charge.', 'Hier sind die Äquipotentiallinien der Platten und die der Ladung je für sich gezeichnet, und sie kreuzen sich. Äquipotentiallinien kreuzen sich nie: In jedem Punkt hat das Potential einen Wert, die Summe der Potentiale der Platten und der Ladung.'),
   };
   // the nudges in practice where the why would give the right diagram away
   const NUDGEE = {
@@ -323,6 +398,34 @@
       questions: [{ type: 'pick', key: 'd', label: L('Which diagram is right?', 'Welches Diagramm stimmt?'), options: r.shuffle(opts).map((o) => ({ html: o.html, ok: !!o.ok, tag: o.tag, why: o.ok ? '' : `${WHYE[o.tag]()} ${PERP()}`, ...(!o.ok && NUDGEE[o.tag] ? { nudge: NUDGEE[o.tag]() } : {}) })) }],
       hints: [L('Sketch the field lines first; the equipotentials cross them at right angles.', 'Skizziere zuerst die Feldlinien; die Äquipotentiallinien kreuzen sie senkrecht.'), L('Around a single point charge, equipotentials are circles: V = k·Q/r.', 'Um eine einzelne Punktladung sind Äquipotentiallinien Kreise: V = k·Q/r.')],
       solution: [PERP()], solFig: fig(C.fig(Q.c, cp ? { box, given: capEqui(Q.c), equiLines: true, extra: capLines(Q.c) } : { box, equi: Q.lv, lines: true })), p: { key, s: seed % 5 },
+    };
+  }
+  // equal steps of potential across the picture (away from the charges, where it grows without end)
+  function levelsOf(c, n = 9, extra = []) {
+    const v = [];
+    for (let x = BOX[0]; x <= BOX[1]; x += 0.1) for (let y = BOX[2]; y <= BOX[3]; y += 0.1) if ((c.charges || []).every((q) => Math.hypot(x - q.x, y - q.y) > 0.4)) v.push(C.potential(c, x, y));
+    v.sort((a, b) => a - b);
+    const lo = v[Math.floor(v.length * 0.03)], hi = v[Math.floor(v.length * 0.97)];
+    // not the potentials along a plate: (a charged sheet, not a conductor) they change a little along
+    // it, and their lines would hug the plate in thin lenses
+    const along = (c.plates || []).map((p) => { const u = []; for (let x = Math.max(p.a, BOX[0]); x <= Math.min(p.b, BOX[1]); x += 0.05) u.push(C.potential(c, x, p.y)); return [Math.min(...u), Math.max(...u)]; });
+    const pad = 0.04 * (hi - lo);
+    return Array.from({ length: n }, (z, i) => lo + ((hi - lo) * (i + 0.5)) / n).concat(extra).filter((x) => along.every(([a, b]) => x < a - pad || x > b + pad));
+  }
+  // the equipotentials of plates and a charge together
+  function equiMix(seed) {
+    const r = rng(seed * 67 + 31), cf = r.pick(MIX), flip = r.next() < 0.5, mirror = r.next() < 0.5, c = mixConf(cf, flip, mirror), labels = mixLabels(c), ch = c.charges[0];
+    // equal steps across the picture, and two small loops round the charge
+    const lv = levelsOf(c, 9, [0.3, 0.5].map((d) => C.potential(c, ch.x + d, ch.y))), bare = { ...c, charges: [] }, small = (o) => C.fig(c, { box: BOX, small: true, labels, ...o });
+    const opts = [{ html: small({ equi: lv }), ok: true }, { html: small({ given: C.lines(c, BOX), equiLines: true }), tag: 'lines' },
+      { html: small({ equi: levelsOf(bare, 9), alt: bare }), tag: 'ignore' }, { html: small({ equi: levelsOf(bare, 7), alt: bare, circles: [0.35, 0.7, 1.1], centres: [[ch.x, ch.y]] }), tag: 'eqcross' }];
+    const how = L('Sketch the field lines first, then the equipotentials across them at right angles: small closed loops round the charge, and further away lines that follow the plates more and more.', 'Skizziere zuerst die Feldlinien, dann die Äquipotentiallinien senkrecht dazu: kleine geschlossene Schleifen um die Ladung, und weiter weg Linien, die immer mehr den Platten folgen.');
+    return {
+      kind: 'equi', title: L('Equipotentials of plates and charges', 'Äquipotentiallinien von Platten und Ladungen'),
+      text: L(`<p>Which diagram shows equipotential lines (equal steps of potential) of ${mixName(c)}?</p>`, `<p>Welches Diagramm zeigt Äquipotentiallinien (gleiche Potentialschritte) für ${mixName(c)}?</p>`), figs: '',
+      questions: [{ type: 'pick', key: 'd', label: L('Which diagram is right?', 'Welches Diagramm stimmt?'), options: r.shuffle(opts).map((o) => ({ html: o.html, ok: !!o.ok, tag: o.tag, why: o.ok ? '' : `${WHYE[o.tag]()} ${PERP()}` })) }],
+      hints: [L('Sketch the field lines first; the equipotentials cross them at right angles.', 'Skizziere zuerst die Feldlinien; die Äquipotentiallinien kreuzen sie senkrecht.'), L('Close to the charge its own potential wins; close to a large plate, the plate’s.', 'Nahe der Ladung überwiegt ihr eigenes Potential, nahe einer grossen Platte das der Platte.')],
+      solution: [how, PERP()], solFig: fig(C.fig(c, { box: BOX, equi: lv, lines: true, labels })), p: { cf: cf.id, flip, mirror },
     };
   }
   function linesEqui(seed) {
@@ -375,6 +478,8 @@
     equi: () => L('The equipotential lines run along the field lines, not across them.', 'Die Äquipotentiallinien verlaufen längs der Feldlinien, nicht quer zu ihnen.'),
     reverse: () => L('The arrows point from − to +.', 'Die Pfeile zeigen von − nach +.'),
     end: () => L('Field lines end in empty space.', 'Feldlinien enden im leeren Raum.'),
+    eqcross: () => L('Two equipotential lines cross.', 'Zwei Äquipotentiallinien kreuzen sich.'),
+    eqspace: () => L('The spacing of the equipotential lines does not fit the field.', 'Die Abstände der Äquipotentiallinien passen nicht zum Feld.'),
   };
   // what the sketch should show instead (the rule the wrong feature breaks)
   const RULES = {
@@ -382,6 +487,8 @@
     equi: () => L('Equipotential lines cross the field lines at right angles: moving along them, the field does no work.', 'Äquipotentiallinien kreuzen die Feldlinien senkrecht: Bewegt man sich längs ihnen, verrichtet das Feld keine Arbeit.'),
     reverse: () => L('Field lines run from + to −: the field points the way a positive charge would be pushed.', 'Feldlinien laufen von + nach −: Das Feld zeigt dorthin, wohin eine positive Ladung gedrückt würde.'),
     end: () => L('Field lines start and end only on charges (or leave the picture).', 'Feldlinien beginnen und enden nur auf Ladungen (oder verlassen das Bild).'),
+    eqcross: () => L('Equipotential lines of different potentials never cross: at each point the potential has one value, the sum of the potentials of all the charges. The student drew circles round each charge on its own.', 'Äquipotentiallinien verschiedener Potentiale kreuzen sich nie: In jedem Punkt hat das Potential einen Wert, die Summe der Potentiale aller Ladungen. Die Schülerin hat um jede Ladung für sich Kreise gezeichnet.'),
+    eqspace: () => L('For equal steps of potential the equipotentials are closer together where the field is stronger: close to the charges, and farther apart outwards; in a uniform field, such as between the plates, evenly spaced.', 'Für gleiche Potentialschritte liegen die Äquipotentiallinien dichter, wo das Feld stärker ist: nahe bei den Ladungen, und nach aussen immer weiter auseinander; in einem homogenen Feld, etwa zwischen den Platten, gleich weit auseinander.'),
   };
   // the features that are right in a sketch
   const FINE = {
@@ -389,8 +496,15 @@
     equi: () => L('the equipotentials cross the field lines at right angles', 'kreuzen die Äquipotentiallinien die Feldlinien senkrecht'),
     reverse: () => L('the arrows point from + to −', 'zeigen die Pfeile von + nach −'),
     end: () => L('every field line runs from a charge to a charge or out of the picture', 'läuft jede Feldlinie von einer Ladung zu einer Ladung oder aus dem Bild'),
+    eqcross: () => L('no two equipotential lines cross', 'kreuzen sich keine zwei Äquipotentiallinien'),
+    eqspace: () => L('the spacing of the equipotentials fits the strength of the field', 'passen die Abstände der Äquipotentiallinien zur Stärke des Feldes'),
   };
   const ERRS = Object.keys(FEAT);
+  // the errors a sketch can have (crossing equipotentials only round charges: between plates they
+  // would also not be parallel to the plates, a second error)
+  const errsOf = (key) => ERRS.filter((k) => k !== 'eqcross' || key !== 'plates');
+  // equipotentials that get closer together outwards from the left charge (the wrong spacing)
+  const evenLevels = (c) => [0.25, 0.75, 1.1, 1.35, 1.55].flatMap((rr) => { const v = C.potential(c, -1 - rr, 0); return c.charges[1].q < 0 ? [v, -v] : [v]; });
   // the sketch: { c, lv (the levels of its equipotentials), name, o (the options of C.fig) };
   // err null: the right sketch
   function sketch(key, err, flip) {
@@ -408,19 +522,24 @@
     if (err === 'cross') o = draw(cp ? fl.concat([[-1.5, 0.1], [0.1, 1.3]].map(([a, b]) => [[a, c.q > 0 ? c.h : -c.h], [b, c.q > 0 ? -c.h : c.h]])) : c.charges.flatMap((ch) => C.lines({ kind: 'points', charges: [ch] }, BOX, { per: 8 })));
     else if (err === 'equi') o = { given: cp ? [-1.4, -0.7, 0, 0.7, 1.4].map((x) => [[x, -0.75], [x, 0.75]]) : C.lines(c, BOX, { per: 5, offset: 0.33 }), equiLines: true, extra: fl };
     else if (err === 'reverse') o = draw(fl, { reverse: true });
+    else if (err === 'eqcross') o = { given: fl, circles: [0.4, 0.8, 1.2, 1.6], centres: c.charges.map((ch) => [ch.x, ch.y]) };
+    else if (err === 'eqspace') o = cp ? { given: capEqui(c, [-0.62, -0.5, -0.3, 0, 0.3, 0.5, 0.62]), equiLines: true, extra: fl } : { given: fl, equi: evenLevels(c) };
     else if (err === 'end') o = draw(fl.map((ln, i) => (i % 2 === 0 && (cp || ln.length > 30) ? (ln.length === 2 ? [ln[0], [ln[0][0], 0]] : ln.slice(0, Math.round(ln.length * 0.45))) : ln)));
     return { c, lv, name, o: { box: BOX, ...o } };
   }
   function error(seed) {
-    const r = rng(seed * 113 + 79), key = r.pick(['dipole', 'like', 'plates']), err = r.pick(ERRS), flip = r.next() < 0.5 && key !== 'dipole';
+    // about half the sketches with an error in the equipotentials
+    const r = rng(seed * 113 + 79), key = r.pick(['dipole', 'like', 'plates']), eq = r.next() < 0.5, err = r.pick(errsOf(key).filter((k) => /^eq/.test(k) === eq)), flip = r.next() < 0.5 && key !== 'dipole';
+    // the right feature and three others, in the order of the list
+    const shown = [err, ...r.shuffle(errsOf(key).filter((k) => k !== err)).slice(0, 3)], feats = ERRS.filter((k) => shown.includes(k));
     const { c, name, o } = sketch(key, err, flip);
     const how = `${L('Wrong', 'Falsch')}: ${FEAT[err]()} ${RULES[err]()}`;
-    const check = L('Check the features one at a time: where the lines start and end, the arrows, crossings, and how the equipotentials meet the field lines.', 'Prüfe die Merkmale einzeln: wo die Linien beginnen und enden, die Pfeile, Kreuzungen, und wie die Äquipotentiallinien die Feldlinien treffen.');
+    const check = L('Check the features one at a time: where the lines start and end, the arrows, crossings, how the equipotentials meet the field lines and how far apart they are.', 'Prüfe die Merkmale einzeln: wo die Linien beginnen und enden, die Pfeile, Kreuzungen, wie die Äquipotentiallinien die Feldlinien treffen und wie weit sie auseinanderliegen.');
     return {
       kind: 'error', title: L('Find the error', 'Finde den Fehler'),
       text: L(`<p>A student sketched the field lines (blue) and the equipotential lines (orange) of ${name}. One feature of the sketch is wrong.</p>`, `<p>Eine Schülerin hat die Feldlinien (blau) und die Äquipotentiallinien (orange) für ${name} skizziert. Ein Merkmal der Skizze ist falsch.</p>`),
       figs: fig(C.fig(c, { ...o, label: L('A student’s sketch', 'Die Skizze einer Schülerin') })),
-      questions: [choice('err', L('Which feature is wrong?', 'Welches Merkmal ist falsch?'), ERRS.map((k) => ({ label: FEAT[k](), ok: k === err, tag: k === err ? undefined : 'other', why: k === err ? '' : L(`Not this: in the sketch, ${FINE[k]()}. ${check}`, `Nicht das: In der Skizze ${FINE[k]()}. ${check}`) })))],
+      questions: [choice('err', L('Which feature is wrong?', 'Welches Merkmal ist falsch?'), feats.map((k) => ({ label: FEAT[k](), ok: k === err, tag: k === err ? undefined : 'other', why: k === err ? '' : L(`Not this: in the sketch, ${FINE[k]()}. ${check}`, `Nicht das: In der Skizze ${FINE[k]()}. ${check}`) })))],
       hints: [check, LINES(), PERP()],
       solution: [how, L('The right sketch:', 'Die richtige Skizze:')], solFig: fig(C.fig(c, sketch(key, null, flip).o)), p: { key, err, flip },
     };
@@ -463,16 +582,19 @@
   }
 
   const TYPES = {
-    'lines-pick': [2, linesPick], 'lines-wire': [2, (s) => linesShape(s, 'wire')], 'lines-cap': [2, (s) => linesShape(s, 'cap')], 'lines-read': [3, linesRead],
+    'lines-pick': [2, linesPick], 'lines-wire': [2, (s) => linesShape(s, 'wire')], 'lines-cap': [2, (s) => linesShape(s, 'cap')], 'lines-mix': [3, linesMix],
+    'lines-read': [3, (s) => linesRead(s)], 'read-mix': [3, (s) => linesRead(s, true)], 'equi-mix': [3, equiMix],
     'dipole-uniform': [2, dipoleUniform], 'dipole-torque': [3, dipoleTorque], 'dipole-point': [4, dipolePoint],
     'equi-pick': [2, equiPick], 'lines-equi': [2, linesEqui], error: [3, error], stmts: [2, statements],
   };
+  // the probes (probe.js): a field or potential to measure, point by point
+  Object.assign(TYPES, (root.Probe || require('./probe.js')).TYPES);
   function make(type, seed) {
     const [difficulty, f] = TYPES[type];
     return { ...f(seed), type, difficulty, id: `${type}-${seed}`, seed };
   }
 
-  const api = { TYPES: Object.keys(TYPES), make, LINES, PERP, label, pts2, BOX, frac, EQ, CAP, capLines, capEqui, wire, XS, FEAT, sketch };
+  const api = { TYPES: Object.keys(TYPES), make, LINES, PERP, label, pts2, BOX, frac, EQ, CAP, capLines, capEqui, wire, XS, FEAT, sketch, errsOf, MIX, mixConf, levelsOf };
   root.FieldEx = api;
   if (typeof module !== 'undefined') module.exports = api;
 })(typeof window !== 'undefined' ? window : globalThis);
