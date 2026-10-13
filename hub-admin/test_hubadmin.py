@@ -1038,9 +1038,9 @@ class Service(unittest.TestCase):
         self.assertEqual(self.req("/static/fonts/..%2F..%2Fetc%2Fpasswd")[0], 404)
         self.assertEqual(self.req("/static/fonts/hubadmin.py")[0], 404)
 
-    def cookie_of(self, teacher, password):
-        st, headers, _ = self.req("/login", f"teacher={teacher}&password={password}".encode(), "application/x-www-form-urlencoded")
-        self.assertEqual(st, 303, teacher)
+    def cookie_of(self, user, password):
+        st, headers, _ = self.req("/login", f"user={user}&password={password}".encode(), "application/x-www-form-urlencoded")
+        self.assertEqual(st, 303, user)
         return headers["Set-Cookie"].split(";")[0]
 
     def teachers(self, body, cookie):
@@ -1048,8 +1048,10 @@ class Service(unittest.TestCase):
         return st, json.loads(data)
 
     def test_teachers(self):
-        boss = self.cookie_of("bys", "teacher pw")
-        self.assertEqual(self.cookie_of("", "teacher pw").split(".")[0], "hub_admin=bys")  # no identifier: the superuser
+        boss = self.cookie_of("samuel.byland", "teacher pw")
+        self.assertEqual(boss.split(".")[0], "hub_admin=bys")
+        self.assertEqual(self.cookie_of("bys", "teacher pw").split(".")[0], "hub_admin=bys")  # the identifier works too
+        self.assertEqual(self.cookie_of("", "teacher pw").split(".")[0], "hub_admin=bys")
         # the superuser's sets, saved before there were teachers (names without one)
         H.write_config(self.sets, {"sets": {"3a": {"title": "3a", "apps": [{"id": "photons", "modes": ["check"]}]}}})
         self.admin.migrate_sets()
@@ -1057,26 +1059,31 @@ class Service(unittest.TestCase):
                          {"default": "bys", "sets": {"bys/3a": {"title": "3a", "apps": [{"id": "photons", "modes": ["check"]}]}}})
         # a new teacher: a password shown once
         self.assertEqual(self.req("/api/teachers")[0], 403)
-        st, d = self.teachers({"action": "create", "id": "abc", "name": " Anna <B> "}, boss)
+        st, d = self.teachers({"action": "create", "id": "abc", "user": " Anna.B ", "name": " Anna <B> "}, boss)
         self.assertEqual(st, 200)
         pw = d["password"]
         self.assertEqual(len(pw), 12)
-        self.assertEqual(d["teachers"], [{"id": "abc", "name": "Anna B", "created": d["teachers"][0]["created"], "sets": 0}])
+        self.assertEqual(d["teachers"], [{"id": "abc", "user": "anna.b", "name": "Anna B", "created": d["teachers"][0]["created"], "sets": 0}])
         self.assertNotIn(pw, self.admin.teachers_file.read_text())  # only its hash
         self.assertEqual(self.admin.teachers_file.stat().st_mode & 0o777, 0o600)
         for bad, why in [("abc", "already"), ("bys", "already"), ("ab", "three"), ("ABC", "three"), ("abcd", "three"),
                          ("coe", "taken"), ("api", "taken"), (None, "three")]:
-            st, d = self.teachers({"action": "create", "id": bad}, boss)
+            st, d = self.teachers({"action": "create", "id": bad, "user": "someone"}, boss)
             self.assertEqual(st, 400, bad)
             self.assertIn(why, d["error"], bad)
+        for user, why in [("anna.b", "taken"), ("samuel.byland", "taken"), ("bys", "taken"), ("abc", "taken"), ("a b", "user name has"), (".x", "user name has")]:
+            st, d = self.teachers({"action": "create", "id": "xyz", "user": user}, boss)
+            self.assertEqual(st, 400, user)
+            self.assertIn(why, d["error"], user)
         # the teacher logs in, sees the sets and an account, not the superuser's tabs
-        self.assertEqual(self.req("/login", f"teacher=abc&password=wrong".encode(), "application/x-www-form-urlencoded")[0], 403)
-        anna = self.cookie_of("abc", pw)
+        self.assertEqual(self.req("/login", f"user=abc&password=wrong".encode(), "application/x-www-form-urlencoded")[0], 403)
+        anna = self.cookie_of("anna.b", pw)
+        self.cookie_of("abc", pw)  # the identifier works too
         st, _, body = self.req("/", cookie=anna)
         self.assertIn(b'id="view-sets"', body)
         self.assertIn(b'id="view-account"', body)
         self.assertIn(b'data-teacher="abc"', body)
-        self.assertIn(b"Anna B (abc)", body)
+        self.assertIn(b"anna.b (abc)", body)
         for tab in (b'id="view-apps"', b'id="view-sheets"', b'id="view-teachers"'):
             self.assertNotIn(tab, body)
         st, _, body = self.req("/", cookie=boss)
@@ -1106,6 +1113,11 @@ class Service(unittest.TestCase):
         self.assertEqual(list(json.loads(self.sets.read_text())["sets"]), ["abc/3a"])
         st, d = self.teachers({"action": "rename", "id": "abc", "name": "Anna Beispiel"}, boss)
         self.assertEqual(d["teachers"][0]["name"], "Anna Beispiel")
+        self.assertEqual(self.teachers({"action": "rename", "id": "abc", "user": "samuel.byland"}, boss)[0], 400)
+        st, d = self.teachers({"action": "rename", "id": "abc", "user": "anna.beispiel"}, boss)
+        self.assertEqual((d["teachers"][0]["user"], d["teachers"][0]["name"]), ("anna.beispiel", "Anna Beispiel"))
+        self.assertEqual(self.req("/login", f"user=anna.b&password={pw}".encode(), "application/x-www-form-urlencoded")[0], 403)
+        self.cookie_of("anna.beispiel", pw)
         self.assertEqual(d["teachers"][0]["sets"], 1)
         # her own password: the current one needed; her session goes on with a new cookie
         pwreq = lambda body, c: self.req("/api/password", json.dumps(body).encode(), "application/json", c)
@@ -1117,7 +1129,7 @@ class Service(unittest.TestCase):
         self.assertEqual(self.req("/api/sets", cookie=anna)[0], 403)  # the old session ended
         anna = headers["Set-Cookie"].split(";")[0]
         self.assertEqual(self.req("/api/sets", cookie=anna)[0], 200)
-        self.assertEqual(self.req("/login", f"teacher=abc&password={pw}".encode(), "application/x-www-form-urlencoded")[0], 403)
+        self.assertEqual(self.req("/login", f"user=abc&password={pw}".encode(), "application/x-www-form-urlencoded")[0], 403)
         self.cookie_of("abc", "a new password")
         # a new password from the superuser ends her sessions
         st, d = self.teachers({"action": "reset", "id": "abc"}, boss)

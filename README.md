@@ -12,7 +12,7 @@ The admin panel's Sheets tab makes exercise sheets from the teacher's TeXercises
 
 ## Teachers
 
-The admin panel (`/admin/`) has an account per teacher, each with a three-letter identifier. The superuser (`bys`, who logs in with the crossword app's teacher password) creates the accounts in the Teachers tab; a new account's password is shown once, and the teacher can change it under Account. Every teacher makes their own sets, opened at learningphysics.ch/*identifier*/*name*; the superuser's are also at learningphysics.ch/*name*, as before. The order and tags of the apps and the exercise sheets are the superuser's only.
+The admin panel (`/admin/`) has an account per teacher, each with a user name to log in with and a three-letter identifier. The superuser (`samuel.byland`, identifier `bys`, who logs in with the crossword app's teacher password) creates the accounts in the Teachers tab; a new account's password is shown once, and the teacher can change it under Account. Every teacher makes their own sets, opened at learningphysics.ch/*identifier*/*name*; the superuser's are also at learningphysics.ch/*name*, as before. The order and tags of the apps and the exercise sheets are the superuser's only.
 
 ## Tests and deployment
 

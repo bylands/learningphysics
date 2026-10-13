@@ -7,10 +7,10 @@ cards in its order, shows their tags, and lets visitors filter by tag. This serv
 /admin/ behind nginx, lets the teacher edit that file:
 
     /admin/              login page, or the panel once logged in
-    /admin/login         POST teacher=xyz&password=...   sets the session cookie (no teacher: the superuser)
+    /admin/login         POST user=...&password=...  sets the session cookie (the identifier works as a user name too)
     /admin/logout        POST                       ends the session
     /admin/api/teachers  GET  the accounts (the superuser only)
-                         POST {"action": "create", "id", "name"} | {"action": "reset" | "rename" | "delete", "id"}
+                         POST {"action": "create", "id", "user", "name"} | {"action": "reset" | "rename" | "delete", "id"}
     /admin/api/password  POST {"current", "new"}    a teacher's own new password
     /admin/api/config    GET  the apps of the hub page with their order and tags
                          POST {"order": [id, ...], "tags": {id: [key, ...]},
@@ -50,10 +50,11 @@ see sheets/README.md; without it the panel says so), cached in hub-data/sheets/.
 drawn as SVG for the browser (sheets/figures.py, hub-data/sheet-figures/); the TeXercises gallery
 images, which an export lacks, are uploaded or fetched (hub-data/sheet-images/).
 
-Teachers: every teacher has an account with a three-letter identifier (xyz) and their own sets.
-The superuser (--super, default bys) logs in with the crossword app's teacher password and alone
+Teachers: every teacher has an account with a user name (to log in), a three-letter identifier (xyz)
+and their own sets. The superuser (--super, default bys; user name --super-user, default
+samuel.byland) logs in with the crossword app's teacher password and alone
 edits the order and tags of the apps, the exercise sheets and the other accounts (hub-data/
-teachers.json, not served: their names and password hashes); a new account gets a password shown
+teachers.json, not served: their user names, names and password hashes); a new account gets a password shown
 once, which the teacher can change. A session belongs to one teacher and ends when their password
 changes.
 
@@ -159,11 +160,13 @@ SHEET_TOKEN = re.compile(r"[A-Za-z0-9_-]{32}")
 MAX_SHEETS, MAX_MODULES, MAX_SHEET_EXERCISES = 200, 40, 40
 TEXERCISES = "https://texercises.com"
 LOGIN_ATTEMPTS, LOGIN_WINDOW = 10, 15 * 60  # failed logins per address and window (s)
-# teacher accounts: each has a three-letter identifier, the start of its sets' addresses
-# (learningphysics.ch/xyz/name). The superuser (SUPER, --super) logs in with the crossword app's
-# teacher password and creates the others; a set address without an identifier is the superuser's.
-SUPER = "bys"
+# teacher accounts: each has a user name to log in with and a three-letter identifier, the start of
+# its sets' addresses (learningphysics.ch/xyz/name). The superuser (SUPER, --super; user name
+# SUPER_USER, --super-user) logs in with the crossword app's teacher password and creates the
+# others; a set address without an identifier is the superuser's.
+SUPER, SUPER_USER = "bys", "samuel.byland"
 TEACHER_ID = re.compile(r"[a-z]{3}")
+USER_NAME = re.compile(r"[a-z0-9](?:[a-z0-9._-]{0,38}[a-z0-9])?")
 MAX_TEACHERS, MAX_TEACHER_NAME = 100, 80
 MIN_PASSWORD, MAX_PASSWORD = 8, 200
 PASSWORD_ITERATIONS = 310000
@@ -421,6 +424,12 @@ def clean_text(text: object, limit: int) -> str:
     return re.sub(r"\s+", " ", re.sub(r"[\x00-\x1f\x7f<>]", "", text)).strip()[:limit].strip()
 
 
+def user_name(teacher: str, entry: Dict[str, object]) -> str:
+    """An account's user name (an account without one: its identifier)."""
+    user = entry.get("user")
+    return user if isinstance(user, str) and USER_NAME.fullmatch(user) else teacher
+
+
 def new_password() -> str:
     """A first password for an account: 12 characters, easy to type (no 0/O, 1/l/I)."""
     alphabet = "abcdefghijkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789"
@@ -456,12 +465,12 @@ def write_config(path: Path, config: Dict[str, object], mode: int = 0o644) -> No
 # ---------------------------------------------------------------------- the service
 class Admin:
     def __init__(self, password_file: Path, hub: Path, config: Path, sets: Optional[Path] = None,
-                 own: str = OWN_CREATOR, superuser: str = SUPER) -> None:
+                 own: str = OWN_CREATOR, superuser: str = SUPER, super_user: str = SUPER_USER) -> None:
         self.password_file, self.hub, self.config = password_file, hub, config
         self.sets = sets or config.parent / "sets.json"
         self.failures: Dict[str, List[float]] = {}
         # the teacher accounts besides the superuser (with their password hashes: not readable by others)
-        self.super = superuser
+        self.super, self.super_user = superuser, super_user
         self.teachers_file = config.parent / "teachers.json"
         self.accounts_lock = threading.Lock()  # the accounts and the sets, read and written together
         # exercise sheets: the uploaded exercises, the sheets (with the secrets of their online
@@ -514,11 +523,30 @@ class Admin:
     def valid_session(self, value: str) -> bool:
         return self.session_teacher(value) is not None
 
-    def login(self, teacher: str, password: str) -> Optional[str]:
-        """The teacher whose password this is (no identifier: the superuser), or None."""
-        teacher = (teacher or "").strip().lower() or self.super
-        stored = self.stored_hash(teacher) if TEACHER_ID.fullmatch(teacher) else ""
+    def teacher_of(self, user: str) -> Optional[str]:
+        """The identifier of the account with this user name (or, failing that, this identifier)."""
+        user = (user or "").strip().lower()
+        if user == self.super_user:
+            return self.super
+        teachers = self.read_teachers()
+        found = next((t for t, e in teachers.items() if user_name(t, e) == user), None)
+        return found or (user if user == self.super or user in teachers else None)
+
+    def login(self, user: str, password: str) -> Optional[str]:
+        """The teacher (identifier) whose user name and password these are (no user name: the
+        superuser), or None. The identifier works as a user name too."""
+        teacher = self.teacher_of(user) if (user or "").strip() else self.super
+        stored = self.stored_hash(teacher) if teacher else ""
         return teacher if stored and verify_password(password, stored) else None
+
+    def user_problem(self, user: object, teacher: Optional[str] = None) -> Optional[str]:
+        """Why an account (teacher, or a new one) cannot have this user name, or None."""
+        if not isinstance(user, str) or not USER_NAME.fullmatch(user):
+            return "a user name has lower-case letters, digits, dots, hyphens and underscores (up to 40), e.g. anna.beispiel"
+        other = self.teacher_of(user)
+        if other is not None and other != teacher:
+            return f"the user name “{user}” is taken"
+        return None
 
     # ------------------------------------------------------------------ teacher accounts
     def read_teachers(self) -> Dict[str, Dict[str, object]]:
@@ -528,9 +556,12 @@ class Admin:
         return {t: e for t, e in found.items() if TEACHER_ID.fullmatch(t) and t != self.super and isinstance(e, dict)} \
             if isinstance(found, dict) else {}
 
-    def teacher_name(self, teacher: str) -> str:
+    def user_of(self, teacher: str) -> str:
+        """A teacher's user name."""
+        if teacher == self.super:
+            return self.super_user
         entry = self.read_teachers().get(teacher)
-        return str(entry.get("name") or "") if entry else ""
+        return user_name(teacher, entry) if entry else teacher
 
     def teacher_problem(self, teacher: object) -> Optional[str]:
         """Why a new teacher cannot have this identifier, or None: three letters, and the start of
@@ -539,14 +570,16 @@ class Admin:
             return "an identifier is three lower-case letters, e.g. abc"
         if teacher == self.super or teacher in self.read_teachers():
             return f"there is already a teacher “{teacher}”"
+        if self.teacher_of(teacher) is not None:
+            return f"“{teacher}” is another teacher's user name"
         if teacher in RESERVED or teacher in [a["id"] for a in self.apps()] or self.taken(teacher):
             return f"“{teacher}” is taken by the site"
         return None
 
     def teachers_state(self) -> Dict[str, object]:
         sets = self.read_all_sets()
-        return {"super": self.super, "teachers": [
-            {"id": t, "name": str(e.get("name") or ""), "created": e.get("created", 0), "sets": len(sets.get(t, {}))}
+        return {"super": self.super, "super_user": self.super_user, "teachers": [
+            {"id": t, "user": user_name(t, e), "name": str(e.get("name") or ""), "created": e.get("created", 0), "sets": len(sets.get(t, {}))}
             for t, e in sorted(self.read_teachers().items())], "super_sets": len(sets.get(self.super, {}))}
 
     def change_teachers(self, change) -> object:
@@ -557,9 +590,12 @@ class Admin:
             write_config(self.teachers_file, {"teachers": teachers}, 0o600)
             return out
 
-    def create_teacher(self, teacher: object, name: object) -> Dict[str, str]:
-        """A new account; its first password (shown once). ValueError: why not."""
+    def create_teacher(self, teacher: object, name: object, user: object = None) -> Dict[str, str]:
+        """A new account (user name: the identifier, if none); its first password (shown once).
+        ValueError: why not."""
         problem = self.teacher_problem(teacher)
+        user = (user.strip().lower() if isinstance(user, str) else "") or teacher
+        problem = problem or self.user_problem(user)
         if problem:
             raise ValueError(problem)
         name = clean_text(name, MAX_TEACHER_NAME)
@@ -570,8 +606,8 @@ class Admin:
                 raise ValueError(f"there is already a teacher “{teacher}”")
             if len(teachers) >= MAX_TEACHERS:
                 raise ValueError(f"at most {MAX_TEACHERS} teachers")
-            teachers[teacher] = {"name": name, "hash": hash_password(password), "created": int(time.time())}
-            return {"id": teacher, "password": password}
+            teachers[teacher] = {"user": user, "name": name, "hash": hash_password(password), "created": int(time.time())}
+            return {"id": teacher, "user": user, "password": password}
         return self.change_teachers(change)
 
     def reset_password(self, teacher: str) -> Dict[str, str]:
@@ -585,12 +621,24 @@ class Admin:
             return {"id": teacher, "password": password}
         return self.change_teachers(change)
 
-    def rename_teacher(self, teacher: str, name: object) -> Dict[str, str]:
+    def rename_teacher(self, teacher: str, name: object = None, user: object = None) -> Dict[str, str]:
+        """A teacher's new name and/or user name (None: as it is). KeyError: no such teacher."""
+        if teacher not in self.read_teachers():
+            raise KeyError(teacher)
+        if user is not None:
+            user = user.strip().lower() if isinstance(user, str) else user
+            problem = self.user_problem(user, teacher)
+            if problem:
+                raise ValueError(problem)
+
         def change(teachers):
             if teacher not in teachers:
                 raise KeyError(teacher)
-            teachers[teacher]["name"] = clean_text(name, MAX_TEACHER_NAME)
-            return {"id": teacher, "name": teachers[teacher]["name"]}
+            if name is not None:
+                teachers[teacher]["name"] = clean_text(name, MAX_TEACHER_NAME)
+            if user is not None:
+                teachers[teacher]["user"] = user
+            return {"id": teacher, "user": user_name(teacher, teachers[teacher]), "name": str(teachers[teacher].get("name") or "")}
         return self.change_teachers(change)
 
     def delete_teacher(self, teacher: str) -> Dict[str, str]:
@@ -1302,9 +1350,9 @@ def make_handler(admin: Admin):
                 self.json(500, {"error": "could not write the sheets"})
 
         def teachers_post(self) -> None:
-            """/api/teachers (the superuser): {"action": "create", "id", "name"} (the answer has the first
-            password, shown once), {"action": "reset", "id"} (a new password), {"action": "rename", "id",
-            "name"} or {"action": "delete", "id"} (and the teacher's sets)."""
+            """/api/teachers (the superuser): {"action": "create", "id", "user", "name"} (the answer has the
+            first password, shown once), {"action": "reset", "id"} (a new password), {"action": "rename",
+            "id", "name"?, "user"?} or {"action": "delete", "id"} (and the teacher's sets)."""
             if not self.is_super():
                 self.json(403, {"error": "login"})
                 return
@@ -1314,13 +1362,13 @@ def make_handler(admin: Admin):
             action, teacher = body.get("action"), body.get("id")
             try:
                 if action == "create":
-                    out = admin.create_teacher(teacher, body.get("name"))
+                    out = admin.create_teacher(teacher, body.get("name"), body.get("user"))
                 elif not isinstance(teacher, str) or not TEACHER_ID.fullmatch(teacher):
                     raise KeyError(teacher)
                 elif action == "reset":
                     out = admin.reset_password(teacher)
                 elif action == "rename":
-                    out = admin.rename_teacher(teacher, body.get("name"))
+                    out = admin.rename_teacher(teacher, body.get("name"), body.get("user"))
                 elif action == "delete":
                     out = admin.delete_teacher(teacher)
                 else:
@@ -1372,7 +1420,7 @@ def make_handler(admin: Admin):
             path = self.path.split("?", 1)[0]
             if path == "/":
                 teacher = self.teacher()
-                self.send(200, panel_page(teacher, teacher == admin.super, admin.teacher_name(teacher)) if teacher
+                self.send(200, panel_page(teacher, teacher == admin.super, admin.user_of(teacher)) if teacher
                           else login_page(bool(admin.stored_hash())))
             elif path == "/static/admin.js":
                 self.send(200, ADMIN_JS, "text/javascript; charset=utf-8")
@@ -1425,12 +1473,12 @@ def make_handler(admin: Admin):
                     self.send(429, login_page(True, "Too many attempts. Try again in a few minutes."))
                     return
                 form = parse_qs(data.decode("utf-8", "replace"))
-                teacher = admin.login((form.get("teacher") or [""])[0], (form.get("password") or [""])[0])
+                teacher = admin.login((form.get("user") or form.get("teacher") or [""])[0], (form.get("password") or [""])[0])
                 if teacher:
                     self.redirect(admin.new_session(teacher))
                 else:
                     admin.failed(self.addr())
-                    self.send(403, login_page(bool(admin.stored_hash()), "Wrong identifier or password."))
+                    self.send(403, login_page(bool(admin.stored_hash()), "Wrong user name or password."))
             elif path == "/logout":
                 self.redirect("")
             elif path == "/api/teachers":
@@ -1599,18 +1647,18 @@ def login_page(ready: bool, error: str = "") -> str:
     err = f'<p class="error" role="alert">{escape(error)}</p>' if error else ""
     return page("Admin", f"""
     <form class="card login" method="post" action="/admin/login">
-      <p>Your identifier (three letters, e.g. bys) and your password.</p>
+      <p>Your user name (e.g. samuel.byland) and your password.</p>
       {err}
-      <label class="field"><span>Identifier</span><input type="text" name="teacher" required autofocus maxlength="3" autocomplete="username" autocapitalize="none" spellcheck="false"></label>
+      <label class="field"><span>User name</span><input type="text" name="user" required autofocus maxlength="40" autocomplete="username" autocapitalize="none" spellcheck="false"></label>
       <label class="field"><span>Password</span><input type="password" name="password" required autocomplete="current-password"></label>
       <button type="submit" class="primary">Log in</button>
     </form>""")
 
 
-def panel_page(teacher: str = SUPER, superuser: bool = True, name: str = "") -> str:
+def panel_page(teacher: str = SUPER, superuser: bool = True, user: str = "") -> str:
     """The panel of a teacher: the sets for everyone; the order and tags of the apps, the exercise
     sheets and the teachers' accounts for the superuser only; a teacher's own password (Account)."""
-    who = escape(f"{name} ({teacher})" if name else teacher)
+    who = escape(f"{user} ({teacher})" if user and user != teacher else teacher)
     tabs = ('<a href="#quizzes" data-view="quizzes">Quizzes</a><a href="#games" data-view="games">Games</a>'
             '<a href="#sets" data-view="sets">Sets</a>'
             + ('<a href="#sheets" data-view="sheets">Sheets</a><a href="#apps" data-view="apps">Apps &amp; tags</a>'
@@ -1627,9 +1675,10 @@ def panel_page(teacher: str = SUPER, superuser: bool = True, name: str = "") -> 
 
 TEACHERS_SECTION = """
     <section id="view-teachers" hidden>
-      <p class="lead">The teachers who may use this panel. Each has a three-letter identifier and makes their own sets, opened at learningphysics.ch/<i>identifier</i>/<i>name</i>. A new account gets a password shown once: give it to the teacher, who can change it under Account.</p>
+      <p class="lead">The teachers who may use this panel. Each logs in with a user name, has a three-letter identifier and makes their own sets, opened at learningphysics.ch/<i>identifier</i>/<i>name</i>. A new account gets a password shown once: give it to the teacher, who can change it under Account.</p>
       <form id="teacher-new" class="card teacherform">
-        <label class="field"><span>Identifier (three letters)</span><input type="text" name="id" required maxlength="3" pattern="[a-z]{3}" autocomplete="off" spellcheck="false" autocapitalize="none" placeholder="abc"></label>
+        <label class="field"><span>Identifier (3 letters)</span><input type="text" name="id" required maxlength="3" pattern="[a-z]{3}" autocomplete="off" spellcheck="false" autocapitalize="none" placeholder="abc"></label>
+        <label class="field"><span>User name (to log in)</span><input type="text" name="user" required maxlength="40" autocomplete="off" spellcheck="false" autocapitalize="none" placeholder="anna.beispiel"></label>
         <label class="field"><span>Name</span><input type="text" name="name" maxlength="80" autocomplete="off" placeholder="e.g. Anna Beispiel"></label>
         <button type="submit" class="primary">Create account</button>
       </form>
@@ -1777,11 +1826,12 @@ button.primary { background: var(--accent); border-color: var(--accent); color: 
 .view { margin-left: auto; color: var(--accent); }
 .logout { margin: 0; }
 .who { color: var(--muted); font-size: 0.9rem; }
-.teacherform { display: grid; grid-template-columns: 1fr 2fr auto; gap: 0 14px; align-items: end; margin: 0 0 10px; }
+.teacherform { display: grid; grid-template-columns: 1fr 1.5fr 1.5fr auto; gap: 0 14px; align-items: end; margin: 0 0 10px; }
 .teacherform .field { margin: 0; }
 .teachers { list-style: none; margin: 10px 0; padding: 0; display: grid; gap: 10px; }
 .teacher .head { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
 .teacher .head input { width: auto; flex: 1; min-width: 10em; }
+.teacher .head input.user { flex: 0.8; font-family: ui-monospace, monospace; font-size: 0.95rem; }
 .teacher .tid { font-size: 1.1rem; font-family: ui-monospace, monospace; }
 .teacher .password code { font-size: 1.05rem; background: var(--chip); padding: 1px 6px; border-radius: 4px; user-select: all; }
 .teacher .setactions { margin: 8px 0 0; }
@@ -1906,6 +1956,7 @@ h2.section { font-size: 1.15rem; margin: 28px 0 4px; }
 .share { margin-top: 10px; }
 .share .url { word-break: break-all; }
 .share .addapp { margin-top: 6px; }
+@media (max-width: 720px) { .teacherform { grid-template-columns: 1fr 1fr; gap: 10px; } }
 @media (max-width: 560px) { .teacherform { grid-template-columns: 1fr; gap: 10px; } .view { margin-left: 0; } .add input { width: 9em; } .setform { grid-template-columns: 1fr; } .exmain .tools { margin-left: 0; } }
 """ + TX_CSS
 
@@ -3050,11 +3101,13 @@ ACCOUNTS_JS = r"""
     function render() {
       const rows = state.teachers.map((t) => {
         const name = el('input', { type: 'text', value: t.name, maxlength: '80', 'aria-label': `Name of ${t.id}`, placeholder: 'Name' });
-        const rename = async () => {
-          if (name.value.trim() === t.name) return;
-          try { state = await post('/admin/api/teachers', { action: 'rename', id: t.id, name: name.value }); status(`Renamed ${t.id}.`, 'ok'); render(); } catch (e) { status(`Not renamed: ${e.message}`, 'bad'); }
+        const user = el('input', { type: 'text', value: t.user, maxlength: '40', class: 'user', 'aria-label': `User name of ${t.id}`, placeholder: 'User name', spellcheck: 'false', autocapitalize: 'none' });
+        const rename = async (what, input, old) => {
+          if (input.value.trim() === old) return;
+          try { state = await post('/admin/api/teachers', { action: 'rename', id: t.id, [what]: input.value }); status(`Changed the ${what === 'user' ? 'user name' : 'name'} of ${t.id}.`, 'ok'); render(); } catch (e) { input.value = old; status(`Not changed: ${e.message}`, 'bad'); }
         };
-        name.addEventListener('change', rename);
+        name.addEventListener('change', () => rename('name', name, t.name));
+        user.addEventListener('change', () => rename('user', user, t.user));
         const reset = async () => {
           if (!confirm(`A new password for ${t.id}? The old one stops working, and ${t.id} is logged out.`)) return;
           try { const d = await post('/admin/api/teachers', { action: 'reset', id: t.id }); state = d; shown = { id: d.id, password: d.password }; status('', ''); render(); } catch (e) { status(`Error: ${e.message}`, 'bad'); }
@@ -3064,15 +3117,15 @@ ACCOUNTS_JS = r"""
           try { state = await post('/admin/api/teachers', { action: 'delete', id: t.id }); if (shown && shown.id === t.id) shown = null; status(`Deleted ${t.id}.`, 'ok'); render(); } catch (e) { status(`Error: ${e.message}`, 'bad'); }
         };
         return el('li', { class: 'card teacher' },
-          el('div', { class: 'head' }, el('strong', { class: 'tid' }, t.id), name, el('span', { class: 'note' }, sets(t.sets))),
-          shown && shown.id === t.id ? el('p', { class: 'password' }, 'Password: ', el('code', {}, shown.password), el('span', { class: 'note' }, ' (shown once: give it to the teacher, who logs in with the identifier and this password)')) : '',
+          el('div', { class: 'head' }, el('strong', { class: 'tid' }, t.id), user, name, el('span', { class: 'note' }, sets(t.sets))),
+          shown && shown.id === t.id ? el('p', { class: 'password' }, 'Password: ', el('code', {}, shown.password), el('span', { class: 'note' }, ` (shown once: give it to the teacher, who logs in with the user name ${t.user} and this password)`)) : '',
           el('div', { class: 'setactions' },
             el('span', { class: 'note' }, `learningphysics.ch/${t.id}/…`),
             el('button', { type: 'button', onclick: reset }, 'New password'),
             el('button', { type: 'button', class: 'danger', onclick: remove }, 'Delete account')));
       });
       $('#teacher-list').replaceChildren(
-        el('p', { class: 'note' }, `You: ${state.super}, ${sets(state.super_sets)}, with the crossword app’s teacher password.`),
+        el('p', { class: 'note' }, `You: ${state.super_user} (${state.super}), ${sets(state.super_sets)}, with the crossword app’s teacher password.`),
         rows.length ? el('ul', { class: 'teachers' }, ...rows) : el('p', { class: 'empty' }, 'No other teachers yet.'));
     }
     async function load() {
@@ -3086,7 +3139,7 @@ ACCOUNTS_JS = r"""
       e.preventDefault();
       const f = e.target, id = f.elements.id.value.trim().toLowerCase();
       try {
-        const d = await post('/admin/api/teachers', { action: 'create', id, name: f.elements.name.value });
+        const d = await post('/admin/api/teachers', { action: 'create', id, user: f.elements.user.value.trim().toLowerCase(), name: f.elements.name.value });
         state = d; shown = { id: d.id, password: d.password };
         f.reset();
         status(`Account ${d.id} created.`, 'ok');
@@ -3125,10 +3178,13 @@ def main(argv: Optional[List[str]] = None) -> int:
     p.add_argument("--config", type=Path, required=True, help="where to write apps.json (served as /apps.json)")
     p.add_argument("--sets", type=Path, help="where to write sets.json (served as /sets.json; default: next to apps.json)")
     p.add_argument("--super", default=SUPER, help=f"the identifier of the superuser, who logs in with --password-file (default: {SUPER})")
+    p.add_argument("--super-user", default=SUPER_USER, help=f"the superuser's user name (default: {SUPER_USER})")
     args = p.parse_args(argv)
     if not TEACHER_ID.fullmatch(args.super):
         p.error("--super: three lower-case letters")
-    admin = Admin(args.password_file, args.hub, args.config, args.sets, superuser=args.super)
+    if not USER_NAME.fullmatch(args.super_user):
+        p.error("--super-user: lower-case letters, digits, dots, hyphens and underscores")
+    admin = Admin(args.password_file, args.hub, args.config, args.sets, superuser=args.super, super_user=args.super_user)
     admin.migrate_sets()
     server = ThreadingHTTPServer((args.host, args.port), make_handler(admin))
     print(f"hub admin on http://{args.host}:{args.port}/", file=sys.stderr)
