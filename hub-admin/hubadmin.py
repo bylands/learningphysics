@@ -1892,8 +1892,6 @@ def panel_page(teacher: str = SUPER, superuser: bool = True, user: str = "") -> 
     <div class="bar top">
       <nav class="tabs" aria-label="Sections">{tabs}</nav>
       <a class="view" href="/" target="_blank" rel="noopener">View the hub page ↗</a>
-      <label class="names" title="The language of the names of the apps, learning objectives and topics in this panel">Names
-        <select id="names-lang"><option value="en">English</option><option value="de">Deutsch</option></select></label>
       <span class="who" data-teacher="{escape(teacher)}">{who}</span>
       <form method="post" action="/admin/logout" class="logout"><button type="submit">Log out</button></form>
     </div>""" + (SUPER_SECTIONS if superuser else "") + ACCOUNT_SECTION + COMMON_SECTIONS, script=True)
@@ -2066,8 +2064,6 @@ button.primary { background: var(--accent); border-color: var(--accent); color: 
 .view { margin-left: auto; color: var(--accent); }
 .logout { margin: 0; }
 .who { color: var(--muted); font-size: 0.9rem; }
-.names { color: var(--muted); font-size: 0.9rem; display: inline-flex; gap: 6px; align-items: center; }
-.names select { font-size: 0.9rem; }
 .teacherform { display: grid; grid-template-columns: 1fr 1.6fr 1.4fr 1.4fr; gap: 10px 14px; align-items: end; margin: 0 0 10px; }
 .teacherform .wide { grid-column: 1 / 4; }
 .teacher .fields { display: grid; grid-template-columns: 1fr 1fr 1.6fr; gap: 6px 10px; margin-top: 8px; }
@@ -2353,11 +2349,10 @@ ADMIN_JS = r"""
   'use strict';
   const $ = (s) => document.querySelector(s);
   if (!$('#view-apps')) return; // the superuser's only
-  const names = () => { try { return localStorage.getItem('admin-names') === 'de' ? 'de' : 'en'; } catch (e) { return 'en'; } };
   const MAX_TAGS = 8, MAX_LEN = 32;
   let apps = [], order = [], tags = {}, labels = {}, dirty = false, fresh = null;
 
-  const nameOf = (id) => { const a = apps.find((x) => x.id === id) || { name: id }; return (names() === 'de' && a.de) || a.name; };
+  const nameOf = (id) => { const a = apps.find((x) => x.id === id) || { name: id }; return a.name; };
   const status = (text, cls) => { const el = $('#status'); el.textContent = text; el.className = `status ${cls || ''}`; };
   function changed() { dirty = true; $('#save').disabled = false; status('Unsaved changes'); }
   const fold = (t) => t.trim().toLowerCase();
@@ -2493,7 +2488,6 @@ ADMIN_JS = r"""
   }
 
   $('#save').addEventListener('click', save);
-  window.addEventListener('admin-names', () => { if (apps.length) renderApps(); }); // the switch in the top bar (sets.js)
   window.addEventListener('beforeunload', (e) => { if (dirty) { e.preventDefault(); e.returnValue = ''; } });
   load().catch(() => status('Could not load the apps.', 'bad'));
 })();
@@ -3067,7 +3061,6 @@ SETS_JS = r"""
 // objectives are chosen for it.
 (function () {
   'use strict';
-  const names = () => { try { return localStorage.getItem('admin-names') === 'de' ? 'de' : 'en'; } catch (e) { return 'en'; } };
   const $ = (s) => document.querySelector(s);
   const MODES = { tutor: 'Tutor', practice: 'Practice', check: 'Check' };
   const KEY = /^[a-z0-9][a-z0-9-]{0,39}$/, MAX_TITLE = 80;
@@ -3080,18 +3073,17 @@ SETS_JS = r"""
   const shown = new Set(); // apps whose sections are open, as 'set index:app id'
   const added = new Map(); // set → the app last added to it, whose next one the list of apps offers first
   const LANGS = { '': 'English or German (students choose)', en: 'English only', de: 'German only' };
-  // the language of the names of the apps, objectives and topics (the switch in the top bar, remembered)
-  let lang = names();
-  const sw = $('#names-lang');
-  if (sw) {
-    sw.value = lang;
-    sw.addEventListener('change', () => {
-      lang = sw.value === 'de' ? 'de' : 'en';
-      try { localStorage.setItem('admin-names', lang); } catch (e) { /* storage unavailable */ }
-      if (loaded) render();
-      window.dispatchEvent(new CustomEvent('admin-names', { detail: lang })); // the apps' view (admin.js)
-    });
+  // the language of the names of the apps, objectives and topics in the editor of a set: its own
+  // switch Names (s.names, remembered in the browser under the set's name, not saved), at first the
+  // set's language, else English
+  const NAMES = { en: 'English', de: 'Deutsch' };
+  const namesKey = (name) => `admin-names:${teacher}/${name}`;
+  function namesOf(name, setLang) {
+    let v = null;
+    try { v = localStorage.getItem(namesKey(name)); } catch (e) { /* storage unavailable */ }
+    return v === 'de' || v === 'en' ? v : setLang || 'en';
   }
+  let nameLang = 'en'; // the names of the set in the editor
 
   function el(tag, attrs, ...kids) {
     const e = document.createElement(tag);
@@ -3103,7 +3095,7 @@ SETS_JS = r"""
     return e;
   }
   const appOf = (id) => apps.find((a) => a.id === id) || { id, name: id, modes: [] };
-  const appName = (a) => (lang === 'de' && a.de) || a.name;
+  const appName = (a) => (nameLang === 'de' && a.de) || a.name;
   const status = (text, cls) => { const e = $('#sets-status'); e.textContent = text; e.className = `status ${cls || ''}`; };
   // why a name cannot be, or ''
   function problem(i) {
@@ -3122,10 +3114,10 @@ SETS_JS = r"""
 
   // ---------------------------------------------------------------- the outline of an app
   function outline(app) {
-    const id = `${app}:${lang}`;
+    const id = `${app}:${nameLang}`;
     if (outlines[id]) return outlines[id];
     outlines[id] = new Promise((resolve, reject) => {
-      const frame = el('iframe', { class: 'outline-frame', src: `/${app}/?outline=1&lang=${lang}`, title: 'outline', 'aria-hidden': 'true', tabindex: '-1' });
+      const frame = el('iframe', { class: 'outline-frame', src: `/${app}/?outline=1&lang=${nameLang}`, title: 'outline', 'aria-hidden': 'true', tabindex: '-1' });
       const done = (v) => { clearTimeout(timer); window.removeEventListener('message', on); frame.remove(); if (v) resolve(v); else reject(new Error('no outline')); };
       const on = (e) => { if (e.origin === location.origin && e.source === frame.contentWindow && e.data && e.data.type === 'lp-outline') done(e.data); };
       const timer = setTimeout(() => done(null), 20000);
@@ -3148,6 +3140,7 @@ SETS_JS = r"""
       return;
     }
     const s = sets[sel], i = sel;
+    nameLang = s.names || 'en';
     const name = el('input', { type: 'text', value: s.name, maxlength: '40', autocomplete: 'off', spellcheck: 'false', 'aria-describedby': 'set-url', class: problem(i) ? 'bad' : '' });
     name.addEventListener('input', () => {
       s.name = name.value.toLowerCase().replace(/[^a-z0-9-]/g, '-');
@@ -3160,7 +3153,14 @@ SETS_JS = r"""
     const title = el('input', { type: 'text', value: s.title, maxlength: String(MAX_TITLE), placeholder: 'e.g. Klasse 3a · Elektrizität' });
     title.addEventListener('input', () => { s.title = title.value; changed(); renderList(); });
     const lang = el('select', {}, ...Object.entries(LANGS).map(([k, t]) => el('option', { value: k, selected: (s.lang || '') === k }, t)));
-    lang.addEventListener('change', () => { if (lang.value) s.lang = lang.value; else delete s.lang; changed(); });
+    lang.addEventListener('change', () => {
+      if (lang.value) s.lang = lang.value; else delete s.lang;
+      changed();
+      if (s.lang && s.lang !== s.names) setNames(s, s.lang); // a set in German only: its names in German too
+    });
+    const names = el('select', { 'aria-label': 'Language of the names of the apps and learning objectives' },
+      ...Object.entries(NAMES).map(([k, t]) => el('option', { value: k, selected: s.names === k }, t)));
+    names.addEventListener('change', () => setNames(s, names.value));
     // the apps not in the set, in the standard order; first the one after the app last added
     const unused = apps.filter((a) => !s.apps.some((x) => x.id === a.id));
     const last = apps.findIndex((a) => a.id === (added.get(s) || (s.apps.length ? s.apps[s.apps.length - 1].id : null)));
@@ -3170,7 +3170,8 @@ SETS_JS = r"""
       el('div', { class: 'setform' },
         el('label', { class: 'field' }, el('span', {}, 'Name (the address)'), name),
         el('label', { class: 'field' }, el('span', {}, 'Title on the set’s page (optional)'), title),
-        el('label', { class: 'field' }, el('span', {}, 'Language'), lang)),
+        el('label', { class: 'field' }, el('span', {}, 'Language'), lang),
+        el('label', { class: 'field', title: 'Only here, in the panel: the language of the names of the apps, learning objectives and topics' }, el('span', {}, 'Names in'), names)),
       el('div', { class: 'setactions' },
         s.saved && s.saved === s.name ? el('a', { href: `/${path(s.name)}`, target: '_blank', rel: 'noopener', id: 'set-url' }, `learningphysics.ch/${path(s.name)} ↗`) : el('span', { class: 'note', id: 'set-url' }, `learningphysics.ch/${path(s.name)}`),
         el('button', { type: 'button', onclick: () => duplicate(i) }, 'Duplicate'),
@@ -3183,6 +3184,11 @@ SETS_JS = r"""
     if (focus && focus.add) { const p = box.querySelector('.addapp select'); if (p) p.focus(); }
     if (focus && focus.dropped != null) { const b = box.querySelectorAll('.setapp')[focus.dropped]; if (b) b.classList.add('moved'); }
     if (focus && focus.move) { const b = box.querySelectorAll('.setapp')[focus.move.k]; if (b) b.querySelectorAll('.move button')[focus.move.up ? 0 : 1].focus(); }
+  }
+  function setNames(s, v) {
+    s.names = v === 'de' ? 'de' : 'en';
+    try { localStorage.setItem(namesKey(s.name), s.names); } catch (e) { /* storage unavailable */ }
+    render();
   }
   // only the buttons of the list (typing in the editor keeps its focus)
   function renderList() {
@@ -3278,7 +3284,7 @@ SETS_JS = r"""
     return `${base}${n > 1 ? `-${n}` : ''}`;
   }
   function add() {
-    sets.push({ name: fresh('neues-set'), title: '', apps: [], saved: null });
+    sets.push({ name: fresh('neues-set'), title: '', apps: [], saved: null, names: 'en' });
     sel = sets.length - 1;
     changed();
     render({ name: true });
@@ -3303,7 +3309,7 @@ SETS_JS = r"""
   function apply(data, keepSel) {
     const before = sel >= 0 && sets[sel] ? sets[sel].name : null;
     apps = data.apps || [];
-    sets = Object.entries(data.sets || {}).map(([name, s]) => ({ name, title: s.title || '', ...(s.lang ? { lang: s.lang } : {}), apps: s.apps || [], saved: name }));
+    sets = Object.entries(data.sets || {}).map(([name, s]) => ({ name, title: s.title || '', ...(s.lang ? { lang: s.lang } : {}), apps: s.apps || [], saved: name, names: namesOf(name, s.lang) }));
     sel = keepSel && before ? sets.findIndex((s) => s.name === before) : sets.length ? 0 : -1;
     if (sel < 0 && sets.length) sel = 0;
     dirty = false;
@@ -3326,6 +3332,7 @@ SETS_JS = r"""
       const r = await fetch('/admin/api/sets', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
       if (r.status === 403) { status('Logged out: log in again (your changes are lost on reload)', 'bad'); $('#sets-save').disabled = false; return; }
       if (!r.ok) throw new Error((await r.json().catch(() => ({}))).error || r.statusText);
+      sets.forEach((x) => { try { localStorage.setItem(namesKey(x.name), x.names); } catch (e) { /* storage unavailable */ } }); // renamed ones too
       apply(await r.json(), true);
       status('Saved. The sets are live at their addresses.', 'ok');
     } catch (e) {
