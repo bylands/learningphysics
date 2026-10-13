@@ -27,7 +27,7 @@
 //                          element also phase: how the current is shifted against the voltage)
 //   phaseItem(id)          that question for element id (R, L or C)
 //   fits(ex, k, state)     whether candidate k agrees with the answers given so far
-//   mismatch(ex, k)        why candidate k is not the curve (its first feature that differs)
+//   mismatch(ex, k, name, nudge)  why candidate k is not the curve (its first feature that differs)
 //   reason(id, phase)      the reasoning for phase lo, hi or res (HTML)
 //   hints(ex), solution(ex)  for practice (ex.direct: picked without the questions, so the hints ask
 //                          them); dual(id), swapLC(id): the circuit with series and
@@ -329,8 +329,15 @@
   const and = (xs) => (xs.length < 2 ? xs.join('') : `${xs.slice(0, -1).join(', ')} ${L('and', 'und')} ${xs[xs.length - 1]}`);
   // Why candidate k is not the curve: its first feature that differs. name(k): how the curve is
   // called (by default its letter; the arcade numbers its options).
-  function mismatch(ex, k, name = letter) {
+  // nudge: while the exercise is open, a curve picked wrongly is not told what the right curve does
+  // (in the inverse, the curve is given, so naming what it does gives nothing away)
+  function mismatch(ex, k, name = letter, nudge = false) {
     const f = features(ex.cands[k]), t = features(ex.net), key = ORDER.find((x) => f[x] !== t[x]);
+    if (nudge && !ex.inverse) {
+      const at = { lo: L('for <i>ω</i> → 0', 'für <i>ω</i> → 0'), hi: L('for <i>ω</i> → ∞', 'für <i>ω</i> → ∞'), res: L('at <i>ω</i>₀', 'bei <i>ω</i>₀') }[key];
+      return L(`Curve ${name(k)} ${DOES[key][f[key]]()}. What does the impedance of this circuit do ${at}?`,
+        `Kurve ${name(k)} ${DOES[key][f[key]]()}. Was macht die Impedanz dieser Schaltung ${at}?`);
+    }
     if (ex.inverse) {
       return L(`Circuit ${name(k)} gives a curve that ${DOES[key][f[key]]()}, but this curve ${DOES[key][t[key]]()}.`,
         `Schaltung ${name(k)} ergibt eine Kurve, die ${DOES_DE_SUB[key][f[key]]}, aber diese Kurve ${DOES[key][t[key]]()}.`);

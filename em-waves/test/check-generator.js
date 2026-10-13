@@ -55,7 +55,7 @@ const EXPECT = {
 const bad = /undefined|NaN|Infinity|\[object|\$\$\$/;
 function texts(ex) {
   return [ex.title, ex.text, ...ex.hints, ...ex.solution, ex.results, ex.figure({ task: true }) || '', ex.solutionFigure() || '',
-    ...ex.fields.flatMap((f) => [f.what, f.ask || '', ...(f.options || []).flatMap((o) => [o[1], o[2] || '']), ...(f.traps || []).map((t) => t.why)])].join('\n');
+    ...ex.fields.flatMap((f) => [f.what, f.ask || '', ...(f.options || []).flatMap((o) => [o[1], o[2] || '', o[4] || '']), ...(f.traps || []).flatMap((t) => [t.why, t.nudge || ''])])].join('\n');
 }
 
 function checkFields(ex, where) {

@@ -54,7 +54,8 @@
   const nice = (x) => Math.abs(x * 20 - Math.round(x * 20)) < 1e-9;
   const and = (xs) => (xs.length < 2 ? xs.join('') : `${xs.slice(0, -1).join(', ')} ${L('and', 'und')} ${xs[xs.length - 1]}`);
   // a right option keeps its flag only in a multi: there, missing it is the mistake
-  const opt = (html, correct, flag, why) => ({ html, correct, flag: flag || null, why });
+  // nudge: what a wrong choice is told while the exercise is open, when why would give the answer away
+  const opt = (html, correct, flag, why, nudge) => ({ html, correct, flag: flag || null, why, ...(nudge ? { nudge } : {}) });
   const choice = (key, prompt, options, pics = false) => ({ type: 'choice', key, prompt, options: options.map((o) => (o.correct ? { ...o, flag: null } : o)), pics });
   const multi = (key, prompt, single, options) => ({ type: 'multi', key, prompt, single, options });
   const numQ = (key, prompt, ask, sym, unit, value, traps, why) =>
@@ -206,7 +207,8 @@
       opt(vFig(A.v, B.v), true, null, ''),
       opt(vFig(-A.v, -B.v), false, 'sign', L('The signs are swapped: a vehicle whose position increases has v > 0, one whose position decreases v < 0.', 'Die Vorzeichen sind vertauscht: Ein Fahrzeug, dessen Ort zunimmt, hat v > 0, eines, dessen Ort abnimmt, v < 0.')),
       opt(vFig(B.v, A.v), false, null, L('This graph swaps A and B.', 'Dieser Graph vertauscht A und B.')),
-      opt(vFig(Math.abs(A.v), Math.abs(B.v)), false, 'sign', L(`Both velocities are positive here. But ${A.v < 0 ? 'A' : 'B'} moves in the negative direction: its position decreases, so its v is negative.`, `Hier sind beide Geschwindigkeiten positiv. ${A.v < 0 ? 'A' : 'B'} bewegt sich aber in negativer Richtung: Sein Ort nimmt ab, also ist sein v negativ.`)),
+      opt(vFig(Math.abs(A.v), Math.abs(B.v)), false, 'sign', L(`Both velocities are positive here. But ${A.v < 0 ? 'A' : 'B'} moves in the negative direction: its position decreases, so its v is negative.`, `Hier sind beide Geschwindigkeiten positiv. ${A.v < 0 ? 'A' : 'B'} bewegt sich aber in negativer Richtung: Sein Ort nimmt ab, also ist sein v negativ.`),
+        L('Here both velocities are positive. Do the positions of both vehicles increase?', 'Hier sind beide Geschwindigkeiten positiv. Nehmen die Orte beider Fahrzeuge zu?')),
     ]), true);
     const velSteps = [
       step(L('Velocity of A', 'Geschwindigkeit von A'), L(`A moves uniformly, so the velocity follows from its two known positions: ${vLine('A')}.`, `A bewegt sich gleichförmig, also folgt die Geschwindigkeit aus seinen zwei bekannten Orten: ${vLine('A')}.`), fig()),
@@ -566,6 +568,7 @@
       order: () => L('Start at t = 0: the graph starts where the dot of t = 0 is, and follows the dots in the order of their times.', 'Beginne bei t = 0: Der Graph beginnt dort, wo der Punkt von t = 0 liegt, und folgt den Punkten in der Reihenfolge ihrer Zeiten.'),
       steady: () => L('This graph has the right start and end, but a constant velocity. In the picture, the distances between the dots change: the velocity changes.', 'Dieser Graph hat den richtigen Anfang und das richtige Ende, aber eine konstante Geschwindigkeit. Im Bild ändern sich die Abstände zwischen den Punkten: Die Geschwindigkeit ändert sich.'),
       sign: () => L(`At first the dots move towards ${dir > 0 ? 'larger' : 'smaller'} s, so v starts ${dir > 0 ? 'positive' : 'negative'}.`, `Zuerst wandern die Punkte zu ${dir > 0 ? 'grösseren' : 'kleineren'} s, also ist v zuerst ${dir > 0 ? 'positiv' : 'negativ'}.`),
+      signNudge: () => L('Check the sign of v: which way do the dots move at first?', 'Prüfe das Vorzeichen von v: In welche Richtung wandern die Punkte zuerst?'),
       jumps: () => L('With a constant acceleration, the velocity changes steadily, not in jumps once a second: the distance per second is only its mean in that second, reached in its middle.', 'Bei konstanter Beschleunigung ändert sich die Geschwindigkeit gleichmässig, nicht sprunghaft einmal pro Sekunde: Der Abstand pro Sekunde ist nur ihr Mittelwert in dieser Sekunde, erreicht in deren Mitte.'),
     };
     // with a graph to choose: ★2 the s(t) graph, ★3 the v(t) or the a(t) graph; else questions
@@ -582,7 +585,7 @@
       graphQs.push(choice('graph', L('Which v(t) graph belongs to this motion?', 'Welcher v(t)-Graph gehört zu dieser Bewegung?'), r.shuffle([
         opt(vGraph(vLine(gaps)), true, null, ''),
         opt(vGraph(vLine(inv)), false, 'gaps', WHYG.gaps()),
-        opt(vGraph(vLine(gaps.map((g) => -g))), false, 'sign', WHYG.sign()),
+        opt(vGraph(vLine(gaps.map((g) => -g))), false, 'sign', WHYG.sign(), WHYG.signNudge()),
         opt(vGraph(steps(gaps)), false, null, WHYG.jumps()),
       ]), true));
     }
@@ -614,7 +617,9 @@
     if (d === 3) {
       questions.push(numQ('a', L('The acceleration of the cart:', 'Die Beschleunigung des Wagens:'), L('What is the acceleration of the cart?', 'Wie gross ist die Beschleunigung des Wagens?'), it('a'), 'm/s²', acc, [
         { value: -acc, flag: 'sign', why: L(`The distances per second ${acc * dir > 0 ? 'grow' : 'shrink'} in the direction of motion${pat.how === 'turn' ? ' at first' : ''}: work out the sign from how the signed distance changes, from ${sval(gaps[0], 'm')} to ${sval(gaps[1], 'm')}.`,
-          `Die Abstände pro Sekunde ${acc * dir > 0 ? 'wachsen' : 'schrumpfen'}${pat.how === 'turn' ? ' zuerst' : ''} in Bewegungsrichtung: Bestimme das Vorzeichen daraus, wie sich der Abstand mit Vorzeichen ändert, von ${sval(gaps[0], 'm')} auf ${sval(gaps[1], 'm')}.`) },
+          `Die Abstände pro Sekunde ${acc * dir > 0 ? 'wachsen' : 'schrumpfen'}${pat.how === 'turn' ? ' zuerst' : ''} in Bewegungsrichtung: Bestimme das Vorzeichen daraus, wie sich der Abstand mit Vorzeichen ändert, von ${sval(gaps[0], 'm')} auf ${sval(gaps[1], 'm')}.`),
+          nudge: L(`Check the sign: how does the signed distance per second change, from ${sval(gaps[0], 'm')} to ${sval(gaps[1], 'm')}?`,
+            `Prüfe das Vorzeichen: Wie ändert sich der Abstand pro Sekunde mit Vorzeichen, von ${sval(gaps[0], 'm')} auf ${sval(gaps[1], 'm')}?`) },
         { value: gaps[n - 1], flag: null, why: L('That is the distance moved in the last second, which corresponds to a mean velocity. The acceleration is how much this distance changes from one second to the next, per second squared.', 'Das ist der Abstand in der letzten Sekunde, er entspricht einer mittleren Geschwindigkeit. Die Beschleunigung ist, um wie viel sich dieser Abstand von einer Sekunde zur nächsten ändert, pro Sekunde im Quadrat.') },
         { value: acc / 2, flag: null, why: L('The distances per second change by a · (1 s)² from one second to the next, so a is that change itself, not half of it.', 'Die Abstände pro Sekunde ändern sich von einer Sekunde zur nächsten um a · (1 s)², also ist a diese Änderung selbst, nicht die Hälfte davon.') },
       ], L('a = (change of the distance per second) / (1 s)².', 'a = (Änderung des Abstands pro Sekunde) / (1 s)².')));

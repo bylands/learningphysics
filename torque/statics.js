@@ -36,6 +36,10 @@
       noBeam: () => L('The plank’s own weight is missing: it acts at the plank’s middle.', 'Die Gewichtskraft des Bretts fehlt: Sie greift in der Mitte des Bretts an.'),
       swap: () => L('Swapped: the support nearer to a load carries more of it.', 'Vertauscht: Die Stütze, die näher bei einer Last ist, trägt mehr davon.'),
     },
+    // in practice, where the reason would give the answer away
+    nudge: {
+      swap: () => L('Which support is nearer to the loads? Check the torques about the other support again.', 'Welche Stütze ist näher bei den Lasten? Prüfe die Drehmomente um die andere Stütze nochmals.'),
+    },
     fields: () => [field('A', ['A'], 'N', 1, L('force of support A', 'Kraft der Stütze A')), field('B', ['B'], 'N', 1, L('force of support B', 'Kraft der Stütze B'))],
     title: () => L('A plank on two supports', 'Ein Brett auf zwei Stützen'),
     text: (p) => L(`A uniform plank ${m_(p.len)} long with a mass of ${kg(p.m)} rests on two supports: A at its left end and B ${m_(p.b)} from A${p.b === p.len ? ', at its right end' : ''}. A person of ${kg(p.M)} stands ${m_(p.x)} from A. With which forces do the supports push on the plank? Take g = 10 m/s².`,
@@ -93,6 +97,9 @@
     why: {
       noArm: () => L('The forearm’s own weight is missing.', 'Die Gewichtskraft des Unterarms fehlt.'),
       jointUp: () => L('The joint pushes down on the forearm: the muscle pulls up more than the weights pull down, and the joint takes up the difference.', 'Das Gelenk drückt auf den Unterarm nach unten: Der Muskel zieht stärker nach oben, als die Gewichtskräfte nach unten ziehen, und das Gelenk nimmt die Differenz auf.'),
+    },
+    nudge: {
+      jointUp: () => L('Which forces on the forearm point up, which down? Their sum is zero.', 'Welche Kräfte auf den Unterarm zeigen nach oben, welche nach unten? Ihre Summe ist null.'),
     },
     fields: () => [field('Fm', ['Fm'], 'N', 1, L('muscle force', 'Muskelkraft')), field('E', ['E'], 'N', 1, L('force in the elbow joint', 'Kraft im Ellbogengelenk'))],
     title: () => L('Holding a ball', 'Einen Ball halten'),

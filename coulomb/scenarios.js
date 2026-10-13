@@ -1,7 +1,9 @@
 // The situations of the app, from the worksheet “Force Vectors” and around it: point charges, the
 // Coulomb force between two of them, and the net force of several (superposition). Each situation:
 //   { id, difficulty, title(p), make(r) → parameters p, solve(p, o) → values v (SI; with a flag
-//     of traps set in o: the result of that wrong idea), traps: [flag], why: { flag: () => text },
+//     of traps set in o: the result of that wrong idea), traps: [flag], why: { flag: () => text } (what the
+//     wrong idea misses, shown in the check), nudge: { flag: () => text } (the feedback in
+//     practice instead, where the why would give the answer away),
 //     fields(p) → [field], text(p), hints(p, v), steps(p, v) → [{ text, show: [force keys] }],
 //     figure(p, v, view) }
 // A field is a number { key, type: 'num', sym, unit, what } (its value in the unit), a choice
@@ -18,6 +20,12 @@
   const step = (rule, html, show = [], hl = []) => ({ text: `<p class="step-rule">${rule}</p>${html}`, show, hl });
   const p$ = (s) => `<p>${s}</p>`;
   const m$ = (s) => `$${s}$`;
+  // nudges after a wrong answer in practice, used by several situations
+  const NUDGE = {
+    noSquare: () => L('How does the distance enter Coulomb’s law? Check its power.', 'Wie geht der Abstand ins Coulombgesetz ein? Prüfe seine Potenz.'),
+    signs: () => L('What signs do the two charges have, and what does that mean for the direction of the force?', 'Welche Vorzeichen haben die beiden Ladungen, und was bedeutet das für die Richtung der Kraft?'),
+    negative: () => L('What sign does the charge have, and what does that mean for the direction of the force compared with the field?', 'Welches Vorzeichen hat die Ladung, und was bedeutet das für die Richtung der Kraft im Vergleich zum Feld?'),
+  };
   const res = (x) => `\\htmlClass{result}{${x}}`;
   const rt = (x) => `<span class="result">${x}</span>`; // a result in the text
   const num$ = (key, sym, unit, what) => ({ key, type: 'num', sym, unit, what });
@@ -173,6 +181,11 @@
       signs: () => L('Like charges repel, unlike charges attract.', 'Gleichnamige Ladungen stossen sich ab, ungleichnamige ziehen sich an.'),
       third: () => L('Newton’s third law: A and B push or pull each other with forces of the same size, in opposite directions, however different the charges.', 'Actio = reactio: A und B stossen oder ziehen sich mit gleich grossen Kräften in entgegengesetzte Richtungen, wie verschieden die Ladungen auch sind.'),
     },
+    nudge: {
+      noSquare: () => NUDGE.noSquare(),
+      signs: () => NUDGE.signs(),
+      third: () => L('Think of Newton’s third law: what holds for the forces that A and B exert on each other?', 'Denk an actio = reactio: Was gilt für die Kräfte, die A und B aufeinander ausüben?'),
+    },
     fields: (p) => [dirField('dB', L('direction of the force on B', 'Richtung der Kraft auf B'), DIR_ALL), dirField('dA', L('direction of the force on A', 'Richtung der Kraft auf A'), DIR_ALL),
       p.chg ? choice('size', L(`The force on ${pairDirChange(p).on} is then …`, `Die Kraft auf ${pairDirChange(p).on} ist dann …`), FACTORS(), L(`how the force on ${pairDirChange(p).on} changes`, `wie sich die Kraft auf ${pairDirChange(p).on} ändert`))
         : choice('size', L('Which force is larger?', 'Welche Kraft ist grösser?'), [['A', L('the force on A', 'die Kraft auf A')], ['B', L('the force on B', 'die Kraft auf B')], ['eq', L('both are equally large', 'beide sind gleich gross')]], L('which force is larger', 'welche Kraft grösser ist'))],
@@ -229,6 +242,7 @@
     solve: (p, o = {}) => ({ f: o.noSquare ? (p.a * p.b) / p.n : o.wrongWay ? p.a * p.b * p.n ** 2 : (p.a * p.b) / p.n ** 2 }),
     traps: ['noSquare', 'wrongWay'],
     why: { noSquare: () => L('The distance counts squared: 1/r².', 'Der Abstand zählt im Quadrat: 1/r².'), wrongWay: () => L('A larger distance means a smaller force.', 'Ein grösserer Abstand bedeutet eine kleinere Kraft.') },
+    nudge: { noSquare: () => NUDGE.noSquare(), wrongWay: () => L('Does the force grow or shrink when the charges move apart?', 'Wird die Kraft grösser oder kleiner, wenn sich die Ladungen voneinander entfernen?') },
     fields: () => [num$('f', "F'/F", '', L('factor', 'Faktor'))],
     text: (p) => (p.what === 'r'
       ? L(`Two point charges exert a force on each other. Their distance is ${DIST[p.n]()}, the charges stay the same. By what factor does the force change? (Give it as a number or a fraction, e.g. 0.25 or 1/4.)`,
@@ -255,6 +269,7 @@
     solve: (p, o = {}) => { const f = o.noSquare ? (p.a * p.b) / p.n : o.oneCharge ? p.a / p.n ** 2 : (p.a * p.b) / p.n ** 2; return { f, F2: f * p.F }; },
     traps: ['noSquare', 'oneCharge'],
     why: { noSquare: () => L('The distance counts squared: 1/r².', 'Der Abstand zählt im Quadrat: 1/r².'), oneCharge: () => L('Both charges count: the force is proportional to their product.', 'Beide Ladungen zählen: Die Kraft ist proportional zu ihrem Produkt.') },
+    nudge: { noSquare: () => NUDGE.noSquare(), oneCharge: () => L('Did you take the change of both charges into account?', 'Hast du die Änderung beider Ladungen berücksichtigt?') },
     fields: (p) => [num$('f', "F'/F", '', L('factor', 'Faktor')), num$('F2', "F'", forceUnit(Math.min(p.F, (p.a * p.b * p.F) / p.n ** 2)), L('new force', 'neue Kraft'))],
     text: (p) => {
       const c = (x, i) => (x === 1 ? L(`charge ${i} stays the same`, `Ladung ${i} bleibt gleich`) : L(`charge ${i} is ${CHG[x]()}`, `Ladung ${i} wird ${CHG[x]()}`));
@@ -284,6 +299,10 @@
     solve: (p, o = {}) => { const n = o.noRoot ? 1 / p.m : o.wrongWay ? Math.sqrt(p.m) : 1 / Math.sqrt(p.m); return { n, r2: n * p.r0 }; },
     traps: ['noRoot', 'wrongWay'],
     why: { noRoot: () => L('The force goes with 1/r²: the distance changes by the square root of the inverse factor.', 'Die Kraft geht mit 1/r²: Der Abstand ändert sich um die Wurzel des Kehrwerts.'), wrongWay: () => L('A larger force needs a smaller distance.', 'Eine grössere Kraft braucht einen kleineren Abstand.') },
+    nudge: {
+      noRoot: () => L('You took the factor of the force for the distance. How does the force depend on the distance?', 'Du hast den Faktor der Kraft für den Abstand genommen. Wie hängt die Kraft vom Abstand ab?'),
+      wrongWay: () => L('For this force, must the charges come closer or move apart?', 'Müssen die Ladungen für diese Kraft näher zusammen oder weiter auseinander?'),
+    },
     fields: () => [num$('n', "r'/r", '', L('factor for the distance', 'Faktor für den Abstand')), num$('r2', "r'", 'cm', L('new distance', 'neuer Abstand'))],
     text: (p) => L(`Two point charges ${q(p.r0, 'cm')} apart exert a force of ${q(p.F, 'N')} on each other. At what distance is the force between them ${q(p.F * p.m, 'N')}? By what factor must their distance change?`,
       `Zwei Punktladungen im Abstand ${q(p.r0, 'cm')} üben eine Kraft von ${q(p.F, 'N')} aufeinander aus. In welchem Abstand beträgt die Kraft zwischen ihnen ${q(p.F * p.m, 'N')}? Um welchen Faktor muss sich ihr Abstand ändern?`),
@@ -378,7 +397,11 @@
     noSquare: () => L('The distance counts squared: at twice the distance a quarter of the force.', 'Der Abstand zählt im Quadrat: im doppelten Abstand ein Viertel der Kraft.'),
     sameDist: () => L('Measure each distance from the charge the force acts on.', 'Miss jeden Abstand von der Ladung aus, auf die die Kraft wirkt.'),
   };
-  const lineEnd = { id: 'line-end', difficulty: 2, title: () => L('Three charges in a line', 'Drei Ladungen auf einer Geraden'), make: (r) => lineMake(r, false), solve: lineSolve, traps: ['signs', 'noSquare', 'sameDist'], why: lineWhy, fields: lineFields, text: lineText, hints: lineHints, steps: lineSteps, figure: lineFigure };
+  const lineNudge = {
+    signs: () => NUDGE.signs(),
+    noSquare: () => L('How quickly does the force fall off with the distance? Compare the two forces again.', 'Wie stark nimmt die Kraft mit dem Abstand ab? Vergleiche die beiden Kräfte nochmals.'),
+  };
+  const lineEnd = { id: 'line-end', difficulty: 2, title: () => L('Three charges in a line', 'Drei Ladungen auf einer Geraden'), make: (r) => lineMake(r, false), solve: lineSolve, traps: ['signs', 'noSquare', 'sameDist'], why: lineWhy, nudge: lineNudge, fields: lineFields, text: lineText, hints: lineHints, steps: lineSteps, figure: lineFigure };
   const lineMid = { ...lineEnd, id: 'line-mid', difficulty: 3, title: () => L('A charge in the middle', 'Eine Ladung in der Mitte'), make: (r) => lineMake(r, true), traps: ['signs', 'noSquare'] };
 
   // ---------------------------------------------------------------- 4 which way? (equal charges)
@@ -584,6 +607,7 @@
       sum: () => L('The forces are perpendicular: add them as arrows, with Pythagoras, not as numbers.', 'Die Kräfte stehen senkrecht aufeinander: Addiere sie als Pfeile, mit Pythagoras, nicht als Zahlen.'),
       noSquare: () => L('The distance counts squared: at twice the distance a quarter of the force.', 'Der Abstand zählt im Quadrat: im doppelten Abstand ein Viertel der Kraft.'),
     },
+    nudge: { sum: () => L('You added the sizes as numbers. How do two forces at a right angle add up?', 'Du hast die Beträge als Zahlen addiert. Wie addieren sich zwei Kräfte, die senkrecht aufeinander stehen?') },
     fields: () => [num$('F2', 'F_2', 'N', L('force of charge 2', 'Kraft von Ladung 2')), num$('F', 'F', 'N', L('size of the net force', 'Betrag der resultierenden Kraft')), dirField('dir', L('direction', 'Richtung'), ['NE', 'NW', 'SW', 'SE'])],
     text: (p) => {
       const same = Math.abs(Math.abs(p.x1) - Math.abs(p.y2)) < 1e-9;
@@ -652,6 +676,7 @@
     solve: zeroSolve,
     traps: ['noRoot', 'other'],
     why: { noRoot: () => L('The forces go with 1/r²: the distances are in the ratio of the square roots of the charges.', 'Die Kräfte gehen mit 1/r²: Die Abstände stehen im Verhältnis der Wurzeln der Ladungen.'), other: () => L('That is the distance from q₂; the question asks for the distance from q₁.', 'Das ist der Abstand von q₂; gefragt ist der Abstand von q₁.') },
+    nudge: { noRoot: () => L('Set the two forces equal: how do the distances enter the forces?', 'Setze die beiden Kräfte gleich: Wie gehen die Abstände in die Kräfte ein?') },
     fields: () => [choice('region', L('The point lies …', 'Der Punkt liegt …'), zeroRegions(), L('where the point lies', 'wo der Punkt liegt')), num$('x', 'x', 'cm', L('distance from q₁', 'Abstand von q₁'))],
     text: (p) => L(`Two point charges of ${qs(p.q1, 'μC')} (q₁) and ${qs(p.q2, 'μC')} (q₂) are ${q(p.d, 'cm')} apart. At which point on the line through them does a third charge feel no net force? Give the region and the distance from q₁.`,
       `Zwei Punktladungen von ${qs(p.q1, 'μC')} (q₁) und ${qs(p.q2, 'μC')} (q₂) sind ${q(p.d, 'cm')} voneinander entfernt. An welchem Punkt auf der Geraden durch sie spürt eine dritte Ladung keine resultierende Kraft? Gib den Bereich und den Abstand von q₁ an.`),
@@ -676,6 +701,10 @@
     make: (r) => zeroMake(r, false),
     traps: ['noRoot', 'between'],
     why: { noRoot: () => L('The forces go with 1/r²: the distances are in the ratio of the square roots of the charges.', 'Die Kräfte gehen mit 1/r²: Die Abstände stehen im Verhältnis der Wurzeln der Ladungen.'), between: () => L('Between unlike charges, both forces point the same way: the point lies outside.', 'Zwischen ungleichnamigen Ladungen zeigen beide Kräfte in dieselbe Richtung: Der Punkt liegt ausserhalb.') },
+    nudge: {
+      noRoot: () => L('Set the two forces equal: how do the distances enter the forces?', 'Setze die beiden Kräfte gleich: Wie gehen die Abstände in die Kräfte ein?'),
+      between: () => L('Which way do the two forces point on a charge between unlike charges? Can they cancel there?', 'In welche Richtungen zeigen die beiden Kräfte auf eine Ladung zwischen ungleichnamigen Ladungen? Können sie sich dort aufheben?'),
+    },
     fields: () => [choice('region', L('The point lies …', 'Der Punkt liegt …'), zeroRegions(), L('where the point lies', 'wo der Punkt liegt')), num$('x', 'x', 'cm', L('distance from the nearer charge', 'Abstand von der näheren Ladung'))],
     text: (p) => L(`Two point charges of ${qs(p.q1, 'μC')} (q₁) and ${qs(p.q2, 'μC')} (q₂) are ${q(p.d, 'cm')} apart. At which point on the line through them does a third charge feel no net force? Give the region and the distance from the nearer of the two charges.`,
       `Zwei Punktladungen von ${qs(p.q1, 'μC')} (q₁) und ${qs(p.q2, 'μC')} (q₂) sind ${q(p.d, 'cm')} voneinander entfernt. An welchem Punkt auf der Geraden durch sie spürt eine dritte Ladung keine resultierende Kraft? Gib den Bereich und den Abstand von der näheren der beiden Ladungen an.`),
@@ -788,6 +817,11 @@
       inverse: () => L('A larger charge feels a larger force, not a smaller one: F = |q| E.', 'Eine grössere Ladung spürt eine grössere Kraft, nicht eine kleinere: F = |q| E.'),
       against: () => L('A positive charge is pushed along the field, a negative charge against it.', 'Eine positive Ladung wird in Feldrichtung gestossen, eine negative entgegen.'),
     },
+    nudge: {
+      sameF: () => L('You kept the same force. Does the force on the second charge depend on its charge?', 'Du hast die gleiche Kraft genommen. Hängt die Kraft auf die zweite Ladung von ihrer Ladung ab?'),
+      inverse: () => L('In the same field, does a larger charge feel a larger or a smaller force?', 'Spürt eine grössere Ladung im gleichen Feld eine grössere oder eine kleinere Kraft?'),
+      against: () => NUDGE.negative(),
+    },
     fields: () => [num$('E', 'E', 'N/C', L('field strength at P', 'Feldstärke in P')), num$('F2', 'F_2', 'μN', L('size of the force on the second charge', 'Betrag der Kraft auf die zweite Ladung')),
       dirField('dir', L('direction of that force', 'Richtung dieser Kraft'), DIR_ALL)],
     text: (p) => L(`A small test charge of ${qs(p.q1, 'nC')} at a point P feels an electric force of ${q(p.q1 * p.E, 'μN')}, pointing ${dirName(p.d)}. Then it is replaced by a charge of ${qs(p.q2, 'nC')}. How strong is the field at P? How large is the force on the second charge, and which way does it point?`,
@@ -859,6 +893,10 @@
       fieldSign: () => L('The field of a positive charge points away from it, that of a negative charge towards it.', 'Das Feld einer positiven Ladung zeigt von ihr weg, das einer negativen zu ihr hin.'),
       largest: () => L('That is the field of the strongest charge alone; the others count too.', 'Das ist das Feld der stärksten Ladung allein; die anderen zählen auch.'),
       negAlong: () => L('On a negative charge, the force points against the field.', 'Auf eine negative Ladung zeigt die Kraft entgegen dem Feld.'),
+    },
+    nudge: {
+      fieldSign: () => L('Check each field on its own: which way does the field of a positive charge point, and which way that of a negative one?', 'Prüfe jedes Feld einzeln: Wohin zeigt das Feld einer positiven Ladung, wohin das einer negativen?'),
+      negAlong: () => L('The charge at P is negative: what does that mean for the direction of the force compared with the field?', 'Die Ladung in P ist negativ: Was bedeutet das für die Richtung der Kraft im Vergleich zum Feld?'),
     },
     fields: () => [dirField('E', L('direction of the net field at P', 'Richtung des Gesamtfeldes in P'), DIR_ALL), dirField('F', L('direction of the force on a negative charge at P', 'Richtung der Kraft auf eine negative Ladung in P'), DIR_ALL)],
     text: (p) => L(`The point charges ${p.ch.map((x, i) => `${NAMES[i]} = $${qTex(x.s)}$`).join(', ')} sit on a grid of side d around the point P, as shown. In which direction does their net electric field at P point? A small negative charge is placed at P: in which direction does the force on it point?`,

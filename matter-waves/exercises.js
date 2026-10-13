@@ -3,13 +3,15 @@
 //   { id, type, difficulty, title, text, figs (HTML), questions, hints, solution (HTML paragraphs),
 //     solFig, p (what makes it new to the student) }
 // with questions of four kinds:
-//   { type: 'num', key, label, sym, unit, value, tol, abs, scale, wrong: [{ value, tag, why }] }
+//   { type: 'num', key, label, sym, unit, value, tol, abs, scale, wrong: [{ value, tag, why, nudge }] }
 //        a number in the unit shown; tol: the relative error allowed, abs: an absolute one; wrong:
 //        the results of typical mistakes, each with what went wrong
-//   { type: 'choice', key, label, options: [{ label, ok, why, tag }] }   one of a few answers
-//   { type: 'pick', key, label, options: [{ html, ok, why, tag }] }       one of a few drawings
+//   { type: 'choice', key, label, options: [{ label, ok, why, tag, nudge }] }   one of a few answers
+//   { type: 'pick', key, label, options: [{ html, ok, why, tag, nudge }] }       one of a few drawings
 //   { type: 'multi', key, statements: [{ html, ok, why }] }              statements to tick
-// The tags name the wrong idea behind an answer (the check's misconceptions, app.js). No calculator:
+// The tags name the wrong idea behind an answer (the check's misconceptions, app.js). why explains
+// a wrong answer (in the check, and once solved); nudge, where why would give the answer away, is
+// shown instead while the exercise is open. No calculator:
 // the numbers are worked out by ratios from one value given.
 // The types, by topic:
 //   debroglie, same-lambda, diffraction         the de Broglie wavelength by ratios, electron diffraction
@@ -38,8 +40,8 @@
   const choice = (key, label, options) => ({ type: 'choice', key, label, options });
   const pick = (key, label, options) => ({ type: 'pick', key, label, options });
   const multi = (key, statements) => ({ type: 'multi', key, statements });
-  // options from [label, ok, why, tag], shuffled (or in the order given)
-  const opts = (r, list, keep) => { const o = list.map(([label, ok, why, tag]) => ({ label, ok, why: ok ? '' : why, tag: ok ? undefined : tag || 'other' })); return keep ? o : r.shuffle(o); };
+  // options from [label, ok, why, tag, nudge], shuffled (or in the order given)
+  const opts = (r, list, keep) => { const o = list.map(([label, ok, why, tag, nudge]) => ({ label, ok, why: ok ? '' : why, tag: ok ? undefined : tag || 'other', nudge: ok ? '' : nudge || '' })); return keep ? o : r.shuffle(o); };
 
   // ---------------------------------------------------------------- typical mistakes
   const WHY = {
@@ -48,6 +50,16 @@
     inverse: () => L('More energy means more momentum, so a shorter wavelength: λ = h/p.', 'Mehr Energie bedeutet mehr Impuls, also eine kürzere Wellenlänge: λ = h/p.'),
     nsq: () => L('E<sub>n</sub> = n²·h²/(8·m·L²): the energy grows with n², not with n.', 'E<sub>n</sub> = n²·h²/(8·m·L²): Die Energie wächst mit n², nicht mit n.'),
     lsq: () => L('λ ∝ L, so p ∝ 1/L and E = p²/(2m) ∝ 1/L².', 'λ ∝ L, also p ∝ 1/L und E = p²/(2m) ∝ 1/L².'),
+  };
+
+  // the nudges for them while the exercise is open
+  const NUDGE = {
+    photonp: () => L('Does this formula hold for a particle with mass, or for a photon?', 'Gilt diese Formel für ein Teilchen mit Masse oder für ein Photon?'),
+    sqrt: () => L('How does the momentum depend on the kinetic energy: in proportion, or otherwise? And so the wavelength on the voltage?', 'Wie hängt der Impuls von der kinetischen Energie ab: proportional oder anders? Und damit die Wellenlänge von der Spannung?'),
+    inverse: () => L('Check the direction: with more energy, does the wavelength get longer or shorter? Think of λ = h/p.', 'Prüfe die Richtung: Wird die Wellenlänge mit mehr Energie länger oder kürzer? Denk an λ = h/p.'),
+    nsq: () => L('Does the energy grow with n itself, or with a power of n? Think of p = h/λ and E = p²/(2m).', 'Wächst die Energie mit n selbst oder mit einer Potenz von n? Denk an p = h/λ und E = p²/(2m).'),
+    lsq: () => L('How does E = p²/(2m) depend on the momentum, and the momentum on the width? To which power does L enter, then?', 'Wie hängt E = p²/(2m) vom Impuls ab, und der Impuls von der Breite? Mit welcher Potenz kommt L also vor?'),
+    lighter: () => L('Check the direction: does the lighter electron have the larger or the smaller momentum? What does that mean for λ = h/p?', 'Prüfe die Richtung: Hat das leichtere Elektron den grösseren oder den kleineren Impuls? Was heisst das für λ = h/p?'),
   };
 
   // ---------------------------------------------------------------- the de Broglie wavelength
@@ -66,20 +78,20 @@
       figs: '',
       questions: [
         rev ? numQ('U', L(`(a) the voltage that accelerated it, without a calculator`, `(a) die Spannung, mit der es beschleunigt wurde, ohne Taschenrechner`), String(U), 'V', Uv, { wrong: [
-          { value: 150 * k, tag: 'sqrt', why: L('The wavelength goes with 1/√V, so the voltage goes with 1/λ²: square the factor of the wavelength.', 'Die Wellenlänge geht mit 1/√U, also die Spannung mit 1/λ²: Den Faktor der Wellenlänge quadrieren.') },
-          { value: 150 / (k * k), tag: 'inverse', why: L('A shorter wavelength means more momentum, so a larger voltage: λ = h/p.', 'Eine kürzere Wellenlänge bedeutet mehr Impuls, also eine grössere Spannung: λ = h/p.') },
+          { value: 150 * k, tag: 'sqrt', why: L('The wavelength goes with 1/√V, so the voltage goes with 1/λ²: square the factor of the wavelength.', 'Die Wellenlänge geht mit 1/√U, also die Spannung mit 1/λ²: Den Faktor der Wellenlänge quadrieren.'), nudge: NUDGE.sqrt() },
+          { value: 150 / (k * k), tag: 'inverse', why: L('A shorter wavelength means more momentum, so a larger voltage: λ = h/p.', 'Eine kürzere Wellenlänge bedeutet mehr Impuls, also eine grössere Spannung: λ = h/p.'), nudge: L('Check the direction: does a shorter wavelength go with more or less momentum, and so with a larger or smaller voltage?', 'Prüfe die Richtung: Gehört zu einer kürzeren Wellenlänge mehr oder weniger Impuls, und damit eine grössere oder kleinere Spannung?') },
         ] })
-          : numQ('lam', L(`(a) its wavelength, without a calculator`, `(a) seine Wellenlänge, ohne Taschenrechner`), lam, 'pm', l1, { wrong: [{ value: 100 / (k * k), tag: 'sqrt', why: WHY.sqrt() }, { value: 100 * k, tag: 'inverse', why: WHY.inverse() }] }),
+          : numQ('lam', L(`(a) its wavelength, without a calculator`, `(a) seine Wellenlänge, ohne Taschenrechner`), lam, 'pm', l1, { wrong: [{ value: 100 / (k * k), tag: 'sqrt', why: WHY.sqrt(), nudge: NUDGE.sqrt() }, { value: 100 * k, tag: 'inverse', why: WHY.inverse(), nudge: NUDGE.inverse() }] }),
         choice('p', L(`(b) Its momentum, from its kinetic energy ${Ek}, is`, `(b) Sein Impuls, aus seiner kinetischen Energie ${Ek}, ist`), opts(r, [
           [`${p} = √(2·${m}·${Ek})`, true],
-          [`${p} = ${Ek}/${i('c')}`, false, WHY.photonp(), 'photonp'],
-          [`${p} = 2·${m}·${Ek}`, false, L(`${Ek} = ${p}²/(2${m}): the momentum is the square root of 2·${m}·${Ek}.`, `${Ek} = ${p}²/(2${m}): Der Impuls ist die Wurzel aus 2·${m}·${Ek}.`), 'sqrt'],
-          [`${p} = ½·${m}·${v}²`, false, L(`That is the kinetic energy. The momentum is ${p} = ${m}·${v} = √(2·${m}·${Ek}).`, `Das ist die kinetische Energie. Der Impuls ist ${p} = ${m}·${v} = √(2·${m}·${Ek}).`), 'other'],
+          [`${p} = ${Ek}/${i('c')}`, false, WHY.photonp(), 'photonp', NUDGE.photonp()],
+          [`${p} = 2·${m}·${Ek}`, false, L(`${Ek} = ${p}²/(2${m}): the momentum is the square root of 2·${m}·${Ek}.`, `${Ek} = ${p}²/(2${m}): Der Impuls ist die Wurzel aus 2·${m}·${Ek}.`), 'sqrt', L(`Check the units: does 2·${m}·${Ek} have the unit of a momentum?`, `Prüfe die Einheiten: Hat 2·${m}·${Ek} die Einheit eines Impulses?`)],
+          [`${p} = ½·${m}·${v}²`, false, L(`That is the kinetic energy. The momentum is ${p} = ${m}·${v} = √(2·${m}·${Ek}).`, `Das ist die kinetische Energie. Der Impuls ist ${p} = ${m}·${v} = √(2·${m}·${Ek}).`), 'other', L('That is the kinetic energy. How is the momentum defined?', 'Das ist die kinetische Energie. Wie ist der Impuls definiert?')],
         ])),
         choice('ph', L(`(c) A photon has the same energy, ${Vt} eV. Its wavelength is`, `(c) Ein Photon hat dieselbe Energie, ${Vt} eV. Seine Wellenlänge ist`), opts(r, [
           [L('much longer than the electron’s', 'viel länger als die des Elektrons'), true],
-          [L(`the same, ${plain(l1)} pm`, `dieselbe, ${plain(l1)} pm`), false, L(`Same energy, but not the same momentum: the photon has ${p} = ${i('E')}/${i('c')}, the electron ${p} = √(2·${m}·${Ek}), which is far larger.`, `Dieselbe Energie, aber nicht derselbe Impuls: Das Photon hat ${p} = ${i('E')}/${i('c')}, das Elektron ${p} = √(2·${m}·${Ek}), und das ist viel grösser.`), 'photonp'],
-          [L('much shorter than the electron’s', 'viel kürzer als die des Elektrons'), false, L(`At the same energy, the photon has the smaller momentum ${i('E')}/${i('c')}, so the longer wavelength.`, `Bei gleicher Energie hat das Photon den kleineren Impuls ${i('E')}/${i('c')}, also die längere Wellenlänge.`), 'photonp'],
+          [L(`the same, ${plain(l1)} pm`, `dieselbe, ${plain(l1)} pm`), false, L(`Same energy, but not the same momentum: the photon has ${p} = ${i('E')}/${i('c')}, the electron ${p} = √(2·${m}·${Ek}), which is far larger.`, `Dieselbe Energie, aber nicht derselbe Impuls: Das Photon hat ${p} = ${i('E')}/${i('c')}, das Elektron ${p} = √(2·${m}·${Ek}), und das ist viel grösser.`), 'photonp', L('Do the photon and the electron have the same momentum at the same energy? Which formula for the momentum holds for each?', 'Haben Photon und Elektron bei gleicher Energie auch denselben Impuls? Welche Formel für den Impuls gilt für welches?')],
+          [L('much shorter than the electron’s', 'viel kürzer als die des Elektrons'), false, L(`At the same energy, the photon has the smaller momentum ${i('E')}/${i('c')}, so the longer wavelength.`, `Bei gleicher Energie hat das Photon den kleineren Impuls ${i('E')}/${i('c')}, also die längere Wellenlänge.`), 'photonp', L('At the same energy, which has the larger momentum, the photon or the electron? And what does that mean for λ = h/p?', 'Welches hat bei gleicher Energie den grösseren Impuls, das Photon oder das Elektron? Und was heisst das für λ = h/p?')],
         ])),
       ],
       hints: [
@@ -108,45 +120,49 @@
     const r = rng(seed * 41 + 9);
     const same = r.pick(['v', 'E', 'p']), ask = r.pick(['short', 'long']), ratio = r.pick(['v', 'E', 'p']);
     const samePWhy = L('Same momentum, same wavelength: λ = h/p does not depend on the mass. The lighter particle is only faster, v = p/m.', 'Gleicher Impuls, gleiche Wellenlänge: λ = h/p hängt nicht von der Masse ab. Das leichtere Teilchen ist nur schneller, v = p/m.');
+    // the nudges while the exercise is open
+    const samePNudge = L('On what does λ = h/p depend, and does that differ between the three?', 'Wovon hängt die Wellenlänge λ = h/p ab, und unterscheidet sich diese Grösse bei den dreien?');
+    const massNudge = L('Compare the momenta: how does the momentum at the same ' + (same === 'v' ? 'speed' : 'kinetic energy') + ' depend on the mass?', 'Vergleiche die Impulse: Wie hängt der Impuls bei gleicher ' + (same === 'v' ? 'Geschwindigkeit' : 'kinetischer Energie') + ' von der Masse ab?');
+    const voltNudge = ask === 'short' ? L('Which of the three gains the largest momentum from the same voltage? Think of mass and charge.', 'Welches der drei bekommt bei gleicher Spannung den grössten Impuls? Denk an Masse und Ladung.') : L('Which of the three gains the smallest momentum from the same voltage? Think of mass and charge.', 'Welches der drei bekommt bei gleicher Spannung den kleinsten Impuls? Denk an Masse und Ladung.');
     const names = [L('the electron', 'das Elektron'), L('the proton', 'das Proton'), L('the alpha particle', 'das Alphateilchen')];
     const allSame = L('all the same', 'alle gleich');
     const qa = same === 'p' ? [
       [allSame, true],
-      [names[0], false, samePWhy, 'mass'],
-      [names[1], false, samePWhy, 'mass'],
-      [names[2], false, samePWhy, 'mass'],
+      [names[0], false, samePWhy, 'mass', samePNudge],
+      [names[1], false, samePWhy, 'mass', samePNudge],
+      [names[2], false, samePWhy, 'mass', samePNudge],
     ] : [
       [names[0], true],
-      [names[1], false, L('The proton is heavier: at the same ' + (same === 'v' ? 'speed' : 'kinetic energy') + ' it has more momentum, so a shorter wavelength.', 'Das Proton ist schwerer: Bei gleicher ' + (same === 'v' ? 'Geschwindigkeit' : 'kinetischer Energie') + ' hat es mehr Impuls, also eine kürzere Wellenlänge.'), 'mass'],
-      [names[2], false, L('The alpha particle is the heaviest: it has the most momentum and the shortest wavelength.', 'Das Alphateilchen ist am schwersten: Es hat am meisten Impuls und die kürzeste Wellenlänge.'), 'mass'],
+      [names[1], false, L('The proton is heavier: at the same ' + (same === 'v' ? 'speed' : 'kinetic energy') + ' it has more momentum, so a shorter wavelength.', 'Das Proton ist schwerer: Bei gleicher ' + (same === 'v' ? 'Geschwindigkeit' : 'kinetischer Energie') + ' hat es mehr Impuls, also eine kürzere Wellenlänge.'), 'mass', massNudge],
+      [names[2], false, L('The alpha particle is the heaviest: it has the most momentum and the shortest wavelength.', 'Das Alphateilchen ist am schwersten: Es hat am meisten Impuls und die kürzeste Wellenlänge.'), 'mass', massNudge],
       [allSame, false, L('λ = h/p, and the momentum depends on the mass.', 'λ = h/p, und der Impuls hängt von der Masse ab.'), 'mass'],
     ];
     const qb = ask === 'short' ? [
-      [names[0], false, L('The electron is the lightest: it has the longest wavelength.', 'Das Elektron ist am leichtesten: Es hat die längste Wellenlänge.'), 'mass'],
-      [names[1], false, L('The alpha particle is heavier and, with twice the charge, gains twice the energy: p = √(2·m·q·V).', 'Das Alphateilchen ist schwerer und gewinnt mit der doppelten Ladung die doppelte Energie: p = √(2·m·q·U).'), 'charge'],
+      [names[0], false, L('The electron is the lightest: it has the longest wavelength.', 'Das Elektron ist am leichtesten: Es hat die längste Wellenlänge.'), 'mass', voltNudge],
+      [names[1], false, L('The alpha particle is heavier and, with twice the charge, gains twice the energy: p = √(2·m·q·V).', 'Das Alphateilchen ist schwerer und gewinnt mit der doppelten Ladung die doppelte Energie: p = √(2·m·q·U).'), 'charge', voltNudge],
       [names[2], true],
       [allSame, false, L('The voltage gives each the energy q·V, but λ = h/p depends on the momentum p = √(2·m·q·V).', 'Die Spannung gibt jedem die Energie q·U, aber λ = h/p hängt vom Impuls p = √(2·m·q·U) ab.'), 'mass'],
     ] : [
       [names[0], true],
-      [names[1], false, L('The proton is about 1800 times heavier than the electron: more momentum, shorter wavelength.', 'Das Proton ist etwa 1800-mal schwerer als das Elektron: mehr Impuls, kürzere Wellenlänge.'), 'mass'],
-      [names[2], false, L('The alpha particle is the heaviest and has twice the charge: the most momentum, the shortest wavelength.', 'Das Alphateilchen ist am schwersten und hat die doppelte Ladung: am meisten Impuls, die kürzeste Wellenlänge.'), 'charge'],
+      [names[1], false, L('The proton is about 1800 times heavier than the electron: more momentum, shorter wavelength.', 'Das Proton ist etwa 1800-mal schwerer als das Elektron: mehr Impuls, kürzere Wellenlänge.'), 'mass', voltNudge],
+      [names[2], false, L('The alpha particle is the heaviest and has twice the charge: the most momentum, the shortest wavelength.', 'Das Alphateilchen ist am schwersten und hat die doppelte Ladung: am meisten Impuls, die kürzeste Wellenlänge.'), 'charge', voltNudge],
       [allSame, false, L('The voltage gives each the energy q·V, but λ = h/p depends on the momentum p = √(2·m·q·V).', 'Die Spannung gibt jedem die Energie q·U, aber λ = h/p hängt vom Impuls p = √(2·m·q·U) ab.'), 'mass'],
     ];
     const qc = ratio === 'p' ? [
       [L('the same', 'gleich lang'), true],
-      [L('about 1840 times longer', 'etwa 1840-mal länger'), false, L('That is the ratio of the speeds: with the same momentum the electron is about 1840 times faster, v = p/m. The wavelength λ = h/p is the same.', 'Das ist das Verhältnis der Geschwindigkeiten: Bei gleichem Impuls ist das Elektron etwa 1840-mal schneller, v = p/m. Die Wellenlänge λ = h/p ist dieselbe.'), 'mass'],
-      [L('about 43 times longer', 'etwa 43-mal länger'), false, L('That would be at the same kinetic energy. With the same momentum, λ = h/p is the same.', 'Das wäre bei gleicher kinetischer Energie. Bei gleichem Impuls ist λ = h/p dasselbe.'), 'mass'],
-      [L('about 1840 times shorter', 'etwa 1840-mal kürzer'), false, L('λ = h/p depends only on the momentum, and that is the same.', 'λ = h/p hängt nur vom Impuls ab, und der ist gleich.'), 'mass'],
+      [L('about 1840 times longer', 'etwa 1840-mal länger'), false, L('That is the ratio of the speeds: with the same momentum the electron is about 1840 times faster, v = p/m. The wavelength λ = h/p is the same.', 'Das ist das Verhältnis der Geschwindigkeiten: Bei gleichem Impuls ist das Elektron etwa 1840-mal schneller, v = p/m. Die Wellenlänge λ = h/p ist dieselbe.'), 'mass', L('That is the ratio of the speeds. On what does the wavelength λ = h/p depend?', 'Das ist das Verhältnis der Geschwindigkeiten. Wovon hängt die Wellenlänge λ = h/p ab?')],
+      [L('about 43 times longer', 'etwa 43-mal länger'), false, L('That would be at the same kinetic energy. With the same momentum, λ = h/p is the same.', 'Das wäre bei gleicher kinetischer Energie. Bei gleichem Impuls ist λ = h/p dasselbe.'), 'mass', L('That would be at the same kinetic energy. What is the same here, and on what does λ = h/p depend?', 'Das wäre bei gleicher kinetischer Energie. Was ist hier gleich, und wovon hängt λ = h/p ab?')],
+      [L('about 1840 times shorter', 'etwa 1840-mal kürzer'), false, L('λ = h/p depends only on the momentum, and that is the same.', 'λ = h/p hängt nur vom Impuls ab, und der ist gleich.'), 'mass', L('On what does λ = h/p depend, and how does that differ between the two?', 'Wovon hängt λ = h/p ab, und wie unterscheidet sich diese Grösse bei den beiden?')],
     ] : ratio === 'v' ? [
       [L('about 1840 times longer', 'etwa 1840-mal länger'), true],
-      [L('about 43 times longer', 'etwa 43-mal länger'), false, L('At the same speed, p = m·v: the ratio of the momenta is the ratio of the masses, without a square root.', 'Bei gleicher Geschwindigkeit ist p = m·v: Das Verhältnis der Impulse ist das Verhältnis der Massen, ohne Wurzel.'), 'sqrt'],
+      [L('about 43 times longer', 'etwa 43-mal länger'), false, L('At the same speed, p = m·v: the ratio of the momenta is the ratio of the masses, without a square root.', 'Bei gleicher Geschwindigkeit ist p = m·v: Das Verhältnis der Impulse ist das Verhältnis der Massen, ohne Wurzel.'), 'sqrt', L('At the same speed, how does the momentum depend on the mass: with a square root or without?', 'Wie hängt der Impuls bei gleicher Geschwindigkeit von der Masse ab: mit oder ohne Wurzel?')],
       [L('the same', 'gleich lang'), false, L('Same speed, but not the same momentum: p = m·v.', 'Gleiche Geschwindigkeit, aber nicht derselbe Impuls: p = m·v.'), 'mass'],
-      [L('about 1840 times shorter', 'etwa 1840-mal kürzer'), false, L('The lighter electron has the smaller momentum, so the longer wavelength.', 'Das leichtere Elektron hat den kleineren Impuls, also die längere Wellenlänge.'), 'inverse'],
+      [L('about 1840 times shorter', 'etwa 1840-mal kürzer'), false, L('The lighter electron has the smaller momentum, so the longer wavelength.', 'Das leichtere Elektron hat den kleineren Impuls, also die längere Wellenlänge.'), 'inverse', NUDGE.lighter()],
     ] : [
       [L('about 43 times longer', 'etwa 43-mal länger'), true],
-      [L('about 1840 times longer', 'etwa 1840-mal länger'), false, WHY.sqrt(), 'sqrt'],
+      [L('about 1840 times longer', 'etwa 1840-mal länger'), false, WHY.sqrt(), 'sqrt', NUDGE.sqrt()],
       [L('the same', 'gleich lang'), false, L('Same energy, but not the same momentum: p = √(2·m·E<sub>kin</sub>).', 'Dieselbe Energie, aber nicht derselbe Impuls: p = √(2·m·E<sub>kin</sub>).'), 'mass'],
-      [L('about 43 times shorter', 'etwa 43-mal kürzer'), false, L('The lighter electron has the smaller momentum, so the longer wavelength.', 'Das leichtere Elektron hat den kleineren Impuls, also die längere Wellenlänge.'), 'inverse'],
+      [L('about 43 times shorter', 'etwa 43-mal kürzer'), false, L('The lighter electron has the smaller momentum, so the longer wavelength.', 'Das leichtere Elektron hat den kleineren Impuls, also die längere Wellenlänge.'), 'inverse', NUDGE.lighter()],
     ];
     return {
       title: L('Light and heavy particles', 'Leichte und schwere Teilchen'),
@@ -189,7 +205,11 @@
       inverse: () => (up ? L('Faster electrons have a shorter wavelength: they are diffracted less, the rings shrink.', 'Schnellere Elektronen haben eine kürzere Wellenlänge: Sie werden weniger gebeugt, die Ringe schrumpfen.') : L('Slower electrons have a longer wavelength: they are diffracted more, the rings grow.', 'Langsamere Elektronen haben eine längere Wellenlänge: Sie werden stärker gebeugt, die Ringe wachsen.')),
       same: () => L('The spacings of the planes belong to the crystal, but the angles depend on the wavelength of the electrons.', 'Die Abstände der Netzebenen gehören zum Kristall, aber die Winkel hängen von der Wellenlänge der Elektronen ab.'),
     };
-    const options = r.shuffle(S.map(([x, w]) => ({ html: G.rings(radii.map((q) => q * x), { max, small: true }), ok: !w, why: w ? WRONG[w]() : '', tag: w ? (w === 'same' ? 'other' : w) : undefined })));
+    const NUDGES = {
+      sqrt: () => NUDGE.sqrt(),
+      inverse: () => (up ? L('Are faster electrons diffracted more or less? Think of λ = h/p.', 'Werden schnellere Elektronen stärker oder schwächer gebeugt? Denk an λ = h/p.') : L('Are slower electrons diffracted more or less? Think of λ = h/p.', 'Werden langsamere Elektronen stärker oder schwächer gebeugt? Denk an λ = h/p.')),
+    };
+    const options = r.shuffle(S.map(([x, w]) => ({ html: G.rings(radii.map((q) => q * x), { max, small: true }), ok: !w, why: w ? WRONG[w]() : '', tag: w ? (w === 'same' ? 'other' : w) : undefined, nudge: w && NUDGES[w] ? NUDGES[w]() : '' })));
     const Utxt = (x) => `${plain(x, 3)} kV`;
     return {
       title: L('Electrons diffracted by graphite', 'Elektronenbeugung an Graphit'),
@@ -201,7 +221,7 @@
           [L('They are a diffraction pattern, as with X-rays, and their size follows λ = h/p of the electrons.', 'Sie sind ein Beugungsmuster, wie bei Röntgenstrahlung, und ihre Grösse folgt dem λ = h/p der Elektronen.'), true],
           [L('The electrons bounce off the atoms of the foil at random.', 'Die Elektronen prallen zufällig von den Atomen der Folie ab.'), false, L('Bouncing at random would give a smooth spot, not sharp rings at fixed angles.', 'Zufälliges Abprallen ergäbe einen verschmierten Fleck, keine scharfen Ringe bei festen Winkeln.'), 'particle'],
           [L('X-rays made in the tube make the rings, not the electrons.', 'Röntgenstrahlung aus der Röhre erzeugt die Ringe, nicht die Elektronen.'), false, L('A magnet near the tube moves the rings: they are made by charged particles, the electrons.', 'Ein Magnet neben der Röhre verschiebt die Ringe: Sie stammen von geladenen Teilchen, den Elektronen.'), 'other'],
-          [L('The charges in the foil deflect the electrons onto circles.', 'Die Ladungen in der Folie lenken die Elektronen auf Kreise ab.'), false, L('Electric deflection would not give sharp rings whose radius follows h/p. The rings are where the waves from the planes of atoms add up.', 'Elektrische Ablenkung ergäbe keine scharfen Ringe, deren Radius h/p folgt. Die Ringe liegen dort, wo sich die Wellen der Atomebenen verstärken.'), 'particle'],
+          [L('The charges in the foil deflect the electrons onto circles.', 'Die Ladungen in der Folie lenken die Elektronen auf Kreise ab.'), false, L('Electric deflection would not give sharp rings whose radius follows h/p. The rings are where the waves from the planes of atoms add up.', 'Elektrische Ablenkung ergäbe keine scharfen Ringe, deren Radius h/p folgt. Die Ringe liegen dort, wo sich die Wellen der Atomebenen verstärken.'), 'particle', L('Electric deflection would not give sharp rings whose radius follows h/p. What kind of pattern gives sharp rings at fixed angles?', 'Elektrische Ablenkung ergäbe keine scharfen Ringe, deren Radius h/p folgt. Was für ein Muster ergibt scharfe Ringe bei festen Winkeln?')],
         ])),
       ],
       hints: [
@@ -232,14 +252,16 @@
     const nn = r.pick([1, 2, 3, 4]), sq = r.next() < 0.5, other = nn === 1 ? 2 : r.pick([nn - 1, nn + 1]);
     const wrongs = r.shuffle(sq ? ['count', 'psi', 'flat', 'walls'] : ['count', 'walls', 'onewall', 'outside']).slice(0, 3);
     const draw = (k) => G.box({ n: k === 'count' ? other : nn, sq, kind: k === 'count' ? 'ok' : k, small: true, w: 260, h: 130 });
-    const options = r.shuffle(['ok', ...wrongs].map((k) => { const [why, tag] = k === 'ok' ? ['', undefined] : BOXWRONG[k](); return { html: draw(k), ok: k === 'ok', why, tag }; }));
+    // the count of half waves is the answer itself: while open, a question instead
+    const countNudge = L('Count the half waves between the walls in this drawing: does their number fit this state?', 'Zähle die halben Wellen zwischen den Wänden in dieser Zeichnung: Passt ihre Anzahl zu diesem Zustand?');
+    const options = r.shuffle(['ok', ...wrongs].map((k) => { const [why, tag] = k === 'ok' ? ['', undefined] : BOXWRONG[k](); return { html: draw(k), ok: k === 'ok', why, tag, nudge: k === 'count' ? countNudge : '' }; }));
     // the wavelength: 2L/n among L/n, 4L/n, nL/2, 2nL
     const seen = new Set([ofL(2, nn)]), lw = [];
     for (const [a, b, tag] of [[1, nn, 'half'], [nn, 2, 'nl'], [4, nn, 'half'], [2 * nn, 1, 'nl']]) {
       const s = ofL(a, b);
       if (seen.has(s) || lw.length === 3) continue;
       seen.add(s);
-      lw.push([`${lam} = ${s}`, false, tag === 'half' ? L(`Each half wave is ${lam}/2 long, and ${n} of them fill the box: ${Lb} = ${n}·${lam}/2.`, `Jede halbe Welle ist ${lam}/2 lang, und ${n} davon füllen den Kasten: ${Lb} = ${n}·${lam}/2.`) : L(`The more half waves fit in, the shorter each: ${lam} = 2${Lb}/${n}.`, `Je mehr halbe Wellen hineinpassen, desto kürzer ist jede: ${lam} = 2${Lb}/${n}.`), tag]);
+      lw.push([`${lam} = ${s}`, false, tag === 'half' ? L(`Each half wave is ${lam}/2 long, and ${n} of them fill the box: ${Lb} = ${n}·${lam}/2.`, `Jede halbe Welle ist ${lam}/2 lang, und ${n} davon füllen den Kasten: ${Lb} = ${n}·${lam}/2.`) : L(`The more half waves fit in, the shorter each: ${lam} = 2${Lb}/${n}.`, `Je mehr halbe Wellen hineinpassen, desto kürzer ist jede: ${lam} = 2${Lb}/${n}.`), tag, tag === 'half' ? L(`How long is one half wave, in terms of ${lam}, and how many of them fill the box?`, `Wie lang ist eine halbe Welle, ausgedrückt durch ${lam}, und wie viele davon füllen den Kasten?`) : L('Does each wave get longer or shorter when more half waves fit in the box?', 'Wird jede Welle länger oder kürzer, wenn mehr halbe Wellen in den Kasten passen?')]);
     }
     const what = sq ? L(`the probability density ${psi2}`, `die Wahrscheinlichkeitsdichte ${psi2}`) : L(`the wavefunction ${i('ψ')}`, `die Wellenfunktion ${i('ψ')}`);
     return {
@@ -270,23 +292,23 @@
     const e1 = r.pick([0.5, 1, 1.5, 2, 3]), k = r.pick([2, 3, 4]), ch = r.pick(['wide2', 'narrow2', 'wide3', 'proton']);
     const ev = (x) => `${plain(x, 3)} eV`;
     const CH = {
-      wide2: [L('The box is made twice as wide.', 'Der Kasten wird doppelt so breit gemacht.'), [[L('a quarter as large', 'ein Viertel so gross'), true], [L('half as large', 'halb so gross'), false, WHY.lsq(), 'lsq'], [L('four times as large', 'viermal so gross'), false, L('A wider box fits longer waves: less momentum, less energy.', 'In einen breiteren Kasten passen längere Wellen: weniger Impuls, weniger Energie.'), 'widthdir'], [L('the same', 'gleich gross'), false, L('The wavelength 2L depends on the width, and so do p and E.', 'Die Wellenlänge 2L hängt von der Breite ab, und damit p und E.'), 'other']]],
-      narrow2: [L('The box is made half as wide.', 'Der Kasten wird halb so breit gemacht.'), [[L('four times as large', 'viermal so gross'), true], [L('twice as large', 'doppelt so gross'), false, WHY.lsq(), 'lsq'], [L('a quarter as large', 'ein Viertel so gross'), false, L('A narrower box fits only shorter waves: more momentum, more energy.', 'In einen schmaleren Kasten passen nur kürzere Wellen: mehr Impuls, mehr Energie.'), 'widthdir'], [L('the same', 'gleich gross'), false, L('The wavelength 2L depends on the width, and so do p and E.', 'Die Wellenlänge 2L hängt von der Breite ab, und damit p und E.'), 'other']]],
-      wide3: [L('The box is made three times as wide.', 'Der Kasten wird dreimal so breit gemacht.'), [[L('a ninth as large', 'ein Neuntel so gross'), true], [L('a third as large', 'ein Drittel so gross'), false, WHY.lsq(), 'lsq'], [L('nine times as large', 'neunmal so gross'), false, L('A wider box fits longer waves: less momentum, less energy.', 'In einen breiteren Kasten passen längere Wellen: weniger Impuls, weniger Energie.'), 'widthdir'], [L('the same', 'gleich gross'), false, L('The wavelength 2L depends on the width, and so do p and E.', 'Die Wellenlänge 2L hängt von der Breite ab, und damit p und E.'), 'other']]],
-      proton: [L('A proton (about 1840 times as heavy) is put in the same box instead.', 'Stattdessen kommt ein Proton (etwa 1840-mal so schwer) in denselben Kasten.'), [[L('about 1840 times smaller', 'etwa 1840-mal kleiner'), true], [L('about 43 times smaller', 'etwa 43-mal kleiner'), false, L('The same box gives the same wavelengths, so the same momenta; E = p²/(2m) is 1840 times smaller, without a square root.', 'Derselbe Kasten ergibt dieselben Wellenlängen, also dieselben Impulse; E = p²/(2m) ist 1840-mal kleiner, ohne Wurzel.'), 'lsq'], [L('about 1840 times larger', 'etwa 1840-mal grösser'), false, L('Same p, larger m: E = p²/(2m) is smaller.', 'Gleiches p, grösseres m: E = p²/(2m) ist kleiner.'), 'mass'], [L('the same', 'gleich gross'), false, L('The momenta are the same, but E = p²/(2m) depends on the mass.', 'Die Impulse sind gleich, aber E = p²/(2m) hängt von der Masse ab.'), 'mass']]],
+      wide2: [L('The box is made twice as wide.', 'Der Kasten wird doppelt so breit gemacht.'), [[L('a quarter as large', 'ein Viertel so gross'), true], [L('half as large', 'halb so gross'), false, WHY.lsq(), 'lsq', NUDGE.lsq()], [L('four times as large', 'viermal so gross'), false, L('A wider box fits longer waves: less momentum, less energy.', 'In einen breiteren Kasten passen längere Wellen: weniger Impuls, weniger Energie.'), 'widthdir', L('Check the direction: do longer or shorter waves fit in a wider box? What does that mean for momentum and energy?', 'Prüfe die Richtung: Passen in einen breiteren Kasten längere oder kürzere Wellen? Was heisst das für Impuls und Energie?')], [L('the same', 'gleich gross'), false, L('The wavelength 2L depends on the width, and so do p and E.', 'Die Wellenlänge 2L hängt von der Breite ab, und damit p und E.'), 'other']]],
+      narrow2: [L('The box is made half as wide.', 'Der Kasten wird halb so breit gemacht.'), [[L('four times as large', 'viermal so gross'), true], [L('twice as large', 'doppelt so gross'), false, WHY.lsq(), 'lsq', NUDGE.lsq()], [L('a quarter as large', 'ein Viertel so gross'), false, L('A narrower box fits only shorter waves: more momentum, more energy.', 'In einen schmaleren Kasten passen nur kürzere Wellen: mehr Impuls, mehr Energie.'), 'widthdir', L('Check the direction: do longer or shorter waves fit in a narrower box? What does that mean for momentum and energy?', 'Prüfe die Richtung: Passen in einen schmaleren Kasten längere oder kürzere Wellen? Was heisst das für Impuls und Energie?')], [L('the same', 'gleich gross'), false, L('The wavelength 2L depends on the width, and so do p and E.', 'Die Wellenlänge 2L hängt von der Breite ab, und damit p und E.'), 'other']]],
+      wide3: [L('The box is made three times as wide.', 'Der Kasten wird dreimal so breit gemacht.'), [[L('a ninth as large', 'ein Neuntel so gross'), true], [L('a third as large', 'ein Drittel so gross'), false, WHY.lsq(), 'lsq', NUDGE.lsq()], [L('nine times as large', 'neunmal so gross'), false, L('A wider box fits longer waves: less momentum, less energy.', 'In einen breiteren Kasten passen längere Wellen: weniger Impuls, weniger Energie.'), 'widthdir', L('Check the direction: do longer or shorter waves fit in a wider box? What does that mean for momentum and energy?', 'Prüfe die Richtung: Passen in einen breiteren Kasten längere oder kürzere Wellen? Was heisst das für Impuls und Energie?')], [L('the same', 'gleich gross'), false, L('The wavelength 2L depends on the width, and so do p and E.', 'Die Wellenlänge 2L hängt von der Breite ab, und damit p und E.'), 'other']]],
+      proton: [L('A proton (about 1840 times as heavy) is put in the same box instead.', 'Stattdessen kommt ein Proton (etwa 1840-mal so schwer) in denselben Kasten.'), [[L('about 1840 times smaller', 'etwa 1840-mal kleiner'), true], [L('about 43 times smaller', 'etwa 43-mal kleiner'), false, L('The same box gives the same wavelengths, so the same momenta; E = p²/(2m) is 1840 times smaller, without a square root.', 'Derselbe Kasten ergibt dieselben Wellenlängen, also dieselben Impulse; E = p²/(2m) ist 1840-mal kleiner, ohne Wurzel.'), 'lsq', L('The box is the same: what stays the same, then? How does E = p²/(2m) depend on the mass, with a square root or without?', 'Der Kasten ist derselbe: Was bleibt dann gleich? Wie hängt E = p²/(2m) von der Masse ab, mit oder ohne Wurzel?')], [L('about 1840 times larger', 'etwa 1840-mal grösser'), false, L('Same p, larger m: E = p²/(2m) is smaller.', 'Gleiches p, grösseres m: E = p²/(2m) ist kleiner.'), 'mass', L('Check the direction: does E = p²/(2m) grow or shrink with the same p and a larger mass?', 'Prüfe die Richtung: Wird E = p²/(2m) bei gleichem p und grösserer Masse grösser oder kleiner?')], [L('the same', 'gleich gross'), false, L('The momenta are the same, but E = p²/(2m) depends on the mass.', 'Die Impulse sind gleich, aber E = p²/(2m) hängt von der Masse ab.'), 'mass']]],
     }[ch];
     return {
       title: L('The energies in a box', 'Die Energien im Kasten'),
       text: `<p>${L(`An electron is trapped in a box with infinitely high walls (a model of a thin layer or a long molecule). Its lowest energy is ${E1} = ${ev(e1)}.`, `Ein Elektron ist in einem Kasten mit unendlich hohen Wänden gefangen (ein Modell einer dünnen Schicht oder eines langen Moleküls). Seine kleinste Energie ist ${E1} = ${ev(e1)}.`)}</p>`,
       figs: fig(G.levels(3)),
       questions: [
-        numQ('E', L(`(a) the energy of the state ${n} = ${k}, without a calculator`, `(a) die Energie des Zustands ${n} = ${k}, ohne Taschenrechner`), `${i('E')}${sb(k)}`, 'eV', k * k * e1, { wrong: [{ value: k * e1, tag: 'linear', why: WHY.nsq() }] }),
+        numQ('E', L(`(a) the energy of the state ${n} = ${k}, without a calculator`, `(a) die Energie des Zustands ${n} = ${k}, ohne Taschenrechner`), `${i('E')}${sb(k)}`, 'eV', k * k * e1, { wrong: [{ value: k * e1, tag: 'linear', why: WHY.nsq(), nudge: NUDGE.nsq() }] }),
         choice('ch', L(`(b) ${CH[0]} The lowest energy becomes`, `(b) ${CH[0]} Die kleinste Energie wird`), opts(r, CH[1])),
         choice('why', L('(c) Why can the electron have only certain energies?', '(c) Warum kann das Elektron nur bestimmte Energien haben?'), opts(r, [
           [L('Only standing waves with a whole number of half waves fit between the walls; each has its own wavelength, so its own momentum and energy.', 'Nur stehende Wellen mit einer ganzen Zahl halber Wellen passen zwischen die Wände; jede hat ihre eigene Wellenlänge, also ihren eigenen Impuls und ihre eigene Energie.'), true],
-          [L('Energies in between are possible, only less likely.', 'Energien dazwischen sind möglich, nur weniger wahrscheinlich.'), false, L('In between, no standing wave fits: ψ could not be zero at both walls. Such states do not exist at all.', 'Dazwischen passt keine stehende Welle: ψ könnte nicht an beiden Wänden null sein. Solche Zustände gibt es gar nicht.'), 'classical'],
-          [L('The electron bounces between the walls, and it can only bounce at certain speeds.', 'Das Elektron prallt zwischen den Wänden hin und her, und das geht nur mit bestimmten Geschwindigkeiten.'), false, L('A ball bouncing between walls could have any speed. The energies are fixed because a standing wave must fit.', 'Eine Kugel, die zwischen Wänden hin- und herprallt, könnte jede Geschwindigkeit haben. Die Energien sind festgelegt, weil eine stehende Welle passen muss.'), 'classical'],
-          [L('The walls absorb all other energies.', 'Die Wände absorbieren alle anderen Energien.'), false, L('The walls do nothing but keep ψ zero at the ends. That condition alone picks the wavelengths and so the energies.', 'Die Wände tun nichts, als ψ an den Enden auf null zu halten. Diese Bedingung allein wählt die Wellenlängen und damit die Energien aus.'), 'other'],
+          [L('Energies in between are possible, only less likely.', 'Energien dazwischen sind möglich, nur weniger wahrscheinlich.'), false, L('In between, no standing wave fits: ψ could not be zero at both walls. Such states do not exist at all.', 'Dazwischen passt keine stehende Welle: ψ könnte nicht an beiden Wänden null sein. Solche Zustände gibt es gar nicht.'), 'classical', L('Which waves fit between the walls if ψ must be zero at both? Are there states in between at all?', 'Welche Wellen passen zwischen die Wände, wenn ψ an beiden null sein muss? Gibt es dazwischen überhaupt Zustände?')],
+          [L('The electron bounces between the walls, and it can only bounce at certain speeds.', 'Das Elektron prallt zwischen den Wänden hin und her, und das geht nur mit bestimmten Geschwindigkeiten.'), false, L('A ball bouncing between walls could have any speed. The energies are fixed because a standing wave must fit.', 'Eine Kugel, die zwischen Wänden hin- und herprallt, könnte jede Geschwindigkeit haben. Die Energien sind festgelegt, weil eine stehende Welle passen muss.'), 'classical', L('A ball bouncing between walls could have any speed. What is different for the electron in the box?', 'Eine Kugel, die zwischen Wänden hin- und herprallt, könnte jede Geschwindigkeit haben. Was ist beim Elektron im Kasten anders?')],
+          [L('The walls absorb all other energies.', 'Die Wände absorbieren alle anderen Energien.'), false, L('The walls do nothing but keep ψ zero at the ends. That condition alone picks the wavelengths and so the energies.', 'Die Wände tun nichts, als ψ an den Enden auf null zu halten. Diese Bedingung allein wählt die Wellenlängen und damit die Energien aus.'), 'other', L('The walls do nothing but keep ψ zero at the ends. Which waves meet that condition?', 'Die Wände tun nichts, als ψ an den Enden auf null zu halten. Welche Wellen erfüllen diese Bedingung?')],
         ])),
       ],
       hints: [
@@ -314,9 +336,9 @@
     const v = r.pick(['wide', 'narrow', 'mean', 'likely']);
     const meaning = choice('dx', L(`(b) The uncertainty ${dx} of a state means`, `(b) Die Unschärfe ${dx} eines Zustands bedeutet`), opts(r, [
       [L('the spread of the positions found when the position is measured on many particles in this same state', 'die Streuung der Orte, die man findet, wenn man den Ort an vielen Teilchen in diesem selben Zustand misst'), true],
-      [L('the error of the instrument that measures the position', 'den Fehler des Instruments, das den Ort misst'), false, L(`Even with a perfect instrument the results scatter: ${dx} belongs to the state, not to the instrument.`, `Auch mit einem perfekten Instrument streuen die Ergebnisse: ${dx} gehört zum Zustand, nicht zum Instrument.`), 'error'],
-      [L('that the particle has an exact position, which we do not know', 'dass das Teilchen einen genauen Ort hat, den wir nicht kennen'), false, L('In this state the particle has no exact position. Each measurement finds one place, but which one is a matter of chance.', 'In diesem Zustand hat das Teilchen keinen genauen Ort. Jede Messung findet einen Ort, aber welchen, ist Zufall.'), 'hidden'],
-      [L('how far the measurement pushes the particle', 'wie weit die Messung das Teilchen verschiebt'), false, L(`${dx} is there before any measurement: it is the width of ${psi2} of the state.`, `${dx} ist schon vor jeder Messung da: Es ist die Breite von ${psi2} des Zustands.`), 'error'],
+      [L('the error of the instrument that measures the position', 'den Fehler des Instruments, das den Ort misst'), false, L(`Even with a perfect instrument the results scatter: ${dx} belongs to the state, not to the instrument.`, `Auch mit einem perfekten Instrument streuen die Ergebnisse: ${dx} gehört zum Zustand, nicht zum Instrument.`), 'error', L(`Would the results scatter with a perfect instrument too? Does ${dx} belong to the instrument or to the state?`, `Würden die Ergebnisse auch mit einem perfekten Instrument streuen? Gehört ${dx} zum Instrument oder zum Zustand?`)],
+      [L('that the particle has an exact position, which we do not know', 'dass das Teilchen einen genauen Ort hat, den wir nicht kennen'), false, L('In this state the particle has no exact position. Each measurement finds one place, but which one is a matter of chance.', 'In diesem Zustand hat das Teilchen keinen genauen Ort. Jede Messung findet einen Ort, aber welchen, ist Zufall.'), 'hidden', L('Does the particle in this state have an exact position at all, which we only do not know? What do many measurements find?', 'Hat das Teilchen in diesem Zustand überhaupt einen genauen Ort, den man nur nicht kennt? Was findet man bei vielen Messungen?')],
+      [L('how far the measurement pushes the particle', 'wie weit die Messung das Teilchen verschiebt'), false, L(`${dx} is there before any measurement: it is the width of ${psi2} of the state.`, `${dx} ist schon vor jeder Messung da: Es ist die Breite von ${psi2} des Zustands.`), 'error', L(`Is ${dx} there only after a measurement, or before it? What does the width of ${psi2} show?`, `Ist ${dx} erst nach einer Messung da oder schon vorher? Was zeigt die Breite von ${psi2}?`)],
     ]));
     if (v === 'wide' || v === 'narrow') {
       const sig = r.shuffle(SIGMAS), mus = sig.map(() => r.pick([0.35, 0.42, 0.5, 0.58, 0.65])), ymax = 1.08 / (SIGMAS[0] * Math.sqrt(2 * Math.PI));
@@ -324,7 +346,11 @@
       const whyOf = (k) => (v === 'wide'
         ? (k === narrowest ? [L(`The highest peak is the narrowest: the area under ${psi2} is always 1. ${dx} is the width of the curve.`, `Der höchste Gipfel ist der schmalste: Die Fläche unter ${psi2} ist immer 1. ${dx} ist die Breite der Kurve.`), 'height'] : [L(`${dx} is the width of ${psi2}; where the curve lies does not matter. Another curve is wider.`, `${dx} ist die Breite von ${psi2}; wo die Kurve liegt, spielt keine Rolle. Eine andere Kurve ist breiter.`), 'width'])
         : (k === widest ? [L(`The widest ${psi2} has the largest ${dx}, so ${dp} can be the smallest: ${dx}·${dp} ≥ ${h}/(4π).`, `Das breiteste ${psi2} hat das grösste ${dx}, also kann ${dp} am kleinsten sein: ${dx}·${dp} ≥ ${h}/(4π).`), 'heisenberg'] : [L(`Compare the widths: the narrowest ${psi2} has the smallest ${dx}, so the largest ${dp}.`, `Vergleiche die Breiten: Das schmalste ${psi2} hat das kleinste ${dx}, also das grösste ${dp}.`), 'heisenberg']));
-      const options = sig.map((s, k) => { const [why, tag] = k === best ? ['', undefined] : whyOf(k); return { html: G.packet(mus[k], s, { ymax, small: true }), ok: k === best, why, tag }; });
+      // the nudges while the exercise is open
+      const nudgeOf = (k) => (v === 'wide'
+        ? (k === narrowest ? L(`The highest peak is the narrowest, as the area under ${psi2} is always 1. What does ${dx} measure: the height or the width?`, `Der höchste Gipfel ist der schmalste, weil die Fläche unter ${psi2} immer 1 ist. Was misst ${dx}: die Höhe oder die Breite?`) : L(`Does it matter for ${dx} where the curve lies? Compare the widths of the curves.`, `Spielt es für ${dx} eine Rolle, wo die Kurve liegt? Vergleiche die Breiten der Kurven.`))
+        : (k === widest ? L(`Which curve has the largest ${dx}? What follows for ${dp} by Heisenberg?`, `Welche Kurve hat das grösste ${dx}? Was folgt daraus mit Heisenberg für ${dp}?`) : L(`Compare the widths of the curves: which has the smallest ${dx}, and what does that mean for ${dp}?`, `Vergleiche die Breiten der Kurven: Welche hat das kleinste ${dx}, und was heisst das für ${dp}?`)));
+      const options = sig.map((s, k) => { const [why, tag] = k === best ? ['', undefined] : whyOf(k); return { html: G.packet(mus[k], s, { ymax, small: true }), ok: k === best, why, tag, nudge: k === best ? '' : nudgeOf(k) }; });
       return {
         title: L('Reading |ψ|²', '|ψ|² lesen'),
         text: `<p>${L(`The drawings show the probability density ${psi2} of four states of a particle, to the same scale.`, `Die Zeichnungen zeigen die Wahrscheinlichkeitsdichte ${psi2} von vier Zuständen eines Teilchens, im selben Massstab.`)}</p>`,
@@ -348,9 +374,9 @@
     // the state n = 2 in a box: zero in the middle, yet the mean is there
     const qa = v === 'mean' ? choice('m', L(`(a) Where is the expectation value ${xm}, the mean of many measurements of the position?`, `(a) Wo liegt der Erwartungswert ${xm}, der Mittelwert vieler Messungen des Orts?`), opts(r, [
       [`${xm} = ${ofL(1, 2)}`, true],
-      [`${xm} = ${ofL(1, 4)}`, false, L(`Near ${ofL(1, 4)} and ${ofL(3, 4)} the particle is most likely found. The mean of all the places is in the middle, by symmetry.`, `Bei ${ofL(1, 4)} und ${ofL(3, 4)} findet man das Teilchen am wahrscheinlichsten. Der Mittelwert aller Orte liegt aus Symmetriegründen in der Mitte.`), 'mean'],
-      [`${xm} = ${ofL(3, 4)}`, false, L(`Near ${ofL(1, 4)} and ${ofL(3, 4)} the particle is most likely found. The mean of all the places is in the middle, by symmetry.`, `Bei ${ofL(1, 4)} und ${ofL(3, 4)} findet man das Teilchen am wahrscheinlichsten. Der Mittelwert aller Orte liegt aus Symmetriegründen in der Mitte.`), 'mean'],
-      [L(`there is none: the particle is never found at ${ofL(1, 2)}`, `es gibt keinen: Das Teilchen ist nie bei ${ofL(1, 2)}`), false, L('A mean need not be a likely place: the mean of 1 and 3 is 2. Half the results lie left, half right: the mean is L/2.', 'Ein Mittelwert muss kein wahrscheinlicher Ort sein: Der Mittelwert von 1 und 3 ist 2. Die Hälfte der Ergebnisse liegt links, die Hälfte rechts: Der Mittelwert ist L/2.'), 'mean'],
+      [`${xm} = ${ofL(1, 4)}`, false, L(`Near ${ofL(1, 4)} and ${ofL(3, 4)} the particle is most likely found. The mean of all the places is in the middle, by symmetry.`, `Bei ${ofL(1, 4)} und ${ofL(3, 4)} findet man das Teilchen am wahrscheinlichsten. Der Mittelwert aller Orte liegt aus Symmetriegründen in der Mitte.`), 'mean', L('There the particle is most likely found. Is the mean of all the places the same as the most likely place? Think of the symmetry.', 'Dort findet man das Teilchen am wahrscheinlichsten. Ist der Mittelwert aller Orte dasselbe wie der wahrscheinlichste Ort? Denk an die Symmetrie.')],
+      [`${xm} = ${ofL(3, 4)}`, false, L(`Near ${ofL(1, 4)} and ${ofL(3, 4)} the particle is most likely found. The mean of all the places is in the middle, by symmetry.`, `Bei ${ofL(1, 4)} und ${ofL(3, 4)} findet man das Teilchen am wahrscheinlichsten. Der Mittelwert aller Orte liegt aus Symmetriegründen in der Mitte.`), 'mean', L('There the particle is most likely found. Is the mean of all the places the same as the most likely place? Think of the symmetry.', 'Dort findet man das Teilchen am wahrscheinlichsten. Ist der Mittelwert aller Orte dasselbe wie der wahrscheinlichste Ort? Denk an die Symmetrie.')],
+      [L(`there is none: the particle is never found at ${ofL(1, 2)}`, `es gibt keinen: Das Teilchen ist nie bei ${ofL(1, 2)}`), false, L('A mean need not be a likely place: the mean of 1 and 3 is 2. Half the results lie left, half right: the mean is L/2.', 'Ein Mittelwert muss kein wahrscheinlicher Ort sein: Der Mittelwert von 1 und 3 ist 2. Die Hälfte der Ergebnisse liegt links, die Hälfte rechts: Der Mittelwert ist L/2.'), 'mean', L('Must a mean be a likely place? What is the mean of 1 and 3?', 'Muss ein Mittelwert ein wahrscheinlicher Ort sein? Was ist der Mittelwert von 1 und 3?')],
     ])) : choice('m', L('(a) Where is the particle most likely to be found?', '(a) Wo findet man das Teilchen am wahrscheinlichsten?'), opts(r, [
       [L(`near ${ofL(1, 4)} and near ${ofL(3, 4)}`, `bei ${ofL(1, 4)} und bei ${ofL(3, 4)}`), true],
       [L(`at ${ofL(1, 2)}, in the middle`, `bei ${ofL(1, 2)}, in der Mitte`), false, L(`There ${psi2} is zero: the particle is never found in the middle. ${ofL(1, 2)} is only the mean of the places found.`, `Dort ist ${psi2} null: In der Mitte findet man das Teilchen nie. ${ofL(1, 2)} ist nur der Mittelwert der gefundenen Orte.`), 'mean'],
@@ -421,7 +447,7 @@
     return { ...fn(seed), type, difficulty, id: `${type}-${seed}`, seed };
   }
 
-  const api = { TYPES: Object.keys(TYPES), make, BANK_U, WHY, i, sb, numQ, choice, pick, opts, fig, ofL };
+  const api = { TYPES: Object.keys(TYPES), make, BANK_U, WHY, NUDGE, i, sb, numQ, choice, pick, opts, fig, ofL };
   root.MatterEx = api;
   if (typeof module !== 'undefined') module.exports = api;
 })(typeof window !== 'undefined' ? window : globalThis);

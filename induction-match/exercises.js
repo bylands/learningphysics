@@ -7,6 +7,7 @@
 //   { type: 'pick', key, label, options: [{ html (a graph), ok, tag, why }] }   one of four graphs
 //   { type: 'choice', key, label, options: [{ label, ok, tag, why }] }          one of a few values
 //   { type: 'multi', key, label, statements: [{ html, ok, why }] }              statements to tick
+// A wrong option may carry a nudge: shown in practice in place of a why that gives the answer away.
 // and, for a drawing, draw = { kind ('flux' | 'volt'), at, spans, target, init }: the handles the
 // student sets to whole values (plot.js).
 // The types:
@@ -174,6 +175,33 @@
     },
   };
 
+  // In practice, while the exercise is open, a nudge in place of a reason that would give the answer
+  // away (app.js); the reason itself stays for the check, the tutor and once the exercise is solved.
+  const NUDGE = {
+    phi2v: () => L(`Check the sign: by Lenz's rule, ${Vi()} = −${DPHI}. Where ${PHI} increases, which sign must ${Vi()} have?`,
+      `Prüfe das Vorzeichen: Nach der Lenzschen Regel ist ${Vi()} = −${DPHI}. Welches Vorzeichen muss ${Vi()} haben, wo ${PHI} zunimmt?`),
+    v2phi: () => L(`Check the direction: by Lenz's rule, ${Vi()} = −${DPHI}. Where ${Vi()} is positive, must ${PHI} rise or fall?`,
+      `Prüfe die Richtung: Nach der Lenzschen Regel ist ${Vi()} = −${DPHI}. Muss ${PHI} steigen oder fallen, wo ${Vi()} positiv ist?`),
+    signV: () => L("Check the sign: does the flux increase or decrease at this time, and what sign does that give the induced voltage (Lenz's rule)?",
+      'Prüfe das Vorzeichen: Nimmt der Fluss zu dieser Zeit zu oder ab, und welches Vorzeichen gibt das der induzierten Spannung (Lenzsche Regel)?'),
+    signD: () => L('Check the sign: the flux changes by minus the area under the voltage graph. Is that area positive or negative here?',
+      'Prüfe das Vorzeichen: Der Fluss ändert sich um minus die Fläche unter dem Spannungsgraphen. Ist diese Fläche hier positiv oder negativ?'),
+    signL: () => L("Check the sign: while the loop moves in, does the flux increase or decrease, and what sign does that give the voltage (Lenz's rule)?",
+      'Prüfe das Vorzeichen: Nimmt der Fluss zu oder ab, während die Schleife hineinfährt, und welches Vorzeichen gibt das der Spannung (Lenzsche Regel)?'),
+    overlap: () => L('Compare the loop with the field region: which is narrower, and how much of the loop can be in the field at most?',
+      'Vergleiche die Schleife mit dem Feldgebiet: Was ist schmaler, und wie viel der Schleife kann höchstens im Feld liegen?'),
+    side: () => L('Compare the loop with the field region: which is wider, and when does the flux stop growing?',
+      'Vergleiche die Schleife mit dem Feldgebiet: Was ist breiter, und wann hört der Fluss auf zu wachsen?'),
+    motion: () => L('Motion alone does not decide it: does the field strength inside the loop change along this path?',
+      'Bewegung allein entscheidet nicht: Ändert sich die Feldstärke in der Schleife entlang dieses Weges?'),
+    sense: () => L("Does the flux increase or decrease here? By Lenz's rule, should the field of the induced current inside the loop point along the outer field or against it?",
+      'Nimmt der Fluss hier zu oder ab? Soll das Feld des induzierten Stroms in der Schleife nach der Lenzschen Regel in Richtung des äusseren Feldes zeigen oder dagegen?'),
+    force: () => L("Which way does the loop move, and does the force, by Lenz's rule, help this motion or oppose it?",
+      'In welche Richtung bewegt sich die Schleife, und hilft die Kraft nach der Lenzschen Regel dieser Bewegung, oder wirkt sie ihr entgegen?'),
+  };
+  // the nudge of a wrong option, where it has one
+  const nudged = (o, n) => (!o.ok && n ? { ...o, nudge: n() } : o);
+
   const prompt = (dir, phi0) => (dir === 'phi2v'
     ? L('<p>The graph shows the magnetic flux through a conducting loop.</p>', '<p>Der Graph zeigt den magnetischen Fluss durch eine Leiterschleife.</p>')
     : L(`<p>The graph shows the voltage induced in a conducting loop. At the start, the magnetic flux through the loop is ${fmt(phi0)} mWb.</p>`,
@@ -220,7 +248,7 @@
     return {
       kind: 'pick', dir, family, title: dir === 'phi2v' ? L('From flux to voltage', 'Vom Fluss zur Spannung') : L('From voltage to flux', 'Von der Spannung zum Fluss'),
       text: prompt(dir, phi0), figs: given(dir, g),
-      questions: [{ type: 'pick', key: 'g', label: askGraph(dir), options: e.options.map((o) => ({ html: optionGraph(o), ok: o.ok, tag: o.tag, why: o.ok ? '' : WHY[dir][o.tag]() })) }],
+      questions: [{ type: 'pick', key: 'g', label: askGraph(dir), options: e.options.map((o) => ({ html: optionGraph(o), ok: o.ok, tag: o.tag, why: o.ok ? '' : WHY[dir][o.tag]() })).map((o) => nudged(o, o.tag === 'sign' && NUDGE[dir])) }],
       hints: graphHints(dir, family, g, phi0), solution: graphSolution(dir, g, phi0), solFig: solGraphs(g), g, phi0, p: e.p,
     };
   }
@@ -258,7 +286,7 @@
         ? [{ value: -right, tag: 'sign' }, { value: Fat(g, t), tag: 'copy' }, { value: neg(other.d0), tag: 'steep' }, { value: -(y1 - y0), tag: 'delta' }, { value: 0, tag: 'zero' }]
         : [{ value: -right, tag: 'sign' }, { value: -(p.d0 + p.d1) / 2, tag: 'average' }, { value: Fat(g, t), tag: 'copy' }, { value: 0, tag: 'zero' }];
       qs.push(choice(`v${n}`, L(`(${'ab'[n]}) the induced voltage at <i>t</i> = ${fmt(t)} s`, `(${'ab'[n]}) die induzierte Spannung bei <i>t</i> = ${fmt(t)} s`),
-        explained(values(right, r.shuffle(cands.slice(0, 1).concat(r.shuffle(cands.slice(1)))), 'mV', { signed: true }), WHYV, how)));
+        explained(values(right, r.shuffle(cands.slice(0, 1).concat(r.shuffle(cands.slice(1)))), 'mV', { signed: true }), WHYV, how).map((o) => nudged(o, o.tag === 'sign' && NUDGE.signV))));
     });
     return {
       kind: 'value', dir: 'phi2v', family, title: L('Reading off the voltage', 'Die Spannung ablesen'),
@@ -300,8 +328,8 @@
       text: prompt('v2phi', phi0) + L('<p>By how much does the flux change, and where does it end?</p>', '<p>Um wie viel ändert sich der Fluss, und wo endet er?</p>'),
       figs: one('volt', voltGraph(g)),
       questions: [
-        choice('d', L(`(a) the change of the flux ${between(a, b)}`, `(a) die Änderung des Flusses ${between(a, b)}`), explained(q1, WHYD, how1)),
-        choice('e', L('(b) the flux at <i>t</i> = 8 s', '(b) der Fluss bei <i>t</i> = 8 s'), explained(q2, WHYD, how2)),
+        choice('d', L(`(a) the change of the flux ${between(a, b)}`, `(a) die Änderung des Flusses ${between(a, b)}`), explained(q1, WHYD, how1).map((o) => nudged(o, o.tag === 'sign' && NUDGE.signD))),
+        choice('e', L('(b) the flux at <i>t</i> = 8 s', '(b) der Fluss bei <i>t</i> = 8 s'), explained(q2, WHYD, how2).map((o) => nudged(o, o.tag === 'sign' && NUDGE.signD))),
       ],
       hints: [graphHints('v2phi', family, g, phi0)[0], graphHints('v2phi', family, g, phi0)[1],
         family === 'lin' ? L('Where the voltage is constant, the area is a rectangle: voltage × time (1 mV · 1 s = 1 mWb).', 'Wo die Spannung konstant ist, ist die Fläche ein Rechteck: Spannung × Zeit (1 mV · 1 s = 1 mWb).')
@@ -543,7 +571,7 @@
       if (variant !== 'num') {
         const o = loopOptions(r, L0, g);
         if (!o.flux || !o.volt) continue;
-        const pick = (key, label, list) => ({ type: 'pick', key, label, options: list.map((x) => ({ html: optionGraph(x), ok: x.ok, tag: x.tag, why: x.ok ? '' : WHYL[x.tag]() })) });
+        const pick = (key, label, list) => ({ type: 'pick', key, label, options: list.map((x) => ({ html: optionGraph(x), ok: x.ok, tag: x.tag, why: x.ok ? '' : WHYL[x.tag]() })).map((o) => nudged(o, { sign: NUDGE.signL, side: NUDGE.side }[o.tag])) });
         return { ...base, questions: [pick('f', L('(a) Which graph shows the flux through the loop?', '(a) Welcher Graph zeigt den Fluss durch die Schleife?'), o.flux), pick('u', L('(b) Which graph shows the induced voltage?', '(b) Welcher Graph zeigt die induzierte Spannung?'), o.volt)] };
       }
       const { B, s, v, w, te, tw, V } = L0, k = 0.1;
@@ -566,7 +594,7 @@
         ...base,
         questions: [
           choice('a', L('(a) the size of the induced voltage while the loop moves into the field', '(a) der Betrag der induzierten Spannung, während die Schleife ins Feld fährt'), explained(qa, whyN, how[1])),
-          choice('b', L('(b) the largest flux through the loop', '(b) der grösste Fluss durch die Schleife'), explained(qb, whyN, how[1])),
+          choice('b', L('(b) the largest flux through the loop', '(b) der grösste Fluss durch die Schleife'), explained(qb, whyN, how[1]).map((o) => nudged(o, (o.tag === 'square' || o.tag === 'sw') && NUDGE.overlap))),
           choice('c', L('(c) how long no voltage is induced while the loop overlaps the field', '(c) wie lange keine Spannung induziert wird, während die Schleife das Feld überlappt'), explained(qc, whyN, how[2])),
         ],
       };
@@ -674,16 +702,17 @@
     const whyForce = L("By Lenz's rule, the force opposes the motion that causes the current: it does not pull the loop on in the direction it moves.", 'Nach der Lenzschen Regel wirkt die Kraft der Bewegung entgegen, die den Strom verursacht: Sie zieht die Schleife nicht weiter in ihre Bewegungsrichtung.');
     const wrongDir = (d) => (!flows ? whyMotion : d === null ? whyNone : whySense);
     const wrongForce = (f) => (!flows ? whyMotion : f === null ? whyNone : whyForce);
-    const o3 = (label, ok, w) => ({ label, ok, why: ok ? '' : w });
+    const nudgeDir = (d) => (!flows ? NUDGE.motion : d === null ? null : NUDGE.sense), nudgeForce = (f) => (!flows ? NUDGE.motion : f === null ? null : NUDGE.force);
+    const o3 = (label, ok, w, n) => nudged({ label, ok, why: ok ? '' : w }, n);
     return {
       kind: 'lenz', title: L('A field stronger on one side', 'Ein Feld, auf einer Seite stärker'), text, figs: '', pic: ['gradient', { into, strong, move }],
       questions: [
         choice('dir', L('(a) As seen in the figure, the induced current flows', '(a) Wie in der Abbildung gesehen fliesst der induzierte Strom'), r.shuffle([
-          o3(L('clockwise', 'im Uhrzeigersinn'), dir === 'cw', wrongDir('cw')), o3(L('anticlockwise', 'im Gegenuhrzeigersinn'), dir === 'acw', wrongDir('acw')),
-          o3(L('not at all', 'gar nicht'), dir === null, wrongDir(null))])),
+          o3(L('clockwise', 'im Uhrzeigersinn'), dir === 'cw', wrongDir('cw'), nudgeDir('cw')), o3(L('anticlockwise', 'im Gegenuhrzeigersinn'), dir === 'acw', wrongDir('acw'), nudgeDir('acw')),
+          o3(L('not at all', 'gar nicht'), dir === null, wrongDir(null), nudgeDir(null))])),
         choice('force', L('(b) The magnetic force on the loop points', '(b) Die magnetische Kraft auf die Schleife zeigt'), r.shuffle([
-          o3(L('towards the stronger field', 'zum stärkeren Feld hin'), force === 'stronger', wrongForce('stronger')), o3(L('towards the weaker field', 'zum schwächeren Feld hin'), force === 'weaker', wrongForce('weaker')),
-          o3(L('nowhere: there is no force', 'nirgends hin: Es wirkt keine Kraft'), force === null, wrongForce(null))])),
+          o3(L('towards the stronger field', 'zum stärkeren Feld hin'), force === 'stronger', wrongForce('stronger'), nudgeForce('stronger')), o3(L('towards the weaker field', 'zum schwächeren Feld hin'), force === 'weaker', wrongForce('weaker'), nudgeForce('weaker')),
+          o3(L('nowhere: there is no force', 'nirgends hin: Es wirkt keine Kraft'), force === null, wrongForce(null), nudgeForce(null))])),
       ],
       hints: [L('Where is the field stronger? Does the loop move to a stronger field, to a weaker one, or does the field stay equally strong along its path? So does the flux through the loop increase, decrease or stay the same?', 'Wo ist das Feld stärker? Bewegt sich die Schleife zu einem stärkeren Feld, zu einem schwächeren, oder bleibt das Feld entlang ihres Weges gleich stark? Nimmt also der Fluss durch die Schleife zu, ab, oder bleibt er gleich?'),
         LENZ() + ' ' + L('If the flux increases, the induced field points against the outer field; if it decreases, along it.', 'Nimmt der Fluss zu, zeigt das induzierte Feld gegen das äussere Feld; nimmt er ab, in seine Richtung.'),

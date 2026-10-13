@@ -88,7 +88,7 @@
     if (Number.isNaN(x)) return { cls: 'bad', msg: ui().number };
     const e = f.value, near = (y, z, tol) => Math.abs(y - z) <= tol * Math.max(Math.abs(z), 1e-300);
     if (e === 0 ? Math.abs(x) < 1e-9 : near(x, e, 0.01) || IW.sig(x, 3) === IW.sig(e, 3) || IW.sig(x, 2) === IW.sig(e, 2)) return { cls: 'ok', msg: ui().correct };
-    for (const t of f.traps) if (near(x, t.value, 0.01)) return { cls: 'bad', msg: t.why };
+    for (const t of f.traps) if (near(x, t.value, 0.01)) return { cls: 'bad', msg: t.nudge || t.why };
     if (e !== 0 && near(-x, e, 0.01)) return { cls: 'warn', msg: f.signed ? ui().signed : ui().sign };
     if (e !== 0 && x !== 0) { const k = Math.log10(Math.abs(x / e)); if (Math.abs(k - Math.round(k)) < 0.005 && Math.round(k) !== 0) return { cls: 'warn', msg: ui().power }; }
     if (e !== 0 && near(x, e, 0.05)) return { cls: 'warn', msg: ui().close };
@@ -141,7 +141,8 @@
         <input id="in-${f.key}" type="text" inputmode="${f.sci ? 'text' : 'decimal'}" autocomplete="off" autocapitalize="off" enterkeyhint="done" spellcheck="false">
         <span class="unit">${(IW.UNITS[f.unit] || [, f.unit])[1]}</span>${fb}</div>`;
     }
-    // a choice (o[2], the explanation of a wrong one, is no title: it would give the answer away)
+    // a choice (o[2], the explanation of a wrong one, is no title: it would give the answer away;
+    // o[4], where there is one, is the nudge shown instead of o[2] after a wrong answer)
     const list = f.options.map((o) => [o[0], o[1]]);
     return `<div class="field choice${f.pics || f.stack ? ' wide' : ''}" data-key="${f.key}"${f.after ? ' hidden' : ''}><span class="what">${f.what}</span>${radios(f, list)}${fb}</div>`;
   }
@@ -160,7 +161,7 @@
     if (f.type === 'num') return judgeNum(parse(val), f);
     if (val === f.value) return { cls: 'ok', msg: ui().correct };
     const o = (f.options || []).find((x) => x[0] === val);
-    return { cls: 'bad', msg: (o && o[2]) || ui().wrong };
+    return { cls: 'bad', msg: (o && (o[4] || o[2])) || ui().wrong };
   }
 
   function render() {

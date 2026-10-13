@@ -56,6 +56,10 @@
     same: () => L('That is the value before switching. Only the inductor current is sure to stay the same; the other currents can jump.', 'Das ist der Wert vor dem Schalten. Nur der Spulenstrom bleibt sicher gleich; die anderen Ströme können springen.'),
     sign: () => L('Wrong direction: compare the direction of the current with the arrow.', 'Falsche Richtung: Vergleiche die Richtung des Stroms mit dem Pfeil.'),
   };
+  // While the exercise is open, a nudge instead of a WHY that would give the answer away.
+  const NUDGE = {
+    zero: () => L('Right after switching: can the current through an inductor change suddenly?', 'Unmittelbar nach dem Schalten: Kann sich der Strom durch eine Spule sprunghaft ändern?'),
+  };
 
   let ex = null, st = null, tutor = null, checker = null, topics = null;
 
@@ -103,7 +107,7 @@
     const e = f.value, near = (y, z, tol) => Math.abs(y - z) <= tol * Math.max(Math.abs(z), 0.05);
     if (near(x, e, ex.tol)) return { cls: 'ok', msg: ui().correct };
     for (const k of ['wire', 'zero', 'same']) {
-      if (model[k] !== null && !near(model[k], e, ex.tol) && near(x, model[k], ex.tol)) return { cls: 'bad', msg: WHY[k]() };
+      if (model[k] !== null && !near(model[k], e, ex.tol) && near(x, model[k], ex.tol)) return { cls: 'bad', msg: (!st.solved && !st.revealed && NUDGE[k] ? NUDGE : WHY)[k]() };
     }
     if (e !== 0 && near(-x, e, ex.tol)) return { cls: 'warn', msg: f.abs ? ui().size : ui().sign };
     if (e !== 0 && near(x, e, Math.max(0.05, 2 * ex.tol))) return { cls: 'warn', msg: ui().close };

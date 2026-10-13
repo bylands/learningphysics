@@ -293,6 +293,10 @@
       full: () => L('The weight acts at the centre of mass: its lever arm about the edge is half the width.', 'Die Gewichtskraft greift im Schwerpunkt an: Ihr Hebelarm bezüglich der Kante ist die halbe Breite.'),
       top: () => L('The push acts at the height given, not at the top of the box.', 'Die Kraft greift in der angegebenen Höhe an, nicht oben an der Kiste.'),
     },
+    // in practice, where the reason would give the answer away
+    nudge: {
+      full: () => L('Where does the weight act, and how long is its lever arm about the edge then?', 'Wo greift die Gewichtskraft an, und wie lang ist dann ihr Hebelarm bezüglich der Kante?'),
+    },
     fields: () => [field('F', ['F'], 'N', 1, L('smallest force that tips it', 'kleinste Kraft, die sie kippt'))],
     title: () => L('Tipping over', 'Kippen'),
     text: (p) => L(`A box ${cm(p.w)} wide and ${cm(p.h)} high with a mass of ${kg(p.m)} stands on the floor. It is pushed horizontally ${cm(p.y)} above the floor. The floor is rough, so the box does not slide. With which force does it start to tip over? Take g = 10 m/s² and the centre of mass in the middle of the box.`,
@@ -340,6 +344,9 @@
     why: {
       swap: () => L('That is the angle measured the other way: from the floor, not from the vertical.', 'Das ist der Winkel von der anderen Seite gemessen: vom Boden aus, nicht von der Senkrechten.'),
       full: () => L('The centre of mass is in the middle: what counts is half the width against half the height.', 'Der Schwerpunkt liegt in der Mitte: Es zählt die halbe Breite gegen die halbe Höhe.'),
+    },
+    nudge: {
+      full: () => L('The centre of mass is in the middle: how far is it from the edge, horizontally and vertically?', 'Der Schwerpunkt liegt in der Mitte: Wie weit ist er von der Kante entfernt, waagrecht und senkrecht?'),
     },
     // tan θ, which needs no calculator; the angle itself is in the solution
     fields: () => [field('tan', ['tanTheta'], '', 2, L('at the tilt θ where it falls:', 'bei der Neigung θ, bei der er fällt:'))],

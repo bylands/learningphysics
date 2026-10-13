@@ -50,7 +50,8 @@
   const nice = (x) => Math.abs(x * 20 - Math.round(x * 20)) < 1e-9;
   const and = (xs) => (xs.length < 2 ? xs.join('') : `${xs.slice(0, -1).join(', ')} ${L('and', 'und')} ${xs[xs.length - 1]}`);
   // a right option keeps its flag only in a multi: there, missing it is the mistake
-  const opt = (html, correct, flag, why) => ({ html, correct, flag: flag || null, why });
+  // nudge: what a wrong choice is told while the exercise is open, when why would give the answer away
+  const opt = (html, correct, flag, why, nudge) => ({ html, correct, flag: flag || null, why, ...(nudge ? { nudge } : {}) });
   const choice = (key, prompt, options, pics = false) => ({ type: 'choice', key, prompt, options: options.map((o) => (o.correct ? { ...o, flag: null } : o)), pics });
   const multi = (key, prompt, single, options) => ({ type: 'multi', key, prompt, single, options });
   const numQ = (key, prompt, ask, sym, unit, value, traps, why) =>
@@ -217,10 +218,15 @@
             `Hier ist s positiv, nimmt aber ab: Der Körper bewegt sich in negativer Richtung, also v < 0. Das Vorzeichen von v ist die Richtung der Steigung, nicht das Vorzeichen von s.`)
           : L('Here s decreases, so v is negative.', 'Hier nimmt s ab, also ist v negativ.'));
       }
-      if (p.v === 0) return opt(interval(p.t0, p.t1), false, null, L('Here s stays the same: the body is at rest, v = 0.', 'Hier bleibt s gleich: Der Körper ruht, v = 0.'));
+      if (p.v === 0) {
+        return opt(interval(p.t0, p.t1), false, null, L('Here s stays the same: the body is at rest, v = 0.', 'Hier bleibt s gleich: Der Körper ruht, v = 0.'),
+          L('How does the graph run in this interval, and what does that mean for v?', 'Wie verläuft der Graph in diesem Intervall, und was bedeutet das für v?'));
+      }
       return opt(interval(p.t0, p.t1), false, below ? 'below' : null, below
         ? L('Here s is negative, but it increases: the body moves in the positive direction, so v > 0.', 'Hier ist s negativ, nimmt aber zu: Der Körper bewegt sich in positiver Richtung, also v > 0.')
-        : L('Here s increases, so v is positive.', 'Hier nimmt s zu, also ist v positiv.'));
+        : L('Here s increases, so v is positive.', 'Hier nimmt s zu, also ist v positiv.'), below
+        ? L('Here s is negative. Does the sign of s tell the direction, or whether s increases or decreases?', 'Hier ist s negativ. Gibt das Vorzeichen von s die Richtung an, oder ob s zu- oder abnimmt?')
+        : L('Does the graph rise or fall in this interval?', 'Steigt oder fällt der Graph in diesem Intervall?'));
     });
     const q1 = multi('neg', L('In which time intervals is the velocity negative? Choose all.', 'In welchen Zeitintervallen ist die Geschwindigkeit negativ? Wähle alle.'),
       L('In which time interval is the velocity negative?', 'In welchem Zeitintervall ist die Geschwindigkeit negativ?'), options);
@@ -299,13 +305,17 @@
       }
       if (x.kind === 'negup') {
         return opt(x.name, false, 'negpos', L(`${x.name}: the positions are negative, but they increase: ${x.name} moves in the positive direction. The direction is in the change of s, not in its sign.`,
-          `${x.name}: Die Orte sind negativ, nehmen aber zu: ${x.name} bewegt sich in positiver Richtung. Die Richtung steckt in der Änderung von s, nicht in seinem Vorzeichen.`));
+          `${x.name}: Die Orte sind negativ, nehmen aber zu: ${x.name} bewegt sich in positiver Richtung. Die Richtung steckt in der Änderung von s, nicht in seinem Vorzeichen.`),
+        L(`${x.name}: the positions are negative. Is the direction in the sign of s, or in how s changes from one column to the next?`,
+          `${x.name}: Die Orte sind negativ. Steckt die Richtung im Vorzeichen von s oder darin, wie sich s von einer Spalte zur nächsten ändert?`));
       }
       if (x.kind === 'stop') {
         return opt(x.name, false, null, L(`${x.name}: the position decreases until ${num(x.stop)} s and then stays the same: ${x.name} stops, it does not move in the negative direction all the time.`,
-          `${x.name}: Der Ort nimmt bis ${num(x.stop)} s ab und bleibt dann gleich: ${x.name} hält an, bewegt sich also nicht die ganze Zeit in negativer Richtung.`));
+          `${x.name}: Der Ort nimmt bis ${num(x.stop)} s ab und bleibt dann gleich: ${x.name} hält an, bewegt sich also nicht die ganze Zeit in negativer Richtung.`),
+        L(`${x.name}: check every change from one column to the next, the last ones too.`, `${x.name}: Prüfe jede Änderung von einer Spalte zur nächsten, auch die letzten.`));
       }
-      return opt(x.name, false, allNeg(x) ? 'negpos' : null, L(`${x.name}: the position decreases only for a while and then increases again: ${x.name} turns around.`, `${x.name}: Der Ort nimmt nur eine Zeit lang ab und dann wieder zu: ${x.name} kehrt um.`));
+      return opt(x.name, false, allNeg(x) ? 'negpos' : null, L(`${x.name}: the position decreases only for a while and then increases again: ${x.name} turns around.`, `${x.name}: Der Ort nimmt nur eine Zeit lang ab und dann wieder zu: ${x.name} kehrt um.`),
+        L(`${x.name}: does the position decrease from every column to the next?`, `${x.name}: Nimmt der Ort von jeder Spalte zur nächsten ab?`));
     });
     const q1 = multi('back', L('Which vehicles move in the negative direction all the time? Choose all.', 'Welche Fahrzeuge bewegen sich die ganze Zeit in negativer Richtung? Wähle alle.'),
       L('Which vehicle moves in the negative direction all the time?', 'Welches Fahrzeug bewegt sich die ganze Zeit in negativer Richtung?'), options);

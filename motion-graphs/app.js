@@ -204,19 +204,18 @@
     switch (code) {
       case 'sign': return L(`Check the sign: where ${F} increases, ${f} is positive; where it decreases, ${f} is negative.`,
         `Achte auf das Vorzeichen: Wo ${F} zunimmt, ist ${f} positiv; wo ${F} abnimmt, ist ${f} negativ.`);
-      case 'notConst': return L(`${F} is a straight line here, so its slope does not change: ${f} is constant (a horizontal line).`,
-        `${F} ist hier eine Gerade, also ändert sich die Steigung nicht: ${f} ist konstant (eine waagrechte Linie).`);
+      case 'notConst': return L(`${F} is a straight line here: does its slope change along the piece, and what does that mean for the shape of ${f}?`,
+        `${F} ist hier eine Gerade: Ändert sich ihre Steigung im Lauf des Stücks, und was bedeutet das für die Form von ${f}?`);
       case 'value': return p.g0 === 0
         ? L(`${F} is horizontal here${ex.from === 's' ? ' (the body is at rest)' : ''}: what slope does that mean, and so what value of ${f}?`, `${F} ist hier waagrecht${ex.from === 's' ? ' (der Körper ist in Ruhe)' : ''}: Welche Steigung bedeutet das, und also welcher Wert von ${f}?`)
         : L(`${f} is constant here, but check its value: ${f} equals ${M()} ${fb} = Δ${F}/Δ<i>t</i>. Read the change of ${F} and the duration of the piece from the graph.`,
           `${f} ist hier konstant, aber prüfe den Wert: ${f} ist gleich ${M('dat')} ${fb} = Δ${F}/Δ<i>t</i>. Lies die Änderung von ${F} und die Dauer des Stücks am Graphen ab.`);
-      case 'average': return L(`You drew ${M()} ${fb} = Δ${F}/Δ<i>t</i> for the whole piece. But ${F} is curved here, so ${f} changes steadily: it equals ${fb} only in the middle of the piece and is a sloped straight line through that point.`,
-        `Du hast ${M('acc')} ${fb} = Δ${F}/Δ<i>t</i> für das ganze Stück gezeichnet. Aber ${F} ist hier gekrümmt, also ändert sich ${f} gleichmässig: Es ist nur in der Mitte des Stücks gleich ${fb} und ist eine schräge Gerade durch diesen Punkt.`);
-      case 'notLinear': return L(`${F} is curved here, so its slope changes: ${f} is not constant, but a sloped straight line.`,
-        `${F} ist hier gekrümmt, also ändert sich die Steigung: ${f} ist nicht konstant, sondern eine schräge Gerade.`);
-      case 'direction': return p.g1 > p.g0
-        ? L(`${F} curves upward here (its slope increases), so ${f} must increase.`, `${F} krümmt sich hier nach oben (die Steigung nimmt zu), also muss ${f} zunehmen.`)
-        : L(`${F} curves downward here (its slope decreases), so ${f} must decrease.`, `${F} krümmt sich hier nach unten (die Steigung nimmt ab), also muss ${f} abnehmen.`);
+      case 'average': return L(`You drew ${M()} ${fb} = Δ${F}/Δ<i>t</i> for the whole piece. But ${F} is curved here: is its slope the same all along the piece?`,
+        `Du hast ${M('acc')} ${fb} = Δ${F}/Δ<i>t</i> für das ganze Stück gezeichnet. Aber ${F} ist hier gekrümmt: Ist seine Steigung im ganzen Stück gleich?`);
+      case 'notLinear': return L(`${F} is curved here: does its slope stay the same along the piece, and what does that mean for ${f}?`,
+        `${F} ist hier gekrümmt: Bleibt seine Steigung im Lauf des Stücks gleich, und was bedeutet das für ${f}?`);
+      case 'direction': return L(`Does ${F} curve upward or downward in this piece? So does its slope, ${f}, increase or decrease?`,
+        `Krümmt sich ${F} in diesem Stück nach oben oder nach unten? Nimmt seine Steigung ${f} also zu oder ab?`);
       case 'start': case 'end': return `${L(`The value at the ${code} of the piece is off.`, `Der Wert am ${code === 'start' ? 'Anfang' : 'Ende'} des Stücks stimmt nicht.`)} ${whyEnd(p, i, code)}`;
       default: return `${L(`Both end values are off: ${f} is the slope of the tangent to ${F} at the start and at the end of the piece, and their mean is ${M()} ${fb} = Δ${F}/Δ<i>t</i>.`,
         `Beide Endwerte stimmen nicht: ${f} ist die Steigung der Tangente an ${F} am Anfang und am Ende des Stücks, und ihr Mittelwert ist ${M()} ${fb} = Δ${F}/Δ<i>t</i>.`)} ${whyEnd(p, i, ex.how[i].start === 'mean' ? 'end' : 'start')}`;

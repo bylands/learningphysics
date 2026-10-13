@@ -53,7 +53,8 @@
   const step = (rule, html) => `<p class="step-rule">${rule}</p>${html}`;
   const numF = (key, sym, unit, what, value, traps = [], tol = 0.01) => ({ key, type: 'num', sym, unit, what, value, tol, traps: traps.filter((t) => Number.isFinite(t.value) && Math.abs(t.value - value) > 2 * tol * value) });
   const choiceF = (key, what, value, options, o = {}) => ({ key, type: 'choice', what, value, options, ...o });
-  const opt = (v, html, why = '', flag = null) => ({ v, html, why, flag });
+  // nudge: what a wrong choice is told while the exercise is open, when why would give the answer away
+  const opt = (v, html, why = '', flag = null, nudge = null) => ({ v, html, why, flag, ...(nudge ? { nudge } : {}) });
   const ofKey = (ex, key) => ex.fields.find((f) => f.key === key);
 
   // ================================================================ combining capacitors
@@ -172,11 +173,13 @@
       ser: L('In series the reciprocals add: $\\frac{1}{C} = \\frac{1}{C_1} + \\frac{1}{C_2} + \\frac{1}{C_3}$ is larger than each $\\frac{1}{C_k}$, so $C$ is smaller than each $C_k$.', 'In Serie addieren sich die Kehrwerte: $\\frac{1}{C} = \\frac{1}{C_1} + \\frac{1}{C_2} + \\frac{1}{C_3}$ ist grösser als jedes $\\frac{1}{C_k}$, also ist $C$ kleiner als jedes $C_k$.'),
       par: L(`In parallel the capacitances add: $C = C_1 + C_2 + C_3 = ${tq(sum, 'µF')}$, larger than each one.`, `Parallel addieren sich die Kapazitäten: $C = C_1 + C_2 + C_3 = ${tq(sum, 'µF')}$, grösser als jede einzelne.`),
     }[ser ? 'ser' : 'par'];
+    const nudge = ser ? L('In series the reciprocals add: is $\\frac{1}{C}$ then larger or smaller than each $\\frac{1}{C_k}$?', 'In Serie addieren sich die Kehrwerte: Ist $\\frac{1}{C}$ dann grösser oder kleiner als jedes $\\frac{1}{C_k}$?')
+      : L('In parallel the capacitances add: how does their sum compare with the largest one?', 'Parallel addieren sich die Kapazitäten: Wie verhält sich ihre Summe zur grössten?');
     const where = choiceF('where', L('The total capacitance is', 'Die Gesamtkapazität ist'), ser ? 'below' : 'above', [
-      opt('below', L(`smaller than the smallest: $C < ${tq(lo, 'µF')}$`, `kleiner als die kleinste: $C < ${tq(lo, 'µF')}$`), why, ser ? null : 'swap'),
-      opt('edge', ser ? L(`equal to the smallest: $C = ${tq(lo, 'µF')}$`, `gleich der kleinsten: $C = ${tq(lo, 'µF')}$`) : L(`equal to the largest: $C = ${tq(hi, 'µF')}$`, `gleich der grössten: $C = ${tq(hi, 'µF')}$`), `${L('Each capacitor counts.', 'Jeder Kondensator zählt.')} ${why}`, 'edge'),
-      opt('between', L(`between the smallest and the largest`, `zwischen der kleinsten und der grössten`), `${L('That would be some kind of average.', 'Das wäre eine Art Mittelwert.')} ${why}`, 'avg'),
-      opt('above', L(`larger than the largest: $C > ${tq(hi, 'µF')}$`, `grösser als die grösste: $C > ${tq(hi, 'µF')}$`), why, ser ? 'swap' : null),
+      opt('below', L(`smaller than the smallest: $C < ${tq(lo, 'µF')}$`, `kleiner als die kleinste: $C < ${tq(lo, 'µF')}$`), why, ser ? null : 'swap', nudge),
+      opt('edge', ser ? L(`equal to the smallest: $C = ${tq(lo, 'µF')}$`, `gleich der kleinsten: $C = ${tq(lo, 'µF')}$`) : L(`equal to the largest: $C = ${tq(hi, 'µF')}$`, `gleich der grössten: $C = ${tq(hi, 'µF')}$`), `${L('Each capacitor counts.', 'Jeder Kondensator zählt.')} ${why}`, 'edge', `${L('Each capacitor counts.', 'Jeder Kondensator zählt.')} ${nudge}`),
+      opt('between', L(`between the smallest and the largest`, `zwischen der kleinsten und der grössten`), `${L('That would be some kind of average.', 'Das wäre eine Art Mittelwert.')} ${why}`, 'avg', `${L('That would be some kind of average.', 'Das wäre eine Art Mittelwert.')} ${nudge}`),
+      opt('above', L(`larger than the largest: $C > ${tq(hi, 'µF')}$`, `grösser als die grösste: $C > ${tq(hi, 'µF')}$`), why, ser ? 'swap' : null, nudge),
     ].map((o) => (o.v === (ser ? 'below' : 'above') ? { ...o, why: '' } : o)), { stack: true, ask: L('Where does the total capacitance lie?', 'Wo liegt die Gesamtkapazität?') });
     // the change: what is done, the answer, why, and the flag of the opposite answer
     const ch = {
@@ -189,8 +192,11 @@
       smaller: { text: L('$C_1$ is replaced by a capacitor with a smaller capacitance.', '$C_1$ wird durch einen Kondensator mit kleinerer Kapazität ersetzt.'), v: 'down', flag: null,
         why: ser ? L('A smaller $C_1$ makes $\\frac{1}{C_1}$ larger, so $\\frac{1}{C}$ larger and $C$ smaller.', 'Ein kleineres $C_1$ macht $\\frac{1}{C_1}$ grösser, also $\\frac{1}{C}$ grösser und $C$ kleiner.') : L('A smaller $C_1$ makes the sum $C_1 + C_2 + C_3$ smaller.', 'Ein kleineres $C_1$ macht die Summe $C_1 + C_2 + C_3$ kleiner.') },
     }[change];
+    const chNudge = ser ? L('In series the reciprocals add: how does this change alter $\\frac{1}{C}$, and so $C$?', 'In Serie addieren sich die Kehrwerte: Wie ändert diese Änderung $\\frac{1}{C}$, und damit $C$?')
+      : L('In parallel the capacitances add: how does this change alter their sum?', 'Parallel addieren sich die Kapazitäten: Wie ändert diese Änderung ihre Summe?');
     const more = choiceF('more', `${ch.text} ${L('The total capacitance becomes', 'Die Gesamtkapazität wird')}`, ch.v, ['up', 'down', 'same'].map((v) => opt(v, bigSmall(v),
-      v === ch.v ? '' : v === 'same' ? `${L('Every capacitor counts in the total.', 'Jeder Kondensator zählt bei der Gesamtkapazität mit.')} ${ch.why}` : ch.why, v === ch.v ? null : v === 'same' ? 'edge' : ch.flag)));
+      v === ch.v ? '' : v === 'same' ? `${L('Every capacitor counts in the total.', 'Jeder Kondensator zählt bei der Gesamtkapazität mit.')} ${ch.why}` : ch.why, v === ch.v ? null : v === 'same' ? 'edge' : ch.flag,
+      v === 'same' ? `${L('Every capacitor counts in the total.', 'Jeder Kondensator zählt bei der Gesamtkapazität mit.')} ${chNudge}` : chNudge)));
     return {
       text: p$(L(`Three capacitors, ${capList(vals)}, are connected ${inWords(ser)}. Without calculating: where does the total capacitance lie?`, `Drei Kondensatoren, ${capList(vals)}, sind ${inWords(ser)} geschaltet. Ohne zu rechnen: Wo liegt die Gesamtkapazität?`)),
       fields: [where, more],
@@ -210,13 +216,17 @@
     const k = 1 + vals.indexOf(ser ? Math.min(...vals) : Math.max(...vals)), right = `c${k}`;
     const same = ser ? L('In series all carry the same charge $Q$: what leaves one plate arrives on the next.', 'In Serie tragen alle dieselbe Ladung $Q$: Was eine Platte verlässt, kommt auf der nächsten an.') : L('In parallel all are connected to the same two points: they have the same voltage $\\Delta V$.', 'Parallel sind alle an dieselben zwei Punkte angeschlossen: Sie haben dieselbe Spannung $U$.');
     const most = ser ? L('So the voltages differ: $\\Delta V_k = Q/C_k$, the smallest capacitance has the largest voltage.', 'Also sind die Spannungen verschieden: $U_k = Q/C_k$, die kleinste Kapazität hat die grösste Spannung.') : L('So the charges differ: $Q_k = C_k\\,\\Delta V$, the largest capacitance carries the largest charge.', 'Also sind die Ladungen verschieden: $Q_k = C_k U$, die grösste Kapazität trägt die grösste Ladung.');
-    const options = (r, why) => [...vals.map((_, i) => [`c${i + 1}`, `$C_${i + 1}$`]), ['same', L('all the same', 'alle gleich')]].map(([v, h]) => opt(v, h, v === r ? '' : why, v === r ? null : 'share'));
+    const options = (r, why, nudge) => [...vals.map((_, i) => [`c${i + 1}`, `$C_${i + 1}$`]), ['same', L('all the same', 'alle gleich')]].map(([v, h]) => opt(v, h, v === r ? '' : why, v === r ? null : 'share', nudge));
+    const nudgeMost = ser ? L('In series: which quantity is the same for all capacitors? What does $Q = C\\cdot\\Delta V$ then say about their voltages?', 'In Serie: Welche Grösse ist für alle Kondensatoren gleich? Was sagt $Q = C\\cdot U$ dann über ihre Spannungen?')
+      : L('In parallel: which quantity is the same for all capacitors? What does $Q = C\\cdot\\Delta V$ then say about their charges?', 'Parallel: Welche Grösse ist für alle Kondensatoren gleich? Was sagt $Q = C\\cdot U$ dann über ihre Ladungen?');
+    const nudgeSame = ser ? L('In series: where does the charge that leaves one plate go?', 'In Serie: Wohin geht die Ladung, die eine Platte verlässt?')
+      : L('In parallel: to which two points is each capacitor connected?', 'Parallel: An welche zwei Punkte ist jeder Kondensator angeschlossen?');
     const qV = L('Which capacitor has the largest voltage?', 'Welcher Kondensator hat die grösste Spannung?'), qQ = L('Which capacitor carries the largest charge?', 'Welcher Kondensator trägt die grösste Ladung?');
     return {
       text: p$(L(`Three capacitors, ${capList(vals)}, are connected ${inWords(ser)} between A and B, and a battery is connected to A and B. Without calculating: which capacitor has the largest voltage, which one the largest charge?`, `Drei Kondensatoren, ${capList(vals)}, sind zwischen A und B ${inWords(ser)} geschaltet, und an A und B wird eine Batterie angeschlossen. Ohne zu rechnen: Welcher Kondensator hat die grösste Spannung, welcher die grösste Ladung?`)),
       fields: [
-        choiceF('where', ser ? qV : qQ, right, options(right, `${same} ${most}`), { ask: ser ? qV : qQ }),
-        choiceF('more', ser ? qQ : qV, 'same', options('same', same), { ask: ser ? qQ : qV }),
+        choiceF('where', ser ? qV : qQ, right, options(right, `${same} ${most}`, nudgeMost), { ask: ser ? qV : qQ }),
+        choiceF('more', ser ? qQ : qV, 'same', options('same', same, nudgeSame), { ask: ser ? qQ : qV }),
       ],
       figure: () => Fg.network(net),
       solutionFigure: () => Fg.network(net),
@@ -234,9 +244,10 @@
     const block = ser ? { p: [leaf('2', b), leaf('3', c)] } : { s: [leaf('2', b), leaf('3', c)] }, net = ser ? { s: [leaf('1', a), block] } : { p: [leaf('1', a), block] };
     const vb = ser ? b + c : ser2(b, c), total = ser ? ser2(a, vb) : a + vb, v = ser ? 'below' : 'above';
     const why = ser ? L('$C_1$ and the block $C_{23}$ are in series: the total is smaller than each of them, whatever the values.', '$C_1$ und der Block $C_{23}$ sind in Serie: Die Gesamtkapazität ist kleiner als jeder der beiden, was immer die Werte sind.') : L('$C_1$ and the block $C_{23}$ are in parallel: the total is their sum, larger than each of them, whatever the values.', '$C_1$ und der Block $C_{23}$ sind parallel: Die Gesamtkapazität ist ihre Summe, grösser als jeder der beiden, was immer die Werte sind.');
+    const nudge = L('Think of the block $C_{23}$ as one capacitor: how is it connected to $C_1$, and what does that mean for the total?', 'Stell dir den Block $C_{23}$ als einen Kondensator vor: Wie ist er mit $C_1$ verbunden, und was bedeutet das für die Gesamtkapazität?');
     const cmp = (key, name) => choiceF(key, L(`Compared with ${name} alone, the total capacitance is`, `Verglichen mit ${name} allein ist die Gesamtkapazität`), v, [
       ['below', L('smaller', 'kleiner'), ser ? null : 'swap'], ['edge', L('the same', 'gleich gross'), 'edge'], ['above', L('larger', 'grösser'), ser ? 'swap' : null], ['depends', L('it depends on the values', 'es hängt von den Werten ab'), 'edge'],
-    ].map(([o, h, f]) => opt(o, h, o === v ? '' : why, o === v ? null : f)), { stack: true, ask: L(`Compared with ${name} alone: is the total capacitance smaller or larger?`, `Verglichen mit ${name} allein: Ist die Gesamtkapazität kleiner oder grösser?`) });
+    ].map(([o, h, f]) => opt(o, h, o === v ? '' : why, o === v ? null : f, nudge)), { stack: true, ask: L(`Compared with ${name} alone: is the total capacitance smaller or larger?`, `Verglichen mit ${name} allein: Ist die Gesamtkapazität kleiner oder grösser?`) });
     return {
       text: p$(L(`Three capacitors, ${capList([a, b, c])}, are connected as shown. Without calculating: how does the total capacitance compare with $C_1$ alone, and with the block $C_{23}$ of $C_2$ and $C_3$ alone?`, `Drei Kondensatoren, ${capList([a, b, c])}, sind wie gezeigt geschaltet. Ohne zu rechnen: Wie verhält sich die Gesamtkapazität zu $C_1$ allein und zum Block $C_{23}$ aus $C_2$ und $C_3$ allein?`)),
       fields: [cmp('where', '$C_1$'), cmp('more', L('the block $C_{23}$', 'dem Block $C_{23}$'))],
@@ -258,11 +269,15 @@
     const totals = [[c / n, ser ? null : 'swap'], [n * c, ser ? 'swap' : null], [c, 'edge'], [ser ? c / (n * n) : n * n * c, null]];
     const share = ser ? L(`In series the ${n} voltages add up to $\\Delta V$. All carry the same charge, and equal capacitors with the same charge have the same voltage: $\\Delta V/${n}$ each.`, `In Serie addieren sich die ${n} Spannungen zu $U$. Alle tragen dieselbe Ladung, und gleiche Kondensatoren mit derselben Ladung haben dieselbe Spannung: je $U/${n}$.`) : L('In parallel each capacitor is connected to A and B: each has the whole voltage $\\Delta V$.', 'Parallel ist jeder Kondensator an A und B angeschlossen: Jeder hat die ganze Spannung $U$.');
     const each = ser ? 'part' : 'all';
+    const nudgeTotal = ser ? L(`In series the reciprocals add: what is $\\frac{1}{C}$ for ${n} equal capacitors?`, `In Serie addieren sich die Kehrwerte: Was ist $\\frac{1}{C}$ bei ${n} gleichen Kondensatoren?`)
+      : L(`In parallel the capacitances add: what does that give for ${n} equal capacitors?`, `Parallel addieren sich die Kapazitäten: Was ergibt das bei ${n} gleichen Kondensatoren?`);
+    const nudgeShare = ser ? L('In series: how do the voltages of the capacitors add up to $\\Delta V$, and do equal capacitors with the same charge differ?', 'In Serie: Wie ergeben die Spannungen der Kondensatoren zusammen $U$, und unterscheiden sich gleiche Kondensatoren mit derselben Ladung?')
+      : L('In parallel: to which two points is each capacitor connected?', 'Parallel: An welche zwei Punkte ist jeder Kondensator angeschlossen?');
     return {
       text: p$(L(`${n} equal capacitors, each with $C_1 = ${tq(c, 'µF')}$, are connected ${inWords(ser)} between A and B. Without a calculator: what is the total capacitance? A battery with voltage $\\Delta V$ is connected to A and B: what is the voltage of each capacitor?`, `${n} gleiche Kondensatoren mit je $C_1 = ${tq(c, 'µF')}$ sind zwischen A und B ${inWords(ser)} geschaltet. Ohne Rechner: Wie gross ist die Gesamtkapazität? An A und B wird eine Batterie mit der Spannung $U$ angeschlossen: Welche Spannung hat jeder Kondensator?`)),
       fields: [
-        choiceF('where', L('The total capacitance:', 'Die Gesamtkapazität:'), String(value), totals.map(([x, f]) => opt(String(x), `$C = ${tq(x, 'µF')}$`, x === value ? '' : why, x === value ? null : f)), { ask: L('What is the total capacitance?', 'Wie gross ist die Gesamtkapazität?') }),
-        choiceF('more', L('The voltage of each capacitor:', 'Die Spannung jedes Kondensators:'), each, [['part', L(`$\\Delta V/${n}$`, `$U/${n}$`)], ['all', L('$\\Delta V$', '$U$')], ['more', L(`$${n}\\,\\Delta V$`, `$${n}\\,U$`)]].map(([v, h]) => opt(v, h, v === each ? '' : share, v === each ? null : 'share'))),
+        choiceF('where', L('The total capacitance:', 'Die Gesamtkapazität:'), String(value), totals.map(([x, f]) => opt(String(x), `$C = ${tq(x, 'µF')}$`, x === value ? '' : why, x === value ? null : f, nudgeTotal)), { ask: L('What is the total capacitance?', 'Wie gross ist die Gesamtkapazität?') }),
+        choiceF('more', L('The voltage of each capacitor:', 'Die Spannung jedes Kondensators:'), each, [['part', L(`$\\Delta V/${n}$`, `$U/${n}$`)], ['all', L('$\\Delta V$', '$U$')], ['more', L(`$${n}\\,\\Delta V$`, `$${n}\\,U$`)]].map(([v, h]) => opt(v, h, v === each ? '' : share, v === each ? null : 'share', nudgeShare))),
       ],
       figure: () => Fg.network(net),
       solutionFigure: () => Fg.network(net, { reduce: [[net, '', value]] }),
@@ -368,7 +383,7 @@
   // left out), in the order p.perm
   function curveField(p, q, list) {
     const wrong = list.slice(1).filter((_, i) => i !== p.drop % (list.length - 1));
-    const opts = [list[0], ...wrong].map((c, k) => ({ v: c.id, html: curveGraph(q, c, L(`Graph ${k + 1}`, `Graph ${k + 1}`)), why: c.why || '', flag: c.flag || null }));
+    const opts = [list[0], ...wrong].map((c, k) => ({ v: c.id, html: curveGraph(q, c, L(`Graph ${k + 1}`, `Graph ${k + 1}`)), why: c.why || '', flag: c.flag || null, ...(c.nudge ? { nudge: c.nudge } : {}) }));
     rng(p.perm).shuffle(opts);
     const what = { U: L('The voltage $\\Delta V_C$ across the capacitor:', 'Die Spannung $U_C$ über dem Kondensator:'), I: L('The current $I$ (its size):', 'Der Strom $I$ (sein Betrag):'), R: L('The voltage $\\Delta V_R$ across the resistor:', 'Die Spannung $U_R$ über dem Widerstand:') }[q];
     return choiceF('graph', what, list[0].id, opts, { pics: true });
@@ -381,28 +396,40 @@
     current: () => L('The current does not follow the capacitor voltage: it is largest at the start and falls as the capacitor fills, $I = (\\Delta V_0 - \\Delta V_C)/R$.', 'Der Strom folgt nicht der Kondensatorspannung: Er ist am Anfang am grössten und nimmt ab, während sich der Kondensator füllt, $I = (U_0 - U_C)/R$.'),
     constant: () => L('The current is not constant: it falls as the voltage that drives it falls.', 'Der Strom ist nicht konstant: Er nimmt ab, wie die Spannung, die ihn antreibt.'),
   };
+  // while the exercise is open: a nudge instead of the explanation, which would give the answer away
+  const NUDGE = {
+    shape: () => L('Check the shape: when is the change fastest, and why?', 'Prüfe die Form: Wann ist die Änderung am schnellsten, und warum?'),
+    direction: () => L('Is the capacitor being charged or discharged here? Does the curve fit that?', 'Wird der Kondensator hier geladen oder entladen? Passt die Kurve dazu?'),
+    start: () => L('How large is the current right after the switch closes? Which voltage is across the resistor then?', 'Wie gross ist der Strom unmittelbar nach dem Schliessen des Schalters? Welche Spannung liegt dann über dem Widerstand?'),
+    current: () => L('The current does not follow the capacitor voltage: which voltage drives it through the resistor, and how does that voltage change?', 'Der Strom folgt nicht der Kondensatorspannung: Welche Spannung treibt ihn durch den Widerstand, und wie ändert sich diese Spannung?'),
+    constant: () => L('Is the current really constant? How does the voltage that drives it change?', 'Ist der Strom wirklich konstant? Wie ändert sich die Spannung, die ihn antreibt?'),
+    loop: (charge) => (charge ? L('What does the loop rule say about $\\Delta V_0$, $\\Delta V_R$ and $\\Delta V_C$ at every moment?', 'Was sagt die Maschenregel in jedem Moment über $U_0$, $U_R$ und $U_C$?')
+      : L('While discharging there is no battery: how is the resistor connected to the capacitor?', 'Beim Entladen gibt es keine Batterie: Wie ist der Widerstand mit dem Kondensator verbunden?')),
+  };
   // the graphs of U_C, I and U_R: the right one first
   const LISTS = {
     U: (charge) => [
       { id: 'exp', f: charge ? CURVES.up : CURVES.down },
-      { id: 'other', f: charge ? CURVES.down : CURVES.up, why: WHY.direction(), flag: 'direction' },
-      { id: 'lin', f: charge ? CURVES.linUp : CURVES.linDown, why: WHY.shape(), flag: 'shape' },
-      { id: 'slow', f: charge ? CURVES.slowUp : CURVES.slowDown, why: WHY.shape(), flag: 'shape' },
+      { id: 'other', f: charge ? CURVES.down : CURVES.up, why: WHY.direction(), flag: 'direction', nudge: NUDGE.direction() },
+      { id: 'lin', f: charge ? CURVES.linUp : CURVES.linDown, why: WHY.shape(), flag: 'shape', nudge: NUDGE.shape() },
+      { id: 'slow', f: charge ? CURVES.slowUp : CURVES.slowDown, why: WHY.shape(), flag: 'shape', nudge: NUDGE.shape() },
       { id: 'step', pts: charge ? STEPUP : STEPDOWN, why: WHY.jump(), flag: 'jump' },
     ],
     I: (charge) => [
       { id: 'exp', f: CURVES.down },
-      { id: 'rise', f: CURVES.up, why: charge ? WHY.current() : WHY.start(), flag: charge ? 'current' : 'start' },
-      { id: 'hump', f: CURVES.hump, why: WHY.start(), flag: 'start' },
-      { id: 'lin', f: CURVES.linDown, why: WHY.shape(), flag: 'shape' },
-      { id: 'const', pts: CONST, why: WHY.constant(), flag: 'shape' },
+      { id: 'rise', f: CURVES.up, why: charge ? WHY.current() : WHY.start(), flag: charge ? 'current' : 'start', nudge: charge ? NUDGE.current() : NUDGE.start() },
+      { id: 'hump', f: CURVES.hump, why: WHY.start(), flag: 'start', nudge: NUDGE.start() },
+      { id: 'lin', f: CURVES.linDown, why: WHY.shape(), flag: 'shape', nudge: NUDGE.shape() },
+      { id: 'const', pts: CONST, why: WHY.constant(), flag: 'shape', nudge: NUDGE.constant() },
     ],
   };
   // U_R = R·I follows the current: while charging it is the rest, U₀ − U_C; while discharging the
   // resistor is connected straight across the capacitor, U_R = U_C
   LISTS.R = (charge) => LISTS.I(charge).map((c) => (c.id !== 'rise' ? c : charge
-    ? { ...c, why: L('That is $\\Delta V_C$. Across the resistor is the rest, $\\Delta V_R = \\Delta V_0 - \\Delta V_C = R\\cdot I$: it follows the current.', 'Das ist $U_C$. Über dem Widerstand liegt der Rest, $U_R = U_0 - U_C = R\\cdot I$: Sie folgt dem Strom.') }
-    : { ...c, why: L('While discharging, the resistor is connected straight across the capacitor: $\\Delta V_R = \\Delta V_C$, which falls. A rising curve would be charging.', 'Beim Entladen ist der Widerstand direkt an den Kondensator angeschlossen: $U_R = U_C$, und das nimmt ab. Eine steigende Kurve wäre Laden.'), flag: 'direction' }));
+    ? { ...c, why: L('That is $\\Delta V_C$. Across the resistor is the rest, $\\Delta V_R = \\Delta V_0 - \\Delta V_C = R\\cdot I$: it follows the current.', 'Das ist $U_C$. Über dem Widerstand liegt der Rest, $U_R = U_0 - U_C = R\\cdot I$: Sie folgt dem Strom.'),
+      nudge: L(`That is $\\Delta V_C$. ${NUDGE.loop(true)}`, `Das ist $U_C$. ${NUDGE.loop(true)}`) }
+    : { ...c, why: L('While discharging, the resistor is connected straight across the capacitor: $\\Delta V_R = \\Delta V_C$, which falls. A rising curve would be charging.', 'Beim Entladen ist der Widerstand direkt an den Kondensator angeschlossen: $U_R = U_C$, und das nimmt ab. Eine steigende Kurve wäre Laden.'), flag: 'direction',
+      nudge: L('While discharging: how is the resistor connected to the capacitor, and what does the capacitor voltage do?', 'Beim Entladen: Wie ist der Widerstand mit dem Kondensator verbunden, und was macht die Kondensatorspannung?') }));
 
   const SITUATION = {
     charge: () => L('An uncharged capacitor $C$ is connected through a resistor $R$ to a battery with voltage $\\Delta V_0$. At $t = 0$ the switch S is closed.', 'Ein ungeladener Kondensator $C$ ist über einen Widerstand $R$ mit einer Batterie der Spannung $U_0$ verbunden. Bei $t = 0$ wird der Schalter S geschlossen.'),
@@ -482,13 +509,14 @@
       }[moment];
       const LOOP = charge ? L('Across the resistor is the rest: $\\Delta V_R = \\Delta V_0 - \\Delta V_C$, not $\\Delta V_C$ itself.', 'Über dem Widerstand liegt der Rest: $U_R = U_0 - U_C$, nicht $U_C$ selbst.')
         : L('While discharging there is no battery: the resistor is connected straight across the capacitor, $\\Delta V_R = \\Delta V_C$.', 'Beim Entladen gibt es keine Batterie: Der Widerstand ist direkt an den Kondensator angeschlossen, $U_R = U_C$.');
+      const loopNudge = NUDGE.loop(charge);
       const START = L('That is the current at the start, $I_0 = \\Delta V_0/R$. Since then it has fallen, with the voltage across the resistor.', 'Das ist der Strom am Anfang, $I_0 = U_0/R$. Seither hat er abgenommen, mit der Spannung über dem Widerstand.');
       const urF = numF('UR', Vs('R'), 'V', L('across the resistor', 'über dem Widerstand'), UR, moment === 'start' ? [] : moment === 'fromI' ? [{ value: I / R, why: ohm, flag: null }]
-        : charge ? [{ value: UC, why: LOOP, flag: 'loop' }, { value: U0, why: START, flag: 'loop' }] : [{ value: U0 - UC, why: LOOP, flag: 'direction' }, { value: U0, why: START, flag: 'loop' }]);
+        : charge ? [{ value: UC, why: LOOP, flag: 'loop', nudge: loopNudge }, { value: U0, why: START, flag: 'loop' }] : [{ value: U0 - UC, why: LOOP, flag: 'direction', nudge: loopNudge }, { value: U0, why: START, flag: 'loop' }]);
       const second = moment === 'fromI'
-        ? numF('UC', Vs('C'), 'V', L('across the capacitor', 'über dem Kondensator'), UC, [{ value: charge ? UR : U0 - UR, why: LOOP, flag: charge ? 'loop' : 'direction' }])
+        ? numF('UC', Vs('C'), 'V', L('across the capacitor', 'über dem Kondensator'), UC, [{ value: charge ? UR : U0 - UR, why: LOOP, flag: charge ? 'loop' : 'direction', nudge: loopNudge }])
         : numF('I', 'I', 'mA', L('current', 'Strom'), I, moment === 'start' ? [{ value: U0 * R, why: ohm, flag: null }]
-          : [{ value: charge ? UC / R : (U0 - UC) / R, why: charge ? WHY.current() : LOOP, flag: charge ? 'current' : 'direction' }, { value: U0 / R, why: START, flag: 'loop' }]);
+          : [{ value: charge ? UC / R : (U0 - UC) / R, why: charge ? WHY.current() : LOOP, flag: charge ? 'current' : 'direction', nudge: charge ? NUDGE.current() : loopNudge }, { value: U0 / R, why: START, flag: 'loop' }]);
       const solution = [];
       if (moment === 'start') {
         solution.push(step(L('Right after switching', 'Unmittelbar nach dem Schalten'), p$(charge
@@ -557,7 +585,8 @@
           p$(`${charge ? L('Read the half-life $T_{1/2}$ (the time until the capacitor is charged to $\\Delta V_0/2$),', 'Lies die Halbwertszeit $T_{1/2}$ ab (die Zeit, bis der Kondensator auf $U_0/2$ geladen ist)') : L('Read the half-life $T_{1/2}$,', 'Lies die Halbwertszeit $T_{1/2}$ ab')} ${askText}`) +
           p$(`<span class="note">${L('Point at the graph to read its coordinates.', 'Zeige auf den Graphen, um seine Koordinaten abzulesen.')}</span>`),
         fields: [
-          numF('th', 'T_{1/2}', unit, L('half-life', 'Halbwertszeit'), th, [{ value: tau, why: WHY_TAU(), flag: 'half' }, { value: t2, why: L(`At $t = ${tq(t2, unit)}$ the voltage is $${frac}\\,\\Delta V_0$: that is $${k}\\,T_{1/2}$.`, `Bei $t = ${tq(t2, unit)}$ ist die Spannung $${frac}\\,U_0$: Das ist $${k}\\,T_{1/2}$.`), flag: null }], 0.08),
+          numF('th', 'T_{1/2}', unit, L('half-life', 'Halbwertszeit'), th, [{ value: tau, why: WHY_TAU(), flag: 'half' }, { value: t2, why: L(`At $t = ${tq(t2, unit)}$ the voltage is $${frac}\\,\\Delta V_0$: that is $${k}\\,T_{1/2}$.`, `Bei $t = ${tq(t2, unit)}$ ist die Spannung $${frac}\\,U_0$: Das ist $${k}\\,T_{1/2}$.`), flag: null,
+            nudge: L(`At $t = ${tq(t2, unit)}$ the voltage is $${frac}\\,\\Delta V_0$, not $\\Delta V_0/2$. Where does the curve reach $\\Delta V_0/2$?`, `Bei $t = ${tq(t2, unit)}$ ist die Spannung $${frac}\\,U_0$, nicht $U_0/2$. Wo erreicht die Kurve $U_0/2$?`) }], 0.08),
           second,
         ],
         figure: () => readGraph(p, tau, { levels: [{ y: U0 }], read: 'xy' }),

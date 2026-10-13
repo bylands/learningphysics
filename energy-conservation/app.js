@@ -261,7 +261,8 @@
     const o = ex.options[Number(sel.value)];
     sel.closest('.choice').classList.add(o.correct ? 'ok' : 'bad');
     fb.className = `fb choice-fb ${o.correct ? 'ok' : 'bad'}`;
-    fb.innerHTML = o.correct ? ui().correct : o.why || ui().wrong;
+    // a wrong option: a nudge while the exercise is open, where its reason would give the answer away
+    fb.innerHTML = o.correct ? ui().correct : (!st.solved && !st.revealed && o.nudge) || o.why || ui().wrong;
     math(fb);
     return !!o.correct;
   }

@@ -62,7 +62,7 @@
     const near = (y, tol = q.tol, abs = q.abs) => Math.abs(y - v) <= Math.max(tol * Math.abs(v), abs || 0) + 1e-12;
     if (near(x) || (q.scale !== 1 && near(x / q.scale))) return { cls: 'ok', msg: ui().correct };
     for (const w of q.wrong || []) {
-      if (Math.abs(x - w.value) <= Math.max(0.02 * Math.abs(w.value), q.abs || 0) || (q.scale !== 1 && Math.abs(x / q.scale - w.value) <= 0.02 * Math.abs(w.value))) return { cls: 'bad', msg: w.why, tag: w.tag };
+      if (Math.abs(x - w.value) <= Math.max(0.02 * Math.abs(w.value), q.abs || 0) || (q.scale !== 1 && Math.abs(x / q.scale - w.value) <= 0.02 * Math.abs(w.value))) return { cls: 'bad', msg: w.why, tag: w.tag, nudge: w.nudge };
     }
     if (near(-x)) return { cls: 'warn', msg: ui().sign };
     if (near(x / 1000) || near(x * 1000)) return { cls: 'warn', msg: ui().prefix };
@@ -96,13 +96,15 @@
     return out;
   }
   // Marks every answer; true if all are right, null if one is missing.
-  // While the exercise is open, a wrong answer gets a nudge, not the solution: the steps of the
-  // solution are taken out of its explanation, and single statements or missed options are not marked.
+  // While the exercise is open, a wrong answer gets a nudge, not the solution: its own nudge where it
+  // has one (its explanation would give the answer away), else the explanation with the steps of the
+  // solution taken out; single statements or missed options are not marked.
   function feedback() {
     let all = true, missing = false;
     const done = st && (st.solved || st.revealed);
-    const nudge = (w) => {
+    const nudge = (w, n) => {
       if (done) return w;
+      if (n) return n;
       let t = w || '';
       for (const s of ex.solution) if (s) t = t.split(s).join('');
       t = t.replace(/\s+/g, ' ').trim();
@@ -114,7 +116,7 @@
         if (!raw.trim()) { all = false; missing = true; row.className = 'field'; row.querySelector('.fb').textContent = ''; continue; }
         const r = judge(parse(raw), q);
         row.className = `field ${r.cls}`;
-        row.querySelector('.fb').innerHTML = r.cls === 'bad' && r.tag ? nudge(r.msg) : r.msg;
+        row.querySelector('.fb').innerHTML = r.cls === 'bad' && r.tag ? nudge(r.msg, r.nudge) : r.msg;
         if (r.cls !== 'ok') all = false;
         continue;
       }
@@ -136,14 +138,14 @@
         inputs.forEach((x) => {
           const o = q.options[Number(x.value)], el = x.closest('.cand');
           el.classList.remove('ok', 'bad');
-          if (x.checked) { el.classList.add(o.ok ? 'ok' : 'bad'); if (!o.ok) { notes.push(nudge(o.why)); all = false; } }
+          if (x.checked) { el.classList.add(o.ok ? 'ok' : 'bad'); if (!o.ok) { notes.push(nudge(o.why, o.nudge)); all = false; } }
         });
         $(`[data-fb="${q.key}"]`).innerHTML = notes.map((n) => `<li>${n}</li>`).join('');
         continue;
       }
       const o = q.options[on[0]], row = $(`.qrow[data-key="${q.key}"]`);
       row.className = `qrow ${o.ok ? 'ok' : 'bad'}`;
-      row.querySelector('.fb').innerHTML = o.ok ? ui().correct : nudge(o.why);
+      row.querySelector('.fb').innerHTML = o.ok ? ui().correct : nudge(o.why, o.nudge);
       if (!o.ok) all = false;
     }
     return all ? true : missing && !document.querySelector('#fields .field.bad, #fields .field.warn, .qrow.bad, .cand.bad, .stmts li.bad, .stmts-fb:not(:empty)') ? null : false;

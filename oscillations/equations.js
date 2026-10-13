@@ -82,6 +82,14 @@
     omegaT: () => L('That is the angular frequency ω, not the period. One period is the time for the phase ω·t to grow by 2π: T = 2π/ω.', 'Das ist die Kreisfrequenz ω, nicht die Periode. Eine Periode ist die Zeit, in der die Phase ω·t um 2π wächst: T = 2π/ω.'),
   };
 
+  // the nudges after such a wrong period in practice (PWHY stays for the check's explanation)
+  const PNUDGE = {
+    omega2: () => L('Compare with ÿ = −ω²·y: does ω or ω² stand there?', 'Vergleiche mit ÿ = −ω²·y: Steht dort ω oder ω²?'),
+    inverse: () => L('How are T and ω related? Bring the equation into the form ÿ = −ω²·y first (divide by the factor in front of ÿ) and read off ω.', 'Wie hängen T und ω zusammen? Bring die Gleichung zuerst in die Form ÿ = −ω²·y (teile durch den Faktor vor ÿ) und lies ω ab.'),
+    freq: () => L('That is the frequency f = ω/(2π), the number of oscillations per second. How is the period related to it?', 'Das ist die Frequenz f = ω/(2π), die Anzahl Schwingungen pro Sekunde. Wie hängt die Periode mit ihr zusammen?'),
+    omegaT: () => L('That is the angular frequency ω, not the period. In what time does the phase ω·t grow by 2π?', 'Das ist die Kreisfrequenz ω, nicht die Periode. In welcher Zeit wächst die Phase ω·t um 2π?'),
+  };
+
   const cos = Math.cos, sin = Math.sin, exp = Math.exp;
   const harmonic = (P, w, y0 = 0) => ({ order: 2, acc: (y) => -w * w * (y - y0) });
   // the usual wrong periods for ω = c, as ODE (ω² read as ω) or as solution (ω taken for T)
@@ -185,6 +193,6 @@
   // (g: the shifted equilibrium g/c² between 2 and 3, away from the start at 1)
   const numbers = (r) => { const c = 0.8 + 1.4 * r(); return { c, A: 1, m: 0.5 + r(), D: 2 + 4 * r(), g: c * c * (2 + r()), gamma: 0.2 + 0.3 * r(), B: 0.5 + r(), C1: 0.6 + r(), C2: 0.3 + r(), phi: 0.4 + r() }; };
 
-  root.Equations = { VARS, CONSTS, MISTAKES, PWHY, FORMS, byId, make, sym, tex, symbols, trace, numbers };
+  root.Equations = { VARS, CONSTS, MISTAKES, PWHY, PNUDGE, FORMS, byId, make, sym, tex, symbols, trace, numbers };
   if (typeof module !== 'undefined') module.exports = root.Equations;
 })(typeof window !== 'undefined' ? window : globalThis);

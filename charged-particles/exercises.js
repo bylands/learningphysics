@@ -8,7 +8,9 @@
 //   { type: 'pick', key, label, options: [{ html, ok, why, tag }] }           one of four drawings
 //   { type: 'choice', key, label, options: [{ label, ok, why, tag }] }        one of a few values
 //   { type: 'multi', key, label, statements: [{ html, ok, why }] }            statements to tick
-// tag: the wrong idea behind a wrong option (app.js names them in the check).
+// tag: the wrong idea behind a wrong option (app.js names them in the check). A wrong option may
+// also carry a nudge: the feedback in practice while the exercise is open, where its why would
+// give the answer away (the why is shown in the check and once the exercise is solved).
 // The types:
 //   accel, accel-compare, stop, ev   the acceleration voltage: |q|·U = ΔE_kin, electronvolts
 //   deflect-path, deflect-compare    a charge flying into a capacitor: its path; two deflections
@@ -53,12 +55,12 @@
   const fac = (x) => (whole(x) ? frac(x) : x > 1 ? `×√${Math.round(x * x)}` : `×1/√${Math.round(1 / (x * x))}`);
   const rootable = (x) => whole(x) || [2, 3, 6].some((n) => Math.abs(x * x - n) < 1e-9 || Math.abs(x * x - 1 / n) < 1e-9);
   const FILL = [2, 0.5, 4, 0.25, 1, 3, 1 / 3, 8, 1 / 8, 6, 1 / 6];
-  // four factors: the right one, the tempting ones ([x, why, tag], each one mistake), fillers
+  // four factors: the right one, the tempting ones ([x, why, tag, nudge], each one mistake), fillers
   function factors(right, tempt, how) {
     const out = [{ x: right, ok: true }];
-    for (const [x, why, tag] of tempt) if (out.length < 4 && rootable(x) && !out.some((o) => Math.abs(o.x - x) < 1e-9)) out.push({ x, why, tag });
+    for (const [x, why, tag, nudge] of tempt) if (out.length < 4 && rootable(x) && !out.some((o) => Math.abs(o.x - x) < 1e-9)) out.push({ x, why, tag, ...(nudge ? { nudge } : {}) });
     for (const x of FILL) if (out.length < 4 && !out.some((o) => Math.abs(o.x - x) < 1e-9)) out.push({ x, why: how, tag: 'other' });
-    return out.sort((p, q) => p.x - q.x).map((o) => ({ label: fac(o.x), ok: !!o.ok, why: o.ok ? '' : o.why, tag: o.tag }));
+    return out.sort((p, q) => p.x - q.x).map((o) => ({ label: fac(o.x), ok: !!o.ok, why: o.ok ? '' : o.why, tag: o.tag, ...(o.nudge ? { nudge: o.nudge } : {}) }));
   }
   // the options of a value: the right one and the mistakes ({ value, tag, why }), apart by 15 %,
   // then multiples of the right one (extra) with how, the working, as their reason; sorted
@@ -72,8 +74,8 @@
   }
   const tiles = (key2, label, options, multi = false) => ({ type: 'tiles', key: key2, label, multi, options });
   const choice = (key2, label, options) => ({ type: 'choice', key: key2, label, options });
-  // word options: [label, right?, why, tag]
-  const words = (r, list) => r.shuffle(list.map(([label, ok, why, tag]) => ({ label, ok, why: ok ? '' : why, tag: ok ? undefined : tag })));
+  // word options: [label, right?, why, tag, nudge]
+  const words = (r, list) => r.shuffle(list.map(([label, ok, why, tag, nudge]) => ({ label, ok, why: ok ? '' : why, tag: ok ? undefined : tag, ...(nudge && !ok ? { nudge } : {}) })));
   const cmpTable = (heads, rows) => `<table class="cmp"><thead><tr><th></th>${heads.map((h) => `<th>${h}</th>`).join('')}</tr></thead><tbody>${rows.map(([n, ...v]) => `<tr><th>${n}</th>${v.map((x) => `<td>${x}</td>`).join('')}</tr>`).join('')}</tbody></table>`;
   const times = (f, sym) => (Math.abs(f - 1) < 1e-9 ? it(sym) : f > 1 ? `${nice(f)}${it(sym)}` : `${it(sym)}/${nice(1 / f)}`);
 
@@ -118,17 +120,21 @@
       qk = L(`(c) For ${n === 0.5 ? 'half the' : n === 2 ? 'twice the' : 'three times the'} speed, the voltage needed is`, `(c) Für ${n === 0.5 ? 'die halbe' : n === 2 ? 'die doppelte' : 'die dreifache'} Geschwindigkeit braucht es die Spannung`);
       rightK = n * n;
       howK = L(`v ∝ √|ΔV|, so |ΔV| ∝ v²: ${sq(n)} times the speed needs ${sq(n * n)} times the voltage.`, `v ∝ √U, also U ∝ v²: Die ${sq(n)}-fache Geschwindigkeit braucht die ${sq(n * n)}-fache Spannung.`);
-      temptK = [[n, L(`The energy goes with the square of the speed. ${howK}`, `Die Energie geht mit dem Quadrat der Geschwindigkeit. ${howK}`), 'sqrt'], [Math.sqrt(n), L(`Upside down. ${howK}`, `Umgekehrt. ${howK}`), 'sqrt']];
+      temptK = [[n, L(`The energy goes with the square of the speed. ${howK}`, `Die Energie geht mit dem Quadrat der Geschwindigkeit. ${howK}`), 'sqrt',
+        L('How does the speed depend on the voltage? Start from ½·m·v² = |q·ΔV|.', 'Wie hängt die Geschwindigkeit von der Spannung ab? Geh von ½·m·v² = |q|·U aus.')],
+      [Math.sqrt(n), L(`Upside down. ${howK}`, `Umgekehrt. ${howK}`), 'sqrt', L('Check the way round: the question asks for the voltage for a given speed.', 'Prüfe die Richtung: Gefragt ist die Spannung für eine gegebene Geschwindigkeit.')]];
     } else if (ask === 'E') {
       qk = L(`(c) With ${OFU[n][0]}, its kinetic energy would be`, `(c) Mit ${OFU[n][1]} wäre seine kinetische Energie`);
       rightK = n;
       howK = L(`E_kin = |q·ΔV|: the energy is proportional to the voltage, ×${sq(n)}.`, `E_kin = |q|·U: Die Energie ist proportional zur Spannung, ×${sq(n)}.`);
-      temptK = [[Math.sqrt(n), L(`The square root belongs to the speed, not to the energy. ${howK}`, `Die Wurzel gehört zur Geschwindigkeit, nicht zur Energie. ${howK}`), 'sqrt'], [n * n, howK, 'other']];
+      temptK = [[Math.sqrt(n), L(`The square root belongs to the speed, not to the energy. ${howK}`, `Die Wurzel gehört zur Geschwindigkeit, nicht zur Energie. ${howK}`), 'sqrt',
+        L('How does the energy the field gives depend on the voltage?', 'Wie hängt die Energie, die das Feld liefert, von der Spannung ab?')], [n * n, howK, 'other']];
     } else {
       qk = L(`(c) With ${OFU[n][0]}, its speed would be`, `(c) Mit ${OFU[n][1]} wäre seine Geschwindigkeit`);
       rightK = Math.sqrt(n);
       howK = L(`${cap(OFU[n][0])}: ${sq(n)} times the energy; ½·m·v² changes ×${sq(n)}, so v changes ×${sq(Math.sqrt(n))}.`, `Mit ${OFU[n][1]} die ${sq(n)}-fache Energie: ½·m·v² ändert sich ×${sq(n)}, also ändert sich v ×${sq(Math.sqrt(n))}.`);
-      temptK = [[n, L(`The energy grows with the voltage, the speed only with its square root. ${howK}`, `Die Energie wächst mit der Spannung, die Geschwindigkeit nur mit ihrer Wurzel. ${howK}`), 'sqrt'], [n * n, howK, 'sqrt']];
+      temptK = [[n, L(`The energy grows with the voltage, the speed only with its square root. ${howK}`, `Die Energie wächst mit der Spannung, die Geschwindigkeit nur mit ihrer Wurzel. ${howK}`), 'sqrt',
+        L('That is the factor of the energy. How does the speed follow from the energy?', 'Das ist der Faktor der Energie. Wie folgt die Geschwindigkeit aus der Energie?')], [n * n, howK, 'sqrt']];
     }
     const zWhy = (how) => L(`An alpha particle has the charge 2e. ${how}`, `Ein Alphateilchen hat die Ladung 2e. ${how}`);
     return {
@@ -136,7 +142,7 @@
       text: L(`<p>${cap(pt.name())}, at rest at first, is accelerated through a voltage of ${inV(U)}.</p>`, `<p>${cap(pt.name())}, zuerst in Ruhe, wird mit einer Spannung von ${inV(U)} beschleunigt.</p>`),
       figs: fig(accelFig({ q: pt.q, sym: pt.sym })),
       questions: [
-        choice('E', L('(a) its kinetic energy', '(a) seine kinetische Energie'), values(Ek, z === 2 ? [{ value: U, tag: 'charge', why: zWhy(howE) }] : [{ value: U / 2, tag: 'half', why: L(`No ½ here: ½·m·v² is the kinetic energy, |q·ΔV| the work that gives it. ${howE}`, `Hier kein ½: ½·m·v² ist die kinetische Energie, |q|·U die Arbeit, die sie liefert. ${howE}`) }], inEV, howE)),
+        choice('E', L('(a) its kinetic energy', '(a) seine kinetische Energie'), values(Ek, z === 2 ? [{ value: U, tag: 'charge', why: zWhy(howE) }] : [{ value: U / 2, tag: 'half', why: L(`No ½ here: ½·m·v² is the kinetic energy, |q·ΔV| the work that gives it. ${howE}`, `Hier kein ½: ½·m·v² ist die kinetische Energie, |q|·U die Arbeit, die sie liefert. ${howE}`), nudge: L('Where does your factor ½ come from? What work does the field do on the charge?', 'Woher kommt dein Faktor ½? Welche Arbeit verrichtet das Feld an der Ladung?') }], inEV, howE)),
         choice('J', L('(b) the same energy in joules', '(b) dieselbe Energie in Joule'), values(J, [...(Ek >= 1e3 ? [{ value: J / 1e3, tag: 'unit', why: L(`Mind the prefix: 1 keV = 1000 eV. ${howJ}`, `Achte auf den Vorsatz: 1 keV = 1000 eV. ${howJ}`) }] : []), ...(z === 2 ? [{ value: U * e0, tag: 'charge', why: zWhy(howJ) }] : [])], (x) => `${sci(x)} J`, howJ, [10, 0.1, 2, 0.5])),
         choice('k', qk, factors(rightK, temptK, howK)),
       ],
@@ -156,9 +162,11 @@
       text: L(`<p>${cap(L(...a[1]))} and ${L(...b[1])} are both accelerated from rest through ${inV(U)}. (Masses: ${a[3]} u and ${b[3]} u; charges: ${a[2]}e and ${b[2]}e.)</p>`, `<p>${cap(L(...a[1]))} und ${L(...b[1])} werden beide aus der Ruhe mit ${inV(U)} beschleunigt. (Massen: ${a[3]} u und ${b[3]} u; Ladungen: ${a[2]}e und ${b[2]}e.)</p>`), figs: '',
       questions: [
         choice('E', L(`(a) Compared with ${A}, the kinetic energy of ${B} is`, `(a) Verglichen mit ${A} ist die kinetische Energie von ${B}`),
-          factors(kE, [[b[3] / a[3], L(`The energy does not depend on the mass. ${howE}`, `Die Energie hängt nicht von der Masse ab. ${howE}`), 'mass'], [kE / (b[3] / a[3]), L(`The mass does not count for the energy. ${howE}`, `Die Masse zählt für die Energie nicht. ${howE}`), 'mass']], howE)),
+          factors(kE, [[b[3] / a[3], L(`The energy does not depend on the mass. ${howE}`, `Die Energie hängt nicht von der Masse ab. ${howE}`), 'mass', L('Does the energy the field gives depend on the mass of the particle?', 'Hängt die Energie, die das Feld liefert, von der Masse des Teilchens ab?')], [kE / (b[3] / a[3]), L(`The mass does not count for the energy. ${howE}`, `Die Masse zählt für die Energie nicht. ${howE}`), 'mass', L('Does the energy the field gives depend on the mass of the particle?', 'Hängt die Energie, die das Feld liefert, von der Masse des Teilchens ab?')]], howE)),
         choice('v', L(`(b) Compared with ${A}, the speed of ${B} is`, `(b) Verglichen mit ${A} ist die Geschwindigkeit von ${B}`),
-          factors(kv, [[kv * kv, L(`The speed goes with the square root of q/m. ${howV}`, `Die Geschwindigkeit geht mit der Wurzel aus q/m. ${howV}`), 'sqrt'], [1 / kv, L(`Upside down: more charge per mass, more speed. ${howV}`, `Gerade umgekehrt: mehr Ladung pro Masse, mehr Geschwindigkeit. ${howV}`), 'other'], [kE, L(`The same energy in a heavier particle is a smaller speed. ${howV}`, `Dieselbe Energie in einem schwereren Teilchen ist eine kleinere Geschwindigkeit. ${howV}`), 'mass']], howV)),
+          factors(kv, [[kv * kv, L(`The speed goes with the square root of q/m. ${howV}`, `Die Geschwindigkeit geht mit der Wurzel aus q/m. ${howV}`), 'sqrt', L('Solve ½·m·v² = |q·ΔV| for v: how do the charge and the mass enter?', 'Löse ½·m·v² = |q|·U nach v auf: Wie gehen Ladung und Masse ein?')],
+            [1 / kv, L(`Upside down: more charge per mass, more speed. ${howV}`, `Gerade umgekehrt: mehr Ladung pro Masse, mehr Geschwindigkeit. ${howV}`), 'other', L('Check the way round: which particle has more charge per mass, and is it faster or slower then?', 'Prüfe die Richtung: Welches Teilchen hat mehr Ladung pro Masse, und ist es dann schneller oder langsamer?')],
+            [kE, L(`The same energy in a heavier particle is a smaller speed. ${howV}`, `Dieselbe Energie in einem schwereren Teilchen ist eine kleinere Geschwindigkeit. ${howV}`), 'mass', L('That is the factor of the energy. How does the speed depend on the energy and the mass?', 'Das ist der Faktor der Energie. Wie hängt die Geschwindigkeit von der Energie und der Masse ab?')]], howV)),
       ],
       hints: [L('E_kin = |q·ΔV|.', 'E_kin = |q|·U.'), L('½·m·v² = |q·ΔV|, so v = √(2·|q·ΔV|/m).', '½·m·v² = |q|·U, also v = √(2·|q|·U/m).')],
       solution: [howE, howV], p: { a: a[0], b: b[0], U },
@@ -211,11 +219,13 @@
     const how = q ? L(`The force q·E is the same everywhere between the plates: towards the ${down > 0 ? 'upper' : 'lower'} plate, which is ${q > 0 ? 'negative' : 'positive'}. Like a ball thrown horizontally, the charge moves on a parabola, and it gets faster: the force does work on it.`, `Die Kraft q·E ist zwischen den Platten überall gleich: zur ${down > 0 ? 'oberen' : 'unteren'} Platte, die ${q > 0 ? 'negativ' : 'positiv'} ist. Wie ein waagrecht geworfener Ball bewegt sich die Ladung auf einer Parabel, und sie wird schneller: Die Kraft verrichtet Arbeit an ihr.`)
       : L('A neutral particle feels no electric force: it flies straight on.', 'Ein neutrales Teilchen spürt keine elektrische Kraft: Es fliegt geradeaus.');
     const W = { sign: L('This one bends the wrong way: a positive charge is pushed towards the negative plate, a negative one towards the positive plate.', 'Diese biegt falsch ab: Eine positive Ladung wird zur negativen Platte gedrückt, eine negative zur positiven.'), straight: L('The charge feels a force between the plates.', 'Die Ladung spürt zwischen den Platten eine Kraft.'), circle: L('A circle needs a force that turns with the motion, as in a magnetic field; here the force always points the same way: a parabola.', 'Ein Kreis braucht eine Kraft, die sich mit der Bewegung dreht, wie in einem Magnetfeld; hier zeigt die Kraft immer in dieselbe Richtung: eine Parabel.'), bent: L('A neutral particle is not deflected.', 'Ein neutrales Teilchen wird nicht abgelenkt.') };
+    // in practice, instead of the why where it says which path is right
+    const N = { sign: L('This one bends to the wrong side. What sign does the charge have, and which plate pulls it?', 'Diese biegt zur falschen Seite ab. Welches Vorzeichen hat die Ladung, und welche Platte zieht sie an?'), circle: L('A circle needs a force that turns with the motion. Does the force between the plates do that?', 'Ein Kreis braucht eine Kraft, die sich mit der Bewegung dreht. Tut das die Kraft zwischen den Platten?'), bent: L('What charge does this particle carry? Does it feel a force between the plates?', 'Welche Ladung trägt dieses Teilchen? Spürt es zwischen den Platten eine Kraft?') };
     return {
       kind: 'path', title: L('Into the capacitor', 'In den Kondensator'),
       text: L(`<p>${cap(pt.name())} flies horizontally into the field between two charged plates.</p>`, `<p>${cap(pt.name())} fliegt waagrecht in das Feld zwischen zwei geladenen Platten.</p>`),
       figs: fig(capFig({ top, q, sym: pt.sym, v: true, field: true })),
-      questions: [{ type: 'pick', key: 'p', label: L('Which drawing shows its path?', 'Welche Zeichnung zeigt seine Bahn?'), options: r.shuffle(opts).map((o) => ({ html: capFig({ top, q, sym: pt.sym, pts: o.pts, small: true }), ok: !!o.ok, tag: o.tag, why: o.ok ? '' : `${W[o.tag]} ${how}` })) }],
+      questions: [{ type: 'pick', key: 'p', label: L('Which drawing shows its path?', 'Welche Zeichnung zeigt seine Bahn?'), options: r.shuffle(opts).map((o) => ({ html: capFig({ top, q, sym: pt.sym, pts: o.pts, small: true }), ok: !!o.ok, tag: o.tag, why: o.ok ? '' : `${W[o.tag]} ${how}`, ...(!o.ok && N[o.tag] ? { nudge: N[o.tag] } : {}) })) }],
       hints: [chargeOf(pt), EFORCE(), L('The force between the plates has the same size and direction everywhere.', 'Die Kraft zwischen den Platten hat überall denselben Betrag und dieselbe Richtung.')],
       solution: [how], solFig: fig(capFig({ top, q, sym: pt.sym, pts: q ? para(down) : straight })), p: { q, top, pt: pt.id },
     };
@@ -252,11 +262,15 @@
     const how = L(`y = |q·ΔV|·L²/(2·m·d·v²): ${parts.join('; ')}. Together: ${frac(ky)}.`, `y = |q|·U·L²/(2·m·d·v²): ${parts.join('; ')}. Zusammen: ${frac(ky)}.`);
     const base = (zr / mr) * f.U / f.d;
     const tempt = [
-      [base * f.L ** 2 / f.v, L('The time between the plates, L/v, is squared: the speed counts squared.', 'Die Zeit zwischen den Platten, L/v, wird quadriert: Die Geschwindigkeit zählt quadratisch.'), 'square'],
-      [base * f.L / f.v ** 2, L('The length of the plates counts squared, like the time.', 'Die Länge der Platten zählt quadratisch, wie die Zeit.'), 'square'],
-      [zr * f.U * f.L ** 2 / (f.d * f.v ** 2), L('A heavier particle is accelerated less: divide by the mass.', 'Ein schwereres Teilchen wird weniger beschleunigt: durch die Masse teilen.'), 'mass'],
-      [(zr / mr) * f.U * f.L ** 2 * f.d / f.v ** 2, L('E = |ΔV|/d: a larger distance means a weaker field.', 'E = U/d: Ein grösserer Abstand bedeutet ein schwächeres Feld.'), 'other'],
-      [1 / ky, L('Upside down.', 'Gerade umgekehrt.'), 'other'],
+      [base * f.L ** 2 / f.v, L('The time between the plates, L/v, is squared: the speed counts squared.', 'Die Zeit zwischen den Platten, L/v, wird quadriert: Die Geschwindigkeit zählt quadratisch.'), 'square',
+        L('How does the deflection depend on the time between the plates, and how does that time depend on the speed?', 'Wie hängt die Ablenkung von der Zeit zwischen den Platten ab, und wie hängt diese Zeit von der Geschwindigkeit ab?')],
+      [base * f.L / f.v ** 2, L('The length of the plates counts squared, like the time.', 'Die Länge der Platten zählt quadratisch, wie die Zeit.'), 'square',
+        L('How does the time between the plates depend on their length, and how does the time enter the deflection?', 'Wie hängt die Zeit zwischen den Platten von ihrer Länge ab, und wie geht die Zeit in die Ablenkung ein?')],
+      [zr * f.U * f.L ** 2 / (f.d * f.v ** 2), L('A heavier particle is accelerated less: divide by the mass.', 'Ein schwereres Teilchen wird weniger beschleunigt: durch die Masse teilen.'), 'mass',
+        L('How does the acceleration across the plates depend on the mass?', 'Wie hängt die Beschleunigung quer zu den Platten von der Masse ab?')],
+      [(zr / mr) * f.U * f.L ** 2 * f.d / f.v ** 2, L('E = |ΔV|/d: a larger distance means a weaker field.', 'E = U/d: Ein grösserer Abstand bedeutet ein schwächeres Feld.'), 'other',
+        L('How does the field between the plates depend on their distance?', 'Wie hängt das Feld zwischen den Platten von ihrem Abstand ab?')],
+      [1 / ky, L('Upside down.', 'Gerade umgekehrt.'), 'other', L('Check the way round: the question compares B with A.', 'Prüfe die Richtung des Vergleichs: Gefragt ist B verglichen mit A.')],
     ];
     const howT = L(`Along the plates the speed stays the same: t = L/v, the length ${frac(f.L)}, the speed ${frac(f.v)}: ${frac(kt)}.`, `Längs der Platten bleibt die Geschwindigkeit gleich: t = L/v, die Länge ${frac(f.L)}, die Geschwindigkeit ${frac(f.v)}: ${frac(kt)}.`);
     const sideTxt = (x, q, fl) => `${cap(x)} ${q > 0 ? L('is positive', 'ist positiv') : L('is negative', 'ist negativ')}${fl ? L(', and the plates are swapped', ', und die Platten sind vertauscht') : ''}`;
@@ -277,7 +291,8 @@
       figs: fig(capFig({ top: 1, q: Math.sign(pa[3]), sym: pa[2], v: true, field: true, label: L('Experiment A', 'Versuch A') })),
       questions: [
         choice('y', L('(a) Compared with A, the deflection by the end of the plates in B is', '(a) Verglichen mit A ist die Ablenkung bis zum Ende der Platten in B'), factors(ky, tempt, how)),
-        choice('t', L('(b) Compared with A, the time the particle takes to pass the plates in B is', '(b) Verglichen mit A ist die Zeit, die das Teilchen in B für den Weg zwischen den Platten braucht,'), factors(kt, [[f.v / f.L, L('t = L/v: faster means less time.', 't = L/v: schneller bedeutet weniger Zeit.'), 'other'], [f.L / f.v ** 2, L('The speed counts once here, not squared.', 'Die Geschwindigkeit zählt hier einfach, nicht quadratisch.'), 'square']], howT)),
+        choice('t', L('(b) Compared with A, the time the particle takes to pass the plates in B is', '(b) Verglichen mit A ist die Zeit, die das Teilchen in B für den Weg zwischen den Platten braucht,'), factors(kt, [[f.v / f.L, L('t = L/v: faster means less time.', 't = L/v: schneller bedeutet weniger Zeit.'), 'other', L('Does a faster particle need more or less time between the plates?', 'Braucht ein schnelleres Teilchen mehr oder weniger Zeit zwischen den Platten?')],
+          [f.L / f.v ** 2, L('The speed counts once here, not squared.', 'Die Geschwindigkeit zählt hier einfach, nicht quadratisch.'), 'square', L('How does the time between the plates depend on the speed? Is there a square in it?', 'Wie hängt die Zeit zwischen den Platten von der Geschwindigkeit ab? Kommt darin ein Quadrat vor?')]], howT)),
         choice('s', L('(c) Compared with A, the particle in B is deflected', '(c) Verglichen mit A wird das Teilchen in B abgelenkt'), words(r, [[L('to the same side', 'zur selben Seite'), same, howS2, 'sign'], [L('to the other side', 'zur anderen Seite'), !same, howS2, 'sign']])),
       ],
       hints: [L('Along the plates the speed stays the same: t = L/v. Across them the particle accelerates evenly: a = |q|·E/m with E = |ΔV|/d.', 'Längs der Platten bleibt die Geschwindigkeit gleich: t = L/v. Quer dazu wird das Teilchen gleichmässig beschleunigt: a = |q|·E/m mit E = U/d.'), L('y = ½·a·t² = |q·ΔV|·L²/(2·m·d·v²): find the factor of each quantity.', 'y = ½·a·t² = |q|·U·L²/(2·m·d·v²): Bestimme den Faktor jeder Grösse.')],
@@ -291,6 +306,11 @@
     straight: () => L('A charge moving across a field is deflected.', 'Eine Ladung, die sich quer zum Feld bewegt, wird abgelenkt.'),
     bent: () => L('A neutral particle is not deflected.', 'Ein neutrales Teilchen wird nicht abgelenkt.'),
     parabola: () => L('That is the path in an electric field: there the force always points the same way. The magnetic force stays perpendicular to the velocity, so the path is a circle.', 'Das ist die Bahn in einem elektrischen Feld: Dort zeigt die Kraft immer in dieselbe Richtung. Die magnetische Kraft bleibt senkrecht zur Geschwindigkeit, also ist die Bahn ein Kreis.'),
+  };
+  // in practice, instead of the why where it says which path is right
+  const NUDGEP = {
+    bent: () => L('What charge does this particle carry? Does it feel a force in the field?', 'Welche Ladung trägt dieses Teilchen? Spürt es im Feld eine Kraft?'),
+    parabola: () => L('That is the path in an electric field, where the force always points the same way. How does the magnetic force point compared with the velocity?', 'Das ist die Bahn in einem elektrischen Feld, wo die Kraft immer in dieselbe Richtung zeigt. Wie steht die magnetische Kraft zur Geschwindigkeit?'),
   };
   const BOX = [-1, 6, -3.2, 3.2], REGION = [1, 6, -3.2, 3.2];
   function pathCircle(seed) {
@@ -310,7 +330,7 @@
       kind: 'path', title: L('A charge enters a field', 'Eine Ladung tritt in ein Feld ein'),
       text: L(`<p>${cap(pt.name())} flies to the right into a region with a uniform magnetic field ${dirName([0, 0, bz])}.</p>`, `<p>${cap(pt.name())} fliegt nach rechts in ein Gebiet mit einem homogenen Magnetfeld, das ${dirName([0, 0, bz])} zeigt.</p>`),
       figs: fig(pathFig({ ...base, pts: [[-0.6, y0], [0.4, y0]] })),
-      questions: [{ type: 'pick', key: 'p', label: L('Which drawing shows its path?', 'Welche Zeichnung zeigt seine Bahn?'), options: r.shuffle(opts).map((o) => ({ html: pathFig({ ...base, pts: o.pts, small: true }), ok: !!o.ok, tag: o.tag, why: o.ok ? '' : `${WHYP[o.tag]()} ${how}` })) }],
+      questions: [{ type: 'pick', key: 'p', label: L('Which drawing shows its path?', 'Welche Zeichnung zeigt seine Bahn?'), options: r.shuffle(opts).map((o) => ({ html: pathFig({ ...base, pts: o.pts, small: true }), ok: !!o.ok, tag: o.tag, why: o.ok ? '' : `${WHYP[o.tag]()} ${how}`, ...(!o.ok && NUDGEP[o.tag] ? { nudge: NUDGEP[o.tag]() } : {}) })) }],
       hints: [chargeOf(pt), RULE(), L('A force that is always perpendicular to the velocity changes only the direction of motion, not the speed: the path is a circle.', 'Eine Kraft, die immer senkrecht zur Geschwindigkeit steht, ändert nur die Bewegungsrichtung, nicht den Betrag: Die Bahn ist ein Kreis.')],
       solution: [how], solFig: fig(pathFig({ ...base, pts: q ? right : straight })), p: { q, bz, R, y0, pt: pt.id },
     };
@@ -333,11 +353,11 @@
       figs: fig(pathFig({ box: BOX, region: REGION, bz, q, sym: pt.sym, pts: [[-0.6, 0], [0.4, 0]], name: 'A' })) + fig(capFig({ top, q, sym: pt.sym, v: true, field: true, label: 'B' })),
       questions: [
         choice('m', L('(a) A: when it leaves the magnetic field, its speed is', '(a) A: Wenn es das Magnetfeld verlässt, ist seine Geschwindigkeit'), words(r, [[same, true, howM], [more, false, howM, 'work'], [less, false, howM, 'work'], [sign, false, signWhy(howM), 'sign']])),
-        choice('e', L('(b) B: when it leaves the plates, its speed is', '(b) B: Wenn es die Platten verlässt, ist seine Geschwindigkeit'), words(r, [[more, true, howE], [same, false, L(`Unlike the magnetic force, the electric force has a part along the motion here. ${howE}`, `Anders als die magnetische Kraft hat die elektrische hier einen Teil in Bewegungsrichtung. ${howE}`), 'efield'], [less, false, howE, 'efield'], [sign, false, signWhy(howE), 'sign']])),
+        choice('e', L('(b) B: when it leaves the plates, its speed is', '(b) B: Wenn es die Platten verlässt, ist seine Geschwindigkeit'), words(r, [[more, true, howE], [same, false, L(`Unlike the magnetic force, the electric force has a part along the motion here. ${howE}`, `Anders als die magnetische Kraft hat die elektrische hier einen Teil in Bewegungsrichtung. ${howE}`), 'efield', L('Does the electric force here have a part along the motion?', 'Hat die elektrische Kraft hier einen Teil in Bewegungsrichtung?')], [less, false, howE, 'efield'], [sign, false, signWhy(howE), 'sign']])),
         choice('why', L('(c) The magnetic field does not change its speed because the magnetic force', '(c) Das Magnetfeld ändert seine Geschwindigkeit nicht, weil die magnetische Kraft'), words(r, [
           [L('is always perpendicular to its velocity', 'immer senkrecht zu seiner Geschwindigkeit steht'), true, howM],
           [L('is too weak to change the speed', 'zu schwach ist, um die Geschwindigkeit zu ändern'), false, L(`A strong field only makes a tighter circle. ${howM}`, `Ein starkes Feld ergibt nur einen engeren Kreis. ${howM}`), 'work'],
-          [L('points along the field lines', 'längs der Feldlinien zeigt'), false, L(`The magnetic force is perpendicular to the field and to the velocity. ${howM}`, `Die magnetische Kraft steht senkrecht zum Feld und zur Geschwindigkeit. ${howM}`), 'perp'],
+          [L('points along the field lines', 'längs der Feldlinien zeigt'), false, L(`The magnetic force is perpendicular to the field and to the velocity. ${howM}`, `Die magnetische Kraft steht senkrecht zum Feld und zur Geschwindigkeit. ${howM}`), 'perp', L('Does the magnetic force really point along the field lines? Check with the hand rule.', 'Zeigt die magnetische Kraft wirklich längs der Feldlinien? Prüfe es mit der Handregel.')],
           [L('acts only at the edge of the field', 'nur am Rand des Feldes wirkt'), false, L(`It acts everywhere in the field: it bends the path all the way round. ${howM}`, `Sie wirkt überall im Feld: Sie biegt die Bahn den ganzen Weg. ${howM}`), 'perp']])),
         choice('turns', L('(d) If it stayed in the magnetic field for ten turns, its kinetic energy after them would be', '(d) Bliebe es zehn Umläufe lang im Magnetfeld, wäre seine kinetische Energie danach'), words(r, [
           [L('the same as at the start', 'gleich wie zu Beginn'), true, howM],
@@ -547,6 +567,7 @@
     const upperNeg = neg === 'upper', upperAsk = askPos ? !upperNeg : upperNeg;
     const wrongEdge = askPos ? L(`That edge becomes negative, the other one positive. ${how}`, `Dieser Rand wird negativ, der andere positiv. ${how}`)
       : L(`That is where the ${holes ? 'positive carriers' : 'electrons'} would go if they moved the other way. ${how}`, `Dorthin gingen die ${holes ? 'positiven Ladungsträger' : 'Elektronen'}, wenn sie sich in die andere Richtung bewegten. ${how}`);
+    const nudgeEdge = L('Check the hand rule again: which way do the carriers move, which way are they pushed, and what sign do they bring?', 'Prüfe die Handregel nochmals: Wohin bewegen sich die Ladungsträger, wohin werden sie gedrückt, und welches Vorzeichen bringen sie mit?');
     // (b) one of three: when the charge stops growing, the field across the strip, the other carriers
     const askB = r.pick(['stop', 'field', 'carriers']), posEdge = neg === 'upper' ? 'lower' : 'upper', Edir = [0, posEdge === 'upper' ? -1 : 1, 0];
     const carriers = holes ? L('positive carriers', 'positiven Ladungsträger') : L('electrons', 'Elektronen');
@@ -576,8 +597,8 @@
       figs: fig(hallFig({ I, bz })),
       questions: [
         choice('edge', askPos ? L('(a) Which part of the strip becomes positively charged?', '(a) Welcher Teil des Streifens wird positiv geladen?') : L('(a) Which part of the strip becomes negatively charged?', '(a) Welcher Teil des Streifens wird negativ geladen?'), words(r, [
-          [cap(edge('upper')), upperAsk, wrongEdge, 'hallsign'],
-          [cap(edge('lower')), !upperAsk, wrongEdge, 'hallsign'],
+          [cap(edge('upper')), upperAsk, wrongEdge, 'hallsign', nudgeEdge],
+          [cap(edge('lower')), !upperAsk, wrongEdge, 'hallsign', nudgeEdge],
           [cap(end), false, L(`The magnetic force is perpendicular to the motion of the charges: across the strip, not along it. ${how}`, `Die magnetische Kraft steht senkrecht zur Bewegung der Ladungen: quer zum Streifen, nicht längs. ${how}`), 'perp'],
           [L('No part: the charges only flow along the strip', 'Kein Teil: Die Ladungen fliessen nur längs des Streifens'), false, L(`The moving charges feel a magnetic force across the strip. ${how}`, `Die bewegten Ladungen spüren eine magnetische Kraft quer zum Streifen. ${how}`), 'none']])),
         qb,

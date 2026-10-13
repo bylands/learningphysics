@@ -1,6 +1,6 @@
 // Exercises and worked examples from the scenarios (see scenarios.js).
 // generate(level, seed, calc) gives { id, scenario, title, text, fields: [{ key, sym, unit, dec,
-// what, sense, value, senseValue, traps: [{ value, why, flag }] }], figure(view), hints, solution,
+// what, sense, value, senseValue, traps: [{ value, why, nudge, flag }] }], figure(view), hints, solution,
 // results } (for the links of earlier versions, which named a level); practiceOf(scenario, seed)
 // one of a given situation for practice, generateFor(scenario, seed, o) one for the check;
 // quiz(exercise, seed, keys) a multiple-choice question about one of its quantities;
@@ -25,12 +25,13 @@
   function exercise(scn, p) {
     const v = scn.solve(p);
     const why = (flag) => (scn.why && scn.why[flag] ? scn.why[flag]() : '');
-    const wrong = scn.traps.map((flag) => ({ vals: scn.solve(p, { [flag]: true }), why: why(flag), flag }));
+    const nudge = (flag) => (scn.nudge && scn.nudge[flag] ? scn.nudge[flag]() : '');
+    const wrong = scn.traps.map((flag) => ({ vals: scn.solve(p, { [flag]: true }), why: why(flag), nudge: nudge(flag), flag }));
     const fields = scn.fields(p).map((f) => ({
       ...f,
       value: f.sense ? Math.abs(v[f.key]) : v[f.key],
       senseValue: f.sense ? Math.sign(v[f.key]) : null,
-      traps: wrong.map((w) => ({ value: f.sense ? Math.abs(w.vals[f.key]) : w.vals[f.key], why: w.why, flag: w.flag }))
+      traps: wrong.map((w) => ({ value: f.sense ? Math.abs(w.vals[f.key]) : w.vals[f.key], why: w.why, nudge: w.nudge, flag: w.flag }))
         .filter((t) => Number.isFinite(t.value) && !same(t.value, f.sense ? Math.abs(v[f.key]) : v[f.key])),
     }));
     const steps = scn.steps(p, v);

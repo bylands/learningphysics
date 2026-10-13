@@ -19,7 +19,7 @@ const fail = (msg) => { failures++; if (failures < 30) console.error('  FAIL ' +
 const bad = (html) => /undefined|NaN|null|\[object|Infinity/.test(html);
 const eq = (a, b) => Math.abs(a - b) < 1e-9 * Math.max(1, Math.abs(b));
 
-const TYPES = ['lines-pV', 'lines-pT', 'lines-VT', 'match-pV', 'match-pT', 'match-VT', 'close-pV', 'close-pT', 'close-VT', 'statements-pV', 'statements-pT', 'statements-VT',
+const TYPES = ['lines-pV', 'lines-pT', 'lines-VT', 'match-pV', 'match-pT', 'match-VT', 'match-mix', 'close-pV', 'close-pT', 'close-VT', 'statements-pV', 'statements-pT', 'statements-VT',
   'switch-pV-pT', 'switch-pV-VT', 'switch-pT-pV', 'switch-VT-pV', 'switch-pT-VT', 'switch-VT-pT', 'draw-pV', 'draw-pT', 'draw-VT', 'error-pV', 'error-pT', 'error-VT', 'table'];
 const SEEDS = 120;
 

@@ -87,7 +87,7 @@
     if (Number.isNaN(x)) return { cls: 'bad', msg: ui().number };
     const e = f.value, near = (y, z, tol) => Math.abs(y - z) <= tol * Math.max(Math.abs(z), 1e-300);
     if (e === 0 ? Math.abs(x) < 1e-9 : near(x, e, 0.01) || CL.sig(x, 3) === CL.sig(e, 3) || CL.sig(x, 2) === CL.sig(e, 2)) return { cls: 'ok', msg: ui().correct };
-    for (const t of f.traps) if (near(x, t.value, 0.01)) return { cls: 'bad', msg: t.why };
+    for (const t of f.traps) if (near(x, t.value, 0.01)) return { cls: 'bad', msg: t.nudge || t.why };
     if (e !== 0 && near(-x, e, 0.01)) return { cls: 'warn', msg: ui().sign };
     if (e !== 0 && x !== 0) { const k = Math.log10(Math.abs(x / e)); if (Math.abs(k - Math.round(k)) < 0.005 && Math.round(k) !== 0) return { cls: 'warn', msg: ui().power }; }
     if (e !== 0 && near(x, e, 0.05)) return { cls: 'warn', msg: ui().close };
@@ -164,7 +164,7 @@
     if (f.type === 'rank') { const n = f.items.filter((it) => val[it] !== f.value[it]).length; return n ? { cls: 'bad', msg: ui().rankWrong(n) } : { cls: 'ok', msg: ui().correct }; }
     if (val === f.value) return { cls: 'ok', msg: ui().correct };
     const t = (f.traps || []).find((x) => x.value === val); // the answer of a typical wrong idea
-    return { cls: 'bad', msg: (t && t.why) || ui().wrong };
+    return { cls: 'bad', msg: (t && (t.nudge || t.why)) || ui().wrong };
   }
 
   function render() {

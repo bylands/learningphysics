@@ -151,7 +151,7 @@ for (const lang of ['en', 'de']) {
           if (f.after && !ex.fields.some((g) => g.key === f.after)) fail(`${id}: ${f.key} after nothing`);
         }
       });
-      [ex.title, ex.text, ex.results, ...ex.hints, ...ex.solution, ex.figure(), ex.solutionFigure(), ...ex.fields.flatMap((f) => (f.options || []).map((o) => o[1] + o[2]))].forEach((s, i) => checkText(id, `text ${i}`, s));
+      [ex.title, ex.text, ex.results, ...ex.hints, ...ex.solution, ex.figure(), ex.solutionFigure(), ...ex.fields.flatMap((f) => (f.options || []).map((o) => o[1] + o[2] + (o[4] || '')))].forEach((s, i) => checkText(id, `text ${i}`, s));
       ex.steps.forEach((s, i) => checkText(id, `frame ${i}`, ex.figure({ show: new Set(s.show || []) })));
       if (seed <= 80) {
         const qz = Osc.quiz(ex, seed);

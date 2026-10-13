@@ -3,14 +3,16 @@
 //   { id, type, difficulty, title, text, figs (HTML), questions, hints, solution (HTML paragraphs),
 //     solFig, p (what makes it new to the student) }
 // with questions of four kinds:
-//   { type: 'num', key, label, sym, unit, value, tol, abs, scale, wrong: [{ value, tag, why }] }
+//   { type: 'num', key, label, sym, unit, value, tol, abs, scale, wrong: [{ value, tag, why, nudge }] }
 //        a number in the unit shown (value in that unit, e.g. 4.62 for 4.62 · 10¹⁴ Hz with unit
 //        10¹⁴ Hz and scale 1e14: the full number 4.62e14 counts as well); tol: the relative error
 //        allowed, abs: an absolute one (for values read off a graph, or small differences); wrong: the results of typical mistakes, each with what went wrong
-//   { type: 'choice', key, label, options: [{ label, ok, why, tag }] }   one of a few answers
-//   { type: 'pick', key, label, options: [{ html, ok, why, tag }] }       one of a few drawings
+//   { type: 'choice', key, label, options: [{ label, ok, why, tag, nudge }] }   one of a few answers
+//   { type: 'pick', key, label, options: [{ html, ok, why, tag, nudge }] }       one of a few drawings
 //   { type: 'multi', key, statements: [{ html, ok, why }] }              statements to tick
-// The tags name the wrong idea behind an answer (the check's misconceptions, app.js).
+// The tags name the wrong idea behind an answer (the check's misconceptions, app.js). why explains
+// a wrong answer (in the check, and once solved); nudge, where why would give the answer away, is
+// shown instead while the exercise is open.
 // All numbers are in electronvolts and can be worked out in the head: the light is given by a
 // wavelength or a frequency whose photon energy is a round number of eV.
 // The types, by topic:
@@ -54,8 +56,8 @@
   const choice = (key, label, options) => ({ type: 'choice', key, label, options });
   const pick = (key, label, options) => ({ type: 'pick', key, label, options });
   const multi = (key, statements) => ({ type: 'multi', key, statements });
-  // options from [label, ok, why, tag], shuffled (or in the order given)
-  const opts = (r, list, keep) => { const o = list.map(([label, ok, why, tag]) => ({ label, ok, why: ok ? '' : why, tag: ok ? undefined : tag || 'other' })); return keep ? o : r.shuffle(o); };
+  // options from [label, ok, why, tag, nudge], shuffled (or in the order given)
+  const opts = (r, list, keep) => { const o = list.map(([label, ok, why, tag, nudge]) => ({ label, ok, why: ok ? '' : why, tag: ok ? undefined : tag || 'other', nudge: ok ? '' : nudge || '' })); return keep ? o : r.shuffle(o); };
 
   // ---------------------------------------------------------------- typical mistakes
   const WHY = {
@@ -63,6 +65,14 @@
     noW: () => L('That is the whole photon energy: part of it is needed to free the electron from the metal.', 'Das ist die ganze Photonenenergie: Ein Teil davon wird gebraucht, um das Elektron aus dem Metall zu lösen.'),
     addW: () => L('The work function is used up in freeing the electron: subtract it.', 'Die Austrittsarbeit wird beim Herauslösen des Elektrons verbraucht: Ziehe sie ab.'),
     bright: () => L('Brightness is the number of photons per second, not the energy of one photon.', 'Die Helligkeit ist die Zahl der Photonen pro Sekunde, nicht die Energie eines Photons.'),
+  };
+
+  // the nudges for them while the exercise is open
+  const NUDGE = {
+    inverse: () => L('Check the direction: does the photon energy get larger or smaller with a longer wavelength?', 'Prüfe die Richtung: Wird die Photonenenergie mit grösserer Wellenlänge grösser oder kleiner?'),
+    noW: () => L('Does the electron get the whole photon energy as kinetic energy? What does it cost to leave the metal?', 'Bekommt das Elektron die ganze Photonenenergie als kinetische Energie? Was kostet es, das Metall zu verlassen?'),
+    addW: () => L('Check the sign of the work function in the energy balance: does it give the electron energy, or cost it energy?', 'Prüfe das Vorzeichen der Austrittsarbeit in der Energiebilanz: Bringt sie dem Elektron Energie, oder kostet sie welche?'),
+    bright: () => L('What changes with brighter or dimmer light: the energy of each photon, or something else?', 'Was ändert sich bei hellerem oder schwächerem Licht: die Energie jedes Photons oder etwas anderes?'),
   };
 
   // ---------------------------------------------------------------- the wave model
@@ -90,10 +100,11 @@
       photon: () => L('Each photon brings h·f; what is left after the work function φ is the kinetic energy.', 'Jedes Photon bringt h·f; was nach der Austrittsarbeit W übrig bleibt, ist die kinetische Energie.'),
       wrong: [[() => L('Light of a higher frequency is always brighter.', 'Licht höherer Frequenz ist immer heller.'), 'intensity'], [() => L('Light of a higher frequency lowers the work function of the metal.', 'Licht höherer Frequenz senkt die Austrittsarbeit des Metalls.'), 'work']] },
   ];
-  // Observations that fit the wave model as well, with why they do.
+  // Observations that fit the wave model as well, with why they do (and, where that gives the
+  // answer away, a nudge for while the exercise is open).
   const FILLERS = [
-    [() => L('Brighter light releases more electrons per second.', 'Helleres Licht löst mehr Elektronen pro Sekunde aus.'), () => L('More light, more energy, more electrons: the wave model expects that too. What it gets wrong is the energy of each electron.', 'Mehr Licht, mehr Energie, mehr Elektronen: Das erwartet auch das Wellenmodell. Falsch liegt es bei der Energie jedes einzelnen Elektrons.')],
-    [() => L('Light can release electrons from a metal.', 'Licht kann Elektronen aus einem Metall lösen.'), () => L('A wave carries energy too; the puzzle is which light does it, and how fast.', 'Auch eine Welle trägt Energie; das Rätsel ist, welches Licht es tut, und wie schnell.')],
+    [() => L('Brighter light releases more electrons per second.', 'Helleres Licht löst mehr Elektronen pro Sekunde aus.'), () => L('More light, more energy, more electrons: the wave model expects that too. What it gets wrong is the energy of each electron.', 'Mehr Licht, mehr Energie, mehr Elektronen: Das erwartet auch das Wellenmodell. Falsch liegt es bei der Energie jedes einzelnen Elektrons.'), () => L('What would the wave model expect here? Does this observation fit a wave too?', 'Was würde das Wellenmodell hier erwarten? Passt diese Beobachtung auch zu einer Welle?')],
+    [() => L('Light can release electrons from a metal.', 'Licht kann Elektronen aus einem Metall lösen.'), () => L('A wave carries energy too; the puzzle is which light does it, and how fast.', 'Auch eine Welle trägt Energie; das Rätsel ist, welches Licht es tut, und wie schnell.'), () => L('Does a wave not carry energy too? Would the wave model expect this observation, then?', 'Trägt nicht auch eine Welle Energie? Würde das Wellenmodell diese Beobachtung also erwarten?')],
     [() => L('A large enough counter-voltage stops the photocurrent.', 'Eine genügend grosse Gegenspannung stoppt den Photostrom.'), () => L('Electrons with a limited energy are stopped by a large enough voltage in any model.', 'Elektronen mit begrenzter Energie werden in jedem Modell von einer genügend grossen Spannung gestoppt.')],
     [() => L('The released electrons are negatively charged.', 'Die ausgelösten Elektronen sind negativ geladen.'), () => L('That is a fact about electrons, not about light: it fits any model of light.', 'Das ist eine Tatsache über Elektronen, nicht über Licht: Sie passt zu jedem Modell des Lichts.')],
   ];
@@ -107,13 +118,13 @@
       questions: [
         choice('obs', L('(a) Which observation can the wave model of light not explain?', '(a) Welche Beobachtung kann das Wellenmodell des Lichts nicht erklären?'), opts(r, [
           [pz.obs(), true],
-          ...r.shuffle(FILLERS).slice(0, 3).map(([t, why]) => [t(), false, why(), 'wave']),
+          ...r.shuffle(FILLERS).slice(0, 3).map(([t, why, nudge]) => [t(), false, why(), 'wave', nudge ? nudge() : '']),
         ])),
         // (b) names the answer of (a): it is shown once (a) is right
         { ...choice('why', L(`(b) ${pz.obs()} How do photons explain it?`, `(b) ${pz.obs()} Wie erklären Photonen das?`), opts(r, [
           [pz.photon(), true],
           [pz.wave(), false, waveWhy, 'wave'],
-          ...pz.wrong.map(([t, tag]) => [t(), false, tag === 'intensity' ? WHY.bright() : L('The work function is a property of the metal: the light does not change it.', 'Die Austrittsarbeit ist eine Eigenschaft des Metalls: Das Licht ändert sie nicht.'), tag]),
+          ...pz.wrong.map(([t, tag]) => [t(), false, tag === 'intensity' ? WHY.bright() : L('The work function is a property of the metal: the light does not change it.', 'Die Austrittsarbeit ist eine Eigenschaft des Metalls: Das Licht ändert sie nicht.'), tag, tag === 'intensity' ? NUDGE.bright() : '']),
         ])), after: 'obs' },
       ],
       hints: [
@@ -155,18 +166,19 @@
     const r = rng(seed * 31 + 3), li = light(r), ch = r.pick(Object.keys(CHANGE)), k = CHANGE[ch].k;
     const bright = ch === 'bright' || ch === 'dim';
     const ans = (x) => ({ 2: L('twice the energy', 'die doppelte Energie'), 0.5: L('half the energy', 'die halbe Energie'), 1: L('the same energy', 'dieselbe Energie'), 4: L('four times the energy', 'die vierfache Energie') }[x]);
+    // [why, tag, nudge]
     const whyOf = (x) => {
-      if (bright) return [WHY.bright(), 'intensity'];
+      if (bright) return [WHY.bright(), 'intensity', NUDGE.bright()];
       if (x === 1) return [L('The colour of the light changes, and with it the energy of each photon.', 'Die Farbe des Lichts ändert sich und mit ihr die Energie jedes Photons.'), 'inverse'];
-      if (x === 1 / k) return [ch === 'freq' ? L('E = h·f: the energy is proportional to the frequency.', 'E = h·f: Die Energie ist proportional zur Frequenz.') : WHY.inverse(), 'inverse'];
-      return [L('E = h·c/λ = h·f: one factor 2, not two.', 'E = h·c/λ = h·f: ein Faktor 2, nicht zwei.'), 'other'];
+      if (x === 1 / k) return [ch === 'freq' ? L('E = h·f: the energy is proportional to the frequency.', 'E = h·f: Die Energie ist proportional zur Frequenz.') : WHY.inverse(), 'inverse', ch === 'freq' ? L('Check the direction: does the photon energy get larger or smaller with a higher frequency?', 'Prüfe die Richtung: Wird die Photonenenergie mit höherer Frequenz grösser oder kleiner?') : NUDGE.inverse()];
+      return [L('E = h·c/λ = h·f: one factor 2, not two.', 'E = h·c/λ = h·f: ein Faktor 2, nicht zwei.'), 'other', L('Does the wavelength (or the frequency) appear squared in the formula for the photon energy?', 'Kommt die Wellenlänge (oder die Frequenz) in der Formel für die Photonenenergie im Quadrat vor?')];
     };
     return {
       title: L('The energy of a photon', 'Die Energie eines Photons'),
       text: `<p>${L(`Light with ${li.given} falls on a screen.`, `Licht mit ${li.given} fällt auf einen Schirm.`)}</p>${CONST()}`,
       figs: li.nm >= 100 && li.nm <= 1000 ? fig(G.bar([{ nm: li.nm, label: `${plain(li.nm)} nm` }])) : '',
       questions: [
-        numQ('E', L('(a) the energy of one photon', '(a) die Energie eines Photons'), E, 'eV', li.eV, { tol: 0.015, wrong: li.f14 ? [] : [{ value: li.nm / HC, tag: 'inverse', why: WHY.inverse() }] }),
+        numQ('E', L('(a) the energy of one photon', '(a) die Energie eines Photons'), E, 'eV', li.eV, { tol: 0.015, wrong: li.f14 ? [] : [{ value: li.nm / HC, tag: 'inverse', why: WHY.inverse(), nudge: NUDGE.inverse() }] }),
         choice('k', L(`(b) The light is replaced by ${CHANGE[ch].text()}. One photon of it has, compared with before,`, `(b) Das Licht wird ersetzt durch ${CHANGE[ch].text()}. Ein Photon davon hat, verglichen mit vorher,`),
           opts(r, [2, 0.5, 1, 4].map((x) => (x === k ? [ans(x), true] : [ans(x), false, ...whyOf(x)])), true)),
       ],
@@ -202,9 +214,11 @@
       if (Ns.filter((n) => n > 0.8 * Ns[iN]).length > 1) continue; // a clear winner
       const tag = ['A', 'B', 'C'];
       const table = `<table class="data"><tr><th></th><th>${L('source', 'Quelle')}</th><th>${lam}</th><th>${i('P')}</th></tr>${srcs.map((s, k) => `<tr><td><b>${tag[k]}</b></td><td>${nameOf(s)}</td><td>${s.nm} nm</td><td>${s.mW} mW</td></tr>`).join('')}</table>`;
-      const qE = srcs.map((s, k) => [tag[k], k === iE, k === iP ? L('The power is the energy per second, not the energy of one photon. That depends only on the wavelength.', 'Die Leistung ist die Energie pro Sekunde, nicht die Energie eines Photons. Diese hängt nur von der Wellenlänge ab.') : WHY.inverse(), k === iP ? 'intensity' : 'inverse']);
+      const qE = srcs.map((s, k) => [tag[k], k === iE, k === iP ? L('The power is the energy per second, not the energy of one photon. That depends only on the wavelength.', 'Die Leistung ist die Energie pro Sekunde, nicht die Energie eines Photons. Diese hängt nur von der Wellenlänge ab.') : WHY.inverse(), k === iP ? 'intensity' : 'inverse',
+        k === iP ? L('Does the power tell you the energy of a single photon? On what does that depend?', 'Sagt die Leistung etwas über die Energie eines einzelnen Photons? Wovon hängt diese ab?') : NUDGE.inverse()]);
       qE.push([L('all the same', 'alle gleich'), false, L('Photons of different wavelengths carry different energies.', 'Photonen verschiedener Wellenlänge tragen verschiedene Energien.'), 'other']);
-      const qN = srcs.map((s, k) => [tag[k], k === iN, k === iE ? L('Energetic photons: the same power needs fewer of them. Compare P·λ, not the power alone.', 'Energiereiche Photonen: Für dieselbe Leistung braucht es weniger davon. Vergleiche P·λ, nicht nur die Leistung.') : L('Photons per second = power / photon energy: both matter.', 'Photonen pro Sekunde = Leistung / Photonenenergie: Beides zählt.'), k === iE ? 'inverse' : 'other']);
+      const qN = srcs.map((s, k) => [tag[k], k === iN, k === iE ? L('Energetic photons: the same power needs fewer of them. Compare P·λ, not the power alone.', 'Energiereiche Photonen: Für dieselbe Leistung braucht es weniger davon. Vergleiche P·λ, nicht nur die Leistung.') : L('Photons per second = power / photon energy: both matter.', 'Photonen pro Sekunde = Leistung / Photonenenergie: Beides zählt.'), k === iE ? 'inverse' : 'other',
+        k === iE ? L('This source has the most energetic photons. Does a given power then need more or fewer of them?', 'Diese Quelle hat die energiereichsten Photonen. Braucht es für eine bestimmte Leistung dann mehr oder weniger davon?') : '']);
       return {
         title: L('Energetic photons or many photons?', 'Energiereiche Photonen oder viele Photonen?'),
         text: `<p>${L('Three light sources:', 'Drei Lichtquellen:')}</p>${table}`,
@@ -234,7 +248,7 @@
       if (!out && r.next() < 0.6) continue; // mostly electrons released
       const yes = L('yes', 'ja'), no = L('no', 'nein');
       const qOut = choice('out', L('(a) Are electrons released?', '(a) Werden Elektronen ausgelöst?'), opts(r, [
-        [yes, out, L('Compare the energy of one photon with the work function: it is not enough.', 'Vergleiche die Energie eines Photons mit der Austrittsarbeit: Sie reicht nicht.'), 'threshold'],
+        [yes, out, L('Compare the energy of one photon with the work function: it is not enough.', 'Vergleiche die Energie eines Photons mit der Austrittsarbeit: Sie reicht nicht.'), 'threshold', L('Compare the energy of one photon with the work function.', 'Vergleiche die Energie eines Photons mit der Austrittsarbeit.')],
         [no, !out, L('Compare the energy of one photon with the work function.', 'Vergleiche die Energie eines Photons mit der Austrittsarbeit.'), 'other'],
         [L('only if the light is bright enough', 'nur wenn das Licht hell genug ist'), false, L('Each electron takes the energy of one photon. A brighter light gives more photons, not more energetic ones.', 'Jedes Elektron nimmt die Energie eines Photons auf. Helleres Licht liefert mehr Photonen, nicht energiereichere.'), 'intensity'],
         [L('only after the light has shone for a while', 'erst nachdem das Licht eine Weile geschienen hat'), false, L('An electron cannot collect the energy of several photons: one photon is enough at once, or never.', 'Ein Elektron kann die Energie mehrerer Photonen nicht sammeln: Ein Photon genügt sofort, oder nie.'), 'wave'],
@@ -243,16 +257,16 @@
       // (b) and (c) give (a) away (a kinetic energy to work out, or what would release electrons):
       // they are shown once (a) is right
       if (out) {
-        qs.push({ ...numQ('ek', L('(b) the kinetic energy of the fastest electrons', '(b) die kinetische Energie der schnellsten Elektronen'), `${EkMax}`, 'eV', ek, { tol: 0.02, abs: 0.012, wrong: [{ value: eV, tag: 'noW', why: WHY.noW() }, { value: eV + m.W, tag: 'addW', why: WHY.addW() }] }), after: 'out' });
-        qs.push({ ...numQ('U0', L('(c) the stopping voltage', '(c) die Gegenspannung'), U0, 'V', ek, { tol: 0.02, abs: 0.012, wrong: [{ value: eV, tag: 'noW', why: WHY.noW() }, { value: eV + m.W, tag: 'addW', why: WHY.addW() }] }), after: 'out' });
+        qs.push({ ...numQ('ek', L('(b) the kinetic energy of the fastest electrons', '(b) die kinetische Energie der schnellsten Elektronen'), `${EkMax}`, 'eV', ek, { tol: 0.02, abs: 0.012, wrong: [{ value: eV, tag: 'noW', why: WHY.noW(), nudge: NUDGE.noW() }, { value: eV + m.W, tag: 'addW', why: WHY.addW(), nudge: NUDGE.addW() }] }), after: 'out' });
+        qs.push({ ...numQ('U0', L('(c) the stopping voltage', '(c) die Gegenspannung'), U0, 'V', ek, { tol: 0.02, abs: 0.012, wrong: [{ value: eV, tag: 'noW', why: WHY.noW(), nudge: NUDGE.noW() }, { value: eV + m.W, tag: 'addW', why: WHY.addW(), nudge: NUDGE.addW() }] }), after: 'out' });
       } else {
         const shorter = li.f14 ? L('light of a higher frequency', 'Licht höherer Frequenz') : L('light of a shorter wavelength', 'Licht kürzerer Wellenlänge');
         const longer = li.f14 ? L('light of a lower frequency', 'Licht tieferer Frequenz') : L('light of a longer wavelength', 'Licht längerer Wellenlänge');
         qs.push({ ...choice('light', L('(b) What would release electrons from this cathode?', '(b) Womit liessen sich aus dieser Kathode Elektronen auslösen?'), opts(r, [
           [shorter, true],
-          [L('brighter light of the same colour', 'helleres Licht derselben Farbe'), false, WHY.bright(), 'intensity'],
+          [L('brighter light of the same colour', 'helleres Licht derselben Farbe'), false, WHY.bright(), 'intensity', NUDGE.bright()],
           [L('the same light, shone for longer', 'dasselbe Licht, länger eingestrahlt'), false, L('An electron cannot collect the energy of several photons: one photon must be enough.', 'Ein Elektron kann die Energie mehrerer Photonen nicht sammeln: Ein Photon muss genügen.'), 'wave'],
-          [longer, false, WHY.inverse(), 'inverse'],
+          [longer, false, WHY.inverse(), 'inverse', NUDGE.inverse()],
         ])), after: 'out' });
       }
       return {
@@ -308,10 +322,18 @@
       if (light) return [L(`${ch === 'brighter' ? 'More' : 'Fewer'} photons per second release ${ch === 'brighter' ? 'more' : 'fewer'} electrons per second.`, `${ch === 'brighter' ? 'Mehr' : 'Weniger'} Photonen pro Sekunde lösen ${ch === 'brighter' ? 'mehr' : 'weniger'} Elektronen pro Sekunde aus.`), 'other'];
       return [L(`${EkMax} = ${h}·${f} − ${W}: think about whether the fastest electrons get faster or slower.`, `${EkMax} = ${h}·${f} − ${W}: Überlege, ob die schnellsten Elektronen schneller oder langsamer werden.`), 'addW'];
     };
+    // the nudge while the exercise is open (whyOf gives the answer away; its last one is a nudge already)
+    const nudgeOf = ([a, b]) => {
+      const uCh = Math.abs(a - U) > 1e-9, iCh = b !== I;
+      if (light && uCh) return L('On what does the stopping voltage depend: on the energy of one photon, or on the number of photons? What does the brightness change?', 'Wovon hängt die Gegenspannung ab: von der Energie eines Photons oder von der Zahl der Photonen? Was ändert die Helligkeit?');
+      if (!light && iCh) return L('How many photons per second arrive now? What decides the saturation current?', 'Wie viele Photonen pro Sekunde kommen jetzt an? Was bestimmt den Sättigungsstrom?');
+      if (light) return L('What happens to the number of photons per second, and what does the saturation current show?', 'Was geschieht mit der Zahl der Photonen pro Sekunde, und was zeigt der Sättigungsstrom?');
+      return '';
+    };
     const wrongs = r.shuffle(cands.filter((_, k) => k !== right)).slice(0, 3);
     const options = r.shuffle([after, ...wrongs]).map((cd) => {
       const ok = cd === after, [why, tag] = ok ? ['', undefined] : whyOf(cd);
-      return { html: G.ivGraph([{ U0: U, I, cls: 'old', dash: true }, { U0: cd[0], I: cd[1], cls: 'new' }], { Imax: 2.3 * I, small: true, w: 260, h: 180 }), ok, why, tag };
+      return { html: G.ivGraph([{ U0: U, I, cls: 'old', dash: true }, { U0: cd[0], I: cd[1], cls: 'new' }], { Imax: 2.3 * I, small: true, w: 260, h: 180 }), ok, why, tag, nudge: ok ? '' : nudgeOf(cd) };
     });
     const eVnm = r2(P.eV(nm));
     return {
@@ -320,7 +342,7 @@
       figs: fig(G.ivGraph([{ U0: U, I, cls: 'new' }], { Imax: 2.3 * I })),
       questions: [
         numQ('U0', L('(a) the stopping voltage, read off', '(a) die Gegenspannung, abgelesen'), U0, 'V', U, { tol: 0.01, abs: 0.06 }),
-        numQ('W', L('(b) the work function of the cathode', '(b) die Austrittsarbeit der Kathode'), W, 'eV', Wc, { tol: 0.01, abs: 0.07, wrong: [{ value: eVnm + U, tag: 'addW', why: WHY.addW() }, { value: U, tag: 'noW', why: L('That is the kinetic energy of the fastest electrons, not the work function.', 'Das ist die kinetische Energie der schnellsten Elektronen, nicht die Austrittsarbeit.') }] }),
+        numQ('W', L('(b) the work function of the cathode', '(b) die Austrittsarbeit der Kathode'), W, 'eV', Wc, { tol: 0.01, abs: 0.07, wrong: [{ value: eVnm + U, tag: 'addW', why: WHY.addW(), nudge: NUDGE.addW() }, { value: U, tag: 'noW', why: L('That is the kinetic energy of the fastest electrons, not the work function.', 'Das ist die kinetische Energie der schnellsten Elektronen, nicht die Austrittsarbeit.') }] }),
         pick('new', L(`(c) ${text} Which graph shows the new current (solid) compared with the old one (dashed)?`, `(c) ${text} Welcher Graph zeigt den neuen Strom (ausgezogen) im Vergleich zum alten (gestrichelt)?`), options),
       ],
       hints: [
@@ -363,19 +385,19 @@
       questions: [
         numQ('fG', L('(a) the threshold frequency', '(a) die Grenzfrequenz'), fG, `${pow(14)} Hz`, fg, { tol: 0.02, abs: 0.2, scale: 1e14 }),
         numQ('lG', L('(b) the cut-off wavelength (the longest that still releases electrons)', '(b) die Grenzwellenlänge (die grösste, die noch Elektronen auslöst)'), lG, 'nm', lg, { tol: 0.02 }),
-        numQ('W', L('(c) the work function of the cathode', '(c) die Austrittsarbeit der Kathode'), W, 'eV', Wm, { tol: 0.03, abs: 0.1, wrong: [{ value: fg, tag: 'axis', why: L('That is the threshold frequency in 10<sup>14</sup> Hz: the work function is where the line meets the V<sub>s</sub>-axis, φ = e·(its distance below zero).', 'Das ist die Grenzfrequenz in 10<sup>14</sup> Hz: Die Austrittsarbeit liegt dort, wo die Gerade die U₀-Achse schneidet, W = e·(Abstand unter null).') }] }),
+        numQ('W', L('(c) the work function of the cathode', '(c) die Austrittsarbeit der Kathode'), W, 'eV', Wm, { tol: 0.03, abs: 0.1, wrong: [{ value: fg, tag: 'axis', why: L('That is the threshold frequency in 10<sup>14</sup> Hz: the work function is where the line meets the V<sub>s</sub>-axis, φ = e·(its distance below zero).', 'Das ist die Grenzfrequenz in 10<sup>14</sup> Hz: Die Austrittsarbeit liegt dort, wo die Gerade die U₀-Achse schneidet, W = e·(Abstand unter null).'), nudge: L(`That is the threshold frequency in 10<sup>14</sup> Hz. Where on the line do you read off the work function?`, `Das ist die Grenzfrequenz in 10<sup>14</sup> Hz. Wo an der Geraden liest man die Austrittsarbeit ab?`) }] }),
         choice('slope', L('(d) The slope of the line is', '(d) Die Steigung der Geraden ist'), opts(r, [
           [L('h/e, the same for every metal', 'h/e, für jedes Metall gleich'), true],
-          [L('φ/e, different for every metal', 'W/e, für jedes Metall verschieden'), false, L('V<sub>s</sub> = (h/e)·f − φ/e: φ/e is where the line meets the V<sub>s</sub>-axis, the factor in front of f is h/e.', 'U₀ = (h/e)·f − W/e: W/e liegt dort, wo die Gerade die U₀-Achse schneidet; der Faktor vor f ist h/e.'), 'slope'],
-          [L('e/h, the same for every metal', 'e/h, für jedes Metall gleich'), false, L('e·V<sub>s</sub> = h·f − φ, so V<sub>s</sub> = (h/e)·f − φ/e: the slope is h/e.', 'e·U₀ = h·f − W, also U₀ = (h/e)·f − W/e: Die Steigung ist h/e.'), 'slope'],
-          [L('larger, the brighter the light', 'umso grösser, je heller das Licht'), false, L('The brightness changes the current, not the stopping voltage: it does not appear in V<sub>s</sub> = (h/e)·f − φ/e.', 'Die Helligkeit ändert den Strom, nicht die Gegenspannung: Sie kommt in U₀ = (h/e)·f − W/e nicht vor.'), 'intensity'],
+          [L('φ/e, different for every metal', 'W/e, für jedes Metall verschieden'), false, L('V<sub>s</sub> = (h/e)·f − φ/e: φ/e is where the line meets the V<sub>s</sub>-axis, the factor in front of f is h/e.', 'U₀ = (h/e)·f − W/e: W/e liegt dort, wo die Gerade die U₀-Achse schneidet; der Faktor vor f ist h/e.'), 'slope', L(`Solve Einstein’s equation for ${U0}: which part is where the line meets the axis, and which is the factor in front of ${f}?`, `Löse Einsteins Gleichung nach ${U0} auf: Welcher Teil ist der Achsenabschnitt, welcher der Faktor vor ${f}?`)],
+          [L('e/h, the same for every metal', 'e/h, für jedes Metall gleich'), false, L('e·V<sub>s</sub> = h·f − φ, so V<sub>s</sub> = (h/e)·f − φ/e: the slope is h/e.', 'e·U₀ = h·f − W, also U₀ = (h/e)·f − W/e: Die Steigung ist h/e.'), 'slope', L(`Solve ${i('e')}·${U0} = ${h}·${f} − ${W} for ${U0} and check what stands in front of ${f}.`, `Löse ${i('e')}·${U0} = ${h}·${f} − ${W} nach ${U0} auf und prüfe, was vor ${f} steht.`)],
+          [L('larger, the brighter the light', 'umso grösser, je heller das Licht'), false, L('The brightness changes the current, not the stopping voltage: it does not appear in V<sub>s</sub> = (h/e)·f − φ/e.', 'Die Helligkeit ändert den Strom, nicht die Gegenspannung: Sie kommt in U₀ = (h/e)·f − W/e nicht vor.'), 'intensity', L(`Does the brightness appear in Einstein’s equation for ${U0}?`, `Kommt die Helligkeit in Einsteins Gleichung für ${U0} vor?`)],
         ])),
         // (e): its explanations name the answer of (d), the slope h/e for every metal; shown once (d) is right
         { ...choice('metal', L(`(e) The cathode is replaced by one with a ${larger ? 'larger' : 'smaller'} work function. Its line is`, `(e) Die Kathode wird durch eine mit ${larger ? 'grösserer' : 'kleinerer'} Austrittsarbeit ersetzt. Ihre Gerade ist`), opts(r, [
-          [L('parallel to this one, shifted to higher frequencies', 'parallel zu dieser, zu höheren Frequenzen verschoben'), larger, L('f₀ = φ/h: a smaller work function means a lower threshold frequency.', 'f_G = W/h: Eine kleinere Austrittsarbeit bedeutet eine tiefere Grenzfrequenz.'), 'threshold'],
-          [L('parallel to this one, shifted to lower frequencies', 'parallel zu dieser, zu tieferen Frequenzen verschoben'), !larger, L('f₀ = φ/h: a larger work function means a higher threshold frequency.', 'f_G = W/h: Eine grössere Austrittsarbeit bedeutet eine höhere Grenzfrequenz.'), 'threshold'],
-          [L('steeper, from the same threshold frequency', 'steiler, ab derselben Grenzfrequenz'), false, L('The slope is h/e for every metal; the threshold frequency f₀ = φ/h changes.', 'Die Steigung ist für jedes Metall h/e; die Grenzfrequenz f_G = W/h ändert sich.'), 'slope'],
-          [L('flatter, from the same threshold frequency', 'flacher, ab derselben Grenzfrequenz'), false, L('The slope is h/e for every metal; the threshold frequency f₀ = φ/h changes.', 'Die Steigung ist für jedes Metall h/e; die Grenzfrequenz f_G = W/h ändert sich.'), 'slope'],
+          [L('parallel to this one, shifted to higher frequencies', 'parallel zu dieser, zu höheren Frequenzen verschoben'), larger, L('f₀ = φ/h: a smaller work function means a lower threshold frequency.', 'f_G = W/h: Eine kleinere Austrittsarbeit bedeutet eine tiefere Grenzfrequenz.'), 'threshold', L('How does the threshold frequency depend on the work function: does it get higher or lower?', 'Wie hängt die Grenzfrequenz von der Austrittsarbeit ab: Wird sie höher oder tiefer?')],
+          [L('parallel to this one, shifted to lower frequencies', 'parallel zu dieser, zu tieferen Frequenzen verschoben'), !larger, L('f₀ = φ/h: a larger work function means a higher threshold frequency.', 'f_G = W/h: Eine grössere Austrittsarbeit bedeutet eine höhere Grenzfrequenz.'), 'threshold', L('How does the threshold frequency depend on the work function: does it get higher or lower?', 'Wie hängt die Grenzfrequenz von der Austrittsarbeit ab: Wird sie höher oder tiefer?')],
+          [L('steeper, from the same threshold frequency', 'steiler, ab derselben Grenzfrequenz'), false, L('The slope is h/e for every metal; the threshold frequency f₀ = φ/h changes.', 'Die Steigung ist für jedes Metall h/e; die Grenzfrequenz f_G = W/h ändert sich.'), 'slope', L('Does the slope h/e depend on the metal? What changes instead when the work function changes?', 'Hängt die Steigung h/e vom Metall ab? Was ändert sich stattdessen, wenn sich die Austrittsarbeit ändert?')],
+          [L('flatter, from the same threshold frequency', 'flacher, ab derselben Grenzfrequenz'), false, L('The slope is h/e for every metal; the threshold frequency f₀ = φ/h changes.', 'Die Steigung ist für jedes Metall h/e; die Grenzfrequenz f_G = W/h ändert sich.'), 'slope', L('Does the slope h/e depend on the metal? What changes instead when the work function changes?', 'Hängt die Steigung h/e vom Metall ab? Was ändert sich stattdessen, wenn sich die Austrittsarbeit ändert?')],
         ], true)), after: 'slope' },
       ],
       hints: [
@@ -440,7 +462,7 @@
     return { ...fn(seed), type, difficulty, id: `${type}-${seed}`, seed };
   }
 
-  const api = { TYPES: Object.keys(TYPES), make, BANK, WHY, PUZZLES, SOURCES, light, i, sb, SYM, CONST, numQ, choice, pick, opts, fig };
+  const api = { TYPES: Object.keys(TYPES), make, BANK, WHY, NUDGE, PUZZLES, SOURCES, light, i, sb, SYM, CONST, numQ, choice, pick, opts, fig };
   root.PhotonEx = api;
   if (typeof module !== 'undefined') module.exports = api;
 })(typeof window !== 'undefined' ? window : globalThis);

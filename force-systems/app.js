@@ -175,8 +175,10 @@
   // results to work out (a choice of values, generator.js). Find the error is a choice only: a
   // right choice solves it.
   const compItems = () => ex.comps.map((c) => ({ ...Identify.trig({ ...c, alpha: ex.p.alpha, num: (x) => FS.num(x), unit: '\\mathrm{N}' }), ...(c.value ? { value: c.value } : {}) }));
-  const eqItems = () => ex.eqs;
-  const numItems = () => ex.nums || [];
+  // while the exercise is open, a wrong choice shows its nudge (where there is one) instead of its why
+  const nudged = (items) => (st && (st.solved || st.revealed) ? items : items.map((it) => ({ ...it, options: it.options.map((o) => (o.nudge ? { ...o, why: o.nudge } : o)) })));
+  const eqItems = () => nudged(ex.eqs);
+  const numItems = () => nudged(ex.nums || []);
   const choiceOnly = () => !ex.forces;
   const allIdentified = () => Identify.ok(compItems(), st.ident) && Identify.ok(eqItems(), st.ident) && Identify.ok(numItems(), st.ident);
   // the forces of the components identified so far (drawn in), all once the solution is shown

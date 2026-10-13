@@ -107,9 +107,9 @@
   const thousandth = (x) => Math.abs(1000 * x - Math.round(1000 * x)) < 1e-6;
   function numItem(n) {
     const html = (x) => `$${FS.tq(x, n.unit, 3)}$`, options = [{ html: html(n.value), right: true, x: n.value }];
-    n.wrongs.forEach(([w, flag, why]) => {
+    n.wrongs.forEach(([w, flag, why, nudge]) => {
       const x = thousandth(w) ? w : FS.round(w, 1);
-      if (options.length < 4 && Number.isFinite(x) && x >= 0 && (x > 0 || w === 0) && !options.some((o) => o.html === html(x))) options.push({ html: html(x), right: false, flag, why, x });
+      if (options.length < 4 && Number.isFinite(x) && x >= 0 && (x > 0 || w === 0) && !options.some((o) => o.html === html(x))) options.push({ html: html(x), right: false, flag, why, ...(nudge ? { nudge } : {}), x });
     });
     options.sort((a, b) => a.x - b.x);
     return { key: `n-${n.key}`, what: n.what, options: options.map(({ x, ...o }) => o), value: `$${n.sym} = ${n.calc}$`, ok: options.length === 4, x: n.value };

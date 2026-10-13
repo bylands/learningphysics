@@ -85,9 +85,10 @@
     const done = st && (st.solved || st.revealed);
     // While the exercise is open, a wrong answer gets a nudge, not the solution: the steps of the
     // solution, whole or sentence by sentence, are taken out of its explanation.
-    const nudge = (w) => {
+    // n: the option's own nudge, where its reason would give the answer away
+    const nudge = (w, n) => {
       if (done) return w;
-      let t = w || '';
+      let t = n || w || '';
       for (const s of ex.solution) if (s) t = t.split(s).join('');
       for (const s of ex.solution) for (const x of String(s || '').split(/(?<=[.!?])\s+/)) if (x.length > 3) t = t.split(x).join('');
       t = t.replace(/\s+/g, ' ').trim();
@@ -112,11 +113,11 @@
       if (q.type === 'pick') {
         document.querySelectorAll('.cand').forEach((el) => el.classList.remove('ok', 'bad'));
         sel.closest('.cand').classList.add(o.ok ? 'ok' : 'bad');
-        $(`[data-fb="${q.key}"]`).innerHTML = o.ok ? '' : nudge(o.why);
+        $(`[data-fb="${q.key}"]`).innerHTML = o.ok ? '' : nudge(o.why, o.nudge);
       } else {
         const row = $(`.field[data-key="${q.key}"]`);
         row.className = `field ${o.ok ? 'ok' : 'bad'}`;
-        row.querySelector('.fb').innerHTML = o.ok ? ui().correct : nudge(o.why);
+        row.querySelector('.fb').innerHTML = o.ok ? ui().correct : nudge(o.why, o.nudge);
       }
       if (!o.ok) all = false;
     }
@@ -233,10 +234,15 @@
   }
   function unveil(q) {
     st.unveiled = q.key;
+    showUnveiled();
     const row = $(`.field[data-key="${q.key}"]`);
-    row.hidden = false;
     row.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }
+  // The held-back question replaces the ones already answered right, so it sits next to the figure.
+  function showUnveiled() {
+    for (const q of ex.questions) { const row = $(`.field[data-key="${q.key}"]`); if (row) row.hidden = q.key !== st.unveiled; }
+  }
+
   function solved() {
     if (!st.revealed) {
       const s = stored('cyc-score', { solved: 0, clean: 0 });
@@ -279,7 +285,7 @@
     st.revealed = true;
     finish();
     if (ex.kind === 'draw') { st.placed = ex.cycle.states.length + 1; drawFigure(); $('.field[data-key="back"]').hidden = false; }
-    ex.questions.filter((q) => q.after).forEach((q) => { $(`.field[data-key="${q.key}"]`).hidden = false; });
+    ex.questions.forEach((q) => { const row = $(`.field[data-key="${q.key}"]`); if (row) row.hidden = false; });
     showSolution();
     updateButtons();
     $('#solution').scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -363,7 +369,7 @@
   // ---------------------------------------------------------------- practice topics
   const TOPICS = [
     { name: () => L('Processes and lines', 'Prozesse und Linien'), example: 0, stages: [{ name: () => 'p(V)', types: ['lines-pV'] }, { name: () => L('p(T) and V(T)', 'p(T) und V(T)'), types: ['lines-pT', 'lines-VT'] }] },
-    { name: () => L('Description → diagram', 'Beschreibung → Diagramm'), example: 1, stages: [{ name: () => 'p(V)', types: ['match-pV'] }, { name: () => L('p(T) and V(T)', 'p(T) und V(T)'), types: ['match-pT', 'match-VT'] }, { name: () => L('back to A', 'zurück nach A'), types: ['close-pV', 'close-pT', 'close-VT'] }] },
+    { name: () => L('Description → diagram', 'Beschreibung → Diagramm'), example: 1, stages: [{ name: () => 'p(V)', types: ['match-pV'] }, { name: () => L('p(T) and V(T)', 'p(T) und V(T)'), types: ['match-pT', 'match-VT'] }, { name: () => L('mixed diagrams', 'gemischte Diagramme'), types: ['match-mix'] }, { name: () => L('back to A', 'zurück nach A'), types: ['close-pV', 'close-pT', 'close-VT'] }] },
     { name: () => L('Diagram → statements', 'Diagramm → Aussagen'), example: 2, stages: [{ name: () => 'p(V)', types: ['statements-pV'] }, { name: () => L('p(T) and V(T)', 'p(T) und V(T)'), types: ['statements-pT', 'statements-VT'] }] },
     { name: () => L('Switching diagrams', 'Diagramme wechseln'), example: 3, stages: [{ name: () => L('from p(V)', 'aus p(V)'), types: ['switch-pV-pT', 'switch-pV-VT'] }, { name: () => L('into p(V)', 'in p(V)'), types: ['switch-pT-pV', 'switch-VT-pV'] }, { name: () => L('p(T) ↔ V(T)', 'p(T) ↔ V(T)'), types: ['switch-pT-VT', 'switch-VT-pT'] }] },
     { name: () => L('Draw it yourself', 'Selbst zeichnen'), example: 1, stages: [{ name: () => 'p(V)', types: ['draw-pV'] }, { name: () => L('p(T) and V(T)', 'p(T) und V(T)'), types: ['draw-pT', 'draw-VT'] }] },
@@ -445,7 +451,7 @@
       st = keep;
       drawFigure();
       if (ex.kind === 'draw' && st.placed > ex.steps.length) $('.field[data-key="back"]').hidden = false;
-      if (st.unveiled) $(`.field[data-key="${st.unveiled}"]`).hidden = false;
+      if (st.unveiled) showUnveiled();
       chosen.forEach(([n, v]) => { const x = document.querySelector(`input[name="${n}"][value="${v}"]`); if (x) x.checked = true; });
       if (st.checked) feedback();
       showStatus(status);
