@@ -228,14 +228,15 @@
     }
 
     // Meter from p to q: a circle with its letter (A ammeter, V voltmeter); o.l a label (the
-    // reading) on side o.ls, o.hl highlights the circle.
+    // reading) on side o.ls, o.hl highlights the circle, o.drag: it can be dragged (<g class="placed"
+    // data-meter=o.drag>).
     meter(p, q, letter, o = {}) {
       const r = 0.28;
       const g = this._two(p, q, 2 * r);
       const [x, y] = this.P(g.m);
       this.P(add(g.m, [r, r])); this.P(sub(g.m, [r, r]));
-      this.els.push(`<circle class="c${o.hl ? ' hl' : ''}" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${(r * S).toFixed(1)}"/>`);
-      this.els.push(`<text class="lbl meter-l" x="${x.toFixed(1)}" y="${y.toFixed(1)}" dy="0.35em" text-anchor="middle">${esc(letter)}</text>`);
+      const body = `<circle class="c${o.hl ? ' hl' : ''}" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${(r * S).toFixed(1)}"/><text class="lbl meter-l" x="${x.toFixed(1)}" y="${y.toFixed(1)}" dy="0.35em" text-anchor="middle">${esc(letter)}</text>`;
+      this.els.push(o.drag ? `<g class="placed" data-meter="${esc(o.drag)}">${body}</g>` : body);
       const n = normalTowards(g.d, o.ls || this._defaultSide(g.d));
       this._text(add(g.m, mul(n, r + 0.12)), n, o.l, 'lbl');
       return this;

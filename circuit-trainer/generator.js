@@ -608,7 +608,7 @@
   // view.mark: node id → 'strong' | 'light' (resistors highlighted, groups in a shaded zone) and
   // view.focus: key → 'new' | 'use' (labels highlighted); the arcade sets 'ask' for its question.
   // view.meters: [{ m: 'A' | 'V', at: node id (0: in the main line, beside the battery), across
-  // (else in series), l: label, hl }]; a resistor with a meter shows no current or voltage.
+  // (else in series, after the resistor, or before it), l: label, hl, drag (it can be dragged) }]; a resistor with a meter shows no current or voltage.
   // view.slots: the spots where a meter can be placed (ids of slotsOf, see meters), drawn as
   // dashed circles, and view.slotLabel(id) their names.
   // view.notes: key → the value a student noted (text, without unit), drawn like a given value in
@@ -619,6 +619,8 @@
     s.autoDots = true;
     const L = c.layout, mark = view.mark || new Map(), focus = view.focus || new Map(), meters = view.meters || [], notes = view.notes || new Map();
     const meterAt = (id, across) => meters.find((m) => m.at === id && !!m.across === across);
+    // the options of a meter: its label, highlighted, and (where it was placed) draggable
+    const mo = (m, ls) => ({ l: m.l, ls, hl: m.hl, drag: m.drag ? m.m : null });
     const at = new Map(); // node id → corners of the area of its resistors and labels
     const lab = (node, p, q) => {
       if (p) at.set(node.id, [p, q]);
@@ -636,14 +638,16 @@
     // across it (on side out, a unit vector).
     const slots = view.slots ? new Set(view.slots) : null, slotLabel = view.slotLabel || ((id) => id);
     lab.res = (node, p, q, t, ls, out) => {
-      const ser = meterAt(node.id, false), acr = meterAt(node.id, true), m = ser ? lerp(p, q, 0.55) : q;
-      s.res(p, m, { l: t.r, ls, hl: t.hl, id: view.notes ? node.id : null, name: `R${node.idx}` });
-      if (ser) s.meter(m, q, ser.m, { l: ser.l, ls, hl: ser.hl });
+      const ser = meterAt(node.id, false), acr = meterAt(node.id, true), ro = { l: t.r, ls, hl: t.hl, id: view.notes ? node.id : null, name: `R${node.idx}` };
+      if (!ser) s.res(p, q, ro);
+      else if (ser.before) { const m = lerp(p, q, 0.45); s.meter(p, m, ser.m, mo(ser, ls)).res(m, q, ro); } // the meter before the resistor
+      else { const m = lerp(p, q, 0.55); s.res(p, m, ro).meter(m, q, ser.m, mo(ser, ls)); }
       const d = out[0] ? BRIDGE.v : BRIDGE.h, a = [p[0] + out[0] * d, p[1] + out[1] * d], b = [q[0] + out[0] * d, q[1] + out[1] * d];
-      if (acr) s.wire(p, a).meter(a, b, acr.m, { l: acr.l, ls: out, hl: acr.hl }).wire(b, q);
+      if (acr) s.wire(p, a).meter(a, b, acr.m, mo(acr, out)).wire(b, q);
       if (!slots) return;
-      // in series: on the wire after the resistor's box; across: beside it, with its leads
+      // in series: on the wire before and after the resistor's box; across: beside it, with its leads
       const length = Math.hypot(q[0] - p[0], q[1] - p[1]), free = (length - Math.min(0.9, length * 0.5)) / 2;
+      if (!ser && slots.has('b' + node.id)) s.slot(lerp(p, q, free / 2 / length), 'b' + node.id, slotLabel('b' + node.id));
       if (!ser && slots.has('s' + node.id)) s.slot(lerp(q, p, free / 2 / length), 's' + node.id, slotLabel('s' + node.id));
       if (!acr && slots.has('a' + node.id)) s.slot(lerp(a, b, 0.5), 'a' + node.id, slotLabel('a' + node.id), [p, a, b, q]);
     };
@@ -674,9 +678,9 @@
     s.wire([x, -L.bottomY], [0, -L.bottomY]);
     // a meter in the main line: above the battery
     const main = meterAt(0, false), across = meterAt(0, true), bx = -BAT_BRIDGE;
-    if (main) s.bat([0, -L.bottomY], [0, -L.bottomY / 2]).meter([0, -L.bottomY / 2], [0, 0], main.m, { l: main.l, ls: 'right', hl: main.hl });
+    if (main) s.bat([0, -L.bottomY], [0, -L.bottomY / 2]).meter([0, -L.bottomY / 2], [0, 0], main.m, mo(main, 'right'));
     else s.bat([0, -L.bottomY], [0, 0]);
-    if (across) s.wire([0, 0], [bx, 0]).meter([bx, 0], [bx, -L.bottomY], across.m, { l: across.l, ls: 'left', hl: across.hl }).wire([bx, -L.bottomY], [0, -L.bottomY]);
+    if (across) s.wire([0, 0], [bx, 0]).meter([bx, 0], [bx, -L.bottomY], across.m, mo(across, 'left')).wire([bx, -L.bottomY], [0, -L.bottomY]);
     if (slots && !main && slots.has('main')) s.slot([0, -Math.min(0.55, 0.22 * L.bottomY)], 'main', slotLabel('main'));
     if (slots && !across && slots.has('battery')) s.slot([bx, -L.bottomY / 2], 'battery', slotLabel('battery'), [[0, 0], [bx, 0], [bx, -L.bottomY], [0, -L.bottomY]]);
     s.vol([0, 0], [0, -L.bottomY], bl.v, 'left');
@@ -970,15 +974,15 @@
     return { R, V };
   }
 
-  // Where a meter can go: in the main line, across the battery, and in series with or across each
-  // resistor: [{ id, at, across }].
+  // Where a meter can go: in the main line, across the battery, and in series with each resistor
+  // (before it: b, after it: s) or across it (a): [{ id, at, across, before }].
   const slotsOf = (c) => [{ id: 'main', at: 0, across: false }, { id: 'battery', at: 0, across: true },
-    ...c.leaves.flatMap((n) => [{ id: 's' + n.id, at: n.id, across: false }, { id: 'a' + n.id, at: n.id, across: true }])];
+    ...c.leaves.flatMap((n) => [{ id: 'b' + n.id, at: n.id, across: false, before: true }, { id: 's' + n.id, at: n.id, across: false }, { id: 'a' + n.id, at: n.id, across: true }])];
   function slotName(c, id) {
     if (id === 'main') return L('in the main line, beside the battery', 'in der Hauptleitung, neben der Batterie');
     if (id === 'battery') return L('across the battery', 'parallel zur Batterie');
     const R = `R${c.nodes[Number(id.slice(1))].idx}`;
-    return id[0] === 's' ? L(`in series with ${R}`, `in Serie zu ${R}`) : L(`across ${R}`, `parallel zu ${R}`);
+    return id[0] === 'b' ? L(`in series with ${R}, before it`, `in Serie zu ${R}, davor`) : id[0] === 's' ? L(`in series with ${R}, after it`, `in Serie zu ${R}, danach`) : L(`across ${R}`, `parallel zu ${R}`);
   }
   // The node whose current a resistor shares (up through series groups), and the one whose
   // voltage it shares (up through parallel groups): a meter there measures the same.
@@ -997,7 +1001,7 @@
     }
     if (id === 'main') return topI(n) === c.root ? { ok: true } : { ok: false, why: why('main') };
     if (id === 'battery') return { ok: false, why: why('battery') };
-    if (id[0] === 's') return topI(j) === topI(n) ? { ok: true } : { ok: false, why: L(`There the ammeter shows the current through ${Rj}, which is not the current through ${R}.`, `Dort zeigt das Amperemeter den Strom durch ${Rj}, und der ist nicht der Strom durch ${R}.`) };
+    if (id[0] === 's' || id[0] === 'b') return topI(j) === topI(n) ? { ok: true } : { ok: false, why: L(`There the ammeter shows the current through ${Rj}, which is not the current through ${R}.`, `Dort zeigt das Amperemeter den Strom durch ${Rj}, und der ist nicht der Strom durch ${R}.`) };
     return j === n ? { ok: false, why: why('across') } : { ok: false, why: L(`Across ${Rj}, the ammeter ($R_\\text{A} \\approx 0$) short-circuits ${Rj}, and it does not show the current through ${R}.`, `Parallel zu ${Rj} schliesst das Amperemeter ($R_\\text{A} \\approx 0$) ${Rj} kurz, und es zeigt nicht den Strom durch ${R}.`) };
   }
 
@@ -1208,7 +1212,7 @@
     // placed: meter letter → the spot where it is (none: not placed yet); the free spots are drawn
     const placeFig = (placed = {}) => {
       const all = slotsOf(c), taken = new Set(Object.values(placed).filter(Boolean));
-      const on = Object.entries(placed).filter(([, id]) => id).map(([m, id]) => { const x = all.find((y) => y.id === id); return { m, at: x.at, across: x.across, hl: true }; });
+      const on = Object.entries(placed).filter(([, id]) => id).map(([m, id]) => { const x = all.find((y) => y.id === id); return { m, at: x.at, across: x.across, before: x.before, hl: true, drag: true }; });
       return `<div class="fig">${draw(c, nm, prob, { known: givenOnly(prob), mark: new Map(set.targets.map((t) => [t.n.id, 'strong'])), slots: all.map((x) => x.id).filter((id) => !taken.has(id)),
         slotLabel: (x) => slotName(c, x), meters: on }).toSVG()}</div>`;
     };
