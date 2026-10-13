@@ -22,11 +22,18 @@ cards in its order, shows their tags, and lets visitors filter by tag. This serv
                          anew, if asked), their alternatives, each objective's exercises; nothing is saved
     /admin/api/preview   GET ?keys=a,b  the exercises as HTML (text and solution), for KaTeX
     /admin/api/texercises POST a TeXercises export (zip): its exercises by the teacher are kept for
-                         the sheets (hub-data/texercises/), all others are left out
+                         the sheets (hub-data/texercises/), all others are left out; ?image=<name>: an
+                         image of the TeXercises gallery, or a .zip of them (hub-data/sheet-images/)
+    /admin/api/images    GET ?keys=a,b  the gallery images these exercises use, and which are there
+                         POST {"name": ...} /admin/api/images/fetch: fetch one from TeXercises
     /admin/sheet/<id>.pdf, /admin/sheet/<id>-solutions.pdf   the saved sheet's PDF, made when first
                          asked for (a page that reloads itself until it is there)
-    /admin/sheet/s/<secret>   a shared sheet's online version: its exercises, no solutions
-                         (all of these logged in only, except the online version: whoever has its link)
+    /admin/sheet/s/<secret>   a shared sheet's online version: its exercises, no solutions, one per
+                         screen (and s/<secret>/img/<file>: its images)
+    /admin/sheet/img/<file>   an uploaded image; /admin/sheet/fig/<hash>.svg  a drawn TikZ figure (public)
+                         (all of these logged in only, except the online version: whoever has its link,
+                         and the figures)
+    /admin/static/fonts/<file>  the PDF's fonts (Erewhon, Fira Sans) from the server's TeX Live
     /admin/static/...    the panel's scripts and styles
 
 Exercise sheets (Sheets; sheets/sheets.py, sheets/preview.py): a sheet is the teacher's own,
@@ -34,7 +41,9 @@ independent of the sets: a title, a language, modules (the hub's apps) and per m
 objectives, and its exercises in order, all kept in hub-data/exercise-sheets.json (not served). The
 panel suggests a balanced sheet from sheets/pool.json and alternatives for each exercise, and shows
 the exercises with KaTeX; build_sheet.py and LuaLaTeX make the PDFs (they need LaTeX on the server,
-see sheets/README.md; without it the panel says so), cached in hub-data/sheets/.
+see sheets/README.md; without it the panel says so), cached in hub-data/sheets/. TikZ figures are
+drawn as SVG for the browser (sheets/figures.py, hub-data/sheet-figures/); the TeXercises gallery
+images, which an export lacks, are uploaded or fetched (hub-data/sheet-images/).
 
 A set is opened at learningphysics.ch/<name> (nginx serves the hub page for it, which then shows
 only the set's apps; see hub/index.html and shared/sets.js, which applies the set in the apps):
@@ -89,7 +98,7 @@ from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
-from urllib.parse import parse_qs
+from urllib.parse import parse_qs, quote, unquote
 
 # the exercise sheets (sheets/ next to this file, sent by deploy.sh); the panel works without them.
 # The service restarts only when this file changes, so sheets.py and preview.py are read again when
@@ -413,6 +422,8 @@ class Admin:
         self.texercises = config.parent / "texercises"
         self.sheet_cache = config.parent / "sheets"
         self.sheets_file = config.parent / "exercise-sheets.json"
+        self.sheet_images = config.parent / "sheet-images"  # the gallery images, uploaded or fetched
+        self.sheet_figures = config.parent / "sheet-figures"  # the TikZ figures as SVG (figures.py)
         self.sheets_lock = threading.Lock()
         self.own = own
 
@@ -545,6 +556,8 @@ class Admin:
                                    "updated": s.get("updated", 0), "shared": bool(s.get("token"))} for i, s in sheets.items()),
                                  key=lambda x: -x["updated"])
         state["apps"] = self.sheet_apps(sheetlib, have)
+        figs = sheets_module("figures")
+        state["figures"] = bool(figs and figs.available())
         state["own"] = self.own
         state["max"] = MAX_SHEET_EXERCISES
         return state
@@ -656,10 +669,47 @@ class Admin:
         that are there."""
         sheetlib, pool, have, _ = self.sheet_context()
         out = {}
+        media = SheetMedia(self, "/admin/sheet/")
         for k in keys[:MAX_SHEET_EXERCISES]:
             if k in have and sheetlib.info(pool, k):
-                out[k] = render_exercise(have[k])
+                out[k] = render_exercise(have[k], media=media)
         return {"exercises": out}
+
+    # ------------------------------------------------------------------ images of the sheets
+    def images_of(self, keys: List[str]) -> Dict[str, object]:
+        """The gallery images the exercises use: [{name, have, exercises: [titles], gallery: url}]."""
+        sheetlib, pool, have, _ = self.sheet_context()
+        lib = sheets_module("preview")
+        found: Dict[str, Dict[str, object]] = {}
+        for k in keys[:MAX_SHEET_EXERCISES]:
+            if k not in have or lib is None:
+                continue
+            parts = lib.read_exercise(have[k])
+            title = str((parts.get("meta") or {}).get("title") or k)
+            for name in lib.images_used(str(parts.get("text") or "") + "\n" + str(parts.get("solution") or "")):
+                e = found.setdefault(name, {"name": name, "have": bool(sheetlib.find_image(self.sheet_images, name)),
+                                            "pdf": bool(sheetlib.find_image(self.sheet_images, name, latex=True)),
+                                            "exercises": [], "gallery": sheetlib.GALLERY.format(quote(name))})
+                if title not in e["exercises"]:
+                    e["exercises"].append(title)
+        return {"images": list(found.values())}
+
+    def store_images(self, filename: str, data: bytes) -> Dict[str, object]:
+        sheetlib = sheets_module()
+        if sheetlib is None:
+            raise ValueError("exercise sheets are not installed")
+        return {"kept": sheetlib.store_images(self.sheet_images, filename, data)}
+
+    def fetch_image(self, name: str) -> Dict[str, object]:
+        sheetlib = sheets_module()
+        if sheetlib is None:
+            raise ValueError("exercise sheets are not installed")
+        ok, what = sheetlib.fetch_image(self.sheet_images, name)
+        return {"ok": ok, "name": what} if ok else {"ok": False, "error": what}
+
+    def image_file(self, name: str) -> Optional[Path]:
+        sheetlib = sheets_module()
+        return sheetlib.find_image(self.sheet_images, name) if sheetlib else None
 
     def sheet_chosen(self, s: Dict[str, object], sheetlib, pool) -> List[Tuple[str, str]]:
         apps = [m.get("id") for m in s.get("modules", []) if isinstance(m, dict)]
@@ -686,7 +736,8 @@ class Admin:
         pool = sheetlib.load_pool()
         title = str(s.get("title") or "")
         return sheetlib.request_pdf(title, self.sheet_chosen(s, sheetlib, pool), self.app_names(), self.texercises,
-                                    self.sheet_cache, "both" if solutions else "exercises", self.sheet_opts(s, sheetlib))
+                                    self.sheet_cache, "both" if solutions else "exercises", self.sheet_opts(s, sheetlib),
+                                    self.sheet_images)
 
     def online(self, token: str) -> Optional[str]:
         """The online version of a shared sheet (its exercises, without solutions), or None."""
@@ -697,17 +748,17 @@ class Admin:
         sid, s = found
         pool, have = sheetlib.load_pool(), sheetlib.available(self.texercises)
         names = self.app_names()
-        parts, last, n = [], None, 0
+        media = SheetMedia(self, f"/admin/sheet/s/{token}/")
+        exercises = []
         for app, key in self.sheet_chosen(s, sheetlib, pool):
             if key not in have:
                 continue
-            if app != last:
-                parts.append(f'<h2 class="section">{escape(names.get(app, app))}</h2>')
-                last = app
-            n += 1
-            ex = render_exercise(have[key], solution=False)
-            parts.append(f'<article class="exercise tx"><h3><span class="n">{n}</span> {escape(ex["title"])}</h3>{ex["text"]}</article>')
-        return online_page(s, parts, self.sheet_opts(s, sheetlib))
+            ex = render_exercise(have[key], solution=False, media=media)
+            entry = (sheetlib.info(pool, key, [app]) or (app, {}))[1]
+            exercises.append({"module": names.get(app, app), "title": ex["title"], "html": ex["text"],
+                              "difficulty": sheetlib.level(entry.get("difficulty")) if entry.get("difficulty") else 0,
+                              "pending": "pending" in ex.get("fallbacks", [])})
+        return online_page(s, exercises, self.sheet_opts(s, sheetlib))
 
     def app_names(self) -> Dict[str, str]:
         return {a["id"]: str(a.get("name") or a["id"]) for a in self.apps()}
@@ -719,12 +770,67 @@ class Admin:
         return sheetlib.store_export(data, self.texercises, self.own)
 
 
-def render_exercise(folder: Path, solution: bool = True) -> Dict[str, object]:
+class SheetMedia:
+    """The figures and images of the exercises on a page (preview.py's Media): a TikZ figure as the SVG
+    figures.py draws (/admin/sheet/fig/<hash>.svg, public: its name is a hash), a gallery image as
+    the uploaded file under base (/admin/sheet/img/ for the panel, the sheet's secret link for its
+    online version)."""
+
+    def __init__(self, admin: "Admin", base: str) -> None:
+        self.admin, self.base = admin, base
+
+    def figure(self, preamble: str, lang: str, env: str, body: str) -> Dict[str, object]:
+        figs = sheets_module("figures")
+        if figs is None:
+            return {}
+        got = figs.figure(self.admin.sheet_figures, preamble, lang, figs.figure_source(env, body))
+        if got.get("svg"):
+            return {"url": f"/admin/sheet/fig/{got['svg']}", "width": got.get("width", 0)}
+        return got
+
+    def image(self, name: str) -> Optional[str]:
+        p = self.admin.image_file(name)
+        return f"{self.base}img/{quote(p.name)}" if p else None
+
+
+# the PDF's fonts for the online version, from the server's TeX Live (served at /admin/static/fonts/)
+FONT_FILES = ("Erewhon-Regular.otf", "Erewhon-Italic.otf", "Erewhon-Bold.otf", "Erewhon-BoldItalic.otf",
+              "FiraSans-Book.otf", "FiraSans-BookItalic.otf", "FiraSans-Medium.otf", "FiraSans-SemiBold.otf")
+FONT_DIRS = ("/usr/share/texlive/texmf-dist/fonts/opentype/public/erewhon",
+             "/usr/share/texlive/texmf-dist/fonts/opentype/public/fira",
+             "/usr/share/texmf/fonts/opentype/public/erewhon", "/usr/share/texmf/fonts/opentype/public/fira")
+_fonts: Dict[str, Optional[Path]] = {}
+
+
+def font_file(name: str) -> Optional[Path]:
+    if name not in FONT_FILES:
+        return None
+    if name not in _fonts:
+        found = next((Path(d) / name for d in FONT_DIRS if (Path(d) / name).is_file()), None)
+        if found is None:
+            try:
+                import subprocess
+                r = subprocess.run(["kpsewhich", name], capture_output=True, text=True, timeout=10)
+                found = Path(r.stdout.strip()) if r.returncode == 0 and r.stdout.strip() else None
+            except (OSError, subprocess.SubprocessError):
+                found = None
+        _fonts[name] = found if found and found.is_file() else None
+    return _fonts[name]
+
+
+IMAGE_TYPES = {".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".gif": "image/gif",
+               ".webp": "image/webp", ".svg": "image/svg+xml"}
+# an uploaded or drawn image opened on its own runs nothing (an SVG could hold a script)
+MEDIA_HEADERS = {"Content-Security-Policy": "default-src 'none'; style-src 'unsafe-inline'; sandbox",
+                 "Cache-Control": "private, max-age=300"}
+
+
+def render_exercise(folder: Path, solution: bool = True, media: Optional[SheetMedia] = None) -> Dict[str, object]:
     """An exercise as HTML (sheets/preview.py); a page that cannot be read says so."""
     lib = sheets_module("preview")
     if lib is None:
         return {"title": folder.name, "lang": "en", "text": '<p class="tx-fig">The preview is not installed.</p>', "solution": "", "fallbacks": ["error"]}
-    out = lib.render(folder, solution)
+    out = lib.render(folder, solution, media)
     out["key"] = folder.name
     return out
 
@@ -797,17 +903,15 @@ def make_handler(admin: Admin):
 
         def send(self, status: int, body: str | bytes, ctype: str = "text/html; charset=utf-8", headers: Optional[Dict[str, str]] = None) -> None:
             data = body.encode("utf-8") if isinstance(body, str) else body
+            headers = {"Cache-Control": "no-store", "X-Frame-Options": "DENY", "X-Content-Type-Options": "nosniff",
+                       "Referrer-Policy": "same-origin",
+                       "Content-Security-Policy": "default-src 'none'; script-src 'self'; style-src 'self'; connect-src 'self'; "
+                       "img-src 'self'; font-src 'self'; frame-src 'self'; form-action 'self'; frame-ancestors 'none'; base-uri 'none'",
+                       **(headers or {})}  # a page's own headers replace these
             self.send_response(status)
             self.send_header("Content-Type", ctype)
             self.send_header("Content-Length", str(len(data)))
-            self.send_header("Cache-Control", "no-store")
-            self.send_header("X-Frame-Options", "DENY")
-            self.send_header("X-Content-Type-Options", "nosniff")
-            self.send_header("Referrer-Policy", "same-origin")
-            self.send_header("Content-Security-Policy",
-                             "default-src 'none'; script-src 'self'; style-src 'self'; connect-src 'self'; "
-                             "img-src 'self'; font-src 'self'; frame-src 'self'; form-action 'self'; frame-ancestors 'none'; base-uri 'none'")
-            for k, v in (headers or {}).items():
+            for k, v in headers.items():
                 self.send_header(k, v)
             self.end_headers()
             if self.command != "HEAD":
@@ -855,7 +959,25 @@ def make_handler(admin: Admin):
         def sheet_route(self, rest: str) -> None:
             """<id>.pdf and <id>-solutions.pdf (logged in): the saved sheet's PDF, made when first asked
             for (a page that reloads itself until it is there); s/<secret>: a shared sheet's online
-            version, for everyone with the link."""
+            version, for everyone with the link (and s/<secret>/img/<file>: its images); fig/<hash>.svg: a
+            drawn TikZ figure; img/<file> (logged in): an uploaded image."""
+            m = re.fullmatch(r"fig/([0-9a-f]{32})\.svg", rest)
+            if m:
+                f = admin.sheet_figures / f"{m.group(1)}.svg"
+                if f.is_file():
+                    self.send(200, f.read_bytes(), "image/svg+xml", {**MEDIA_HEADERS, "Cache-Control": "public, max-age=86400"})
+                else:
+                    self.send(404, "Not found", "text/plain; charset=utf-8")
+                return
+            m = re.fullmatch(r"(?:s/([A-Za-z0-9_-]{32})/)?img/([^/]{1,160})", rest)
+            if m:
+                ok = admin.sheet_by_token(m.group(1)) is not None if m.group(1) else self.logged_in()
+                f = admin.image_file(unquote(m.group(2))) if ok else None
+                if f is None or f.name != unquote(m.group(2)):
+                    self.send(404, "Not found", "text/plain; charset=utf-8")
+                else:
+                    self.send(200, f.read_bytes(), IMAGE_TYPES.get(f.suffix.lower(), "application/octet-stream"), MEDIA_HEADERS)
+                return
             if rest.startswith("s/"):
                 html = admin.online(rest[2:])
                 if html is None:
@@ -896,10 +1018,10 @@ def make_handler(admin: Admin):
             try:
                 if path == "/api/sheets":
                     self.json(200, admin.sheets_state())
-                elif path == "/api/preview":
+                elif path in ("/api/preview", "/api/images"):
                     query = parse_qs(self.path.partition("?")[2])
                     keys = [k for k in (query.get("keys") or [""])[0].split(",") if k]
-                    self.json(200, admin.preview(keys))
+                    self.json(200, admin.preview(keys) if path == "/api/preview" else admin.images_of(keys))
                 else:
                     sid = path[len("/api/sheets/"):]
                     full = admin.sheet_full(sid) if SHEET_ID.fullmatch(sid) else None
@@ -964,8 +1086,14 @@ def make_handler(admin: Admin):
                 self.send(200, ONLINE_CSS, "text/css; charset=utf-8")
             elif path.startswith("/sheet/"):
                 self.sheet_route(path[len("/sheet/"):])
-            elif path in ("/api/sheets", "/api/preview") or path.startswith("/api/sheets/"):
+            elif path in ("/api/sheets", "/api/preview", "/api/images") or path.startswith("/api/sheets/"):
                 self.sheets_get(path)
+            elif path.startswith("/static/fonts/"):
+                f = font_file(path[len("/static/fonts/"):])
+                if f is None:
+                    self.send(404, "Not found", "text/plain; charset=utf-8")
+                else:
+                    self.send(200, f.read_bytes(), "font/otf", {"Cache-Control": "public, max-age=604800"})
             elif path == "/static/admin.css":
                 self.send(200, ADMIN_CSS, "text/css; charset=utf-8")
             elif path in API:
@@ -997,7 +1125,22 @@ def make_handler(admin: Admin):
                 self.redirect("")
             elif path == "/api/plan" or path.startswith("/api/sheets/"):
                 self.sheets_post(path)
+            elif path == "/api/images/fetch":
+                if not self.logged_in():
+                    self.json(403, {"error": "login"})
+                    return
+                body = self.json_body()
+                if body is None:
+                    return
+                try:
+                    self.json(200, admin.fetch_image(str(body.get("name") or "")))
+                except ValueError as e:
+                    self.json(400, {"error": str(e)})
+                except OSError:
+                    self.json(500, {"error": "could not store the image"})
             elif path == "/api/texercises":
+                # the uploads of the sheets (nginx lets 64 MB through here): a TeXercises export, or with
+                # ?image=<file name> an image of the gallery or a .zip of them
                 if not self.logged_in():
                     self.json(403, {"error": "login"})
                     return
@@ -1008,12 +1151,13 @@ def make_handler(admin: Admin):
                 if n <= 0 or n > MAX_UPLOAD:
                     self.json(413, {"error": "the file is too large (at most 64 MB)"})
                     return
+                image = parse_qs(self.path.partition("?")[2]).get("image")
                 try:
-                    self.json(200, admin.store_texercises(self.rfile.read(n)))
+                    self.json(200, admin.store_images(image[0], self.rfile.read(n)) if image else admin.store_texercises(self.rfile.read(n)))
                 except ValueError as e:
                     self.json(400, {"error": str(e)})
                 except OSError:
-                    self.json(500, {"error": "could not store the exercises"})
+                    self.json(500, {"error": "could not store the " + ("images" if image else "exercises")})
             elif path in API:
                 # JSON only: a form on another site cannot send it (and the cookie is SameSite=Strict)
                 if not self.logged_in():
@@ -1065,13 +1209,35 @@ def page(title: str, body: str, script: bool = False, refresh: int = 0) -> str:
 </html>"""
 
 
-def online_page(sheet: Dict[str, object], parts: List[str], opts: Dict[str, str]) -> str:
-    """A shared sheet's online version: its exercises (no solutions), the math set by KaTeX, for the
-    screen and for printing; the footer as on the PDF."""
+def online_page(sheet: Dict[str, object], exercises: List[Dict[str, object]], opts: Dict[str, str]) -> str:
+    """A shared sheet's online version in the look of its PDF (Erewhon, Fira Sans, the accent colour):
+    one exercise per screen, with buttons, numbers, the arrow keys and swiping to move between them
+    (online.js; without it, all of them one after another); for printing, all of them. No solutions.
+    exercises: [{"module", "title", "html", "difficulty" (1-3, 0: unknown), "pending"}]."""
     de = opts.get("lang") == "de"
     title = str(sheet.get("title") or ("Übungen" if de else "Exercises"))
-    footer = " · ".join(x for x in (("Übungen " if de else "Exercises ") + title, opts.get("school", ""), opts.get("author", ""), opts.get("date", "")) if x)
-    body = "".join(parts) or f'<p class="empty">{"Dieses Blatt hat noch keine Aufgaben." if de else "This sheet has no exercises yet."}</p>'
+    left = ("Übungen " if de else "Exercises ") + title
+    signed = " · ".join(x for x in (opts.get("school", ""), opts.get("author", ""), opts.get("date", "")) if x)
+    total = len(exercises)
+    arts, dots, last = [], [], None
+    for n, e in enumerate(exercises, 1):
+        module = str(e.get("module") or "")
+        d = int(e.get("difficulty") or 0)
+        stars = (f'<span class="stars" title="{"Schwierigkeit" if de else "difficulty"} {d}/3">{"★" * d}</span>' if d else "")
+        arts.append(f'<article class="exercise tx" id="a{n}" data-n="{n}"{" data-pending" if e.get("pending") else ""}>'
+                    f'<p class="module">{escape(module)}</p>'
+                    f'<h2><span class="n">{n}</span><span class="t">{escape(str(e.get("title") or ""))}</span>{stars}</h2>'
+                    f'{e.get("html") or ""}</article>')
+        if module != last:
+            dots.append(f'<span class="group" title="{escape(module)}"></span>' if last is not None else "")
+            last = module
+        dots.append(f'<a href="#a{n}" data-n="{n}" title="{escape(str(e.get("title") or ""))}">{n}</a>')
+    empty = f'<p class="empty">{"Dieses Blatt hat noch keine Aufgaben." if de else "This sheet has no exercises yet."}</p>'
+    prev, nxt = ("Zurück", "Weiter") if de else ("Previous", "Next")
+    nav = (f'<nav class="pager" aria-label="{"Aufgaben" if de else "Exercises"}" hidden>'
+           f'<button type="button" class="prev" aria-label="{prev}">← <span>{prev}</span></button>'
+           f'<span class="pos" aria-live="polite"></span>'
+           f'<button type="button" class="next" aria-label="{nxt}"><span>{nxt}</span> →</button></nav>') if total > 1 else ""
     return f"""<!doctype html>
 <html lang="{'de' if de else 'en'}">
 <head>
@@ -1087,10 +1253,15 @@ def online_page(sheet: Dict[str, object], parts: List[str], opts: Dict[str, str]
   <script defer src="/admin/static/online.js"></script>
 </head>
 <body>
-  <main class="sheet">
-    <header><p class="site"><a href="/">learningphysics.ch</a></p><h1>{escape(title)}</h1></header>
-    {body}
-    <footer>{escape(footer)}</footer>
+  <main class="sheet" data-total="{total}">
+    <header class="top">
+      <p class="site"><a href="/">learningphysics.ch</a></p>
+      <h1>{escape(title)}</h1>
+      {f'<nav class="dots" aria-label="{"Aufgaben" if de else "Exercises"}">{"".join(dots)}</nav>' if total > 1 else ""}
+    </header>
+    <div class="slides">{"".join(arts) or empty}</div>
+    {nav}
+    <footer><span class="left">{escape(left)}</span><span class="right">{escape(signed)}</span></footer>
   </main>
 </body>
 </html>"""
@@ -1195,6 +1366,9 @@ TX_CSS = r"""
 .tx .tx-right { text-align: right; }
 .tx .tx-fig { display: inline-block; border: 1px dashed var(--muted); color: var(--muted); border-radius: 6px; padding: 4px 12px; margin: 4px 0; font-size: 0.85rem; }
 .tx .tx-fig a { color: inherit; }
+.tx .tx-fig.tx-pending { border-style: dotted; }
+.tx .tx-figure { margin: 8px 0; }
+.tx .tx-img { max-width: 100%; height: auto; background: #fff; }
 .tx code.tx-raw, .tx pre.tx-raw { color: var(--muted); background: var(--chip); border-radius: 4px; padding: 0 3px; font-size: 0.85em; white-space: pre-wrap; }
 .tx .tx-table { border-collapse: collapse; margin: 0.5em 0; }
 .tx .tx-table td { border: 1px solid var(--line); padding: 2px 8px; }
@@ -1338,6 +1512,10 @@ h2.section { font-size: 1.15rem; margin: 28px 0 4px; }
 .chip.quiet { background: transparent; border: 1px solid var(--line); color: var(--muted); }
 .chip.warn { background: #f6e7c4; color: #6b4b00; }
 .chip.bad { background: var(--bad); color: var(--card); }
+.imglist { list-style: none; padding: 0; margin: 0 0 8px; }
+.imglist li { margin: 3px 0; }
+.imglist .ok { color: var(--ok); font-weight: 600; }
+.imglist .bad { color: var(--bad); font-weight: 600; }
 .obs { margin: 2px 0 0; font-size: 0.82rem; }
 .alts { list-style: none; margin: 8px 0 2px; padding: 6px 0 0 12px; border-left: 3px solid var(--accent); display: grid; gap: 6px; font-size: 0.95rem; }
 .prev { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 6px 12px; margin: 8px 0 4px; }
@@ -1360,25 +1538,72 @@ h2.section { font-size: 1.15rem; margin: 28px 0 4px; }
 """ + TX_CSS
 
 ONLINE_CSS = r"""
-:root { --bg: #fff; --ink: #1f2328; --muted: #646b73; --line: #d9d6ce; --accent: #2b59c3; --chip: #eef2fb; --ok: #1d7a3e; color-scheme: light; }
-@media (prefers-color-scheme: dark) { :root { --bg: #15171a; --ink: #e6e3dc; --muted: #9aa0a6; --line: #3a3e44; --accent: #7aa2ff; --chip: #26304a; color-scheme: dark; } }
+/* the online version of a sheet, in the look of its PDF (lp-minion.sty, modern): Erewhon for the
+   text, Fira Sans for headings and numbers, one accent colour (a deep blue); the fonts come from the
+   server's TeX Live (/admin/static/fonts/), else similar ones of the device */
+@font-face { font-family: "Erewhon"; src: url(/admin/static/fonts/Erewhon-Regular.otf) format("opentype"); font-weight: 400; font-style: normal; font-display: swap; }
+@font-face { font-family: "Erewhon"; src: url(/admin/static/fonts/Erewhon-Italic.otf) format("opentype"); font-weight: 400; font-style: italic; font-display: swap; }
+@font-face { font-family: "Erewhon"; src: url(/admin/static/fonts/Erewhon-Bold.otf) format("opentype"); font-weight: 700; font-style: normal; font-display: swap; }
+@font-face { font-family: "Erewhon"; src: url(/admin/static/fonts/Erewhon-BoldItalic.otf) format("opentype"); font-weight: 700; font-style: italic; font-display: swap; }
+@font-face { font-family: "Fira Sans LP"; src: url(/admin/static/fonts/FiraSans-Book.otf) format("opentype"); font-weight: 400; font-style: normal; font-display: swap; }
+@font-face { font-family: "Fira Sans LP"; src: url(/admin/static/fonts/FiraSans-BookItalic.otf) format("opentype"); font-weight: 400; font-style: italic; font-display: swap; }
+@font-face { font-family: "Fira Sans LP"; src: url(/admin/static/fonts/FiraSans-Medium.otf) format("opentype"); font-weight: 500; font-style: normal; font-display: swap; }
+@font-face { font-family: "Fira Sans LP"; src: url(/admin/static/fonts/FiraSans-SemiBold.otf) format("opentype"); font-weight: 600; font-style: normal; font-display: swap; }
+:root { --bg: #fff; --paper: #fff; --ink: #1a1a1a; --muted: #6b6b6b; --line: #d8dde4; --accent: #005293; --accent-soft: #7fa8c9; --chip: #eef3f8; --ok: #1d7a3e; color-scheme: light;
+  --serif: "Erewhon", "Utopia", "Charter", "Bitstream Charter", Georgia, serif;
+  --sans: "Fira Sans LP", "Fira Sans", "Source Sans 3", "Segoe UI", system-ui, sans-serif; }
+@media (prefers-color-scheme: dark) { :root { --bg: #14171b; --paper: #14171b; --ink: #e8e6e1; --muted: #9ba3ab; --line: #343a42; --accent: #7fb2e0; --accent-soft: #4f7394; --chip: #1f2a36; color-scheme: dark; } }
 * { box-sizing: border-box; }
-body { margin: 0; background: var(--bg); color: var(--ink); font: 17px/1.55 Georgia, "Times New Roman", serif; }
-.sheet { max-width: 780px; margin: 0 auto; padding: 24px 18px 40px; }
-.sheet header .site { margin: 0; font: 0.9rem system-ui, sans-serif; }
-.sheet header .site a { color: var(--muted); text-decoration: none; }
-.sheet h1 { font: 600 1.7rem/1.2 system-ui, -apple-system, "Segoe UI", sans-serif; margin: 4px 0 18px; }
-.sheet h2.section { font: 600 1.15rem system-ui, sans-serif; color: var(--accent); margin: 26px 0 6px; border-bottom: 1px solid var(--line); padding-bottom: 2px; }
-.exercise { margin: 0 0 18px; break-inside: avoid; }
-.exercise h3 { font: 600 1.02rem system-ui, sans-serif; margin: 14px 0 4px; }
-.exercise h3 .n { display: inline-block; min-width: 1.6em; color: var(--accent); }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 18px/1.5 var(--serif); font-variant-numeric: lining-nums; }
+.sheet { max-width: 760px; min-height: 100vh; margin: 0 auto; padding: 22px 20px 18px; display: flex; flex-direction: column; }
+.top .site { margin: 0 0 6px; font: 0.8rem var(--sans); letter-spacing: 0.02em; }
+.top .site a { color: var(--muted); text-decoration: none; }
+.top h1 { font: 600 1.75rem/1.2 var(--sans); color: var(--accent); margin: 0; padding-bottom: 7px; border-bottom: 1px solid var(--accent); }
+.dots { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin: 14px 0 0; }
+.dots a { min-width: 2em; height: 2em; padding: 0 0.4em; display: inline-flex; align-items: center; justify-content: center; border-radius: 1em;
+  font: 500 0.82rem var(--sans); color: var(--accent); text-decoration: none; border: 1px solid var(--line); background: var(--paper); }
+.dots a:hover { border-color: var(--accent-soft); }
+.dots a[aria-current="step"] { background: var(--accent); border-color: var(--accent); color: var(--paper); }
+.dots .group { width: 1px; height: 1.4em; background: var(--line); margin: 0 4px; }
+.slides { flex: 1; margin-top: 18px; }
+.exercise { margin: 0 0 30px; }
+.js .exercise { display: none; margin: 0; animation: lp-in 0.18s ease-out; }
+.js .exercise.current { display: block; }
+@keyframes lp-in { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+.exercise .module { margin: 0 0 4px; font: 600 0.82rem var(--sans); color: var(--accent); text-transform: none; letter-spacing: 0.01em; }
+.exercise h2 { display: flex; align-items: baseline; gap: 0.6em; margin: 0 0 10px; font: 500 1.12rem/1.3 var(--sans); }
+.exercise h2 .n { font-weight: 600; color: var(--accent); min-width: 1.2em; }
+.exercise h2 .t { flex: 1; }
+.exercise h2 .stars { color: var(--accent-soft); font-size: 0.8rem; letter-spacing: 0.08em; white-space: nowrap; }
+.exercise.tx ol.tx-abc > li::before { content: counter(abc, lower-alpha); font: 500 0.95em var(--sans); color: var(--accent); }
+.tx .katex { font-size: 1.08em; }
+.tx .tx-figure { margin: 12px 0; text-align: center; }
+.tx .tx-img { max-width: 100%; height: auto; background: #fff; border-radius: 4px; }
+@media (prefers-color-scheme: dark) { .tx .tx-img { padding: 8px; } }
+.tx .tx-box-title { font-family: var(--sans); }
+.tx .tx-table { font-variant-numeric: tabular-nums; }
 .empty { color: var(--muted); }
-footer { margin-top: 30px; padding-top: 8px; border-top: 1px solid var(--line); color: var(--muted); font: 0.85rem system-ui, sans-serif; }
+.pager { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 26px 0 10px; font-family: var(--sans); }
+.pager button { font: 500 0.95rem var(--sans); color: var(--accent); background: var(--paper); border: 1px solid var(--line); border-radius: 8px; padding: 9px 16px; cursor: pointer; min-width: 44px; }
+.pager button:hover:not(:disabled) { border-color: var(--accent); }
+.pager button:disabled { color: var(--muted); opacity: 0.5; cursor: default; }
+.pager button:focus-visible, .dots a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.pager .pos { font: 600 0.95rem var(--sans); color: var(--accent); }
+footer { display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-top: 18px; padding-top: 8px; border-top: 1px solid var(--line);
+  color: var(--muted); font: 0.75rem var(--sans); letter-spacing: 0.01em; }
+@media (max-width: 520px) {
+  body { font-size: 17px; }
+  .sheet { padding: 16px 16px 14px; }
+  .top h1 { font-size: 1.4rem; }
+  .pager button span { display: none; }
+}
 @media print {
-  :root { --bg: #fff; --ink: #000; --muted: #555; --line: #bbb; --accent: #000; }
-  body { font-size: 11pt; }
-  .sheet { max-width: none; padding: 0; }
-  .sheet header .site { display: none; }
+  :root { --bg: #fff; --paper: #fff; --ink: #000; --muted: #555; --line: #bbb; --accent: #005293; --accent-soft: #7fa8c9; }
+  body { font-size: 10.5pt; }
+  .sheet { max-width: none; padding: 0; min-height: 0; display: block; }
+  .top .site, .dots, .pager { display: none !important; }
+  .js .exercise, .exercise { display: block !important; margin: 0 0 14pt; animation: none; break-inside: avoid; }
   a { color: inherit; text-decoration: none; }
 }
 """ + TX_CSS
@@ -1668,7 +1893,7 @@ SHEETS_JS = r"""
     return el('span', { class: 'chips' },
       d.lang ? el('span', { class: 'chip' }, d.lang === 'de' ? 'DE' : 'EN') : '',
       d.difficulty ? el('span', { class: 'chip', title: `difficulty ${d.difficulty}` }, '★'.repeat(Math.min(d.difficulty, 5))) : '',
-      d.images ? el('span', { class: 'chip warn', title: 'Has an image: not in the export, a placeholder on the sheet' }, 'image') : '',
+      d.images ? el('span', { class: 'chip warn', title: 'Has an image: TeXercises does not export it; upload or fetch it under Images' }, 'image') : '',
       d.available === false ? el('span', { class: 'chip bad', title: 'Not in the uploaded export: left out of the PDF and the online version' }, 'missing') : '',
       d.app ? el('span', { class: 'chip quiet' }, appOf(d.app).name) : '');
   }
@@ -1692,7 +1917,7 @@ SHEETS_JS = r"""
         .catch(() => { msg.textContent = 'The upload failed.'; });
     };
     box.replaceChildren(
-      el('p', { class: 'note' }, `LaTeX on the server: ${st.latex ? 'yes' : 'no (PDFs need it; see hub-admin/sheets/README.md)'} · exercises there: ${st.exercises} (export uploaded: ${up}) · of the pool: ${st.in_pool} of ${st.pool}`),
+      el('p', { class: 'note' }, `LaTeX on the server: ${st.latex ? 'yes' : 'no (PDFs need it; see hub-admin/sheets/README.md)'} · figures drawn for the browser: ${st.figures ? 'yes' : 'no (needs LaTeX and pdftocairo)'} · exercises there: ${st.exercises} (export uploaded: ${up}) · of the pool: ${st.in_pool} of ${st.pool}`),
       el('details', { class: 'upload' }, el('summary', {}, 'Upload a TeXercises export'),
         el('p', { class: 'note' }, `TeXercises: Settings → Export, the .zip. Only your own exercises (creator “${st.own}”) are kept; upload it again whenever your exercises change.`),
         el('div', { class: 'addapp' }, file, el('button', { type: 'button', onclick: send }, 'Upload'), msg)));
@@ -1706,6 +1931,7 @@ SHEETS_JS = r"""
 
   // ---------------------------------------------------------------- the editor
   function render() {
+    fills = [];
     renderList();
     const box = $('#sheet-edit');
     if (!cur) {
@@ -1725,6 +1951,7 @@ SHEETS_JS = r"""
         el('button', { type: 'button', class: 'danger', onclick: () => act('delete') }, 'Delete sheet')) : '',
       el('h3', {}, 'Modules and learning objectives'), modules(),
       el('h3', {}, 'Exercises'), exercises(),
+      el('h3', {}, 'Images'), imagesBox(),
       el('h3', {}, 'Preview'), preview(),
       el('h3', {}, 'PDF and online version'), output()));
   }
@@ -1836,6 +2063,20 @@ SHEETS_JS = r"""
       Object.assign(previews, d.exercises);
     }
   }
+  // figures still being drawn on the server: their exercises are asked for again until they are there
+  let fills = [], pendingTimer = 0, pendingRounds = 0;
+  function watchPending() {
+    clearTimeout(pendingTimer);
+    const keys = [...new Set(fills.map((f) => f.k))].filter((k) => previews[k] && previews[k].fallbacks.includes('pending'));
+    if (!keys.length) { pendingRounds = 0; return; }
+    if (++pendingRounds > 40) return;
+    pendingTimer = setTimeout(async () => {
+      keys.forEach((k) => { delete previews[k]; });
+      try { await fetchPreviews(keys); } catch (e) { return; }
+      fills.filter((f) => keys.includes(f.k)).forEach((f) => f.fill());
+      watchPending();
+    }, 3000);
+  }
   function previewOf(k, solution) {
     const box = el('div', { class: 'prev' }, el('p', { class: 'note' }, 'Loading…'));
     const show = () => {
@@ -1843,9 +2084,10 @@ SHEETS_JS = r"""
       if (!p) { box.replaceChildren(el('p', { class: 'note' }, 'Not in the uploaded export: no preview.')); return; }
       box.replaceChildren(html(p.text));
       if (solution) box.append(el('details', { class: 'sol' }, el('summary', {}, 'Solution'), html(p.solution || '')));
-      if (p.fallbacks.some((f) => f !== 'figure' && f !== 'image')) box.append(el('p', { class: 'note' }, 'Some of it is only shown as its source here; the PDF has it.'));
+      if (p.fallbacks.some((f) => !['figure', 'image', 'pending'].includes(f))) box.append(el('p', { class: 'note' }, 'Some of it is only shown as its source here; the PDF has it.'));
     };
-    if (previews[k] || det(k).available === false) show(); else fetchPreviews([k]).then(show).catch((e) => box.replaceChildren(el('p', { class: 'error' }, `No preview: ${e.message}`)));
+    fills.push({ k, fill: show });
+    if (previews[k] || det(k).available === false) { show(); watchPending(); } else fetchPreviews([k]).then(() => { show(); watchPending(); }).catch((e) => box.replaceChildren(el('p', { class: 'error' }, `No preview: ${e.message}`)));
     return box;
   }
   function preview() {
@@ -1858,15 +2100,78 @@ SHEETS_JS = r"""
       parts.push(box);
       fetchPreviews(cur.exercises).then(() => {
         box.replaceChildren(el('h2', {}, cur.title || '(no title)'), ...cur.exercises.map((k, i) => {
-          const p = previews[k];
-          const a = el('article', {}, el('h4', {}, `${i + 1}. ${p ? p.title : det(k).title}`));
-          if (!p) { a.append(el('p', { class: 'note' }, 'Not in the uploaded export: no preview.')); return a; }
-          a.append(html(p.text), el('div', { class: 'sol' }, el('p', { class: 'soltitle' }, cur.lang === 'de' ? 'Lösung' : 'Solution'), html(p.solution || '')));
+          const a = el('article', {});
+          const fill = () => {
+            const p = previews[k];
+            a.replaceChildren(el('h4', {}, `${i + 1}. ${p ? p.title : det(k).title}`));
+            if (!p) { a.append(el('p', { class: 'note' }, 'Not in the uploaded export: no preview.')); return; }
+            a.append(html(p.text), el('div', { class: 'sol' }, el('p', { class: 'soltitle' }, cur.lang === 'de' ? 'Lösung' : 'Solution'), html(p.solution || '')));
+          };
+          fill();
+          fills.push({ k, fill });
           return a;
         }));
+        watchPending();
       }).catch((e) => box.replaceChildren(el('p', { class: 'error' }, `No preview: ${e.message}`)));
     }
     return el('div', {}, ...parts);
+  }
+
+  // ---------------------------------------------------------------- images
+  // TeXercises does not export its gallery images: the sheet's images, which are there, and how to get
+  // the others (fetched by the server from TeXercises, or downloaded there and uploaded here)
+  let imgList = null, imgKeys = '';
+  function imagesBox() {
+    const box = el('div', { class: 'images' });
+    const keys = cur.exercises.filter((k) => det(k).available !== false).join(',');
+    const msg = el('span', { class: 'status', 'aria-live': 'polite' });
+    const draw = () => {
+      if (!imgList) { box.replaceChildren(el('p', { class: 'note' }, 'Loading…')); return; }
+      if (!imgList.length) { box.replaceChildren(el('p', { class: 'note' }, cur.exercises.length ? 'The exercises of this sheet use no images.' : 'No exercises yet.')); return; }
+      const missing = imgList.filter((x) => !x.have);
+      const file = el('input', { type: 'file', multiple: true, accept: 'image/*,.svg,.pdf,.zip', 'aria-label': 'Images to upload' });
+      const upload = async () => {
+        if (!file.files.length) { msg.textContent = 'Choose the files first.'; return; }
+        let kept = 0, failed = 0;
+        for (const f of file.files) {
+          msg.textContent = `Uploading ${f.name}…`;
+          try {
+            const r = await fetch(`/admin/api/texercises?image=${encodeURIComponent(f.name)}`, { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/octet-stream' }, body: f });
+            const d = await r.json().catch(() => ({}));
+            if (r.ok) kept += d.kept.length; else failed += 1;
+          } catch (e) { failed += 1; }
+        }
+        status(`Kept ${kept} image${kept === 1 ? '' : 's'}${failed ? `; ${failed} file${failed === 1 ? ' was' : 's were'} no image` : ''}.`, failed ? 'bad' : 'ok');
+        refresh(true);
+      };
+      const fetchAll = async () => {
+        let ok = 0, why = '';
+        for (const x of missing) {
+          msg.textContent = `Fetching ${x.name} from TeXercises…`;
+          try { const d = await api('/admin/api/images/fetch', { name: x.name }); if (d.ok) ok += 1; else why = d.error; } catch (e) { why = e.message; }
+        }
+        status(`Fetched ${ok} of ${missing.length} images from TeXercises.${why ? ` Not all: ${why}.` : ''}`, ok === missing.length ? 'ok' : 'bad');
+        refresh(true);
+      };
+      box.replaceChildren(
+        el('ul', { class: 'imglist' }, ...imgList.map((x) => el('li', {},
+          el('span', { class: x.have ? 'ok' : 'bad' }, x.have ? '✓' : '✗'), ' ',
+          el('code', {}, x.name), ' ',
+          el('span', { class: 'note' }, x.exercises.join(' · ')), ' ',
+          x.have && !x.pdf ? el('span', { class: 'note' }, '(not in the PDF: LaTeX needs a PNG, JPEG or PDF of it)') : '',
+          x.have ? '' : el('a', { href: x.gallery, target: '_blank', rel: 'noopener' }, 'download from TeXercises ↗')))),
+        missing.length ? el('div', { class: 'addapp' }, el('button', { type: 'button', onclick: fetchAll }, `Fetch the ${missing.length} missing from TeXercises`)) : '',
+        el('div', { class: 'addapp' }, file, el('button', { type: 'button', onclick: upload }, 'Upload'), msg),
+        el('p', { class: 'note' }, 'Images keep the name they have in the TeXercises gallery (the extension may differ); a .zip of them works too. They show in the preview, the online version and the PDF.'));
+    };
+    const refresh = (changed) => {
+      api(`/admin/api/images?keys=${encodeURIComponent(keys)}`).then((d) => {
+        imgList = d.images; imgKeys = keys;
+        if (changed) { cur.exercises.forEach((k) => { delete previews[k]; }); render(); } else draw();
+      }).catch((e) => box.replaceChildren(el('p', { class: 'error' }, `Could not list the images: ${e.message}`)));
+    };
+    if (imgList && imgKeys === keys) draw(); else { imgList = null; draw(); if (keys) refresh(); else { imgList = []; draw(); } }
+    return box;
   }
 
   // ---------------------------------------------------------------- PDF and online version
@@ -1969,8 +2274,10 @@ SHEETS_JS = r"""
 """
 
 ONLINE_JS = r"""
-// The online version of a sheet: KaTeX sets the math (.tx-m inline, .tx-d displayed); what it
-// cannot read stays as its source.
+// The online version of a sheet: KaTeX sets the math (.tx-m inline, .tx-d displayed; what it cannot
+// read stays as its source), and one exercise is shown at a time: the buttons, the numbers at the top,
+// the arrow keys and swiping move between them, and the address (#a3) keeps the place. Figures still
+// being drawn on the server: the page reloads itself (a few times) until they are there.
 (function () {
   'use strict';
   function typeset() {
@@ -1985,7 +2292,60 @@ ONLINE_JS = r"""
       }
     });
   }
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', typeset); else typeset();
+  function slides() {
+    const arts = [...document.querySelectorAll('.slides .exercise')];
+    if (arts.length < 2) return;
+    document.documentElement.classList.add('js');
+    const pager = document.querySelector('.pager'), prev = pager.querySelector('.prev'), next = pager.querySelector('.next'), pos = pager.querySelector('.pos');
+    const dots = [...document.querySelectorAll('.dots a')];
+    pager.hidden = false;
+    let cur = -1;
+    const fromHash = () => { const m = /^#a(\d+)$/.exec(location.hash); const n = m ? Number(m[1]) - 1 : 0; return n >= 0 && n < arts.length ? n : 0; };
+    function show(i, push) {
+      i = Math.max(0, Math.min(arts.length - 1, i));
+      if (i === cur) return;
+      const first = cur < 0;
+      cur = i;
+      arts.forEach((a, j) => a.classList.toggle('current', j === i));
+      dots.forEach((d, j) => { if (j === i) d.setAttribute('aria-current', 'step'); else d.removeAttribute('aria-current'); });
+      prev.disabled = i === 0;
+      next.disabled = i === arts.length - 1;
+      pos.textContent = `${i + 1} / ${arts.length}`;
+      if (push) history.replaceState(null, '', `#a${i + 1}`);
+      if (!first) window.scrollTo(0, 0);
+    }
+    prev.addEventListener('click', () => show(cur - 1, true));
+    next.addEventListener('click', () => show(cur + 1, true));
+    dots.forEach((d, j) => d.addEventListener('click', (e) => { e.preventDefault(); show(j, true); }));
+    window.addEventListener('hashchange', () => show(fromHash(), false));
+    document.addEventListener('keydown', (e) => {
+      if (e.altKey || e.ctrlKey || e.metaKey || /^(INPUT|TEXTAREA|SELECT)$/.test((e.target || {}).tagName || '')) return;
+      if (e.key === 'ArrowRight' || e.key === 'PageDown') { show(cur + 1, true); e.preventDefault(); }
+      else if (e.key === 'ArrowLeft' || e.key === 'PageUp') { show(cur - 1, true); e.preventDefault(); }
+      else if (e.key === 'Home') { show(0, true); } else if (e.key === 'End') { show(arts.length - 1, true); }
+    });
+    let x0 = null, y0 = 0;
+    const box = document.querySelector('.slides');
+    box.addEventListener('touchstart', (e) => { if (e.touches.length === 1) { x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; } }, { passive: true });
+    box.addEventListener('touchend', (e) => {
+      if (x0 === null) return;
+      const dx = e.changedTouches[0].clientX - x0, dy = e.changedTouches[0].clientY - y0;
+      x0 = null;
+      // a clear sideways swipe, not on something that scrolls sideways itself (a wide formula)
+      if (Math.abs(dx) > 60 && Math.abs(dx) > 2 * Math.abs(dy) && !(e.target.closest && e.target.closest('.tx-d, .tx-table'))) show(cur + (dx < 0 ? 1 : -1), true);
+    });
+    show(fromHash(), false);
+  }
+  function pending() {
+    if (!document.querySelector('.exercise[data-pending]')) { try { sessionStorage.removeItem('lp-figures'); } catch (e) { /* none */ } return; }
+    let n = 0;
+    try { n = Number(sessionStorage.getItem('lp-figures') || 0); } catch (e) { /* no storage: reload anyway, a few times */ }
+    if (n >= 20) return;
+    try { sessionStorage.setItem('lp-figures', String(n + 1)); } catch (e) { return; }
+    setTimeout(() => location.reload(), 4000);
+  }
+  function start() { typeset(); slides(); pending(); }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
 })();
 """
 

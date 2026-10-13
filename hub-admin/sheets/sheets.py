@@ -19,6 +19,11 @@ The exercises themselves come from the TeXercises export uploaded in the admin p
 teacher's own, see store_export) and from the drafts that deploy.sh puts next to this file
 (drafts/); only those can be on a sheet. PDFs are cached by a hash of everything they are made of
 and built in the background (request_pdf).
+
+Images: TeXercises does not export its gallery images. The teacher uploads them in the admin panel
+(store_images: files or a .zip, named as in the gallery) or the server fetches them from TeXercises
+(fetch_image: TeXercises asks for no login from Switzerland, where the server is); they are kept in one folder
+(hub-data/sheet-images/) that the PDF (images/ next to the .tex) and the pages use.
 """
 from __future__ import annotations
 
@@ -33,6 +38,8 @@ import sys
 import tarfile
 import tempfile
 import threading
+import urllib.error
+import urllib.request
 import zipfile
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
@@ -46,6 +53,12 @@ KEY = re.compile(r"[A-Za-z0-9][A-Za-z0-9_-]{0,120}")
 TEX_FILES = ("exercise.json", "preamble.tex", "text.tex", "solution.tex", "short_solution.tex")
 MAX_UPLOAD = 64 * 1024 * 1024
 LATEX_TIMEOUT = 150  # s
+IMAGE_NAME = re.compile(r"[A-Za-z0-9][A-Za-z0-9._-]{0,150}")
+IMAGE_EXT = (".png", ".jpg", ".jpeg", ".svg", ".gif", ".webp", ".pdf")
+WEB_EXT = IMAGE_EXT[:-1]  # what a browser shows (not .pdf)
+LATEX_EXT = (".png", ".jpg", ".jpeg", ".pdf")  # what LaTeX reads
+MAX_IMAGE = 10 * 1024 * 1024
+GALLERY = "https://texercises.com/gallery/image/file/{}/"
 
 _locks: Dict[str, threading.Lock] = {}
 _locks_guard = threading.Lock()
@@ -228,9 +241,14 @@ def collection(title: str, chosen: List[Tuple[str, str]], names: Dict[str, str])
     return {"title": title, "items": items, "containers": containers}
 
 
-def fingerprint(coll: Dict[str, object], have: Dict[str, Path], part: str, opts: Dict[str, str]) -> str:
+def fingerprint(coll: Dict[str, object], have: Dict[str, Path], part: str, opts: Dict[str, str],
+                images: Optional[Path] = None) -> str:
     h = hashlib.sha256()
     h.update(json.dumps([coll, part, opts], sort_keys=True, ensure_ascii=False).encode("utf-8"))
+    if images and images.is_dir():  # an image uploaded later makes a new PDF
+        for f in sorted(images.iterdir()):
+            st = f.stat()
+            h.update(f"{f.name}:{st.st_size}:{int(st.st_mtime)}".encode("utf-8"))
     for name in ENGINE:
         h.update((HERE / name).read_bytes())
     for item in coll["items"]:
@@ -246,7 +264,8 @@ def lualatex() -> Optional[str]:
 
 
 def make_pdf(title: str, chosen: List[Tuple[str, str]], names: Dict[str, str], export: Path, cache: Path,
-             part: str = "exercises", opts: Optional[Dict[str, str]] = None) -> Tuple[Optional[bytes], str]:
+             part: str = "exercises", opts: Optional[Dict[str, str]] = None,
+             images: Optional[Path] = None) -> Tuple[Optional[bytes], str]:
     """(pdf, '') or (None, reason). chosen: [(app, key)] in the sheet's order (a section where the app
     changes); part: 'exercises' or 'both' (with the solutions); opts: build_sheet.py's author, school,
     date, footer, lang."""
@@ -256,7 +275,7 @@ def make_pdf(title: str, chosen: List[Tuple[str, str]], names: Dict[str, str], e
     if not chosen:
         return None, "no exercises on this sheet are there (upload the TeXercises export)"
     coll = collection(title, chosen, names)
-    key = fingerprint(coll, have, part, opts)
+    key = fingerprint(coll, have, part, opts, images)
     cache.mkdir(parents=True, exist_ok=True)
     target = cache / f"{key}.pdf"
     with _lock(key):
@@ -267,6 +286,11 @@ def make_pdf(title: str, chosen: List[Tuple[str, str]], names: Dict[str, str], e
             return None, "LaTeX is not installed on the server"
         with tempfile.TemporaryDirectory(prefix="sheet-") as tmp:
             work = Path(tmp)
+            if images and images.is_dir():  # build_sheet.py points the gallery images to images/<name>
+                (work / "images").mkdir()
+                for f in images.iterdir():  # what LaTeX can read (an SVG has its PDF copy)
+                    if f.suffix.lower() in LATEX_EXT and not f.name.startswith("."):
+                        (work / "images" / f.name).symlink_to(f.resolve())
             (work / "coll.json").write_text(json.dumps(coll, ensure_ascii=False), encoding="utf-8")
             args = [sys.executable, str(HERE / "build_sheet.py"), os.pathsep.join(str(s) for s in sources(export)),
                     str(work / "coll.json"), str(work / "sheet.tex"), "--font=modern", f"--part={part}"]
@@ -298,7 +322,8 @@ _jobs: Dict[str, Dict[str, object]] = {}  # PDFs being made: hash -> {"done": bo
 
 
 def request_pdf(title: str, chosen: List[Tuple[str, str]], names: Dict[str, str], export: Path, cache: Path,
-                part: str = "exercises", opts: Optional[Dict[str, str]] = None) -> Tuple[str, object]:
+                part: str = "exercises", opts: Optional[Dict[str, str]] = None,
+                images: Optional[Path] = None) -> Tuple[str, object]:
     """The PDF if it is made: ("ready", pdf); else it is made in the background: ("building", None) until
     it is there, ("error", reason) once if it fails (asked again, it is tried again)."""
     opts = opts or {}
@@ -306,7 +331,7 @@ def request_pdf(title: str, chosen: List[Tuple[str, str]], names: Dict[str, str]
     present = [(a, k) for a, k in chosen if k in have]
     if not present:
         return "error", "no exercises on this sheet are there (upload the TeXercises export)"
-    key = fingerprint(collection(title, present, names), have, part, opts)
+    key = fingerprint(collection(title, present, names), have, part, opts, images)
     target = cache / f"{key}.pdf"
     if target.is_file():
         return "ready", target.read_bytes()
@@ -323,7 +348,7 @@ def request_pdf(title: str, chosen: List[Tuple[str, str]], names: Dict[str, str]
 
     def run() -> None:
         try:
-            pdf, why = make_pdf(title, chosen, names, export, cache, part, opts)
+            pdf, why = make_pdf(title, chosen, names, export, cache, part, opts, images)
         except (OSError, subprocess.SubprocessError) as e:
             pdf, why = None, f"the sheet could not be made ({e.__class__.__name__})"
         with _locks_guard:
@@ -402,6 +427,112 @@ def store_export(data: bytes, export: Path, own: str) -> Dict[str, int]:
     os.replace(tmp, export)
     shutil.rmtree(old, ignore_errors=True)
     return {"exercises": kept, "skipped": skipped}
+
+
+# ---------------------------------------------------------------------- images
+def image_kind(data: bytes) -> Optional[str]:
+    """The extension of an image file by its first bytes, or None if it is none of IMAGE_EXT."""
+    if data[:8] == b"\x89PNG\r\n\x1a\n":
+        return ".png"
+    if data[:3] == b"\xff\xd8\xff":
+        return ".jpg"
+    if data[:6] in (b"GIF87a", b"GIF89a"):
+        return ".gif"
+    if data[:4] == b"RIFF" and data[8:12] == b"WEBP":
+        return ".webp"
+    if data[:5] == b"%PDF-":
+        return ".pdf"
+    head = data[:2048].lstrip(b"\xef\xbb\xbf \t\r\n").lower()
+    if head.startswith(b"<svg") or (head.startswith(b"<?xml") or head.startswith(b"<!--")) and b"<svg" in head:
+        return ".svg"
+    return None
+
+
+def valid_name(name: str) -> bool:
+    return bool(IMAGE_NAME.fullmatch(name or "")) and ".." not in name
+
+
+def find_image(images: Path, name: str, latex: bool = False) -> Optional[Path]:
+    """The uploaded file of a gallery image: <name> itself or <name>.<ext>, one a browser shows (latex:
+    one LaTeX reads, an SVG's PDF copy too)."""
+    if not valid_name(name) or not images.is_dir():
+        return None
+    exts = LATEX_EXT if latex else WEB_EXT
+    for cand in [name] + [name + e for e in exts]:
+        p = images / cand
+        if p.is_file() and p.suffix.lower() in exts:
+            return p
+    return None
+
+
+def _store_one(images: Path, filename: str, data: bytes, as_name: Optional[str] = None) -> Optional[str]:
+    """Keep one image (its type checked by its content); the name kept, or None if it is no image."""
+    kind = image_kind(data)
+    if kind is None or len(data) > MAX_IMAGE:
+        return None
+    name = as_name or Path(filename.replace("\\", "/")).name
+    if os.path.splitext(name)[1].lower() not in IMAGE_EXT:  # no extension (as in the gallery): the content's
+        name += kind
+    if not valid_name(name):
+        return None
+    images.mkdir(parents=True, exist_ok=True)
+    tmp = images / f".{name}.tmp"
+    tmp.write_bytes(data)
+    os.replace(tmp, images / name)
+    if kind == ".svg":  # LaTeX cannot read SVG: a PDF copy, if the server can make one
+        conv = shutil.which("rsvg-convert")
+        if conv:
+            try:
+                subprocess.run([conv, "-f", "pdf", "-o", str(images / (os.path.splitext(name)[0] + ".pdf")), str(images / name)],
+                               capture_output=True, timeout=30)
+            except (subprocess.SubprocessError, OSError):
+                pass
+    return name
+
+
+def store_images(images: Path, filename: str, data: bytes) -> List[str]:
+    """Keep an uploaded image, or the images in an uploaded .zip; the names kept. ValueError: none."""
+    if len(data) > MAX_UPLOAD:
+        raise ValueError("the file is too large")
+    kept: List[str] = []
+    if data[:4] == b"PK\x03\x04":
+        try:
+            with zipfile.ZipFile(io.BytesIO(data)) as zf:
+                for info in zf.infolist():
+                    base = Path(info.filename.replace("\\", "/")).name
+                    if info.is_dir() or base.startswith(".") or info.file_size > MAX_IMAGE:
+                        continue
+                    got = _store_one(images, base, zf.read(info))
+                    if got:
+                        kept.append(got)
+        except zipfile.BadZipFile:
+            raise ValueError("not a .zip")
+    else:
+        got = _store_one(images, filename, data)
+        if got:
+            kept.append(got)
+    if not kept:
+        raise ValueError("no image in the file (PNG, JPEG, SVG, GIF, WebP or PDF)")
+    return kept
+
+
+def fetch_image(images: Path, name: str, timeout: float = 20) -> Tuple[bool, str]:
+    """Fetch a gallery image from TeXercises (which redirects to the file); (True, the name kept) or
+    (False, why not)."""
+    if not valid_name(name):
+        return False, "not an image name"
+    req = urllib.request.Request(GALLERY.format(name), headers={"User-Agent": "learningphysics.ch exercise sheets"})
+    try:
+        with urllib.request.urlopen(req, timeout=timeout) as r:
+            data = r.read(MAX_IMAGE + 1)
+    except (urllib.error.URLError, OSError, ValueError) as e:
+        return False, f"TeXercises did not answer ({e.__class__.__name__})"
+    if len(data) > MAX_IMAGE:
+        return False, "too large"
+    if image_kind(data) is None:
+        return False, "TeXercises asks for a login (download it there and upload it here)"
+    got = _store_one(images, name, data, as_name=name)
+    return (True, got) if got else (False, "not an image")
 
 
 def status(export: Path) -> Dict[str, object]:
