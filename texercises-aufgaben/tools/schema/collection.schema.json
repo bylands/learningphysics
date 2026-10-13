@@ -1,0 +1,162 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "TeXercises collection (collections/<key>.json)",
+  "type": "object",
+  "required": [
+    "title"
+  ],
+  "properties": {
+    "id": {
+      "type": [
+        "integer",
+        "null"
+      ]
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 250
+    },
+    "description": {
+      "type": "string"
+    },
+    "kind": {
+      "type": "string",
+      "enum": [
+        "sheet",
+        "exam",
+        "series"
+      ]
+    },
+    "is_private": {
+      "type": "boolean"
+    },
+    "is_complete": {
+      "type": "boolean"
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "maxLength": 100
+      }
+    },
+    "formulas": {
+      "type": "array",
+      "items": {
+        "type": "integer"
+      }
+    },
+    "layout_defaults": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string",
+        "maxLength": 100
+      }
+    },
+    "items": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "exercise": {
+            "type": "string",
+            "description": "Key (folder name) of an exercise in this bundle."
+          },
+          "exercise_id": {
+            "type": "integer",
+            "description": "An exercise on TeXercises not in the bundle."
+          },
+          "points": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "difficulty": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 6
+          },
+          "additional": {
+            "type": "string"
+          },
+          "additional_position": {
+            "type": "integer",
+            "enum": [
+              1,
+              2
+            ]
+          },
+          "gls": {
+            "type": "integer",
+            "enum": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5
+            ]
+          },
+          "gls_size": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "gls_nr_vs_weight": {
+            "type": "boolean"
+          },
+          "newpage": {
+            "type": "boolean"
+          },
+          "show_content_image": {
+            "type": "boolean"
+          }
+        },
+        "oneOf": [
+          {
+            "required": [
+              "exercise"
+            ]
+          },
+          {
+            "required": [
+              "exercise_id"
+            ]
+          }
+        ],
+        "additionalProperties": false
+      }
+    },
+    "containers": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "title",
+          "first",
+          "last"
+        ],
+        "properties": {
+          "title": {
+            "type": "string"
+          },
+          "pretext": {
+            "type": "string"
+          },
+          "first": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "last": {
+            "type": "integer",
+            "minimum": 1
+          }
+        }
+      }
+    },
+    "info": {
+      "type": "object",
+      "description": "Read only, ignored on import."
+    }
+  },
+  "additionalProperties": false
+}
