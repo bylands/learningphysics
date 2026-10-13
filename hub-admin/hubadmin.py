@@ -158,6 +158,9 @@ MAX_UPLOAD = 64 * 1024 * 1024  # a TeXercises export
 SHEET_ID = re.compile(r"[0-9a-f]{12}")
 SHEET_TOKEN = re.compile(r"[A-Za-z0-9_-]{32}")
 MAX_SHEETS, MAX_MODULES, MAX_SHEET_EXERCISES = 200, 40, 40
+FETCH_RETRY = 600  # s: a gallery image TeXercises did not give is asked for again after this
+FETCH_FAILED = ".fetch-failed.json"  # in the images' folder: the fetches that failed
+FETCH_TRIES = 3  # times: then it is not asked for by itself any more (the exercise is marked)
 TEXERCISES = "https://texercises.com"
 LOGIN_ATTEMPTS, LOGIN_WINDOW = 10, 15 * 60  # failed logins per address and window (s)
 # teacher accounts: each has a user name to log in with and a three-letter identifier, the start of
@@ -479,6 +482,9 @@ class Admin:
         self.sheet_cache = config.parent / "sheets"
         self.sheets_file = config.parent / "exercise-sheets.json"
         self.sheet_images = config.parent / "sheet-images"  # the gallery images, uploaded or fetched
+        self.fetching: Dict[str, str] = {}  # gallery name -> stem: being fetched from TeXercises
+        self.fetch_failed = self.read_fetch_failed()  # gallery name -> {"tries", "last": when, "why"}
+        self.fetch_lock = threading.Lock()
         self.sheet_figures = config.parent / "sheet-figures"  # the TikZ figures as SVG (figures.py)
         self.sheets_lock = threading.Lock()
         self.own = own
@@ -941,21 +947,102 @@ class Admin:
             title = str(meta.get("title") or k)
             names = lib.images_used(str(parts.get("text") or "") + "\n" + str(parts.get("solution") or ""))
             for n, name in enumerate(names, 1):
-                e = found.setdefault(name, {"titles": [], "stem": sheetlib.image_stem(title, str(meta.get("id") or k), n, len(names))})
+                e = found.setdefault(name, {"titles": [], "keys": [], "stem": sheetlib.image_stem(title, str(meta.get("id") or k), n, len(names))})
                 if title not in e["titles"]:
                     e["titles"].append(title)
+                if k not in e["keys"]:
+                    e["keys"].append(k)
         return found
 
     def images_of(self, keys: List[str]) -> Dict[str, object]:
-        """The gallery images the exercises use: [{name, have, file, pdf, exercises: [titles], gallery: url}]."""
+        """The gallery images the exercises use: [{name, have, file, pdf, exercises: [titles], keys,
+        gallery: url, fetching: being fetched, error: why fetching failed, refused: TeXercises refused
+        it FETCH_TRIES times}]. Missing ones are fetched from TeXercises in the background, again
+        after FETCH_RETRY if that failed, FETCH_TRIES times at most."""
         sheetlib = sheets_module()
-        out = []
+        out, missing = [], {}
         for name, e in self.image_uses(keys).items():
             f = sheetlib.find_image(self.sheet_images, name)
             out.append({"name": name, "have": bool(f), "file": f.name if f else e["stem"],
                         "pdf": bool(sheetlib.find_image(self.sheet_images, name, latex=True)),
-                        "exercises": e["titles"], "gallery": sheetlib.GALLERY.format(quote(name))})
+                        "exercises": e["titles"], "keys": e["keys"], "gallery": sheetlib.GALLERY.format(quote(name))})
+            if not f:
+                missing[name] = str(e["stem"])
+        with self.fetch_lock:  # uploaded since: forgotten
+            if any(self.fetch_failed.pop(x["name"], None) for x in out if x["have"]):
+                self.write_fetch_failed()
+        self.fetch_missing(missing)
+        with self.fetch_lock:
+            for x in out:
+                if not x["have"]:
+                    failed = self.fetch_failed.get(x["name"])
+                    x["fetching"] = x["name"] in self.fetching
+                    x["refused"] = bool(failed and failed["tries"] >= FETCH_TRIES)
+                    if failed:
+                        x["error"] = failed["why"]
         return {"images": out}
+
+    def read_fetch_failed(self) -> Dict[str, Dict[str, object]]:
+        try:
+            data = json.loads((self.sheet_images / FETCH_FAILED).read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            return {}
+        return {n: {"tries": int(v.get("tries", 0)), "last": float(v.get("last", 0)), "why": str(v.get("why", ""))}
+                for n, v in data.items() if isinstance(n, str) and isinstance(v, dict)} if isinstance(data, dict) else {}
+
+    def write_fetch_failed(self) -> None:
+        """(Under fetch_lock.) Kept in the images' folder, so that a restart does not ask again."""
+        try:
+            self.sheet_images.mkdir(parents=True, exist_ok=True)
+            tmp = self.sheet_images / f".{FETCH_FAILED}.tmp"
+            tmp.write_text(json.dumps(self.fetch_failed, indent=1, sort_keys=True), encoding="utf-8")
+            os.replace(tmp, self.sheet_images / FETCH_FAILED)
+        except OSError:
+            pass
+
+    def fetched(self, name: str, ok: bool, why: str) -> None:
+        """(Under fetch_lock.) Note how a fetch of a gallery image went."""
+        if ok:
+            changed = self.fetch_failed.pop(name, None) is not None
+        else:
+            tries = int(self.fetch_failed.get(name, {}).get("tries", 0)) + 1
+            self.fetch_failed[name] = {"tries": tries, "last": time.time(), "why": why}
+            changed = True
+        if changed:
+            self.write_fetch_failed()
+
+    def fetch_missing(self, missing: Dict[str, str]) -> None:
+        """Fetch these gallery images (name -> stem) from TeXercises in a background thread."""
+        sheetlib = sheets_module()
+        with self.fetch_lock:
+            now = time.time()
+            todo = {}
+            for n, stem in missing.items():
+                failed = self.fetch_failed.get(n)
+                if n in self.fetching or (failed and (failed["tries"] >= FETCH_TRIES or now - failed["last"] < FETCH_RETRY)):
+                    continue
+                todo[n] = stem
+            if not todo or sheetlib is None:
+                return
+            busy = bool(self.fetching)
+            self.fetching.update(todo)
+        if busy:  # the thread already running takes them too
+            return
+
+        def work() -> None:
+            while True:
+                with self.fetch_lock:
+                    if not self.fetching:
+                        return
+                    name, stem = next(iter(self.fetching.items()))
+                try:
+                    ok, what = sheetlib.fetch_image(self.sheet_images, name, stem)
+                except Exception as e:  # noqa: BLE001 - a fetch must not stop the others
+                    ok, what = False, str(e)
+                with self.fetch_lock:
+                    self.fetching.pop(name, None)
+                    self.fetched(name, ok, what)
+        threading.Thread(target=work, daemon=True).start()
 
     def store_images(self, filename: str, data: bytes, keys: List[str], gallery: Optional[str] = None) -> Dict[str, object]:
         """An uploaded image (gallery: of which gallery name), or a .zip of them, for the images of these
@@ -976,6 +1063,8 @@ class Admin:
         if use is None:
             return {"ok": False, "error": "no exercise of this sheet uses this image"}
         ok, what = sheetlib.fetch_image(self.sheet_images, name, str(use["stem"]))
+        with self.fetch_lock:
+            self.fetched(name, ok, what)
         return {"ok": ok, "name": what} if ok else {"ok": False, "error": what}
 
     def image_file(self, name: str) -> Optional[Path]:
@@ -2312,12 +2401,14 @@ SHEETS_JS = r"""
   const appOf = (id) => (st.apps.find((a) => a.id === id) || { id, name: id, objectives: [], exercises: 0 });
   const obName = (app, ob) => { const o = appOf(app).objectives.find((x) => x.id === ob); return o ? o[cur.lang] || o.en : ob; };
   const det = (k) => (plan && plan.details[k]) || { title: k, available: false };
+  let refused = new Set(); // exercises with an image TeXercises refused FETCH_TRIES times (from the image list)
   function chips(k) {
     const d = det(k);
     return el('span', { class: 'chips' },
       d.lang ? el('span', { class: 'chip' }, d.lang === 'de' ? 'DE' : 'EN') : '',
       d.difficulty ? el('span', { class: 'chip', title: `difficulty ${d.difficulty}` }, '★'.repeat(Math.min(d.difficulty, 5))) : '',
-      d.images ? el('span', { class: 'chip warn', title: 'Has an image: TeXercises does not export it; upload or fetch it under Images' }, 'image') : '',
+      refused.has(k) ? el('span', { class: 'chip bad', title: 'TeXercises refused its image three times: download it there and upload it under Images' }, 'image refused')
+        : d.images ? el('span', { class: 'chip warn', title: 'Has an image: TeXercises does not export it; upload or fetch it under Images' }, 'image') : '',
       d.available === false ? el('span', { class: 'chip bad', title: 'Not in the uploaded export: left out of the PDF and the online version' }, 'missing') : '',
       d.app ? el('span', { class: 'chip quiet' }, appOf(d.app).name) : '');
   }
@@ -2591,15 +2682,37 @@ SHEETS_JS = r"""
           el('code', {}, x.name), ' ',
           el('span', { class: 'note' }, `${x.exercises.join(' · ')} → ${x.have ? x.file : x.file + '.…'}`), ' ',
           x.have && !x.pdf ? el('span', { class: 'note' }, '(not in the PDF: LaTeX needs a PNG, JPEG or PDF of it)') : '',
+          x.fetching ? el('span', { class: 'note' }, 'fetching from TeXercises…') : '',
+          x.refused ? el('span', { class: 'error' }, `TeXercises refused it three times, so it is no longer fetched by itself: ${x.error}`)
+            : x.error && !x.fetching ? el('span', { class: 'note' }, `(not fetched: ${x.error}; tried again later)`) : '', ' ',
           x.have ? '' : el('a', { href: x.gallery, target: '_blank', rel: 'noopener' }, 'download from TeXercises ↗'), ' ', one(x)))),
-        missing.length ? el('div', { class: 'addapp' }, el('button', { type: 'button', onclick: fetchAll }, `Fetch the ${missing.length} missing from TeXercises`)) : '',
+        missing.some((x) => !x.fetching) ? el('div', { class: 'addapp' }, el('button', { type: 'button', onclick: fetchAll }, `Fetch the ${missing.length} missing from TeXercises`)) : '',
         el('div', { class: 'addapp' }, file, el('button', { type: 'button', onclick: upload }, 'Upload'), msg),
-        el('p', { class: 'note' }, 'Upload an image at its line, or several at once (or a .zip) named as in the TeXercises gallery (any extension). Each is kept under a name made of its exercise’s title and id, as shown after the arrow. They show in the preview, the online version and the PDF.'));
+        el('p', { class: 'note' }, 'Missing images are fetched from TeXercises by themselves. Or upload an image at its line, or several at once (or a .zip) named as in the TeXercises gallery (any extension). Each is kept under a name made of its exercise’s title and id, as shown after the arrow. They show in the preview, the online version and the PDF.'));
+      // ask again while the server fetches; once one has come, the previews are made anew
+      if (imgList.some((x) => x.fetching)) {
+        const had = imgList.filter((x) => x.have).length;
+        setTimeout(() => {
+          if (!box.isConnected) return;
+          api(`/admin/api/images?keys=${encodeURIComponent(keys)}`).then((d) => {
+            const marks = take(d);
+            if (d.images.filter((x) => x.have).length > had) { cur.exercises.forEach((k) => { delete previews[k]; }); render(); } else if (marks) render(); else draw();
+          }).catch(() => {});
+        }, 2500);
+      }
+    };
+    // the list as it came; true if the exercises marked "image refused" changed (their chips are redrawn)
+    const take = (d) => {
+      imgList = d.images; imgKeys = keys;
+      const now = new Set(d.images.filter((x) => x.refused).flatMap((x) => x.keys));
+      const marks = now.size !== refused.size || [...now].some((k) => !refused.has(k));
+      refused = now;
+      return marks;
     };
     const refresh = (changed) => {
       api(`/admin/api/images?keys=${encodeURIComponent(keys)}`).then((d) => {
-        imgList = d.images; imgKeys = keys;
-        if (changed) { cur.exercises.forEach((k) => { delete previews[k]; }); render(); } else draw();
+        const marks = take(d);
+        if (changed || marks) { cur.exercises.forEach((k) => { delete previews[k]; }); render(); } else draw();
       }).catch((e) => box.replaceChildren(el('p', { class: 'error' }, `Could not list the images: ${e.message}`)));
     };
     if (imgList && imgKeys === keys) draw(); else { imgList = null; draw(); if (keys) refresh(); else { imgList = []; draw(); } }

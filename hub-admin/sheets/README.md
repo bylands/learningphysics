@@ -27,9 +27,13 @@ in order, kept in `hub-data/exercise-sheets.json` (not served).
   until it is there (all figures of an exercise in one LaTeX run, a few seconds). A figure LaTeX
   cannot draw stays a placeholder; without LaTeX or pdftocairo, all are ("figure in the PDF").
 - **Images**: a TeXercises export has no gallery images. The Sheets tab lists the images of a sheet's
-  exercises, which are there and which not; **Fetch from TeXercises** asks TeXercises for the missing
-  ones (`texercises.com/gallery/image/file/<name>/`; TeXercises asks for no login from Switzerland,
-  where the server is, so this should work; if it asks for one, the panel says so), or the teacher
+  exercises, which are there and which not. The missing ones are fetched from TeXercises by
+  themselves, in the background, as soon as the list is shown (`texercises.com/gallery/image/file/<name>/`;
+  TeXercises asks for no login from Switzerland, Germany, Austria and Liechtenstein, so no TeXercises
+  password is kept on the server). If TeXercises refuses one, the panel says why and asks again after
+  10 minutes; after three refusals it stops, and the exercise is marked **image refused** (kept in
+  `hub-data/sheet-images/.fetch-failed.json`, forgotten once the image is there). **Fetch from
+  TeXercises** still asks at once. Or the teacher
   downloads them there and uploads them: one at its line (any file name), or several, or a .zip, named
   as in the gallery (any extension). Each is kept under a name made of its exercise's title and id
   (`magnetfeld-einer-spule-1234.png`; `-2`, `-3` for an exercise's further images; `image_stem`), with
