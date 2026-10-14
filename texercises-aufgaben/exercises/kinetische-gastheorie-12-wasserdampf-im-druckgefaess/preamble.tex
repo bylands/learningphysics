@@ -1,15 +1,16 @@
 \NewQty{VD}{5}[\liter][e-3][\meter\cubed]
-\NewQty{mWa}{10}[\gram][e-3][\kilogram]
-\NewQty{thD}{150}[\degreeCelsius]
+\NewQty{mWa}{1}[\gram][e-3][\kilogram]
+\NewQty{thD}{120}[\degreeCelsius]
 \NewQty{MHa}{1.00794}[\gram\per\mole][e-3][\kilogram\per\mole]
 \NewQty{MOa}{15.9994}[\gram\per\mole][e-3][\kilogram\per\mole]
-\NewQty{rSa}{2.548}[\kilogram\per\meter\cubed]
-\NewQty{pSa}{476.0}[\kilo\pascal][e3][\pascal]
+\NewQty{rSa}{1.122}[\kilogram\per\meter\cubed]
+\NewQty{pSa}{198.53}[\kilo\pascal][e3][\pascal]
 
 \SolQty{TD}[\vartheta+\SI{273.15}{\kelvin}]{\thDX+273.15}[\kelvin]
 \SolQty{MWd}[2M_\text{H}+M_\text{O}]{2*\MHaX+\MOaX}[\kilogram\per\mole]
 \ConvTo{MWdg}{1e3}{MWd}{\gram\per\mole}
-\SolQty{vD}[\sqrt{\frac{8RT}{\pi M}}]{sqrt(8*\ncRX*\TDX/(pi*\MWdX))}[\mps]
+\SolQty{vD}[\sqrt{\frac{3RT}{M}}]{sqrt(3*\ncRX*\TDX/\MWdX)}[\mps]
+\SolQty{vbD}[\sqrt{\frac{8RT}{\pi M}}]{sqrt(8*\ncRX*\TDX/(pi*\MWdX))}[\mps]
 \SolQty{rD}[\frac{m}{V}]{\mWaX/\VDX}[\kilogram\per\meter\cubed]
 \SolQty{pD}[\frac{m}{M}\cdot\frac{RT}{V}]{\mWaX*\ncRX*\TDX/(\MWdX*\VDX)}[\pascal]
 \ConvTo{pDb}{1e-5}{pD}{\bar}
