@@ -552,6 +552,12 @@ class Preview(unittest.TestCase):
         self.assertEqual(P.unit_tex(r"\degree"), (r"\mathrm{{}^{\circ}}", True))
         self.assertEqual(u(""), "")
 
+    def test_prefix_on_plain_unit_and_empty_script(self):
+        e = self.ex("\\SolQty{x}[d]{0.02013}[m]\n\\SolQty{F}[F]{0.0021}[N]")
+        self.assertEqual(e.math(r"\xP{-2}{2}"), r"{2.0\,\mathrm{cm}} ")
+        self.assertEqual(e.math(r"\FP{-3}{2}"), r"{2.1\,\mathrm{mN}} ")
+        self.assertNotIn("x^", P.convert(e, "\\begin{align}a &= x^\\\\ b &= c\n\\end{align}"))
+
     def test_quantities(self):
         e = self.ex("\\NewQty{I}{20}[\\milli\\ampere][e-3][\\ampere]\n\\NewQty*{v}{54}[\\kmph][1/3.6][\\mps]\n"
                     "\\NewQty{d}{7.8e7}[\\km][e3][\\m]\n"

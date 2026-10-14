@@ -1,6 +1,6 @@
 {
   "title": "Zentripetalkraft (Grundaufgaben) – Aufgaben aus den Aufgabenblättern",
-  "description": "Grundaufgaben zur Kreisbewegung und Zentripetalkraft aus den Aufgabenblättern D6: Umlaufzeit, Frequenz, Winkel- und Bahngeschwindigkeit, Zentripetalbeschleunigung und Zentripetalkraft, Grössenvergleiche. Rechnen Sie mit g = 9.81 m/s²; Werte aus Formeln, Tabellen, Begriffe.",
+  "description": "Grundaufgaben zur Kreisbewegung und Zentripetalkraft aus den Aufgabenblättern D6: Zentripetalkraft, Kurvenfahrt, Looping, kosmische Geschwindigkeit, Grössenvergleiche (die kinematischen Grundaufgaben stehen in Kreisbewegung (Kinematik)). Rechnen Sie mit g = 9.81 m/s²; Werte aus Formeln, Tabellen, Begriffe.",
   "kind": "sheet",
   "is_private": true,
   "tags": [
@@ -8,24 +8,6 @@
     "zentripetalkraft"
   ],
   "items": [
-    {
-      "exercise": "zentripetalkraft-grundaufgaben-01-umlaufzeit-velorad"
-    },
-    {
-      "exercise": "zentripetalkraft-grundaufgaben-02-drehwinkel-plattenspieler"
-    },
-    {
-      "exercise": "zentripetalkraft-grundaufgaben-03-geschwindigkeit-am-aequator"
-    },
-    {
-      "exercise": "zentripetalkraft-grundaufgaben-04-minutenzeiger"
-    },
-    {
-      "exercise": "zentripetalkraft-grundaufgaben-05-velofahrerin-in-der-kurve"
-    },
-    {
-      "exercise": "zentripetalkraft-grundaufgaben-06-kuerzere-umlaufzeit-karussell"
-    },
     {
       "exercise": "zentripetalkraft-grundaufgaben-07-was-ist-die-zentripetalkraft"
     },
@@ -52,9 +34,6 @@
     },
     {
       "exercise": "zentripetalkraft-grundaufgaben-15-erste-kosmische-geschwindigkeit"
-    },
-    {
-      "exercise": "zentripetalkraft-grundaufgaben-16-groessen-vergleichen-kreisbewegung"
     },
     {
       "exercise": "zentripetalkraft-grundaufgaben-17-groessen-vergleichen-zentripetalkraft"

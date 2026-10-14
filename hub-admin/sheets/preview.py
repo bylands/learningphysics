@@ -52,6 +52,7 @@ UNITS = {"ampere": "A", "candela": "cd", "kelvin": "K", "kilogram": "kg", "gram"
          "arcminute": "'", "arcsecond": "''", "degree": r"{}^{\circ}", "percent": r"\%", "bar": "bar",
          "angstrom": r"\text{Å}", "barn": "b", "knot": "kn", "mmHg": "mmHg", "kWh": "kWh", "clight": "c",
          "planckbar": r"\hbar ", "elementarycharge": "e", "electronmass": "m_e", "year": "a"}
+UNIT_NAME = {sym: name for name, sym in reversed(list(UNITS.items())) if sym.isalpha()}  # "m" -> "metre"
 NO_SPACE = {"arcminute", "arcsecond", "degree"}  # no space between the number and these
 # siunitx' abbreviations (\km, \mA, \kHz, ...): name -> (prefix, unit); those of texercises-lp.sty are read
 # from it below
@@ -695,7 +696,14 @@ class Exercise:
                     p_, figs = 0, 4
                 prefix = POWER_TEN.get(p_)
                 x = None if q.x is None else q.x / 10 ** p_
-                unit = ("\\" + prefix if prefix else "") + q.unit if q.unit else ""
+                unit = q.unit
+                if prefix and unit:
+                    if unit.startswith("\\"):
+                        unit = "\\" + prefix + unit
+                    elif unit in UNIT_NAME:  # a plain symbol (m, N, ...) after a prefix macro
+                        unit = "\\" + prefix + "\\" + UNIT_NAME[unit]
+                    else:
+                        unit = PREFIXES[prefix].strip() + unit
                 return self.with_unit(fmt(x, figs, True, "fixed"), unit), i
         return None
 
@@ -1717,9 +1725,13 @@ def render_parts(parts: Dict[str, object], solution: bool = True, media: Optiona
     return out
 
 
+# x^\\ or x_\\ before a line break: LaTeX passes over the empty script, KaTeX refuses the whole formula
+EMPTY_SCRIPT = re.compile(r"(?<!\\)[\^_]\s*(?=\\\\)")
+
+
 def convert(ex: Exercise, tex: str) -> str:
     try:
-        return ex.html(strip_comments(tex))
+        return ex.html(EMPTY_SCRIPT.sub("", strip_comments(tex)))
     except Exception:  # never break the page
         ex.fallback("error")
         return '<pre class="tx-raw">' + escape(tex) + "</pre>"
