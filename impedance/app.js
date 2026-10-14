@@ -18,11 +18,10 @@
       stars: (d) => `Difficulty: ${d} of 5`,
       score: (s, c) => `Solved: ${s} · first try without hints: ${c}`,
       hint: (n) => `Hint (${n} left)`, noHints: 'No more hints', unlocks: (n) => `Unlocks after all hints or ${n} attempts`,
-      choose: 'Enter a value for each quantity, then check again.',
+      choose: 'Choose a value for each quantity, then check again.',
       ok: 'All correct.', okWell: 'All correct, well done! Compare your approach with the worked solution, or start a new exercise.',
       notYet: (n) => `Not quite yet (attempt ${n}).`, tryAgain: ' Try again, or take a hint.', canReveal: ' You can take a hint or look at the worked solution.',
-      correct: 'Correct', number: 'Enter a number',
-      close: (tol) => `Close, but not within ${tol} %: read the graph more carefully, with the probe.`,
+      correct: 'Correct',
       whichCurve: 'Which curve?', theCurves: 'The curves:', curve: (k) => `Curve ${k}`,
       whichCircuit: 'Which circuit?', theCircuits: 'The circuits:', circuit: (k) => `Circuit ${k}`,
       chooseCurve: 'Choose a curve, then check.', chooseCircuit: 'Choose a circuit, then check.',
@@ -42,11 +41,10 @@
       stars: (d) => `Schwierigkeit: ${d} von 5`,
       score: (s, c) => `Gelöst: ${s} · beim ersten Versuch ohne Tipps: ${c}`,
       hint: (n) => `Tipp (${n} übrig)`, noHints: 'Keine Tipps mehr', unlocks: (n) => `Wird nach allen Tipps oder ${n} Versuchen freigeschaltet`,
-      choose: 'Gib für jede Grösse einen Wert ein und prüfe dann nochmals.',
+      choose: 'Wähle für jede Grösse einen Wert und prüfe dann nochmals.',
       ok: 'Alles richtig.', okWell: 'Alles richtig, gut gemacht! Vergleiche deinen Lösungsweg mit der ausführlichen Lösung oder starte eine neue Aufgabe.',
       notYet: (n) => `Noch nicht ganz (Versuch ${n}).`, tryAgain: ' Versuche es nochmals, oder nimm einen Tipp.', canReveal: ' Du kannst einen Tipp nehmen oder die ausführliche Lösung anschauen.',
-      correct: 'Richtig', number: 'Gib eine Zahl ein',
-      close: (tol) => `Knapp daneben, nicht innerhalb von ${tol} %: Lies den Graphen genauer ab, mit der Sonde.`,
+      correct: 'Richtig',
       whichCurve: 'Welche Kurve?', theCurves: 'Die Kurven:', curve: (k) => `Kurve ${k}`,
       whichCircuit: 'Welche Schaltung?', theCircuits: 'Die Schaltungen:', circuit: (k) => `Schaltung ${k}`,
       chooseCurve: 'Wähle eine Kurve und prüfe dann.', chooseCircuit: 'Wähle eine Schaltung und prüfe dann.',
@@ -119,7 +117,6 @@
     $('#title').innerHTML = `${ex.inverse ? ui().whichCircuit : ui().whichCurve} ${starsOf(ex.difficulty)}`;
     const res = M.NETS[ex.net].level >= 2; // what the options can have, not only the right one
     $('#prompt').innerHTML = ex.direct ? (ex.inverse ? ui().directInversePrompt(res) : ui().directPrompt(res, M.single(ex.net))) : ex.inverse ? ui().inversePrompt : ui().matchPrompt;
-    $('#fields').className = '';
     $('#fields').innerHTML = `<div id="ident"></div><p class="match-head">${ex.inverse ? ui().theCircuits : ui().theCurves}</p><div id="cands"></div><p id="cand-fb" class="ident-fb bad" aria-live="polite"></p>`;
   }
   // the questions and the options
@@ -240,24 +237,22 @@
     }
     const c = ex.c, ks = I.UNKNOWNS[c.kind];
     $('#title').innerHTML = `${circuitName(c)} ${starsOf(ex.difficulty)}`;
-    const tol = Math.round(100 * I.TOL);
-    $('#prompt').innerHTML = L(`The graph shows the impedance <i>Z</i> of the circuit against the angular frequency <i>ω</i>. Find ${and(ks.map((k) => `<i>${k}</i>`))} from the features of the graph and enter their values; within ${tol} % counts as right.`,
-      `Der Graph zeigt die Impedanz <i>Z</i> der Schaltung gegen die Kreisfrequenz <i>ω</i>. Bestimme ${and(ks.map((k) => `<i>${k}</i>`))} aus den Merkmalen des Graphen und gib ihre Werte ein; auf ${tol} % genau gilt als richtig.`);
+    $('#prompt').innerHTML = L(`The graph shows the impedance <i>Z</i> of the circuit against the angular frequency <i>ω</i>. Find ${and(ks.map((k) => `<i>${k}</i>`))} from the features of the graph and choose the matching values.`,
+      `Der Graph zeigt die Impedanz <i>Z</i> der Schaltung gegen die Kreisfrequenz <i>ω</i>. Bestimme ${and(ks.map((k) => `<i>${k}</i>`))} aus den Merkmalen des Graphen und wähle die passenden Werte.`);
     $('#schematic').className = 'fig'; // after a curve → circuit exercise, it held the curve
     $('#schematic').innerHTML = P.schematic(c);
     probe.reset();
     drawGraph();
-    $('#fields').className = 'fields';
     $('#fields').innerHTML = fieldsHtml(ex.fields);
     finishRender();
   }
-  // The answers: a number field per unknown, in a fixed unit (generator.js: ENTRY), read off the
-  // graph with the probe.
+  // The answers: a row of options per field.
   const fieldsHtml = (fields) => fields.map((f) => `
       <div class="field" data-key="${f.key}">
-        <label for="in-${f.key}" class="sym"><i>${f.key}</i>&nbsp;=</label>
-        <input id="in-${f.key}" type="text" inputmode="decimal" autocomplete="off" enterkeyhint="done" spellcheck="false">
-        <span class="unit">${f.unit}</span>
+        <span class="sym" id="sym-${f.key}"><i>${f.key}</i>&nbsp;=</span>
+        <div class="opts" role="radiogroup" aria-labelledby="sym-${f.key}">${f.options.map((o, i) => `
+          <label><input type="radio" name="opt-${f.key}" value="${i}"><span>${o.label}</span></label>`).join('')}
+        </div>
         <span class="fb" aria-live="polite"></span>
       </div>`).join('');
   function finishRender() {
@@ -287,18 +282,17 @@
     $('#check').hidden = !!ex.match && !ex.direct && !st.solved; // a matching exercise with questions is solved by them
   }
 
-  // Marks every field; true if all are right, null if some are empty. Right within TOL; a value of a
-  // typical mistake gets its explanation, one a little off a hint to read more carefully.
+  // Marks every choice; true if all are right, null if some are missing.
   function feedback() {
     let allOk = true, anyEmpty = false;
     for (const f of ex.fields) {
       const row = document.querySelector(`.field[data-key="${f.key}"]`);
-      const raw = row.querySelector('input').value;
-      if (!raw.trim()) { anyEmpty = true; allOk = false; row.className = 'field'; row.querySelector('.fb').innerHTML = ''; continue; }
-      const r = I.judge(f, I.parse(raw));
-      row.className = `field ${r.ok ? 'ok' : r.close ? 'warn' : 'bad'}`;
-      row.querySelector('.fb').innerHTML = r.ok ? ui().correct : r.nan ? ui().number : r.trap ? r.trap.why : r.close ? ui().close(Math.round(100 * I.TOL)) : f.wrong;
-      if (!r.ok) allOk = false;
+      const sel = row.querySelector('input:checked');
+      const o = sel && f.options[Number(sel.value)];
+      if (!o) anyEmpty = true;
+      row.className = `field${o ? (o.ok ? ' ok' : ' bad') : ''}`;
+      row.querySelector('.fb').innerHTML = o ? (o.ok ? ui().correct : o.why) : '';
+      if (!o || !o.ok) allOk = false;
     }
     return allOk ? true : anyEmpty ? null : false;
   }
@@ -569,8 +563,7 @@
     };
   }
   // R read off the curve of an RLC circuit, where it is marked (the minimum or the maximum, without
-  // a label), with four values to choose from: the right one and those of typical mistakes
-  // (generator.js: choices; practice has the student type it).
+  // a label), with the four options of the practice exercise.
   function annForR(an) {
     const has = (s, f) => s.ann.some(f);
     const s = an.steps.find((x) => has(x, (a) => (a.t === 'pt' || a.t === 'h') && /R/.test(a.label || '') && !/√2/.test(a.label || '')));
@@ -617,19 +610,19 @@
     if (topics) topics.relabel();
   }
 
-  // The same exercise in the other language, with the answers, feedback, hints and solution kept.
+  // The same exercise in the other language, with the choices, feedback, hints and solution kept.
   function switchLang() {
     applyStatic();
     showScore();
     if (ex) {
       const fields = ex.fields || [];
-      const typed = fields.map((f) => { const el = document.getElementById(`in-${f.key}`); return el ? el.value : null; });
+      const chosen = fields.map((f) => { const r = document.querySelector(`input[name="opt-${f.key}"]:checked`); return r ? r.value : null; });
       const keep = st, status = st.status; // render() clears the status line
       ex = again(ex);
       prepare(ex);
       render();
       st = keep;
-      ex.fields && ex.fields.forEach((f, k) => { if (typed[k] != null) document.getElementById(`in-${f.key}`).value = typed[k]; });
+      ex.fields && ex.fields.forEach((f, k) => { if (chosen[k] != null) document.querySelector(`input[name="opt-${f.key}"][value="${chosen[k]}"]`).checked = true; });
       if (ex.match) drawMatch();
       else if (st.checked) feedback();
       showStatus(status);
@@ -717,11 +710,9 @@
     topics.mount($('#levels'));
     $('#new').addEventListener('click', fresh);
     $('#answers').addEventListener('submit', check);
-    // A new choice clears the feedback on the old one, and so does typing a new value.
+    // A new choice clears the feedback on the old one.
     $('#fields').addEventListener('change', (evt) => {
-      if (evt.target.name === 'cand') { st.pick = Number(evt.target.value); document.querySelectorAll('.cand.bad').forEach((el) => el.classList.remove('bad')); $('#cand-fb').innerHTML = ''; }
-    });
-    $('#fields').addEventListener('input', (evt) => {
+      if (evt.target.name === 'cand') { st.pick = Number(evt.target.value); document.querySelectorAll('.cand.bad').forEach((el) => el.classList.remove('bad')); $('#cand-fb').innerHTML = ''; return; }
       const row = evt.target.closest('.field');
       if (!row) return;
       row.className = 'field';

@@ -9,9 +9,8 @@
 // - that texts, hints, solutions and drawings contain no undefined values.
 // It also checks the tutor's examples against the answers on the worksheet, and that the check's
 // questions on springs and drag offer their misconceptions. Practice: nice angles (sine and cosine
-// given in the text), the results to work out (each worked out here again, typed in: the right
-// value accepted also with a decimal comma and a unit, at least three traps of typical mistakes,
-// each recognised when typed, with its explanation), at least 20 different exercises per stage, the order of topics and stages, the
+// given in the text), the results to work out (each worked out here again, four values to choose
+// from, one right), at least 20 different exercises per stage, the order of topics and stages, the
 // drag acting at the body's centre, and the saved progress of the earlier order moved along with
 // its content.
 'use strict';
@@ -185,37 +184,31 @@ const ANSWER = {
 };
 const UNIT = { N: 'N', F: 'N', S: 'N', D: 'N', res: 'N', a: 'a', dx: 'cm', k: 'Nm' };
 const tenthOk = (x) => Math.abs(10 * x - Math.round(10 * x)) < 1e-9;
+const valueOf = (html) => Number(html.replace(/^\$/, '').match(/^-?[\d.]+/)[0]);
 function checkNums(ex, id) {
   const want = ANSWER[ex.scenario];
   if (!want) { if (ex.nums.length) fail(`${id}: results to work out without a check`); return; }
   const w = want(ex.p);
   if (ex.nums.map((n) => n.key).join() !== Object.keys(w).map((k) => `n-${k}`).join()) fail(`${id}: results ${ex.nums.map((n) => n.key)} instead of ${Object.keys(w)}`);
   ex.nums.forEach((n) => {
-    const k = n.key.slice(2), x = w[k], typed = (y) => Forces.judge(n, Forces.parse(y));
-    if (Math.abs(n.x - x) > 1e-9) fail(`${id}: result ${k} = ${n.x}, worked out ${x}`);
+    const k = n.key.slice(2), x = w[k], right = n.options.filter((o) => o.right);
+    if (n.options.length !== 4) fail(`${id}: result ${k} has ${n.options.length} options`);
+    if (right.length !== 1) { fail(`${id}: result ${k}: not exactly one right option`); return; }
+    if (new Set(n.options.map((o) => o.html)).size !== 4) fail(`${id}: result ${k}: equal options`);
+    if (Math.abs(valueOf(right[0].html) - x) > 1e-9) fail(`${id}: result ${k} = ${right[0].html}, worked out ${x}`);
     if (!(x > 0) || !tenthOk(x)) fail(`${id}: result ${k} = ${x} is not a nice number`);
     if (UNIT[k] === 'a' && !Number.isInteger(Math.round(2 * x * 1e6) / 1e6)) fail(`${id}: acceleration ${x} is not a multiple of 0.5`);
-    if (n.unit !== UNIT[k] || !FS.UNITS[n.unit]) fail(`${id}: result ${k} in ${n.unit}`);
-    // the right value, as typed with a decimal comma and its unit
-    const shown = `${FS.num(x)} ${FS.UNITS[n.unit]}`.replace('.', ',');
-    if (!typed(shown).ok || !typed(String(x)).ok) fail(`${id}: result ${k}: ${shown} not taken as right`);
-    if (typed(String(-x)).ok || typed(String(2 * x + 1)).ok) fail(`${id}: result ${k}: a wrong value taken as right`);
-    if (n.traps.length < 3) fail(`${id}: result ${k} has ${n.traps.length} traps`);
-    n.traps.forEach((t) => {
-      if (!(t.value >= 0) || Math.abs(1000 * t.value - Math.round(1000 * t.value)) > 1e-6) fail(`${id}: result ${k}: trap ${t.value} is not a short number`);
-      if (!t.why || !t.flag) fail(`${id}: result ${k}: a trap without explanation`);
-      const j = typed(String(t.value).replace('.', ','));
-      if (j.trap !== t) fail(`${id}: result ${k}: trap ${t.value} typed is not recognised (${JSON.stringify(j)})`);
-      checkText(id, `result ${k}`, t.why + (t.nudge || ''));
+    n.options.forEach((o) => {
+      const y = valueOf(o.html);
+      if (!(y >= 0) || Math.abs(1000 * y - Math.round(1000 * y)) > 1e-6) fail(`${id}: result ${k}: option ${o.html} is not a short number`);
+      if (!o.right && (!o.why || !o.flag)) fail(`${id}: result ${k}: a wrong option without explanation`);
+      if (!o.html.includes(`\\mathrm{${{ N: 'N', a: 'm/s^2', cm: 'cm', Nm: 'N/m' }[UNIT[k]]}}`)) fail(`${id}: result ${k}: option ${o.html} without its unit`);
+      checkText(id, `result ${k}`, o.html + (o.why || ''));
     });
-    if (new Set(n.traps.map((t) => t.value)).size !== n.traps.length || n.traps.some((t) => Math.abs(t.value - x) < 5e-4)) fail(`${id}: result ${k}: equal values`);
+    if (n.options.map(o => valueOf(o.html)).some((y, j, a) => j && y < a[j - 1])) fail(`${id}: result ${k}: options not in ascending order`);
     checkText(id, `result ${k}`, n.what + n.value);
   });
 }
-
-// typed numbers: decimal comma, minus signs, a unit after the number
-for (const [t, y] of [['14', 14], ['2,5', 2.5], ['2.5 m/s²', 2.5], ['−3', -3], ['37N', 37], [' 0,5 ', 0.5]]) if (Forces.parse(t) !== y) fail(`"${t}" parsed as ${Forces.parse(t)}, not ${y}`);
-for (const t of ['', 'N', '1.2.3', 'm 4']) if (!Number.isNaN(Forces.parse(t))) fail(`"${t}" parsed as ${Forces.parse(t)}`);
 
 // Practice: every situation in both languages, with nice angles (their sine and cosine in the
 // text), so that the components the student identifies, the results the student works out and
