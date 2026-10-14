@@ -1,0 +1,19 @@
+{
+  "title": "Normalkraft ist nicht die Reaktionskraft zur Gewichtskraft",
+  "note": "aus den Aufgabenblättern (D3 Kraft, Nr. 7; D4 Normal- & Reibungskraft, Nr. 3)",
+  "language": "GER",
+  "type": 0,
+  "default_difficulty": 1,
+  "default_points": 0,
+  "tags": [
+    "actio gleich reactio",
+    "dynamik",
+    "gewichtskraft",
+    "normalkraft",
+    "wechselwirkungsprinzip"
+  ],
+  "subbranches": [
+    "Dynamics"
+  ],
+  "youtube": ""
+}

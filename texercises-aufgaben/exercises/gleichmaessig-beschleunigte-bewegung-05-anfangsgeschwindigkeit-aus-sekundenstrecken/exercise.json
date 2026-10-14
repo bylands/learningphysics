@@ -1,0 +1,18 @@
+{
+  "title": "Anfangsgeschwindigkeit aus Sekundenstrecken",
+  "note": "aus den Aufgabenblättern (K2 Beschleunigte Bewegung, Nr. 7; K2 ks, Nr. 9; K2a Beschleunigte Bewegung, Nr. 4)",
+  "language": "GER",
+  "type": 1,
+  "default_difficulty": 2,
+  "default_points": 0,
+  "tags": [
+    "anfangsgeschwindigkeit",
+    "gleichmässig beschleunigte bewegung",
+    "kinematik",
+    "mittlere geschwindigkeit"
+  ],
+  "subbranches": [
+    "Kinematics"
+  ],
+  "youtube": ""
+}

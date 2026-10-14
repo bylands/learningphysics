@@ -1,0 +1,17 @@
+{
+  "title": "Kupferstab bei tiefer Temperatur",
+  "note": "aus den Aufgabenblättern (W1 Temperatur und Wärme, Nr. 1; T1 Längen- und Volumenausdehnung, Nr. 4)",
+  "language": "GER",
+  "type": 1,
+  "default_difficulty": 1,
+  "default_points": 0,
+  "tags": [
+    "formelsammlung",
+    "längenausdehnung",
+    "wärmeausdehnung"
+  ],
+  "subbranches": [
+    "Thermal Expansion"
+  ],
+  "youtube": ""
+}

@@ -1,0 +1,9 @@
+\NewQty{pa}{1.5}[\bar][e5][\pascal]
+\NewQty{Va}{25}[\liter][e-3][\m\cubed]
+
+\SolQty{Vb}[2\,V_1]{2*\VaX}[\m\cubed]
+\SolQty{pb}[p_1\left(\frac{V_1}{V_2}\right)^{7/5}]{\paX*(\VaX/\VbX)^(7/5)}[\pascal]
+\ConvTo{pbb}{1e-5}{pb}{\bar}
+\SolQty{Wad}[\frac{5}{2}\,p_1V_1\left(1-\left(\frac{V_1}{V_2}\right)^{2/5}\right)]{5/2*\paX*\VaX*(1-(\VaX/\VbX)^(2/5))}[\joule]
+\SolQty{Wli}[\frac{p_1+p_2}{2}\left(V_2-V_1\right)]{(\paX+\pbX)/2*(\VbX-\VaX)}[\joule]
+\SolQty{dWr}[\frac{W_\text{lin}-W}{W}]{100*(\WliX-\WadX)/\WadX}[\percent]

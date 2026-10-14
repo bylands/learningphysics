@@ -1,0 +1,17 @@
+{
+  "title": "Grössen vergleichen (Kräfte am Hang)",
+  "note": "aus den Aufgabenblättern (D5 Kräfte am Hang, Nr. 1; D5 Kräfte am Hang & Luftwiderstand, Nr. 1; D4 Hangkräfte, Nr. 1)",
+  "language": "GER",
+  "type": 1,
+  "default_difficulty": 1,
+  "default_points": 0,
+  "tags": [
+    "dynamik",
+    "einheiten",
+    "grössenvergleich"
+  ],
+  "subbranches": [
+    "Dynamics"
+  ],
+  "youtube": ""
+}

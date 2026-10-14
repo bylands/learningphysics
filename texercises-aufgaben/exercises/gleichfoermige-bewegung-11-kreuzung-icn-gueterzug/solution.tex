@@ -1,0 +1,33 @@
+Die Züge werden als gleichförmig bewegt angenommen. Die Zeit $t$ wird ab 6:30 Uhr gezählt, der Ort $x$ ab Aarau in Richtung Zürich. Der ICN braucht $t_\mathrm{I} = \tIO$ für die Strecke $d = \sAZO$, der Güterzug fährt bei $t_\mathrm{G} = \tGO$ ab. Die Geschwindigkeit des ICN ist
+\begin{align}
+ v_\mathrm{I} &= \vIF = \frac{\sAZ}{\tI} = \vI \approx \vIkP{0}{3}
+\end{align}
+Die beiden Orte sind
+\begin{align}
+ x_\mathrm{I} &= v_\mathrm{I}\,t, \qquad x_\mathrm{G} = d - v_\mathrm{G}\left(t-t_\mathrm{G}\right)
+\end{align}
+Sie kreuzen sich, wenn $x_\mathrm{I} = x_\mathrm{G}$ ist:
+\begin{align}
+ t_\mathrm{K} &= \tKF \\
+   &= \frac{\sAZ+\vG\cdot\tG}{\vI+\vG} = \tK \approx \tKmP{0}{2}
+\end{align}
+nach 6:30 Uhr, also um $\result{\text{6:\uKI~Uhr}}$, und zwar
+\begin{align}
+ x_\mathrm{K} &= \xKF = \vI\cdot\tK = \xK \approx \result{\xKP{3}{2}}
+\end{align}
+von Aarau entfernt.
+
+\begin{center}
+\begin{tikzpicture}[>=stealth]
+ \draw[->] (0,0) -- (10.6,0) node[below] {$t$ in \si{\minute}};
+ \draw[->] (0,0) -- (0,6.6) node[left] {$x$ in \si{\km}};
+ \foreach \x in {0,5,...,25} \draw (\x*0.4,0.08) -- (\x*0.4,-0.08) node[below] {\x};
+ \foreach \y in {0,10,...,50} \draw (0.08,\y*0.12) -- (-0.08,\y*0.12) node[left] {\y};
+ \draw[red, very thick] (0,0) -- (9.6,6) node[above] {ICN};
+ \draw[blue, very thick] (4,6) -- (10,3.15) node[right] {Güterzug};
+ \fill (7.18,4.49) circle (0.09);
+ \draw[dotted] (7.18,4.49) -- (7.18,0);
+ \draw[dotted] (7.18,4.49) -- (0,4.49);
+\end{tikzpicture}
+\end{center}
+Im $x(t)$-Diagramm ist der Kreuzungspunkt der Schnittpunkt der beiden Geraden.

@@ -1,0 +1,17 @@
+{
+  "title": "Wasser im luftleeren Raum",
+  "note": "aus den Aufgabenblättern (H1 Druck, Nr. 8)",
+  "language": "GER",
+  "type": 1,
+  "default_difficulty": 2,
+  "default_points": 0,
+  "tags": [
+    "kompressibilität",
+    "luftdruck",
+    "volumenänderung"
+  ],
+  "subbranches": [
+    "Hydrostatics"
+  ],
+  "youtube": ""
+}

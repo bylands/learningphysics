@@ -1,0 +1,18 @@
+{
+  "title": "Gezogene Kiste mit Beschleunigung",
+  "note": "aus den Aufgabenblättern (D4 Normal- & Reibungskraft, Nr. 11; D4 Reibung und Luftwiderstand, Nr. 6; D4a Reibung und Luftwiderstand, Nr. 5; D5KS Reibung und Luftwiderstand, Nr. 3; D5 Reibung und Luftwiderstand, Nr. 3; D5a Reibung, Nr. 4)",
+  "language": "GER",
+  "type": 1,
+  "default_difficulty": 2,
+  "default_points": 0,
+  "tags": [
+    "aktionsprinzip",
+    "dynamik",
+    "gleitreibung",
+    "reibungszahl"
+  ],
+  "subbranches": [
+    "Dynamics"
+  ],
+  "youtube": ""
+}

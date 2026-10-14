@@ -1,0 +1,60 @@
+{
+  "title": "Kreisbewegung (Kinematik) – Aufgaben aus den Aufgabenblättern",
+  "description": "Kinematik der Kreisbewegung aus dem Aufgabenblatt K5: Umlaufzeit, Frequenz, Winkel- und Bahngeschwindigkeit, Radialbeschleunigung, Geschwindigkeitsvektor auf der Kreisbahn. Rechnen Sie mit g = 9.81 m/s²; Werte aus Formeln, Tabellen, Begriffe.",
+  "kind": "sheet",
+  "is_private": true,
+  "tags": [
+    "kinematik",
+    "kreisbewegung"
+  ],
+  "items": [
+    {
+      "exercise": "kreisbewegung-kinematik-01-umlaufzeit-und-frequenz-velorad"
+    },
+    {
+      "exercise": "kreisbewegung-kinematik-02-schnellerer-plattenspieler"
+    },
+    {
+      "exercise": "kreisbewegung-kinematik-03-geschwindigkeitsvektor-rotierende-scheibe"
+    },
+    {
+      "exercise": "kreisbewegung-kinematik-04-drehwinkel-plattenteller"
+    },
+    {
+      "exercise": "kreisbewegung-kinematik-05-winkelgeschwindigkeit-minutenzeiger"
+    },
+    {
+      "exercise": "kreisbewegung-kinematik-06-bahngeschwindigkeit-am-aequator"
+    },
+    {
+      "exercise": "kreisbewegung-kinematik-07-radialbeschleunigung-velofahrerin"
+    },
+    {
+      "exercise": "kreisbewegung-kinematik-08-kreisbewegung-beim-hammerwerfen"
+    },
+    {
+      "exercise": "kreisbewegung-kinematik-09-kuerzere-umlaufzeit-karussell"
+    },
+    {
+      "exercise": "kreisbewegung-kinematik-10-radialbeschleunigung-erdrotation-zuerich"
+    },
+    {
+      "exercise": "kreisbewegung-kinematik-11-drehende-autoraeder"
+    },
+    {
+      "exercise": "kreisbewegung-kinematik-12-rotierende-festplatte"
+    },
+    {
+      "exercise": "kreisbewegung-kinematik-13-bremsen-oder-ausweichen"
+    },
+    {
+      "exercise": "kreisbewegung-kinematik-14-achterbahn-im-looping"
+    },
+    {
+      "exercise": "kreisbewegung-kinematik-15-radius-aus-geschwindigkeitsaenderung"
+    },
+    {
+      "exercise": "kreisbewegung-kinematik-16-groessen-vergleichen"
+    }
+  ]
+}

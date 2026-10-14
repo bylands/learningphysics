@@ -1,0 +1,21 @@
+\begin{center}
+\begin{tikzpicture}[>=stealth]
+ \draw (-0.5,0) -- (10,0);
+ \draw[thick, domain=0:9, samples=50] plot (\x, {2*(1-(\x/9)^2)});
+ \fill (0,2) circle (0.1);
+ \draw[->, very thick, red] (0,2) -- (1.4,2) node[above] {$\vec v_0$};
+ \draw[|<->|] (-0.4,0) -- (-0.4,2) node[midway, left] {$h$};
+ \draw[|<->|] (0,-0.4) -- (9,-0.4) node[midway, below] {$w$};
+\end{tikzpicture}
+\end{center}
+
+Vertikal fällt die Kugel wie beim freien Fall; ohne Luftwiderstand dauert der Flug
+\begin{align}
+ h &= \frac{1}{2}g\,t^2 \quad\Rightarrow\quad t = \tpF = \tp
+\end{align}
+Horizontal fliegt sie in dieser Zeit gleichförmig mit $v_0$:
+\begin{align}
+ w &= v_0\,t = \xwF \\
+   &= \vp\cdot\sqrt{\frac{2\cdot\hp}{\gE}} \\
+   &= \xw \approx \result{\xwP{0}{3}}
+\end{align}

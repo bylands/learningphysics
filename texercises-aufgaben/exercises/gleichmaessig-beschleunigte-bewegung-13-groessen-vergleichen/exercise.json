@@ -1,0 +1,18 @@
+{
+  "title": "Grössen vergleichen (beschleunigte Bewegung)",
+  "note": "aus den Aufgabenblättern (K2 Beschleunigte Bewegung, Nr. 1; K2 ks, Nr. 1)",
+  "language": "GER",
+  "type": 1,
+  "default_difficulty": 1,
+  "default_points": 0,
+  "tags": [
+    "einheiten",
+    "grössenvergleich",
+    "kinematik",
+    "zehnerpotenzen"
+  ],
+  "subbranches": [
+    "Kinematics"
+  ],
+  "youtube": ""
+}

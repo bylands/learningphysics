@@ -1,0 +1,43 @@
+{
+  "title": "Dampfdruck und Luftfeuchtigkeit – Aufgaben aus den Aufgabenblättern",
+  "description": "Dampfdruck und Luftfeuchtigkeit aus den Aufgabenblättern G2 und A1: Sättigungsdampfdruck und Siedetemperatur (Interpolation in der Tabelle), Dampfdruckkurve, absolute und relative Luftfeuchtigkeit, Taupunkt, Kältemittel. Tabellenwerte aus Formeln, Tabellen, Begriffe (7. Auflage, S. 192).",
+  "kind": "sheet",
+  "is_private": true,
+  "tags": [
+    "dampfdruck",
+    "luftfeuchtigkeit",
+    "thermodynamik"
+  ],
+  "items": [
+    {
+      "exercise": "dampfdruck-und-luftfeuchtigkeit-01-dampfkochtopf"
+    },
+    {
+      "exercise": "dampfdruck-und-luftfeuchtigkeit-02-ungesaettigter-dampf"
+    },
+    {
+      "exercise": "dampfdruck-und-luftfeuchtigkeit-03-dampfreiniger"
+    },
+    {
+      "exercise": "dampfdruck-und-luftfeuchtigkeit-04-dampftemperatur-kraftwerk"
+    },
+    {
+      "exercise": "dampfdruck-und-luftfeuchtigkeit-05-waschkueche"
+    },
+    {
+      "exercise": "dampfdruck-und-luftfeuchtigkeit-06-beschlagene-brillenglaeser"
+    },
+    {
+      "exercise": "dampfdruck-und-luftfeuchtigkeit-07-turnhalle"
+    },
+    {
+      "exercise": "dampfdruck-und-luftfeuchtigkeit-08-siedetemperatur-bei-tiefdruck"
+    },
+    {
+      "exercise": "dampfdruck-und-luftfeuchtigkeit-09-freon-im-kuehlschrank"
+    },
+    {
+      "exercise": "dampfdruck-und-luftfeuchtigkeit-10-sauna"
+    }
+  ]
+}

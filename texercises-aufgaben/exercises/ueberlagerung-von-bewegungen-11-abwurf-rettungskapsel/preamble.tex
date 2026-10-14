@@ -1,0 +1,11 @@
+\NewQty{gE}{9.81}[\mpss]
+\NewQty{hf}{1200}[\m]
+\NewQty*{vfl}{430}[\kmph][1/3.6][\mps]
+
+\SolQty{tf}[\sqrt{\frac{2h}{g}}]{sqrt(2*\hfX/\gEX)}[\s]
+\SolQty{xf}[v_0\sqrt{\frac{2h}{g}}]{\vflX*sqrt(2*\hfX/\gEX)}[\m]
+\SolQty{vyf}[g\,t]{\gEX*\tfX}[\mps]
+\SolQty{ve}[\sqrt{v_0^2+v_y^2}]{sqrt(\vflX^2+\vyfX^2)}[\mps]
+\ConvTo{vek}{3.6}{ve}{\kmph}
+\SolQty{thv}[\arctan\frac{v_0}{v_y}]{atan(\vflX/\vyfX)*180/pi}[\degree]
+\SolQty{thh}[\arctan\frac{v_y}{v_0}]{atan(\vyfX/\vflX)*180/pi}[\degree]

@@ -1,0 +1,29 @@
+\begin{center}
+\begin{tikzpicture}[>=stealth]
+ \fill (0,0) circle (0.25);
+ \node at (0,-0.6) {$M$};
+ \draw[dashed] (0,0) circle (3);
+ \draw[<->] (0,0) -- (2.121,2.121) node[midway, above left] {$r$};
+ \fill (3,0) circle (0.1);
+ \node[anchor=west] at (3.15,-0.3) {$m$};
+ \draw[->, very thick, red] (3,0) -- (1.9,0) node[above] {$F_\mathrm{G}$};
+ \draw[->, very thick] (3,0) -- (3,1.4) node[right] {$v$};
+\end{tikzpicture}
+\end{center}
+
+Für ein Objekt der Masse $m$, das im Abstand $r$ auf einer Kreisbahn um das Zentrum kreist, ist die Gravitationskraft die Zentripetalkraft:
+\begin{align}
+ G\,\frac{M\,m}{r^2} &= m\,\frac{v^2}{r}
+ \quad\Rightarrow\quad M = \frac{v^2\,r}{G}
+\end{align}
+Mit $r = \rLjO = \rLj$ (Lichtjahr nach FoTaBe S.~205) und $v = \vBO$ ist die Masse innerhalb der Bahn
+\begin{align}
+ M &= \MZF \\
+   &= \frac{\left(\vB\right)^2\cdot\rLj}{\ncG} \\
+   &= \MZ
+\end{align}
+Mit $M_\odot = \MSoO$ (FoTaBe S.~211) entspricht das
+\begin{align}
+ \frac{M}{M_\odot} &= \nBF = \frac{\MZ}{\MSo} = \nB \approx \result{\nBS{2}}
+\end{align}
+Sonnenmassen. Die Zahlen im Artikel passen zusammen. Das Wort «mindestens» ist gerechtfertigt, weil man mit dem Dopplereffekt nur die Geschwindigkeitskomponente in Sichtrichtung misst; die wahre Bahngeschwindigkeit und damit die Masse können nur grösser sein. Die Entfernung der Galaxie von uns spielt für die Rechnung keine Rolle.

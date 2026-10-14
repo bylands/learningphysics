@@ -1,0 +1,8 @@
+\NewQty{gE}{9.81}[\mpss]
+\NewQty{Lp}{1}[\m]
+\NewQty{alp}{10}[\degree]
+\NewQty{vnp}{0.5}[\mps]
+
+\SolQty{hnp}[L\left(1-\cos\alpha_0\right)]{\LpX*(1-cos(\alpX*pi/180))}[\m]
+\SolQty{hp}[L\left(1-\cos\alpha_0\right)+\frac{v_0^2}{2g}]{\LpX*(1-cos(\alpX*pi/180))+\vnpX^2/(2*\gEX)}[\m]
+\SolQty{bep}[\arccos\left(1-\frac{h}{L}\right)]{acos(1-\hpX/\LpX)*180/pi}[\degree]

@@ -1,0 +1,17 @@
+{
+  "title": "Verdampfen von siedendem Wasser",
+  "note": "aus den Aufgabenblättern (W3 Spezifische und latente Wärme, Nr. 8; W3 Spezifische und latente Wärme (2007), Nr. 8)",
+  "language": "GER",
+  "type": 1,
+  "default_difficulty": 2,
+  "default_points": 0,
+  "tags": [
+    "latente wärme",
+    "spezifische wärme",
+    "verdampfungswärme"
+  ],
+  "subbranches": [
+    "Temperatur & Heat"
+  ],
+  "youtube": ""
+}

@@ -1,0 +1,8 @@
+\NewQty{LFe}{25}[\centi\meter][e-2][\meter]
+\NewQty{kFe}{44}[\newton\per\meter]
+\NewQty{mFe}{350}[\gram][e-3][\kilo\gram]
+\NewQty{fFe}{1.2}[\hertz]
+
+\SolQty{omFe}[2\pi f]{2*pi*\fFeX}[\radps]
+\SolQty{xFe}[\frac{m\,\omega^2 L}{k-m\,\omega^2}]{\mFeX*\omFeX^2*\LFeX/(\kFeX-\mFeX*\omFeX^2)}[\meter]
+\SolQty{fFemax}[\frac{1}{2\pi}\sqrt{\frac{k}{m}}]{sqrt(\kFeX/\mFeX)/(2*pi)}[\hertz]

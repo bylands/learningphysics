@@ -1,0 +1,13 @@
+\NewQty{VAg}{2.5}[\liter][e-3][\cubic\meter]
+\NewQty{TAz}{15}[\degreeCelsius]
+\NewQty{TBz}{40}[\degreeCelsius]
+\NewQty{gaWa}{0.207e-3}[\per\kelvin]
+\NewQty{rhA}{999.101}[\kilogram\per\cubic\meter]
+\NewQty{rhB}{992.22}[\kilogram\per\cubic\meter]
+\NewQty{Ttb}{20}[\degreeCelsius]
+
+\SolQty{dTz}[\vartheta_2-\vartheta_1]{\TBzX-\TAzX}[\kelvin]
+\SolQty{VWa}[\frac{\Delta V}{\gamma\,\Delta\vartheta}]{\VAgX/(\gaWaX*\dTzX)}[\cubic\meter]
+\ConvTo{VWl}{1e3}{VWa}{\liter}
+\SolQty{VWb}[\frac{\Delta V}{\rho_1/\rho_2-1}]{\VAgX/(\rhAX/\rhBX-1)}[\cubic\meter]
+\ConvTo{VWbl}{1e3}{VWb}{\liter}

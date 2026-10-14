@@ -1,0 +1,46 @@
+\begin{center}
+\begin{tikzpicture}[>=stealth]
+ \draw[thick] (0,0) ellipse (4.85 and 4.14);
+ \fill[orange!80] (2.525,0) circle (0.3);
+ \node at (2.525,-0.6) {Sonne};
+ \fill (4.85,0) circle (0.1);
+ \node[anchor=west] at (4.95,0.3) {Perihel};
+ \fill (-4.85,0) circle (0.1);
+ \node[anchor=east] at (-4.95,0.3) {Aphel};
+ \draw[|<->|] (2.525,-1.1) -- (4.85,-1.1) node[midway, below] {$r_\mathrm{P}$};
+ \draw[|<->|] (-4.85,-1.1) -- (2.525,-1.1) node[midway, below] {$r_\mathrm{A}$};
+ \draw[->, very thick] (4.85,0) -- (4.85,1.5) node[right] {$v_\mathrm{P}$};
+\end{tikzpicture}
+\end{center}
+
+\begin{abcliste}
+\abc Mit dem Nullpunkt an der Sonnenoberfläche ($R_\odot = \RSoO$, $M_\odot = \MSoO$, FoTaBe S.~211) ist die potentielle Energie im Abstand $r$
+\begin{align}
+ E_\mathrm{p}(r) &= -G\,\frac{M_\odot\,m}{r}-\left(-G\,\frac{M_\odot\,m}{R_\odot}\right) = G\,M_\odot\,m\left(\frac{1}{R_\odot}-\frac{1}{r}\right)
+\end{align}
+Im Perihel und im Aphel:
+\begin{align}
+ E_\mathrm{P} &= \EPeF \\
+   &= \ncG\cdot\MSo\cdot\mHe\cdot\left(\frac{1}{\RSo}-\frac{1}{\rPe}\right) \\
+   &= \EPe \approx \result{\EPeP{12}{3}} \\
+ E_\mathrm{A} &= \EApF \\
+   &= \ncG\cdot\MSo\cdot\mHe\cdot\left(\frac{1}{\RSo}-\frac{1}{\rAp}\right) \\
+   &= \EAp \approx \result{\EApP{12}{3}}
+\end{align}
+Die beiden Werte unterscheiden sich nur um etwa ein Prozent, weil beide Punkte im Vergleich zum Sonnenradius sehr weit weg sind.
+
+\abc Die Sonde muss mit ihrer kinetischen Energie im Perihel mindestens die Differenz der potentiellen Energien bis zum Aphel aufbringen können (im Aphel hätte sie dann gerade die Geschwindigkeit null):
+\begin{align}
+ \frac{1}{2}\,m\,v_\mathrm{P}^2 &\geq E_\mathrm{A}-E_\mathrm{P} = G\,M_\odot\,m\left(\frac{1}{r_\mathrm{P}}-\frac{1}{r_\mathrm{A}}\right)
+\end{align}
+Damit ist
+\begin{align}
+ v_\mathrm{P} &\geq \vPmF \\
+   &= \sqrt{2\cdot\ncG\cdot\MSo\cdot\left(\frac{1}{\rPe}-\frac{1}{\rAp}\right)} \\
+   &= \vPm \approx \result{\vPmP{3}{2}}
+\end{align}
+Tatsächlich fliegt die Sonde auch im Aphel noch. Mit dem zweiten Keplerschen Gesetz, $v_\mathrm{P}\,r_\mathrm{P} = v_\mathrm{A}\,r_\mathrm{A}$, und der Energieerhaltung erhält man die wirkliche Perihelgeschwindigkeit auf dieser Bahn:
+\begin{align}
+ v_\mathrm{P} &= \vPkF = \vPk \approx \vPkP{3}{2}
+\end{align}
+\end{abcliste}

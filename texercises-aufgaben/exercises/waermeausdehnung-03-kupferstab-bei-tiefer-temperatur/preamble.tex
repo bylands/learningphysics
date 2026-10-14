@@ -1,0 +1,7 @@
+\NewQty{lNu}{1000.0}[\mm][e-3][\m]
+\NewQty{TAk}{20.0}[\degreeCelsius]
+\NewQty{TBk}{5.0}[\degreeCelsius]
+\NewQty{alKu}{16.8e-6}[\per\kelvin]
+
+\SolQty{dTK}[\vartheta_2-\vartheta_1]{\TBkX-\TAkX}[\kelvin]
+\SolQty{lKu}[l_0\left(1+\alpha\,\Delta\vartheta\right)]{\lNuX*(1+\alKuX*\dTKX)}[\m]

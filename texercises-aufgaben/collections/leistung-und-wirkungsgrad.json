@@ -1,0 +1,49 @@
+{
+  "title": "Leistung und Wirkungsgrad – Aufgaben aus den Aufgabenblättern",
+  "description": "Leistung, Energieeinheiten und Wirkungsgrad aus den Aufgabenblättern E2/E3: Hubarbeit und Leistung, kWh und PS, Wirkungsgrad von Motoren und Muskeln, Reichweite eines Elektroautos. Rechnen Sie mit g = 9.81 m/s²; Werte aus Formeln, Tabellen, Begriffe.",
+  "kind": "sheet",
+  "is_private": true,
+  "tags": [
+    "energie",
+    "leistung",
+    "wirkungsgrad"
+  ],
+  "items": [
+    {
+      "exercise": "leistung-und-wirkungsgrad-01-zwei-personen-am-berg"
+    },
+    {
+      "exercise": "leistung-und-wirkungsgrad-02-kran-hebt-schneller"
+    },
+    {
+      "exercise": "leistung-und-wirkungsgrad-03-kernkraftwerk-goesgen"
+    },
+    {
+      "exercise": "leistung-und-wirkungsgrad-04-leistung-automotor"
+    },
+    {
+      "exercise": "leistung-und-wirkungsgrad-05-gluehbirne-fuer-einen-franken"
+    },
+    {
+      "exercise": "leistung-und-wirkungsgrad-06-leistung-und-luftwiderstand"
+    },
+    {
+      "exercise": "leistung-und-wirkungsgrad-07-wirkungsgrad-elektromotor"
+    },
+    {
+      "exercise": "leistung-und-wirkungsgrad-08-steighoehe-aus-leistung"
+    },
+    {
+      "exercise": "leistung-und-wirkungsgrad-09-reichweite-elektroauto"
+    },
+    {
+      "exercise": "leistung-und-wirkungsgrad-10-benzinverbrauch-motor"
+    },
+    {
+      "exercise": "leistung-und-wirkungsgrad-11-grundumsatz"
+    },
+    {
+      "exercise": "leistung-und-wirkungsgrad-12-wirkungsgrad-ergometer"
+    }
+  ]
+}

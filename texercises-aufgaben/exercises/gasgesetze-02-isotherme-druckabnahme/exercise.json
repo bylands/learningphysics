@@ -1,0 +1,17 @@
+{
+  "title": "Volumenänderung bei isothermem Prozess",
+  "note": "aus den Aufgabenblättern (G1 Gasgesetze, Nr. 2)",
+  "language": "GER",
+  "type": 1,
+  "default_difficulty": 1,
+  "default_points": 0,
+  "tags": [
+    "boyle-mariotte",
+    "gasgesetze",
+    "isotherm"
+  ],
+  "subbranches": [
+    "Gas Laws"
+  ],
+  "youtube": ""
+}

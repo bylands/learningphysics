@@ -1,0 +1,17 @@
+{
+  "title": "Wärmeentnahme einer Wärmepumpe",
+  "note": "aus den Aufgabenblättern (W2 Wärmekraftmaschinen, Nr. 7; W2 Wärmemaschinen, Nr. 6)",
+  "language": "GER",
+  "type": 1,
+  "default_difficulty": 2,
+  "default_points": 0,
+  "tags": [
+    "energieerhaltung",
+    "leistungsziffer",
+    "wärmepumpe"
+  ],
+  "subbranches": [
+    "Laws of Thermodynamics"
+  ],
+  "youtube": ""
+}

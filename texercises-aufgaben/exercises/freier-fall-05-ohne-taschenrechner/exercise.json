@@ -1,0 +1,18 @@
+{
+  "id": 24631,
+  "title": "Freier Fall ohne Taschenrechner",
+  "note": "aus den Aufgabenblättern (K3 Freier Fall, Nr. 6; K2a, Nr. 7)",
+  "language": "GER",
+  "type": 1,
+  "default_difficulty": 1,
+  "default_points": 0,
+  "tags": [
+    "abschätzen",
+    "freier fall",
+    "kinematik"
+  ],
+  "subbranches": [
+    "Kinematics"
+  ],
+  "youtube": ""
+}

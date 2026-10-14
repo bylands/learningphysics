@@ -1,0 +1,15 @@
+{
+  "title": "Geschwindigkeit aus dem Impuls",
+  "note": "aus den Aufgabenblättern (D2 Impuls, Nr. 2; D1 Masse, Dichte & Impuls, Nr. 7; D2 Impuls (2007), Nr. 2)",
+  "language": "GER",
+  "type": 1,
+  "default_difficulty": 1,
+  "default_points": 0,
+  "tags": [
+    "impuls"
+  ],
+  "subbranches": [
+    "Momentum"
+  ],
+  "youtube": ""
+}

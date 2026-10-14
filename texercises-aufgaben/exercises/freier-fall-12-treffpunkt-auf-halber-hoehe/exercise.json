@@ -1,0 +1,19 @@
+{
+  "id": 24638,
+  "title": "Treffpunkt zweier Bälle auf halber Höhe",
+  "note": "aus den Aufgabenblättern (K3 Freier Fall, Nr. 12)",
+  "language": "GER",
+  "type": 7,
+  "default_difficulty": 3,
+  "default_points": 0,
+  "tags": [
+    "formal",
+    "freier fall",
+    "kinematik",
+    "senkrechter wurf"
+  ],
+  "subbranches": [
+    "Kinematics"
+  ],
+  "youtube": ""
+}

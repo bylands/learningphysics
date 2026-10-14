@@ -1,0 +1,10 @@
+\NewQty{tof}{320}[\degreeCelsius]
+\NewQty{ta}{-15}[\degreeCelsius]
+\NewQty{ti}{22}[\degreeCelsius]
+
+\SolQty{To}[\vartheta_\text{O}+\SI{273.15}{\kelvin}]{\tofX+273.15}[\kelvin]
+\SolQty{Ta}[\vartheta_\text{a}+\SI{273.15}{\kelvin}]{\taX+273.15}[\kelvin]
+\SolQty{Ti}[\vartheta_\text{i}+\SI{273.15}{\kelvin}]{\tiX+273.15}[\kelvin]
+\SolQty{etS}[1-\frac{T_\text{a}}{T_\text{O}}]{1-\TaX/\ToX}
+\SolQty{ewp}[\frac{T_\text{i}}{T_\text{i}-T_\text{a}}]{\TiX/(\TiX-\TaX)}
+\SolQty{fak}[\left(1-\frac{T_\text{a}}{T_\text{O}}\right)\frac{T_\text{i}}{T_\text{i}-T_\text{a}}]{\etSX*\ewpX}

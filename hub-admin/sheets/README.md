@@ -50,6 +50,30 @@ in order, kept in `hub-data/exercise-sheets.json` (not served).
   all of them. It needs no login. **New link** replaces the secret (the old link stops working),
   **Stop sharing** removes it.
 
+## TeXercises review (learningphysics.ch/texercises/)
+
+A page of its own for checking exercises before (or after) they go to TeXercises, served by the admin
+service and open to every teacher account (logged in; teachingphysics.ch/texercises redirects there).
+
+- **Uploads** (the superuser): a TeXercises export (Settings → Export) or a bundle to import in the same
+  format, as .zip or .tgz up to 64 MB. Only `exercises/<key>/` (exercise.json and the four .tex parts)
+  and `collections/*.json` are kept, as an upload of its own in `hub-data/texercises-review/bundles/`
+  (at most 40; deleting one keeps its feedback). The sheets' export (above) is not touched.
+- **Collections**: each collection's exercises in order, rendered as in the preview (text, solution,
+  short solution; the TikZ figures drawn as for the sheets), solutions shown or hidden. **All
+  exercises**: the list, searchable by title, key or id.
+- **Difficulty** (the superuser): an exercise's standard difficulty (`default_difficulty`, 1 to 6). The
+  change is kept beside the upload; **Download** gives the whole bundle with the changes, or only the
+  changed exercises (no collections): imported into TeXercises, an exercise with an id is updated in
+  place, one without is created anew.
+- **Feedback** (any teacher): a bug, a suggestion, a question or other, on an exercise, in
+  `hub-data/texercises-review/feedback.json`. Its author or the superuser marks it done or deletes it.
+  The Feedback tab lists all of it and downloads it as Markdown (open entries, or all), by upload and
+  exercise, to pass on to whoever fixes the exercises.
+
+`review.py` keeps the uploads and the feedback; `hubadmin.py` serves the page (`/texercises/`, nginx:
+`deploy/nginx/learningphysics.conf`).
+
 ## How the exercises are chosen
 
 - `pool.json` lists, for every app and learning objective, the exercises that practise it, best first,

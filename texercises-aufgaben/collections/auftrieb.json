@@ -1,0 +1,51 @@
+{
+  "title": "Auftrieb – Aufgaben aus den Aufgabenblättern",
+  "description": "Auftrieb und Schwimmen aus den Aufgabenblättern H3 Auftrieb und Hydrostatik: Archimedisches Prinzip, Dichtebestimmung, schwimmende Körper, Eis und Meeresspiegel, Auftrieb in Gasen. Rechnen Sie mit g = 9.81 m/s²; Dichten aus Formeln, Tabellen, Begriffe.",
+  "kind": "sheet",
+  "is_private": true,
+  "tags": [
+    "auftrieb",
+    "hydrostatik"
+  ],
+  "items": [
+    {
+      "exercise": "auftrieb-01-aluminiumkugel-unter-wasser"
+    },
+    {
+      "exercise": "auftrieb-02-schwimmende-aluminiumschuessel"
+    },
+    {
+      "exercise": "auftrieb-03-volumen-eines-korkzapfens"
+    },
+    {
+      "exercise": "auftrieb-04-metallwuerfel-auf-der-waage"
+    },
+    {
+      "exercise": "auftrieb-05-dichte-mit-kraftmesser"
+    },
+    {
+      "exercise": "auftrieb-06-eintauchtiefe-eichenholzquader"
+    },
+    {
+      "exercise": "auftrieb-07-schmelzender-eiswuerfel"
+    },
+    {
+      "exercise": "auftrieb-08-sinken-beim-ausatmen"
+    },
+    {
+      "exercise": "auftrieb-09-auf-einer-eisscholle"
+    },
+    {
+      "exercise": "auftrieb-10-abschmelzen-der-polkappen"
+    },
+    {
+      "exercise": "auftrieb-11-beladener-oeltanker"
+    },
+    {
+      "exercise": "auftrieb-12-heissluftballon-in-grosser-hoehe"
+    },
+    {
+      "exercise": "auftrieb-13-nutzlast-zeppelin-hindenburg"
+    }
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "title": "Kinetische Energie eines Sprinters",
+  "note": "aus den Aufgabenblättern (E3 Energetik, Nr. 4; E1 Energie, Nr. 3)",
+  "language": "GER",
+  "type": 1,
+  "default_difficulty": 1,
+  "default_points": 0,
+  "tags": [
+    "abschätzung",
+    "kinetische energie"
+  ],
+  "subbranches": [
+    "Work, Energy, Power"
+  ],
+  "youtube": ""
+}

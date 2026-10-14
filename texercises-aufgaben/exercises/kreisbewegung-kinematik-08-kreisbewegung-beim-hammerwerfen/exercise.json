@@ -1,0 +1,20 @@
+{
+  "title": "Kreisbewegung beim Hammerwerfen",
+  "note": "aus den Aufgabenblättern (K5 Kreisbewegung, Nr. 8)",
+  "language": "GER",
+  "type": 2,
+  "default_difficulty": 2,
+  "default_points": 0,
+  "tags": [
+    "bahngeschwindigkeit",
+    "frequenz",
+    "kinematik",
+    "kreisbewegung",
+    "radialbeschleunigung",
+    "sport"
+  ],
+  "subbranches": [
+    "Circular Motion"
+  ],
+  "youtube": ""
+}

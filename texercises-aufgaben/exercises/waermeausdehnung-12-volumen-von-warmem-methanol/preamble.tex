@@ -1,0 +1,10 @@
+\NewQty{mMe}{12}[\gram][e-3][\kg]
+\NewQty{TAm}{20}[\degreeCelsius]
+\NewQty{TBm}{60}[\degreeCelsius]
+\NewQty{rhMe}{0.792e3}[\kilogram\per\cubic\meter]
+\NewQty{gaMe}{1.20e-3}[\per\kelvin]
+
+\SolQty{Vnu}[\frac{m}{\rho_0}]{\mMeX/\rhMeX}[\cubic\meter]
+\SolQty{dTm}[\vartheta_2-\vartheta_1]{\TBmX-\TAmX}[\kelvin]
+\SolQty{Vwa}[\frac{m}{\rho_0}\left(1+\gamma\,\Delta\vartheta\right)]{\VnuX*(1+\gaMeX*\dTmX)}[\cubic\meter]
+\ConvTo{Vwac}{1e6}{Vwa}{\cubic\centi\meter}

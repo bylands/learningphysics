@@ -1,0 +1,17 @@
+{
+  "title": "Grössen vergleichen (Zentripetalkraft)",
+  "note": "aus den Aufgabenblättern (D6 Zentripetalkraft, Nr. 1; D6_Zentripetalkraft, Nr. 1)",
+  "language": "GER",
+  "type": 1,
+  "default_difficulty": 1,
+  "default_points": 0,
+  "tags": [
+    "einheiten",
+    "grössenvergleich",
+    "zentripetalkraft"
+  ],
+  "subbranches": [
+    "Circular Motion"
+  ],
+  "youtube": ""
+}

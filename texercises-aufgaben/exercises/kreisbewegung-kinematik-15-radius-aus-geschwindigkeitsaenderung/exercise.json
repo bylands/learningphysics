@@ -1,0 +1,20 @@
+{
+  "title": "Radius aus Geschwindigkeitsänderung",
+  "note": "aus den Aufgabenblättern (K5 Kreisbewegung, Nr. 15)",
+  "language": "GER",
+  "type": 2,
+  "default_difficulty": 3,
+  "default_points": 0,
+  "tags": [
+    "drehwinkel",
+    "geschwindigkeitsvektor",
+    "kinematik",
+    "konstruktion",
+    "kreisbewegung",
+    "vektoren"
+  ],
+  "subbranches": [
+    "Circular Motion"
+  ],
+  "youtube": ""
+}

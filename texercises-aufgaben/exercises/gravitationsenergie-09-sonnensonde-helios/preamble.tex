@@ -1,0 +1,10 @@
+\NewQty{mHe}{370.5}[\kg]
+\NewQty{rAp}{147.5e9}[\m]
+\NewQty{rPe}{46.5e9}[\m]
+\NewQty{MSo}{1.9884e30}[\kg]
+\NewQty{RSo}{6.960e8}[\m]
+
+\SolQty{EPe}[G\,M_\odot\,m\left(\frac{1}{R_\odot}-\frac{1}{r_\mathrm{P}}\right)]{\ncGX*\MSoX*\mHeX*(1/\RSoX-1/\rPeX)}[\J]
+\SolQty{EAp}[G\,M_\odot\,m\left(\frac{1}{R_\odot}-\frac{1}{r_\mathrm{A}}\right)]{\ncGX*\MSoX*\mHeX*(1/\RSoX-1/\rApX)}[\J]
+\SolQty{vPm}[\sqrt{2\,G\,M_\odot\left(\frac{1}{r_\mathrm{P}}-\frac{1}{r_\mathrm{A}}\right)}]{sqrt(2*\ncGX*\MSoX*(1/\rPeX-1/\rApX))}[\mps]
+\SolQty{vPk}[\sqrt{\frac{2\,G\,M_\odot\,r_\mathrm{A}}{r_\mathrm{P}\left(r_\mathrm{A}+r_\mathrm{P}\right)}}]{sqrt(2*\ncGX*\MSoX*\rApX/(\rPeX*(\rApX+\rPeX)))}[\mps]

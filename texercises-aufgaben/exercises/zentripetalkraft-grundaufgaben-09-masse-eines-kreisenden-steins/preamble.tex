@@ -1,0 +1,8 @@
+\NewQty{rSt}{51}[\centi\meter][e-2][\meter]
+\NewQty{nSt}{2.5}
+\NewQty{tSt}{1}[\second]
+\NewQty{FSt}{5.8}[\newton]
+
+\SolQty{fSt}[\frac{n}{t}]{\nStX/\tStX}[\hertz]
+\SolQty{mSt}[\frac{F}{4\pi^2 f^2 r}]{\FStX/(4*pi^2*\fStX^2*\rStX)}[\kilo\gram]
+\ConvTo{mStg}{1e3}{mSt}{\gram}

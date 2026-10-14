@@ -1,0 +1,24 @@
+\begin{center}
+\begin{tikzpicture}[>=stealth]
+ \fill[gray!20] (-4,0) rectangle (4,-0.25);
+ \draw (-4,0) -- (4,0);
+ \node[anchor=north west] at (-4,-0.25) {Tischplatte};
+ \draw[fill=gray!35] (-1,0) rectangle (1,1.2);
+ \fill (0,0.6) circle (0.05);
+ \draw[->, very thick] (1,0.6) -- ++(2.0,0) node[right] {$F_\mathrm{Z}$};
+ \draw[->, very thick, red] (-1,0.05) -- ++(-1.5,0) node[left] {$F_\mathrm{R}$};
+ \draw[->, very thick, blue] (0,0.6) -- ++(0,-1.6) node[anchor=north west] {$F_\mathrm{G}$};
+ \draw[->, very thick, blue] (0.3,0) -- ++(0,1.6) node[anchor=south west] {$F_\mathrm{N}$};
+\end{tikzpicture}
+\end{center}
+
+Der Klotz bewegt sich gleichförmig, die resultierende Kraft ist null. Die Zugkraft ist also gleich gross wie die Gleitreibungskraft, und auf der horizontalen Unterlage ist die Normalkraft gleich der Gewichtskraft:
+\begin{align}
+ F_\mathrm{Z} &= F_\mathrm{R} = \mu_\mathrm{G}\,F_\mathrm{N} = \mu_\mathrm{G}\,m\,g
+\end{align}
+Daraus folgt
+\begin{align}
+ \mu_\mathrm{G} &= \muGF \\
+   &= \frac{\FZu}{\mKl\cdot\gE} \\
+   &= \muG \approx \result{\muGP{0}{2}}
+\end{align}

@@ -1,0 +1,16 @@
+\NewQty{mD}{100}[\gram][e-3][\kg]
+\NewQty{mE}{100}[\gram][e-3][\kg]
+\NewQty{Ts}{100}[\celsius]
+\NewQty{Tn}{0}[\celsius]
+\NewQty{cW}{4182}[\joule\per\kilogram\per\kelvin]
+\NewQty{LfE}{3.338e5}[\joule\per\kilogram]
+\NewQty{LvW}{2.257e6}[\joule\per\kilogram]
+
+\SolQty{QE}[m_\text{E}\left(L_\text{f}+c_\text{W}\left(\vartheta_\text{s}-\vartheta_0\right)\right)]{\mEX*(\LfEX+\cWX*(\TsX-\TnX))}[\joule]
+\SolQty{QD}[m_\text{D}L_\text{v}]{\mDX*\LvWX}[\joule]
+\SolQty{mKo}[\frac{m_\text{E}\left(L_\text{f}+c_\text{W}\left(\vartheta_\text{s}-\vartheta_0\right)\right)}{L_\text{v}}]{\QEX/\LvWX}[\kg]
+\SolQty{mRe}[m_\text{D}-m_\text{k}]{\mDX-\mKoX}[\kg]
+\SolQty{mWs}[m_\text{E}+m_\text{k}]{\mEX+\mKoX}[\kg]
+\ConvTo{mKog}{1e3}{mKo}{\gram}
+\ConvTo{mReg}{1e3}{mRe}{\gram}
+\ConvTo{mWsg}{1e3}{mWs}{\gram}

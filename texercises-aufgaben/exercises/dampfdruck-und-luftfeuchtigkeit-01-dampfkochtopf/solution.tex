@@ -1,0 +1,11 @@
+Wasser siedet, wenn sein Sättigungsdampfdruck gleich dem Druck über der Flüssigkeit ist. Der absolute Druck im Topf ist mit dem äusseren Luftdruck $p_0 = \ncpo$
+\begin{align}
+ p &= \pTF = \ncpo + \pUe = \pT
+\end{align}
+Nach der Tabelle für gesättigten Wasserdampf (FoTaBe S.~192) liegt dieser Druck zwischen $p_1 = \psAO$ bei $\vartheta_1 = \thAO$ und $p_2 = \psBO$ bei $\vartheta_2 = \thBO$. Lineare Interpolation ergibt
+\begin{align}
+ \vartheta &= \thSF \\
+   &= \thA + \left(\thB-\thA\right)\cdot\frac{\pTP{3}{4}-\psAO}{\psBO-\psAO} \\
+   &= \thS \approx \result{\thSP{0}{3}}
+\end{align}
+Weil die Dampfdruckkurve nach oben gekrümmt ist, liefert die lineare Interpolation eine etwas zu tiefe Temperatur.

@@ -1,0 +1,61 @@
+{
+  "title": "Wärmetransport – Aufgaben aus den Aufgabenblättern",
+  "description": "Wärmeleitung, Konvektion und Wärmestrahlung aus den Aufgabenblättern W1/W4: Wärmedurchgangskoeffizient, Wärmeleitfähigkeit, Stefan-Boltzmann-Gesetz, Wien’sches Verschiebungsgesetz. Werte aus Formeln, Tabellen, Begriffe.",
+  "kind": "sheet",
+  "is_private": true,
+  "tags": [
+    "wärmeleitung",
+    "wärmestrahlung",
+    "wärmetransport"
+  ],
+  "items": [
+    {
+      "exercise": "waermetransport-01-abwaerme-automotor"
+    },
+    {
+      "exercise": "waermetransport-02-waermetransport-koerper"
+    },
+    {
+      "exercise": "waermetransport-03-waermeverlust-wand"
+    },
+    {
+      "exercise": "waermetransport-04-backstein-backsteinmauer"
+    },
+    {
+      "exercise": "waermetransport-05-waermeleitung-aluminiumstab"
+    },
+    {
+      "exercise": "waermetransport-06-strahlungsintensitaet-gluehbirne"
+    },
+    {
+      "exercise": "waermetransport-07-strahlung-aluminiumkugel"
+    },
+    {
+      "exercise": "waermetransport-08-strahlungsintensitaet-temperaturerhoehung"
+    },
+    {
+      "exercise": "waermetransport-09-verdoppelte-strahlungsleistung"
+    },
+    {
+      "exercise": "waermetransport-10-heisser-stein-alufolie"
+    },
+    {
+      "exercise": "waermetransport-11-geschwaerzte-platte-sonnenlicht"
+    },
+    {
+      "exercise": "waermetransport-12-temperatur-roentgenstrahlung"
+    },
+    {
+      "exercise": "waermetransport-13-heizleistung-blockhaus"
+    },
+    {
+      "exercise": "waermetransport-14-strahlung-herdplatte"
+    },
+    {
+      "exercise": "waermetransport-15-temperatur-erdoberflaeche"
+    },
+    {
+      "exercise": "waermetransport-16-gluehdraht-gluehbirne"
+    }
+  ]
+}

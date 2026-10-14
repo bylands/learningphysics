@@ -1,0 +1,17 @@
+{
+  "title": "Mischtemperatur zweier Wassermengen",
+  "note": "aus den Aufgabenblättern (A1 Übergangswärme/Dampfdruck, Nr. 1)",
+  "language": "GER",
+  "type": 1,
+  "default_difficulty": 1,
+  "default_points": 0,
+  "tags": [
+    "kalorimetrie",
+    "mischtemperatur",
+    "wärme"
+  ],
+  "subbranches": [
+    "Temperatur & Heat"
+  ],
+  "youtube": ""
+}

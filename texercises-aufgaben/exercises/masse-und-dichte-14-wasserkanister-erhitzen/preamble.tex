@@ -1,0 +1,11 @@
+\NewQty{VKa}{20}[\liter][e-3][\meter\cubed]
+\NewQty{tKa}{20}[\degreeCelsius]
+\NewQty{tKe}{90}[\degreeCelsius]
+\NewQty{tMx}{4}[\degreeCelsius]
+\NewQty{rMx}{999.972}[\kgpmk]
+\NewQty{rKa}{998.206}[\kgpmk]
+\NewQty{rKe}{965.30}[\kgpmk]
+
+\ConvTo{tMxr}{1}{tMx}{\degreeCelsius}
+\SolQty{dVK}[V_0\left(\frac{\rho_{20}}{\rho_{90}}-1\right)]{\VKaX*(\rKaX/\rKeX-1)}[\meter\cubed]
+\ConvTo{dVKl}{1e3}{dVK}{\liter}

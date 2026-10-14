@@ -1,0 +1,17 @@
+{
+  "title": "Hydraulische Presse",
+  "note": "aus den Aufgabenblättern (H1 Druck, Nr. 11; H1KS Druck, Nr. 6; H12 Druck und Schweredruck, Nr. 12)",
+  "language": "GER",
+  "type": 1,
+  "default_difficulty": 1,
+  "default_points": 0,
+  "tags": [
+    "druck",
+    "hydraulik",
+    "kolben"
+  ],
+  "subbranches": [
+    "Hydrostatics"
+  ],
+  "youtube": ""
+}

@@ -1,0 +1,9 @@
+\NewQty{thA}{-50}[\degreeCelsius]
+\NewQty{psA}{0.647}[\bar][e5][\pascal]
+\NewQty{thB}{-40}[\degreeCelsius]
+\NewQty{psB}{1.056}[\bar][e5][\pascal]
+\NewQty{thR}{20}[\degreeCelsius]
+\NewQty{psR}{9.17}[\bar][e5][\pascal]
+
+\SolQty{thV}[\vartheta_1+\left(\vartheta_2-\vartheta_1\right)\frac{p_0-p_1}{p_2-p_1}]{\thAX+(\thBX-\thAX)*(\ncpoX-\psAX)/(\psBX-\psAX)}[\degreeCelsius]
+\ConvTo{psRr}{1e-5}{psR}{\bar}

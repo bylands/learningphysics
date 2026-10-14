@@ -1,0 +1,18 @@
+{
+  "title": "Messtabelle: welche Bewegung ist beschleunigt?",
+  "note": "aus den Aufgabenblättern (K2 Beschleunigte Bewegung, Nr. 6)",
+  "language": "GER",
+  "type": 2,
+  "default_difficulty": 2,
+  "default_points": 0,
+  "tags": [
+    "differenzen",
+    "gleichmässig beschleunigte bewegung",
+    "kinematik",
+    "messwerte"
+  ],
+  "subbranches": [
+    "Kinematics"
+  ],
+  "youtube": ""
+}

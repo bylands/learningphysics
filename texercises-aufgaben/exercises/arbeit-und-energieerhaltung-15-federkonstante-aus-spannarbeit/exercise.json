@@ -1,0 +1,17 @@
+{
+  "title": "Federkonstante aus Spannarbeit",
+  "note": "aus den Aufgabenblättern (E2 Arbeit und Leistung, Nr. 8)",
+  "language": "GER",
+  "type": 1,
+  "default_difficulty": 2,
+  "default_points": 0,
+  "tags": [
+    "federkonstante",
+    "spannarbeit",
+    "spannenergie"
+  ],
+  "subbranches": [
+    "Work, Energy, Power"
+  ],
+  "youtube": ""
+}

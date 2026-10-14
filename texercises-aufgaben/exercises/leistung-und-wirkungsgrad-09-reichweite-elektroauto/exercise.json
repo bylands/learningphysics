@@ -1,0 +1,21 @@
+{
+  "title": "Reichweite eines Elektroautos",
+  "note": "aus den Aufgabenblättern (E2 Arbeit und Leistung, Nr. 13)",
+  "language": "GER",
+  "type": 2,
+  "default_difficulty": 3,
+  "default_points": 0,
+  "tags": [
+    "abschätzung",
+    "leistung",
+    "luftwiderstand",
+    "optimierung",
+    "rollwiderstand",
+    "wirkungsgrad"
+  ],
+  "subbranches": [
+    "Work, Energy, Power",
+    "Dynamics"
+  ],
+  "youtube": ""
+}

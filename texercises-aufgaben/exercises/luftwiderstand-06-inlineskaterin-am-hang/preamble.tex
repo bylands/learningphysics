@@ -1,0 +1,10 @@
+\NewQty{mIn}{63}[\kg]
+\NewQty{AIn}{0.75}[\m\squared]
+\NewQty{pIn}{17}[\percent]
+\NewQty{cwM}{0.78}
+\NewQty{gE}{9.81}[\mpss]
+\NewQty{rhL}{1.293}[\kilo\gram\per\cubic\meter]
+
+\SolQty{alIn}[\arctan p]{atan(\pInX/100)*180/pi}[\degree]
+\SolQty{vIn}[\sqrt{\frac{2\,m\,g\sin\alpha}{c_w\,\rho\,A}}]{sqrt(2*\mInX*\gEX*sin(atan(\pInX/100))/(\cwMX*\rhLX*\AInX))}[\mps]
+\ConvTo{vInk}{3.6}{vIn}{\kmph}

@@ -1,0 +1,6 @@
+\NewQty{Per}{75}[\watt]
+\NewQty*{ter}{25}[\minute][60][\second]
+\NewQty{Ech}{410}[\kilo\joule][e3][\joule]
+
+\SolQty{Wer}[P\,t]{\PerX*\terX}[\joule]
+\SolQty{wgr}[\frac{P\,t}{E_\mathrm{chem}}]{100*\PerX*\terX/\EchX}[\percent]

@@ -1,0 +1,19 @@
+{
+  "title": "Grössen vergleichen (Masse und Dichte)",
+  "note": "aus den Aufgabenblättern (D1 Masse und Dichte, Nr. 1; D1 KS Masse und Dichte, Nr. 1; D1 Dichte, Nr. 1; D1 Dichte KS, Nr. 1)",
+  "language": "GER",
+  "type": 1,
+  "default_difficulty": 1,
+  "default_points": 0,
+  "tags": [
+    "dichte",
+    "einheiten",
+    "grössenvergleich",
+    "masse",
+    "volumen"
+  ],
+  "subbranches": [
+    "Dynamics"
+  ],
+  "youtube": ""
+}

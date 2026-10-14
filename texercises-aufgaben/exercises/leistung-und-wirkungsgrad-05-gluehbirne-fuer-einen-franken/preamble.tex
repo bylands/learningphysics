@@ -1,0 +1,8 @@
+\NewQty*{pre}{0.20}[CHF\per\kilo\watt\hour][1/3.6e6][CHF\per\joule]
+\NewQty{Pgb}{100}[\watt]
+\NewQty{Kgb}{1}[CHF]
+
+\SolQty{Egb}[\frac{K}{k}]{\KgbX/\preX}[\joule]
+\ConvTo{Egbw}{1/3.6e6}{Egb}{\kilo\watt\hour}
+\SolQty{tgb}[\frac{K}{k\,P}]{\KgbX/(\preX*\PgbX)}[\second]
+\ConvTo{tgbh}{1/3600}{tgb}{\hour}

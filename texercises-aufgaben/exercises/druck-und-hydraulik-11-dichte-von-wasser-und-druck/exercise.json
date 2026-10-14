@@ -1,0 +1,17 @@
+{
+  "title": "Dichte von Wasser und Druck",
+  "note": "aus den Aufgabenblättern (H1 Druck, Nr. 10)",
+  "language": "GER",
+  "type": 2,
+  "default_difficulty": 3,
+  "default_points": 0,
+  "tags": [
+    "dichte",
+    "graph",
+    "kompressibilität"
+  ],
+  "subbranches": [
+    "Hydrostatics"
+  ],
+  "youtube": ""
+}

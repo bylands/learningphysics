@@ -1,0 +1,38 @@
+{
+  "title": "Stösse – Aufgaben aus den Aufgabenblättern",
+  "description": "Stösse aus den Aufgabenblättern D2 (Impuls) und E1/E3 (Energie): vollständig unelastische und elastische Stösse in einer Dimension, schiefer Stoss beim Billard, Energieverlust bei Stössen.",
+  "kind": "sheet",
+  "is_private": true,
+  "tags": [
+    "stoss",
+    "impulserhaltung",
+    "energieerhaltung",
+    "dynamik"
+  ],
+  "items": [
+    {
+      "exercise": "stoesse-01-wagen-koppeln-an"
+    },
+    {
+      "exercise": "stoesse-02-crashtest-auto-gegen-lastwagen"
+    },
+    {
+      "exercise": "stoesse-03-billardkugeln"
+    },
+    {
+      "exercise": "stoesse-04-geschwindigkeit-einer-luftgewehrkugel"
+    },
+    {
+      "exercise": "stoesse-05-energieverlust-beim-zentralen-stoss"
+    },
+    {
+      "exercise": "stoesse-06-energie-beim-vollstaendig-unelastischen-stoss"
+    },
+    {
+      "exercise": "stoesse-07-energieerhaltung-beim-elastischen-stoss"
+    },
+    {
+      "exercise": "stoesse-08-elastischer-stoss-zweier-wagen"
+    }
+  ]
+}

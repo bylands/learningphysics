@@ -1,0 +1,16 @@
+{
+  "title": "Spannenergie einer zusammengedrückten Feder",
+  "note": "aus den Aufgabenblättern (E3 Energetik, Nr. 5; E1 Energie, Nr. 6)",
+  "language": "GER",
+  "type": 1,
+  "default_difficulty": 1,
+  "default_points": 0,
+  "tags": [
+    "federkraft",
+    "spannenergie"
+  ],
+  "subbranches": [
+    "Work, Energy, Power"
+  ],
+  "youtube": ""
+}

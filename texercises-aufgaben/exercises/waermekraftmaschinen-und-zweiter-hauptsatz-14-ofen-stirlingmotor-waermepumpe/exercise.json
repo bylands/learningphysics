@@ -1,0 +1,19 @@
+{
+  "title": "Ofen mit Stirlingmotor und Wärmepumpe",
+  "note": "aus den Aufgabenblättern (W2 Wärmekraftmaschinen, Nr. 13; W2 Wärmemaschinen, Nr. 10)",
+  "language": "GER",
+  "type": 1,
+  "default_difficulty": 3,
+  "default_points": 0,
+  "tags": [
+    "carnot-wirkungsgrad",
+    "leistungsziffer",
+    "stirlingmotor",
+    "wärmepumpe",
+    "zweiter hauptsatz"
+  ],
+  "subbranches": [
+    "Laws of Thermodynamics"
+  ],
+  "youtube": ""
+}

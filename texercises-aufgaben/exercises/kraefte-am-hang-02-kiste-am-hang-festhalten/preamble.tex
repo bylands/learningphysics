@@ -1,0 +1,7 @@
+\NewQty{gE}{9.81}[\mpss]
+\NewQty{FPa}{130}[\newton]
+\NewQty{FSk}{480}[\newton]
+
+\SolQty{wi}[\arctan\left(\frac{F_\parallel}{F_\perp}\right)]{atan(\FPaX/\FSkX)*180/pi}[\degree]
+\SolQty{FGe}[\sqrt{F_\parallel^2+F_\perp^2}]{sqrt(\FPaX^2+\FSkX^2)}[\newton]
+\SolQty{mKi}[\frac{\sqrt{F_\parallel^2+F_\perp^2}}{g}]{\FGeX/\gEX}[\kg]

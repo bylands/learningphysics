@@ -1,0 +1,17 @@
+{
+  "title": "Einheiten von Parametern bestimmen (s, v, t)",
+  "note": "aus den Aufgabenblättern (K1 Gleichförmige Bewegung, Nr. 4)",
+  "language": "GER",
+  "type": 1,
+  "default_difficulty": 2,
+  "default_points": 0,
+  "tags": [
+    "dimensionsanalyse",
+    "einheiten",
+    "kinematik"
+  ],
+  "subbranches": [
+    "Kinematics"
+  ],
+  "youtube": ""
+}

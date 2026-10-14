@@ -1,0 +1,10 @@
+\NewQty{dH}{20}[\centi\meter][e-2][\meter]
+\NewQty{AH}{75}[\meter\squared]
+\NewQty{ta}{-10}[\degreeCelsius]
+\NewQty{ti}{20}[\degreeCelsius]
+\NewQty{UH}{0.5}[\watt\per\meter\squared\per\kelvin]
+\NewQty{lH}{0.15}[\watt\per\meter\per\kelvin]
+
+\SolQty{dT}[\vartheta_\text{i}-\vartheta_\text{a}]{\tiX-\taX}[\kelvin]
+\SolQty{PH}[U\,A\,\Delta T]{\UHX*\AHX*\dTX}[\watt]
+\SolQty{PL}[\frac{\lambda\,A\,\Delta T}{d}]{\lHX*\AHX*\dTX/\dHX}[\watt]

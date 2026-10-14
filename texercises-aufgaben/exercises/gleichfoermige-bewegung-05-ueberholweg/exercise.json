@@ -1,0 +1,18 @@
+{
+  "title": "Überholweg beim Überholen",
+  "note": "aus den Aufgabenblättern (K1 Gleichförmige Bewegung, Nr. 8; K1a Gleichförmige Bewegung, Nr. 5)",
+  "language": "GER",
+  "type": 1,
+  "default_difficulty": 2,
+  "default_points": 0,
+  "tags": [
+    "gleichförmige bewegung",
+    "kinematik",
+    "relativgeschwindigkeit",
+    "überholen"
+  ],
+  "subbranches": [
+    "Kinematics"
+  ],
+  "youtube": ""
+}

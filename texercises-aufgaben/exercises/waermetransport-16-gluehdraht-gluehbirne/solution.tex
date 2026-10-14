@@ -1,0 +1,32 @@
+\begin{abcliste}
+\abc Nach Kirchhoff ist die Emissionszahl gleich dem Absorptionsvermögen, $\varepsilon = \eWO$. Wir nehmen an, dass die ganze elektrische Leistung abgestrahlt wird (Wärmeleitung über die Halterung und das Gas vernachlässigt). Mit $T = \TD$ folgt aus $P = \varepsilon\,\sigma\,A\,T^4$
+\begin{align}
+ A &= \AdF \\
+   &= \frac{\Pd}{\eWO\cdot\sig\cdot\left(\TD\right)^4} \\
+   &= \Ad \approx \result{\AdcP{0}{2}}
+\end{align}
+
+\abc Wien'sches Verschiebungsgesetz (FoTaBe S.~182):
+\begin{align}
+ \lambda_\text{max} &= \lDF = \frac{\bW}{\TD} = \lD \approx \result{\lDP{-6}{2}}
+\end{align}
+Das Maximum liegt im nahen Infrarot. Die Glühbirne strahlt hauptsächlich \emph{Infrarotstrahlung} (Wärmestrahlung) ab, nur ein kleiner Teil ist sichtbares Licht.
+
+\abc Die Emissionszahl kürzt sich im Verhältnis heraus, man kann mit einem schwarzen Strahler rechnen. Das Planck'sche Strahlungsgesetz (FoTaBe S.~182) gibt die Intensität pro Frequenzintervall; umgeschrieben auf Wellenlängen ($f = c/\lambda$, $\mathrm{d}f = c\,\mathrm{d}\lambda/\lambda^2$) lautet es
+\begin{align}
+ J'(\lambda) = \frac{\mathrm{d}J}{\mathrm{d}\lambda} &= \frac{2\pi h c^2}{\lambda^5}\cdot\frac{1}{e^{hc/(\lambda kT)}-1}
+\end{align}
+An den Rändern und in der Mitte des sichtbaren Bereichs, $\lambda_1 = \lAO$, $\lambda_\text{m} = \lMO$ und $\lambda_2 = \lEO$, ist
+\begin{align}
+ J'_1 &= \JA, \qquad J'_\text{m} = \JM, \qquad J'_2 = \JE
+\end{align}
+Die Intensität im sichtbaren Bereich ist die Fläche unter der Kurve zwischen $\lambda_1$ und $\lambda_2$. Mit der Simpsonregel (Kepler'sche Fassregel):
+\begin{align}
+ J_\text{sichtbar} &= \int_{\lambda_1}^{\lambda_2} J'(\lambda)\,\mathrm{d}\lambda \approx \JvF = \Jv
+\end{align}
+Die gesamte Intensität eines schwarzen Strahlers ist $J_\text{total} = \JtF = \Jt$. Das Verhältnis ist
+\begin{align}
+ \frac{J_\text{sichtbar}}{J_\text{total}} &= \frac{\Jv}{\Jt} = \anV \approx \result{\anVP{0}{2}}
+\end{align}
+Eine feinere numerische Integration ändert daran praktisch nichts. Nur rund ein Dreizehntel der Strahlungsleistung ist sichtbares Licht; deshalb ist die Glühbirne als Lichtquelle so ineffizient.
+\end{abcliste}

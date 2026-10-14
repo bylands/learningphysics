@@ -1,0 +1,17 @@
+{
+  "title": "Velofahrerin in der Kurve",
+  "note": "aus den Aufgabenblättern (D6 KS Kreisbewegung, Nr. 5; D6KS_Kreisbewegung, Nr. 5)",
+  "language": "GER",
+  "type": 1,
+  "default_difficulty": 1,
+  "default_points": 0,
+  "tags": [
+    "kreisbewegung",
+    "radialbeschleunigung",
+    "zentripetalbeschleunigung"
+  ],
+  "subbranches": [
+    "Circular Motion"
+  ],
+  "youtube": ""
+}

@@ -1,0 +1,18 @@
+{
+  "title": "Bahn des Kometen Halley",
+  "note": "aus den Aufgabenblättern (G1 Kepler, Nr. 6; G Gravitation, Nr. 2)",
+  "language": "GER",
+  "type": 1,
+  "default_difficulty": 2,
+  "default_points": 0,
+  "tags": [
+    "drittes kepler-gesetz",
+    "formelsammlung",
+    "kepler-gesetze",
+    "komet"
+  ],
+  "subbranches": [
+    "Gravitation/Celestial mechanics"
+  ],
+  "youtube": ""
+}

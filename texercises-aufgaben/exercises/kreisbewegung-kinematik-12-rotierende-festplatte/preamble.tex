@@ -1,0 +1,8 @@
+\NewQty{dZ}{3.5}
+\NewQty{zo}{2.54}[\centi\meter][e-2][\m]
+\NewQty*{fU}{7200}[\per\minute][1/60][\Hz]
+
+\ConvTo{fUs}{1}{fU}{\Hz}
+\SolQty{dpl}[d]{\dZX*\zoX}[\m]
+\SolQty{vpl}[\pi d f]{pi*\dplX*\fUX}[\mps]
+\SolQty{Tpl}[\frac{1}{f}]{1/\fUX}[\s]

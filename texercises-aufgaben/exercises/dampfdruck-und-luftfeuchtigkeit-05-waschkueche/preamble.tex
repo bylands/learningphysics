@@ -1,0 +1,10 @@
+\NewQty{rWk}{12}[\gram\per\meter\cubed][e-3][\kilogram\per\meter\cubed]
+\NewQty{thW}{24}[\degreeCelsius]
+\NewQty{rsW}{0.02181}[\kilogram\per\meter\cubed]
+\NewQty{thA}{12}[\degreeCelsius]
+\NewQty{rsA}{0.01067}[\kilogram\per\meter\cubed]
+\NewQty{thB}{14}[\degreeCelsius]
+\NewQty{rsB}{0.01208}[\kilogram\per\meter\cubed]
+
+\SolQty{fiW}[\frac{\rho_\text{w}}{\rho_\text{s}}]{100*\rWkX/\rsWX}[\percent]
+\SolQty{thT}[\vartheta_1+\left(\vartheta_2-\vartheta_1\right)\frac{\rho_\text{w}-\rho_1}{\rho_2-\rho_1}]{\thAX+(\thBX-\thAX)*(\rWkX-\rsAX)/(\rsBX-\rsAX)}[\degreeCelsius]

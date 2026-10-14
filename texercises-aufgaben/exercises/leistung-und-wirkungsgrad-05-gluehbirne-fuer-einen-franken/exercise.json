@@ -1,0 +1,18 @@
+{
+  "title": "Glühbirne für einen Franken",
+  "note": "aus den Aufgabenblättern (E3 Energetik, Nr. 14; E2 Arbeit und Leistung, Nr. 7)",
+  "language": "GER",
+  "type": 1,
+  "default_difficulty": 1,
+  "default_points": 0,
+  "tags": [
+    "elektrische energie",
+    "energiekosten",
+    "kilowattstunde",
+    "leistung"
+  ],
+  "subbranches": [
+    "Work, Energy, Power"
+  ],
+  "youtube": ""
+}

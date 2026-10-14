@@ -1,0 +1,19 @@
+{
+  "title": "Schwitzen bei Fieber",
+  "note": "aus den Aufgabenblättern (A1 Übergangswärme/Dampfdruck, Nr. 3)",
+  "language": "GER",
+  "type": 0,
+  "default_difficulty": 1,
+  "default_points": 0,
+  "tags": [
+    "alltag",
+    "latente wärme",
+    "mensch",
+    "verdampfungswärme",
+    "verdunstung"
+  ],
+  "subbranches": [
+    "Temperatur & Heat"
+  ],
+  "youtube": ""
+}

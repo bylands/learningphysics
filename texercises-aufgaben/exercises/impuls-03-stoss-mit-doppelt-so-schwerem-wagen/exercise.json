@@ -1,0 +1,17 @@
+{
+  "title": "Stoss mit einem doppelt so schweren Wagen",
+  "note": "aus den Aufgabenblättern (D2 Impuls, Nr. 5; D2 Impuls (2007), Nr. 5)",
+  "language": "GER",
+  "type": 1,
+  "default_difficulty": 1,
+  "default_points": 0,
+  "tags": [
+    "impuls",
+    "impulserhaltung",
+    "stoss"
+  ],
+  "subbranches": [
+    "Momentum"
+  ],
+  "youtube": ""
+}

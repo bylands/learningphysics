@@ -1,0 +1,7 @@
+\NewQty{TAq}{20}[\degreeCelsius]
+\NewQty{TBq}{270}[\degreeCelsius]
+\NewQty{gaHg}{0.182e-3}[\per\kelvin]
+
+\SolQty{dTq}[\vartheta_2-\vartheta_1]{\TBqX-\TAqX}[\kelvin]
+\SolQty{ddK}[{\sqrt[3]{1+\gamma\,\Delta\vartheta}-1}]{100*(exp(ln(1+\gaHgX*\dTqX)/3)-1)}[\percent]
+\SolQty{ddn}[\frac{1}{3}\,\gamma\,\Delta\vartheta]{100*\gaHgX*\dTqX/3}[\percent]

@@ -1,0 +1,17 @@
+{
+  "title": "Teilchengeschwindigkeit bei Erwärmung",
+  "note": "aus den Aufgabenblättern (G2 Gaskinetik & Dampfdruck, Nr. 6; G2 Kinetische Gastheorie, Nr. 4)",
+  "language": "GER",
+  "type": 1,
+  "default_difficulty": 1,
+  "default_points": 0,
+  "tags": [
+    "absolute temperatur",
+    "kinetische gastheorie",
+    "mittlere schnelligkeit"
+  ],
+  "subbranches": [
+    "Gas Laws"
+  ],
+  "youtube": ""
+}

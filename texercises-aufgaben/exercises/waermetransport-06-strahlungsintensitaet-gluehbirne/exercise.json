@@ -1,0 +1,16 @@
+{
+  "title": "Strahlungsintensität einer Glühbirne",
+  "note": "aus den Aufgabenblättern (W4 Wärmetransport, Nr. 5)",
+  "language": "GER",
+  "type": 1,
+  "default_difficulty": 1,
+  "default_points": 0,
+  "tags": [
+    "strahlungsintensität",
+    "wärmestrahlung"
+  ],
+  "subbranches": [
+    "Heat Transfer"
+  ],
+  "youtube": ""
+}

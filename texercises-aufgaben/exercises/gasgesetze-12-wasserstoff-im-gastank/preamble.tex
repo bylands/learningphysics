@@ -1,0 +1,12 @@
+\NewQty{VH}{120}[\liter][e-3][\meter\cubed]
+\NewQty{pH}{73}[\bar][e5][\pascal]
+\NewQty{thH}{22}[\degreeCelsius]
+\NewQty{MH}{1.00794}[\gram\per\mole][e-3][\kilogram\per\mole]
+
+\SolQty{TH}[\vartheta+\SI{273.15}{\kelvin}]{\thHX+273.15}[\kelvin]
+\SolQty{MHy}[2M_\text{H}]{2*\MHX}[\kilogram\per\mole]
+\ConvTo{MHyg}{1e3}{MHy}{\gram\per\mole}
+\SolQty{nHy}[\frac{pV}{RT}]{\pHX*\VHX/(\ncRX*\THX)}[\mole]
+\SolQty{mHy}[n\,M]{\nHyX*\MHyX}[\kilogram]
+\ConvTo{mHyg}{1e3}{mHy}{\gram}
+\SolQty{rHy}[\frac{m}{V}]{\mHyX/\VHX}[\kilogram\per\meter\cubed]

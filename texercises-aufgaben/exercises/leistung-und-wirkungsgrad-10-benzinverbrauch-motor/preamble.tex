@@ -1,0 +1,12 @@
+\NewQty{Hbz}{43}[\mega\joule\per\kilo\gram][e6][\joule\per\kilo\gram]
+\NewQty*{Pbz}{85}[PS][735.5][\watt]
+\NewQty{wgr}{25}[\percent]
+\NewQty*{tbz}{1}[\minute][60][\second]
+\NewQty{rhoB}{750}[\kilo\gram\per\meter\cubed]
+\NewQty{wPS}{735.5}[\watt]
+
+\ConvTo{Pbzw}{1}{Pbz}{\watt}
+\SolQty{Ebz}[\frac{P\,t}{\eta}]{\PbzX*\tbzX/(\wgrX/100)}[\joule]
+\SolQty{mbz}[\frac{P\,t}{\eta\,H}]{\PbzX*\tbzX/(\wgrX/100*\HbzX)}[\kilo\gram]
+\SolQty{Vbz}[\frac{m}{\rho}]{\mbzX/\rhoBX}[\meter\cubed]
+\ConvTo{Vbzl}{1e3}{Vbz}{\liter}

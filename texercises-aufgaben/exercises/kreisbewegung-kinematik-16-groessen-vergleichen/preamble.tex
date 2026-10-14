@@ -1,0 +1,23 @@
+\NewQty{aL}{4.7}[\kilo\meter\per\second][e3][\mps]
+\NewQty*{aR}{12e3}[\kmph][1/3.6][\mps]
+\NewQty{bL}{270}[\degree]
+\NewQty{cL}{3.6}[\pico\second][e-12][\second]
+\NewQty{cR}{36e-11}[\second]
+\NewQty*{dL}{5400}[\per\minute][1/60][\Hz]
+\NewQty{dR}{90}[\Hz]
+\NewQty{eL}{1.0}[\radian]
+\NewQty{eR}{60}[\degree]
+\NewQty{fA}{3.5}[\milli\meter\squared][e-6][\meter\squared]
+\NewQty{fB}{8}[\nano\meter][e-9][\meter]
+\NewQty{fR}{28e-9}[\liter][e-3][\meter\cubed]
+
+\ConvTo{aLs}{1}{aL}{\mps}
+\ConvTo{aRs}{1}{aR}{\mps}
+\ConvTo{bLr}{pi/180}{bL}{\radian}
+\SolQty{bR}[\frac{3\pi}{2}]{3*pi/2}[\radian]
+\ConvTo{cLs}{1}{cL}{\second}
+\ConvTo{cRs}{1}{cR}{\second}
+\ConvTo{dLs}{1}{dL}{\Hz}
+\ConvTo{eLd}{180/pi}{eL}{\degree}
+\SolQty{fL}[A\cdot d]{\fAX*\fBX}[\meter\cubed]
+\ConvTo{fRs}{1}{fR}{\meter\cubed}

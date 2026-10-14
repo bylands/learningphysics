@@ -1,0 +1,106 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "TeXercises exercise (exercises/<key>/exercise.json)",
+  "description": "The LaTeX fields live next to this file as preamble.tex, text.tex, solution.tex and short_solution.tex.",
+  "type": "object",
+  "required": [
+    "title"
+  ],
+  "properties": {
+    "id": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "description": "Existing exercise to update; omit to create."
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 250
+    },
+    "note": {
+      "type": "string",
+      "maxLength": 300
+    },
+    "language": {
+      "type": "string",
+      "description": "Short name, see reference.json languages."
+    },
+    "type": {
+      "type": "integer",
+      "enum": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8
+      ]
+    },
+    "default_difficulty": {
+      "type": "integer",
+      "enum": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ]
+    },
+    "default_points": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "maxLength": 100
+      }
+    },
+    "subbranches": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Topic names, see reference.json subbranches."
+    },
+    "youtube": {
+      "type": "string",
+      "maxLength": 50
+    },
+    "private_until": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "format": "date"
+    },
+    "preamble": {
+      "type": "string",
+      "description": "Only if preamble.tex is absent."
+    },
+    "text": {
+      "type": "string",
+      "description": "Only if text.tex is absent."
+    },
+    "solution": {
+      "type": "string",
+      "description": "Only if solution.tex is absent."
+    },
+    "short_solution": {
+      "type": "string",
+      "description": "Only if short_solution.tex is absent."
+    },
+    "info": {
+      "type": "object",
+      "description": "Read only, ignored on import."
+    }
+  },
+  "additionalProperties": false
+}

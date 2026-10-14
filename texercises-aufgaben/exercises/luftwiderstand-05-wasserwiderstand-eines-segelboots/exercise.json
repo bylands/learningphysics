@@ -1,0 +1,19 @@
+{
+  "title": "Wasserwiderstand eines Segelboots",
+  "note": "aus den Aufgabenblättern (D5 Kräfte am Hang & Luftwiderstand, Nr. 11)",
+  "language": "GER",
+  "type": 1,
+  "default_difficulty": 2,
+  "default_points": 0,
+  "tags": [
+    "dynamik",
+    "kräftegleichgewicht",
+    "luftwiderstand",
+    "relativgeschwindigkeit",
+    "widerstandszahl"
+  ],
+  "subbranches": [
+    "Dynamics"
+  ],
+  "youtube": ""
+}

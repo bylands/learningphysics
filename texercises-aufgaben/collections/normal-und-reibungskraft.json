@@ -1,0 +1,64 @@
+{
+  "title": "Normal- und Reibungskraft – Aufgaben aus den Aufgabenblättern",
+  "description": "Normalkraft, Haft- und Gleitreibung aus den Aufgabenblättern D4/D5: Kräftegleichgewicht, Reibungszahlen, Beschleunigen und Bremsen. Rechnen Sie mit g = 9.81 m/s²; Reibungszahlen aus Formeln, Tabellen, Begriffe (S. 189).",
+  "kind": "sheet",
+  "is_private": true,
+  "tags": [
+    "dynamik",
+    "normalkraft",
+    "reibung"
+  ],
+  "items": [
+    {
+      "exercise": "normal-und-reibungskraft-01-formel-1-wagen-an-der-decke"
+    },
+    {
+      "exercise": "normal-und-reibungskraft-02-container-am-kran"
+    },
+    {
+      "exercise": "normal-und-reibungskraft-03-astronaut-auf-dem-mond"
+    },
+    {
+      "exercise": "normal-und-reibungskraft-04-metallklotz-auf-tischplatte"
+    },
+    {
+      "exercise": "normal-und-reibungskraft-05-holzschrank-verschieben"
+    },
+    {
+      "exercise": "normal-und-reibungskraft-06-gezogene-kiste-mit-beschleunigung"
+    },
+    {
+      "exercise": "normal-und-reibungskraft-07-zwei-verbundene-holzkloetze"
+    },
+    {
+      "exercise": "normal-und-reibungskraft-08-haftreibung-beim-sprinter"
+    },
+    {
+      "exercise": "normal-und-reibungskraft-09-mutter-zieht-schlitten"
+    },
+    {
+      "exercise": "normal-und-reibungskraft-10-beschleunigen-und-bremsen-eines-zuges"
+    },
+    {
+      "exercise": "normal-und-reibungskraft-11-rasiermesser-am-lederriemen"
+    },
+    {
+      "exercise": "normal-und-reibungskraft-12-schlepplift"
+    },
+    {
+      "exercise": "normal-und-reibungskraft-13-bremsspur-im-schneematsch"
+    },
+    {
+      "exercise": "normal-und-reibungskraft-14-auto-mit-angezogener-handbremse"
+    },
+    {
+      "exercise": "normal-und-reibungskraft-15-zug-mit-blockierenden-raedern"
+    },
+    {
+      "exercise": "normal-und-reibungskraft-16-reibungskraft-im-diagramm"
+    },
+    {
+      "exercise": "normal-und-reibungskraft-17-groessen-vergleichen"
+    }
+  ]
+}

@@ -1,0 +1,7 @@
+Der Dampf entsteht über siedendem Wasser und ist gesättigt: Seine Temperatur ist die Siedetemperatur bei \pKO. Nach der Tabelle für gesättigten Wasserdampf (FoTaBe S.~192) liegt dieser Druck zwischen $p_1 = \psAbP{0}{4}$ bei $\vartheta_1 = \thAO$ und $p_2 = \psBbP{0}{3}$ bei $\vartheta_2 = \thBO$. Lineare Interpolation ergibt
+\begin{align}
+ \vartheta &= \thKF \\
+   &= \thA + \left(\thB-\thA\right)\cdot\frac{\pKO-\psAbP{0}{4}}{\psBbP{0}{3}-\psAbP{0}{4}} \\
+   &= \thK \approx \result{\thKP{0}{2}}
+\end{align}
+Weil die Dampfdruckkurve nach oben gekrümmt ist und das Intervall gross ist, liegt die tatsächliche Siedetemperatur einige Grad höher.

@@ -1,0 +1,19 @@
+{
+  "title": "Billardkugeln",
+  "note": "aus den Aufgabenblättern (D2 Impuls, Nr. 11; D1 Masse, Dichte & Impuls, Nr. 13)",
+  "language": "GER",
+  "type": 1,
+  "default_difficulty": 3,
+  "default_points": 0,
+  "tags": [
+    "elastischer stoss",
+    "impuls",
+    "impulserhaltung",
+    "schiefer stoss",
+    "vektoren"
+  ],
+  "subbranches": [
+    "Momentum"
+  ],
+  "youtube": ""
+}

@@ -1,0 +1,19 @@
+{
+  "title": "Auf einer Eisscholle stehen",
+  "note": "aus den Aufgabenblättern (H3 Auftrieb, Nr. 10; H Hydrostatik, Nr. 16; H1 Hydrostatik, Nr. 17)",
+  "language": "GER",
+  "type": 1,
+  "default_difficulty": 2,
+  "default_points": 0,
+  "tags": [
+    "archimedes",
+    "auftrieb",
+    "eis",
+    "hydrostatik",
+    "schwimmen"
+  ],
+  "subbranches": [
+    "Hydrostatics"
+  ],
+  "youtube": ""
+}

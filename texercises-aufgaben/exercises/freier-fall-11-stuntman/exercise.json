@@ -1,0 +1,18 @@
+{
+  "id": 24637,
+  "title": "Stuntman springt auf Zug",
+  "note": "aus den Aufgabenblättern (K3 Freier Fall, Nr. 11)",
+  "language": "GER",
+  "type": 1,
+  "default_difficulty": 2,
+  "default_points": 0,
+  "tags": [
+    "freier fall",
+    "gleichförmige bewegung",
+    "kinematik"
+  ],
+  "subbranches": [
+    "Kinematics"
+  ],
+  "youtube": ""
+}

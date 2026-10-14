@@ -1,0 +1,8 @@
+\NewQty{aMe}{57.9092e9}[\m]
+\NewQty*{TMe}{87.969}[\day][86400][\s]
+\NewQty{exM}{0.20563}
+\NewQty{vRe}{47.36}[\kmps][e3][\mps]
+
+\SolQty{vMe}[\frac{2\pi a}{T}]{2*pi*\aMeX/\TMeX}[\mps]
+\SolQty{dev}[\frac{v-v_\text{m}}{v_\text{m}}]{100*(\vMeX-\vReX)/\vReX}[\percent]
+\SolQty{vEl}[\frac{2\pi a}{T}\left(1-\frac{\varepsilon^2}{4}\right)]{\vMeX*(1-\exMX^2/4)}[\mps]

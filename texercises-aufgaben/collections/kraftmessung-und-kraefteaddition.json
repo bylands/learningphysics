@@ -1,0 +1,56 @@
+{
+  "title": "Kraftmessung und Kräfteaddition – Aufgaben aus den Aufgabenblättern",
+  "description": "Gewichtskraft, Federkraft (Hooke'sches Gesetz), Kräftegleichgewicht und Addition von Kräften (Kräfteparallelogramm, Komponenten) aus den Aufgabenblättern D3. Rechnen Sie mit g = 9.81 m/s²; Werte aus Formeln, Tabellen, Begriffe.",
+  "kind": "sheet",
+  "is_private": true,
+  "tags": [
+    "dynamik",
+    "kraft",
+    "kräfteaddition",
+    "federkraft"
+  ],
+  "items": [
+    {
+      "exercise": "kraftmessung-und-kraefteaddition-01-gewicht-auf-mond-und-mars"
+    },
+    {
+      "exercise": "kraftmessung-und-kraefteaddition-02-verlaengerung-einer-feder"
+    },
+    {
+      "exercise": "kraftmessung-und-kraefteaddition-03-federkonstanten-vergleichen"
+    },
+    {
+      "exercise": "kraftmessung-und-kraefteaddition-04-haertere-feder"
+    },
+    {
+      "exercise": "kraftmessung-und-kraefteaddition-05-stossdaempferfedern"
+    },
+    {
+      "exercise": "kraftmessung-und-kraefteaddition-06-antriebskraft-beim-velofahren"
+    },
+    {
+      "exercise": "kraftmessung-und-kraefteaddition-07-resultierende-zweier-kraefte"
+    },
+    {
+      "exercise": "kraftmessung-und-kraefteaddition-08-zwei-gleich-grosse-kraefte"
+    },
+    {
+      "exercise": "kraftmessung-und-kraefteaddition-09-winkel-zwischen-zwei-kraeften"
+    },
+    {
+      "exercise": "kraftmessung-und-kraefteaddition-10-kraftkomponenten-im-gleichgewicht"
+    },
+    {
+      "exercise": "kraftmessung-und-kraefteaddition-11-skiliftsessel-am-drahtseil"
+    },
+    {
+      "exercise": "kraftmessung-und-kraefteaddition-12-federn-in-serie-und-parallel"
+    },
+    {
+      "exercise": "kraftmessung-und-kraefteaddition-13-winkel-aus-kraftbetraegen"
+    },
+    {
+      "exercise": "kraftmessung-und-kraefteaddition-14-groessen-vergleichen"
+    }
+  ]
+}

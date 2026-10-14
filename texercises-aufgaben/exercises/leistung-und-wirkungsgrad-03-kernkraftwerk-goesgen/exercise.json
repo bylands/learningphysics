@@ -1,0 +1,18 @@
+{
+  "title": "Energie des Kernkraftwerks Gösgen",
+  "note": "aus den Aufgabenblättern (E3 Energetik, Nr. 9; E2 Arbeit und Leistung, Nr. 5)",
+  "language": "GER",
+  "type": 1,
+  "default_difficulty": 1,
+  "default_points": 0,
+  "tags": [
+    "einheiten",
+    "energie",
+    "kilowattstunde",
+    "leistung"
+  ],
+  "subbranches": [
+    "Work, Energy, Power"
+  ],
+  "youtube": ""
+}

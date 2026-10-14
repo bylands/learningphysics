@@ -1,0 +1,37 @@
+{
+  "title": "Luftwiderstand – Aufgaben aus den Aufgabenblättern",
+  "description": "Luftwiderstandskraft F = ½ c_w ρ A v², Endgeschwindigkeit und Relativgeschwindigkeit aus den Aufgabenblättern D4/D5. Rechnen Sie mit g = 9.81 m/s²; Widerstandszahlen und Luftdichte aus Formeln, Tabellen, Begriffe.",
+  "kind": "sheet",
+  "is_private": true,
+  "tags": [
+    "dynamik",
+    "luftwiderstand",
+    "strömungswiderstand"
+  ],
+  "items": [
+    {
+      "exercise": "luftwiderstand-01-wind-an-einer-fahnenstange"
+    },
+    {
+      "exercise": "luftwiderstand-02-bremsender-tischtennisball"
+    },
+    {
+      "exercise": "luftwiderstand-03-luftwiderstand-beim-beschleunigen"
+    },
+    {
+      "exercise": "luftwiderstand-04-fallende-kartonrolle"
+    },
+    {
+      "exercise": "luftwiderstand-05-wasserwiderstand-eines-segelboots"
+    },
+    {
+      "exercise": "luftwiderstand-06-inlineskaterin-am-hang"
+    },
+    {
+      "exercise": "luftwiderstand-07-segelflaeche-beim-eissegeln"
+    },
+    {
+      "exercise": "luftwiderstand-08-sinkende-stahlkugeln"
+    }
+  ]
+}

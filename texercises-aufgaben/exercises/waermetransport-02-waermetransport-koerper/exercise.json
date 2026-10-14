@@ -1,0 +1,19 @@
+{
+  "title": "Wärmetransport im menschlichen Körper",
+  "note": "aus den Aufgabenblättern (W1 Temperatur und Wärme, Nr. 8; W4 Wärmetransport, Nr. 2)",
+  "language": "GER",
+  "type": 0,
+  "default_difficulty": 1,
+  "default_points": 0,
+  "tags": [
+    "konvektion",
+    "verdunstung",
+    "wärmeleitung",
+    "wärmestrahlung",
+    "wärmetransport"
+  ],
+  "subbranches": [
+    "Heat Transfer"
+  ],
+  "youtube": ""
+}

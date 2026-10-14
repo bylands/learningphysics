@@ -1,0 +1,9 @@
+\NewQty{gE}{9.81}[\mpss]
+\NewQty{Aea}{5}[\centi\meter\squared][e-4][\meter\squared]
+\NewQty{Aeb}{9}[\centi\meter\squared][e-4][\meter\squared]
+\NewQty{Aec}{3}[\centi\meter\squared][e-4][\meter\squared]
+\NewQty{mko}{5}[\kilo\gram]
+
+\SolQty{pko}[\frac{m\,g}{A_1}]{\mkoX*\gEX/\AeaX}[\pascal]
+\ConvTo{pkob}{1e-5}{pko}{\bar}
+\SolQty{Fko}[\frac{m\,g}{A_1}\left(A_2-A_3\right)]{\pkoX*(\AebX-\AecX)}[\newton]

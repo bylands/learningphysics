@@ -1,0 +1,17 @@
+{
+  "title": "Begegnung auf der Laufbahn",
+  "note": "aus den Aufgabenblättern (K1 Gleichförmige Bewegung, Nr. 9)",
+  "language": "GER",
+  "type": 1,
+  "default_difficulty": 2,
+  "default_points": 0,
+  "tags": [
+    "begegnung",
+    "gleichförmige bewegung",
+    "kinematik"
+  ],
+  "subbranches": [
+    "Kinematics"
+  ],
+  "youtube": ""
+}

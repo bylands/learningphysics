@@ -1,0 +1,19 @@
+{
+  "title": "Gegen eine Wand drücken",
+  "note": "aus den Aufgabenblättern (D3 Kraftmessung & Kräfteaddition, Nr. 11)",
+  "language": "GER",
+  "type": 0,
+  "default_difficulty": 1,
+  "default_points": 0,
+  "tags": [
+    "actio gleich reactio",
+    "dynamik",
+    "haftreibung",
+    "kräfteplan",
+    "wechselwirkungsprinzip"
+  ],
+  "subbranches": [
+    "Dynamics"
+  ],
+  "youtube": ""
+}

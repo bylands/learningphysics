@@ -1,0 +1,19 @@
+{
+  "title": "Energie beim vollständig unelastischen Stoss",
+  "note": "aus den Aufgabenblättern (E3 Energetik, Nr. 7)",
+  "language": "GER",
+  "type": 7,
+  "default_difficulty": 2,
+  "default_points": 0,
+  "tags": [
+    "energieverlust",
+    "impulserhaltung",
+    "kinetische energie",
+    "unelastischer stoss"
+  ],
+  "subbranches": [
+    "Momentum",
+    "Work, Energy, Power"
+  ],
+  "youtube": ""
+}

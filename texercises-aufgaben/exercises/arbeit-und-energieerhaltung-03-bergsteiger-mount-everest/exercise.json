@@ -1,0 +1,16 @@
+{
+  "title": "Bergsteiger auf dem Mount Everest",
+  "note": "aus den Aufgabenblättern (E3 Energetik, Nr. 3; E1 Energie, Nr. 2)",
+  "language": "GER",
+  "type": 1,
+  "default_difficulty": 1,
+  "default_points": 0,
+  "tags": [
+    "bezugsniveau",
+    "potentielle energie"
+  ],
+  "subbranches": [
+    "Work, Energy, Power"
+  ],
+  "youtube": ""
+}

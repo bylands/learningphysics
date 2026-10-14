@@ -1,0 +1,19 @@
+\NewQty{TA}{300}[\kelvin]
+\NewQty{TB}{1000}[\kelvin]
+\NewQty{TC}{2000}[\kelvin]
+\NewQty{MOa}{15.9994}[\gram\per\mole][e-3][\kilogram\per\mole]
+\NewQty{vgr}{600}[\mps]
+\NewQty{bA}{460}[\mps]
+\NewQty{bB}{830}[\mps]
+\NewQty{bC}{1180}[\mps]
+\NewQty{anr}{20}[\percent]
+\NewQty{dvG}{100}[\mps]
+\NewQty{dfG}{1e-4}[\second\per\meter]
+
+\SolQty{MOz}[2M_\text{O}]{2*\MOaX}[\kilogram\per\mole]
+\SolQty{vwA}[\sqrt{\frac{2RT}{M}}]{sqrt(2*\ncRX*\TAX/\MOzX)}[\mps]
+\ConvTo{bAr}{1}{bA}{\mps}
+\ConvTo{bBr}{1}{bB}{\mps}
+\ConvTo{bCr}{1}{bC}{\mps}
+\ConvTo{anrr}{1}{anr}{\percent}
+\SolQty{aG}[\Delta v\cdot\Delta f]{100*\dvGX*\dfGX}[\percent]

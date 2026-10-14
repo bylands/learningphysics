@@ -1,0 +1,18 @@
+\NewQty{aLi}{2.5}[\kg]
+\NewQty{aRe}{25}[\newton]
+\NewQty{bLi}{53}[\gram\per\centi\meter\cubed][e3][\kilo\gram\per\meter\cubed]
+\NewQty{bRe}{5.3}[\kilo\gram\per\deci\liter][e4][\kilo\gram\per\meter\cubed]
+\NewQty{cLi}{1.5}[\newton\second\squared\per\meter]
+\NewQty{cRe}{1.5}[\kg]
+\NewQty{dLi}{13e-8}[\meter]
+\NewQty{dRe}{1.3}[\nano\meter][e-9][\meter]
+\NewQty{eLi}{12}[\hertz]
+\NewQty*{eRe}{720}[\per\minute][1/60][\hertz]
+\NewQty{fA}{3.5}[\centi\meter][e-2][\meter]
+\NewQty{fB}{12}[\milli\meter\squared][e-6][\meter\squared]
+\NewQty{fRe}{4.2}[\milli\liter]
+
+\ConvTo{dLs}{1}{dLi}{\meter}
+\ConvTo{eRs}{1}{eRe}{\hertz}
+\SolQty{fLi}[l\cdot A]{\fAX*\fBX}[\meter\cubed]
+\ConvTo{fLm}{1e6}{fLi}{\milli\liter}

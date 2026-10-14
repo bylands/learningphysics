@@ -1,0 +1,18 @@
+{
+  "title": "Freon 22 im Kühlschrank",
+  "note": "aus den Aufgabenblättern (G2 Gaskinetik & Dampfdruck, Nr. 15)",
+  "language": "GER",
+  "type": 1,
+  "default_difficulty": 2,
+  "default_points": 0,
+  "tags": [
+    "dampfdruck",
+    "kältemittel",
+    "kühlschrank",
+    "siedetemperatur"
+  ],
+  "subbranches": [
+    "Vapor Pressure & Humidity"
+  ],
+  "youtube": ""
+}

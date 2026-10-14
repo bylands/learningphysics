@@ -1,0 +1,11 @@
+\NewQty{VF}{1.5}[\liter][e-3][\meter\cubed]
+\NewQty{thEi}{20}[\degreeCelsius]
+\NewQty{pEi}{1013}[\milli\bar][e2][\pascal]
+\NewQty{thZw}{6}[\degreeCelsius]
+\NewQty{pZw}{920}[\milli\bar][e2][\pascal]
+
+\SolQty{TEi}[\vartheta_1+\SI{273.15}{\kelvin}]{\thEiX+273.15}[\kelvin]
+\SolQty{TZw}[\vartheta_2+\SI{273.15}{\kelvin}]{\thZwX+273.15}[\kelvin]
+\SolQty{VZw}[V\cdot\frac{p_1}{p_2}\cdot\frac{T_2}{T_1}]{\VFX*\pEiX*\TZwX/(\pZwX*\TEiX)}[\meter\cubed]
+\SolQty{dVF}[V_2-V]{\VZwX-\VFX}[\meter\cubed]
+\ConvTo{dVFl}{1e3}{dVF}{\liter}

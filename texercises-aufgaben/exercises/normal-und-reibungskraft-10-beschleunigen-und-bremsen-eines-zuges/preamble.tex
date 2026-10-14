@@ -1,0 +1,11 @@
+\NewQty{gE}{9.81}[\mpss]
+\NewQty{mLo}{58}[\tonne][e3][\kg]
+\NewQty{mWa}{300}[\tonne][e3][\kg]
+\NewQty*{vZu}{100}[\kmph][1/3.6][\mps]
+\NewQty{muH}{0.78}
+\NewQty{aTy}{1}[\mpss]
+
+\SolQty{aZu}[\frac{\mu_\mathrm{H}\,m_\mathrm{L}\,g}{m_\mathrm{L}+m_\mathrm{W}}]{\muHX*\mLoX*\gEX/(\mLoX+\mWaX)}[\mpss]
+\SolQty{aBr}[\mu_\mathrm{H}\,g]{\muHX*\gEX}[\mpss]
+\SolQty{tBr}[\frac{v_0}{\mu_\mathrm{H}\,g}]{\vZuX/\aBrX}[\s]
+\SolQty{sBr}[\frac{v_0^2}{2\,\mu_\mathrm{H}\,g}]{\vZuX/2*\tBrX}[\m]

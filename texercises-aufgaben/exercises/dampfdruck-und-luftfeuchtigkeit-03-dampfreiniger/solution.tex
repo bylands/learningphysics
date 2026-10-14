@@ -1,0 +1,23 @@
+Im Steamer ist der Dampf über dem siedenden Wasser gesättigt; sein Druck ist der Sättigungsdampfdruck bei \thStO. Man liest bei \thStO\ auf der Dampfdruckkurve ab:
+
+\begin{center}
+\begin{tikzpicture}[>=stealth, xscale=0.07, yscale=1.3]
+
+ \draw[gray!20, xstep=5, ystep=0.1] (0,0) grid (150,5);
+ \draw[gray!50, xstep=10, ystep=0.5] (0,0) grid (150,5);
+ \draw[->] (0,0) -- (160,0) node[below left=12pt] {$\vartheta$ in \si{\degreeCelsius}};
+ \draw[->] (0,0) -- (0,5.4) node[above right] {$p_\text{s}$ in \si{\bar}};
+ \foreach \x in {0,20,40,60,80,100,120,140} \node[below] at (\x,0) {\x};
+ \foreach \y in {1,2,3,4,5} \node[left] at (0,\y) {\y};
+ \draw[very thick, blue] plot[smooth] coordinates {(0,0.0061) (10,0.0123) (20,0.0234) (30,0.0424) (40,0.0738) (50,0.1234) (60,0.1992) (70,0.3116) (80,0.4734) (90,0.7010) (100,1.0132) (110,1.4326) (120,1.9853) (130,2.7013) (140,3.614) (150,4.760)};
+
+ \draw[thick, red, dashed, ->] (120,0) -- (120,1.9853) -- (0,1.9853);
+ \node[circle, fill=red, inner sep=1.5pt] at (120,1.9853) {};
+\end{tikzpicture}
+\end{center}
+
+Die Tabelle (FoTaBe S.~192) gibt genauer $p_\text{s} = \psStO$, also
+\begin{align}
+ p &= \psSt \approx \result{\psStbP{0}{3}}
+\end{align}
+Das ist ungefähr der doppelte Normaldruck; der Überdruck im Gerät beträgt also rund ein bar.

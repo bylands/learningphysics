@@ -1,0 +1,7 @@
+\NewQty{TAg}{20}[\degreeCelsius]
+\NewQty{TBg}{110}[\degreeCelsius]
+\NewQty{rhGl}{1.261e3}[\kilogram\per\cubic\meter]
+\NewQty{gaGl}{0.50e-3}[\per\kelvin]
+
+\SolQty{dTg}[\vartheta_2-\vartheta_1]{\TBgX-\TAgX}[\kelvin]
+\SolQty{rhH}[\frac{\rho_0}{1+\gamma\,\Delta\vartheta}]{\rhGlX/(1+\gaGlX*\dTgX)}[\kilogram\per\cubic\meter]

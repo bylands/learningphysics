@@ -1,0 +1,11 @@
+\NewQty{sAZ}{50}[\km][e3][\m]
+\NewQty*{tI}{24}[\minute][60][\s]
+\NewQty*{tG}{10}[\minute][60][\s]
+\NewQty*{vG}{95}[\kmph][1/3.6][\mps]
+
+\SolQty{vI}[\frac{d}{t_\mathrm{I}}]{\sAZX/\tIX}[\mps]
+\ConvTo{vIk}{3.6}{vI}{\kmph}
+\SolQty{tK}[\frac{d+v_\mathrm{G}\,t_\mathrm{G}}{v_\mathrm{I}+v_\mathrm{G}}]{(\sAZX+\vGX*\tGX)/(\vIX+\vGX)}[\s]
+\ConvTo{tKm}{1/60}{tK}{\minute}
+\SolQty{xK}[v_\mathrm{I}\,t_\mathrm{K}]{\vIX*\tKX}[\m]
+\SolQty{uK}[\text{Minuten}]{round(30+\tKX/60,0)}

@@ -1,0 +1,6 @@
+\NewQty{mBu}{190}[\gram][e-3][\kg]
+\NewQty{PBr}{450}[\watt]
+\NewQty{Hu}{45.7}[\mega\joule\per\kilogram][e6][\joule\per\kilogram]
+
+\SolQty{tBr}[\frac{m\,H}{P}]{\mBuX*\HuX/\PBrX}[\s]
+\ConvTo{tBrh}{1/3600}{tBr}{\hour}

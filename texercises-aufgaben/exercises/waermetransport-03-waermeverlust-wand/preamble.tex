@@ -1,0 +1,8 @@
+\NewQty{Uw}{0.2}[\watt\per\meter\squared\per\kelvin]
+\NewQty{Aw}{12}[\meter\squared]
+\NewQty{ti}{22}[\degreeCelsius]
+\NewQty{ta}{5}[\degreeCelsius]
+\NewQty*{tS}{1}[\hour][3600][\second]
+
+\SolQty{dT}[\vartheta_\text{i}-\vartheta_\text{a}]{\tiX-\taX}[\kelvin]
+\SolQty{Qw}[U\,A\,\Delta T\,t]{\UwX*\AwX*\dTX*\tSX}[\joule]

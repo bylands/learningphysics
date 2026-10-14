@@ -1,0 +1,18 @@
+{
+  "title": "Umkehrzeit auf schiefer Ebene",
+  "note": "aus den Aufgabenblättern (D4 Hangkräfte, Nr. 6; D3 Kräfte 1, Nr. 11)",
+  "language": "GER",
+  "type": 1,
+  "default_difficulty": 2,
+  "default_points": 0,
+  "tags": [
+    "dynamik",
+    "gleichmässig beschleunigte bewegung",
+    "hangabtriebskraft",
+    "schiefe ebene"
+  ],
+  "subbranches": [
+    "Dynamics"
+  ],
+  "youtube": ""
+}

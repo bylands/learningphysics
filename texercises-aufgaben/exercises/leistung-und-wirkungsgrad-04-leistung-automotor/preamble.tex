@@ -1,0 +1,7 @@
+\NewQty*{Pam}{120}[PS][735.5][\watt]
+\NewQty{wgr}{23}[\percent]
+\NewQty{wPS}{735.5}[\watt]
+
+\ConvTo{Pamw}{1}{Pam}{\watt}
+\SolQty{Pzu}[\frac{P}{\eta}]{\PamX/(\wgrX/100)}[\watt]
+\ConvTo{PzuPS}{1/735.5}{Pzu}{PS}

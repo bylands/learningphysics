@@ -1,0 +1,19 @@
+{
+  "title": "Aufsteigende Gasblase im Mineralwasser",
+  "note": "aus den Aufgabenblättern (G1 Gasgesetze, Nr. 4)",
+  "language": "GER",
+  "type": 1,
+  "default_difficulty": 3,
+  "default_points": 0,
+  "tags": [
+    "boyle-mariotte",
+    "gasgesetze",
+    "isotherm",
+    "schweredruck"
+  ],
+  "subbranches": [
+    "Gas Laws",
+    "Hydrostatics"
+  ],
+  "youtube": ""
+}

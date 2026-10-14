@@ -1,0 +1,17 @@
+{
+  "title": "Temperatur bei gegebenem Molvolumen",
+  "note": "aus den Aufgabenblättern (G1 Gasgesetze, Nr. 9)",
+  "language": "GER",
+  "type": 1,
+  "default_difficulty": 1,
+  "default_points": 0,
+  "tags": [
+    "absolute temperatur",
+    "ideale gasgleichung",
+    "molvolumen"
+  ],
+  "subbranches": [
+    "Gas Laws"
+  ],
+  "youtube": ""
+}

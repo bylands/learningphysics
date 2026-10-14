@@ -1,0 +1,18 @@
+{
+  "title": "Bahngeschwindigkeit am Äquator",
+  "note": "aus den Aufgabenblättern (K5 Kreisbewegung, Nr. 6)",
+  "language": "GER",
+  "type": 1,
+  "default_difficulty": 1,
+  "default_points": 0,
+  "tags": [
+    "bahngeschwindigkeit",
+    "erdrotation",
+    "kinematik",
+    "kreisbewegung"
+  ],
+  "subbranches": [
+    "Circular Motion"
+  ],
+  "youtube": ""
+}

@@ -1,0 +1,9 @@
+\NewQty*{tF}{12}[\hour][3600][\s]
+\NewQty*{TMo}{27.32}[\day][86400][\s]
+\NewQty{aMo}{3.844e8}[\m]
+\NewQty{RErd}{6.371e6}[\m]
+
+\SolQty{THe}[2\,t]{2*\tFX}[\s]
+\SolQty{aHe}[a_\text{M}\left(\frac{T}{T_\text{M}}\right)^{2/3}]{\aMoX*(\THeX/\TMoX)^(2/3)}[\m]
+\SolQty{Hh}[2a]{2*\aHeX}[\m]
+\SolQty{Hue}[2a-R_\text{E}]{2*\aHeX-\RErdX}[\m]

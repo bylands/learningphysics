@@ -1,0 +1,21 @@
+\begin{center}
+\begin{tikzpicture}[>=stealth]
+ \draw (0,0) ellipse (4 and 2.8);
+ \fill (0,0) circle (0.05) node[above] {M};
+ \fill[orange] (2.857,0) circle (0.15);
+ \node[above] at (2.857,0.15) {Sonne};
+ \draw[|<->|] (0,-0.4) -- (2.857,-0.4) node[midway, below] {$c$};
+ \draw[|<->|] (0,-1.2) -- (4,-1.2) node[midway, below] {$a$};
+ \draw[dashed] (-4,0) -- (4,0);
+\end{tikzpicture}
+
+(Exzentrizität stark übertrieben)
+\end{center}
+
+Die lineare Exzentrizität $c$ ist der Abstand der Sonne (Brennpunkt) vom Mittelpunkt M der Bahnellipse. Mit der numerischen Exzentrizität $\varepsilon = c/a$ (FoTaBe S.~109) und den Bahndaten der Erde, $a = \aErO$ und $\varepsilon = \exEO$ (FoTaBe S.~212), ist
+\begin{align}
+ c &= \cEF \\
+   &= \exE\cdot\aEr \\
+   &= \cE \approx \result{\cEP{9}{2}}
+\end{align}
+Die Sonne ist also nur um den kleinen Bruchteil $c/a = \varepsilon = \exEO$ der grossen Halbachse vom Mittelpunkt entfernt; die Erdbahn ist fast ein Kreis.

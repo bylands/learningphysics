@@ -1,0 +1,9 @@
+\NewQty{mRo}{25}[\gram][e-3][\kg]
+\NewQty{mAu}{14.6}[\gram][e-3][\kg]
+\NewQty{mCu}{10.4}[\gram][e-3][\kg]
+\NewQty{rAu}{19.29}[\gpcmk][e3][\kgpmk]
+\NewQty{rCu}{8.92}[\gpcmk][e3][\kgpmk]
+\NewQty{rMe}{13.2}[\gpcmk][e3][\kgpmk]
+
+\SolQty{rLe}[\frac{m_\text{Au}+m_\text{Cu}}{\frac{m_\text{Au}}{\rho_\text{Au}}+\frac{m_\text{Cu}}{\rho_\text{Cu}}}]{(\mAuX+\mCuX)/(\mAuX/\rAuX+\mCuX/\rCuX)}[\kgpmk]
+\ConvTo{rLeg}{1e-3}{rLe}{\gpcmk}

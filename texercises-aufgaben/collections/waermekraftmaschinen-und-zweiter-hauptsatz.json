@@ -1,0 +1,61 @@
+{
+  "title": "Wärmekraftmaschinen und zweiter Hauptsatz – Aufgaben aus den Aufgabenblättern",
+  "description": "Wärmekraftmaschinen, Wärmepumpen und Kältemaschinen aus den Aufgabenblättern W2: Wirkungsgrad, Leistungsziffer, Energiebilanz und Gedankenexperimente zum zweiten Hauptsatz. Werte aus Formeln, Tabellen, Begriffe.",
+  "kind": "sheet",
+  "is_private": true,
+  "tags": [
+    "wärmekraftmaschine",
+    "wärmepumpe",
+    "zweiter hauptsatz"
+  ],
+  "items": [
+    {
+      "exercise": "waermekraftmaschinen-und-zweiter-hauptsatz-01-wirkungsgrad-dampfmaschine"
+    },
+    {
+      "exercise": "waermekraftmaschinen-und-zweiter-hauptsatz-02-temperatur-stirlingmotor"
+    },
+    {
+      "exercise": "waermekraftmaschinen-und-zweiter-hauptsatz-03-abwaerme-kraftwerk"
+    },
+    {
+      "exercise": "waermekraftmaschinen-und-zweiter-hauptsatz-04-treibstoff-schiffsmotor"
+    },
+    {
+      "exercise": "waermekraftmaschinen-und-zweiter-hauptsatz-05-verbesserter-wirkungsgrad"
+    },
+    {
+      "exercise": "waermekraftmaschinen-und-zweiter-hauptsatz-06-leistungsziffer-groesser-eins"
+    },
+    {
+      "exercise": "waermekraftmaschinen-und-zweiter-hauptsatz-07-waermepumpe-waermeentnahme"
+    },
+    {
+      "exercise": "waermekraftmaschinen-und-zweiter-hauptsatz-08-maximale-leistungsziffer-waermepumpe"
+    },
+    {
+      "exercise": "waermekraftmaschinen-und-zweiter-hauptsatz-09-kuehlschrank-waermeentzug"
+    },
+    {
+      "exercise": "waermekraftmaschinen-und-zweiter-hauptsatz-10-leistungsziffer-klimaanlage"
+    },
+    {
+      "exercise": "waermekraftmaschinen-und-zweiter-hauptsatz-11-pressluft-hebt-lift"
+    },
+    {
+      "exercise": "waermekraftmaschinen-und-zweiter-hauptsatz-12-waermeenergie-weltmeere"
+    },
+    {
+      "exercise": "waermekraftmaschinen-und-zweiter-hauptsatz-13-lohnt-sich-waermepumpe"
+    },
+    {
+      "exercise": "waermekraftmaschinen-und-zweiter-hauptsatz-14-ofen-stirlingmotor-waermepumpe"
+    },
+    {
+      "exercise": "waermekraftmaschinen-und-zweiter-hauptsatz-15-aequivalenz-planck-clausius"
+    },
+    {
+      "exercise": "waermekraftmaschinen-und-zweiter-hauptsatz-16-wirkungsgrad-reversibler-maschinen"
+    }
+  ]
+}

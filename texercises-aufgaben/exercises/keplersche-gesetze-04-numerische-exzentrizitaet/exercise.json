@@ -1,0 +1,17 @@
+{
+  "title": "Numerische Exzentrizität einer Ellipse",
+  "note": "aus den Aufgabenblättern (G1 Kepler, Nr. 4)",
+  "language": "GER",
+  "type": 1,
+  "default_difficulty": 2,
+  "default_points": 0,
+  "tags": [
+    "ellipse",
+    "exzentrizität",
+    "kepler-gesetze"
+  ],
+  "subbranches": [
+    "Gravitation/Celestial mechanics"
+  ],
+  "youtube": ""
+}

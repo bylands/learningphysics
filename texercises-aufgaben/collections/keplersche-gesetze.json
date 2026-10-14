@@ -1,0 +1,54 @@
+{
+  "title": "Keplersche Gesetze – Aufgaben aus den Aufgabenblättern",
+  "description": "Kepler-Gesetze und astronomische Grössen aus den Aufgabenblättern G1 Kepler, G Gravitation und G2 Gravitation: Ellipsenbahnen, Exzentrizität, drittes Kepler-Gesetz, Flächensatz, astronomische Längeneinheiten. Bahndaten aus Formeln, Tabellen, Begriffe.",
+  "kind": "sheet",
+  "is_private": true,
+  "tags": [
+    "gravitation",
+    "kepler-gesetze"
+  ],
+  "items": [
+    {
+      "exercise": "keplersche-gesetze-01-groessen-vergleichen"
+    },
+    {
+      "exercise": "keplersche-gesetze-02-mond-und-sonne-am-himmel"
+    },
+    {
+      "exercise": "keplersche-gesetze-03-lineare-exzentrizitaet-erdbahn"
+    },
+    {
+      "exercise": "keplersche-gesetze-04-numerische-exzentrizitaet"
+    },
+    {
+      "exercise": "keplersche-gesetze-05-umlaufzeiten-zweier-planeten"
+    },
+    {
+      "exercise": "keplersche-gesetze-06-bahn-des-kometen-halley"
+    },
+    {
+      "exercise": "keplersche-gesetze-07-planetoid-nach-zusammenstoss"
+    },
+    {
+      "exercise": "keplersche-gesetze-08-entfernung-von-beteigeuze"
+    },
+    {
+      "exercise": "keplersche-gesetze-09-grosse-magellan-wolke"
+    },
+    {
+      "exercise": "keplersche-gesetze-10-jupitermonde-io-und-ganymed"
+    },
+    {
+      "exercise": "keplersche-gesetze-11-jupitermonde-io-und-europa"
+    },
+    {
+      "exercise": "keplersche-gesetze-12-bahngeschwindigkeit-von-merkur"
+    },
+    {
+      "exercise": "keplersche-gesetze-13-der-fall-des-hephaistos"
+    },
+    {
+      "exercise": "keplersche-gesetze-14-zweites-kepler-gesetz-ueberpruefen"
+    }
+  ]
+}

@@ -1,0 +1,9 @@
+\NewQty{hDF}{430}[\km][e3][\m]
+\NewQty{rpH}{6800}[\km][e3][\m]
+\NewQty{rAH}{42440}[\km][e3][\m]
+\NewQty{MEr}{5.9722e24}[\kg]
+
+\SolQty{aH}[\frac{r_\mathrm{P}+r_\mathrm{A}}{2}]{(\rpHX+\rAHX)/2}[\m]
+\SolQty{vAH}[\sqrt{G\,M_\mathrm{E}\left(\frac{2}{r_\mathrm{A}}-\frac{1}{a}\right)}]{sqrt(\ncGX*\MErX*(2/\rAHX-1/\aHX))}[\mps]
+\SolQty{vKr}[\sqrt{\frac{G\,M_\mathrm{E}}{r_\mathrm{A}}}]{sqrt(\ncGX*\MErX/\rAHX)}[\mps]
+\SolQty{dvH}[v_\mathrm{K}-v_\mathrm{A}]{\vKrX-\vAHX}[\mps]

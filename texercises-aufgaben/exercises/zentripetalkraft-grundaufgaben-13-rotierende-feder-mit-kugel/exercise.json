@@ -1,0 +1,18 @@
+{
+  "title": "Rotierende Feder mit Kugel",
+  "note": "aus den Aufgabenblättern (D6 Zentripetalkraft, Nr. 8)",
+  "language": "GER",
+  "type": 1,
+  "default_difficulty": 3,
+  "default_points": 0,
+  "tags": [
+    "federkraft",
+    "kreisbewegung",
+    "zentripetalkraft"
+  ],
+  "subbranches": [
+    "Circular Motion",
+    "Dynamics"
+  ],
+  "youtube": ""
+}

@@ -1,0 +1,17 @@
+{
+  "title": "Zusammenstoss auf dem Eis",
+  "note": "aus den Aufgabenblättern (D2 Impuls, Nr. 9; D1 Masse, Dichte & Impuls, Nr. 11)",
+  "language": "GER",
+  "type": 1,
+  "default_difficulty": 1,
+  "default_points": 0,
+  "tags": [
+    "impuls",
+    "impulserhaltung",
+    "unelastischer stoss"
+  ],
+  "subbranches": [
+    "Momentum"
+  ],
+  "youtube": ""
+}

@@ -1,0 +1,17 @@
+{
+  "title": "Verfolgergruppe beim Velorennen",
+  "note": "aus den Aufgabenblättern (K1a Gleichförmige Bewegung, Nr. 6)",
+  "language": "GER",
+  "type": 1,
+  "default_difficulty": 2,
+  "default_points": 0,
+  "tags": [
+    "einholen",
+    "gleichförmige bewegung",
+    "kinematik"
+  ],
+  "subbranches": [
+    "Kinematics"
+  ],
+  "youtube": ""
+}

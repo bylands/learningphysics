@@ -1,0 +1,16 @@
+{
+  "title": "Luftdruck auf ein A4-Blatt",
+  "note": "aus den Aufgabenblättern (H1 Hydrostatik, Nr. 4; H1 Druck, Nr. 3; H12 Druck und Schweredruck, Nr. 3)",
+  "language": "GER",
+  "type": 1,
+  "default_difficulty": 1,
+  "default_points": 0,
+  "tags": [
+    "druckkraft",
+    "luftdruck"
+  ],
+  "subbranches": [
+    "Hydrostatics"
+  ],
+  "youtube": ""
+}

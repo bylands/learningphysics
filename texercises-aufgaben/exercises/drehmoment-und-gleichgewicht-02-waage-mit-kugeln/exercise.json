@@ -1,0 +1,18 @@
+{
+  "title": "Waage mit gleich schweren Kugeln",
+  "note": "aus den Aufgabenblättern (S1 Drehmoment & Gleichgewicht, Nr. 2; S1_Hebelgesetz, Nr. 1; S1_StarrerKörper, Nr. 1)",
+  "language": "GER",
+  "type": 1,
+  "default_difficulty": 2,
+  "default_points": 0,
+  "tags": [
+    "drehmoment",
+    "gleichgewicht",
+    "hebelgesetz",
+    "waage"
+  ],
+  "subbranches": [
+    "Lever"
+  ],
+  "youtube": ""
+}

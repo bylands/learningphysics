@@ -1,0 +1,26 @@
+Verwenden Sie das Diagramm zur Geschwindigkeitsverteilung von Sauerstoffgas bei \TAO, \TBO\ und \TCO\ zum Beantworten der folgenden Fragen. (Der Bruchteil der Moleküle mit Geschwindigkeiten zwischen $v$ und $v+\Delta v$ ist $f(v)\cdot\Delta v$.)
+
+\begin{center}
+\begin{tikzpicture}[>=stealth, xscale=0.44, yscale=3]
+
+ \draw[gray!20, xstep=1, ystep=0.1] (0,0) grid (25,2.2);
+ \draw[gray!50, xstep=5, ystep=0.5] (0,0) grid (25,2.2);
+ \draw[->] (0,0) -- (26.5,0) node[below left=12pt] {$v$ in \si{\meter\per\second}};
+ \draw[->] (0,0) -- (0,2.45) node[above right] {$f(v)$ in $10^{-3}\,\mathrm{s/m}$};
+ \foreach \x/\l in {0/0,5/500,10/1000,15/1500,20/2000,25/2500} \node[below] at (\x,0) {\l};
+ \foreach \y in {0.5,1,1.5,2} \node[left] at (0,\y) {\y};
+ \draw[very thick, blue, domain=0:12, samples=80] plot (\x, {0.36675*\x*\x*exp(-((\x/3.948)^2))});
+ \draw[very thick, red, domain=0:22, samples=80] plot (\x, {0.060249*\x*\x*exp(-((\x/7.2085)^2))});
+ \draw[very thick, black!70!green, domain=0:25, samples=80] plot (\x, {0.021303*\x*\x*exp(-((\x/10.194)^2))});
+ \node[blue, above right] at (4.2,2.05) {\TAO};
+ \node[red, above right] at (7.6,1.12) {\TBO};
+ \node[black!70!green, above right] at (13.5,0.72) {\TCO};
+
+\end{tikzpicture}
+\end{center}
+
+\begin{abcliste}
+\abc Wie gross ist die wahrscheinlichste Geschwindigkeit der Moleküle bei \TAO?
+\abc Wie gross sind die \emph{Halbwertsbreiten} (d.h. die Breiten auf halber Höhe) der drei Kurven?
+\abc Welcher Bruchteil der Gasmoleküle ist bei \TAO\ schneller als \vgrO?
+\end{abcliste}

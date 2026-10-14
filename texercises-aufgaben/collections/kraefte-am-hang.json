@@ -1,0 +1,54 @@
+{
+  "title": "Kräfte am Hang – Aufgaben aus den Aufgabenblättern",
+  "description": "Schiefe Ebene aus den Aufgabenblättern D3–D5: Zerlegung der Gewichtskraft, Hangabtriebskraft, Bewegung am Hang, Haft- und Gleitreibung am Hang, verbundene Körper. Rechnen Sie mit g = 9.81 m/s²; Reibungszahlen aus Formeln, Tabellen, Begriffe (S. 189).",
+  "kind": "sheet",
+  "is_private": true,
+  "tags": [
+    "dynamik",
+    "schiefe ebene"
+  ],
+  "items": [
+    {
+      "exercise": "kraefte-am-hang-01-kiste-auf-einer-rampe"
+    },
+    {
+      "exercise": "kraefte-am-hang-02-kiste-am-hang-festhalten"
+    },
+    {
+      "exercise": "kraefte-am-hang-03-umkehrzeit-auf-schiefer-ebene"
+    },
+    {
+      "exercise": "kraefte-am-hang-04-motorrad-am-hang-antriebskraft"
+    },
+    {
+      "exercise": "kraefte-am-hang-05-motorrad-am-hang-haftreibung"
+    },
+    {
+      "exercise": "kraefte-am-hang-06-geneigte-personenwaage"
+    },
+    {
+      "exercise": "kraefte-am-hang-07-beschleunigung-auf-schiefer-ebene"
+    },
+    {
+      "exercise": "kraefte-am-hang-08-auto-rollt-in-den-see"
+    },
+    {
+      "exercise": "kraefte-am-hang-09-zwei-kisten-an-schiefer-ebene"
+    },
+    {
+      "exercise": "kraefte-am-hang-10-lokomotive-an-einer-rampe"
+    },
+    {
+      "exercise": "kraefte-am-hang-11-parkiertes-auto-am-hang"
+    },
+    {
+      "exercise": "kraefte-am-hang-12-stahlwuerfel-auf-stahlplatte"
+    },
+    {
+      "exercise": "kraefte-am-hang-13-kiste-auf-einer-holzrampe"
+    },
+    {
+      "exercise": "kraefte-am-hang-14-groessen-vergleichen"
+    }
+  ]
+}

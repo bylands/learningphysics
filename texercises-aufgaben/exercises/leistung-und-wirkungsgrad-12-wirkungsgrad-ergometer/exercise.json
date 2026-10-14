@@ -1,0 +1,17 @@
+{
+  "title": "Wirkungsgrad auf dem Ergometer",
+  "note": "aus den Aufgabenblättern (E3 Energetik, Nr. 12)",
+  "language": "GER",
+  "type": 1,
+  "default_difficulty": 1,
+  "default_points": 0,
+  "tags": [
+    "leistung",
+    "muskelarbeit",
+    "wirkungsgrad"
+  ],
+  "subbranches": [
+    "Work, Energy, Power"
+  ],
+  "youtube": ""
+}

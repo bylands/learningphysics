@@ -1,0 +1,18 @@
+{
+  "title": "Adiabatenexponent zweiatomiger Gase",
+  "note": "aus den Aufgabenblättern (W3 Spezifische Wärme, Nr. 10)",
+  "language": "GER",
+  "type": 1,
+  "default_difficulty": 1,
+  "default_points": 0,
+  "tags": [
+    "adiabatenexponent",
+    "freiheitsgrade",
+    "ideales gas",
+    "molare wärme"
+  ],
+  "subbranches": [
+    "Laws of Thermodynamics"
+  ],
+  "youtube": ""
+}

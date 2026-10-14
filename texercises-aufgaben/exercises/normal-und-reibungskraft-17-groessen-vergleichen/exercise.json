@@ -1,0 +1,17 @@
+{
+  "title": "Grössen vergleichen (Normal- und Reibungskraft)",
+  "note": "aus den Aufgabenblättern (D4 Normal- & Reibungskraft, Nr. 1)",
+  "language": "GER",
+  "type": 1,
+  "default_difficulty": 1,
+  "default_points": 0,
+  "tags": [
+    "dynamik",
+    "einheiten",
+    "grössenvergleich"
+  ],
+  "subbranches": [
+    "Dynamics"
+  ],
+  "youtube": ""
+}

@@ -1,0 +1,19 @@
+\NewQty{aLe}{3.6}[\milli\watt\per\second]
+\NewQty{aRe}{36e-2}[\joule]
+\NewQty{bLe}{2.7}[\milli\gram\per\milli\meter\cubed][e3][\kilo\gram\per\meter\cubed]
+\NewQty{bRe}{0.27}[\kilo\gram\per\deci\liter][e4][\kilo\gram\per\meter\cubed]
+\NewQty*{cLe}{3}[\kilo\watt\hour][3.6e6][\joule]
+\NewQty{cRe}{10}[\mega\joule][e6][\joule]
+\NewQty*{dLe}{5}[PS][735.5][\watt]
+\NewQty{dRe}{5}[\kilo\watt][e3][\watt]
+\NewQty{eLe}{4.6}[\micro\second][e-6][\second]
+\NewQty{eRe}{460e-4}[\second]
+\NewQty{fA}{3.5}[\newton]
+\NewQty{fB}{12}[\centi\meter][e-2][\meter]
+\NewQty{fRe}{0.42}[\joule]
+\NewQty{wPS}{735.5}[\watt]
+
+\ConvTo{cLs}{1}{cLe}{\joule}
+\ConvTo{dLs}{1}{dLe}{\watt}
+\ConvTo{eRs}{1}{eRe}{\second}
+\SolQty{fLe}[F\cdot s]{\fAX*\fBX}[\joule]

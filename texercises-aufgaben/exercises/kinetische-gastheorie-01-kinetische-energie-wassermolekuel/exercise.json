@@ -1,0 +1,18 @@
+{
+  "title": "Kinetische Energie eines Wassermoleküls",
+  "note": "aus den Aufgabenblättern (G2 Gaskinetik & Dampfdruck, Nr. 2; G2 Kinetische Gastheorie, Nr. 6)",
+  "language": "GER",
+  "type": 1,
+  "default_difficulty": 1,
+  "default_points": 0,
+  "tags": [
+    "absolute temperatur",
+    "boltzmann-konstante",
+    "kinetische energie",
+    "kinetische gastheorie"
+  ],
+  "subbranches": [
+    "Gas Laws"
+  ],
+  "youtube": ""
+}

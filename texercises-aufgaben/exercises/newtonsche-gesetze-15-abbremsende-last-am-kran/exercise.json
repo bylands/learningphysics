@@ -1,0 +1,19 @@
+{
+  "title": "Abbremsende Last am Kran",
+  "note": "aus den Aufgabenblättern (D3_KraftmessungKräftegleichgewicht, Nr. 4)",
+  "language": "GER",
+  "type": 1,
+  "default_difficulty": 2,
+  "default_points": 0,
+  "tags": [
+    "aktionsprinzip",
+    "beschleunigung",
+    "dynamik",
+    "gewichtskraft",
+    "seilkraft"
+  ],
+  "subbranches": [
+    "Dynamics"
+  ],
+  "youtube": ""
+}

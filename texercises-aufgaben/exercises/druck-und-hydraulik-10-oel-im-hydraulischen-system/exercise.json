@@ -1,0 +1,16 @@
+{
+  "title": "Öl im hydraulischen System",
+  "note": "aus den Aufgabenblättern (H1 Druck, Nr. 9)",
+  "language": "GER",
+  "type": 1,
+  "default_difficulty": 2,
+  "default_points": 0,
+  "tags": [
+    "hydraulik",
+    "kompressibilität"
+  ],
+  "subbranches": [
+    "Hydrostatics"
+  ],
+  "youtube": ""
+}

@@ -1,0 +1,64 @@
+{
+  "title": "Masse und Dichte – Aufgaben aus den Aufgabenblättern",
+  "description": "Masse und Dichte aus den Aufgabenblättern D1: Massen nachschlagen, Dichte, mittlere Dichte von Legierungen und zusammengesetzten Körpern, Dichteanomalie des Wassers. Werte aus Formeln, Tabellen, Begriffe (7. Auflage).",
+  "kind": "sheet",
+  "is_private": true,
+  "tags": [
+    "masse",
+    "dichte",
+    "dynamik"
+  ],
+  "items": [
+    {
+      "exercise": "masse-und-dichte-01-massen-nachschlagen"
+    },
+    {
+      "exercise": "masse-und-dichte-02-aequivalenz-traege-schwere-masse"
+    },
+    {
+      "exercise": "masse-und-dichte-03-quecksilber-im-thermometer"
+    },
+    {
+      "exercise": "masse-und-dichte-04-dichteaenderung-von-wasser"
+    },
+    {
+      "exercise": "masse-und-dichte-05-aluminiumwuerfel"
+    },
+    {
+      "exercise": "masse-und-dichte-06-laenge-einer-betonroehre"
+    },
+    {
+      "exercise": "masse-und-dichte-07-radius-einer-stahlkugel"
+    },
+    {
+      "exercise": "masse-und-dichte-08-material-eines-metallzylinders"
+    },
+    {
+      "exercise": "masse-und-dichte-09-ring-aus-gold-und-silber"
+    },
+    {
+      "exercise": "masse-und-dichte-10-dichte-von-rotgold"
+    },
+    {
+      "exercise": "masse-und-dichte-11-felsstueck-aus-zwei-steinen"
+    },
+    {
+      "exercise": "masse-und-dichte-12-erhitzte-metallkugel"
+    },
+    {
+      "exercise": "masse-und-dichte-13-dichteanomalie-des-wassers"
+    },
+    {
+      "exercise": "masse-und-dichte-14-wasserkanister-erhitzen"
+    },
+    {
+      "exercise": "masse-und-dichte-15-mittlere-dichte-eines-hammers"
+    },
+    {
+      "exercise": "masse-und-dichte-16-dichte-von-messing"
+    },
+    {
+      "exercise": "masse-und-dichte-17-groessen-vergleichen"
+    }
+  ]
+}

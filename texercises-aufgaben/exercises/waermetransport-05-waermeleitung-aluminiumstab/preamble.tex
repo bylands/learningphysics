@@ -1,0 +1,9 @@
+\NewQty{lS}{45}[\centi\meter][e-2][\meter]
+\NewQty{dS}{12}[\milli\meter][e-3][\meter]
+\NewQty{tk}{5.5}[\degreeCelsius]
+\NewQty{tw}{115}[\degreeCelsius]
+\NewQty{lam}{239}[\watt\per\meter\per\kelvin]
+\NewQty{ts}{1}[\second]
+
+\SolQty{dT}[\vartheta_\text{w}-\vartheta_\text{k}]{\twX-\tkX}[\kelvin]
+\SolQty{Qs}[\lambda\,\frac{\pi d^2}{4}\,\frac{\Delta T}{l}\,t]{\lamX*pi*\dSX^2/4*\dTX/\lSX*\tsX}[\joule]

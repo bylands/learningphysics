@@ -1,0 +1,10 @@
+\NewQty{PO}{1250}[\kilo\watt][e3][\watt]
+\NewQty{mFe}{2.5}[\tonne][e3][\kg]
+\NewQty{Ta}{20}[\celsius]
+\NewQty{TfFe}{1535}[\celsius]
+\NewQty{cFe}{450}[\joule\per\kilogram\per\kelvin]
+\NewQty{LfFe}{2.77e5}[\joule\per\kilogram]
+
+\SolQty{QFe}[m\left(c\left(\vartheta_\text{f}-\vartheta_1\right)+L_\text{f}\right)]{\mFeX*(\cFeX*(\TfFeX-\TaX)+\LfFeX)}[\joule]
+\SolQty{tO}[\frac{m\left(c\left(\vartheta_\text{f}-\vartheta_1\right)+L_\text{f}\right)}{P}]{\QFeX/\POX}[\s]
+\ConvTo{tOm}{1/60}{tO}{\minute}

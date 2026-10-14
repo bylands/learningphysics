@@ -1,0 +1,16 @@
+{
+  "title": "Länge eines Schraubenschlüssels",
+  "note": "aus den Aufgabenblättern (S1 Drehmoment & Gleichgewicht, Nr. 5; S1_Hebelgesetz, Nr. 4; S1_StarrerKörper, Nr. 4)",
+  "language": "GER",
+  "type": 1,
+  "default_difficulty": 1,
+  "default_points": 0,
+  "tags": [
+    "drehmoment",
+    "hebelarm"
+  ],
+  "subbranches": [
+    "Lever"
+  ],
+  "youtube": ""
+}

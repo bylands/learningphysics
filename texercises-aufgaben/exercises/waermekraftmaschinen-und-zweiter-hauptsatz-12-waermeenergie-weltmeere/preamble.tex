@@ -1,0 +1,9 @@
+\NewQty{mM}{14e20}[\kilogram]
+\NewQty{dT}{1}[\degreeCelsius][1][\kelvin]
+\NewQty{cW}{4182}[\joule\per\kilogram\per\kelvin]
+\NewQty*{Ew}{1.6e5}[\tera\watt\hour][3.6e15][\joule]
+\NewQty{To}{290}[\kelvin]
+
+\SolQty{Qm}[c\,m\,\Delta T]{\cWX*\mMX*\dTX}[\joule]
+\SolQty{nJ}[\frac{c\,m\,\Delta T}{E_\text{W}}]{\QmX/\EwX}
+\SolQty{etC}[\frac{\Delta T}{T}]{100*\dTX/\ToX}[\percent]

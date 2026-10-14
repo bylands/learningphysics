@@ -1,0 +1,19 @@
+\NewQty{Pd}{100}[\watt]
+\NewQty{eW}{0.25}
+\NewQty{tD}{2300}[\degreeCelsius]
+\NewQty{lA}{400}[\nano\meter][e-9][\meter]
+\NewQty{lM}{600}[\nano\meter][e-9][\meter]
+\NewQty{lE}{800}[\nano\meter][e-9][\meter]
+\NewQty{sig}{5.670367e-8}[\Wpqmkv]
+\NewQty{bW}{2.8977729e-3}[\meter\kelvin]
+
+\SolQty{TD}[\vartheta+\SI{273.15}{\kelvin}]{\tDX+273.15}[\kelvin]
+\SolQty{Ad}[\frac{P}{\varepsilon\,\sigma\,T^4}]{\PdX/(\eWX*\sigX*\TDX^4)}[\meter\squared]
+\ConvTo{Adc}{1e4}{Ad}{\centi\meter\squared}
+\SolQty{lD}[\frac{b}{T}]{\bWX/\TDX}[\meter]
+\SolQty{JA}[\frac{2\pi h c^2}{\lambda_1^5}\cdot\frac{1}{e^{hc/(\lambda_1 kT)}-1}]{2*pi*\nchX*\nccX^2/\lAX^5/(exp(\nchX*\nccX/(\lAX*\nckX*\TDX))-1)}[\watt\per\meter\cubed]
+\SolQty{JM}[\frac{2\pi h c^2}{\lambda_\text{m}^5}\cdot\frac{1}{e^{hc/(\lambda_\text{m} kT)}-1}]{2*pi*\nchX*\nccX^2/\lMX^5/(exp(\nchX*\nccX/(\lMX*\nckX*\TDX))-1)}[\watt\per\meter\cubed]
+\SolQty{JE}[\frac{2\pi h c^2}{\lambda_2^5}\cdot\frac{1}{e^{hc/(\lambda_2 kT)}-1}]{2*pi*\nchX*\nccX^2/\lEX^5/(exp(\nchX*\nccX/(\lEX*\nckX*\TDX))-1)}[\watt\per\meter\cubed]
+\SolQty{Jv}[\frac{\lambda_2-\lambda_1}{6}\left(J'_1+4J'_\text{m}+J'_2\right)]{(\lEX-\lAX)/6*(\JAX+4*\JMX+\JEX)}[\Wpmq]
+\SolQty{Jt}[\sigma\,T^4]{\sigX*\TDX^4}[\Wpmq]
+\SolQty{anV}[\frac{J_\text{sichtbar}}{J_\text{total}}]{100*\JvX/\JtX}[\percent]

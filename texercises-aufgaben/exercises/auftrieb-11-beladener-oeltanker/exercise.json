@@ -1,0 +1,18 @@
+{
+  "title": "Beladener Öltanker",
+  "note": "aus den Aufgabenblättern (H1 Hydrostatik, Nr. 18; H3 Auftrieb, Nr. 12; H Hydrostatik, Nr. 17)",
+  "language": "GER",
+  "type": 1,
+  "default_difficulty": 2,
+  "default_points": 0,
+  "tags": [
+    "archimedes",
+    "auftrieb",
+    "hydrostatik",
+    "schwimmen"
+  ],
+  "subbranches": [
+    "Hydrostatics"
+  ],
+  "youtube": ""
+}

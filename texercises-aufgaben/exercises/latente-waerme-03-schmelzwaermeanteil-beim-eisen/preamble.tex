@@ -1,0 +1,7 @@
+\NewQty{Ta}{20}[\celsius]
+\NewQty{TfFe}{1535}[\celsius]
+\NewQty{cFe}{450}[\joule\per\kilogram\per\kelvin]
+\NewQty{LfFe}{2.77e5}[\joule\per\kilogram]
+
+\SolQty{QaFe}[c\left(\vartheta_\text{f}-\vartheta_1\right)]{\cFeX*(\TfFeX-\TaX)}[\joule\per\kilogram]
+\SolQty{ant}[\frac{L_\text{f}}{c\left(\vartheta_\text{f}-\vartheta_1\right)+L_\text{f}}]{100*\LfFeX/(\QaFeX+\LfFeX)}[\percent]

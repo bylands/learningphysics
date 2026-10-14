@@ -1,0 +1,17 @@
+{
+  "title": "Planetoid nach einem Zusammenstoss",
+  "note": "aus den Aufgabenblättern (G1 Kepler, Nr. 7; G Gravitation, Nr. 3)",
+  "language": "GER",
+  "type": 1,
+  "default_difficulty": 1,
+  "default_points": 0,
+  "tags": [
+    "drittes kepler-gesetz",
+    "kepler-gesetze",
+    "umlaufzeit"
+  ],
+  "subbranches": [
+    "Gravitation/Celestial mechanics"
+  ],
+  "youtube": ""
+}

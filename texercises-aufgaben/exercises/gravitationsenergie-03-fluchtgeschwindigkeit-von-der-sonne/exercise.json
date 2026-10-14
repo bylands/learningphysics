@@ -1,0 +1,20 @@
+{
+  "title": "Fluchtgeschwindigkeit von der Sonne",
+  "note": "aus den Aufgabenblättern (G2 Gravitation, Nr. 10; G3 Gravitationsenergie, Nr. 3)",
+  "language": "GER",
+  "type": 1,
+  "default_difficulty": 1,
+  "default_points": 0,
+  "tags": [
+    "fluchtgeschwindigkeit",
+    "formelsammlung",
+    "gravitation",
+    "gravitationsenergie",
+    "sonne"
+  ],
+  "subbranches": [
+    "Gravitation",
+    "Work, Energy, Power"
+  ],
+  "youtube": ""
+}

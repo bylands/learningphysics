@@ -1,0 +1,24 @@
+\begin{center}
+\begin{tikzpicture}[>=stealth]
+ \draw (0,0) ellipse (4.5 and 1.15);
+ \fill[orange] (4.35,0) circle (0.12);
+ \node[right] at (4.55,0) {Sonne};
+ \fill (-4.5,0) circle (0.06) node[left] {A};
+ \draw[|<->|] (-4.5,-1.6) -- (4.35,-1.6) node[midway, below] {$r_\text{A}$};
+ \draw[|<->|] (-4.5,1.6) -- (4.5,1.6) node[midway, above] {$2a$};
+\end{tikzpicture}
+\end{center}
+
+Die Erde ($a_\text{E} = \aErO$, $T_\text{E} = \TErO$) und der Komet umkreisen beide die Sonne. Nach dem dritten Kepler'schen Gesetz ist $a^3/T^2 = a_\text{E}^3/T_\text{E}^2$, also hat die Bahn des Kometen die grosse Halbachse
+\begin{align}
+ a &= \aHaF \\
+   &= \aEr\cdot\left(\frac{\THa}{\TEr}\right)^{2/3} \\
+   &= \aHa
+\end{align}
+Die grösste Entfernung (Aphel A) und die kleinste (Perihel) ergeben zusammen die grosse Achse: $r_\text{A} + r_\text{P} = 2a$. Mit der Periheldistanz $r_\text{P} = \rPHO$ (FoTaBe S.~214) ist
+\begin{align}
+ r_\text{A} &= \rAHF \\
+   &= 2\cdot\aHa - \rPH \\
+   &= \rAH \approx \result{\rAHP{0}{2}}
+\end{align}
+Weil die Bahn so stark exzentrisch ist, ist $r_\text{P}$ klein, und die grösste Entfernung ist fast die ganze grosse Achse, $r_\text{A} \approx 2a$.

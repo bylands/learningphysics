@@ -1,0 +1,11 @@
+\NewQty{mPb}{13}[\gram][e-3][\kg]
+\NewQty{VW}{3.5}[\deci\liter][e-4][\m\cubed]
+\NewQty{dT}{0.5}[\kelvin]
+\NewQty{TfPb}{327.4}[\celsius]
+\NewQty{cPb}{129}[\joule\per\kilogram\per\kelvin]
+\NewQty{LfPb}{0.23e5}[\joule\per\kilogram]
+\NewQty{rhW}{998}[\kilogram\per\meter\cubed]
+\NewQty{cW}{4182}[\joule\per\kilogram\per\kelvin]
+
+\SolQty{mWa}[\rho\,V]{\rhWX*\VWX}[\kg]
+\SolQty{Ta}[\vartheta_\text{f}-\Delta\vartheta-\frac{1}{c_\text{Pb}}\left(\frac{m_\text{W}c_\text{W}\Delta\vartheta}{m_\text{Pb}}-L_\text{f}\right)]{\TfPbX-\dTX-(\mWaX*\cWX*\dTX/\mPbX-\LfPbX)/\cPbX}[\celsius]

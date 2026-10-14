@@ -1,0 +1,47 @@
+{
+  "title": "Drehmoment und Gleichgewicht – Aufgaben aus den Aufgabenblättern",
+  "description": "Drehmoment, Hebelgesetz, Gleichgewicht und Schwerpunkt aus den Aufgabenblättern S1 (Drehmoment & Gleichgewicht, Hebelgesetz, Starrer Körper). Rechnen Sie mit g = 9.81 m/s².",
+  "kind": "sheet",
+  "is_private": true,
+  "tags": [
+    "drehmoment",
+    "gleichgewicht",
+    "hebelgesetz",
+    "schwerpunkt"
+  ],
+  "items": [
+    {
+      "exercise": "drehmoment-und-gleichgewicht-01-groessen-vergleichen"
+    },
+    {
+      "exercise": "drehmoment-und-gleichgewicht-02-waage-mit-kugeln"
+    },
+    {
+      "exercise": "drehmoment-und-gleichgewicht-03-maximale-last-kran"
+    },
+    {
+      "exercise": "drehmoment-und-gleichgewicht-04-einseitiger-hebel"
+    },
+    {
+      "exercise": "drehmoment-und-gleichgewicht-05-schraubenschluessel"
+    },
+    {
+      "exercise": "drehmoment-und-gleichgewicht-06-beschleunigung-durch-motordrehmoment"
+    },
+    {
+      "exercise": "drehmoment-und-gleichgewicht-07-drehbar-aufgehaengtes-brett"
+    },
+    {
+      "exercise": "drehmoment-und-gleichgewicht-08-schwerpunkt-l-profil"
+    },
+    {
+      "exercise": "drehmoment-und-gleichgewicht-09-kraefte-an-einer-zugbruecke"
+    },
+    {
+      "exercise": "drehmoment-und-gleichgewicht-10-zwei-arbeiter-tragen-balken"
+    },
+    {
+      "exercise": "drehmoment-und-gleichgewicht-11-schwerpunkt-dreier-massen"
+    }
+  ]
+}

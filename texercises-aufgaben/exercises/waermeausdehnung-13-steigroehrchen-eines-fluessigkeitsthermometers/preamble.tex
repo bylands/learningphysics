@@ -1,0 +1,10 @@
+\NewQty{VEt}{15}[\milli\liter][e-6][\cubic\meter]
+\NewQty{TNt}{0}[\degreeCelsius]
+\NewQty{Ttb}{20}[\degreeCelsius]
+\NewQty{dTt}{1}[\degreeCelsius][1][\kelvin]
+\NewQty{dhT}{1}[\mm][e-3][\m]
+\NewQty{gaEt}{1.10e-3}[\per\kelvin]
+
+\SolQty{dVt}[\gamma\,V_0\,\Delta\vartheta]{\gaEtX*\VEtX*\dTtX}[\cubic\meter]
+\ConvTo{dVtm}{1e9}{dVt}{\cubic\milli\meter}
+\SolQty{rT}[\sqrt{\frac{\gamma\,V_0\,\Delta\vartheta}{\pi\,\Delta h}}]{sqrt(\dVtX/(pi*\dhTX))}[\m]

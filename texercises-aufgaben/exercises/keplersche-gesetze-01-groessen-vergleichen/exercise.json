@@ -1,0 +1,17 @@
+{
+  "title": "Grössen vergleichen (Kepler-Gesetze)",
+  "note": "aus den Aufgabenblättern (G1 Kepler, Nr. 1)",
+  "language": "GER",
+  "type": 1,
+  "default_difficulty": 1,
+  "default_points": 0,
+  "tags": [
+    "astronomie",
+    "einheiten",
+    "grössenvergleich"
+  ],
+  "subbranches": [
+    "Gravitation/Celestial mechanics"
+  ],
+  "youtube": ""
+}

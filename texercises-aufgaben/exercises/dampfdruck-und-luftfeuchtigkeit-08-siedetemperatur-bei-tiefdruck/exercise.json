@@ -1,0 +1,18 @@
+{
+  "title": "Siedetemperatur bei Tiefdruck",
+  "note": "aus den Aufgabenblättern (G2 Gaskinetik & Dampfdruck, Nr. 14)",
+  "language": "GER",
+  "type": 1,
+  "default_difficulty": 2,
+  "default_points": 0,
+  "tags": [
+    "dampfdruck",
+    "interpolation",
+    "luftdruck",
+    "siedetemperatur"
+  ],
+  "subbranches": [
+    "Vapor Pressure & Humidity"
+  ],
+  "youtube": ""
+}

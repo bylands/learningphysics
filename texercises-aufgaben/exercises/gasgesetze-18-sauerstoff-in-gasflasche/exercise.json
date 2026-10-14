@@ -1,0 +1,18 @@
+{
+  "title": "Sauerstoff in der Gasflasche",
+  "note": "aus den Aufgabenblättern (G1 Gasgesetze, Nr. 16)",
+  "language": "GER",
+  "type": 1,
+  "default_difficulty": 2,
+  "default_points": 0,
+  "tags": [
+    "dichte",
+    "ideale gasgleichung",
+    "isochor",
+    "molare masse"
+  ],
+  "subbranches": [
+    "Gas Laws"
+  ],
+  "youtube": ""
+}

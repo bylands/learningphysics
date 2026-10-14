@@ -1,0 +1,19 @@
+{
+  "title": "Segelfläche beim Eissegeln",
+  "note": "aus den Aufgabenblättern (D5 Kräfte am Hang & Luftwiderstand, Nr. 15)",
+  "language": "GER",
+  "type": 1,
+  "default_difficulty": 3,
+  "default_points": 0,
+  "tags": [
+    "dynamik",
+    "gleitreibung",
+    "kräftegleichgewicht",
+    "luftwiderstand",
+    "relativgeschwindigkeit"
+  ],
+  "subbranches": [
+    "Dynamics"
+  ],
+  "youtube": ""
+}

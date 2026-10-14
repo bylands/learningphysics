@@ -1,0 +1,20 @@
+{
+  "title": "Wasserdampf trifft auf Eis",
+  "note": "aus den Aufgabenblättern (W3 Spezifische und latente Wärme, Nr. 18; W3 Spezifische und latente Wärme (2007), Nr. 17)",
+  "language": "GER",
+  "type": 2,
+  "default_difficulty": 3,
+  "default_points": 0,
+  "tags": [
+    "eis",
+    "kondensation",
+    "latente wärme",
+    "mischtemperatur",
+    "schmelzwärme",
+    "verdampfungswärme"
+  ],
+  "subbranches": [
+    "Temperatur & Heat"
+  ],
+  "youtube": ""
+}

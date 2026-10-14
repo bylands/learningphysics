@@ -1,0 +1,17 @@
+{
+  "title": "Frostschutz durch Wasser",
+  "note": "aus den Aufgabenblättern (W3 Spezifische und latente Wärme, Nr. 12)",
+  "language": "GER",
+  "type": 0,
+  "default_difficulty": 1,
+  "default_points": 0,
+  "tags": [
+    "alltag",
+    "erstarrungswärme",
+    "latente wärme"
+  ],
+  "subbranches": [
+    "Temperatur & Heat"
+  ],
+  "youtube": ""
+}

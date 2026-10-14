@@ -1,0 +1,26 @@
+\begin{center}
+\begin{tikzpicture}[>=stealth]
+ \fill[blue!15] (0,0) rectangle (7,2);
+ \draw[blue!60!black, thick] (0,2) -- (7,2);
+ \draw[fill=cyan!8] (1.5,0.6) rectangle (5.5,2.5);
+ \draw[|<->|] (5.9,2) -- (5.9,2.5) node[midway, right] {$h_\text{ü}$};
+ \draw[|<->|] (1.5,2.9) -- (5.5,2.9) node[midway, above] {$A$};
+ \draw[->, very thick] (3.5,4.0) -- (3.5,2.6) node[pos=0, above] {$m\,g$};
+\end{tikzpicture}
+\end{center}
+
+Steigt eine Person der Masse $m$ auf die Scholle (Fläche $A = \AscO$), sinkt diese um $\Delta h$ tiefer ein, bis der zusätzliche Auftrieb das zusätzliche Gewicht trägt:
+\begin{align}
+ \rho_\text{W}\,A\,\Delta h\,g &= m\,g
+\end{align}
+Die Scholle geht unter, sobald $\Delta h$ grösser wird als der Teil $h_\text{ü} = \hueO$ über Wasser. Die grösste Masse, die sie tragen kann, ist (mit $\rho_\text{W} = \rhoWO$, FoTaBe S.~187)
+\begin{align}
+ m_\text{max} &= \mmaxF \\
+   &= \rhoW\cdot\Asc\cdot\hue \\
+   &= \mmax \approx \result{\mmaxP{0}{2}}
+\end{align}
+Für eine Person mit $m = \mPO$ sinkt die Scholle um
+\begin{align}
+ \Delta h &= \dhsF = \frac{\mP}{\rhoW\cdot\Asc} = \dhs \approx \result{\dhsP{-2}{2}}
+\end{align}
+ein. Das ist weniger als \hueO: Man kann \result{\text{auf die Scholle steigen}}, steht danach aber nur noch knapp über dem Wasser. Im Meerwasser (grössere Dichte) ist die Reserve etwas grösser. Die Dicke der Scholle und die Dichte des Eises spielen keine Rolle.

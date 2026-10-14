@@ -1,0 +1,17 @@
+{
+  "title": "Verdoppelte Strahlungsleistung",
+  "note": "aus den Aufgabenblättern (W4 Wärmetransport, Nr. 7; W1 Wärme, Nr. 8)",
+  "language": "GER",
+  "type": 1,
+  "default_difficulty": 1,
+  "default_points": 0,
+  "tags": [
+    "absolute temperatur",
+    "stefan-boltzmann-gesetz",
+    "wärmestrahlung"
+  ],
+  "subbranches": [
+    "Heat Transfer"
+  ],
+  "youtube": ""
+}

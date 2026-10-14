@@ -1,0 +1,8 @@
+\NewQty{mSt}{500}[\gram][e-3][\kg]
+\NewQty{hBr}{15}[\m]
+\NewQty{gE}{9.81}[\mpss]
+\NewQty{mEa}{5.9722e24}[\kg]
+
+\SolQty{vSt}[\sqrt{2gh}]{sqrt(2*\gEX*\hBrX)}[\mps]
+\SolQty{pSt}[m\sqrt{2gh}]{\mStX*\vStX}[\kgmps]
+\SolQty{vEa}[\frac{m\sqrt{2gh}}{M_\text{E}}]{\pStX/\mEaX}[\mps]

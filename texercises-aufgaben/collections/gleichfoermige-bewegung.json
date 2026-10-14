@@ -1,0 +1,51 @@
+{
+  "title": "Gleichförmige Bewegung – Aufgaben aus den Aufgabenblättern",
+  "description": "Gleichförmige Bewegung aus den Aufgabenblättern K1/K1a: Diagramme, Geschwindigkeit, Fahrzeit, Überholen, Begegnen und Einholen, Durchschnittsgeschwindigkeit, Einheiten und Grössenvergleiche.",
+  "kind": "sheet",
+  "is_private": true,
+  "tags": [
+    "gleichförmige bewegung",
+    "kinematik"
+  ],
+  "items": [
+    {
+      "exercise": "gleichfoermige-bewegung-01-diagramme-erkennen"
+    },
+    {
+      "exercise": "gleichfoermige-bewegung-02-eisschnelllaeuferin"
+    },
+    {
+      "exercise": "gleichfoermige-bewegung-03-flug-zuerich-new-york"
+    },
+    {
+      "exercise": "gleichfoermige-bewegung-04-gotthardtunnel"
+    },
+    {
+      "exercise": "gleichfoermige-bewegung-05-ueberholweg"
+    },
+    {
+      "exercise": "gleichfoermige-bewegung-06-begegnung-auf-der-laufbahn"
+    },
+    {
+      "exercise": "gleichfoermige-bewegung-07-durchschnittsgeschwindigkeit-zweier-teilstrecken"
+    },
+    {
+      "exercise": "gleichfoermige-bewegung-08-ueberrunden-formel-2"
+    },
+    {
+      "exercise": "gleichfoermige-bewegung-09-marathon-zielankunft"
+    },
+    {
+      "exercise": "gleichfoermige-bewegung-10-verfolgergruppe-velorennen"
+    },
+    {
+      "exercise": "gleichfoermige-bewegung-11-kreuzung-icn-gueterzug"
+    },
+    {
+      "exercise": "gleichfoermige-bewegung-12-groessen-vergleichen"
+    },
+    {
+      "exercise": "gleichfoermige-bewegung-13-einheiten-von-parametern"
+    }
+  ]
+}

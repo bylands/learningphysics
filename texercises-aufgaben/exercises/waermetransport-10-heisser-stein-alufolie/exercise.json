@@ -1,0 +1,17 @@
+{
+  "title": "Heisser Stein in Alufolie",
+  "note": "aus den Aufgabenblättern (W4 Wärmetransport, Nr. 8; W1 Wärme, Nr. 9)",
+  "language": "GER",
+  "type": 0,
+  "default_difficulty": 1,
+  "default_points": 0,
+  "tags": [
+    "emissionszahl",
+    "reflexion",
+    "wärmestrahlung"
+  ],
+  "subbranches": [
+    "Heat Transfer"
+  ],
+  "youtube": ""
+}

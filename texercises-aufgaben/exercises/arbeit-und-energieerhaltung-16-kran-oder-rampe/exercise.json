@@ -1,0 +1,19 @@
+{
+  "title": "Kran oder Rampe",
+  "note": "aus den Aufgabenblättern (E3 Energetik, Nr. 16; E2 Arbeit und Leistung, Nr. 12)",
+  "language": "GER",
+  "type": 1,
+  "default_difficulty": 2,
+  "default_points": 0,
+  "tags": [
+    "arbeit",
+    "gleitreibung",
+    "hubarbeit",
+    "schiefe ebene"
+  ],
+  "subbranches": [
+    "Work, Energy, Power",
+    "Dynamics"
+  ],
+  "youtube": ""
+}

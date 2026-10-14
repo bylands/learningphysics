@@ -1,0 +1,10 @@
+\NewQty{vKa}{2.8}[\mps]
+\NewQty{aK}{-0.74}[\mpss]
+\NewQty{tKa}{5.2}[\s]
+\NewQty{tKb}{8.1}[\s]
+
+\SolQty{tKu}[-\frac{v_0}{a}]{-\vKaX/\aKX}[\s]
+\SolQty{sKu}[-\frac{v_0^2}{2a}]{-\vKaX^2/(2*\aKX)}[\m]
+\SolQty{sKa}[v_0\,t_1+\frac{1}{2}a\,t_1^2]{\vKaX*\tKaX+0.5*\aKX*\tKaX^2}[\m]
+\SolQty{sKb}[v_0\,t_2+\frac{1}{2}a\,t_2^2]{\vKaX*\tKbX+0.5*\aKX*\tKbX^2}[\m]
+\ConvTo{sKbb}{-1}{sKb}{\m}

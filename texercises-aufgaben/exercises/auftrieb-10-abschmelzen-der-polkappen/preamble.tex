@@ -1,0 +1,11 @@
+\NewQty{hEis}{1000}[\m]
+\NewQty*{AMe}{360e6}[\km\squared][1e6][\m\squared]
+\NewQty*{AAr}{13e6}[\km\squared][1e6][\m\squared]
+\NewQty{rhoMe}{1040}[\kgpmk]
+\NewQty{rhoEis}{917}[\kgpmk]
+\NewQty{rhoW}{999.8}[\kgpmk]
+
+\SolQty{mEis}[\rho_\text{E}\,A_\text{A}\,h]{\rhoEisX*\AArX*\hEisX}[\kg]
+\SolQty{dhAr}[\frac{\rho_\text{E}\,A_\text{A}\,h}{A_\text{M}}\left(\frac{1}{\rho_\text{W}}-\frac{1}{\rho_\text{M}}\right)]{\mEisX*(1/\rhoWX-1/\rhoMeX)/\AMeX}[\m]
+\SolQty{dhAn}[\frac{\rho_\text{E}\,A_\text{A}\,h}{\rho_\text{W}\,A_\text{M}}]{\mEisX/(\rhoWX*\AMeX)}[\m]
+\SolQty{qAn}[\frac{\Delta h_\text{Land}}{\Delta h}]{\dhAnX/\dhArX}

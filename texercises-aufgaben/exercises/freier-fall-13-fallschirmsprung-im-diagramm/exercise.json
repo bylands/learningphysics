@@ -1,0 +1,19 @@
+{
+  "id": 24639,
+  "title": "Fallschirmsprung im Diagramm",
+  "note": "aus den Aufgabenblättern (K3 Freier Fall, Nr. 13)",
+  "language": "GER",
+  "type": 0,
+  "default_difficulty": 2,
+  "default_points": 0,
+  "tags": [
+    "bewegungsdiagramme",
+    "freier fall",
+    "kinematik",
+    "luftwiderstand"
+  ],
+  "subbranches": [
+    "Kinematics"
+  ],
+  "youtube": ""
+}

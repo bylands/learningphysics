@@ -1,0 +1,12 @@
+\NewQty{VWs}{2.5}[\liter][e-3][\m\cubed]
+\NewQty{Tn}{0}[\celsius]
+\NewQty{Ts}{100}[\celsius]
+\NewQty{rhWs}{958.35}[\kilogram\per\meter\cubed]
+\NewQty{rhWn}{999.84}[\kilogram\per\meter\cubed]
+\NewQty{LvW}{2.257e6}[\joule\per\kilogram]
+\NewQty{cW}{4182}[\joule\per\kilogram\per\kelvin]
+
+\SolQty{Qv}[\rho_\text{s}V L_\text{v}]{\rhWsX*\VWsX*\LvWX}[\joule]
+\SolQty{mWa}[\frac{Q}{c\left(\vartheta_\text{s}-\vartheta_0\right)}]{\QvX/(\cWX*(\TsX-\TnX))}[\kg]
+\SolQty{VWn}[\frac{m'}{\rho_0}]{\mWaX/\rhWnX}[\m\cubed]
+\ConvTo{VWnl}{1e3}{VWn}{\liter}

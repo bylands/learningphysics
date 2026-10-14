@@ -1,0 +1,11 @@
+\NewQty*{vAa}{30}[\kmph][1/3.6][\mps]
+\NewQty*{vAb}{50}[\kmph][1/3.6][\mps]
+\NewQty{tRe}{1.0}[\s]
+\NewQty{aBr}{7.0}[\mpss]
+
+\SolQty{sRa}[v_1\,t_\mathrm{R}]{\vAaX*\tReX}[\m]
+\SolQty{sBa}[\frac{v_1^2}{2a}]{\vAaX^2/(2*\aBrX)}[\m]
+\SolQty{sAn}[v_1\,t_\mathrm{R}+\frac{v_1^2}{2a}]{\sRaX+\sBaX}[\m]
+\SolQty{sRb}[v_2\,t_\mathrm{R}]{\vAbX*\tReX}[\m]
+\ConvTo{vAbk}{3.6}{vAb}{\kmph}
+\SolQty{sAb}[v_2\,t_\mathrm{R}+\frac{v_2^2}{2a}]{\sRbX+\vAbX^2/(2*\aBrX)}[\m]

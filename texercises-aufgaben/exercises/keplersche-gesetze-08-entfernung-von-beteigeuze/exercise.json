@@ -1,0 +1,19 @@
+{
+  "title": "Entfernung von Beteigeuze",
+  "note": "aus den Aufgabenblättern (G1 Kepler, Nr. 8; G Gravitation, Nr. 4)",
+  "language": "GER",
+  "type": 1,
+  "default_difficulty": 1,
+  "default_points": 0,
+  "tags": [
+    "astronomische einheit",
+    "einheiten",
+    "formelsammlung",
+    "lichtjahr",
+    "stern"
+  ],
+  "subbranches": [
+    "Gravitation/Celestial mechanics"
+  ],
+  "youtube": ""
+}

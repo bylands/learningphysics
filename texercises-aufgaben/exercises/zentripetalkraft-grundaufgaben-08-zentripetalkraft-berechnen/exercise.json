@@ -1,0 +1,17 @@
+{
+  "title": "Zentripetalkraft berechnen",
+  "note": "aus den Aufgabenblättern (D6 Zentripetalkraft, Nr. 3; D6KS_Kreisbewegung, Nr. 7; D6_Zentripetalkraft, Nr. 3)",
+  "language": "GER",
+  "type": 1,
+  "default_difficulty": 1,
+  "default_points": 0,
+  "tags": [
+    "kreisbewegung",
+    "zentripetalkraft"
+  ],
+  "subbranches": [
+    "Circular Motion",
+    "Dynamics"
+  ],
+  "youtube": ""
+}

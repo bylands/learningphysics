@@ -1,0 +1,16 @@
+{
+  "title": "Kraft auf das Ventil einer Gasflasche",
+  "note": "aus den Aufgabenblättern (H1 Hydrostatik, Nr. 3; H1 Druck, Nr. 2; H12 Druck und Schweredruck, Nr. 2)",
+  "language": "GER",
+  "type": 1,
+  "default_difficulty": 1,
+  "default_points": 0,
+  "tags": [
+    "druck",
+    "druckkraft"
+  ],
+  "subbranches": [
+    "Hydrostatics"
+  ],
+  "youtube": ""
+}

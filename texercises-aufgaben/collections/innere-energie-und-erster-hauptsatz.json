@@ -1,0 +1,67 @@
+{
+  "title": "Innere Energie und erster Hauptsatz – Aufgaben aus den Aufgabenblättern",
+  "description": "Innere Energie idealer Gase, erster Hauptsatz, isotherme, isobare und adiabatische Prozesse, Kreisprozess sowie molare und spezifische Wärmen (Dulong-Petit, Freiheitsgrade) aus den Aufgabenblättern W1 und W3. Werte aus Formeln, Tabellen, Begriffe (7. Aufl.).",
+  "kind": "sheet",
+  "is_private": true,
+  "tags": [
+    "erster hauptsatz",
+    "innere energie",
+    "thermodynamik"
+  ],
+  "items": [
+    {
+      "exercise": "innere-energie-und-erster-hauptsatz-01-verbleib-der-zugefuehrten-waerme"
+    },
+    {
+      "exercise": "innere-energie-und-erster-hauptsatz-02-am-gas-verrichtete-arbeit"
+    },
+    {
+      "exercise": "innere-energie-und-erster-hauptsatz-03-isotherme-und-adiabatische-arbeit"
+    },
+    {
+      "exercise": "innere-energie-und-erster-hauptsatz-04-innere-energie-bei-zustandsaenderung"
+    },
+    {
+      "exercise": "innere-energie-und-erster-hauptsatz-05-innere-energie-von-sauerstoff"
+    },
+    {
+      "exercise": "innere-energie-und-erster-hauptsatz-06-innere-energie-von-helium"
+    },
+    {
+      "exercise": "innere-energie-und-erster-hauptsatz-07-adiabatische-abkuehlung-von-wasserstoff"
+    },
+    {
+      "exercise": "innere-energie-und-erster-hauptsatz-08-isobare-expansion-von-stickstoff"
+    },
+    {
+      "exercise": "innere-energie-und-erster-hauptsatz-09-isotherme-kompression-von-luft"
+    },
+    {
+      "exercise": "innere-energie-und-erster-hauptsatz-10-freie-expansion-ins-vakuum"
+    },
+    {
+      "exercise": "innere-energie-und-erster-hauptsatz-11-arbeit-bei-adiabatischer-expansion"
+    },
+    {
+      "exercise": "innere-energie-und-erster-hauptsatz-12-kreisprozess-mit-luft"
+    },
+    {
+      "exercise": "innere-energie-und-erster-hauptsatz-13-spezifische-waermen-nach-dulong-petit"
+    },
+    {
+      "exercise": "innere-energie-und-erster-hauptsatz-14-spezifische-waerme-von-palladium"
+    },
+    {
+      "exercise": "innere-energie-und-erster-hauptsatz-15-spezifische-waermen-von-sauerstoff"
+    },
+    {
+      "exercise": "innere-energie-und-erster-hauptsatz-16-freiheitsgrade-von-kohlendioxid"
+    },
+    {
+      "exercise": "innere-energie-und-erster-hauptsatz-17-adiabatenexponent-zweiatomiger-gase"
+    },
+    {
+      "exercise": "innere-energie-und-erster-hauptsatz-18-adiabatenexponent-und-freiheitsgrade"
+    }
+  ]
+}

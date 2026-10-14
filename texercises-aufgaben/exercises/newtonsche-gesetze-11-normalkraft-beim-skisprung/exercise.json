@@ -1,0 +1,18 @@
+{
+  "title": "Normalkraft beim Skisprung",
+  "note": "aus den Aufgabenblättern (D4 Normal- & Reibungskraft, Nr. 8; D3 Kraft, Nr. 16)",
+  "language": "GER",
+  "type": 0,
+  "default_difficulty": 2,
+  "default_points": 0,
+  "tags": [
+    "diagramme",
+    "dynamik",
+    "kraft-zeit-diagramm",
+    "normalkraft"
+  ],
+  "subbranches": [
+    "Dynamics"
+  ],
+  "youtube": ""
+}
