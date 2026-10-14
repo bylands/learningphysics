@@ -580,6 +580,12 @@ class Exercise:
                     if not name or value is None:
                         continue
                     v = typed_value(value)
+                    fp = re.fullmatch(r"\s*\\fpeval\s*\{(.*)\}\s*", value, re.S)
+                    if v is None and fp:  # \NewQty{nm}{\fpeval{\nX-1}}: computed from other quantities
+                        try:
+                            v = evaluate(fp.group(1), self.number)
+                        except EvalError:
+                            v = None
                     if v is not None and factor and factor.strip():
                         f = factor.strip()
                         if not star and f[0] in "eE":  # e-3: times 1e-3
@@ -908,6 +914,23 @@ class Exercise:
                 i += 1
         return "".join(out)
 
+    def if_branch(self, s: str, i: int) -> Tuple[str, int]:
+        """\\ifthenelse{a = b}{then}{else} (also < and >) on numbers and quantities: the branch taken."""
+        cond, i = read_group(s, i)
+        yes, i = read_group(s, i)
+        no, i = read_group(s, i)
+        m = re.fullmatch(r"(.+?)([=<>])(.+)", cond or "", re.S)
+        if not m:
+            self.fallback("\\ifthenelse")
+            return yes or "", i
+        try:
+            a, b = evaluate(m.group(1), self.number), evaluate(m.group(3), self.number)
+        except EvalError:
+            self.fallback("\\ifthenelse")
+            return yes or "", i
+        took = {"=": abs(a - b) <= 1e-9 * max(1.0, abs(a), abs(b)), "<": a < b, ">": a > b}[m.group(2)]
+        return (yes if took else no) or "", i
+
     def defined(self, name: str, s: str, i: int) -> Optional[Tuple[str, int]]:
         """An exercise's macro (expanded, as math) or quantity, as math; None if name is neither."""
         if name in self.macros:
@@ -925,6 +948,9 @@ class Exercise:
     def common(self, name: str, s: str, i: int) -> Optional[Tuple[str, int]]:
         """What both modes print as math: an exercise's macro (expanded, as math), a quantity, siunitx
         and friends, free-standing units, and the few macros of texercises-lp.sty that KaTeX lacks."""
+        if name == "ifthenelse":
+            branch, i = self.if_branch(s, i)
+            return "{" + self.math(branch) + "}", i
         r = self.defined(name, s, i)
         if r is not None:
             return r
@@ -1023,9 +1049,11 @@ class Exercise:
                             depth += 1
                         elif s[k] == "}":
                             depth -= 1
+                        elif s[k] == "\n" and depth <= 0 and PAR_BREAK.match(s, k):
+                            break  # a $ left open: TeX closes it at the end of the paragraph
                         k += 1
                     out.add(inline_math(self.math(s[i + 1:k])))
-                    i = k + 1
+                    i = k + 1 if k < n and s[k] == "$" else k
             elif c == "{":
                 body, i = read_group(s, i)
                 self.text(body or "", out)
@@ -1084,6 +1112,10 @@ class Exercise:
         if name == "begin":
             env, k = read_group(s, j)
             return self.environment(env or "", s, k, out)
+        if name == "ifthenelse":
+            branch, j = self.if_branch(s, j)
+            self.text(branch, out)
+            return j
         r = self.defined(name, s, j)  # the exercise's own (as in TeX: defined after the package's)
         if r is not None:
             out.add(inline_math(r[0]))
@@ -1233,6 +1265,9 @@ class Exercise:
             if env.startswith("alignat"):
                 _, k = read_group(body, 0)
                 body = body[k:]
+            if env.startswith("equation") and re.search(r"(?<!\\)&", body):  # an align written as equation
+                env = "align*"
+                body = re.sub(r"\\\\\s*$", "", body)
             out.block(display(r"\begin{" + MATH_ENV_KATEX.get(env, env) + "}" + self.math(body) + r"\end{" + MATH_ENV_KATEX.get(env, env) + "}"
                               if env not in ("displaymath", "math", "equation", "equation*") else self.math(body)))
             return after
@@ -1725,6 +1760,7 @@ def render_parts(parts: Dict[str, object], solution: bool = True, media: Optiona
     return out
 
 
+PAR_BREAK = re.compile(r"\n[ \t]*\n")
 # x^\\ or x_\\ before a line break: LaTeX passes over the empty script, KaTeX refuses the whole formula
 EMPTY_SCRIPT = re.compile(r"(?<!\\)[\^_]\s*(?=\\\\)")
 
