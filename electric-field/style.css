@@ -127,6 +127,9 @@ table.cmp tbody th { text-align: left; font-weight: normal; color: var(--muted);
 .dip-replay { font-size: 0.85rem; padding: 3px 10px; color: var(--muted); }
 .dip-replay:hover:not(:disabled) { color: var(--ink); }
 svg.ef .ghost { opacity: 0.3; }
+/* in practice, the animation of the exercise's own dipole once it is answered */
+.observe { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--line); }
+.observe .note { margin: 0 0 8px; }
 
 /* the probe (probe.js): a figure to measure the field or the potential in */
 svg.ef.probe { touch-action: none; cursor: crosshair; -webkit-user-select: none; user-select: none; -webkit-tap-highlight-color: transparent; }

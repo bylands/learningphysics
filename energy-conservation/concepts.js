@@ -11,7 +11,9 @@
 //   turn      the turning point of a bungee jump (v = 0) and its equilibrium (largest speed)
 //   hang      a block on a spring: the lowest point is twice as far down as the equilibrium
 // question(kind, seed) gives { title, text, figure, ask, options: [{ html, correct, flag, why }],
-// explain(), hints }, exercise(kind, seed) the same as a practice exercise; CHECK is the source of
+// explain(), hints, motion }, exercise(kind, seed) the same as a practice exercise (motion: the
+// situation's exercise, whose animation practice shows once the question is answered, if the
+// question is about the situation as it is drawn); CHECK is the source of
 // the check (objectives, question, concepts), errorLesson() the frames of the tutor's example.
 (function (root) {
   'use strict';
@@ -159,7 +161,7 @@
     const right = { html: chart(s.states, s.forms), correct: true };
     const wrong = opts.map((x) => ({ html: chart(s.states.map((st, i) => (i === x.i ? x.st : st)), s.forms), correct: false, flag: x.flag, why: x.why, nudge: x.nudge }));
     return {
-      title: s.ex.title, text: prompt(s), figure: s.ex.figure({}),
+      title: s.ex.title, text: prompt(s), figure: s.ex.figure({}), motion: s.ex,
       ask: L(`Which bar charts show the energy in the states ${CIRCLED.slice(0, s.states.length).join(', ')}?`, `Welche Balkendiagramme zeigen die Energie in den Zuständen ${CIRCLED.slice(0, s.states.length).join(', ')}?`),
       options: shuffle(r, [right, ...wrong]),
       explain: explainTable(s, s.states.map((st, i) => s.forms.filter((k) => (st[k] || 0) > 1e-9).map((k) => reason[k](CIRCLED[i], true)).join(' ')).join(' ')),
@@ -186,7 +188,7 @@
       return { html: setName(set), correct: false, flag: added ? ADDED[added] : 'forgot', why: diff.map((k) => reason[k](c, has.includes(k))).join(' '), nudge: diff.map((k) => ask[k](c)).join(' ') };
     });
     return {
-      title: s.ex.title, text: prompt(s), figure: s.ex.figure({ hl: new Set([i]) }),
+      title: s.ex.title, text: prompt(s), figure: s.ex.figure({ hl: new Set([i]) }), motion: s.ex,
       ask: L(`Which forms of energy are zero in state ${c}, and which are not?`, `Welche Energieformen sind im Zustand ${c} null, welche nicht?`),
       options: shuffle(r, [{ html: setName(has), correct: true }, ...wrong]),
       explain: explainTable(s, FORMS3.map((k) => reason[k](c, has.includes(k))).join(' ')),
@@ -208,7 +210,7 @@
       const opts = threeByLength(r, `$${right}$`, cand, (x) => x.eq);
       if (opts.length < 3 && k < 50) continue;
       return {
-        title: s.ex.title, text: prompt(s), figure: s.ex.figure({ hl: new Set([a, b]) }),
+        title: s.ex.title, text: prompt(s), figure: s.ex.figure({ hl: new Set([a, b]) }), motion: s.ex,
         ask: L(`Which equation is the energy balance $E_${a + 1} = E_${b + 1}$?`, `Welche Gleichung ist die Energiebilanz $E_${a + 1} = E_${b + 1}$?`),
         options: shuffle(r, [{ html: `$${right}$`, correct: true }, ...opts.map((x) => ({ html: `$${x.eq}$`, correct: false, flag: x.flag, why: x.why, nudge: x.nudge }))]),
         explain: explainTable(s, L(`Add up the energy of each state and set the sums equal: $${right}$. Only then solve for the wanted quantity, with symbols.`, `Addiere die Energie jedes Zustands und setze die Summen gleich: $${right}$. Erst dann nach der gesuchten Grösse auflösen, mit Symbolen.`)),
@@ -232,7 +234,7 @@
     return {
       title: L('Find the error', 'Finde den Fehler'),
       text: `${prompt(s)}<p>${L('A student has filled in this energy table:', 'Ein Schüler hat diese Energietabelle ausgefüllt:')}</p>${tableHtml(s, en)}`,
-      figure: s.ex.figure({}),
+      figure: s.ex.figure({}), motion: s.ex,
       ask: L('One entry of the table is wrong. Which one?', 'Ein Eintrag der Tabelle ist falsch. Welcher?'),
       options: shuffle(r, [{ html: label(x.i, x.k, x.tex), correct: true },
         ...right.map((c) => ({ html: label(c.i, c.k, cellTex(s, c.i, c.k)), correct: false, flag: 'table', why: reason[c.k](CIRCLED[c.i], !!s.en[c.i][c.k]) }))]),
@@ -289,7 +291,7 @@
   const choice = (r, q) => ({
     title: q.title, text: q.text, figure: q.figure || '', ask: q.ask,
     options: shuffle(r, [{ html: q.right, correct: true }, ...shuffle(r, [...q.wrong]).slice(0, 3).map(([html, flag, why, nudge]) => ({ html, correct: false, flag, why, nudge }))]),
-    explain: () => q.explain, hints: q.hints || [],
+    explain: () => q.explain, hints: q.hints || [], motion: q.motion,
   });
   const PATH_EXPLAIN = () => L('Lifting work changes the potential energy, and that depends only on the height: $W = m\\,g\\,h$ on every path. On a ramp $n$ times as long as it is high, the force needed is $n$ times smaller, $m\\,g/n$, but it acts over an $n$ times longer path: $W = \\frac{m\\,g}{n}\\cdot n\\,h = m\\,g\\,h$.',
     'Die Hubarbeit ändert die Lageenergie, und die hängt nur von der Höhe ab: $W = m\\,g\\,h$ auf jedem Weg. Auf einer Rampe, die $n$-mal so lang wie hoch ist, braucht es eine $n$-mal kleinere Kraft, $m\\,g/n$, aber über einen $n$-mal längeren Weg: $W = \\frac{m\\,g}{n}\\cdot n\\,h = m\\,g\\,h$.');
@@ -388,7 +390,7 @@
   function turn(seed) {
     const r = rng(seed), s = situation('bungee', seed), v = Math.floor(r() * 3);
     const base = { title: L('Bungee jump', 'Bungee-Sprung'), text: `<p>${L('A bungee jumper steps off a bridge: free fall until ②, where the rope starts to stretch; at ③ the jumper is at the lowest point.', 'Eine Bungee-Springerin lässt sich von einer Brücke fallen: freier Fall bis ②, wo sich das Seil zu dehnen beginnt; in ③ ist sie im tiefsten Punkt.')}</p>`,
-      figure: s.ex.figure({}), explain: `<p>${EQ_EXPLAIN()}</p>`, hints: [L('Where does the rope pull harder than the weight, and where less?', 'Wo zieht das Seil stärker als die Gewichtskraft, wo schwächer?')] };
+      figure: s.ex.figure({}), motion: s.ex, explain: `<p>${EQ_EXPLAIN()}</p>`, hints: [L('Where does the rope pull harder than the weight, and where less?', 'Wo zieht das Seil stärker als die Gewichtskraft, wo schwächer?')] };
     if (v === 0) return choice(r, { ...base,
       ask: L('Where is the jumper fastest?', 'Wo ist die Springerin am schnellsten?'),
       right: L('Between ② and ③, where the rope pulls as hard as the weight', 'Zwischen ② und ③, wo die Seilkraft gleich der Gewichtskraft ist'),
@@ -418,13 +420,13 @@
     const base = { title: L('A block on a spring', 'Ein Klotz an der Feder'), figure: '', explain: `<p>${why}</p>`,
       hints: [L('Lowest point: energy, $m\\,g\\,s = \\tfrac{1}{2}\\,k\\,s^2$. At rest: forces, $k\\,x_0 = m\\,g$.', 'Tiefster Punkt: Energie, $m\\,g\\,s = \\tfrac{1}{2}\\,k\\,s^2$. In Ruhe: Kräfte, $k\\,x_0 = m\\,g$.')] };
     const start = L('<p>A block hangs on a relaxed spring and is released from rest. It drops by $s$ to its lowest point and turns round there.</p>', '<p>Ein Klotz hängt an einer entspannten Feder und wird aus der Ruhe losgelassen. Er sinkt um $s$ bis zum tiefsten Punkt und kehrt dort um.</p>');
-    if (v === 0) return choice(r, { ...base, text: start, figure: s.ex.figure({}),
+    if (v === 0) return choice(r, { ...base, text: start, figure: s.ex.figure({}), motion: s.ex,
       ask: L('How far below the start would the block hang at rest?', 'Wie weit unter dem Start würde der Klotz in Ruhe hängen?'),
       right: '$\\tfrac{1}{2}\\,s$',
       wrong: [['$s$', 'equil', L('The lowest point is not the equilibrium: there the spring pulls with 2 m g, twice the weight.', 'Der tiefste Punkt ist nicht die Ruhelage: Dort zieht die Feder mit 2 m g, doppelt so stark wie die Gewichtskraft.'), L('Is the lowest point the equilibrium? Compare the spring force there with the weight.', 'Ist der tiefste Punkt die Ruhelage? Vergleiche dort die Federkraft mit der Gewichtskraft.')],
         ['$\\tfrac{1}{4}\\,s$', 'other', L('At rest k x₀ = m g with k = 2 m g/s, so x₀ = s/2.', 'In Ruhe gilt k x₀ = m g mit k = 2 m g/s, also x₀ = s/2.'), L('Find k from the energy at the lowest point; then at rest k x₀ = m g.', 'Bestimme k aus der Energie im tiefsten Punkt; in Ruhe gilt dann k x₀ = m g.')],
         ['$\\tfrac{1}{\\sqrt{2}}\\,s$', 'other', L('The spring force grows in proportion to the stretch: k x₀ = m g gives x₀ = s/2.', 'Die Federkraft wächst proportional zur Dehnung: k x₀ = m g ergibt x₀ = s/2.'), L('The spring force grows in proportion to the stretch: at what stretch does it equal the weight?', 'Die Federkraft wächst proportional zur Dehnung: Bei welcher Dehnung ist sie gleich der Gewichtskraft?')]] });
-    if (v === 1) return choice(r, { ...base, text: start, figure: s.ex.figure({}),
+    if (v === 1) return choice(r, { ...base, text: start, figure: s.ex.figure({}), motion: s.ex,
       ask: L('Where is the block fastest?', 'Wo ist der Klotz am schnellsten?'),
       right: L('$\\tfrac{1}{2}\\,s$ below the start, where the spring force equals the weight', '$\\tfrac{1}{2}\\,s$ unter dem Start, wo Federkraft und Gewichtskraft gleich sind'),
       wrong: [[L('At the lowest point, $s$ below the start, where the spring is stretched most', 'Im tiefsten Punkt, $s$ unter dem Start, wo die Feder am stärksten gedehnt ist'), 'turn', L('The block turns round there: v = 0.', 'Dort kehrt der Klotz um: v = 0.')],
@@ -450,7 +452,7 @@
       choice: true, scenario: kind, difficulty: DIFFICULTY[kind], formal: true, seed,
       title: q.title, text: q.text, ask: q.ask, options: q.options,
       figure: () => q.figure, solutionFigure: () => '', hints: q.hints,
-      solution: [q.explain()], results: q.options.find((o) => o.correct).html,
+      solution: [q.explain()], results: q.options.find((o) => o.correct).html, motion: q.motion || null,
       key: `${q.title}|${q.text}|${q.ask}|${q.options.map((o) => o.html).join('|')}`,
     };
   }

@@ -7,7 +7,11 @@
 //   digits) and follows the taught method finds R, L and C within the tolerance,
 // - the estimates of the worked solution are within the tolerance,
 // - every unknown has one right option and wrong ones that are far apart and explained, and the
-//   student's reading is nearest the right one,
+//   student's reading is nearest the right one (the options of the check, and of practice once a
+//   value typed is wrong): the right one typed is right, no wrong one typed is,
+// - typed in practice, the student's reading (in the field's unit) is right, every trap typed
+//   gets its own explanation (the inverse of the slope as the number typed in mH), and the traps
+//   are far apart; typed numbers parse as meant,
 // - graph and schematic render in both axis modes; the tutor lessons are usable, and the series RL
 //   and RC examples agree with Z = √(R² + X²),
 // - the probe's readout of ω⁻² is 1/ω², shown with a power of ten that reads back to it.
@@ -104,6 +108,26 @@ for (const filter of Object.keys(I.LEVELS)) {
       }
       const nearest = os.reduce((a, b) => (Math.abs(Math.log(b.value / s[f.key])) < Math.abs(Math.log(a.value / s[f.key])) ? b : a));
       if (!nearest.ok) fail(`${tag}: reading ${f.key} = ${s[f.key]} is nearest to the wrong option ${nearest.label}`);
+      // typed: the reading in the field's unit, with three digits and a decimal comma, is right;
+      // each trap, typed as rounded to two digits, gets its explanation
+      const scale = I.ENTRY[f.key].scale, typed = (x) => String(r3(x / scale)).replace('.', ',');
+      if (f.value !== v || !f.unit || !f.wrong) fail(`${tag}: field ${f.key}`);
+      if (!I.judge(f, I.parse(typed(s[f.key]))).ok) fail(`${tag}: typed reading ${f.key} = ${typed(s[f.key])} ${f.unit} not right`);
+      for (const o of os) if (!!I.judge(f, o.value / scale).ok !== !!o.ok) fail(`${tag}: option ${o.label} of ${f.key} typed judged ${o.ok ? 'wrong' : 'right'}`);
+      if (f.key === 'L') {
+        const inv = f.traps.find((t) => t.tag === 'inverse'), j = I.judge(f, I.parse(typed(1 / v * scale)));
+        if (inv && j.trap !== inv) fail(`${tag}: Δω/ΔZ = ${r3(1 / v)} typed in mH not taken as the inverse (${JSON.stringify(j)})`);
+        if (inv) tags['typed L: inverse'] = (tags['typed L: inverse'] || 0) + 1;
+      }
+      const ts = [v, ...f.traps.map((t) => t.value)].sort((a, b) => a - b);
+      for (let k = 1; k < ts.length; k++) if (ts[k] < ts[k - 1] * I.GAP * (1 - 1e-9)) fail(`${tag}: ${f.key} traps too close`);
+      for (const t of f.traps) {
+        const j = I.judge(f, I.parse(String(Number((t.value / scale).toPrecision(2)))));
+        if (!j.trap || j.trap !== t) fail(`${tag}: trap ${t.tag} of ${f.key} typed as ${(t.value / scale).toPrecision(2)} not recognised`);
+        if (!t.why || /NaN|undefined|Infinity/.test(t.why)) fail(`${tag}: trap ${t.tag} of ${f.key} without explanation`);
+      }
+      if (!f.traps.some((t) => t.tag === 'prefix') && f.key !== 'R') fail(`${tag}: ${f.key} without the factor 1000`);
+      if (I.judge(f, 3 * v / scale).ok || I.judge(f, 1.1 * v / scale).ok || !I.judge(f, 1.1 * v / scale).close) fail(`${tag}: ${f.key} judged too leniently`);
     }
     if (seed <= 200) checkRender(tag, c, ax, an);
   }
@@ -171,6 +195,10 @@ for (let seed = 1; seed <= 60; seed++) {
 }
 for (const [x, h] of [[2.5e-7, '2.50·10⁻⁷ s²'], [1e-6, '1.00·10⁻⁶ s²'], [9.9996e-5, '1.00·10⁻⁴ s²'], [0.25, '0.250 s²'], [2500, '2.50·10³ s²'], [1 / 400 ** 2, '6.25·10⁻⁶ s²']]) if (I.H(x, 's2') !== h) fail(`ω⁻² ${x} shown as ${I.H(x, 's2')}, not ${h}`);
 console.log(`readouts of ω⁻²: ${reads}`);
+
+// typed numbers: decimal comma, minus signs, powers of ten, a unit after the number
+for (const [t, x] of [['120', 120], ['0,47', 0.47], ['1.5e-3', 0.0015], ['2,2·10^-2', 0.022], ['1.5 x 10^3', 1500], ['47 mH', 47], ['330Ω', 330], [' 68 ', 68], ['−3', -3], ['.5', 0.5]]) if (I.parse(t) !== x) fail(`"${t}" parsed as ${I.parse(t)}, not ${x}`);
+for (const t of ['', 'abc', '1.2.3', 'mH 47', '1,000.5']) if (!Number.isNaN(I.parse(t))) fail(`"${t}" parsed as ${I.parse(t)}`);
 
 if (failures) { console.error(`\n${failures} failures`); process.exit(1); }
 console.log('Generator OK');

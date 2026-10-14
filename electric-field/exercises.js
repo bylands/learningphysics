@@ -3,7 +3,9 @@
 // kind, difficulty, title, text, figs, questions, hints, solution, solFig, p }, with questions of
 // the kinds tiles (directions or names: one, or all that fit), pick (one of four drawings), choice
 // (one of a few values or words) and multi (statements to tick). The wrong options carry a tag: the
-// wrong idea behind them (the check counts some of them as misconceptions).
+// wrong idea behind them (the check counts some of them as misconceptions). The dipole exercises
+// also carry anim { kind, o, note }: the animation of their own dipole (anim.js, DipoleAnim.html(kind,
+// o)) that practice shows once they are answered, with a note on what to watch.
 // The types:
 //   lines-pick, lines-wire, lines-cap   which diagram shows the field lines: of point charges, of a
 //                               charged wire (and how its field falls off), of a plate capacitor
@@ -241,6 +243,11 @@
   }
 
   // ---------------------------------------------------------------- dipoles
+  // the observe step: in an equilibrium the dipole is let go, holds still, and is then tapped (anim.js)
+  const TAP = { stable: { t: 1.2, w: 0.6 }, unstable: { t: 1.2, w: 0.6 } };
+  const noteU = (turn) => (turn === 'stable' ? L('Let go, the dipole stays put: the forces act along the rod. Tapped, it only swings a little back and forth about where it was: a stable equilibrium.', 'Losgelassen bleibt der Dipol stehen: Die Kräfte wirken längs des Stabs. Angestossen schwingt er nur wenig um seine Lage hin und her: ein stabiles Gleichgewicht.')
+    : turn === 'unstable' ? L('Let go, the dipole stays put: the forces act along the rod. A slight tap, and it turns right round, its + end swinging through the field direction and up the other side: an unstable equilibrium.', 'Losgelassen bleibt der Dipol stehen: Die Kräfte wirken längs des Stabs. Ein leichter Stoss, und er dreht sich ganz um, sein +-Ende schwingt durch die Feldrichtung und auf der anderen Seite wieder hinauf: ein labiles Gleichgewicht.')
+      : L(`Let go, the dipole turns ${turn === 'acw' ? 'anticlockwise' : 'clockwise'}, and swings back and forth about the field direction, as far to one side as to the other: nothing slows it down. Its centre stays where it is: the net force is zero.`, `Losgelassen dreht sich der Dipol ${turn === 'acw' ? 'im Gegenuhrzeigersinn' : 'im Uhrzeigersinn'}, und schwingt um die Feldrichtung hin und her, gleich weit nach beiden Seiten: Nichts bremst ihn. Sein Mittelpunkt bleibt, wo er ist: Die Gesamtkraft ist null.`));
   function dipoleUniform(seed) {
     const r = rng(seed * 79 + 47), Ed = r.pick([[1, 0], [0, 1], [-1, 0], [0, -1]]), ang = r.pick([45, 90, 135, -45, -90, -135, 0, 180]);
     const a0 = Math.atan2(Ed[1], Ed[0]) + (ang * Math.PI) / 180, p = [Math.cos(a0), Math.sin(a0)], tz = p[0] * Ed[1] - p[1] * Ed[0];
@@ -260,7 +267,7 @@
         choice('T', L('(b) The dipole', '(b) Der Dipol'), T.map(([k, label]) => ({ label, ok: k === turn, tag: k === turn ? undefined : 'torque', why: k === turn ? '' : howT }))),
       ],
       hints: [L('Draw the force on each end: <span class="vec"><i>F</i></span> = q·<span class="vec"><i>E</i></span>.', 'Zeichne die Kraft auf jedes Ende: <span class="vec"><i>F</i></span> = q·<span class="vec"><i>E</i></span>.'), L('Equal and opposite forces that do not act along the same line make a torque.', 'Gleich grosse, entgegengesetzte Kräfte, die nicht auf derselben Geraden wirken, erzeugen ein Drehmoment.')],
-      solution: [howF, howT], p: { E: dkey(Ed), ang },
+      solution: [howF, howT], p: { E: dkey(Ed), ang }, anim: { kind: 'uniform', o: { E: Ed, angle: (a0 * 180) / Math.PI, ...(TAP[turn] ? { nudge: TAP[turn] } : {}) }, note: noteU(turn) },
     };
   }
 
@@ -317,6 +324,7 @@
       questions: [choice('M', L('Compared with dipole 1, the torque on dipole 2 is', 'Verglichen mit Dipol 1 ist das Drehmoment auf Dipol 2'), factors(k, tempt, how))],
       hints: [L('Two forces q·E, equal and opposite; their lever arm is the distance between their lines of action, d·sin φ.', 'Zwei Kräfte q·E, gleich gross und entgegengesetzt; ihr Hebelarm ist der Abstand ihrer Wirkungslinien, d·sin φ.'), L('M = q·E·d·sin φ: find the factor of each quantity. sin 90° = 1, sin 30° = sin 150° = 1/2.', 'M = q·E·d·sin φ: Bestimme den Faktor jeder Grösse. sin 90° = 1, sin 30° = sin 150° = 1/2.')],
       solution: [how], p: { f: [f.q, f.d, f.E].join(','), a1, a2 },
+      anim: { kind: 'uniform', o: { E: [1, 0], angle: a1 }, note: L('Dipole 1 let go: the torque turns it clockwise. As it turns, φ and so the torque get smaller; it swings past the field direction, where sin φ = 0, and back and forth about it.', 'Dipol 1 losgelassen: Das Drehmoment dreht ihn im Uhrzeigersinn. Beim Drehen werden φ und damit das Drehmoment kleiner; er schwingt über die Feldrichtung hinaus, wo sin φ = 0, und um sie hin und her.') },
     };
   }
   // A dipole along the line to a point charge: given which end is nearer and the sign of the
@@ -360,6 +368,11 @@
       ],
       hints: [L('The field of a point charge gets weaker with the distance.', 'Das Feld einer Punktladung wird mit dem Abstand schwächer.'), L('Which end of the dipole feels the stronger force?', 'Welches Ende des Dipols spürt die stärkere Kraft?')],
       solution: [sol, howFree], p: ask === 'F' ? { Q, plusNear } : { Q, plusNear, ask },
+      // the dipole of the figure, let go (free to turn); when it is repelled, it is tapped after a
+      // moment, as the slightest nudge turns it round
+      anim: { kind: 'point', o: { Q, x: (xn + xf) / 2, y: 0, angle: plusNear ? 180 : 0, ...(attract ? {} : { nudge: { t: 0.6, w: 1 } }) },
+        note: attract ? L(`Let go, the dipole is pulled straight in, its ${near > 0 ? 'positive' : 'negative'} end first: the force on the nearer end is the larger one.`, `Losgelassen wird der Dipol geradewegs hingezogen, sein ${near > 0 ? 'positives' : 'negatives'} Ende voran: Die Kraft auf das nähere Ende ist die grössere.`)
+          : L('Let go along the line, the dipole is pushed away. A slight tap, and it turns round; once its other end is nearer, it is pulled in.', 'Längs der Geraden losgelassen wird der Dipol weggestossen. Ein leichter Stoss, und er dreht sich um; sobald sein anderes Ende näher ist, wird er hingezogen.') },
     };
   }
 

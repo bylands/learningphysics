@@ -211,6 +211,58 @@ for (const lang of ['en', 'de']) {
   if (/ß/.test(last.text)) fail('tutor 9: ß in Swiss German');
 }
 
+// The ruler (app.js): in the situations of Scenarios.RULER it reads a segment between grid points
+// (a, b) as |b − a| · GRID.unit cm and draws it at GRID.px per square. So their drawings must have
+// that grid, with D at 0, 0, the forces at grid points, the scale the text names, and the lengths
+// the ruler reads must give the answers. The other situations have no grid and no ruler.
+{
+  const { GRID, RULER, UNIT, armOf } = globalThis.Scenarios;
+  const read = (a, b) => Math.hypot(b[0] - a[0], b[1] - a[1]) * GRID.unit; // cm, as the ruler shows it
+  const onGrid = (P) => P.every((x) => Number.isInteger(x)) && Math.abs(P[0]) <= GRID.x && Math.abs(P[1]) <= GRID.y;
+  const near = (x) => Math.abs(x - Math.round(x)) < 1e-9;
+  if (GRID.unit !== UNIT) fail(`ruler: ${GRID.unit} cm per square, the exercises ${UNIT} cm`);
+  RULER.forEach((id) => { if (!Torque.SCENARIOS.some((s) => s.id === id)) fail(`ruler: no situation ${id}`); });
+  for (const lang of ['en', 'de']) {
+    Lang.set(lang, true);
+    for (const s of Torque.SCENARIOS) {
+      for (let seed = 1; seed <= 40; seed++) {
+        const ex = Torque.practiceOf(s.id, seed), id = `${lang} ruler ${s.id}-${seed}`, fig = ex.figure({ task: true });
+        const grid = (fig.match(/<path class="grid" d="([^"]*)"/) || [])[1];
+        if (!RULER.includes(s.id)) { if (grid) fail(`${id}: a grid, but no ruler`); continue; }
+        checked++;
+        // the grid's lines: every GRID.px from −x to x squares and from −y to y (y down in px)
+        const xs = [...grid.matchAll(/M(-?[\d.]+) (-?[\d.]+)V/g)].map((m) => +m[1]), ys = [...grid.matchAll(/M(-?[\d.]+) (-?[\d.]+)H/g)].map((m) => -m[2]);
+        [[xs, GRID.x], [ys, GRID.y]].forEach(([ls, n], k) => {
+          if (ls.length !== 2 * n + 1 || ls.some((x, i) => Math.abs(x - (i - n) * GRID.px) > 0.05)) fail(`${id}: grid lines ${'xy'[k]} not every ${GRID.px} px from −${n} to ${n}: ${ls}`);
+        });
+        // the scale in the text and in the drawing
+        if (!(lang === 'en' ? /squares: 10 cm/ : /Kästchen: 10 cm/).test(fig) || !new RegExp(`${GRID.unit} cm`).test(ex.text)) fail(`${id}: the scale is not ${GRID.unit} cm per square`);
+        if (!/<circle class="hub" cx="0" cy="0"/.test(fig)) fail(`${id}: D is not at the grid point 0, 0`);
+        ex.p.forces.forEach((f, i) => {
+          const k = i + 1, M = Math.abs(ex.v.M[i]);
+          if (!onGrid(f.P)) fail(`${id}: F${k} acts at ${f.P}, not at a grid point`);
+          // what the ruler reads gives the torque: the lever arm of a force along the grid (to the
+          // foot of the perpendicular, a grid point), or the distances of an oblique one's point of
+          // application from D across and up (for its components)
+          if (f.u[0] === 0 || f.u[1] === 0) {
+            const { foot, d } = armOf(f);
+            if (!foot.every(near) || !onGrid(foot.map(Math.round))) fail(`${id}: the foot of d${k} ${foot} is not a grid point`);
+            if (!close(read([0, 0], foot), d) || !close((f.F * read([0, 0], foot)) / 100, M)) fail(`${id}: the ruler reads d${k} = ${read([0, 0], foot)} cm, M${k} = ${M} N·m`);
+          } else {
+            const Mc = Math.abs(f.F * f.u[1] * read([0, 0], [f.P[0], 0]) * Math.sign(f.P[0]) - f.F * f.u[0] * read([0, 0], [0, f.P[1]]) * Math.sign(f.P[1])) / 100;
+            if (!close(Mc, M)) fail(`${id}: by components on the grid ${Mc} N·m, M${k} = ${M} N·m`);
+          }
+          // the student's sketch: each lever arm in the text is the length the ruler reads of the arm drawn
+          if (s.id === 'arm-error') {
+            const len = read([0, 0], i === ex.p.wrong ? f.P : armOf(f).foot);
+            if (!ex.text.includes(TQ.tq(len / 100, 'm', 3))) fail(`${id}: d${k} drawn ${len} cm, not in the text`);
+          }
+        });
+      }
+    }
+  }
+}
+
 // The check: every kind of every objective, many seeds, both languages.
 let questions = 0;
 for (const lang of ['en', 'de']) {

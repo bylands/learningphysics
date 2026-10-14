@@ -44,6 +44,9 @@
   const PX = 30; // px per square
   // the grid: its lines through the grid points from −x to x and −y to y (squares), D at 0, 0
   const GRID = { x: 6, y: 5, px: PX, unit: UNIT };
+  // The situations drawn on this grid, where the app offers its ruler (app.js): the plates, their
+  // rankings and the student's sketch. The beams have no grid; their lengths are given.
+  const RULER = ['plate-axis', 'plate', 'rank-axis', 'rank', 'arm-error'];
   const AXIS = [[1, 0], [-1, 0], [0, 1], [0, -1]];
   const OBLIQUE = [[3, 4], [4, 3], [-3, 4], [-4, 3], [3, -4], [4, -3], [-3, -4], [-4, -3]].map(([a, b]) => [a / 5, b / 5]);
   const arrowLen = (F) => 16 + 9 * F; // px
@@ -785,6 +788,6 @@
 
   // helpers for the situations of statics.js, which adds its own to SCENARIOS
   const H = { step, res, exact, beamPic, kg, cm, N, senseWord };
-  root.Scenarios = { SCENARIOS, armOf, torqueOf, angleCands, UNIT, GRID, H };
+  root.Scenarios = { SCENARIOS, armOf, torqueOf, angleCands, UNIT, GRID, RULER, H };
   if (typeof module !== 'undefined') module.exports = root.Scenarios;
 })(typeof window !== 'undefined' ? window : globalThis);

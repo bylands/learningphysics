@@ -61,16 +61,15 @@ svg .pin-n { fill: var(--accent); font-size: 11px; font-weight: 700; font-family
 .k-tan { color: var(--tan); font-weight: 600; }
 .steps h4 { margin: 14px 0 2px; font-size: 1rem; }
 
-/* answers: one row of options per unknown */
-#fields { display: grid; gap: 12px; margin-bottom: 14px; }
-.field { display: grid; grid-template-columns: 2.6em minmax(0, 1fr); align-items: center; gap: 6px 8px; }
-.field .sym { text-align: right; }
-.field .fb { grid-column: 2; font-size: 0.9rem; }
-.field .fb:empty { display: none; }
-/* a problem's fields say what they are, and their symbols are wider */
-.field:has(.what) { grid-template-columns: auto minmax(0, 1fr); }
-.field .what { grid-column: 1 / -1; font-size: 0.95rem; color: var(--muted); }
-svg .curve2 { stroke: var(--zc); stroke-width: 1.8; stroke-dasharray: 7 5; fill: none; opacity: 0.6; }
+/* answers: a number field per unknown (the grid of .fields, ui.css); a matching exercise has its
+   questions and options here instead */
+#fields { margin-bottom: 14px; }
+#fields:not(.fields) { display: grid; gap: 12px; }
+/* a field typed wrong becomes a row of four values to choose from (app.js: fieldsHtml), across the
+   grid of fields */
+.field.choice { display: grid; grid-column: 1 / -1; grid-template-columns: 2.6em minmax(0, 1fr); align-items: center; gap: 6px 8px; }
+.field.choice .fb { grid-column: 2; }
+.field.choice .fb:empty { display: none; }
 .opts { display: flex; flex-wrap: wrap; gap: 6px; }
 .opts label { position: relative; }
 .opts input { position: absolute; opacity: 0; inset: 0; margin: 0; cursor: pointer; }
@@ -89,6 +88,7 @@ svg .curve2 { stroke: var(--zc); stroke-width: 1.8; stroke-dasharray: 7 5; fill:
 .opts input:focus-visible + span { outline: 2px solid var(--accent); outline-offset: 2px; }
 .field.ok input:checked + span { background: var(--ok-bg); border-color: var(--ok); color: var(--ok); }
 .field.bad input:checked + span { background: var(--bad-bg); border-color: var(--bad); color: var(--bad); }
+svg .curve2 { stroke: var(--zc); stroke-width: 1.8; stroke-dasharray: 7 5; fill: none; opacity: 0.6; }
 #hint-list ul { margin: 4px 0; padding-left: 1.2em; }
 
 /* which curve belongs to the circuit (match.js): the four sketches, faded once ruled out, the one
@@ -122,5 +122,13 @@ svg .axis .sub { font-size: 10px; }
 @media (max-width: 560px) {
   .opts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .opts span { min-width: 0; padding-inline: 8px; }
-  .field .sym { grid-column: auto; text-align: right; margin-top: 0; }
+}
+/* on wide screens a choice shares the columns of the typed fields, so that its symbol lines up with theirs */
+@media (min-width: 641px) {
+  .field.choice { grid-template-columns: subgrid; }
+  .field.choice .opts, .field.choice .fb { grid-column: 2 / -1; }
+}
+/* ui.css puts a field's symbol above its input on narrow screens; a choice keeps it beside the values */
+@media (max-width: 640px) {
+  .field.choice .sym { grid-column: auto; text-align: right; margin-top: 0; }
 }

@@ -18,10 +18,12 @@
       stars: (d) => `Difficulty: ${d} of 5`,
       score: (s, c) => `Solved: ${s} · first try without hints: ${c}`,
       hint: (n) => `Hint (${n} left)`, noHints: 'No more hints', unlocks: (n) => `Unlocks after all hints or ${n} attempts`,
-      choose: 'Choose a value for each quantity, then check again.',
+      choose: 'Enter or choose a value for each quantity, then check again.',
       ok: 'All correct.', okWell: 'All correct, well done! Compare your approach with the worked solution, or start a new exercise.',
       notYet: (n) => `Not quite yet (attempt ${n}).`, tryAgain: ' Try again, or take a hint.', canReveal: ' You can take a hint or look at the worked solution.',
-      correct: 'Correct',
+      correct: 'Correct', number: 'Enter a number',
+      notYetChoose: 'Not right yet. Choose from these values:', nowChoose: 'Choose from these values:',
+      close: (tol) => `Close, but not within ${tol} %: read the graph more carefully, with the probe.`,
       whichCurve: 'Which curve?', theCurves: 'The curves:', curve: (k) => `Curve ${k}`,
       whichCircuit: 'Which circuit?', theCircuits: 'The circuits:', circuit: (k) => `Circuit ${k}`,
       chooseCurve: 'Choose a curve, then check.', chooseCircuit: 'Choose a circuit, then check.',
@@ -41,10 +43,12 @@
       stars: (d) => `Schwierigkeit: ${d} von 5`,
       score: (s, c) => `Gelöst: ${s} · beim ersten Versuch ohne Tipps: ${c}`,
       hint: (n) => `Tipp (${n} übrig)`, noHints: 'Keine Tipps mehr', unlocks: (n) => `Wird nach allen Tipps oder ${n} Versuchen freigeschaltet`,
-      choose: 'Wähle für jede Grösse einen Wert und prüfe dann nochmals.',
+      choose: 'Gib für jede Grösse einen Wert ein oder wähle einen und prüfe dann nochmals.',
       ok: 'Alles richtig.', okWell: 'Alles richtig, gut gemacht! Vergleiche deinen Lösungsweg mit der ausführlichen Lösung oder starte eine neue Aufgabe.',
       notYet: (n) => `Noch nicht ganz (Versuch ${n}).`, tryAgain: ' Versuche es nochmals, oder nimm einen Tipp.', canReveal: ' Du kannst einen Tipp nehmen oder die ausführliche Lösung anschauen.',
-      correct: 'Richtig',
+      correct: 'Richtig', number: 'Gib eine Zahl ein',
+      notYetChoose: 'Noch nicht richtig. Wähle aus diesen Werten:', nowChoose: 'Wähle aus diesen Werten:',
+      close: (tol) => `Knapp daneben, nicht innerhalb von ${tol} %: Lies den Graphen genauer ab, mit der Sonde.`,
       whichCurve: 'Welche Kurve?', theCurves: 'Die Kurven:', curve: (k) => `Kurve ${k}`,
       whichCircuit: 'Welche Schaltung?', theCircuits: 'Die Schaltungen:', circuit: (k) => `Schaltung ${k}`,
       chooseCurve: 'Wähle eine Kurve und prüfe dann.', chooseCircuit: 'Wähle eine Schaltung und prüfe dann.',
@@ -117,6 +121,7 @@
     $('#title').innerHTML = `${ex.inverse ? ui().whichCircuit : ui().whichCurve} ${starsOf(ex.difficulty)}`;
     const res = M.NETS[ex.net].level >= 2; // what the options can have, not only the right one
     $('#prompt').innerHTML = ex.direct ? (ex.inverse ? ui().directInversePrompt(res) : ui().directPrompt(res, M.single(ex.net))) : ex.inverse ? ui().inversePrompt : ui().matchPrompt;
+    $('#fields').className = '';
     $('#fields').innerHTML = `<div id="ident"></div><p class="match-head">${ex.inverse ? ui().theCircuits : ui().theCurves}</p><div id="cands"></div><p id="cand-fb" class="ident-fb bad" aria-live="polite"></p>`;
   }
   // the questions and the options
@@ -178,7 +183,7 @@
     finish(); // the student moves on
     ex = exercise;
     prepare(ex);
-    st = { tries: 0, hints: 0, solved: false, revealed: false, checked: false, status: null, ident: {}, pick: null, wrong: null };
+    st = { tries: 0, hints: 0, solved: false, revealed: false, checked: false, status: null, ident: {}, pick: null, wrong: null, typed: {}, chosen: {}, choice: {} };
     const hash = `#${ex.id}`;
     if (location.hash !== hash) history.replaceState(null, '', hash);
     render();
@@ -237,24 +242,35 @@
     }
     const c = ex.c, ks = I.UNKNOWNS[c.kind];
     $('#title').innerHTML = `${circuitName(c)} ${starsOf(ex.difficulty)}`;
-    $('#prompt').innerHTML = L(`The graph shows the impedance <i>Z</i> of the circuit against the angular frequency <i>ω</i>. Find ${and(ks.map((k) => `<i>${k}</i>`))} from the features of the graph and choose the matching values.`,
-      `Der Graph zeigt die Impedanz <i>Z</i> der Schaltung gegen die Kreisfrequenz <i>ω</i>. Bestimme ${and(ks.map((k) => `<i>${k}</i>`))} aus den Merkmalen des Graphen und wähle die passenden Werte.`);
+    const tol = Math.round(100 * I.TOL);
+    $('#prompt').innerHTML = L(`The graph shows the impedance <i>Z</i> of the circuit against the angular frequency <i>ω</i>. Find ${and(ks.map((k) => `<i>${k}</i>`))} from the features of the graph and enter their values; within ${tol} % counts as right.`,
+      `Der Graph zeigt die Impedanz <i>Z</i> der Schaltung gegen die Kreisfrequenz <i>ω</i>. Bestimme ${and(ks.map((k) => `<i>${k}</i>`))} aus den Merkmalen des Graphen und gib ihre Werte ein; auf ${tol} % genau gilt als richtig.`);
     $('#schematic').className = 'fig'; // after a curve → circuit exercise, it held the curve
     $('#schematic').innerHTML = P.schematic(c);
     probe.reset();
     drawGraph();
+    $('#fields').className = 'fields';
     $('#fields').innerHTML = fieldsHtml(ex.fields);
     finishRender();
   }
-  // The answers: a row of options per field.
-  const fieldsHtml = (fields) => fields.map((f) => `
-      <div class="field" data-key="${f.key}">
+  // The answers: a number field per unknown, in a fixed unit (generator.js: ENTRY), read off the
+  // graph with the probe; once a value typed is wrong (st.chosen, until the next exercise), a row of
+  // four values to choose from instead. What is typed and chosen is kept (st.typed, st.choice), so
+  // that the fields survive a redraw.
+  const fieldsHtml = (fields) => fields.map((f) => (st.chosen[f.key] ? `
+      <div class="field choice" data-key="${f.key}">
         <span class="sym" id="sym-${f.key}"><i>${f.key}</i>&nbsp;=</span>
         <div class="opts" role="radiogroup" aria-labelledby="sym-${f.key}">${f.options.map((o, i) => `
-          <label><input type="radio" name="opt-${f.key}" value="${i}"><span>${o.label}</span></label>`).join('')}
+          <label><input type="radio" name="opt-${f.key}" value="${i}"${st.choice[f.key] === i ? ' checked' : ''}><span>${o.label}</span></label>`).join('')}
         </div>
         <span class="fb" aria-live="polite"></span>
-      </div>`).join('');
+      </div>` : `
+      <div class="field" data-key="${f.key}">
+        <label for="in-${f.key}" class="sym"><i>${f.key}</i>&nbsp;=</label>
+        <input id="in-${f.key}" type="text" inputmode="decimal" autocomplete="off" enterkeyhint="done" spellcheck="false" value="${(st.typed[f.key] || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;')}">
+        <span class="unit">${f.unit}</span>
+        <span class="fb" aria-live="polite"></span>
+      </div>`)).join('');
   function finishRender() {
     $('#hint-list').innerHTML = '';
     $('#hints').hidden = true;
@@ -282,19 +298,44 @@
     $('#check').hidden = !!ex.match && !ex.direct && !st.solved; // a matching exercise with questions is solved by them
   }
 
-  // Marks every choice; true if all are right, null if some are missing.
-  function feedback() {
-    let allOk = true, anyEmpty = false;
+  // Marks every field: { empty, wrong } counts the fields empty (no number typed, or no value chosen)
+  // and wrong (none of either: all right). Typed: right within TOL; a value of a typical mistake gets
+  // its explanation, one a little off a hint to read more carefully. switchTo (on Check, not on a
+  // redraw): a field typed wrong is from now on a choice of four values (st.chosen), which then shows
+  // what was wrong about the value typed until one is chosen.
+  function feedback(switchTo) {
+    const res = { empty: 0, wrong: 0 }, tol = Math.round(100 * I.TOL);
     for (const f of ex.fields) {
-      const row = document.querySelector(`.field[data-key="${f.key}"]`);
-      const sel = row.querySelector('input:checked');
-      const o = sel && f.options[Number(sel.value)];
-      if (!o) anyEmpty = true;
-      row.className = `field${o ? (o.ok ? ' ok' : ' bad') : ''}`;
-      row.querySelector('.fb').innerHTML = o ? (o.ok ? ui().correct : o.why) : '';
-      if (!o || !o.ok) allOk = false;
+      const row = document.querySelector(`.field[data-key="${f.key}"]`), fb = row.querySelector('.fb');
+      if (st.chosen[f.key]) {
+        const o = f.options[st.choice[f.key]];
+        if (!o) {
+          // not chosen yet: what was wrong about the value typed
+          const r = I.judge(f, I.parse(st.typed[f.key] || '')), why = r.trap ? r.trap.why : r.close ? ui().close(tol) : '';
+          res.empty++;
+          row.className = `field choice ${r.close ? 'warn' : 'bad'}`;
+          fb.innerHTML = why ? `${why} ${ui().notYetChoose}` : `${f.wrong} ${ui().nowChoose}`;
+          continue;
+        }
+        row.className = `field choice ${o.ok ? 'ok' : 'bad'}`;
+        fb.innerHTML = o.ok ? ui().correct : o.why;
+        if (!o.ok) res.wrong++;
+        continue;
+      }
+      const raw = st.typed[f.key] || '';
+      if (!raw.trim()) { res.empty++; row.className = 'field'; fb.innerHTML = ''; continue; }
+      const r = I.judge(f, I.parse(raw));
+      row.className = `field ${r.ok ? 'ok' : r.close ? 'warn' : 'bad'}`;
+      fb.innerHTML = r.ok ? ui().correct : r.nan ? ui().number : r.trap ? r.trap.why : r.close ? ui().close(tol) : f.wrong;
+      if (r.nan) res.empty++;
+      else if (!r.ok) { res.wrong++; if (switchTo) st.chosen[f.key] = true; }
     }
-    return allOk ? true : anyEmpty ? null : false;
+    return res;
+  }
+  // The fields drawn again (e.g. after some are switched to choices), with their feedback.
+  function redrawFields() {
+    $('#fields').innerHTML = fieldsHtml(ex.fields);
+    if (st.checked) feedback();
   }
 
   // The status line: null (none), 'fill', 'ok' or 'bad'.
@@ -321,11 +362,13 @@
       updateButtons();
       return;
     }
-    const r = feedback();
+    const r = feedback(true);
     st.checked = true;
-    if (r === null) { showStatus('fill'); return; }
+    if (r.wrong) redrawFields(); // the fields typed wrong are now choices
+    // a field empty or not chosen yet: not an attempt (unless another is wrong)
+    if (!r.wrong && r.empty) { showStatus('fill'); return; }
     st.tries++;
-    if (r) solved();
+    if (!r.wrong) solved();
     else showStatus('bad');
     updateButtons();
   }
@@ -373,6 +416,11 @@
     st.revealed = true;
     finish();
     if (ex.match) drawMatch(); // the questions shown as answered
+    else if (ex.fields.some((f) => st.chosen[f.key])) {
+      // a field switched to a choice: its right value chosen (and marked), the note to choose gone
+      ex.fields.forEach((f) => { if (st.chosen[f.key]) st.choice[f.key] = f.options.findIndex((o) => o.ok); });
+      redrawFields();
+    }
     showSolution();
     updateButtons();
     $('#solution').scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -563,7 +611,8 @@
     };
   }
   // R read off the curve of an RLC circuit, where it is marked (the minimum or the maximum, without
-  // a label), with the four options of the practice exercise.
+  // a label), with four values to choose from: the right one and those of typical mistakes
+  // (generator.js: choices; practice has the student type it).
   function annForR(an) {
     const has = (s, f) => s.ann.some(f);
     const s = an.steps.find((x) => has(x, (a) => (a.t === 'pt' || a.t === 'h') && /R/.test(a.label || '') && !/√2/.test(a.label || '')));
@@ -610,19 +659,16 @@
     if (topics) topics.relabel();
   }
 
-  // The same exercise in the other language, with the choices, feedback, hints and solution kept.
+  // The same exercise in the other language, with the answers, feedback, hints and solution kept.
   function switchLang() {
     applyStatic();
     showScore();
     if (ex) {
-      const fields = ex.fields || [];
-      const chosen = fields.map((f) => { const r = document.querySelector(`input[name="opt-${f.key}"]:checked`); return r ? r.value : null; });
-      const keep = st, status = st.status; // render() clears the status line
+      const keep = st, status = st.status; // render() clears the status line (the fields are kept in st)
       ex = again(ex);
       prepare(ex);
       render();
       st = keep;
-      ex.fields && ex.fields.forEach((f, k) => { if (chosen[k] != null) document.querySelector(`input[name="opt-${f.key}"][value="${chosen[k]}"]`).checked = true; });
       if (ex.match) drawMatch();
       else if (st.checked) feedback();
       showStatus(status);
@@ -710,12 +756,16 @@
     topics.mount($('#levels'));
     $('#new').addEventListener('click', fresh);
     $('#answers').addEventListener('submit', check);
-    // A new choice clears the feedback on the old one.
+    // A new choice clears the feedback on the old one, and so does typing a new value; both are kept.
     $('#fields').addEventListener('change', (evt) => {
-      if (evt.target.name === 'cand') { st.pick = Number(evt.target.value); document.querySelectorAll('.cand.bad').forEach((el) => el.classList.remove('bad')); $('#cand-fb').innerHTML = ''; return; }
+      if (evt.target.name === 'cand') { st.pick = Number(evt.target.value); document.querySelectorAll('.cand.bad').forEach((el) => el.classList.remove('bad')); $('#cand-fb').innerHTML = ''; }
+    });
+    $('#fields').addEventListener('input', (evt) => {
       const row = evt.target.closest('.field');
       if (!row) return;
-      row.className = 'field';
+      if (evt.target.type === 'radio') st.choice[row.dataset.key] = Number(evt.target.value);
+      else st.typed[row.dataset.key] = evt.target.value;
+      row.className = row.classList.contains('choice') ? 'field choice' : 'field';
       row.querySelector('.fb').textContent = '';
     });
     // the questions of a matching exercise: a right answer fades the options that do not fit; once

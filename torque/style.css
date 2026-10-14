@@ -78,7 +78,7 @@ svg .dimline.hl { stroke: var(--arm); stroke-width: 1.4; }
 /* a choice only (a ranking, the error in a sketch): no "first identify, then calculate" */
 #comps-part.only > :is(h3, .note) { display: none; }
 
-/* the ruler (forces along the grid): a segment between two grid points, with its length */
+/* the ruler (the situations on the grid): a segment between two grid points, with its length */
 .ruler-bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 6px 10px; margin: -6px 0 14px; }
 .ruler-bar button[aria-pressed="true"] { background: var(--arm); border-color: var(--arm); color: #fff; }
 .ruler-bar .note { min-height: 1.4em; }

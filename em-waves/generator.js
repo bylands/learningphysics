@@ -1,9 +1,11 @@
 // Exercises and worked examples from the exercise types (see scenarios.js).
-// practiceOf(type, seed) gives { scenario, difficulty, title, text, fields, figure(view),
+// practiceOf(type, seed, o) gives { scenario, difficulty, title, text, fields, figure(view),
 // solutionFigure(), hints, solution, results, p, v }: a number field has its value in its unit and
 // traps [{ value, why, nudge, flag }] (the answers under typical wrong ideas), a choice field its right
-// answer. quiz(exercise, seed) gives a multiple-choice question about one of its fields (for the
-// check), tutorial(lesson) the tutor's frames.
+// answer, a ranking its order (value, and answer as shown). With o.drag, a type that has one takes
+// its variant for practice by drag and drop (scn.drag: text, fields with a ranking, steps), which
+// the check cannot ask. quiz(exercise, seed) gives a multiple-choice question about one of its
+// fields (for the check), tutorial(lesson) the tutor's frames.
 (function (root) {
   'use strict';
 
@@ -15,11 +17,13 @@
 
   // the right answer of a field, as shown in the results
   function answerHtml(f) {
+    if (f.type === 'rank') return f.answer;
     if (f.type === 'num') return `$${f.sym} = ${tq(f.value * (EW.UNITS[f.unit] || [1])[0], f.unit)}$`;
     return (f.options.find((o) => o[0] === f.value) || [, ''])[1];
   }
 
-  function exercise(scn, p) {
+  function exercise(scn, p, o = {}) {
+    if (o.drag && scn.drag) scn = { ...scn, ...scn.drag };
     const v = scn.solve(p);
     const why = (flag) => (scn.why && scn.why[flag] ? scn.why[flag]() : '');
     // the nudge after a wrong answer in practice, where the explanation (for the check) would give the answer away
@@ -55,9 +59,9 @@
     for (let k = 0; k < 20000; k++) { const p = scn.make(r); if (p) return p; }
     throw new Error(`no parameters for ${scn.id}`);
   }
-  function practiceOf(scenario, seed) {
+  function practiceOf(scenario, seed, o = {}) {
     const scn = byId(scenario);
-    return { ...exercise(scn, make(scn, rng(seed))), seed };
+    return { ...exercise(scn, make(scn, rng(seed)), o), seed };
   }
 
   // A multiple-choice question about one field of an exercise: a choice with four options as it

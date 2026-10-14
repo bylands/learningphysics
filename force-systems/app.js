@@ -21,8 +21,10 @@
       forcesHead: '1 · Forces on each box', compsHead: (n) => `${n} · Components`, compsNote: 'Choose the right expression for each component; its value is then given.',
       eqsHead: (n) => `${n} · Equations`, eqsNote: 'Choose the right equation for each system and axis. The worked solution then solves them.',
       eqsNoteNums: 'Choose the right equation for each system and axis.',
-      numsHead: (n) => `${n} · Calculation`, numsNote: 'Work it out in your head with the values given (g = 10 m/s²), then choose the result.',
-      idFirst: 'First choose the right expression, equation or result for each part.',
+      numsHead: (n) => `${n} · Calculation`, numsNote: 'Work it out in your head with the values given (g = 10 m/s²), then enter the result.',
+      idFirst: 'First choose the right expression or equation for each part.', fill: 'Enter the result, then check again.',
+      number: 'Enter a number', correct: 'Correct', sign: 'Give the size (a positive number)', close: 'Close: check your calculation', wrong: 'Not correct',
+      choose: 'Not right yet. Choose the result from these values:', pick: 'Choose one of the values for each result, then check again.',
       forcesNote: (n, who) => (n > 1 ? 'Tick every force that acts on each box. Each force you tick appears in the drawing.' : `Tick every force that acts on ${who}. Each force you tick appears in the drawing.`),
       tableOk: '✓ The forces are right.', tableBad: (n) => `✗ ${n === 1 ? 'One entry is' : `${n} entries are`} not right yet.`,
       ok: 'All correct.', okWell: 'All correct, well done! Compare your approach with the worked solution, or start a new exercise.',
@@ -39,8 +41,10 @@
       forcesHead: '1 · Kräfte auf jede Kiste', compsHead: (n) => `${n} · Komponenten`, compsNote: 'Wähle für jede Komponente den richtigen Ausdruck; ihr Wert wird dann angegeben.',
       eqsHead: (n) => `${n} · Gleichungen`, eqsNote: 'Wähle für jedes System und jede Achse die richtige Gleichung. Die ausführliche Lösung löst sie dann auf.',
       eqsNoteNums: 'Wähle für jedes System und jede Achse die richtige Gleichung.',
-      numsHead: (n) => `${n} · Rechnung`, numsNote: 'Rechne im Kopf mit den gegebenen Werten (g = 10 m/s²) und wähle das Resultat.',
-      idFirst: 'Wähle zuerst für jeden Teil den richtigen Ausdruck, die richtige Gleichung bzw. das richtige Resultat.',
+      numsHead: (n) => `${n} · Rechnung`, numsNote: 'Rechne im Kopf mit den gegebenen Werten (g = 10 m/s²) und gib das Resultat ein.',
+      idFirst: 'Wähle zuerst für jeden Teil den richtigen Ausdruck bzw. die richtige Gleichung.', fill: 'Gib das Resultat ein, dann prüfe nochmals.',
+      number: 'Gib eine Zahl ein', correct: 'Richtig', sign: 'Gib den Betrag an (eine positive Zahl)', close: 'Knapp daneben: Prüfe deine Rechnung', wrong: 'Nicht richtig',
+      choose: 'Noch nicht richtig. Wähle das Resultat aus diesen Werten:', pick: 'Wähle für jedes Resultat einen der Werte und prüfe dann nochmals.',
       forcesNote: (n, who) => (n > 1 ? 'Kreuze jede Kraft an, die auf die jeweilige Kiste wirkt. Jede angekreuzte Kraft erscheint in der Zeichnung.' : `Kreuze jede Kraft an, die auf ${who} wirkt. Jede angekreuzte Kraft erscheint in der Zeichnung.`),
       tableOk: '✓ Die Kräfte stimmen.', tableBad: (n) => `✗ ${n === 1 ? 'Ein Feld stimmt' : `${n} Felder stimmen`} noch nicht.`,
       ok: 'Alles richtig.', okWell: 'Alles richtig, gut gemacht! Vergleiche deinen Lösungsweg mit der ausführlichen Lösung oder starte eine neue Aufgabe.',
@@ -103,7 +107,7 @@
   function open(exercise) {
     finish(); // the student moves on
     ex = exercise;
-    st = { tries: 0, hints: 0, solved: false, revealed: false, checked: false, ident: {} };
+    st = { tries: 0, hints: 0, solved: false, revealed: false, checked: false, ident: {}, nums: {}, chosen: {} };
     const hash = `#${ex.id}`;
     if (location.hash !== hash) history.replaceState(null, '', hash);
     render();
@@ -172,15 +176,15 @@
 
   // The components to identify (angled forces, see identify.js), with values the app gives (with
   // the sine or cosine the text gives, c.value), the equations to choose (equations.js) and the
-  // results to work out (a choice of values, generator.js). Find the error is a choice only: a
-  // right choice solves it.
+  // results to work out, typed in and after a wrong value chosen (generator.js: numItem). Find the
+  // error is a choice only: a right choice solves it.
   const compItems = () => ex.comps.map((c) => ({ ...Identify.trig({ ...c, alpha: ex.p.alpha, num: (x) => FS.num(x), unit: '\\mathrm{N}' }), ...(c.value ? { value: c.value } : {}) }));
   // while the exercise is open, a wrong choice shows its nudge (where there is one) instead of its why
   const nudged = (items) => (st && (st.solved || st.revealed) ? items : items.map((it) => ({ ...it, options: it.options.map((o) => (o.nudge ? { ...o, why: o.nudge } : o)) })));
   const eqItems = () => nudged(ex.eqs);
   const numItems = () => nudged(ex.nums || []);
   const choiceOnly = () => !ex.forces;
-  const allIdentified = () => Identify.ok(compItems(), st.ident) && Identify.ok(eqItems(), st.ident) && Identify.ok(numItems(), st.ident);
+  const allIdentified = () => Identify.ok(compItems(), st.ident) && Identify.ok(eqItems(), st.ident);
   // the forces of the components identified so far (drawn in), all once the solution is shown
   const identified = () => ex.comps.filter((c) => (st && st.revealed) || (st && Identify.right(compItems().find((it) => it.key === c.key), st.ident))).map((c) => c.fig);
   function showComps() {
@@ -196,10 +200,35 @@
     $('#eqs').innerHTML = Identify.html(eqItems(), state, done);
     $('#nums-part').hidden = !numItems().length;
     $('#nums-head').textContent = ui().numsHead(m + (ex.eqs.length ? 1 : 0));
-    $('#nums').innerHTML = Identify.html(numItems(), state, done);
+    showNums();
     math($('#comps'));
     math($('#eqs'));
+  }
+  // The results to work out: a number field each, as in the sibling apps (the value typed kept in
+  // st.nums, so that the fields survive a redraw). One typed wrong is chosen from four values instead
+  // (st.chosen, until the next exercise; see numFeedback), with what was wrong about the value typed
+  // above them until the right one is chosen. Once the solution is shown, the calculation below.
+  function showNums() {
+    const items = numItems(), done = st && st.revealed, state = st ? st.ident : {};
+    const chosen = (n) => st && st.chosen[n.key];
+    $('#nums').innerHTML = `<div class="fields">${items.map((n) => (chosen(n) ? Identify.html([{ ...n, what: `<span class="what">${n.what}</span> $${n.sym}$${
+      done || Identify.right(n, state) ? '' : `<span class="num-why">${typedWhy(n)}</span>`}` }], state, done) : `
+      <div class="field" data-key="${n.key}">
+        <label for="in-${n.key}" class="sym"><span class="what">${n.what}</span> $${n.sym}$&nbsp;=</label>
+        <input id="in-${n.key}" type="text" inputmode="decimal" autocomplete="off" enterkeyhint="done" spellcheck="false">
+        <span class="unit">${FS.UNITS[n.unit]}</span>
+        <span class="fb" aria-live="polite"></span>
+      </div>`)).join('')}</div>${done ? items.filter((n) => !chosen(n)).map((n) => `<p class="ident-fb ok">${n.value}</p>`).join('') : ''}`;
+    items.forEach((n) => { if (!chosen(n)) $(`#in-${n.key}`).value = (st && st.nums[n.key]) || ''; });
+    if (st && st.checked) numFeedback();
     math($('#nums'));
+  }
+  // What was wrong about the value typed for result n (that of a typical mistake, close, or the
+  // wrong sign), and that the result is now to be chosen.
+  function typedWhy(n) {
+    const r = window.Forces.judge(n, window.Forces.parse(st.nums[n.key] || '')), t = r.trap;
+    const why = t ? (st.solved || st.revealed ? t.why : t.nudge || t.why) : r.sign ? ui().sign : r.close ? ui().close : '';
+    return `${why ? `${why} ` : ''}${ui().choose}`;
   }
 
   // solved now, or solved before (its solution can be looked at again)
@@ -246,12 +275,37 @@
     return !wrongCells;
   }
 
-  // The status line: null (none), 'ident', 'ok' or 'bad'.
+  // Marks the results typed: { empty, wrong, pick } counts the results empty (or no number), typed
+  // wrong and to be chosen still (none of each: all right). A value of a typical mistake gets its
+  // nudge while the exercise is open, its explanation once it is solved or the solution shown.
+  // note (on Check, not on a redraw): the slip is noted, and a result typed wrong is from now on
+  // chosen from four values (st.chosen; showNums draws them). A trap chosen after it was typed is
+  // not counted twice: slips.js counts an idea once per exercise.
+  function numFeedback(note) {
+    const res = { empty: 0, wrong: 0, pick: 0 };
+    numItems().forEach((n) => {
+      if (st.chosen[n.key]) { if (!Identify.right(n, st.ident)) res.pick++; return; }
+      const row = $('#nums').querySelector(`.field[data-key="${n.key}"]`), raw = st.nums[n.key] || '';
+      if (!raw.trim()) { res.empty++; row.className = 'field'; row.querySelector('.fb').textContent = ''; return; }
+      const r = window.Forces.judge(n, window.Forces.parse(raw)), t = r.trap;
+      row.className = `field ${r.ok ? 'ok' : r.sign || r.close ? 'warn' : 'bad'}`;
+      row.querySelector('.fb').textContent = r.ok ? ui().correct : r.nan ? ui().number : t ? (st.solved || st.revealed ? t.why : t.nudge || t.why)
+        : r.sign ? ui().sign : r.close ? ui().close : ui().wrong;
+      if (r.nan) res.empty++;
+      else if (!r.ok) {
+        res.wrong++;
+        if (note) { if (t && t.flag && !st.revealed) slips.note(t.flag, ex.id); st.chosen[n.key] = true; }
+      }
+    });
+    return res;
+  }
+
+  // The status line: null (none), 'ident', 'fill', 'pick', 'ok' or 'bad'.
   function showStatus(kind) {
     const el = $('#status');
     st.status = kind;
     el.className = 'status' + (kind === 'ok' ? ' ok' : kind === 'bad' ? ' bad' : '');
-    el.textContent = !kind ? '' : kind === 'ident' ? ui().idFirst
+    el.textContent = !kind ? '' : kind === 'ident' ? ui().idFirst : kind === 'fill' ? ui().fill : kind === 'pick' ? ui().pick
       : kind === 'ok' ? (st.revealed ? ui().ok : ui().okWell) + (st.advance ? ` ${st.advance}` : '')
         : ui().notYet(st.tries) + (st.tries < MAX_TRIES && !canReveal() ? ui().tryAgain : ui().canReveal);
   }
@@ -260,10 +314,13 @@
     evt.preventDefault();
     if (st.solved) { fresh(); return; } // the button reads New exercise
     if (!allIdentified()) { showStatus('ident'); return; }
-    const r = feedback();
+    const r = feedback(), n = numFeedback(true);
     st.checked = true;
+    if (n.wrong) showNums(); // the results typed wrong are now chosen
+    // a result left empty, or one still to be chosen: not an attempt (unless one is typed wrong)
+    if (!n.wrong && (n.empty || n.pick)) { showStatus(n.empty ? 'fill' : 'pick'); return; }
     st.tries++;
-    if (r) {
+    if (r && !n.wrong) {
       if (!st.solved && !st.revealed) {
         const s = stored('fs-score', { solved: 0, clean: 0 });
         s.solved++;
@@ -415,7 +472,18 @@
     };
     Identify.attach($('#comps'), compItems, () => st.ident, picked($('#comps')));
     Identify.attach($('#eqs'), eqItems, () => st.ident, picked($('#eqs')));
-    Identify.attach($('#nums'), numItems, () => st.ident, picked($('#nums')));
+    // a result chosen (once typed wrong): as a choice above, then drawn again with its label (and,
+    // until the right one is chosen, what was wrong about the value typed)
+    const pickedNum = picked($('#nums'));
+    Identify.attach($('#nums'), numItems, () => st.ident, (right, it) => { pickedNum(right, it); showNums(); });
+    // a result typed: kept, and its feedback cleared until the next check
+    $('#nums').addEventListener('input', (evt) => {
+      const row = evt.target.closest('.field');
+      if (!row) return;
+      st.nums[row.dataset.key] = evt.target.value;
+      row.className = 'field';
+      row.querySelector('.fb').textContent = '';
+    });
     Lang.wire(switchLang);
     $('#new').addEventListener('click', fresh);
     $('#answers').addEventListener('submit', check);

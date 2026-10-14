@@ -99,3 +99,8 @@ svg .force.dim { opacity: 0.25; }
 #eqs-part.only > :is(h3, .note) { display: none; }
 /* a student's attempt, step by step */
 .attempt li { margin: 4px 0; }
+/* a result typed wrong, now chosen from four values (app.js: showNums): across the grid of fields,
+   with what was wrong about the value typed under its label */
+#nums .fields > .ident { grid-column: 1 / -1; margin: 0; }
+#nums .ident .what { color: var(--muted); font-size: 0.9rem; margin-right: 4px; }
+.num-why { display: block; margin-top: 4px; font-size: 0.9rem; color: var(--warn); }

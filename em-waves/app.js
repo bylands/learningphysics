@@ -130,10 +130,12 @@
     return { t: 0, s: 0 };
   }
 
-  // The answer fields: a number (input in-key) or a choice (radio buttons named in-key).
+  // The answer fields: a number (input in-key), a choice (radio buttons named in-key) or a ranking
+  // (cards dragged into boxes, questions.js).
   const radios = (f, list) => `<span class="choices levels small${f.pics ? ' pics' : ''}${f.stack ? ' stack' : ''}" role="radiogroup" aria-label="${f.what.replace(/<[^>]*>|\$/g, '')}">${list
     .map(([v, html, title]) => `<label><input type="radio" name="in-${f.key}" value="${v}"><span${title ? ` title="${title}" aria-label="${title}"` : ''}>${html}</span></label>`).join('')}</span>`;
   function fieldHtml(f) {
+    if (f.type === 'rank') return Questions.html(f);
     const fb = '<span class="fb" aria-live="polite"></span>';
     if (f.type === 'num') {
       return `<div class="field" data-key="${f.key}">
@@ -147,18 +149,22 @@
     return `<div class="field choice${f.pics || f.stack ? ' wide' : ''}" data-key="${f.key}"${f.after ? ' hidden' : ''}><span class="what">${f.what}</span>${radios(f, list)}${fb}</div>`;
   }
   function valueOf(f) {
+    if (f.type === 'rank') return Questions.state(f);
     if (f.type === 'num') return $(`#in-${f.key}`).value;
     const r = document.querySelector(`input[name="in-${f.key}"]:checked`);
     return r ? r.value : null;
   }
   function setValue(f, val) {
     if (val == null) return;
-    if (f.type === 'num') $(`#in-${f.key}`).value = val;
+    if (f.type === 'rank') Questions.setState(f, val);
+    else if (f.type === 'num') $(`#in-${f.key}`).value = val;
     else { const r = document.querySelector(`input[name="in-${f.key}"][value="${val}"]`); if (r) r.checked = true; }
   }
-  const empty = (f, val) => (f.type === 'num' ? !String(val).trim() : val == null);
+  const empty = (f, val) => (f.type === 'num' ? !String(val).trim() : f.type === 'rank' ? val.includes(null) : val == null);
+  // { cls, msg }; a ranking's message may hold formulas (html), and it marks its cards
   function judge(f, val) {
     if (f.type === 'num') return judgeNum(parse(val), f);
+    if (f.type === 'rank') { const r = f.judge(val); return { cls: r.ok ? 'ok' : 'bad', msg: r.msg, html: true, ok: r.ok ? val.map((v, i) => i) : [], bad: r.bad }; }
     if (val === f.value) return { cls: 'ok', msg: ui().correct };
     const o = (f.options || []).find((x) => x[0] === val);
     return { cls: 'bad', msg: (o && (o[4] || o[2])) || ui().wrong };
@@ -214,10 +220,12 @@
     let allOk = true, anyEmpty = false;
     ex.fields.filter(shown).forEach((f) => {
       const row = $('#fields').querySelector(`.field[data-key="${f.key}"]`), base = row.className.replace(/ (ok|warn|bad)\b/g, ''), val = valueOf(f);
+      if (f.type === 'rank') Questions.mark(f);
       if (empty(f, val)) { anyEmpty = true; allOk = false; row.className = base; row.querySelector('.fb').textContent = ''; return; }
       const r = judge(f, val);
       row.className = `${base} ${r.cls}`;
-      row.querySelector('.fb').textContent = r.msg;
+      if (r.html) { row.querySelector('.fb').innerHTML = r.msg; math(row.querySelector('.fb')); } else row.querySelector('.fb').textContent = r.msg;
+      if (f.type === 'rank') Questions.mark(f, r.ok, r.bad);
       if (r.cls !== 'ok') allOk = false;
     });
     if (allOk) {
@@ -374,7 +382,7 @@
     document.querySelector('main').insertAdjacentHTML('beforeend', Check.HTML);
     topics = window.Topics.create({
       app: PRACTICE, topics: topicList(),
-      make: (type, seed) => practiceOf(type, seed), typeOf,
+      make: (type, seed) => practiceOf(type, seed, { drag: true }), typeOf,
       onChange: fresh,
       tutor: (i) => { setMode('tutor'); tutor.open(i); },
     });
@@ -384,7 +392,10 @@
     $('#new').addEventListener('click', fresh);
     $('#answers').addEventListener('submit', check);
     // when every field shown is a choice (yes or no, which graph, …), a click checks at once
+    // a ranking (questions.js) is checked with the button: a moved card only clears its marks
+    Questions.attach($('#fields'));
     $('#answers').addEventListener('change', (e) => {
+      if (e.target.classList.contains('chip')) { Questions.clearAt(e.target); return; }
       if (e.target.type !== 'radio' || st.solved || !ex.fields.filter(shown).every((f) => f.type !== 'num')) return;
       check({ preventDefault() {} });
     });

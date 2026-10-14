@@ -18,6 +18,7 @@
       fill: 'Answer every question, then check.', okWell: 'All correct, well done!',
       notYet: (n) => `Not quite yet (attempt ${n}).`, tryAgain: ' Try again, or take a hint.', canReveal: ' You can take a hint or look at the solution.',
       correct: 'Correct', notThis: 'Not this one: check your reasoning, or take a hint.', notAll: 'Not all the answers that fit are chosen yet.', stmtsWrong: (n) => (n === 1 ? 'One statement is judged wrong.' : `${n} statements are judged wrong.`), missed: 'This one fits too:', shown: 'The right answers are marked.',
+      observe: 'Watch it happen',
     },
     de: {
       title: 'Feldlinien und Äquipotentiallinien', mode: 'Modus', difficulty: 'Schwierigkeit', example: 'Beispiel',
@@ -30,6 +31,7 @@
       fill: 'Beantworte jede Frage und prüfe dann.', okWell: 'Alles richtig, gut gemacht!',
       notYet: (n) => `Noch nicht ganz (Versuch ${n}).`, tryAgain: ' Versuche es nochmals, oder nimm einen Tipp.', canReveal: ' Du kannst einen Tipp nehmen oder die Lösung anschauen.',
       correct: 'Richtig', notThis: 'Das stimmt nicht: Überprüfe deine Überlegung, oder nimm einen Hinweis.', notAll: 'Noch sind nicht alle passenden Antworten gewählt.', stmtsWrong: (n) => (n === 1 ? 'Eine Aussage ist falsch beurteilt.' : `${n} Aussagen sind falsch beurteilt.`), missed: 'Auch diese passt:', shown: 'Die richtigen Antworten sind markiert.',
+      observe: 'Schau zu, was passiert',
     },
   };
   const ui = () => UI[Lang.get()];
@@ -133,7 +135,17 @@
     $('#hints').hidden = true;
     $('#solution').hidden = true;
     showStatus(null);
+    showObserve();
     updateButtons();
+  }
+  // Predict, then observe: once a dipole exercise is answered (or its solution shown), the animation
+  // of its own dipole (ex.anim, anim.js) under it. Practice only: the check shows no animations.
+  function showObserve() {
+    const el = $('#observe'), a = ex.anim, on = !!(a && st && (st.solved || st.revealed));
+    el.hidden = !on;
+    el.innerHTML = on ? `<h3>${ui().observe}</h3><p class="note">${a.note}</p>${window.DipoleAnim.html(a.kind, { ...a.o, label: a.note })}` : '';
+    if (on) window.DipoleAnim.start(el);
+    return on;
   }
   const canReveal = () => st.solved || Practice.solvedBefore(PRACTICE, ex.id) || st.tries >= maxTries() || st.hints >= ex.hints.length;
   function updateButtons() {
@@ -179,6 +191,7 @@
     st.advance = topics.solved(st, ex);
     document.querySelectorAll('#fields input').forEach((x) => { x.disabled = true; });
     showStatus('ok');
+    if (showObserve()) $('#observe').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }
   function showHints() { $('#hint-list').innerHTML = ex.hints.slice(0, st.hints).map((h) => `<li>${h}</li>`).join(''); $('#hints').hidden = !st.hints; }
   function hint() {
@@ -208,6 +221,7 @@
     finish();
     markRight();
     showStatus('shown');
+    showObserve();
     showSolution();
     updateButtons();
     $('#solution').scrollIntoView({ behavior: 'smooth', block: 'start' });

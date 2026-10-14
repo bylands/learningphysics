@@ -9,7 +9,8 @@
 // It also checks the formula parser, typed answers (among them the worksheet's: A √(2/3 g h),
 // B 5/9 h, C √(1/2 g s)), the tutor's examples, and the questions of the check and of practice
 // (concepts.js): every objective's kinds give four options, one of them right, each wrong one
-// explained.
+// explained; a question with a drawing of a situation brings that situation for practice's
+// animation (motion).
 'use strict';
 
 ['../lang.js', '../core.js', '../expr.js', '../draw.js', '../scenarios.js', '../generator.js', '../motion.js', '../lessons.js', '../concepts.js'].forEach((f) => require(f));
@@ -242,6 +243,7 @@ log(`${anims} animations checked`);
 // ---------------------------------------------------------------- the check and the choice exercises
 // Every objective has kinds; every kind gives four options, exactly one right, all different, the
 // wrong ones explained and their wrong ideas known; no undefined values; and its practice stage.
+// As a practice exercise, it brings the situation drawn for the animation (and only then).
 const C = Concepts.CHECK, kinds = new Set(C.objectives.flatMap((o) => o.kinds));
 const stageTypes = new Set(Lessons.EXAMPLES.flatMap((e) => e.practice.flatMap((st) => st.types)));
 C.objectives.forEach((o) => {
@@ -278,6 +280,14 @@ for (const lang of EC.LANGS) {
       if (!e.hints.length) fail(`${id}: no hints`);
       e.hints.forEach((h) => checkText(id, 'hint', h));
       if (e.key !== Concepts.exercise(kind, seed).key) fail(`${id}: not the same exercise again`);
+      // practice's animation after the answer: the situation drawn, wherever one is drawn
+      if (!!e.motion !== !!e.figure()) fail(`${id}: ${e.motion ? 'an animation without a drawing' : 'a drawing without an animation'}`);
+      if (e.motion) {
+        if (e.motion.figure({}) !== e.figure().replace(/ hl"/g, '"')) fail(`${id}: the animation's situation is not the one drawn`);
+        const an = Motion.create(e.motion);
+        if (an.states.length !== e.motion.table.length) fail(`${id}: ${an.states.length} animated states, ${e.motion.table.length} in the table`);
+        checkText(id, 'animation', an.frame(an.duration / 2).svg);
+      }
     }
   }
 }
