@@ -165,7 +165,7 @@ MAX_EXAMPLES, MAX_STAGES, MAX_OBJECTIVES = 100, 300, 50  # per app in a set
 # names a set cannot have, besides the apps and what is in the web root: the services and paths
 # nginx serves itself, and some kept free
 RESERVED = {"admin", "api", "apps", "crosswords", "electric-circuits", "hub", "hub-admin", "hub-data", "index", "katex", "texercises",
-            "lang", "millionaire", "objectives", "physicist", "privacy", "set", "sets", "static", "www"}
+            "lang", "millionaire", "objectives", "privacy", "set", "sets", "static", "wwtbap", "www"}
 MAX_UPLOAD = 64 * 1024 * 1024  # a TeXercises export
 MAX_REVIEW_RENDER = 40  # exercises the review renders at once
 # exercise sheets: their ids, the secret of a shared one's online version (in its address), limits
@@ -2149,9 +2149,9 @@ COMMON_SECTIONS = """
       <p class="lead">The games for the class, each a service of its own on this site.</p>
       <ul class="games">
         <li class="card">
-          <h2><a href="/physicist/" target="_blank" rel="noopener">Who Wants to Be a Physicist? ↗</a></h2>
+          <h2><a href="/wwtbap/" target="_blank" rel="noopener">Who Wants to Be a Physicist? ↗</a></h2>
           <p>A quiz in the style of <i>Who Wants to Be a Millionaire</i>: 15 physics questions of rising difficulty, a ladder of famous physicists and three lifelines. As a classroom game, students join on their phones (QR code or room code), a Fastest Finger First round picks each contestant, and Ask the Audience can be a live class vote. A quick game starts without a lobby.</p>
-          <p class="note">learningphysics.ch/physicist/ · you're logged in there with this account; students join on their phones without one</p>
+          <p class="note">learningphysics.ch/wwtbap/ · you're logged in there with this account; students join on their phones without one</p>
         </li>
         <li class="card">
           <h2><a href="/crosswords/" target="_blank" rel="noopener">Crossword generator ↗</a></h2>

@@ -29,7 +29,7 @@ The admin panel's login also works in the crossword generator (`/crosswords/`, i
 
 The nginx site is kept in `deploy/nginx/`:
 
-- `learningphysics.conf`: the site. It serves every folder in the web root, so a new app needs no change here. It proxies the services (live quiz, crosswords, Who Wants to Be a Physicist? at /physicist/ with a redirect from its old /millionaire/, admin panel and its TeXercises review at /texercises/), and redirects www.learningphysics.ch and the old domain teachingphysics.ch.
+- `learningphysics.conf`: the site. It serves every folder in the web root, so a new app needs no change here. It proxies the services (live quiz, crosswords, Who Wants to Be a Physicist? at /wwtbap/ with a redirect from its old /millionaire/, admin panel and its TeXercises review at /texercises/), and redirects www.learningphysics.ch and the old domain teachingphysics.ch.
   Any other address that looks like a name, with a teacher's three-letter identifier before it or not (learningphysics.ch/abc/3a-elektro, or learningphysics.ch/3a-elektro: the superuser's), gets the hub page, which shows the teacher's set of that name (made in the admin panel, saved as `hub-data/sets.json`, served as `/sets.json`).
 - `gzip.conf`: compression of CSS, JS, JSON and SVG for all sites.
 
