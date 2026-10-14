@@ -4,15 +4,15 @@
 //   animated svg with its scene, the dipole and its force arrows, a button to replay, and no
 //   undefined, NaN and the like,
 // - the physics, step by step (simulate): in the uniform field the net force is zero, the dipole
-//   ends along the field (within a few degrees) with its centre where it was, and it has settled
-//   (hardly turning any more); near the point charge it first turns round, ends closer to the
+//   keeps its centre where it was and, with nothing to slow it, still swings as far as it started
+//   on either side of the field direction; near the point charge it first turns round, ends closer to the
 //   charge than it started, with its negative end nearer the charge, held short of touching it,
 // - every state on the way is finite,
 // - the observe step of practice: for many generated dipole exercises (dipole-uniform, dipole-torque,
 //   dipole-point) the animation starts as the exercise's figure (its field, angle, charge and ends),
 //   keeps its scene through data-scene, and moves as the exercise's right answer says: in a uniform
-//   field it turns the way answered (or, in an equilibrium, holds until tapped, then settles back or
-//   turns round), ends along the field with its centre held; near a charge it is first pulled in or
+//   field it turns the way answered and swings through the field direction (or, in an equilibrium,
+//   holds until tapped, then swings only a little or turns right round), its centre held; near a charge it is first pulled in or
 //   pushed away as answered, and in the end (free to turn) attracted, the end of the opposite sign
 //   nearer.
 'use strict';
@@ -51,14 +51,16 @@ for (const kind of ['uniform', 'point']) {
   let s = A.simulate(kind, {}, 0);
   for (let i = 0; i < sc.T * 240; i++) { s = A.step(sc, s); if (!Number.isFinite(s.x + s.y + s.th + s.vx + s.vy + s.w)) { fail(`${kind}: not finite at ${s.t}`); break; } }
 }
-// uniform: no net force, ends along the field, centre unmoved, settled
+// uniform: no net force, centre unmoved, and no friction: it keeps swinging as far as it started
 for (const angle of [65, 30, 120, -70]) {
   const sc = A.scene('uniform', { angle }), { Fp, Fn } = A.forces(sc, A.simulate(sc, null, 0));
   if (Math.hypot(Fp[0] + Fn[0], Fp[1] + Fn[1]) > 1e-12) fail(`uniform ${angle}°: a net force`);
   const s = A.simulate('uniform', { angle });
-  if (Math.abs(deg(s.th)) > 3) fail(`uniform ${angle}°: ends at ${deg(s.th).toFixed(1)}°, not along the field`);
   if (Math.hypot(s.x, s.y) > 1e-9) fail(`uniform ${angle}°: the centre moved`);
-  if (Math.abs(s.w) > 0.1) fail(`uniform ${angle}°: still turning (ω = ${s.w.toFixed(2)})`);
+  // over the last four seconds shown, it still reaches (nearly) its starting angle on both sides
+  let hi = -Infinity, lo = Infinity, u = A.simulate('uniform', { angle }, sc.T - 4);
+  for (let i = 0; i < 960; i++) { u = A.step(sc, u); hi = Math.max(hi, deg(u.th)); lo = Math.min(lo, deg(u.th)); }
+  if (Math.abs(hi - Math.abs(angle)) > 2 || Math.abs(-lo - Math.abs(angle)) > 2) fail(`uniform ${angle}°: swings between ${lo.toFixed(1)}° and ${hi.toFixed(1)}°, not ±${Math.abs(angle)}°`);
   // it swings past the field direction (a pendulum), not creeping in
   let over = false, t = A.simulate(sc, null, 0);
   for (let i = 0; i < 240 * 3; i++) { t = A.step(sc, t); if (Math.sign(deg(t.th)) === -Math.sign(angle) && Math.abs(deg(t.th)) > 5) over = true; }
@@ -110,15 +112,23 @@ for (const lang of ['de', 'en']) {
       const a0 = type === 'dipole-uniform' ? Math.atan2(Ed[1], Ed[0]) + rad(e.p.ang) : rad(e.p.a1);
       if (Math.hypot(sc.c.E[0] - Ed[0], sc.c.E[1] - Ed[1]) > 1e-9) fail(`${tag}: the field ${sc.c.E}, not ${Ed}`);
       if (Math.hypot(e0.p[0] - 0.7 * Math.cos(a0), e0.p[1] - 0.7 * Math.sin(a0)) > 1e-6) fail(`${tag}: does not start as in the figure`);
-      // the end: along the field, the centre held, at rest
-      const ue = Math.atan2(Ed[1], Ed[0]);
-      if (Math.abs(deg(end.th - ue)) > 3) fail(`${tag}: ends at ${deg(end.th - ue).toFixed(1)}° from the field`);
-      if (Math.hypot(end.x, end.y) > 1e-9 || Math.abs(end.w) > 0.1) fail(`${tag}: the centre moved, or still turning`);
+      // on the way (no friction, so it never settles): the centre held, and it swings through the field
+      // direction; how far it gets from where it started, at most
+      const ue = Math.atan2(Ed[1], Ed[0]), wrap = (x) => Math.atan2(Math.sin(x), Math.cos(x));
+      let u = s0, held = true, past = false, far = 0;
+      while (u.t < sc.T) {
+        u = A.step(sc, u);
+        if (Math.hypot(u.x, u.y) > 1e-9) held = false;
+        if (Math.abs(deg(wrap(u.th - ue))) < 2) past = true;
+        far = Math.max(far, Math.abs(turnOf(s0, u)));
+      }
+      if (!held) fail(`${tag}: the centre moved`);
       const right = type === 'dipole-uniform' ? rightOf(e, 'T') : 'turns clockwise';
       if (/turns (anti)?clockwise/.test(right)) {
         if (sc.nudge) fail(`${tag}: tapped, though it turns by itself`);
         const t = turnOf(s0, A.simulate(sc, null, 0.15));
         if (!(right === 'turns anticlockwise' ? t > 1 : t < -1)) fail(`${tag}: the answer is "${right}", it turns by ${t.toFixed(1)}°`);
+        if (!past) fail(`${tag}: it never swings through the field direction`);
         if (type === 'dipole-torque') {
           // and its torque at the start: q·E·d·sin φ (q = E = 1, d = 2h)
           const { Fp } = A.forces(sc, s0), tau = 2 * sc.h * (Math.cos(sc.th) * Fp[1] - Math.sin(sc.th) * Fp[0]);
@@ -129,7 +139,7 @@ for (const lang of ['de', 'en']) {
         if (!sc.nudge || Math.abs(turnOf(s0, before)) > 0.5) fail(`${tag}: the answer is "${right}", but it turns before the tap`);
         if (Math.abs(turnOf(s0, soon)) < 3) fail(`${tag}: the tap does not move it`);
         const stable = /stable equilibrium/.test(right) && !/unstable/.test(right);
-        if (Math.abs(turnOf(s0, end)) > (stable ? 3 : 1e9) || (!stable && Math.abs(turnOf(s0, end)) < 177)) fail(`${tag}: the answer is "${right}", it ends ${turnOf(s0, end).toFixed(1)}° from where it was`);
+        if (stable ? far > 15 : far < 177) fail(`${tag}: the answer is "${right}", it gets at most ${far.toFixed(1)}° from where it was`);
       }
     } else {
       // the figure: the charge ±2 at −1.8, the nearer end at x = 0.3, the farther at 1.5, on the line

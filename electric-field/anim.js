@@ -1,8 +1,8 @@
 // Animations for the tutor: a dipole (a rod with +q and −q at its ends) moving in a field, drawn
 // over the field lines of charges.js, with the forces on its ends. Shown in the tutor, and in practice
 // as the "observe" step of the dipole exercises (in the exercise's own configuration). Two scenes:
-//   'uniform'  a uniform field (to the right, or o.E); the dipole's centre is held, it swings round
-//              the field direction like a damped pendulum and settles with its + end along the field
+//   'uniform'  a uniform field (to the right, or o.E); the dipole's centre stays put, it swings round
+//              the field direction like a pendulum without friction, back and forth for as long as it is shown
 //   'point'    a point charge (+2 at x = −1.8, or −2 with o.Q < 0); a free dipole to its right, by
 //              default its + end towards the charge: it first turns round, then is attracted, and
 //              stops (and holds) just before it touches the charge
@@ -20,8 +20,9 @@
 //   stop()                 stops all of them
 //   scene(kind, o), step(sc, s, dt), simulate(kind, o, seconds)  the physics, pure (for the tests)
 // The physics: two equal masses m on a massless rod of length d = 2h, charges ±q at the ends, the
-// forces q·E from C.field (k = 1), the torque about the centre, light damping so that it settles;
-// semi-implicit Euler with a fixed step. Time is in seconds of the animation.
+// forces q·E from C.field (k = 1), the torque about the centre; no damping in the uniform field (a
+// lone dipole has nothing to give its energy to), drag near the charge (a scrap of paper in air);
+// semi-implicit Euler with a fixed step, which keeps the energy of the swing. Time is in seconds of the animation.
 (function (root) {
   'use strict';
 
@@ -33,9 +34,8 @@
 
   // ---------------------------------------------------------------- the scenes and the physics
   // m and the damping chosen so that the motion is easy to follow: in the uniform field a swing
-  // takes about 2 s and it has settled after about 7 s; near the charge it turns round in about 2 s
-  // and arrives after about 4 s
-  // a tap (o.nudge) comes after the start; the scene runs that much longer
+  // takes about 1 s and goes on (loop); near the charge it turns round in about 2 s and arrives
+  // after about 4 s; a tap (o.nudge) comes after the start, and the scene runs that much longer
   function scene(kind, o = {}) {
     const box = [-3, 3, -2.2, 2.2], nudge = o.nudge && Number.isFinite(o.nudge.t + o.nudge.w) ? { t: o.nudge.t, w: o.nudge.w } : null, wait = nudge ? nudge.t : 0;
     if (kind === 'point') {
@@ -46,8 +46,8 @@
         stopR: 0.9, px: 30, T: 12 + wait, x: o.x != null ? o.x : 0.6, y: o.y != null ? o.y : 0.25, th: ((o.angle != null ? o.angle : 165) * Math.PI) / 180 };
     }
     const E = Array.isArray(o.E) && Number.isFinite(o.E[0] + o.E[1]) && Math.hypot(...o.E) > 0 ? [o.E[0], o.E[1]] : [1, 0];
-    return { kind: 'uniform', box, c: { kind: 'uniform', E }, h: 0.7, q: 1, m: 0.15, gr: 1.4, gt: 0, gq: 0, free: false, px: 46, nudge,
-      T: 8 + wait, x: o.x || 0, y: o.y || 0, th: ((o.angle != null ? o.angle : 65) * Math.PI) / 180 };
+    return { kind: 'uniform', box, c: { kind: 'uniform', E }, h: 0.7, q: 1, m: 0.15, gr: 0, gt: 0, gq: 0, free: false, px: 46, nudge,
+      T: 8 + wait, loop: true, x: o.x || 0, y: o.y || 0, th: ((o.angle != null ? o.angle : 65) * Math.PI) / 180 };
   }
   const ends = (s, h) => { const ux = Math.cos(s.th), uy = Math.sin(s.th); return { p: [s.x + h * ux, s.y + h * uy], n: [s.x - h * ux, s.y - h * uy] }; };
   // the forces on the + and the − end
@@ -114,11 +114,20 @@
     g += C.particle(X(e.p[0]), Y(e.p[1]), R, 1) + C.particle(X(e.n[0]), Y(e.n[1]), R, -1);
     return o.ghost ? `<g class="ghost">${g}</g>` : g;
   }
-  // a still for reduced motion: faint positions along the way, the last one full
+  // the state where the swing turns back for the first time, on the far side of the field direction
+  function turn(sc) {
+    let s = step(sc, init(sc));
+    const w0 = Math.sign(s.w);
+    while (s.t < sc.T && Math.sign(s.w) === w0) s = step(sc, s);
+    return s;
+  }
+  // a still for reduced motion: faint positions along the way, the last one full (in the uniform
+  // field: the swing from the start to the far side)
   function strobe(sc, W) {
     let s = init(sc), out = '';
-    const wait = sc.nudge ? sc.nudge.t : 0, end = simulate(sc, null, sc.T);
-    const marks = (sc.kind === 'uniform' ? (sc.nudge ? [0, 0.6, 1, 1.4] : [0, 0.35, 0.7]) : [0, 1.2, 2.4, 3.6]).map((m, i) => (i ? m + wait : m));
+    // with a tap: positions just after it; otherwise in the uniform field the swing to the far side
+    const wait = sc.nudge ? sc.nudge.t : 0, far = sc.loop && !sc.nudge ? turn(sc) : null, end = far || simulate(sc, null, sc.T);
+    const marks = far ? [0, far.t / 3, (2 * far.t) / 3] : (sc.kind === 'uniform' ? [0, 0.6, 1, 1.4] : [0, 1.2, 2.4, 3.6]).map((m, i) => (i ? m + wait : m));
     for (let i = 0, k = 0; i <= Math.round(sc.T / DT) && k < marks.length; i++) {
       if (s.t >= marks[k] - 1e-9) { out += draw(sc, s, W, { ghost: true }); k++; }
       s = step(sc, s);
@@ -129,7 +138,7 @@
   function html(kind, o = {}) {
     const sc = scene(kind, o), W = o.W || (o.small ? 260 : 380);
     const label = o.label || (kind === 'point' ? L('A dipole near a positive charge: it turns round and is attracted', 'Ein Dipol nahe einer positiven Ladung: Er dreht sich und wird angezogen')
-      : L('A dipole in a uniform field: it swings round and settles along the field', 'Ein Dipol im homogenen Feld: Er schwingt um die Feldrichtung und kommt in Feldrichtung zur Ruhe'));
+      : L('A dipole in a uniform field: it swings back and forth about the field direction', 'Ein Dipol im homogenen Feld: Er schwingt um die Feldrichtung hin und her'));
     const bg = C.fig(sc.c, { box: sc.box, W, lines: true, lineOpts: kind === 'point' ? { per: 6 } : {}, labels: kind === 'point' ? [sc.Q.q > 0 ? '+2' : '−2'] : null, small: o.small, label });
     // the scene in data-scene, as scene() reads it back (with what differs from the default)
     const data = JSON.stringify({ kind: sc.kind, angle: f1((sc.th * 180) / Math.PI), x: sc.x, y: sc.y, W,
@@ -159,7 +168,7 @@
       last = now;
       if (wait > 0) wait -= dt; else { acc += dt; while (acc >= DT) { s = step(sc, s); acc -= DT; } }
       g.innerHTML = draw(sc, s, d.W);
-      if (s.done || s.t >= sc.T) { loops.delete(l); return; }
+      if (s.done || (!sc.loop && s.t >= sc.T)) { loops.delete(l); return; }
       l.id = requestAnimationFrame(tick);
     };
     l.id = requestAnimationFrame(tick);

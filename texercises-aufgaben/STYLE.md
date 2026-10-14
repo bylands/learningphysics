@@ -68,7 +68,7 @@ Syntax: `../cheatsheet.md`, `../examples.md`,
 `collections/<collection-slug>.json`. exercise.json:
 `{"title", "note": "aus den Aufgabenblättern (<sheet>, Nr. <n>)",
 "language": "GER", "type": 0 descriptive | 1 calculative | 2 both | 7 algebraic,
-"default_difficulty": 1-3 (from the catalogue), "default_points": 0,
+"default_difficulty": 1-6 (rule below), "default_points": 0,
 "tags": [...lowercase German], "subbranches": [TeXercises names, e.g.
 "Kinematics", "Dynamics", "Momentum", "Circular Motion", "Projectile Motion",
 "Lever", "Work, Energy, Power", "Hydrostatics", "Gravitation",
@@ -81,3 +81,18 @@ Collection: `{"title": "<Name> – Aufgaben aus den Aufgabenblättern",
 "items": [{"exercise": "<key>"}, ...]}`.
 
 Check with `python3 tools/check.py` before handing over.
+
+## Difficulty (default_difficulty), agreed with Samuel 14.10.2026
+Judge the exercise by its hardest required part, for a Gymnasium student who
+has learned the topic; raise by one only when the whole is a long chain.
+1. Reproduce: one step. One formula (also solved for another quantity), a unit
+   conversion, a table look-up, recalling a concept.
+2. Apply: two or three chained steps within one topic.
+3. Combine: several steps or two concepts (kinematics + forces, energy + heat);
+   explanations that need a sketch or a reasoned argument.
+4. Transfer: unfamiliar situation that needs a model, assumptions or a formal
+   derivation before any numbers; the hard part of a Matura exam.
+5. Extended: long multi-part problem, estimation with own assumptions, or
+   calculus (derivative, integral, numerical integration).
+6. Beyond the course: differential equations, numerical methods, open
+   project-like questions.
