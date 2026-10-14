@@ -1090,6 +1090,86 @@ class Service(unittest.TestCase):
         self.assertEqual(st, 303, user)
         return headers["Set-Cookie"].split(";")[0]
 
+    def test_texercises_review(self):
+        """/texercises/: logged in only; the superuser uploads a bundle (only its exercises and
+        collections kept, nothing outside its folder), changes a difficulty and downloads the bundle
+        with it; any teacher previews and writes feedback, which only its author or the superuser
+        changes."""
+        self.assertEqual(self.req("/texercises/")[0], 303)
+        self.assertEqual(self.req("/texercises/api/bundles")[0], 403)
+        boss = self.cookie_of("samuel.byland", "teacher pw")
+        pw = self.teachers({"action": "create", "id": "abc", "user": "anna"}, boss)[1]["password"]
+        anna = self.cookie_of("anna", pw)
+        src = ROOT / "texercises-aufgaben"
+        buf = io.BytesIO()
+        with zipfile.ZipFile(buf, "w") as zf:
+            for f in sorted((src / "exercises").glob("freier-fall-0[12]*/*")):
+                zf.write(f, f"export/exercises/{f.parent.name}/{f.name}")
+            zf.write(src / "collections" / "freier-fall.json", "export/collections/freier-fall.json")
+            zf.writestr("export/exercises/../../evil/exercise.json", "{}")
+            zf.writestr("export/README.md", "x")
+        data = buf.getvalue()
+        self.assertEqual(self.req("/texercises/api/upload?name=ff.zip", data, "application/zip", anna)[0], 403)
+        self.assertEqual(self.req("/texercises/api/upload?name=x.zip", b"not a zip", "application/zip", boss)[0], 400)
+        st, _, body = self.req("/texercises/api/upload?name=ff.zip", data, "application/zip", boss)
+        self.assertEqual(st, 200)
+        b = json.loads(body)
+        self.assertEqual((b["name"], b["exercises"], b["collections"]), ("ff.zip", 2, 1))
+        kept = {p.relative_to(self.admin.review).as_posix() for p in self.admin.review.rglob("*") if p.is_file()}
+        self.assertFalse([k for k in kept if "evil" in k or "README" in k])
+        st, _, body = self.req(f"/texercises/api/bundles/{b['id']}", cookie=anna)
+        view = json.loads(body)
+        self.assertEqual([e["key"] for e in view["collections"][0]["items"] if "key" in e][:2],
+                         ["freier-fall-01-groessen-vergleichen", "freier-fall-02-einheiten-von-parametern"])
+        key = "freier-fall-01-groessen-vergleichen"
+        st, _, body = self.req(f"/texercises/api/bundles/{b['id']}/render?keys={key},nope", cookie=anna)
+        got = json.loads(body)["exercises"]
+        self.assertEqual(list(got), [key])
+        self.assertIn("tx-m", got[key]["text"])
+        self.assertTrue(got[key]["short"])
+        # the difficulty: the superuser only, 1 to 6
+        change = lambda n, who: self.req(f"/texercises/api/bundles/{b['id']}", json.dumps({"action": "difficulty", "key": key, "difficulty": n}).encode(), "application/json", who)
+        self.assertEqual(change(4, anna)[0], 403)
+        self.assertEqual(change(7, boss)[0], 400)
+        self.assertEqual(json.loads(change(4, boss)[2])["changed"], True)
+        st, headers, body = self.req(f"/texercises/api/bundles/{b['id']}/export.zip?changed=1", cookie=boss)
+        self.assertEqual(st, 200)
+        self.assertIn('filename="ff-changed.zip"', headers["Content-Disposition"])
+        with zipfile.ZipFile(io.BytesIO(body)) as zf:
+            self.assertEqual(sorted({n.split("/")[1] for n in zf.namelist()}), [key])
+            meta = json.loads(zf.read(f"exercises/{key}/exercise.json"))
+        self.assertEqual((meta["default_difficulty"], meta["id"]), (4, 24627))
+        with zipfile.ZipFile(io.BytesIO(self.req(f"/texercises/api/bundles/{b['id']}/export.zip", cookie=boss)[2])) as zf:
+            self.assertIn("collections/freier-fall.json", zf.namelist())
+            self.assertEqual(json.loads(zf.read("exercises/freier-fall-02-einheiten-von-parametern/exercise.json"))["default_difficulty"], 2)
+        self.assertEqual(self.req(f"/texercises/api/bundles/{b['id']}/export.zip", cookie=anna)[0], 403)
+        self.assertEqual(json.loads(change(1, boss)[2])["changed"], False)  # back to what was uploaded
+        # feedback: anyone logged in; changed by its author or the superuser
+        post = lambda body, who: self.req("/texercises/api/feedback", json.dumps(body).encode(), "application/json", who)
+        self.assertEqual(post({"bundle": b["id"], "key": key, "kind": "bug", "text": "  "}, anna)[0], 400)
+        self.assertEqual(post({"bundle": b["id"], "key": "nope", "text": "x"}, anna)[0], 404)
+        st, _, body = post({"bundle": b["id"], "key": key, "kind": "bug", "text": "Einheit fehlt in b)", "collection": "freier-fall"}, anna)
+        f = json.loads(body)
+        self.assertEqual((f["by"], f["exercise_id"], f["title"]), ("abc", 24627, "Grössen vergleichen (freier Fall)"))
+        mine = json.loads(post({"bundle": b["id"], "key": key, "kind": "idea?", "text": "<b>x</b>"}, boss)[2])
+        self.assertEqual(mine["kind"], "other")
+        self.assertEqual(post({"action": "done", "id": mine["id"]}, anna)[0], 403)
+        self.assertEqual(post({"action": "done", "id": f["id"]}, anna)[0], 200)
+        st, headers, md = self.req("/texercises/api/feedback.md?all=1", cookie=anna)
+        self.assertIn("### Grössen vergleichen (freier Fall) (id 24627)", md.decode())
+        self.assertIn("**Bug** (abc,", md.decode())
+        self.assertNotIn("Einheit fehlt", self.req("/texercises/api/feedback.md", cookie=anna)[2].decode())  # done
+        self.assertEqual({e["key"]: e["feedback"] for e in json.loads(self.req(f"/texercises/api/bundles/{b['id']}", cookie=anna)[2])["exercises"]}[key], 1)  # open
+        # deleted: the bundle goes, its feedback stays
+        self.assertEqual(self.req(f"/texercises/api/bundles/{b['id']}", b'{"action": "delete"}', "application/json", anna)[0], 403)
+        self.assertEqual(self.req(f"/texercises/api/bundles/{b['id']}", b'{"action": "delete"}', "application/json", boss)[0], 200)
+        self.assertEqual(json.loads(self.req("/texercises/api/bundles", cookie=boss)[2])["bundles"], [])
+        fb = json.loads(self.req("/texercises/api/feedback", cookie=boss)[2])["feedback"]
+        self.assertEqual([(x["title"], x["bundle_exists"]) for x in fb], [("Grössen vergleichen (freier Fall)", False)] * 2)
+        st, _, page = self.req("/texercises/", cookie=anna)
+        self.assertIn(b'data-super="0"', page)
+        self.assertIn(b'/texercises/static/review.js', page)
+
     def teachers(self, body, cookie):
         st, _, data = self.req("/api/teachers", json.dumps(body).encode(), "application/json", cookie)
         return st, json.loads(data)
