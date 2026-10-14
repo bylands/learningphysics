@@ -167,6 +167,50 @@ input:focus, select:focus { outline: 2px solid var(--accent); outline-offset: 1p
 .podium li { display: flex; justify-content: space-between; gap: 12px; font-size: 1.3rem; padding: 8px 4px; border-bottom: 1px solid var(--line); }
 .podium li:first-child { font-size: 2rem; font-weight: 800; color: var(--felt); }
 
+/* the animation of a round, above its question */
+.anim-box { position: relative; margin: 8px 0 4px; }
+canvas.anim { display: block; width: 100%; max-width: 820px; aspect-ratio: 800 / 340; margin: 0 auto; border-radius: 8px; background: var(--bg); }
+.replay { position: absolute; right: 8px; top: 8px; font-size: 1.2rem; line-height: 1; padding: 6px 10px; }
+
+/* the lobby: QR code and game code */
+.lobby { display: flex; flex-wrap: wrap; gap: 24px; align-items: center; }
+.lobby .qr { width: 220px; max-width: 60vw; background: #fff; padding: 12px; border-radius: 10px; }
+.lobby .qr svg { display: block; width: 100%; height: auto; }
+.join-url { font-size: 1.6rem; font-weight: 700; margin: 4px 0; overflow-wrap: anywhere; }
+.code { font-size: 2.4rem; font-weight: 800; letter-spacing: 0.15em; font-variant-numeric: tabular-nums; color: var(--accent); vertical-align: middle; margin-left: 6px; }
+.team-players { list-style: none; padding: 0; margin: 0; display: grid; gap: 6px; }
+.join-line { text-align: center; margin: 10px 0 0; }
+.error { color: var(--bad); background: var(--bad-bg); border-radius: 8px; padding: 8px 12px; margin: 12px 0 0; }
+.error a { color: inherit; font-weight: 700; }
+.by { font-weight: 400; }
+.bets td.msg.muted { color: var(--muted); }
+.die.name { width: auto; min-width: 120px; padding: 0 24px; font-size: 2.6rem; }
+
+/* the phone */
+.me { display: flex; justify-content: space-between; align-items: center; gap: 10px; background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 8px 14px; margin-top: 12px; }
+.me .mine-chips { font-weight: 800; font-size: 1.3rem; font-variant-numeric: tabular-nums; }
+.me .mine-chips::before { content: "●"; color: var(--chip); margin-right: 6px; }
+.phone .question { font-size: 1.15rem; }
+.phone .option { font-size: 1rem; padding: 8px 12px; }
+.phone .options { grid-template-columns: 1fr; gap: 6px; }
+.team-buttons { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; }
+input.full { width: 100%; margin-top: 4px; }
+.code-input { width: 6em; font-size: 1.4rem; letter-spacing: 0.15em; text-transform: uppercase; }
+.bet-form { display: grid; gap: 10px; }
+.bet-field { display: grid; grid-template-columns: 1fr 7.5em; gap: 10px; align-items: center; }
+.bet-field input { font-size: 1.2rem; width: 100%; }
+.insure { display: flex; gap: 8px; align-items: baseline; font-size: 0.95rem; }
+.small-timer { font-size: 2.4rem; margin: 10px 0 0; }
+.bad-text { color: var(--bad); }
+.ok-text { color: var(--ok); }
+.team-bet { margin: 12px 0 0; }
+.result { font-size: 1.4rem; font-weight: 800; }
+.result.up { color: var(--ok); }
+.result.down { color: var(--bad); }
+.me-hot { border-color: var(--bad); box-shadow: 0 0 0 3px var(--bad) inset; }
+.big-who { font-size: 1.6rem; color: var(--bad); }
+.podium li.mine { outline: 2px solid var(--accent); border-radius: 6px; }
+
 .foot { margin-top: 28px; padding-block: 16px 32px; border-top: 1px solid var(--line); color: var(--muted); font-size: 0.85rem; }
 .foot a { color: inherit; text-underline-offset: 2px; }
 .foot a:hover { color: var(--accent); }

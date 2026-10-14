@@ -5,12 +5,13 @@
 //   ±5 %, +10 for the first correct team), insurance, the minimum stake and the final round,
 // - that hedging evenly in a Predict round breaks even,
 // - that numbers are read as people type them,
-// - that every round is complete in both languages, and that the worked answers agree with the
+// - that every round is complete in both languages and has its animation (anim.js), and that the worked answers agree with the
 //   physics written out here independently.
 'use strict';
 
 const G = require('../game.js');
 const ROUNDS = require('../rounds.js');
+require('../anim.js');
 
 let failures = 0, checked = 0;
 const fail = (msg) => { failures++; if (failures < 30) console.log('  FAIL ' + msg); };
@@ -99,6 +100,9 @@ for (const r of ROUNDS) {
   }
 }
 eq(ROUNDS.filter((r) => r.standard).length, 6, 'six standard rounds');
+const scenes = globalThis.AllInAnim.SCENES;
+for (const r of ROUNDS) { checked++; if (!scenes[r.id] || typeof scenes[r.id].draw !== 'function') fail(`${r.id}: no animation`); }
+eq(Object.keys(scenes).sort(), ROUNDS.map((r) => r.id).sort(), 'an animation per round, and no other');
 eq(ROUNDS.filter((r) => r.standard).map((r) => r.type), ['predict', 'estimate', 'predict', 'calculate', 'predict', 'estimate'], 'the standard order');
 
 // the worked answers, from the physics
