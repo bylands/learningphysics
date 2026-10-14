@@ -4,8 +4,8 @@
 //   animated svg with its scene, the dipole and its force arrows, a button to replay, and no
 //   undefined, NaN and the like,
 // - the physics, step by step (simulate): in the uniform field the net force is zero, the dipole
-//   ends along the field (within a few degrees) with its centre where it was, and it has settled
-//   (hardly turning any more); near the point charge it first turns round, ends closer to the
+//   keeps its centre where it was and, with nothing to slow it, still swings as far as it started
+//   on either side of the field direction; near the point charge it first turns round, ends closer to the
 //   charge than it started, with its negative end nearer the charge, held short of touching it,
 // - every state on the way is finite.
 'use strict';
@@ -43,14 +43,16 @@ for (const kind of ['uniform', 'point']) {
   let s = A.simulate(kind, {}, 0);
   for (let i = 0; i < sc.T * 240; i++) { s = A.step(sc, s); if (!Number.isFinite(s.x + s.y + s.th + s.vx + s.vy + s.w)) { fail(`${kind}: not finite at ${s.t}`); break; } }
 }
-// uniform: no net force, ends along the field, centre unmoved, settled
+// uniform: no net force, centre unmoved, and no friction: it keeps swinging as far as it started
 for (const angle of [65, 30, 120, -70]) {
   const sc = A.scene('uniform', { angle }), { Fp, Fn } = A.forces(sc, A.simulate(sc, null, 0));
   if (Math.hypot(Fp[0] + Fn[0], Fp[1] + Fn[1]) > 1e-12) fail(`uniform ${angle}°: a net force`);
   const s = A.simulate('uniform', { angle });
-  if (Math.abs(deg(s.th)) > 3) fail(`uniform ${angle}°: ends at ${deg(s.th).toFixed(1)}°, not along the field`);
   if (Math.hypot(s.x, s.y) > 1e-9) fail(`uniform ${angle}°: the centre moved`);
-  if (Math.abs(s.w) > 0.1) fail(`uniform ${angle}°: still turning (ω = ${s.w.toFixed(2)})`);
+  // over the last four seconds shown, it still reaches (nearly) its starting angle on both sides
+  let hi = -Infinity, lo = Infinity, u = A.simulate('uniform', { angle }, sc.T - 4);
+  for (let i = 0; i < 960; i++) { u = A.step(sc, u); hi = Math.max(hi, deg(u.th)); lo = Math.min(lo, deg(u.th)); }
+  if (Math.abs(hi - Math.abs(angle)) > 2 || Math.abs(-lo - Math.abs(angle)) > 2) fail(`uniform ${angle}°: swings between ${lo.toFixed(1)}° and ${hi.toFixed(1)}°, not ±${Math.abs(angle)}°`);
   // it swings past the field direction (a pendulum), not creeping in
   let over = false, t = A.simulate(sc, null, 0);
   for (let i = 0; i < 240 * 3; i++) { t = A.step(sc, t); if (Math.sign(deg(t.th)) === -Math.sign(angle) && Math.abs(deg(t.th)) > 5) over = true; }
