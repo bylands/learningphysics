@@ -71,6 +71,8 @@
     { reg: 'gamma', en: 'the radiation in a PET scanner (from positron annihilation)', de: 'die Strahlung in einem PET-Scanner (aus der Positronenvernichtung)', lam: [2.5e-12] },
   ];
   const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
+  // a region's name at the start of a sentence or on a card (γ stays small: γ rays)
+  const capReg = (s) => (s.startsWith('γ') ? s : cap(s));
   // four regions in a row around the right one, in the order of the spectrum
   function regionField(p, reg) {
     const i = ORDER.indexOf(reg), lo = Math.max(0, Math.min(ORDER.length - 4, i - p.off));
@@ -104,7 +106,8 @@
     make: (r) => ({ regs: shuffle(r, ORDER.slice()).slice(0, 4), by: pick(r, ['lam', 'f', 'E', 'E']), hi: r() < 0.5 }),
     solve: (p) => {
       const sorted = p.regs.slice().sort((a, b) => ORDER.indexOf(a) - ORDER.indexOf(b)), longest = (p.by === 'lam') === p.hi;
-      return { ans: longest ? sorted[3] : sorted[0], opp: longest ? sorted[0] : sorted[3], sorted };
+      // ord: the four from the end asked for to the other (for the ranking in practice)
+      return { ans: longest ? sorted[3] : sorted[0], opp: longest ? sorted[0] : sorted[3], sorted, ord: longest ? sorted.slice().reverse() : sorted };
     },
     traps: [],
     fields: (p, v) => {
@@ -132,6 +135,44 @@
         : L(`So <span class="result">${regName(v.ans)}</span> has ${byText(p)}: the ${p.hi ? 'shortest' : 'longest'} wave of the four.`, `Also hat <span class="result">${regName(v.ans)}</span> ${byText(p)}: die ${p.hi ? 'kürzeste' : 'längste'} Welle der vier.`)), ['mark']),
     ],
     figure: (p, v, view) => (view.task ? '' : Fg().spectrum(view.show.has('mark') ? centre(v.ans) : null, { trend: true })),
+    // In practice the student puts all four in order by drag and drop (questions.js), the end asked
+    // for at the top; the check and the tutor keep the choice above.
+    drag: {
+      text: (p) => L(`Put these kinds of electromagnetic radiation in order: the one with ${byText(p)} at the top, the one with ${BY[p.by]()[p.hi ? 1 : 0]} at the bottom.`,
+        `Ordne diese Strahlungsarten: oben die Strahlung, die ${byText(p)} hat, unten die, die ${BY[p.by]()[p.hi ? 1 : 0]} hat.`),
+      fields: (p, v) => {
+        const ends = [byText(p), BY[p.by]()[p.hi ? 1 : 0]].map(cap);
+        // the feedback on an order (ranks, as read by questions.js): a nudge while it is wrong (which
+        // pair, or how f and E depend on λ), the whole explanation once it is right; bad: the
+        // items to mark
+        const judge = (ranks) => {
+          const pos = (i) => v.ord.indexOf(p.regs[i]), idx = p.regs.map((k, i) => i);
+          const shared = idx.filter((i) => ranks.filter((r) => r === ranks[i]).length > 1);
+          if (shared.length) return { ok: false, bad: shared, msg: L('Some share a box: each kind of radiation has a wavelength of its own, so each gets a box of its own.', 'Einige teilen sich ein Feld: Jede Strahlungsart hat ihre eigene Wellenlänge, also bekommt jede ihr eigenes Feld.') };
+          const mine = idx.slice().sort((i, j) => ranks[i] - ranks[j]);
+          if (mine.every((i, r) => pos(i) === r)) return { ok: true, bad: [], msg: p.by === 'lam' ? ORDER_TEXT() : `${ORDER_TEXT()} ${TREND()}` };
+          if (mine.every((i, r) => pos(i) === 3 - r)) {
+            return { ok: false, bad: [], msg: p.by === 'lam'
+              ? L(`Check the two ends: the top box is for the one with ${byText(p)}.`, `Prüfe die beiden Enden: Das oberste Feld ist für die Strahlung, die ${byText(p)} hat.`)
+              : L('How do f and E depend on λ: do they grow with the wavelength, or fall?', 'Wie hängen f und E von λ ab: Wachsen sie mit der Wellenlänge, oder sinken sie?') };
+          }
+          // the first pair, from the top, that is the wrong way round
+          const r = mine.findIndex((i, k) => k < 3 && pos(i) > pos(mine[k + 1])), a = mine[r], b = mine[r + 1];
+          const A = regName(p.regs[a]), B = regName(p.regs[b]);
+          return { ok: false, bad: [a, b], msg: p.by === 'lam'
+            ? L(`${capReg(A)} and ${B} are the wrong way round: which of the two has the longer waves?`, `${capReg(A)} und ${B} sind vertauscht: Welche der beiden hat die längeren Wellen?`)
+            : L(`${capReg(A)} and ${B} are the wrong way round. Which of the two has the shorter waves, and how does ${p.by === 'f' ? 'f' : 'E'} depend on λ?`,
+              `${capReg(A)} und ${B} sind vertauscht. Welche der beiden hat die kürzeren Wellen, und wie hängt ${p.by === 'f' ? 'f' : 'E'} von λ ab?`) };
+        };
+        return [{ key: 'ord', type: 'rank', what: L('The order:', 'Die Reihenfolge:'), items: p.regs.map((k) => ({ key: k, label: capReg(regName(k)) })), ends, judge,
+          answer: v.ord.map(regName).join(' → ') }];
+      },
+      steps: (p, v) => [
+        specOrder.steps(p, v)[0],
+        step(L('The answer', 'Die Antwort'), p$(L(`So, from the top (${byText(p)}) to the bottom: <span class="result">${v.ord.map(regName).join(', ')}</span>.`,
+          `Also, von oben (${byText(p)}) nach unten: <span class="result">${v.ord.map(regName).join(', ')}</span>.`)), ['mark']),
+      ],
+    },
   };
 
   // from the wavelength to the frequency

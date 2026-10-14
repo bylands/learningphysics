@@ -34,6 +34,8 @@
       wanted: (v) => `Express ${v} by the given quantities`,
       typeHelp: (ex) => `For example sqrt(2*g*h) or √(2gh), v0^2 or v0², 1/2 or 0.5.${ex ? ` Type ${ex}.` : ''}`,
       preview: 'Read as', play: 'Play', pause: 'Pause',
+      watchHead: 'Watch the energy',
+      watchNote: (last) => `The body moves from ① to ${last} and pauses briefly in each state; the bars show how its energy is shared at every moment. The dashed line, the total energy, stays where it is.`,
       tutorBtns: { example: (i, n) => `Example ${i} of ${n}`, back: '← Back', prevEx: '← Previous example', next: 'Next →', nextEx: 'Next example →', done: 'Practise on your own →' },
     },
     de: {
@@ -58,6 +60,8 @@
       wanted: (v) => `Drücke ${v} durch die gegebenen Grössen aus`,
       typeHelp: (ex) => `Zum Beispiel sqrt(2*g*h) oder √(2gh), v0^2 oder v0², 1/2 oder 0.5.${ex ? ` Tippe ${ex}.` : ''}`,
       preview: 'Gelesen als', play: 'Abspielen', pause: 'Anhalten',
+      watchHead: 'Die Energie beobachten',
+      watchNote: (last) => `Der Körper bewegt sich von ① bis ${last} und hält in jedem Zustand kurz inne; die Balken zeigen, wie seine Energie in jedem Moment aufgeteilt ist. Die gestrichelte Linie, die Gesamtenergie, bleibt, wo sie ist.`,
       tutorBtns: { example: (i, n) => `Beispiel ${i} von ${n}`, back: '← Zurück', prevEx: '← Vorheriges Beispiel', next: 'Weiter →', nextEx: 'Nächstes Beispiel →', done: 'Selbst üben →' },
     },
   };
@@ -229,6 +233,7 @@
     $('#hint-list').innerHTML = '';
     $('#hints').hidden = true;
     $('#solution').hidden = true;
+    showWatch();
     showStatus(null);
     math($('#task'));
     markScrollable();
@@ -323,6 +328,7 @@
       finish();
       st.advance = topics.solved(st, ex);
       showStatus('ok');
+      showWatch();
     } else showStatus('bad');
     updateButtons();
   }
@@ -354,22 +360,21 @@
     st.revealed = true;
     finish();
     showSolution();
+    showWatch();
     updateButtons();
     $('#solution').scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
-  // ---------------------------------------------------------------- the tutor's animation
-  // The animation in a tutor frame (motion.js): it plays when the frame is shown and stops in the
-  // last state; ▶ then plays it again from the start, ❚❚ pauses it, and the slider moves through it.
-  // With reduced motion, it waits for ▶.
-  let player = null;
-  function startAnim() {
-    if (player) player.stop();
-    player = null;
-    const el = $('#t-figure .anim'), anim = el && window.Motion && window.Motion.get(el.dataset.anim);
-    if (!anim) return;
+  // ---------------------------------------------------------------- the animation
+  // The animation of a situation (motion.js) in its .anim figure: it plays and stops in the last
+  // state; ▶ then plays it again from the start, ❚❚ pauses it, and the slider moves through it.
+  // With reduced motion, it waits for ▶. onView: it starts only once it is scrolled into view
+  // (practice, where it appears below the exercise). Returns { stop }, or null.
+  function animate(el, onView) {
+    const anim = el && window.Motion && window.Motion.get(el.dataset.anim);
+    if (!anim) return null;
     const svg = el.querySelector('svg'), btn = el.querySelector('.anim-play'), seek = el.querySelector('.anim-seek');
-    let t = 0, last = null, raf = 0, playing = false;
+    let t = 0, last = null, raf = 0, playing = false, seen = null;
     const show = () => { svg.innerHTML = anim.frame(t).svg; seek.value = Math.round((1000 * t) / anim.duration); };
     const setPlaying = (on) => {
       playing = on;
@@ -377,6 +382,7 @@
       btn.textContent = on ? '❚❚' : '▶';
       btn.setAttribute('aria-label', on ? ui().pause : ui().play);
     };
+    const stopWaiting = () => { if (seen) seen.disconnect(); seen = null; };
     function tick(now) {
       if (!el.isConnected) return;
       if (playing) {
@@ -390,14 +396,44 @@
       raf = requestAnimationFrame(tick);
     }
     btn.addEventListener('click', () => {
+      stopWaiting();
       if (!playing && t >= anim.duration) { t = 0; show(); } // at the end: from the start again
       setPlaying(!playing);
     });
-    seek.addEventListener('input', () => { setPlaying(false); t = (Number(seek.value) / 1000) * anim.duration; show(); });
-    setPlaying(!window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+    seek.addEventListener('input', () => { stopWaiting(); setPlaying(false); t = (Number(seek.value) / 1000) * anim.duration; show(); });
+    const auto = !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    setPlaying(auto && !(onView && window.IntersectionObserver));
+    if (auto && onView && window.IntersectionObserver) {
+      seen = new IntersectionObserver((entries) => { if (entries.some((e) => e.isIntersecting)) { stopWaiting(); setPlaying(true); } }, { threshold: 0.6 });
+      seen.observe(svg);
+    }
     show();
     raf = requestAnimationFrame(tick);
-    player = { stop: () => cancelAnimationFrame(raf) };
+    return { stop: () => { cancelAnimationFrame(raf); stopWaiting(); } };
+  }
+
+  // the animation in a tutor frame: it plays when the frame is shown
+  let player = null;
+  function startAnim() {
+    if (player) player.stop();
+    player = animate($('#t-figure .anim'));
+  }
+
+  // In practice, once a situation is solved or its solution shown: its animation, with the same
+  // numbers, below the exercise. A question with options (concepts.js) brings the situation it is
+  // about (motion), if any. Not in the check, which has its own questions.
+  let watcher = null;
+  const motionOf = (e) => { const sit = e && (e.choice ? e.motion : e); return sit && window.Motion && window.Motion.MOTION[sit.scenario] ? sit : null; };
+  function showWatch() {
+    if (watcher) watcher.stop();
+    watcher = null;
+    const sit = motionOf(ex), on = !!sit && (st.solved || st.revealed) && mode() === 'practice';
+    $('#watch').hidden = !on;
+    $('#w-figure').innerHTML = on ? window.Motion.make('practice', sit).markup('practice') : '';
+    if (!on) return;
+    $('#watch-note').textContent = ui().watchNote(EC.CIRCLED[sit.table.length - 1]);
+    markScrollable();
+    watcher = animate($('#w-figure .anim'), true);
   }
 
   // ---------------------------------------------------------------- language
@@ -432,6 +468,7 @@
       showStatus(st.status);
       showHints();
       if (st.revealed) showSolution();
+      showWatch();
       if ($('#task').hidden) { $('#hints').hidden = true; $('#solution').hidden = true; }
       updateButtons();
     }
@@ -450,6 +487,7 @@
     $('#tutor').hidden = m !== 'tutor';
     $('#ck').hidden = m !== 'check';
     if (m !== 'practice') { $('#hints').hidden = true; $('#solution').hidden = true; }
+    if (ex && st) showWatch();
   }
   function practise() {
     setMode('practice');

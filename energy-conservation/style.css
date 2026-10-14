@@ -67,7 +67,7 @@ svg .bars-hl { fill: none; stroke: var(--accent); stroke-width: 1.5; rx: 6px; }
 
 svg .ghost { fill: none; stroke: var(--muted); stroke-width: 1; stroke-dasharray: 3 3; }
 
-/* the tutor's animation: the drawing, and below it ▶/❚❚ and a slider */
+/* the animation (tutor, and practice once solved): the drawing, and below it ▶/❚❚ and a slider */
 .anim { display: flex; flex-direction: column; align-items: center; max-width: 100%; }
 .anim-ctrl { display: flex; align-items: center; gap: 10px; width: min(100%, 420px); margin-top: 6px; }
 .anim-play { min-width: 2.8em; padding: 4px 10px; font-size: 1rem; }

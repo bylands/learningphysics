@@ -183,12 +183,13 @@
   }
 
   // ---------------------------------------------------------------- the ruler
-  // Forces along the grid: the student may draw one segment between two grid points of the drawing
-  // (drag from one to the other, or tap both ends) and reads its length, in squares and in cm. It
+  // The situations on the grid (Scenarios.RULER): the student may draw one segment between two
+  // grid points of the drawing (drag from one to the other, or tap both ends) and reads its
+  // length, in squares and in cm. It
   // only measures: it draws no line of action and knows nothing of the forces. A new segment
   // replaces the old one; Clear removes it. Measuring is switched on with its button, so that on a
   // touch screen the drawing still scrolls otherwise.
-  const RULER = new Set(['plate-axis']);
+  const RULER = new Set(window.Scenarios.RULER);
   const GRID = () => window.Scenarios.GRID;
   let ruler = { on: false, a: null, b: null, pending: false, drag: false };
   const hasRuler = () => !!(ex && RULER.has(ex.scenario));

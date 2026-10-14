@@ -160,6 +160,46 @@ for (const lang of ['en', 'de']) {
   if (plan.length !== CheckSource.objectives.length * Check.perObjective(CheckSource.objectives.length)) fail(`check of ${plan.length} questions`);
 }
 
+// the ranking in practice (spec-order by drag and drop): the order from the end asked for, and its
+// feedback for every order of the four cards and for cards that share a box: right only for the
+// right order, a nudge without the whole order while wrong, the explanation once right
+const perms = (a) => (a.length < 2 ? [a] : a.flatMap((x, i) => perms([...a.slice(0, i), ...a.slice(i + 1)]).map((r) => [x, ...r])));
+for (const lang of ['en', 'de']) {
+  Lang.set(lang, true);
+  for (let seed = 1; seed <= 150; seed++) {
+    const where = `${lang} spec-order drag seed ${seed}`, ex = EWaves.practiceOf('spec-order', seed, { drag: true }), { p, v } = ex;
+    checked++;
+    if (ex.fields.length !== 1 || ex.fields[0].type !== 'rank') { fail(`${where}: no ranking`); continue; }
+    const f = ex.fields[0], all = [ex.text, ...ex.solution, ex.results, ...f.ends, ...f.items.map((x) => x.label)].join('\n');
+    if (bad.test(all)) fail(`${where}: ${all.match(bad)[0]} in the texts`);
+    if (lang === 'de' && /ß/.test(all)) fail(`${where}: ß`);
+    if (f.items.length !== 4 || f.value[0] !== v.ans || f.value[3] !== v.opp) fail(`${where}: order ${f.value}`);
+    const longest = (p.by === 'lam') === p.hi, lam = (k) => globalThis.Figures.REGIONS.find((x) => x.key === k).lo;
+    if (f.value.some((k, i) => i && (lam(k) > lam(f.value[i - 1])) !== !longest)) fail(`${where}: not ordered`);
+    for (const order of perms([0, 1, 2, 3])) {
+      const ranks = [];
+      order.forEach((i, r) => { ranks[i] = r + 1; });
+      const right = order.every((i, r) => p.regs[i] === f.value[r]), j = f.judge(ranks);
+      if (j.ok !== right) fail(`${where}: order ${order} judged ${j.ok}`);
+      if (!j.msg || bad.test(j.msg)) fail(`${where}: order ${order} without feedback`);
+      if (!right && f.items.every((x) => j.msg.toLowerCase().includes(x.label.toLowerCase()))) fail(`${where}: the nudge names all four`);
+      if (!right && j.bad.length && j.bad.some((i) => !order.includes(i))) fail(`${where}: marks ${j.bad}`);
+      if (!right && j.bad.length === 2 && Math.abs(order.indexOf(j.bad[0]) - order.indexOf(j.bad[1])) !== 1) fail(`${where}: marked pair not neighbours`);
+    }
+    const tie = f.judge([1, 1, 3, 4]);
+    if (tie.ok || tie.bad.length !== 2) fail(`${where}: shared box judged ${tie.ok}`);
+  }
+}
+// a pair swapped: those two are marked
+Lang.set('en', true);
+{
+  const ex = EWaves.exercise(EWaves.byId('spec-order'), { regs: ['micro', 'uv', 'radio', 'vis'], by: 'lam', hi: true }, { drag: true }), f = ex.fields[0];
+  // right: radio, micro, vis, uv (indices 2, 0, 3, 1); vis and uv swapped
+  const ranks = [2, 3, 1, 4], j = f.judge(ranks);
+  if (j.ok || j.bad.slice().sort().join() !== '1,3' || !/Ultraviolet and visible light/.test(j.msg)) fail(`swapped pair: ${JSON.stringify(j)}`);
+  if (!f.judge([2, 4, 1, 3]).ok) fail('right order not accepted');
+}
+
 // the example in the tutor: of microwaves, UV, radio waves and light, UV has the largest photons
 Lang.set('en', true);
 const tutorEx = EWaves.exercise(EWaves.byId('spec-order'), Lessons.EXAMPLES[0].p);

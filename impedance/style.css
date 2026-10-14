@@ -61,34 +61,11 @@ svg .pin-n { fill: var(--accent); font-size: 11px; font-weight: 700; font-family
 .k-tan { color: var(--tan); font-weight: 600; }
 .steps h4 { margin: 14px 0 2px; font-size: 1rem; }
 
-/* answers: one row of options per unknown */
-#fields { display: grid; gap: 12px; margin-bottom: 14px; }
-.field { display: grid; grid-template-columns: 2.6em minmax(0, 1fr); align-items: center; gap: 6px 8px; }
-.field .sym { text-align: right; }
-.field .fb { grid-column: 2; font-size: 0.9rem; }
-.field .fb:empty { display: none; }
-/* a problem's fields say what they are, and their symbols are wider */
-.field:has(.what) { grid-template-columns: auto minmax(0, 1fr); }
-.field .what { grid-column: 1 / -1; font-size: 0.95rem; color: var(--muted); }
+/* answers: a number field per unknown (the grid of .fields, ui.css); a matching exercise has its
+   questions and options here instead */
+#fields { margin-bottom: 14px; }
+#fields:not(.fields) { display: grid; gap: 12px; }
 svg .curve2 { stroke: var(--zc); stroke-width: 1.8; stroke-dasharray: 7 5; fill: none; opacity: 0.6; }
-.opts { display: flex; flex-wrap: wrap; gap: 6px; }
-.opts label { position: relative; }
-.opts input { position: absolute; opacity: 0; inset: 0; margin: 0; cursor: pointer; }
-.opts span {
-  display: block;
-  min-width: 6.5em;
-  padding: 6px 12px;
-  border: 1px solid var(--line);
-  border-radius: 6px;
-  background: var(--bg);
-  text-align: center;
-  font-variant-numeric: tabular-nums;
-}
-.opts label:hover span { border-color: var(--accent); }
-.opts input:checked + span { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); font-weight: 600; }
-.opts input:focus-visible + span { outline: 2px solid var(--accent); outline-offset: 2px; }
-.field.ok input:checked + span { background: var(--ok-bg); border-color: var(--ok); color: var(--ok); }
-.field.bad input:checked + span { background: var(--bad-bg); border-color: var(--bad); color: var(--bad); }
 #hint-list ul { margin: 4px 0; padding-left: 1.2em; }
 
 /* which curve belongs to the circuit (match.js): the four sketches, faded once ruled out, the one
@@ -118,9 +95,4 @@ svg .axis .sub { font-size: 10px; }
   svg .tick { font-size: 15px; }
   svg .axis { font-size: 17px; }
   svg .ann { font-size: 15px; }
-}
-@media (max-width: 560px) {
-  .opts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .opts span { min-width: 0; padding-inline: 8px; }
-  .field .sym { grid-column: auto; text-align: right; margin-top: 0; }
 }

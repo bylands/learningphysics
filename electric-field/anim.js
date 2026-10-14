@@ -1,17 +1,22 @@
 // Animations for the tutor: a dipole (a rod with +q and −q at its ends) moving in a field, drawn
-// over the field lines of charges.js, with the forces on its ends. Two scenes:
-//   'uniform'  a uniform field to the right; the dipole's centre is held, it swings round the field
-//              direction like a damped pendulum and settles with its + end along the field
-//   'point'    a positive point charge (+2 at x = −1.8); a free dipole to its right, its + end
-//              towards the charge: it first turns round, then is attracted, and stops (and holds)
-//              just before it touches the charge
+// over the field lines of charges.js, with the forces on its ends. Shown in the tutor, and in practice
+// as the "observe" step of the dipole exercises (in the exercise's own configuration). Two scenes:
+//   'uniform'  a uniform field (to the right, or o.E); the dipole's centre is held, it swings round
+//              the field direction like a damped pendulum and settles with its + end along the field
+//   'point'    a point charge (+2 at x = −1.8, or −2 with o.Q < 0); a free dipole to its right, by
+//              default its + end towards the charge: it first turns round, then is attracted, and
+//              stops (and holds) just before it touches the charge
 //   html(kind, o)          the figure: an <svg class="ef dip-anim"> (field lines from C.fig, the
 //                          dipole in its starting position in <g class="dip">, the scene in
 //                          data-scene) and a button to replay it, in a <div class="dip-anim-wrap">.
 //                          o: { angle (degrees, the direction from − to + end, counter-clockwise
-//                          from the x-axis), x, y (the centre), small, W }
+//                          from the x-axis), x, y (the centre), E ([ex, ey], uniform), Q (the sign
+//                          of the charge, point), nudge ({ t, w }: a tap at t seconds that gives it
+//                          the turning speed w in rad/s, to show an equilibrium is stable or not),
+//                          label, small, W }
 //   start(root)            starts the animations inside root (a DOM element), stopping any running
-//                          ones; with prefers-reduced-motion a still (a strobe of the motion) instead
+//                          there (those elsewhere, e.g. in the tutor while practice shows one, run
+//                          on); with prefers-reduced-motion a still (a strobe of the motion) instead
 //   stop()                 stops all of them
 //   scene(kind, o), step(sc, s, dt), simulate(kind, o, seconds)  the physics, pure (for the tests)
 // The physics: two equal masses m on a massless rod of length d = 2h, charges ±q at the ends, the
@@ -30,17 +35,19 @@
   // m and the damping chosen so that the motion is easy to follow: in the uniform field a swing
   // takes about 2 s and it has settled after about 7 s; near the charge it turns round in about 2 s
   // and arrives after about 4 s
+  // a tap (o.nudge) comes after the start; the scene runs that much longer
   function scene(kind, o = {}) {
-    const box = [-3, 3, -2.2, 2.2];
+    const box = [-3, 3, -2.2, 2.2], nudge = o.nudge && Number.isFinite(o.nudge.t + o.nudge.w) ? { t: o.nudge.t, w: o.nudge.w } : null, wait = nudge ? nudge.t : 0;
     if (kind === 'point') {
-      const Q = { q: 2, x: -1.8, y: 0 };
-      return { kind, box, c: { kind: 'points', charges: [Q] }, Q, h: 0.6, q: 1, m: 0.08, gr: 1.6, gt: 0.6, gq: 10, free: true,
+      const Q = { q: o.Q < 0 ? -2 : 2, x: -1.8, y: 0 };
+      return { kind, box, c: { kind: 'points', charges: [Q] }, Q, h: 0.6, q: 1, m: 0.08, gr: 1.6, gt: 0.6, gq: 10, free: true, nudge,
         // the nearer end stops short of the charge, leaving room for the arrow of its force; forces
         // drawn smaller than in the uniform field (px per unit force), as near the charge they are large
-        stopR: 0.9, px: 30, T: 12, x: o.x != null ? o.x : 0.6, y: o.y != null ? o.y : 0.25, th: ((o.angle != null ? o.angle : 165) * Math.PI) / 180 };
+        stopR: 0.9, px: 30, T: 12 + wait, x: o.x != null ? o.x : 0.6, y: o.y != null ? o.y : 0.25, th: ((o.angle != null ? o.angle : 165) * Math.PI) / 180 };
     }
-    return { kind: 'uniform', box, c: { kind: 'uniform', E: [1, 0] }, h: 0.7, q: 1, m: 0.15, gr: 1.4, gt: 0, gq: 0, free: false, px: 46,
-      T: 8, x: o.x || 0, y: o.y || 0, th: ((o.angle != null ? o.angle : 65) * Math.PI) / 180 };
+    const E = Array.isArray(o.E) && Number.isFinite(o.E[0] + o.E[1]) && Math.hypot(...o.E) > 0 ? [o.E[0], o.E[1]] : [1, 0];
+    return { kind: 'uniform', box, c: { kind: 'uniform', E }, h: 0.7, q: 1, m: 0.15, gr: 1.4, gt: 0, gq: 0, free: false, px: 46, nudge,
+      T: 8 + wait, x: o.x || 0, y: o.y || 0, th: ((o.angle != null ? o.angle : 65) * Math.PI) / 180 };
   }
   const ends = (s, h) => { const ux = Math.cos(s.th), uy = Math.sin(s.th); return { p: [s.x + h * ux, s.y + h * uy], n: [s.x - h * ux, s.y - h * uy] }; };
   // the forces on the + and the − end
@@ -56,7 +63,9 @@
     const { Fp, Fn } = forces(sc, s), ux = Math.cos(s.th), uy = Math.sin(s.th), h = sc.h;
     // torque about the centre: (+h·u) × Fp + (−h·u) × Fn
     const tau = h * (ux * Fp[1] - uy * Fp[0]) - h * (ux * Fn[1] - uy * Fn[0]), I = 2 * sc.m * h * h;
-    const w = clamp(s.w + (tau / I - sc.gr * s.w) * dt, 30);
+    // the tap, in the step that reaches its time
+    const tap = sc.nudge && s.t < sc.nudge.t - 1e-9 && s.t + dt >= sc.nudge.t - 1e-9 ? sc.nudge.w : 0;
+    const w = clamp(s.w + tap + (tau / I - sc.gr * s.w) * dt, 30);
     let vx = 0, vy = 0;
     if (sc.free) {
       // drag: linear and quadratic (as in air), so that it does not rush in at the end, where the
@@ -108,7 +117,8 @@
   // a still for reduced motion: faint positions along the way, the last one full
   function strobe(sc, W) {
     let s = init(sc), out = '';
-    const marks = sc.kind === 'uniform' ? [0, 0.35, 0.7] : [0, 1.2, 2.4, 3.6], end = simulate(sc, null, sc.T);
+    const wait = sc.nudge ? sc.nudge.t : 0, end = simulate(sc, null, sc.T);
+    const marks = (sc.kind === 'uniform' ? (sc.nudge ? [0, 0.6, 1, 1.4] : [0, 0.35, 0.7]) : [0, 1.2, 2.4, 3.6]).map((m, i) => (i ? m + wait : m));
     for (let i = 0, k = 0; i <= Math.round(sc.T / DT) && k < marks.length; i++) {
       if (s.t >= marks[k] - 1e-9) { out += draw(sc, s, W, { ghost: true }); k++; }
       s = step(sc, s);
@@ -118,17 +128,20 @@
 
   function html(kind, o = {}) {
     const sc = scene(kind, o), W = o.W || (o.small ? 260 : 380);
-    const label = kind === 'point' ? L('A dipole near a positive charge: it turns round and is attracted', 'Ein Dipol nahe einer positiven Ladung: Er dreht sich und wird angezogen')
-      : L('A dipole in a uniform field: it swings round and settles along the field', 'Ein Dipol im homogenen Feld: Er schwingt um die Feldrichtung und kommt in Feldrichtung zur Ruhe');
-    const bg = C.fig(sc.c, { box: sc.box, W, lines: true, lineOpts: kind === 'point' ? { per: 6 } : {}, labels: kind === 'point' ? ['+2'] : null, small: o.small, label });
-    const data = JSON.stringify({ kind: sc.kind, angle: f1((sc.th * 180) / Math.PI), x: sc.x, y: sc.y, W });
+    const label = o.label || (kind === 'point' ? L('A dipole near a positive charge: it turns round and is attracted', 'Ein Dipol nahe einer positiven Ladung: Er dreht sich und wird angezogen')
+      : L('A dipole in a uniform field: it swings round and settles along the field', 'Ein Dipol im homogenen Feld: Er schwingt um die Feldrichtung und kommt in Feldrichtung zur Ruhe'));
+    const bg = C.fig(sc.c, { box: sc.box, W, lines: true, lineOpts: kind === 'point' ? { per: 6 } : {}, labels: kind === 'point' ? [sc.Q.q > 0 ? '+2' : '−2'] : null, small: o.small, label });
+    // the scene in data-scene, as scene() reads it back (with what differs from the default)
+    const data = JSON.stringify({ kind: sc.kind, angle: f1((sc.th * 180) / Math.PI), x: sc.x, y: sc.y, W,
+      ...(sc.Q && sc.Q.q < 0 ? { Q: -1 } : {}), ...(sc.kind === 'uniform' ? { E: sc.c.E } : {}), ...(sc.nudge ? { nudge: sc.nudge } : {}) });
     const svg = bg.replace('<svg class="ef ', `<svg data-scene='${data}' class="ef dip-anim `).replace(/<\/svg>$/, `<g class="dip">${draw(sc, init(sc), W)}</g></svg>`);
     return `<div class="dip-anim-wrap">${svg}<button type="button" class="dip-replay">↻ ${L('Replay', 'Nochmals')}</button></div>`;
   }
 
   // ---------------------------------------------------------------- running (browser only)
-  // one loop per figure; start() stops them all first, and a loop whose figure has left the page
-  // (the tutor replaced the frame) stops itself, so nothing keeps running in the background
+  // one loop per figure; start() stops those in its element first, and a loop whose figure has left
+  // the page (the tutor replaced the frame, practice the exercise) stops itself, so nothing keeps
+  // running in the background
   const loops = new Set();
   function stop() { for (const l of loops) cancelAnimationFrame(l.id); loops.clear(); }
   function run(svg) {
@@ -153,8 +166,8 @@
     loops.add(l);
   }
   function start(el) {
-    stop();
     if (!el || !el.querySelectorAll) return;
+    for (const l of loops) if (el.contains(l.svg)) { cancelAnimationFrame(l.id); loops.delete(l); }
     const reduced = root.matchMedia && root.matchMedia('(prefers-reduced-motion: reduce)').matches;
     el.querySelectorAll('.dip-anim-wrap').forEach((w) => {
       const svg = w.querySelector('svg.dip-anim'), b = w.querySelector('.dip-replay');
