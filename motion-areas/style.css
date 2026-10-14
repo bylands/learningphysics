@@ -37,10 +37,10 @@ i.bar { text-decoration: overline; text-decoration-thickness: 1px; }
 .qc-v { color: var(--q-v); }
 .qc-a { color: var(--q-a); }
 .plot svg { display: block; width: 100%; height: auto; }
-#draw { touch-action: none; user-select: none; -webkit-user-select: none; border-radius: 8px; }
-#draw:focus { outline: none; }
-#draw:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-#draw.dragging { cursor: grabbing !important; }
+/* the drawing (sketch.js): the focus shows round the whole diagram, the handle keeps its look */
+#draw { border-radius: 8px; }
+#draw:has(.handle:focus-visible) { outline: 2px solid var(--accent); outline-offset: 2px; }
+#draw .handle:focus-visible { stroke: var(--qc); stroke-width: 2; }
 svg text { font-family: var(--serif); }
 svg .grid { stroke: var(--grid); stroke-width: 1; }
 svg .grid.major { stroke: var(--grid-major); }

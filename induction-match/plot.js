@@ -5,7 +5,8 @@
 //   fluxGraph(fg, annotate, opts), voltGraph(fg, annotate, opts)   the graphs of a flux graph fg
 //   optionGraph(o)   an option of an exercise (generator.js): any function of t, with jumps
 //                    allowed at o.breaks (dotted for the voltage)
-//   drawGraph(d), pointAt(d, px, py)   the student's own graph, set with handles (exercises.js)
+//   drawGraph(d), drawBody(d), drawScales(kind)   the student's own graph, set with the handles of
+//                    the shared sketcher (sketch.js)
 (function (root) {
   'use strict';
 
@@ -126,10 +127,13 @@
   // ---------------------------------------------------------------- drawing
   // The student's graph: d = { kind: 'flux' | 'volt', at (the times of the handles), values,
   // spans (a step graph: the value of handle i holds over spans[i]; otherwise straight lines from
-  // handle to handle), wrong (handles marked), label }. pointAt(d, px, py): the handle nearest to a
-  // point of the drawing (in SVG units) and the whole value there, or null outside the plot.
+  // handle to handle), wrong (handles marked), label }. drawGraph(d): an empty <svg> for the
+  // sketcher, which draws drawBody(d) (the plot under its handles) in it. drawScales(kind): the
+  // scales x(t), y(v), the range lo … hi and the area where a press sets a handle (the plot and a
+  // margin, in SVG units).
   const lims = (kind) => (kind === 'flux' ? [0, PHI_MAX] : [-V_MAX, V_MAX]);
-  function drawGraph(d) {
+  const drawGraph = (d) => svg('', d.label || '', `${d.kind === 'flux' ? 'qc-flux' : 'qc-volt'} drawing`).replace('role="img"', 'role="group"');
+  function drawBody(d) {
     const g = d.kind === 'flux' ? fluxFrame() : voltFrame(), [lo, hi] = lims(d.kind);
     let s = g.s;
     (d.wrong || []).forEach((i) => {
@@ -143,17 +147,11 @@
         s += `<path class="curve" d="M${g.x(a)},${g.y(d.values[i])} L${g.x(b)},${g.y(d.values[i])}"/>`;
       });
     } else s += `<path class="curve" d="M${d.at.map((t, i) => `${g.x(t)},${g.y(d.values[i])}`).join(' L')}"/>`;
-    d.at.forEach((t, i) => { s += `<circle class="handle" cx="${g.x(t)}" cy="${g.y(d.values[i])}" r="5.5"/>`; });
-    return svg(s, d.label || '', `${d.kind === 'flux' ? 'qc-flux' : 'qc-volt'} drawing`);
+    return s;
   }
-  function pointAt(d, px, py) {
-    const [lo, hi] = lims(d.kind), x0 = L, x1 = W - R, y0 = TOP, y1 = H - B;
-    if (px < x0 - 12 || px > x1 + 12 || py < y0 - 10 || py > y1 + 10) return null;
-    const t = ((px - x0) / (x1 - x0)) * T;
-    let i = 0;
-    d.at.forEach((a, k) => { if (Math.abs(a - t) < Math.abs(d.at[i] - t)) i = k; });
-    const v = Math.round(hi - ((py - y0) / (y1 - y0)) * (hi - lo));
-    return { i, y: Math.max(lo, Math.min(hi, v)) };
+  function drawScales(kind) {
+    const g = kind === 'flux' ? fluxFrame() : voltFrame(), [lo, hi] = lims(kind);
+    return { x: g.x, y: g.y, lo, hi, area: { x0: L - 12, x1: W - R + 12, y0: TOP - 10, y1: H - B + 10 } };
   }
 
   // ---------------------------------------------------------------- tutorial marks
@@ -216,7 +214,7 @@
     return `<g class="hover" pointer-events="none">${s}</g>`;
   }
 
-  const api = { fluxGraph, voltGraph, optionGraph, drawGraph, pointAt, timeAt, cursor, guide, SIZE: { W, H }, num, dec, range, Tut, V_MAX, PHI_MAX };
+  const api = { fluxGraph, voltGraph, optionGraph, drawGraph, drawBody, drawScales, timeAt, cursor, guide, SIZE: { W, H }, num, dec, range, Tut, V_MAX, PHI_MAX };
   root.Plot = api;
   if (typeof module !== 'undefined') module.exports = api;
 })(typeof window !== 'undefined' ? window : globalThis);

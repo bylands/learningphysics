@@ -105,7 +105,7 @@ for (const task of Object.keys(M.TASKS)) {
     if (M.copied(ex, ex.answer)) fail(`${tag}: correct answer taken for a copy`);
 
     // diagrams
-    for (const s of [P.sourceGraph(ex), P.targetGraph(ex, ex.answer, { solution: true, marks: ps.map(() => 'ok'), active: 'm1' })]) {
+    for (const s of [P.sourceGraph(ex), P.targetGraph(ex, ex.answer, { solution: true, marks: ps.map(() => 'ok'), active: { t: (ps[1].t0 + ps[1].t1) / 2, v: ex.answer[1].ym } })]) {
       if (/NaN|undefined/.test(s)) fail(`${tag}: diagram`);
     }
   }

@@ -20,6 +20,16 @@ Each set has a switch *Names in* that shows the names of its apps, learning obje
 
 The admin panel's login also works in the crossword generator (`/crosswords/`, its own repository) and on the quiz's teacher screen (`/electric-circuits/host`, the quizzes repository, where every teacher gets a game of their own): its session cookie is for the whole site, and the generator asks the admin panel (`/admin/api/me`) whose it is. There, a teacher can give a crossword a short link, learningphysics.ch/*identifier*/*name*: the hub page serves that address and, finding no set of that name, opens the crossword. A set and a crossword of a teacher can't share a name.
 
+## Interactive widgets
+
+Besides the shared files that every app gets, `shared/` holds widgets for interactive exercises. `shared/sync.sh` copies a widget only into the apps whose `index.html` loads it (its `WIDGETS` list); each file's header documents its use.
+
+- `dnd.js`, `dnd.css`: dragging cards into boxes, to rank them (ties allowed) or to match them (force-concepts, interaction, em-waves).
+- `reader.js`, `reader.css`: reading values off a graph: a free point, a point on the curve, the tangent, pinned points. Most graphs need only `data-read…` attributes on their `<svg>` (photons, capacitors, impedance).
+- `sketch.js`, `sketch.css`: sketching a graph, as straight pieces between breakpoints (optionally bent into parabolas) or as one value per column (motion-graphs, motion-areas, wave-propagation, induction-match).
+
+All of them work with mouse, pen, touch and keyboard. Interactive exercises are for practice and the worked examples only: Check mode (`shared/check.js`) asks four-option questions, so every learning objective practised interactively also needs a question kind for the check, usually the same task with a static figure and four answers.
+
 ## Tests and deployment
 
 - `node <app>/test/check-generator.js` tests one app. `shared/sync.sh --check` checks that the copies match `shared/`, and `node hub/build-objectives.js --check` that `hub/objectives.json` matches the apps' objectives (run it without `--check` after changing an objective).

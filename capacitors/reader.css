@@ -1,0 +1,19 @@
+/* Shared by the learningphysics.ch apps (canonical copy in shared/, copied by sync.sh): the reading
+   off a graph of reader.js. A module's style.css may restyle these classes for its figures. */
+svg[data-read] { cursor: crosshair; }
+svg.rd-reading { touch-action: none; }
+svg[data-read]:focus { outline: none; }
+svg[data-read]:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+svg g.rd { pointer-events: none; }
+svg g.rd .rd-guide { stroke: var(--accent); stroke-width: 1; stroke-dasharray: 3 3; fill: none; }
+svg g.rd .rd-pt, svg g.rd .rd-end { fill: var(--accent); }
+svg g.rd .rd-tan { stroke: var(--accent); stroke-width: 1.8; fill: none; }
+/* the label beside the point (box) and the line at the top right of the plot area (corner) */
+svg g.rd .rd-box { fill: var(--card); stroke: var(--accent); stroke-width: 1; opacity: 0.94; }
+svg g.rd text.rd-text { font: 12px system-ui, sans-serif; fill: var(--ink); font-variant-numeric: tabular-nums; }
+svg g.rd text.rd-text .rd-sub { font-size: 75%; }
+svg g.rd text.rd-corner { font: 13px system-ui, sans-serif; fill: var(--ink); paint-order: stroke; stroke: var(--card); stroke-width: 4px; stroke-linejoin: round; }
+svg g.rd text.rd-corner .rd-sub { font-size: 10px; }
+/* pinned points, numbered */
+svg g.rd .rd-pin { fill: var(--card); stroke: var(--accent); stroke-width: 2; }
+svg g.rd text.rd-pin-n { fill: var(--accent); font: 700 11px system-ui, sans-serif; }

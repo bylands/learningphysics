@@ -74,7 +74,8 @@ div.cand:hover { border-color: var(--line); }
 
 /* drawing */
 #draw-area .linklike { display: block; margin: 4px 0 0; }
-svg.drawing { cursor: crosshair; touch-action: manipulation; }
+/* the drawing (sketch.js, sketch.css: no scrolling while dragging on it): a press anywhere sets a handle */
+svg.drawing { cursor: crosshair; }
 /* reading off the given graph: a guide line, a dot, the tangent and a readout */
 .given svg.pointable { cursor: crosshair; touch-action: pan-y; border-radius: 6px; }
 .given svg.pointable:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
@@ -86,6 +87,7 @@ svg .hv-read { fill: var(--accent); font: 600 12px system-ui, sans-serif; paint-
 svg .hv-read .it { font-family: var(--serif); }
 svg .col { stroke: var(--accent); stroke-width: 1; stroke-dasharray: 2 4; opacity: 0.5; }
 svg .handle { fill: var(--accent); stroke: var(--card); stroke-width: 1.5; }
+svg.drawing .handle:focus-visible { stroke-opacity: 0.35; stroke-width: 6; } /* with the keys: a halo */
 svg .wrongcol { fill: var(--bad); opacity: 0.18; }
 
 /* the pictures */

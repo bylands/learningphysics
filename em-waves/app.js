@@ -1,7 +1,7 @@
 (function () {
   'use strict';
 
-  const EW = window.EW, Lang = window.Lang, Check = window.Check, { practiceOf, tutorial } = window.EWaves;
+  const EW = window.EW, Lang = window.Lang, Check = window.Check, Dnd = window.Dnd, { practiceOf, tutorial } = window.EWaves;
   const { EXAMPLES, TOPICS } = window.Lessons;
   const $ = (sel) => document.querySelector(sel);
   const MAX_TRIES = 3;
@@ -131,11 +131,16 @@
   }
 
   // The answer fields: a number (input in-key), a choice (radio buttons named in-key) or a ranking
-  // (cards dragged into boxes, questions.js).
+  // (cards dragged into boxes, the shared widget dnd.js: { key, type: 'rank', what, items: [{ key,
+  // label }], ends: [top, bottom] }, read as ranks 1, 2, 2, 4, null for a card still in the pool).
   const radios = (f, list) => `<span class="choices levels small${f.pics ? ' pics' : ''}${f.stack ? ' stack' : ''}" role="radiogroup" aria-label="${f.what.replace(/<[^>]*>|\$/g, '')}">${list
     .map(([v, html, title]) => `<label><input type="radio" name="in-${f.key}" value="${v}"><span${title ? ` title="${title}" aria-label="${title}"` : ''}>${html}</span></label>`).join('')}</span>`;
   function fieldHtml(f) {
-    if (f.type === 'rank') return Questions.html(f);
+    if (f.type === 'rank') {
+      return `<div class="field rank dnd" data-key="${f.key}">
+      ${Dnd.html({ kind: 'rank', items: f.items.map((x) => x.label), ends: f.ends })}
+      <p class="fb" aria-live="polite"></p></div>`;
+    }
     const fb = '<span class="fb" aria-live="polite"></span>';
     if (f.type === 'num') {
       return `<div class="field" data-key="${f.key}">
@@ -148,15 +153,21 @@
     const list = f.options.map((o) => [o[0], o[1]]);
     return `<div class="field choice${f.pics || f.stack ? ' wide' : ''}" data-key="${f.key}"${f.after ? ' hidden' : ''}><span class="what">${f.what}</span>${radios(f, list)}${fb}</div>`;
   }
+  const fieldOf = (f) => $('#fields').querySelector(`.field[data-key="${f.key}"]`);
+  function clearRank(row) {
+    row.classList.remove('ok', 'warn', 'bad');
+    Dnd.mark(row);
+    row.querySelectorAll('.fb').forEach((x) => { x.innerHTML = ''; });
+  }
   function valueOf(f) {
-    if (f.type === 'rank') return Questions.state(f);
+    if (f.type === 'rank') return Dnd.ranks(fieldOf(f));
     if (f.type === 'num') return $(`#in-${f.key}`).value;
     const r = document.querySelector(`input[name="in-${f.key}"]:checked`);
     return r ? r.value : null;
   }
   function setValue(f, val) {
     if (val == null) return;
-    if (f.type === 'rank') Questions.setState(f, val);
+    if (f.type === 'rank') Dnd.setRanks(fieldOf(f), val);
     else if (f.type === 'num') $(`#in-${f.key}`).value = val;
     else { const r = document.querySelector(`input[name="in-${f.key}"][value="${val}"]`); if (r) r.checked = true; }
   }
@@ -220,12 +231,12 @@
     let allOk = true, anyEmpty = false;
     ex.fields.filter(shown).forEach((f) => {
       const row = $('#fields').querySelector(`.field[data-key="${f.key}"]`), base = row.className.replace(/ (ok|warn|bad)\b/g, ''), val = valueOf(f);
-      if (f.type === 'rank') Questions.mark(f);
+      if (f.type === 'rank') Dnd.mark(row);
       if (empty(f, val)) { anyEmpty = true; allOk = false; row.className = base; row.querySelector('.fb').textContent = ''; return; }
       const r = judge(f, val);
       row.className = `${base} ${r.cls}`;
       if (r.html) { row.querySelector('.fb').innerHTML = r.msg; math(row.querySelector('.fb')); } else row.querySelector('.fb').textContent = r.msg;
-      if (f.type === 'rank') Questions.mark(f, r.ok, r.bad);
+      if (f.type === 'rank') Dnd.mark(row, r.ok, r.bad);
       if (r.cls !== 'ok') allOk = false;
     });
     if (allOk) {
@@ -392,10 +403,11 @@
     $('#new').addEventListener('click', fresh);
     $('#answers').addEventListener('submit', check);
     // when every field shown is a choice (yes or no, which graph, …), a click checks at once
-    // a ranking (questions.js) is checked with the button: a moved card only clears its marks
-    Questions.attach($('#fields'));
+    // a ranking (dnd.js) is checked with the button: a moved card only clears the marks and
+    // feedback of its field
+    Dnd.attach($('#fields'));
     $('#answers').addEventListener('change', (e) => {
-      if (e.target.classList.contains('chip')) { Questions.clearAt(e.target); return; }
+      if (e.target.classList.contains('chip')) { clearRank(e.target.closest('.field')); return; }
       if (e.target.type !== 'radio' || st.solved || !ex.fields.filter(shown).every((f) => f.type !== 'num')) return;
       check({ preventDefault() {} });
     });

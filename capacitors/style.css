@@ -114,10 +114,9 @@ span.result { background: var(--ok-bg); border-radius: 3px; padding: 0.05em 0.25
 :is(.four, .choices.pics, #ck) svg.tgraph.bare .axl .sub { font-size: 14px; }
 :is(.four, .choices.pics, #ck) svg.tgraph.bare .tick { font-size: 15px; }
 #ck .ck-answers svg.tgraph { width: 260px; max-width: 100%; }
-/* reading a graph (figures.js): the point pointed at, or the tangent there */
-svg.tgraph[data-read] { cursor: crosshair; touch-action: pan-y; }
-svg.tgraph .rdl { stroke: var(--accent); stroke-width: 1.2; stroke-dasharray: 4 3; fill: none; }
-svg.tgraph .rdl.tanl { stroke: var(--vol); stroke-width: 1.8; stroke-dasharray: none; }
-svg.tgraph .rdp { fill: var(--accent); }
-svg.tgraph .rdt { fill: var(--ink); font-size: 13px; font-family: system-ui, sans-serif; paint-order: stroke; stroke: var(--card); stroke-width: 4px; stroke-linejoin: round; }
-svg.tgraph .rdt .sub { font-size: 10px; }
+/* reading a graph (reader.js, see figures.js): the point pointed at, or the tangent there; a
+   horizontal drag reads at once, a vertical one scrolls the page until the graph is tapped */
+svg.tgraph[data-read]:not(.rd-reading) { touch-action: pan-y; }
+svg.tgraph g.rd .rd-guide { stroke-width: 1.2; stroke-dasharray: 4 3; }
+svg.tgraph g.rd .rd-pt:not(.rd-on) { r: 3.5px; }
+svg.tgraph g.rd .rd-tan { stroke: var(--vol); }
