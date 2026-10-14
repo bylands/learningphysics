@@ -8,8 +8,8 @@ overview of the 445 sheet exercises; this first batch is the collection
 their uploaded copies (exercises 24627 to 24639, collection 5851), so an
 upload updates them in place.
 
-All 33 collections (430 exercises) are drafted: Freier Fall carries its
-ids; the others have none until their first upload. `STYLE.md` holds the
+All 33 collections (430 exercises) are uploaded (14.10.2026) and carry the
+ids of their copies on TeXercises, so a later upload updates them in place. `STYLE.md` holds the
 house style, `tools/check.py` checks the drafts.
 
 ## Upload
