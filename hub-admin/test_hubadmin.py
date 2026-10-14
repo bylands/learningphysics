@@ -558,6 +558,17 @@ class Preview(unittest.TestCase):
         self.assertEqual(e.math(r"\FP{-3}{2}"), r"{2.1\,\mathrm{mN}} ")
         self.assertNotIn("x^", P.convert(e, "\\begin{align}a &= x^\\\\ b &= c\n\\end{align}"))
 
+    def test_fpeval_and_ifthenelse(self):
+        e = self.ex("\\NewQty{n}{3}\n\\NewQty{nm}{\\fpeval{\\nX-1}}")
+        self.assertEqual(e.math(r"\nm"), r"{2} ")
+        self.assertEqual(e.math(r"\ifthenelse{\nmX = 2}{a}{b}"), "{a} ")
+        self.assertEqual(e.math(r"\ifthenelse{\nX < 2}{a}{b}"), "{b} ")
+        self.assertIn("yes", P.convert(e, r"\ifthenelse{\nX > 2}{yes}{no}"))
+        self.assertIn(r"\begin{align*}", P.convert(e, "\\begin{equation}\n a &= b \\\\\n\\end{equation}"))
+        h = P.convert(e, "density $\\lambda=Q/L:\n\nForce on $q$ at $r$.")  # a $ left open
+        self.assertIn(r'<span class="tx-m">\lambda=Q/L:</span>', h)
+        self.assertIn('<span class="tx-m">q</span>', h)
+
     def test_quantities(self):
         e = self.ex("\\NewQty{I}{20}[\\milli\\ampere][e-3][\\ampere]\n\\NewQty*{v}{54}[\\kmph][1/3.6][\\mps]\n"
                     "\\NewQty{d}{7.8e7}[\\km][e3][\\m]\n"
