@@ -142,7 +142,7 @@ class Unit(unittest.TestCase):
         # same path would be hidden behind them, and so would a set of that name
         conf = (ROOT / "deploy" / "nginx" / "learningphysics.conf").read_text()
         services = set(re.findall(r"location /([a-z0-9-]+)/ \{[^}]*proxy_pass", conf))
-        self.assertIn("millionaire", services)
+        self.assertIn("physicist", services)
         self.assertLessEqual(services, H.RESERVED, "a service is missing from RESERVED (set names)")
         apps = re.search(r'^APPS="([^"]*)"', (ROOT / "deploy.sh").read_text(), re.M).group(1).split()
         paths = {a.split(":")[-1] for a in apps}
