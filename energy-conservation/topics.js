@@ -13,6 +13,9 @@
 //                             examples than there are topics (by default topic t has example t)
 //     make(type, seed),       an exercise of a type
 //     typeOf(ex),             the type of an exercise
+//     typeIsMade,             (optional) true when typeOf(ex) is the type ex was made as: practice
+//                             then draws among the types and makes only the exercise it picks (for
+//                             apps whose exercises are slow to make)
 //     onChange(),             the student chose another topic or stage (start a new exercise)
 //     tutor(i),               show worked example i (the link next to the stages)
 //     keyOf(ex),              (optional) what makes an exercise new to the student; by default its
@@ -212,8 +215,13 @@
         let ex = null, fresh = false;
         // not the situation of the last one (if the first tries find another)
         const was0 = last && o.situationOf ? o.situationOf(last) : null;
+        // with typeIsMade, practice draws from the types alone, and only the exercise drawn is made
+        const types = typesOf(t, s), lastType = last ? o.typeOf(last) : null;
+        const draw = () => (o.typeIsMade
+          ? exercise(t, s, Practice.next(o.app, (seed) => ({ seed, type: types[seed % types.length] }), (d) => d.type, lastType).seed)
+          : Practice.next(o.app, (seed) => exercise(t, s, seed), (e) => o.typeOf(e), lastType));
         for (let k = 0; k < 25 && !fresh; k++) {
-          ex = Practice.next(o.app, (seed) => exercise(t, s, seed), (e) => o.typeOf(e), last ? o.typeOf(last) : null);
+          ex = draw();
           const key = keyOf(ex);
           fresh = (key == null || !here.has(key)) && (was0 == null || k >= 15 || o.situationOf(ex) !== was0);
         }

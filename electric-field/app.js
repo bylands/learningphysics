@@ -421,7 +421,7 @@
     topics = window.Topics.create({
       app: PRACTICE,
       topics: TOPICS.map((t) => ({ name: t.name, stages: t.stages, example: (s) => ({ i: t.example(s), name: () => LESSONS[t.example(s)].name() }) })),
-      make: (type, seed) => X.make(type, seed), typeOf,
+      make: (type, seed) => X.make(type, seed), typeOf, typeIsMade: true,
       onChange: fresh,
       tutor: (i) => { setMode('tutor'); tutor.open(i); },
     });
