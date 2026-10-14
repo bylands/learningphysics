@@ -1,7 +1,8 @@
 // Exercises and worked examples from the scenarios (see scenarios.js) and their equations
 // (equations.js). An exercise is { scenario, difficulty, title, text, forces (the table of forces),
 // fields (the wanted quantities, for the worked solution: { key, sym, unit, what, value }),
-// figure(view), taskFigure(ticked, extra), solutionFigure(), comps (components to identify),
+// figure(view), taskFigure(ticked, extra), solutionFigure(), diagram() (the free-body diagram the
+// student draws in practice, and its judging), comps (components to identify),
 // eqs (equations to choose, see identify.js), nums (results to work out, typed or chosen, numItem),
 // hints, solution, results, steps, p, v }.
 // practiceOf(type, seed) gives a practice exercise of a situation, or of "find the error" (types
@@ -56,30 +57,39 @@
   // against the motion. The box's centre comes from its weight, the contact point from its normal
   // force, the motion from the velocity arrow (v) or else the acceleration arrows.
   const PHANTOM = 40; // px
+  // Where a force of kind k on box i starts, and its direction: the force's own where it acts (or
+  // has size zero), else as described above; a "force in the direction of motion" (m, see
+  // diagram) along the motion too.
+  function placeOf(scn, sc, i, k) {
+    const own = sc.forces.filter((f) => boxOf(scn, f) === i), of = (x) => own.find((f) => f.kind === x);
+    const C = of('g').at, N = of('n');
+    const mark = sc.marks.find((m) => m.id === 'v') || (sc.marks.length === 1 ? sc.marks[0] : sc.marks.find((m) => m.id === `a${i + 1}`));
+    const m = mark ? mark.dir : null;
+    const zero = of(k); // e.g. friction of size zero: its place in the drawing
+    // each kind in a column of its own, beside the weight in the middle
+    const vertical = m && Math.abs(m[1]) > 0.5;
+    return zero ? { at: zero.at, dir: zero.dir }
+      : k === 'n' ? { at: [C[0] + 22, C[1] + 28], dir: [0, -1] }
+        : k === 'r' ? { at: N ? [N.at[0] - 24, N.at[1]] : [C[0] + 40, C[1] + 8], dir: m ? [-m[0], -m[1]] : [-1, 0] }
+          : k === 's' ? { at: vertical ? [C[0] - 24, C[1] - 6] : [C[0] + 16, C[1] - 14], dir: m || [1, 0] }
+            // a force of motion left of the weight, clear of a push or pull given on the right
+            : k === 'm' ? { at: [C[0] - 22, C[1] - 12], dir: m || [1, 0] }
+            : k === 'f' ? { at: [C[0] - 30, C[1] + 22], dir: [0, -1] }
+              // air resistance at the centre, like the weight (beside it, clear of a spring above)
+              : k === 'd' ? { at: m && !vertical ? [C[0] + 6, C[1] - 8] : [C[0] + 26, C[1]], dir: m ? [-m[0], -m[1]] : [0, -1] }
+                : { at: [C[0] - 20, C[1] - 26], dir: [0, -1] };
+  }
+  // the symbol of a force of kind k on box i: the force's own, else as phantoms draw it
+  function symOf(scn, sc, t, i, k) {
+    const two = t.boxes.length > 1, f = sc.forces.find((x) => x.kind === k && boxOf(scn, x) === i);
+    return f && k !== 'm' ? f.sym : [{ g: 'G', n: 'N', r: 'R', s: 'F', m: 'F', k: two ? 'K' : 'S', f: 'Fs', d: 'D' }[k], two ? String(i + 1) : ''];
+  }
   function phantoms(scn, sc, t) {
-    const out = [], two = t.boxes.length > 1;
-    t.boxes.forEach((b, i) => {
-      const own = sc.forces.filter((f) => boxOf(scn, f) === i), of = (k) => own.find((f) => f.kind === k);
-      const C = of('g').at, N = of('n');
-      const mark = sc.marks.find((m) => m.id === 'v') || (sc.marks.length === 1 ? sc.marks[0] : sc.marks.find((m) => m.id === `a${i + 1}`));
-      const m = mark ? mark.dir : null;
-      kindsOf(scn).forEach((k, j) => {
-        if (t.cells[i][j].length) return;
-        const zero = of(k); // e.g. friction of size zero: its place in the drawing
-        // each kind in a column of its own, beside the weight in the middle
-        const vertical = m && Math.abs(m[1]) > 0.5;
-        const place = zero ? { at: zero.at, dir: zero.dir }
-          : k === 'n' ? { at: [C[0] + 22, C[1] + 28], dir: [0, -1] }
-            : k === 'r' ? { at: N ? [N.at[0] - 24, N.at[1]] : [C[0] + 40, C[1] + 8], dir: m ? [-m[0], -m[1]] : [-1, 0] }
-              : k === 's' ? { at: vertical ? [C[0] - 24, C[1] - 6] : [C[0] + 16, C[1] - 14], dir: m || [1, 0] }
-                : k === 'f' ? { at: [C[0] - 30, C[1] + 22], dir: [0, -1] }
-                  // air resistance at the centre, like the weight (beside it, clear of a spring above)
-                  : k === 'd' ? { at: m && !vertical ? [C[0] + 6, C[1] - 8] : [C[0] + 26, C[1]], dir: m ? [-m[0], -m[1]] : [0, -1] }
-                    : { at: [C[0] - 20, C[1] - 26], dir: [0, -1] };
-        const key = { g: 'G', n: 'N', r: 'R', s: 'F', k: two ? 'K' : 'S', f: 'Fs', d: 'D' }[k];
-        out.push({ id: `ph${i}${k}`, kind: k, ...place, fixed: PHANTOM, sym: [key, two ? String(i + 1) : ''], lab: [8, 0] });
-      });
-    });
+    const out = [];
+    t.boxes.forEach((b, i) => kindsOf(scn).forEach((k, j) => {
+      if (t.cells[i][j].length) return;
+      out.push({ id: `ph${i}${k}`, kind: k, ...placeOf(scn, sc, i, k), fixed: PHANTOM, sym: symOf(scn, sc, t, i, k), lab: [8, 0] });
+    }));
     return out;
   }
 
@@ -98,6 +108,172 @@
     }));
     extra.forEach((id) => ids.add(id));
     return sc.render({ task: true, ticked: ids });
+  }
+
+  // ---------------------------------------------------------------- the free-body diagram drawn
+  // In practice the student draws the forces on each box (app.js, with arrow.js): from a palette
+  // of the kinds of the table of forces, and on a moving body also "a force in the direction of
+  // motion" (m), which does not exist. The forces given in the task (a push or pull, a given air
+  // resistance) are drawn already and count as drawn. diagram() gives
+  //   boxes      the anchors: { id (the box's index), label, area (its corners) }
+  //   kinds      [{ id, name }] for the palette
+  //   tail(k, i), sym(k, i)  where a force of kind k on box i starts, and its symbol
+  //   dirs       the directions to snap to: the 8 of the compass, and along and perpendicular to a
+  //              slope (the axes of every force to draw that is off the 8)
+  //   len        the lengths of the arrows (svg units), a new one as long as a typical force of the
+  //              solved drawing
+  //   target     the forces to draw: { id, kind, anchor, dir (degrees, y up) }; len and group
+  //              (the box) where two of them must be equally long, as the task makes it clear:
+  //              two forces opposite each other on a box, of equal size, with every other force
+  //              on it perpendicular to them (normal force and weight on a level floor, a spring
+  //              or air resistance holding the weight at rest or at terminal velocity)
+  //   judge(arrows, done)  the drawing judged (Arrow.judge, lengths within 20 % of the pair's
+  //              mean): { ok, marks: { arrow id: 'ok' | 'bad' }, notes: [{ flag, text }] }, a note
+  //              per force missing, turned, of the wrong length (one per pair) or too many,
+  //              a nudge while the exercise is open, the explanation once done (solved or shown)
+  const DEG = (d) => (((Math.round((Math.atan2(-d[1], d[0]) * 180) / Math.PI * 1e6) / 1e6) % 360) + 360) % 360;
+  function diagram(scn, p, v, t) {
+    const sc = scn.scene(p, v, { task: true }), kinds = kindsOf(scn);
+    const acting = sc.forces.filter((f) => kinds.includes(f.kind) && f.mag > 1e-9);
+    const given = acting.filter((f) => f.task);
+    const target = acting.filter((f) => !f.task).map((f) => ({ id: f.id, kind: f.kind, anchor: boxOf(scn, f), dir: DEG(f.dir) }));
+    const dot = (a, b) => a.dir[0] * b.dir[0] + a.dir[1] * b.dir[1];
+    t.boxes.forEach((b, i) => {
+      const on = acting.filter((f) => boxOf(scn, f) === i);
+      on.forEach((a) => on.forEach((c) => {
+        if (a.id >= c.id || a.task || c.task || dot(a, c) > -1 + 1e-9 || Math.abs(a.mag - c.mag) > 1e-6 * a.mag) return;
+        if (on.some((x) => x !== a && x !== c && Math.abs(dot(a, x)) > 1e-9)) return;
+        target.filter((x) => x.id === a.id || x.id === c.id).forEach((x) => { x.len = 1; x.group = i; });
+      }));
+    });
+    const axes = new Set([0, 45, 90, 135, 180, 225, 270, 315]);
+    target.forEach((x) => { if (x.dir % 45) [0, 90, 180, 270].forEach((k) => axes.add((x.dir + k) % 360)); });
+    return {
+      boxes: t.boxes.map((label, i) => ({ id: i, label, area: sc.bodies[i] })),
+      kinds: [...kinds, ...(scn.still ? [] : ['m'])].map((k) => ({ id: k, name: k === 'm' ? MOTION() : KIND_NAMES[k](scn) })),
+      tail: (k, i) => placeOf(scn, sc, i, k).at,
+      sym: (k, i) => symOf(scn, sc, t, i, k),
+      dirs: [...axes].sort((a, b) => a - b),
+      len: { lo: 24, hi: 112, step: 8, init: typical(sc, target) },
+      target,
+      given: given.map((f) => f.id),
+      judge: (arrows, done) => judgeDrawing(scn, p, v, t, target, given, arrows, done),
+    };
+  }
+
+  // The length of a new arrow: that of the middle one of the forces to draw in the solved drawing
+  // (the same for every kind, so that it tells nothing about their sizes), to whole steps.
+  function typical(sc, target) {
+    const L = sc.lengths(), ls = target.map((x) => L[x.id]).sort((a, b) => a - b);
+    return Math.max(32, Math.round(ls[Math.floor((ls.length - 1) / 2)] / 8) * 8);
+  }
+
+  // The drawing judged, with a note per thing wrong (see diagram).
+  function judgeDrawing(scn, p, v, t, target, given, arrows, done) {
+    const j = root.Arrow.judge(arrows, target, { lenTol: 0.2 }), marks = {}, notes = [], lens = new Set();
+    j.results.forEach((r) => {
+      const a = r.drawn != null ? arrows[r.drawn] : null;
+      if (a) marks[a.id] = r.result === 'right' ? 'ok' : 'bad';
+      if (r.result === 'right') return;
+      if (r.result === 'len') {
+        const g = target[r.target].group;
+        if (lens.has(g)) return;
+        lens.add(g);
+        notes.push(drawNote(scn, p, v, t, target, given, { result: 'len', kind: r.kind, anchor: r.anchor, pair: target.filter((x) => x.group === g).map((x) => x.kind) }, done));
+      } else notes.push(drawNote(scn, p, v, t, target, given, r, done));
+    });
+    return { ok: j.ok, marks, notes };
+  }
+
+  // What is wrong in the drawing r (a result of Arrow.judge) and its flag (a typical slip, see
+  // check-src.js), as a nudge or, once done, as the explanation.
+  function drawNote(scn, p, v, t, target, given, r, done) {
+    const i = r.anchor, b = t.boxes[i], B = b[0].toUpperCase() + b.slice(1), k = r.kind, still = !!scn.still;
+    const name = k === 'm' ? MOTION() : (t.kinds.find((x) => x.kind === k) || {}).name, Name = name[0].toUpperCase() + name.slice(1);
+    const contact = scn.id === 'push-pair', pushed = given.some((f) => f.kind === 's' && boxOf(scn, f) === i);
+    const has = (x) => target.some((y) => y.kind === x && y.anchor === i);
+    const why = (flag) => forceWrong(scn, p, v, { flag }, b);
+    const say = (flag, nudge, full) => ({ flag, text: done ? full : nudge });
+    if (r.result === 'len') {
+      const [na, nb] = r.pair.map((x) => t.kinds.find((y) => y.kind === x).name);
+      return say(null, L(`Compare the lengths of the ${na} and the ${nb} on ${b}: does anything else act along their line?`, `Vergleiche die Längen: ${na} und ${nb} auf ${b}. Wirkt sonst etwas entlang ihrer Linie?`),
+        L(`The ${na} and the ${nb} on ${b} are equally large: nothing else acts along their line, and it does not accelerate along it. Draw them equally long.`,
+          `${na} und ${nb} auf ${b} sind gleich gross: Sonst wirkt nichts entlang ihrer Linie, und sie wird in dieser Richtung nicht beschleunigt. Zeichne sie gleich lang.`));
+    }
+    if (r.result === 'dir') {
+      switch (k) {
+        case 'g': return say(null, L(`Which way does the Earth pull ${b}?`, `In welche Richtung zieht die Erde ${b}?`),
+          L(`The weight on ${b} points straight down: the Earth pulls it towards its centre.`, `Die Gewichtskraft auf ${b} zeigt senkrecht nach unten: Die Erde zieht sie zu ihrem Mittelpunkt.`));
+        case 'n': return say(null, L(`The normal force on ${b}: which way does the surface push?`, `Die Normalkraft auf ${b}: In welche Richtung drückt die Unterlage?`),
+          L(`The normal force on ${b} points away from the surface, perpendicular to it: the surface pushes, it cannot pull.`, `Die Normalkraft auf ${b} zeigt senkrecht von der Unterlage weg: Die Unterlage drückt, ziehen kann sie nicht.`));
+        case 'r': return still
+          ? say(null, L(`Static friction on ${b}: which way would it slide without friction?`, `Die Haftreibung auf ${b}: In welche Richtung würde sie ohne Reibung gleiten?`),
+            L(`Static friction on ${b} points along the surface, against the way it would slide without friction.`, `Die Haftreibung auf ${b} zeigt entlang der Unterlage, gegen die Richtung, in die sie ohne Reibung gleiten würde.`))
+          : say(null, L(`Friction on ${b}: compare its direction with the direction of motion.`, `Die Reibung auf ${b}: Vergleiche ihre Richtung mit der Bewegungsrichtung.`),
+            L(`Friction on ${b} points along the surface, against its motion.`, `Die Reibung auf ${b} zeigt entlang der Unterlage, gegen ihre Bewegung.`));
+        case 'k': return contact
+          ? say(null, L(`The force of the other box on ${b}: which way does it push?`, `Die Kraft der anderen Kiste auf ${b}: In welche Richtung drückt sie?`),
+            L(`The other box pushes ${b} away from itself: boxes in contact can only push.`, `Die andere Kiste drückt ${b} von sich weg: Kisten, die sich berühren, können nur drücken.`))
+          : say(null, L(`The rope force on ${b}: can a rope push, or only pull?`, `Die Seilkraft auf ${b}: Kann ein Seil drücken oder nur ziehen?`),
+            L(`The rope pulls ${b} along the rope, towards the rope: a rope can only pull.`, `Das Seil zieht ${b} entlang des Seils zu sich hin: Ein Seil kann nur ziehen.`));
+        case 'f': return say('springDir', L(`Is the spring stretched or compressed? Which way does it act on ${b} then?`, `Ist die Feder gedehnt oder gestaucht? In welche Richtung wirkt sie dann auf ${b}?`), why('springDir'));
+        case 'd': return say('dragDir', L(`Air resistance on ${b}: compare its direction with the velocity.`, `Der Luftwiderstand auf ${b}: Vergleiche seine Richtung mit der Geschwindigkeit.`), why('dragDir'));
+        default: return say(null, L(`Check the direction of the ${name} on ${b}.`, `Prüfe die Richtung: ${name} auf ${b}.`), L(`The ${name} on ${b} points the wrong way.`, `${Name} auf ${b}: Die Richtung stimmt nicht.`));
+      }
+    }
+    if (r.result === 'missing') {
+      switch (k) {
+        case 'g': return say(null, L(`The Earth pulls every body: which force is missing on ${b}?`, `Die Erde zieht jeden Körper an: Welche Kraft fehlt auf ${b}?`),
+          L(`The weight on ${b} is missing: the Earth pulls every body down.`, `Die Gewichtskraft auf ${b} fehlt: Die Erde zieht jeden Körper nach unten.`));
+        case 'n': return say(null, L(`${B} lies on a surface: what does the surface do to it?`, `${B} liegt auf einer Unterlage: Was bewirkt die Unterlage?`),
+          L(`The normal force on ${b} is missing: the surface pushes it away from itself, perpendicular to the surface.`, `Die Normalkraft auf ${b} fehlt: Die Unterlage drückt sie senkrecht von sich weg.`));
+        case 'r': return still
+          ? say('noFric', L(`${B} stands still although it is pulled: what holds it?`, `${B} ruht, obwohl an ihr gezogen wird: Was hält sie fest?`),
+            L(`Static friction on ${b} is missing: without it, the pull would make it slide.`, `Die Haftreibung auf ${b} fehlt: Ohne sie würde die Zugkraft sie ins Gleiten bringen.`))
+          : say('noFric', L(`${B} slides over the surface: what else does the surface do besides pushing?`, `${B} gleitet über die Unterlage: Was bewirkt die Unterlage ausser dem Drücken?`), why('noFric'));
+        case 'k': return contact
+          ? say(null, L(`${B} touches the other box: what does that box do?`, `${B} berührt die andere Kiste: Was bewirkt diese Kiste?`),
+            L(`The contact force on ${b} is missing: the other box pushes it.`, `Die Kontaktkraft auf ${b} fehlt: Die andere Kiste drückt auf sie.`))
+          : say(null, L(`A rope is tied to ${b}: what does it do?`, `An ${b} ist ein Seil befestigt: Was bewirkt es?`),
+            L(`The rope force on ${b} is missing: the rope pulls it.`, `Die Seilkraft auf ${b} fehlt: Das Seil zieht an ihr.`));
+        case 'f': return say('noSpring', L(`A spring touches ${b}: is it stretched or compressed, and what does it do?`, `Eine Feder berührt ${b}: Ist sie gedehnt oder gestaucht, und was bewirkt sie?`), why('noSpring'));
+        case 'd': return say('noDrag', L(`${B} moves through the air: what does the air do?`, `${B} bewegt sich durch die Luft: Was bewirkt die Luft?`), why('noDrag'));
+        default: return say(null, L(`A force on ${b} is still missing.`, `Auf ${b} fehlt noch eine Kraft.`), L(`The ${name} on ${b} is missing.`, `${Name} auf ${b} fehlt.`));
+      }
+    }
+    // a force too many: drawn twice, given already, or one that does not act
+    if (given.some((f) => f.kind === k && boxOf(scn, f) === i)) {
+      const s = L(`The ${name} on ${b} is given in the drawing already: a second arrow for it is one too many.`, `${Name} auf ${b} ist in der Zeichnung schon gegeben: Ein zweiter Pfeil dafür ist zu viel.`);
+      return say(null, s, s);
+    }
+    if (has(k)) {
+      const s = L(`Drawn twice: the ${name} on ${b}. Each force acts once.`, `Zweimal eingezeichnet: ${name} auf ${b}. Jede Kraft wirkt nur einmal.`);
+      return say(null, s, s);
+    }
+    switch (k) {
+      case 'm': case 's': return still
+        ? say(null, L(`Which body pushes or pulls ${b} from outside?`, `Welcher Körper drückt oder zieht ${b} von aussen?`),
+          L(`No hand and no rope pushes or pulls ${b} from outside.`, `Keine Hand und kein Seil drückt oder zieht ${b} von aussen.`))
+        : say('motion', L(`Which body pushes or pulls ${b} in the direction of motion? Draw only forces that a body (or the Earth) exerts.`, `Welcher Körper drückt oder zieht ${b} in Bewegungsrichtung? Zeichne nur Kräfte ein, die ein Körper (oder die Erde) ausübt.`), why('motion'));
+      case 'd': return still
+        ? say('dragRest', L(`Does ${b} move through the air?`, `Bewegt sich ${b} durch die Luft?`), why('dragRest'))
+        : say(null, L(`How large is the air resistance on ${b}, at its low speed?`, `Wie gross ist der Luftwiderstand auf ${b} bei ihrer kleinen Geschwindigkeit?`),
+          L(`Air resistance on a box that slides slowly is tiny: it is left out here.`, `Der Luftwiderstand auf eine langsam gleitende Kiste ist winzig: Er wird hier vernachlässigt.`));
+      case 'n': return say(null, L(`Does ${b} lie on a surface that pushes it?`, `Liegt ${b} auf einer Unterlage, die sie stützt?`),
+        L(`There is no normal force on ${b}: no surface supports it.`, `Auf ${b} wirkt keine Normalkraft: Keine Unterlage stützt sie.`));
+      case 'r': return has('n')
+        ? say(null, L(`Is there friction on ${b}? Check what the text says.`, `Wirkt Reibung auf ${b}? Prüfe, was der Text sagt.`),
+          L(`There is no friction on ${b}: the text gives none (no coefficient of friction, or it is negligible).`, `Auf ${b} wirkt keine Reibung: Der Text gibt keine an (keine Reibungszahl, oder sie ist vernachlässigbar).`))
+        : say(null, L(`Does ${b} rub on a surface?`, `Reibt ${b} an einer Unterlage?`),
+          L(`There is no friction on ${b}: it touches no surface.`, `Auf ${b} wirkt keine Reibung: Sie berührt keine Unterlage.`));
+      case 'k': return pushed
+        ? say(null, L(`Which rope or which other box acts on ${b}, besides the push or pull given?`, `Welches Seil oder welche andere Kiste wirkt auf ${b}, ausser der gegebenen Zug- oder Druckkraft?`),
+          L(`Besides the push or pull given in the drawing, no rope and no other box acts on ${b}.`, `Ausser der gegebenen Zug- oder Druckkraft wirkt kein Seil und keine andere Kiste auf ${b}.`))
+        : say(null, L(`Which rope or which other box acts on ${b}?`, `Welches Seil oder welche andere Kiste wirkt auf ${b}?`),
+          L(`No rope and no other box pulls or pushes ${b}.`, `Kein Seil und keine andere Kiste zieht oder drückt ${b}.`));
+      case 'f': return say(null, L(`Is there a spring that touches ${b}?`, `Berührt eine Feder ${b}?`), L(`No spring touches ${b}.`, `Keine Feder berührt ${b}.`));
+      default: return say(null, L(`Is there a body that exerts this force on ${b}?`, `Gibt es einen Körper, der diese Kraft auf ${b} ausübt?`), L(`There is no ${name} on ${b}.`, `${Name} wirkt nicht auf ${b}.`));
+    }
   }
 
   // A result to work out (scn.nums), typed in first: { key, what, sym, unit, x (the right value),
@@ -166,6 +342,8 @@
       figure: (view = { task: true }) => scn.scene(p, v, view).render(view),
       // the task with the ticked forces (Set of 'box:kind') and the forces of extra (ids) drawn in
       taskFigure: (ticked, extra) => taskFigure(scn, p, v, t, ticked, extra),
+      // the free-body diagram the student draws (practice), judged
+      diagram: () => diagram(scn, p, v, t),
       solutionFigure: () => scn.scene(p, v, {}).render({ show: all }),
       // the components to identify (practice: nice angles), with their values
       comps: scn.comps && p.nice ? scn.comps(p).map((c) => niceComp(c, p)) : [],

@@ -25,8 +25,9 @@
       idFirst: 'First choose the right expression or equation for each part.', fill: 'Enter the result, then check again.',
       number: 'Enter a number', correct: 'Correct', sign: 'Give the size (a positive number)', close: 'Close: check your calculation', wrong: 'Not correct',
       choose: 'Not right yet. Choose the result from these values:', pick: 'Choose one of the values for each result, then check again.',
-      forcesNote: (n, who) => (n > 1 ? 'Tick every force that acts on each box. Each force you tick appears in the drawing.' : `Tick every force that acts on ${who}. Each force you tick appears in the drawing.`),
-      tableOk: '✓ The forces are right.', tableBad: (n) => `✗ ${n === 1 ? 'One entry is' : `${n} entries are`} not right yet.`,
+      forcesNote: (n, who, given) => `Draw every force that acts on ${n > 1 ? 'each box' : who}, in its direction${given ? '; the forces given in the drawing count already' : ''}. Where two forces are clearly equally large, draw them equally long.`,
+      drawOk: '✓ The forces are right.', drawBad: '✗ Not right yet:',
+      slope: ['up the slope', 'perpendicular to the slope, away from it', 'down the slope', 'perpendicular to the slope, into it'],
       ok: 'All correct.', okWell: 'All correct, well done! Compare your approach with the worked solution, or start a new exercise.',
       notYet: (n) => `Not quite yet (attempt ${n}).`, tryAgain: ' Try again, or take a hint.', canReveal: ' You can take a hint or look at the worked solution.',
       tutorBtns: { example: (i, n) => `Example ${i} of ${n}`, back: '← Back', prevEx: '← Previous example', next: 'Next →', nextEx: 'Next example →', done: 'Practise on your own →' },
@@ -45,8 +46,9 @@
       idFirst: 'Wähle zuerst für jeden Teil den richtigen Ausdruck bzw. die richtige Gleichung.', fill: 'Gib das Resultat ein, dann prüfe nochmals.',
       number: 'Gib eine Zahl ein', correct: 'Richtig', sign: 'Gib den Betrag an (eine positive Zahl)', close: 'Knapp daneben: Prüfe deine Rechnung', wrong: 'Nicht richtig',
       choose: 'Noch nicht richtig. Wähle das Resultat aus diesen Werten:', pick: 'Wähle für jedes Resultat einen der Werte und prüfe dann nochmals.',
-      forcesNote: (n, who) => (n > 1 ? 'Kreuze jede Kraft an, die auf die jeweilige Kiste wirkt. Jede angekreuzte Kraft erscheint in der Zeichnung.' : `Kreuze jede Kraft an, die auf ${who} wirkt. Jede angekreuzte Kraft erscheint in der Zeichnung.`),
-      tableOk: '✓ Die Kräfte stimmen.', tableBad: (n) => `✗ ${n === 1 ? 'Ein Feld stimmt' : `${n} Felder stimmen`} noch nicht.`,
+      forcesNote: (n, who, given) => `Zeichne jede Kraft ein, die auf ${n > 1 ? 'die jeweilige Kiste' : who} wirkt, in ihrer Richtung${given ? '; die in der Zeichnung gegebenen Kräfte zählen schon' : ''}. Wo zwei Kräfte klar gleich gross sind, zeichne sie gleich lang.`,
+      drawOk: '✓ Die Kräfte stimmen.', drawBad: '✗ Noch nicht richtig:',
+      slope: ['den Hang hinauf', 'senkrecht von der Unterlage weg', 'den Hang hinunter', 'senkrecht in die Unterlage hinein'],
       ok: 'Alles richtig.', okWell: 'Alles richtig, gut gemacht! Vergleiche deinen Lösungsweg mit der ausführlichen Lösung oder starte eine neue Aufgabe.',
       notYet: (n) => `Noch nicht ganz (Versuch ${n}).`, tryAgain: ' Versuche es nochmals, oder nimm einen Tipp.', canReveal: ' Du kannst einen Tipp nehmen oder die ausführliche Lösung anschauen.',
       tutorBtns: { example: (i, n) => `Beispiel ${i} von ${n}`, back: '← Zurück', prevEx: '← Vorheriges Beispiel', next: 'Weiter →', nextEx: 'Nächstes Beispiel →', done: 'Selbst üben →' },
@@ -107,7 +109,7 @@
   function open(exercise) {
     finish(); // the student moves on
     ex = exercise;
-    st = { tries: 0, hints: 0, solved: false, revealed: false, checked: false, ident: {}, nums: {}, chosen: {} };
+    st = { tries: 0, hints: 0, solved: false, revealed: false, checked: false, ident: {}, nums: {}, chosen: {}, arrows: [], drawn: false };
     const hash = `#${ex.id}`;
     if (location.hash !== hash) history.replaceState(null, '', hash);
     render();
@@ -126,23 +128,62 @@
     stages: e.practice.map((s) => ({ name: s.en ? () => s[FS.getLang()] : null, types: s.types })),
   }));
 
-  // The table of forces: a row per kind of force, a column per box (at most two, so that it fits
-  // a phone), a box to tick per cell.
-  function forcesHtml() {
-    const t = ex.forces;
-    const head = t.boxes.map((b) => `<th scope="col">${b}</th>`).join('');
-    const rows = t.kinds.map((k, j) => `<tr><th scope="row" class="k-${k.kind}">${k.name}</th>${t.boxes.map((b, i) => `
-      <td><label class="cell"><input type="checkbox" data-i="${i}" data-j="${j}" aria-label="${b}: ${k.name}"><span aria-hidden="true"></span></label></td>`).join('')}</tr>`).join('');
-    return `<table class="ftable"><thead><tr><th></th>${head}</tr></thead><tbody>${rows}</tbody></table>`;
+  // The free-body diagram: the student drags the forces from a palette onto the boxes of the task's
+  // drawing and turns them (shared arrow.js; what to draw and the judging in generator.js:
+  // diagram). The arrows are kept in st.arrows, so that they survive a redraw (the other language).
+  // Once solved, the drawing shows the right forces at their sizes instead, as the solution does.
+  let drawing = null, diagram = null;
+  const inner = (html) => html.replace(/^[\s\S]*?<svg[^>]*>/, '').replace(/<\/svg>\s*<\/div>\s*$/, '');
+  // directions along and perpendicular to a slope, for screen readers
+  const slopeWords = (d) => {
+    if (!/^incline/.test(ex.scenario)) return null;
+    const k = [0, 90, 180, 270].findIndex((e) => Math.abs((((d - ex.p.alpha - e) % 360) + 540) % 360 - 180) < 0.5);
+    return k < 0 ? null : ui().slope[k];
+  };
+  function mountDrawing() {
+    drawing = null;
+    diagram = ex.forces ? ex.diagram() : null;
+    const svg = $('#figure svg');
+    if (!diagram || !svg) return;
+    // The part of the drawing to draw on: what it shows but the long floor (the bodies, labels,
+    // given forces, slopes and pulleys), and room around the boxes for arrows pointing outwards;
+    // drawn larger (as far as the screen allows), so that the arrows and their labels have room.
+    const [x, y, w, h] = svg.getAttribute('viewBox').split(' ').map(Number), ROOM = 120, PAD = 24;
+    const ext = [Infinity, Infinity, -Infinity, -Infinity], see = (x0, y0, x1, y1) => { ext[0] = Math.min(ext[0], x0); ext[1] = Math.min(ext[1], y0); ext[2] = Math.max(ext[2], x1); ext[3] = Math.max(ext[3], y1); };
+    [...svg.children].filter((e) => !e.matches('.ground, .hatch')).forEach((e) => { const b = e.getBBox(); if (b.width || b.height) see(b.x, b.y, b.x + b.width, b.y + b.height); });
+    diagram.boxes.forEach((b) => b.area.forEach(([px, py]) => see(px - ROOM, py - ROOM, px + ROOM, py + ROOM)));
+    const x0 = Math.max(x - PAD, ext[0]), x1 = Math.min(x + w + PAD, ext[2]), y0 = Math.max(y - PAD, ext[1]), y1 = Math.min(y + h + PAD, ext[3]);
+    svg.setAttribute('viewBox', `${Math.round(x0)} ${Math.round(y0)} ${Math.round(x1 - x0)} ${Math.round(y1 - y0)}`);
+    svg.setAttribute('width', Math.round(1.4 * (x1 - x0)));
+    drawing = window.Arrow.create(svg, {
+      kinds: diagram.kinds.map((k) => ({ id: k.id, label: k.name, cls: `force k-${k.id}` })),
+      anchors: diagram.boxes,
+      tail: (k, an) => diagram.tail(k, an.id),
+      dirs: diagram.dirs,
+      len: diagram.len,
+      label: (a) => FS.svgSym(...diagram.sym(a.kind, a.anchor)),
+      labelCls: 'flbl',
+      words: slopeWords,
+      state: st.arrows,
+      palette: $('#fpalette'),
+      onEdit: (ar) => { st.arrows = ar.state(); clearDrawn(); },
+    });
   }
-
-  // The task's drawing with every force ticked in the table drawn in, whether it acts or not:
-  // the drawing shows what the student claims.
-  function drawTicked() {
-    if (!ex.forces) return;
-    const ticked = new Set([...document.querySelectorAll('#ftable input:checked')].map((b) => `${b.dataset.i}:${b.dataset.j}`));
-    $('#figure').innerHTML = ex.taskFigure(ticked, identified());
+  // The task's drawing: the components identified drawn in; once solved, the right forces.
+  function drawFigure() {
+    if (!drawing) return;
+    const t = ex.forces, all = new Set(st.solved ? t.boxes.flatMap((b, i) => t.kinds.map((k, j) => (t.cells[i][j].length ? `${i}:${j}` : null)).filter(Boolean)) : []);
+    drawing.backdrop(inner(ex.taskFigure(all, identified())));
+    drawing.show({ hidden: st.solved, locked: st.solved });
     markScrollable();
+  }
+  // the marks of a check, gone once the drawing changes
+  function clearDrawn() {
+    if (!st.drawn) return;
+    st.drawn = false;
+    drawing.mark({});
+    $('#forces-fb').className = 'table-fb';
+    $('#forces-fb').innerHTML = '';
   }
 
   function render() {
@@ -156,13 +197,13 @@
     stars.setAttribute('role', 'img');
     $('#title').append(' ', stars);
     $('#prompt').innerHTML = ex.text;
-    $('#figure').innerHTML = ex.forces ? ex.taskFigure(new Set()) : ex.taskFigure();
-    $('#forces-part').hidden = !ex.forces; // find the error: no table of forces
+    $('#figure').innerHTML = ex.forces ? ex.taskFigure(new Set(), identified()) : ex.taskFigure();
+    $('#forces-part').hidden = !ex.forces; // find the error: no forces to draw
+    mountDrawing();
     if (ex.forces) {
-      $('#forces-note').textContent = ui().forcesNote(ex.forces.boxes.length, ex.forces.boxes[0]);
-      $('#ftable').innerHTML = forcesHtml();
-      $('#ftable-fb').textContent = '';
-      $('#ftable-fb').className = 'table-fb';
+      $('#forces-note').textContent = ui().forcesNote(ex.forces.boxes.length, ex.forces.boxes[0], diagram.given.length > 0);
+      $('#forces-fb').innerHTML = '';
+      $('#forces-fb').className = 'table-fb';
     }
     showComps();
     $('#hint-list').innerHTML = '';
@@ -189,7 +230,7 @@
   const identified = () => ex.comps.filter((c) => (st && st.revealed) || (st && Identify.right(compItems().find((it) => it.key === c.key), st.ident))).map((c) => c.fig);
   function showComps() {
     const state = st ? st.ident || {} : {}, done = st && st.revealed;
-    const n = ex.forces ? 2 : 1, m = n + (ex.comps.length ? 1 : 0); // numbered after the table of forces
+    const n = ex.forces ? 2 : 1, m = n + (ex.comps.length ? 1 : 0); // numbered after the forces
     $('#comps-part').hidden = !ex.comps.length;
     $('#comps-head').textContent = ui().compsHead(n);
     $('#comps').innerHTML = Identify.html(compItems(), state, done);
@@ -250,29 +291,20 @@
     $('#reveal-note').hidden = canReveal() || st.revealed;
   }
 
-  // A wrong cell of the table of forces as a typical slip: a force in the direction of motion,
-  // friction, a spring force or air resistance left out, air resistance on a body at rest.
-  function tableSlip(box) {
-    if (st.revealed) return;
-    const k = ex.forces.kinds[box.dataset.j].kind, scn = window.Forces.SCENARIOS.find((x) => x.id === ex.scenario);
-    const still = !!(scn && scn.still);
-    const flag = box.checked ? (k === 's' && !still ? 'motion' : k === 'd' && still ? 'dragRest' : null)
-      : { r: 'noFric', f: 'noSpring', d: 'noDrag' }[k];
-    if (flag) slips.note(flag, ex.id);
-  }
-
-  // Marks the table of forces; true if it is right (or there is none).
-  function feedback() {
-    if (!ex.forces) return true;
-    let wrongCells = 0;
-    document.querySelectorAll('#ftable input').forEach((box) => {
-      const right = box.checked === ex.forces.table[box.dataset.i][box.dataset.j];
-      box.closest('td').className = right ? 'ok' : 'bad';
-      if (!right) { wrongCells++; tableSlip(box); }
-    });
-    $('#ftable-fb').className = `table-fb ${wrongCells ? 'bad' : 'ok'}`;
-    $('#ftable-fb').textContent = wrongCells ? ui().tableBad(wrongCells) : ui().tableOk;
-    return !wrongCells;
+  // Marks the free-body diagram, with a note for each thing wrong in it (a nudge while the
+  // exercise is open, the explanation once it is solved or the solution shown); true if it is
+  // right (or there is none). note (on Check): the typical slips behind it are noted, as in
+  // the results (a force of motion, friction, a spring force or air resistance left out, a
+  // spring force or air resistance turned round, air resistance on a body at rest).
+  function feedback(note) {
+    if (!drawing) return true;
+    const j = diagram.judge(st.arrows, st.solved || st.revealed), fb = $('#forces-fb');
+    st.drawn = true;
+    drawing.mark(j.marks);
+    if (note && !st.revealed) j.notes.forEach((x) => { if (x.flag) slips.note(x.flag, ex.id); });
+    fb.className = `table-fb ${j.ok ? 'ok' : 'bad'}`;
+    fb.innerHTML = j.ok ? `<p>${ui().drawOk}</p>` : `<p>${ui().drawBad}</p><ul class="draw-notes">${j.notes.map((x) => `<li>${x.text}</li>`).join('')}</ul>`;
+    return j.ok;
   }
 
   // Marks the results typed: { empty, wrong, pick } counts the results empty (or no number), typed
@@ -313,8 +345,8 @@
   function check(evt) {
     evt.preventDefault();
     if (st.solved) { fresh(); return; } // the button reads New exercise
-    if (!allIdentified()) { showStatus('ident'); return; }
-    const r = feedback(), n = numFeedback(true);
+    if (!allIdentified()) { feedback(true); showStatus('ident'); return; } // the drawing is judged already
+    const r = feedback(true), n = numFeedback(true);
     st.checked = true;
     if (n.wrong) showNums(); // the results typed wrong are now chosen
     // a result left empty, or one still to be chosen: not an attempt (unless one is typed wrong)
@@ -332,6 +364,7 @@
       Practice.markSolved(PRACTICE, ex.id);
       finish();
       st.advance = topics.solved(st, ex);
+      drawFigure(); // the right forces at their sizes
       showStatus('ok');
     } else showStatus('bad');
     updateButtons();
@@ -363,6 +396,7 @@
     if (!canReveal()) return;
     st.revealed = true;
     finish();
+    if (st.drawn) feedback(); // the explanations instead of the nudges
     showSolution();
     updateButtons();
     $('#solution').scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -385,15 +419,13 @@
     applyStatic();
     showScore();
     if (ex) {
-      const ticks = [...document.querySelectorAll('#ftable input')].map((b) => b.checked);
       const keep = { ...st };
       ex = again(ex);
       render();
       st = keep;
       showComps();
-      document.querySelectorAll('#ftable input').forEach((b, k) => { b.checked = ticks[k]; });
-      drawTicked();
-      if (st.checked) feedback();
+      drawFigure();
+      if (st.drawn) feedback();
       showStatus(st.status);
       showHints();
       if (st.revealed) showSolution();
@@ -466,7 +498,7 @@
       math(el);
       const o = it.options[st.ident[it.key]];
       if (!right && o && o.flag && !st.revealed) slips.note(o.flag, ex.id);
-      if (right) drawTicked(); // a component appears in the drawing
+      if (right) drawFigure(); // a component appears in the drawing
       else { st.tries++; updateButtons(); } // a wrong choice counts as an attempt
       if (right && choiceOnly() && !st.solved && allIdentified()) check({ preventDefault() {} }); // a choice only: solved
     };
@@ -487,7 +519,6 @@
     Lang.wire(switchLang);
     $('#new').addEventListener('click', fresh);
     $('#answers').addEventListener('submit', check);
-    $('#ftable').addEventListener('change', drawTicked);
     $('#hint').addEventListener('click', hint);
     $('#reveal').addEventListener('click', reveal);
     window.addEventListener('hashchange', fromHash);
