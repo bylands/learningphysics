@@ -1,6 +1,6 @@
 #!/bin/bash
 # Copies the shared files (ui.css, lang.js, fit.js, sign.js, tutor.js, check.js, practice.js, topics.js, identify.js, artkit.js, figkit.js, sets.js) into every app, so that
-# each app stays a folder of its own for deployment; pages that are no app (the privacy page and the
+# each app stays a folder of its own for deployment; pages that are no app (the privacy page, the game All In and the
 # hub, whose lang.js is served as /lang.js) get lang.js only. Edit the files here, never an app's copy.
 #   shared/sync.sh          copy
 #   shared/sync.sh --check  only report copies that differ (exit 1 if any)
@@ -12,7 +12,7 @@ set -e
 cd "$(dirname "$0")/.."
 APPS="energy-conservation charged-particles potential-circuit capacitors interference rl-switch force-systems bulb-brightness circuit-trainer impedance induction-match motion-graphs force-concepts torque motion-data motion-areas interaction centre-of-mass coulomb oscillations cyclic-processes wave-propagation magnetic-forces electric-field electric-potential em-waves photons matter-waves"
 FILES="ui.css lang.js fit.js sign.js tutor.js check.js practice.js topics.js identify.js artkit.js figkit.js sets.js slips.js"
-PAGES="privacy hub"
+PAGES="privacy hub all-in"
 status=0
 copy() { # copy shared/$1 to $2/$1, or with --check report a difference
   if [ "$MODE" = "--check" ]; then

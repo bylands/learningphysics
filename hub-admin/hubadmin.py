@@ -164,7 +164,7 @@ MAX_SETS, MAX_TITLE = 100, 80
 MAX_EXAMPLES, MAX_STAGES, MAX_OBJECTIVES = 100, 300, 50  # per app in a set
 # names a set cannot have, besides the apps and what is in the web root: the services and paths
 # nginx serves itself, and some kept free
-RESERVED = {"admin", "api", "apps", "crosswords", "electric-circuits", "hub", "hub-admin", "hub-data", "index", "katex", "texercises",
+RESERVED = {"admin", "all-in", "api", "apps", "crosswords", "electric-circuits", "hub", "hub-admin", "hub-data", "index", "katex", "texercises",
             "lang", "millionaire", "objectives", "privacy", "set", "sets", "static", "wwtbap", "www"}
 MAX_UPLOAD = 64 * 1024 * 1024  # a TeXercises export
 MAX_REVIEW_RENDER = 40  # exercises the review renders at once
@@ -2148,6 +2148,11 @@ COMMON_SECTIONS = """
     <section id="view-games" hidden>
       <p class="lead">The games for the class, each a service of its own on this site.</p>
       <ul class="games">
+        <li class="card">
+          <h2><a href="/all-in/" target="_blank" rel="noopener">All In: the Physics Casino ↗</a></h2>
+          <p>A team game for the projector, 20 to 30 minutes: in every round all teams bet chips at once on the outcome of a demo, an estimate or a short calculation, then a die picks a member of the team in the hot seat to explain the result. You run it on one screen and type in the teams' bet cards; the payouts, the timer and the scoreboard are done for you. Six standard rounds and seven spare ones, in English and German.</p>
+          <p class="note">learningphysics.ch/all-in/ · no login needed; the game is kept in the browser, so a reload loses nothing</p>
+        </li>
         <li class="card">
           <h2><a href="/wwtbap/" target="_blank" rel="noopener">Who Wants to Be a Physicist? ↗</a></h2>
           <p>A quiz in the style of <i>Who Wants to Be a Millionaire</i>: 15 physics questions of rising difficulty, a ladder of famous physicists and three lifelines. As a classroom game, students join on their phones (QR code or room code), a Fastest Finger First round picks each contestant, and Ask the Audience can be a live class vote. A quick game starts without a lobby.</p>

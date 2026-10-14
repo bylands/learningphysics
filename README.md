@@ -6,6 +6,10 @@ The physics apps of [learningphysics.ch](https://learningphysics.ch): static pag
 
 Besides its folder, a new app needs its card on the hub page (`hub/index.html`), its name in `deploy.sh` (`APPS`) and in `shared/sync.sh`, and its learning objectives on the hub page: run `node hub/build-objectives.js`, which reads them from the apps (each app's `const OBJECTIVES = [...]` and its check source) into `hub/objectives.json`. The card can suggest starter tags, English|German, e.g. `data-tags="Quantum physics|Quantenphysik; Light|Licht"`: the hub page and the admin panel show them as long as the app is new to the admin panel (not in `apps.json`'s order). A tag with the same English name as an existing one is that tag. The first Save in the admin panel keeps them, and from then on the app's tags are edited there only.
 
+## All In
+
+`all-in/` is a team game for the projector, *All In: the Physics Casino* (learningphysics.ch/all-in/, linked in the admin panel's Games tab): in every round all teams bet chips at once on a demo's outcome, an estimate or a calculation, and a die picks who explains the result. It is no app with tutor and check, so it has no card on the hub page and no objectives; it gets `lang.js` from `shared/sync.sh` (as a page) and is deployed like an app. The rules are in `all-in/game.js`, the rounds in `all-in/rounds.js`; `node all-in/test/check-game.js` tests both.
+
 ## Exercise sheets
 
 The admin panel's Sheets tab makes exercise sheets from the teacher's TeXercises exercises: choose modules and learning objectives, let it suggest a balanced sheet, replace exercises by suggested alternatives, preview them (KaTeX), then download the PDF (with or without solutions, made with LaTeX on the server) or share an online version at a secret link that needs no login and shows no solutions. See `hub-admin/sheets/README.md` (setup, and `pool.json`, which says which exercises practise which learning objective).
