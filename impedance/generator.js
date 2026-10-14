@@ -468,9 +468,51 @@
     return opts.sort((a, b) => a.value - b.value).map((o) => ({ ...o, label: H(o.value, UNIT[key], 2) }));
   }
 
+  // ---------------------------------------------------------------- typed answers
+  // Practice: each unknown is typed in a fixed unit (ENTRY: R in Ω, L in mH, C in µF, so that the
+  // field does not give away the order of magnitude), right within TOL. A value within TOL of a
+  // typical mistake (mistakes, the factors of 'other' left out) gets that mistake's explanation;
+  // one within CLOSE of the right value is a reading that is not careful enough. After a value
+  // typed wrong, the unknown is chosen from its options instead (choices, as in the check).
+  const ENTRY = { R: { scale: 1, html: 'Ω' }, L: { scale: 1e-3, html: 'mH' }, C: { scale: 1e-6, html: 'µF' } };
+  const CLOSE = 0.15;
+  // The traps of unknown key: [{ tag, value, why }], each at least the factor GAP away from the
+  // right value and from each other, so that no reading within TOL matches two of them. The inverse
+  // of the slope, Δω/ΔZ (1/L, in 1/H), is a number that would be typed as it is into the field, in
+  // mH: as a trap it is that number of mH (in henry 1/L would only match a value 1000 times larger).
+  function traps(c, ax, an, key) {
+    const out = [], apart = (x) => [c[key], ...out.map((t) => t.value)].every((y) => Math.abs(Math.log(x / y)) >= Math.log(GAP) * (1 - 1e-9));
+    for (const m of mistakes(c, ax, an, key)) {
+      const value = m.tag === 'inverse' ? m.value * ENTRY[key].scale : m.value;
+      if (m.tag !== 'other' && Number.isFinite(value) && value > 0 && apart(value)) out.push({ ...m, value });
+    }
+    return out;
+  }
+  // A number as typed: decimal point or comma, a minus sign of any kind, e-notation or ·10^n,
+  // and a unit after it, which is ignored (the field gives the unit). NaN if it is no number.
+  function parse(s) {
+    s = String(s).trim().replace(/,/g, '.').replace(/[−–—‒]/g, '-').replace(/\s*(?:[·*×x]\s*10\s*\^\s*|e)\s*([-+]?\d+)/i, 'e$1');
+    const m = s.match(/^([-+]?\d*\.?\d+(?:e[-+]?\d+)?)(?:\s*[^\d\s.].*)?$/i);
+    return m ? Number(m[1]) : NaN;
+  }
+  // The typed value x (in the field's unit) for field f: { ok }, { trap }, { close }, or {} (wrong).
+  function judge(f, x) {
+    const v = x * ENTRY[f.key].scale, near = (y, tol) => Math.abs(v - y) <= tol * y;
+    if (!Number.isFinite(x)) return { nan: true };
+    if (near(f.value, TOL)) return { ok: true };
+    const trap = f.traps.find((t) => near(t.value, TOL));
+    if (trap) return { trap };
+    return near(f.value, CLOSE) ? { close: true } : {};
+  }
+
   function exercise(c, id) {
     const ax = axesFor(c), an = analysis(c, ax);
-    const fields = UNKNOWNS[c.kind].map((k) => ({ key: k, options: choices(c, ax, an, k) }));
+    // value, unit and traps for the typed answer of practice; options (four values) for the check,
+    // and for practice once a value typed is wrong
+    const fields = UNKNOWNS[c.kind].map((k) => ({
+      key: k, value: c[k], unit: ENTRY[k].html, traps: traps(c, ax, an, k),
+      wrong: mistakes(c, ax, an, k).find((m) => m.tag === 'other').why, options: choices(c, ax, an, k),
+    }));
     return { id, c, ax, an, fields, difficulty: DIFFICULTY[`${c.conn} ${c.kind}`] };
   }
 
@@ -493,6 +535,7 @@
 
   const api = {
     rng, TOL, GAP, OPTIONS, LEVELS, DIFFICULTY, UNKNOWNS, Z, dZ, feature, quality, axesFor, usable, analysis, pairAnalysis, shape, mistakes, choices, exercise, generate,
+    ENTRY, CLOSE, traps, parse, judge,
     q, H, T, digits, sup, p3, niceUp,
   };
   root.Impedance = api;

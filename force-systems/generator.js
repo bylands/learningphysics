@@ -2,7 +2,7 @@
 // (equations.js). An exercise is { scenario, difficulty, title, text, forces (the table of forces),
 // fields (the wanted quantities, for the worked solution: { key, sym, unit, what, value }),
 // figure(view), taskFigure(ticked, extra), solutionFigure(), comps (components to identify),
-// eqs (equations to choose, see identify.js), nums (results to work out, a choice of values),
+// eqs (equations to choose, see identify.js), nums (results to work out, typed or chosen, numItem),
 // hints, solution, results, steps, p, v }.
 // practiceOf(type, seed) gives a practice exercise of a situation, or of "find the error" (types
 // 'error-floor', 'error-pulley', 'error-slope', 'error-spring', 'error-drag'); generateFor(scenario, seed) one with any angles
@@ -100,19 +100,45 @@
     return sc.render({ task: true, ticked: ids });
   }
 
-  // A result to work out (scn.nums), as a choice: the right value and three wrong ones of typical
-  // mistakes (those that are negative or equal to another are left out; one that does not end
-  // after three decimal places is rounded as a student would, to one), in ascending order. ok:
-  // there are three wrong ones.
+  // A result to work out (scn.nums), typed in first: { key, what, sym, unit, x (the right value),
+  // value (TeX: the calculation), traps, options }. The traps are the wrong values of typical
+  // mistakes (those that are negative or equal to another are left out; one that does not end after
+  // three decimal places is rounded as a student would, to one): a value typed that matches one
+  // gets its nudge or explanation (judge). After a wrong value typed, the result is chosen instead
+  // (see identify.js): options are the right value and the first three traps, in ascending order.
+  // ok: there are at least three traps and four options.
   const thousandth = (x) => Math.abs(1000 * x - Math.round(1000 * x)) < 1e-6;
+  const same = (x, y) => Math.abs(x - y) < 5e-4;
   function numItem(n) {
-    const html = (x) => `$${FS.tq(x, n.unit, 3)}$`, options = [{ html: html(n.value), right: true, x: n.value }];
+    const traps = [], html = (x) => `$${FS.tq(x, n.unit, 3)}$`, options = [{ html: html(n.value), right: true, x: n.value }];
     n.wrongs.forEach(([w, flag, why, nudge]) => {
       const x = thousandth(w) ? w : FS.round(w, 1);
-      if (options.length < 4 && Number.isFinite(x) && x >= 0 && (x > 0 || w === 0) && !options.some((o) => o.html === html(x))) options.push({ html: html(x), right: false, flag, why, ...(nudge ? { nudge } : {}), x });
+      if (!(Number.isFinite(x) && x >= 0 && (x > 0 || w === 0))) return;
+      if (![n.value, ...traps.map((t) => t.value)].some((y) => same(x, y))) traps.push({ value: x, flag, why, ...(nudge ? { nudge } : {}) });
+      if (options.length < 4 && !options.some((o) => o.html === html(x))) options.push({ html: html(x), right: false, flag, why, ...(nudge ? { nudge } : {}), x });
     });
     options.sort((a, b) => a.x - b.x);
-    return { key: `n-${n.key}`, what: n.what, options: options.map(({ x, ...o }) => o), value: `$${n.sym} = ${n.calc}$`, ok: options.length === 4, x: n.value };
+    return { key: `n-${n.key}`, what: n.what, sym: n.sym, unit: n.unit, x: n.value, value: `$${n.sym} = ${n.calc}$`, traps,
+      options: options.map(({ x, ...o }) => o), ok: traps.length >= 3 && options.length === 4 };
+  }
+  // A number as typed: decimal point or comma, a minus sign of any kind, a unit after it (ignored:
+  // the field gives the unit). NaN if it is no number.
+  function parse(s) {
+    s = String(s).trim().replace(/,/g, '.').replace(/[−–—‒]/g, '-');
+    const m = s.match(/^([-+]?\d*\.?\d+)(?:\s*[^\d\s.].*)?$/);
+    return m ? Number(m[1]) : NaN;
+  }
+  // The typed value x of a result n (numItem): right within 1 % or when it rounds to the result
+  // (one decimal place); else the trap it matches in the same way (the nearest), the size with the
+  // wrong sign, or close (within 5 %): { ok }, { trap }, { sign }, { close }, { nan } or {} (wrong).
+  function judge(n, x) {
+    if (!Number.isFinite(x)) return { nan: true };
+    const near = (y, tol) => Math.abs(x - y) <= tol * Math.max(Math.abs(y), 0.01), hit = (y) => near(y, 0.01) || Math.abs(x - y) <= 0.05 + 1e-9;
+    if (hit(n.x)) return { ok: true };
+    const trap = n.traps.filter((t) => hit(t.value)).sort((a, b) => Math.abs(x - a.value) - Math.abs(x - b.value))[0]; // the nearest
+    if (trap) return { trap };
+    if (n.x && hit(-n.x)) return { sign: true };
+    return near(n.x, 0.05) ? { close: true } : {};
   }
   // sin α and cos α as the text gives them (practice, p.nice)
   const niceNote = (p) => {
@@ -327,8 +353,8 @@
   // A practice exercise of a situation: nice angles (sine and cosine given as short decimals), so
   // that the components the student identifies (the app gives their values), the results the
   // student works out in the head and the worked solution have at most one decimal place; and
-  // results with three wrong values to choose from. Or "find the error" in one of the situations
-  // of a group.
+  // results with at least three typical wrong values (traps, and three of them to choose from). Or
+  // "find the error" in one of the situations of a group.
   function practiceOf(type, seed) {
     if (type.startsWith('error-')) {
       const r = rng(seed), scn = byId(pick(r, ERRORS[type.slice(6)]));
@@ -364,6 +390,6 @@
     return { frames: [first, ...frames] };
   }
 
-  root.Forces = { SCENARIOS, KINDS, kindsOf, MOTION, ERRORS, linesOf, generateFor, practiceOf, tutorial };
+  root.Forces = { SCENARIOS, KINDS, kindsOf, MOTION, ERRORS, linesOf, generateFor, practiceOf, tutorial, parse, judge };
   if (typeof module !== 'undefined') module.exports = root.Forces;
 })(typeof window !== 'undefined' ? window : globalThis);
