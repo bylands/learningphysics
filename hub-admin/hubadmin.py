@@ -16,10 +16,9 @@ cards in its order, shows their tags, and lets visitors filter by tag. This serv
                               {"action": "update", "id", ...} | {"action": "reset" | "delete", "id"}
     /admin/api/password  POST {"current", "new"}    a teacher's own new password
     /admin/api/account   POST {"user", "first", "last", "school"}  a teacher's own details
-    /admin/api/me        GET  the teacher logged in (the crossword generator and the quiz ask it, with the cookie);
-                         ?probe=1: {"teacher": null} instead of 403 when nobody is (the hub page asks so)
+    /admin/api/me        GET  the teacher logged in (the crossword generator and the quiz ask it, with the cookie)
     /admin/api/exercise-audit  GET  the review of the TeXercises exercises (the superuser only; {"report":
-                         null} before one is uploaded), shown on the hub page to the superuser alone;
+                         null} before one is uploaded), shown in the Sheets tab (the superuser's);
                          POST the report as JSON (up to 8 MB; see normalize_audit), replacing it. Kept in
                          hub-data/exercise-audit.json (not served): the repository is public, the report never
                          goes into it
@@ -549,7 +548,7 @@ class Admin:
         self.sheets_lock = threading.Lock()
         self.own = own
         self.review = config.parent / "texercises-review"  # the TeXercises review (sheets/review.py)
-        self.audit_file = config.parent / "exercise-audit.json"  # the exercises' review, for the hub page (the superuser's)
+        self.audit_file = config.parent / "exercise-audit.json"  # the exercises' review, in the Sheets tab (the superuser's)
         self.allin = AllInRooms()  # the rooms of the game All In (/all-in/), in memory
         self.zero = ZeroRooms()  # the rooms of the quiz Absolute Zero (/absolute-zero/), in memory
         self.seen_at: Dict[str, float] = {}  # teacher -> when their last visit was written (statistics)
@@ -1321,7 +1320,7 @@ class Admin:
             out[k] = got
         return {"exercises": out}
 
-    # ------------------------------------------------------------------ the exercises' review (the hub page)
+    # ------------------------------------------------------------------ the exercises' review (Sheets tab)
     def audit(self) -> Optional[Dict[str, object]]:
         """The report stored (cleaned when it was uploaded), or None."""
         got = read_config(self.audit_file)
@@ -2409,9 +2408,7 @@ def make_handler(admin: Admin):
                 self.zero_get(path[len("/api/absolute-zero/"):])
             elif path == "/api/me":
                 teacher = self.teacher()
-                if not teacher and "probe=1" in self.path.partition("?")[2].split("&"):
-                    self.json(200, {"teacher": None, "super": False})  # (the hub page: no error logged for every visitor)
-                elif not teacher:
+                if not teacher:
                     self.json(403, {"error": "login"})
                 else:
                     self.json(200, admin.me(teacher))
@@ -2715,6 +2712,7 @@ SUPER_SECTIONS = """
     </section>
     <section id="view-sheets" hidden>
       <details id="sheets-topics" class="card topics"><summary>Topics covered by the exercise pool <span class="note">Loading…</span></summary><div class="topicgrid"></div></details>
+      <details id="sheets-audit" class="card audit"><summary>Exercise review <span class="only">only you see this</span> <span class="note">Loading…</span></summary><div class="audit-body"></div></details>
       <p class="lead">Exercise sheets from your TeXercises exercises: choose modules and their learning objectives, let the panel suggest a balanced sheet, replace or reorder its exercises, and preview them. Then download it as a PDF (with or without the solutions) or share an online version with your students: a secret link that works without logging in and shows no solutions.</p>
       <div id="sheets-state" class="sheetstate"><p class="note">Loading…</p></div>
       <div class="bar">
@@ -3029,6 +3027,51 @@ h2.section { font-size: 1.15rem; margin: 28px 0 4px; }
 .topicmod li.zero, .topicmod.zero .head { color: var(--muted); }
 .topicmod li.zero .n { color: var(--bad); font-weight: 600; }
 .topicmod .note { margin: 4px 0 0; font-size: 0.8rem; }
+/* the exercises' review (#sheets-audit): its severities by colour and by name (s-error, not error: .error is red text) */
+.audit { --sev-error: var(--bad); --sev-warning: #a35a00; --sev-doubt: #6a4bb0; padding: 10px 16px; margin: 0 0 14px; }
+@media (prefers-color-scheme: dark) { .audit { --sev-warning: #ffb74d; --sev-doubt: #c2a8ff; } }
+.audit > summary { cursor: pointer; font-weight: 600; }
+.audit > summary .note { font-weight: 400; margin-left: 6px; }
+.audit .only { font-size: 0.75rem; font-weight: 400; color: var(--muted); border: 1px dashed var(--line); border-radius: 999px; padding: 0 8px; margin-left: 4px; }
+.audit .meta { color: var(--muted); font-size: 0.85rem; margin: 8px 0 10px; overflow-wrap: anywhere; }
+.audit .stats { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 12px; }
+.audit .stat { flex: 0 1 8.5rem; min-width: 0; background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 4px 12px; }
+.audit .stat b { display: block; font-size: 1.25rem; font-variant-numeric: tabular-nums; }
+.audit .stat span { color: var(--muted); font-size: 0.82rem; }
+.audit .stat.s-error { border-left: 4px solid var(--sev-error); }
+.audit .stat.s-warning { border-left: 4px solid var(--sev-warning); }
+.audit .stat.s-doubt { border-left: 4px solid var(--sev-doubt); }
+.audit .filters { display: grid; gap: 6px; margin: 0 0 10px; }
+.audit .filters .row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.audit .filters .what { width: 5rem; color: var(--muted); font-size: 0.88rem; }
+.audit .filters button { border-radius: 999px; padding: 2px 11px; font-size: 0.86rem; }
+.audit .filters button .n { margin-left: 5px; color: var(--muted); font-size: 0.8rem; font-variant-numeric: tabular-nums; }
+.audit .filters button[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); font-weight: 600; }
+.audit .filters button[aria-pressed="true"] .n { color: inherit; opacity: 0.85; }
+.audit .filters input[type=search] { flex: 1 1 200px; max-width: 420px; width: auto; min-width: 0; padding: 4px 10px; }
+.audit .shown { color: var(--muted); font-size: 0.88rem; margin: 0 0 8px; }
+.audit ol.exs { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.audit .ex { background: var(--bg); border: 1px solid var(--line); border-left: 4px solid var(--line); border-radius: 8px; padding: 8px 14px 10px; }
+.audit .ex.s-error { border-left-color: var(--sev-error); }
+.audit .ex.s-warning { border-left-color: var(--sev-warning); }
+.audit .ex.s-doubt { border-left-color: var(--sev-doubt); }
+.audit .ex h3 { margin: 0; font-size: 1rem; overflow-wrap: anywhere; }
+.audit .ex h3 a { color: var(--accent); }
+.audit .ex .id { color: var(--muted); font-size: 0.8rem; overflow-wrap: anywhere; }
+.audit .ex ul { list-style: none; margin: 6px 0 0; padding: 0; display: grid; gap: 6px; }
+.audit .ex li { border-top: 1px solid var(--line); padding-top: 6px; font-size: 0.93rem; }
+.audit .sev { display: inline-block; min-width: 4.6rem; text-align: center; border: 1px solid currentColor; border-radius: 999px; padding: 0 8px; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; }
+.audit .sev.s-error { color: var(--sev-error); background: color-mix(in srgb, var(--sev-error) 12%, var(--card)); }
+.audit .sev.s-warning { color: var(--sev-warning); background: color-mix(in srgb, var(--sev-warning) 12%, var(--card)); }
+.audit .sev.s-doubt { color: var(--sev-doubt); background: color-mix(in srgb, var(--sev-doubt) 12%, var(--card)); }
+.audit .where { color: var(--muted); font-size: 0.82rem; margin-left: 8px; }
+.audit .issue, .audit .fix { margin: 3px 0 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+.audit .fix { color: var(--muted); }
+.audit .fix b { color: var(--ok); font-weight: 600; }
+.audit .tools-line { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin: 12px 0 0; font-size: 0.9rem; }
+.audit .tools-line input[type=file] { width: auto; max-width: 100%; font-size: 0.85rem; }
+.audit .replace > summary { cursor: pointer; color: var(--accent); font-size: 0.9rem; margin-top: 12px; }
+@media (max-width: 560px) { .audit .stat { flex: 1 1 5.5rem; padding: 3px 8px; } .audit .filters .what { width: auto; flex-basis: 100%; } }
 .sheetstate .upload summary { cursor: pointer; color: var(--accent); font-size: 0.95rem; }
 .sheetstate .upload { margin: 0 0 10px; }
 .sheet h3 { margin: 22px 0 8px; font-size: 1.05rem; }
@@ -3873,6 +3916,134 @@ SHEETS_JS = r"""
   const topics = $('#sheets-topics');
   try { topics.open = localStorage.getItem('sheets-topics') === '1'; } catch (e) { /* none */ }
   topics.addEventListener('toggle', () => { try { localStorage.setItem('sheets-topics', topics.open ? '1' : '0'); } catch (e) { /* none */ } });
+  window.addEventListener('admin-view', (e) => show(e.detail));
+  show(location.hash.slice(1));
+})();
+
+// The exercises' review (#sheets-audit, in the Sheets tab, the superuser's like the tab): the report of
+// a review of the TeXercises exercises, made elsewhere and uploaded here as JSON
+// (/admin/api/exercise-audit; kept in hub-data/, never in the public repository). Folded under a line
+// with its numbers; unfolded, how many exercises were reviewed and have issues, by severity, then the
+// exercises with issues, the most serious first (PAGE at a time), each issue with its severity,
+// category, where it is and a suggested fix, filtered by severity, category and a search. The texts
+// are the report's: put in as text, never as HTML.
+(function () {
+  'use strict';
+  const box = document.querySelector('#sheets-audit');
+  if (!box) return;
+  const SEV = { error: 'Error', warning: 'Warning', doubt: 'Doubt' }, RANK = { error: 0, warning: 1, doubt: 2 };
+  const WHERE = { text: 'exercise text', solution: 'solution', short: 'short solution', solver: 'solver', title: 'title', compile: 'LaTeX compile' };
+  const PAGE = 60;
+  const body = box.querySelector('.audit-body'), line = box.querySelector('summary .note');
+  let report = null, sevOn = '', catOn = '', query = '', shown = PAGE, loaded = false;
+
+  function el(tag, attrs, ...kids) {
+    const e = document.createElement(tag);
+    Object.entries(attrs || {}).forEach(([k, v]) => {
+      if (v === false || v == null) return;
+      if (k === 'class') e.className = v; else if (k.startsWith('on')) e.addEventListener(k.slice(2), v); else e.setAttribute(k, v === true ? '' : v);
+    });
+    kids.flat().forEach((k) => { if (k !== '' && k != null && k !== false) e.append(k); });
+    return e;
+  }
+  const worst = (e) => Math.min(...e.issues.map((i) => RANK[i.severity]));
+  const count = (e, s) => e.issues.filter((i) => i.severity === s).length;
+  // the most serious first: the worst issue, then the number of errors, of warnings, of issues
+  const order = (a, b) => worst(a) - worst(b) || count(b, 'error') - count(a, 'error') || count(b, 'warning') - count(a, 'warning')
+    || b.issues.length - a.issues.length || a.title.localeCompare(b.title);
+  const fold = (s) => String(s == null ? '' : s).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+
+  function upload(label) {
+    const file = el('input', { type: 'file', accept: '.json,application/json', 'aria-label': 'The report (JSON)' });
+    const msg = el('span', { class: 'status', 'aria-live': 'polite' });
+    const send = async () => {
+      if (!file.files[0]) { msg.textContent = 'Choose the report (.json) first.'; msg.className = 'status bad'; return; }
+      msg.textContent = 'Uploading…'; msg.className = 'status';
+      try {
+        const r = await fetch('/admin/api/exercise-audit', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: await file.files[0].text() });
+        const d = await r.json().catch(() => ({}));
+        if (!r.ok) throw new Error(d.error || r.statusText);
+        await load();
+      } catch (e) { msg.textContent = `Not stored: ${e.message}`; msg.className = 'status bad'; }
+    };
+    return el('div', { class: 'tools-line' }, file, el('button', { type: 'button', onclick: send }, label), msg);
+  }
+
+  function exercise(e, issues) {
+    const title = e.url ? el('a', { href: `https://texercises.com${e.url}`, target: '_blank', rel: 'noopener' }, `${e.title} ↗`) : e.title;
+    return el('li', { class: `ex s-${issues[0].severity}` },
+      el('h3', {}, title),
+      el('div', { class: 'id' }, [e.id ? `id ${e.id}` : '', e.key, e.lang].filter(Boolean).join(' · ')),
+      el('ul', {}, issues.map((i) => el('li', {},
+        el('div', {}, el('span', { class: `sev s-${i.severity}` }, SEV[i.severity]),
+          el('span', { class: 'where' }, [i.category, WHERE[i.where] || i.where].filter(Boolean).join(' · '))),
+        el('p', { class: 'issue' }, i.issue),
+        i.fix ? el('p', { class: 'fix' }, el('b', {}, 'Fix: '), i.fix) : ''))));
+  }
+
+  function draw() {
+    if (!report) {
+      line.textContent = 'no report yet';
+      body.replaceChildren(el('p', { class: 'note' }, 'No review of the TeXercises exercises is stored yet. Upload its report (JSON: {"generated", "source", "reviewed", "exercises": [{"id", "key", "title", "lang", "url", "issues": [{"severity", "category", "where", "issue", "fix"}]}]}). The admin service keeps it (hub-data/, not served); it never goes into the public repository.'),
+        upload('Upload report'));
+      return;
+    }
+    const all = report.exercises.slice().sort(order);
+    const issues = all.flatMap((e) => e.issues);
+    const n = (s) => issues.filter((i) => i.severity === s).length;
+    line.textContent = `${report.reviewed} reviewed · ${all.length} with issues · ${n('error')} errors, ${n('warning')} warnings, ${n('doubt')} doubts`;
+    const cats = [...new Set(issues.map((i) => i.category).filter(Boolean))].sort();
+    const stat = (num, label, cls) => el('div', { class: `stat ${cls || ''}` }, el('b', {}, String(num)), el('span', {}, label));
+    const chip = (label, num, pressed, onclick) => el('button', { type: 'button', 'aria-pressed': String(pressed), onclick }, label, el('span', { class: 'n' }, String(num)));
+    const list = el('ol', { class: 'exs' }), info = el('p', { class: 'shown' });
+    const search = el('input', { type: 'search', placeholder: 'Search title, id, key or issue', 'aria-label': 'Search the exercises and their issues', value: query });
+    const sevRow = el('div', { class: 'row' }), catRow = el('div', { class: 'row' });
+    const more = el('button', { type: 'button', onclick: () => { shown += PAGE; fill(); } });
+    const pick = (f) => () => { f(); shown = PAGE; fill(); };
+    function fill() {
+      sevRow.replaceChildren(el('span', { class: 'what' }, 'Severity'), chip('All', issues.length, !sevOn, pick(() => { sevOn = ''; })),
+        ...Object.keys(SEV).filter((s) => n(s)).map((s) => chip(SEV[s], n(s), sevOn === s, pick(() => { sevOn = sevOn === s ? '' : s; }))));
+      catRow.replaceChildren(el('span', { class: 'what' }, 'Category'), chip('All', issues.length, !catOn, pick(() => { catOn = ''; })),
+        ...cats.map((c) => chip(c, issues.filter((i) => i.category === c).length, catOn === c, pick(() => { catOn = catOn === c ? '' : c; }))));
+      const words = fold(query).split(/\s+/).filter(Boolean);
+      const rows = [];
+      all.forEach((e) => {
+        const head = fold([e.title, e.id, e.key, e.lang].join(' '));
+        const kept = e.issues.filter((i) => (!sevOn || i.severity === sevOn) && (!catOn || i.category === catOn)
+          && words.every((w) => head.includes(w) || fold([i.issue, i.fix, i.category, i.where].join(' ')).includes(w)))
+          .sort((a, b) => RANK[a.severity] - RANK[b.severity]);
+        if (kept.length) rows.push([e, kept]);
+      });
+      info.textContent = !sevOn && !catOn && !words.length ? `${all.length} exercises with issues, the most serious first.`
+        : `${rows.length} of ${all.length} exercises with issues match.`;
+      list.replaceChildren(...rows.slice(0, shown).map(([e, kept]) => exercise(e, kept)));
+      more.hidden = rows.length <= shown;
+      more.textContent = `Show ${Math.min(PAGE, rows.length - shown)} more (${rows.length - shown} left)`;
+    }
+    search.addEventListener('input', () => { query = search.value; shown = PAGE; fill(); });
+    const when = report.uploaded ? new Date(report.uploaded * 1000).toLocaleString() : '';
+    body.replaceChildren(
+      el('p', { class: 'meta' }, [report.generated && `Review of ${report.generated}`, report.source, when && `uploaded ${when}`].filter(Boolean).join(' · ')),
+      el('div', { class: 'stats' }, stat(report.reviewed, 'exercises reviewed'), stat(all.length, 'with issues'),
+        stat(n('error'), 'errors', 's-error'), stat(n('warning'), 'warnings', 's-warning'), stat(n('doubt'), 'doubts', 's-doubt')),
+      el('div', { class: 'filters' }, sevRow, cats.length ? catRow : '', el('div', { class: 'row' }, el('span', { class: 'what' }, 'Search'), search)),
+      info, list, el('div', { class: 'tools-line' }, more),
+      el('details', { class: 'replace' }, el('summary', {}, 'Replace report'), upload('Replace report')));
+    fill();
+  }
+
+  async function load() {
+    const r = await fetch('/admin/api/exercise-audit', { credentials: 'same-origin', cache: 'no-store' });
+    if (r.status === 403) { location.reload(); return; }
+    const d = await r.json();
+    report = d.report && Array.isArray(d.report.exercises) ? d.report : null;
+    loaded = true;
+    draw();
+  }
+  // (folded or not, in this browser, like the topics)
+  try { box.open = localStorage.getItem('sheets-audit') === '1'; } catch (e) { /* none */ }
+  box.addEventListener('toggle', () => { try { localStorage.setItem('sheets-audit', box.open ? '1' : '0'); } catch (e) { /* none */ } });
+  const show = (v) => { if (v === 'sheets' && !loaded) load().catch(() => { line.textContent = 'could not be loaded'; }); };
   window.addEventListener('admin-view', (e) => show(e.detail));
   show(location.hash.slice(1));
 })();
