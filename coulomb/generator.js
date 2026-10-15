@@ -4,7 +4,8 @@
 // traps [{ value, why, nudge, flag }] (the answers under typical wrong ideas; why explains the
 // mistake, as in the check, nudge is the feedback in practice), a choice, direction or
 // ranking field its right answer (a direction or choice also traps: the answers under typical wrong
-// ideas). quiz(exercise, seed, key) gives a multiple-choice question about one of its fields (for the
+// ideas), and draw (drawOf, below) where the forces are drawn in practice and in the tutor instead
+// of their directions chosen. quiz(exercise, seed, key) gives a multiple-choice question about one of its fields (for the
 // check), tutorial(lesson) the tutor's frames.
 (function (root) {
   'use strict';
@@ -22,6 +23,101 @@
     if (f.type === 'dir') return `${ARROW[f.value]} ${dirName(f.value)}`;
     if (f.type === 'rank') return Object.entries(f.value).sort((a, b) => a[1] - b[1]).map(([k]) => k).join(' > ');
     return (f.options.find((o) => o[0] === f.value) || [, ''])[1];
+  }
+
+  // ---------------------------------------------------------------- drawing the forces
+  // In practice and in the tutor, the forces of a situation with draw (scenarios.js) are drawn with
+  // arrow.js instead of their directions chosen; the check keeps its four options (quiz, below).
+  // drawOf gives { keys, ask, fig (the task's figure, with room for the arrows), anchors (in svg
+  // units), kinds, tail(kind, anchor), len, gap, start, target [{ kind, anchor, dir (degrees),
+  // mag, net, zero, name }], none (a button "No net force"), zero (the net force is zero: no arrow
+  // for it, but that button), label(a, arrows) (an arrow's label), judge(arrows, done, none) → { ok,
+  // marks: { arrow id: 'ok' | 'bad' }, notes: [{ flag, text }] } (none: that button pressed),
+  // right() (a drawing judged right, with the button pressed if zero) }.
+  // The judging, kind to achieve with a mouse or a finger:
+  // - each force within TOL = 10° of its direction (the directions to snap to are 15° apart at the
+  //   finest, so that a force off the grid, e.g. the sum of two at a right angle, takes the nearest
+  //   one or two of them, and one on the grid only itself),
+  // - the lengths only where the size is clear: two forces of the same size (but the net force)
+  //   equally long within a step or 30 %, and of two forces of which one is at least CLEAR = 1.25
+  //   times the other (the net force too), the larger longer. Other lengths are free.
+  // A note per thing wrong: a nudge while the exercise is open, the explanation once done (solved
+  // or shown); each with the typical wrong idea behind it (flag) where there is one.
+  const TOL = 10, CLEAR = 1.25, LEN = { lo: 16, hi: 96, step: 8, init: 48 };
+  const DEG8 = [0, 45, 90, 135, 180, 225, 270, 315];
+  const degOf = (F) => (Math.round(((((Math.atan2(F[1], F[0]) * 180) / Math.PI) % 360 + 360) % 360) * 1e6) / 1e6) % 360;
+  const gap = (a, b) => { const d = Math.abs((((a - b) % 360) + 360) % 360); return Math.min(d, 360 - d); };
+  const arrowLib = () => root.Arrow || require('./arrow.js');
+  function drawOf(scn, p, v) {
+    const s = scn.draw(p, v), view = { room: s.anchors.map((a) => a.c) };
+    const fig = scn.figure(p, v, { task: true, draw: view });
+    const anchors = s.anchors.map((a) => ({ id: a.id, label: a.label, x: CL.clean(a.c[0] * view.s), y: CL.clean(-a.c[1] * view.s), r: 26 }));
+    const kinds = s.kinds.map((k) => ({ ...k, dirs: k.dirs || s.dirs || DEG8 }));
+    const big = Math.max(...s.target.map((t) => CL.len(t.F)));
+    const target = s.target.map((t) => ({ ...t, dir: degOf(t.F), mag: CL.len(t.F), zero: !!t.net && CL.len(t.F) < 1e-9 * big }));
+    const judged = target.filter((t) => !t.zero), netT = target.find((t) => t.net), zero = !!(netT && netT.zero);
+    const tail = (kind, an) => { const o = (s.tails || {})[kind] || [0, 0]; return [an.x + o[0], an.y + o[1]]; };
+    // a new arrow points where no force of its kind to draw does (where a kind has a choice)
+    const free = (d) => kinds.every((k) => k.dirs.length < 8 || judged.every((t) => t.kind !== k.id || gap(t.dir, arrowLib().nearest(k.dirs, d)) > TOL));
+    const start = [45, 135, 225, 315, 90, 270, 0, 180, 15, 75, 105, 165, 195, 255, 285, 345].find(free) ?? 45;
+    const { sv } = root.Scenarios;
+    function label(a, arrows) {
+      const k = kinds.find((x) => x.id === a.kind) || {};
+      if (k.sub === '@') return sv('F', String(a.anchor));
+      if (k.sub !== null) return sv('F', k.sub || '');
+      const same = (arrows || []).filter((x) => x.kind === a.kind && String(x.anchor) === String(a.anchor));
+      return sv('F', String(Math.max(1, same.findIndex((x) => x.id === a.id) + 1)));
+    }
+    function judge(arrows, done, none = false) {
+      const j = arrowLib().judge(arrows, judged, { tol: TOL }), marks = {}, problems = [];
+      j.results.forEach((r) => {
+        const a = r.drawn != null ? arrows[r.drawn] : null;
+        if (a) marks[a.id] = r.result === 'right' ? 'ok' : 'bad';
+        if (r.result === 'right') return;
+        // the net force: an arrow drawn although it is zero, or "No net force" chosen although it is not
+        if (zero && r.result === 'extra' && r.kind === netT.kind) problems.push({ type: 'dir', kind: r.kind, t: netT, dir: a.dir });
+        else if (none && r.result === 'missing' && judged[r.target] === netT) problems.push({ type: 'dir', kind: r.kind, t: netT, dir: null });
+        else problems.push({ type: r.result, kind: r.kind, t: r.target != null ? judged[r.target] : null, dir: a ? a.dir : null });
+      });
+      if (zero && !none && !arrows.some((a) => a.kind === netT.kind)) problems.push({ type: 'none', kind: netT.kind, t: netT, dir: null });
+      const right = j.results.filter((r) => r.result === 'right');
+      right.forEach((r, i) => right.slice(i + 1).forEach((q) => {
+        const t1 = judged[r.target], t2 = judged[q.target], a1 = arrows[r.drawn], a2 = arrows[q.drawn], l1 = a1.len, l2 = a2.len;
+        const bad = () => { marks[a1.id] = 'bad'; marks[a2.id] = 'bad'; };
+        if (!t1.net && !t2.net && Math.abs(t1.mag - t2.mag) <= 1e-9 * Math.max(t1.mag, t2.mag)) {
+          if (Math.abs(l1 - l2) > LEN.step + 1e-9 && Math.max(l1, l2) / Math.min(l1, l2) > 1.3 + 1e-9) { problems.push({ type: 'equal', t: t1, a: t1, b: t2 }); bad(); }
+        } else if (t1.mag >= CLEAR * t2.mag && !(l1 > l2)) { problems.push({ type: 'order', t: t1, big: t1, small: t2 }); bad(); }
+        else if (t2.mag >= CLEAR * t1.mag && !(l2 > l1)) { problems.push({ type: 'order', t: t2, big: t2, small: t1 }); bad(); }
+      }));
+      const notes = [];
+      problems.forEach((pr) => {
+        let n;
+        if (pr.type === 'missing') { const x = L(`Still missing: ${pr.t.name}.`, `Es fehlt noch: ${pr.t.name}.`); n = { flag: null, nudge: x, why: x }; }
+        else if (pr.type === 'extra') { const x = L('One arrow too many: draw each force once.', 'Ein Pfeil zu viel: Zeichne jede Kraft nur einmal.'); n = { flag: null, nudge: x, why: x }; }
+        else {
+          n = s.say({ ...pr, type: pr.type === 'none' ? 'dir' : pr.type, targets: judged, rights: right.map((r) => judged[r.target]) });
+          if (pr.type === 'none') n = { ...n, nudge: L('The net force is still missing: draw it, or choose “No net force”.', 'Die resultierende Kraft fehlt noch: Zeichne sie, oder wähle «Keine resultierende Kraft».') };
+        }
+        const text = done ? n.why : n.nudge;
+        if (!notes.some((x) => x.text === text)) notes.push({ flag: n.flag || null, text });
+      });
+      return { ok: !problems.length, marks, notes };
+    }
+    // the right forces, in proportion (the largest 88 long), or else one step of 16 for each size
+    function right() {
+      const A = arrowLib();
+      const make = (lens) => judged.map((t, i) => {
+        const k = kinds.find((x) => x.id === t.kind), an = anchors.find((x) => x.id === t.anchor);
+        return { id: `r${i + 1}`, kind: t.kind, anchor: t.anchor, at: tail(t.kind, an), dir: A.nearest(k.dirs, t.dir), len: lens[i] };
+      });
+      let arrows = make(judged.map((t) => Math.max(LEN.lo, Math.min(LEN.hi, Math.round((88 * t.mag) / big / LEN.step) * LEN.step))));
+      if (!judge(arrows, false, zero).ok) {
+        const level = (t) => CL.sig(t.mag / big, 6), levels = [...new Set(judged.map(level))].sort((a, b) => a - b);
+        arrows = make(judged.map((t) => LEN.lo + 16 * levels.indexOf(level(t))));
+      }
+      return arrows;
+    }
+    return { keys: s.keys, ask: s.ask, fig, anchors, kinds, tail, len: LEN, gap: 13, start, target, none: !!s.none, zero, label, judge, right, tol: TOL };
   }
 
   function exercise(scn, p) {
@@ -57,6 +153,7 @@
       solution: steps.map((s) => s.text),
       results: fields.map(answerHtml).join(', '),
       steps,
+      draw: scn.draw ? drawOf(scn, p, v) : null,
       p, v,
     };
   }
@@ -111,7 +208,9 @@
       figure: ex.figure({ task: true }),
     };
     const frames = ex.steps.map((s) => ({ text: s.text, figure: ex.figure({ show: new Set(s.show || []), hl: new Set(s.hl || []) }) }));
-    return { frames: [first, ...frames] };
+    // the forces drawn by the student first, where they can be (app.js mounts the drawing in .t-draw)
+    const own = ex.draw ? [{ text: `<p class="step-rule">${L('Your turn', 'Du bist dran')}</p><p>${ex.draw.ask}</p><div class="t-draw"></div>`, figure: ex.draw.fig }] : [];
+    return { frames: [first, ...own, ...frames] };
   }
 
   root.Coulomb = { SCENARIOS, practiceOf, quiz, tutorial, exercise, byId, num, LETTERS };
