@@ -1,7 +1,7 @@
 #!/bin/bash
 # Copies the shared files (ui.css, lang.js, fit.js, sign.js, tutor.js, check.js, practice.js, topics.js, identify.js, artkit.js, figkit.js, sets.js) into every app, so that
-# each app stays a folder of its own for deployment; pages that are no app (the privacy page, the game All In and the
-# hub, whose lang.js is served as /lang.js) get lang.js only. The interactive widgets (WIDGETS) go
+# each app stays a folder of its own for deployment; pages that are no app (the privacy page, the games All In and Absolute
+# Zero, and the hub, whose lang.js is served as /lang.js) get lang.js only. The interactive widgets (WIDGETS) go
 # only into the apps whose index.html loads them (<script … src="name">, or a stylesheet link).
 # Edit the files here, never an app's copy.
 #   shared/sync.sh          copy
@@ -16,7 +16,7 @@ APPS="energy-conservation charged-particles potential-circuit capacitors interfe
 FILES="ui.css lang.js fit.js sign.js tutor.js check.js practice.js topics.js identify.js artkit.js figkit.js sets.js slips.js"
 # each widget's header says what it does and which apps use it
 WIDGETS="dnd.js dnd.css reader.js reader.css sketch.js sketch.css arrow.js arrow.css"
-PAGES="privacy hub all-in"
+PAGES="privacy hub all-in absolute-zero"
 status=0
 copy() { # copy shared/$1 to $2/$1, or with --check report a difference
   if [ "$MODE" = "--check" ]; then

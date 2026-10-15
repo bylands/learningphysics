@@ -18,6 +18,8 @@ cards in its order, shows their tags, and lets visitors filter by tag. This serv
     /admin/api/all-in/…  the game All In on phones (AllInRooms): open, <code>/state, <code>/close and
                          GET <code>/host for the teacher's screen; GET <code>?token=, <code>/join and
                          <code>/bet for the phones, without login
+    /admin/api/absolute-zero/…  the quiz Absolute Zero on phones (ZeroRooms): the same, with
+                         <code>/answer instead of <code>/bet
     /admin/api/config    GET  the apps of the hub page with their order and tags
                          POST {"order": [id, ...], "tags": {id: [key, ...]},
                                "labels": {key: {"en": name, "de": name}}}      saves apps.json
@@ -168,7 +170,7 @@ MAX_SETS, MAX_TITLE = 100, 80
 MAX_EXAMPLES, MAX_STAGES, MAX_OBJECTIVES = 100, 300, 50  # per app in a set
 # names a set cannot have, besides the apps and what is in the web root: the services and paths
 # nginx serves itself, and some kept free
-RESERVED = {"admin", "all-in", "api", "apps", "crosswords", "electric-circuits", "hub", "hub-admin", "hub-data", "index", "katex", "texercises",
+RESERVED = {"absolute-zero", "admin", "all-in", "api", "apps", "crosswords", "electric-circuits", "hub", "hub-admin", "hub-data", "index", "katex", "texercises",
             "lang", "millionaire", "objectives", "privacy", "set", "sets", "static", "wwtbap", "www"}
 MAX_UPLOAD = 64 * 1024 * 1024  # a TeXercises export
 MAX_REVIEW_RENDER = 40  # exercises the review renders at once
@@ -535,6 +537,7 @@ class Admin:
         self.own = own
         self.review = config.parent / "texercises-review"  # the TeXercises review (sheets/review.py)
         self.allin = AllInRooms()  # the rooms of the game All In (/all-in/), in memory
+        self.zero = ZeroRooms()  # the rooms of the quiz Absolute Zero (/absolute-zero/), in memory
 
     def stored_hash(self, teacher: Optional[str] = None) -> str:
         """The password hash of a teacher (the superuser's without one), from teachers.json. Read on
@@ -1501,9 +1504,11 @@ class AllInRooms:
                 del self.rooms[c]
             if len(self.rooms) >= ALLIN_MAX_ROOMS:
                 raise ValueError("too many games at the moment")
-            self.rooms[code] = {"owner": teacher, "touched": self.clock(), "state": None, "deadline": None,
-                                "players": {}, "bets": {}, "n": 0}
+            self.rooms[code] = self._new_room(teacher)
             return code
+
+    def _new_room(self, teacher: str) -> Dict[str, object]:
+        return {"owner": teacher, "touched": self.clock(), "state": None, "deadline": None, "players": {}, "bets": {}, "n": 0}
 
     def close(self, teacher: str, code: str) -> None:
         with self.lock:
@@ -1577,6 +1582,112 @@ class AllInRooms:
             entry = {"bet": bet, "by": me["name"], "n": room["n"]}
             room["bets"][str(me["team"])] = entry
             return entry
+
+
+# ---------------------------------------------------------------------- Absolute Zero (/absolute-zero/)
+# The quiz Absolute Zero on the students' phones, run like All In: the teacher's screen
+# (/absolute-zero/, logged in) opens a room, runs the game in the browser (the rules are in
+# absolute-zero/game.js) and sends this service what the phones should show; the phones
+# (/absolute-zero/play/, no login) join with a name and send one answer per question, as often as
+# they like until the time is up. The teacher's screen reads the answers back, by the players'
+# public ids (the tokens stay with the phones).
+ZERO_PHASES = ("lobby", "answer", "judge", "reveal", "scores", "end")
+ZERO_ANSWER = 60  # characters of an answer
+
+
+def zero_state(raw: object) -> Dict[str, object]:
+    """What the teacher's screen sends for the phones, cleaned: the phase, the question (its index
+    and id), the number of questions, the seconds left to answer, and from the reveal on each
+    player's scores ({ id: [round, total, place] })."""
+    if not isinstance(raw, dict) or raw.get("phase") not in ZERO_PHASES:
+        raise ValueError("a phase expected")
+    out: Dict[str, object] = {"phase": raw["phase"]}
+    i = raw.get("i")
+    out["i"] = i if isinstance(i, int) and not isinstance(i, bool) and 0 <= i < 100 else 0
+    out["rounds"] = min(allin_chips(raw.get("rounds")) or 0, 100)
+    out["q"] = re.sub(r"[^a-z0-9-]", "", str(raw.get("q") or ""))[:40]
+    left = allin_number(raw.get("left"))
+    out["left"] = None if left is None else max(0.0, min(left, 600.0))
+    v = raw.get("result")
+    if isinstance(v, dict) and len(json.dumps(v)) <= 8000:
+        out["result"] = v
+    return out
+
+
+class ZeroRooms(AllInRooms):
+    """The rooms of Absolute Zero, in memory: { code: { owner, touched, state, deadline, players:
+    { token: { id, name } }, answers: { id: text }, next } }; next numbers the players' ids."""
+
+    def _new_room(self, teacher: str) -> Dict[str, object]:
+        return {"owner": teacher, "touched": self.clock(), "state": None, "deadline": None, "players": {}, "answers": {}, "next": 1}
+
+    def set_state(self, teacher: str, code: str, raw: object) -> None:
+        state = zero_state(raw)
+        with self.lock:
+            room = self._room(code, teacher)
+            old = room["state"] or {}
+            if old.get("i") != state["i"] or old.get("q") != state["q"] or state["phase"] == "lobby":
+                room["answers"] = {}
+            if state["phase"] == "answer" and state["left"] is not None:
+                room["deadline"] = self.clock() + state["left"]
+            elif state["phase"] != "answer":
+                room["deadline"] = None
+            room["state"] = state
+
+    def _players(self, room: Dict[str, object]) -> List[Dict[str, object]]:
+        return sorted(({"id": p["id"], "name": p["name"]} for p in room["players"].values()), key=lambda p: int(p["id"][1:]))
+
+    def host_view(self, teacher: str, code: str) -> Dict[str, object]:
+        with self.lock:
+            room = self._room(code, teacher)
+            return {"code": code, "players": self._players(room), "answers": dict(room["answers"]), "left": self._left(room)}
+
+    def join(self, code: str, name: object, token: object = None) -> Dict[str, object]:  # type: ignore[override]
+        name = allin_name(name)
+        if not name:
+            raise ValueError("a name expected")
+        with self.lock:
+            room = self._room(code)
+            token = str(token or "")
+            player = room["players"].get(token)
+            if player is None:
+                if len(room["players"]) >= ALLIN_MAX_PLAYERS:
+                    raise ValueError("the game is full")
+                token = secrets.token_urlsafe(12)
+                player = {"id": f"p{room['next']}"}
+                room["next"] += 1
+                room["players"][token] = player
+            player["name"] = name
+            return {"token": token, "id": player["id"]}
+
+    def view(self, code: str, token: object = None) -> Dict[str, object]:
+        """What a phone shows: the state, the seconds left, the players' names, the player and
+        their answer."""
+        with self.lock:
+            room = self._room(code)
+            me = room["players"].get(str(token or ""))
+            out: Dict[str, object] = {"state": room["state"], "left": self._left(room),
+                                      "players": [p["name"] for p in self._players(room)], "me": dict(me) if me else None}
+            if me:
+                out["answer"] = room["answers"].get(me["id"])
+            return out
+
+    def answer(self, code: str, token: object, i: object, text: object) -> Dict[str, object]:
+        text = allin_name(text, ZERO_ANSWER)
+        if not text:
+            raise ValueError("an answer expected")
+        with self.lock:
+            room = self._room(code)
+            me = room["players"].get(str(token or ""))
+            if not me:
+                raise PermissionError("join first")
+            state = room["state"] or {}
+            if state.get("phase") != "answer" or state.get("i") != i:
+                raise ValueError("answers are closed")
+            if room["deadline"] is not None and self.clock() > room["deadline"] + ALLIN_GRACE:
+                raise ValueError("time is up")
+            room["answers"][me["id"]] = text
+            return {"answer": text}
 
 
 def make_handler(admin: Admin):
@@ -2032,6 +2143,47 @@ def make_handler(admin: Admin):
             else:
                 self.send(404, "Not found", "text/plain; charset=utf-8")
 
+        # -------------------------------------------------------------- Absolute Zero
+        def zero_get(self, rest: str) -> None:
+            """/api/absolute-zero/<code>?token=… (a phone), <code>/host (the teacher's screen)."""
+            code, _, action = rest.partition("/")
+            if action == "host":
+                teacher = self.teacher()
+                if not teacher:
+                    self.json(403, {"error": "login"})
+                    return
+                self.allin_call(lambda: admin.zero.host_view(teacher, code))
+            elif not action:
+                token = (parse_qs(self.path.partition("?")[2]).get("token") or [""])[0]
+                self.allin_call(lambda: admin.zero.view(code, token))
+            else:
+                self.send(404, "Not found", "text/plain; charset=utf-8")
+
+        def zero_post(self, rest: str) -> None:
+            """/api/absolute-zero/open, <code>/state and <code>/close (the teacher's screen);
+            <code>/join and <code>/answer (a phone)."""
+            code, _, action = rest.partition("/")
+            body = self.json_body()
+            if body is None:
+                return
+            if action == "join":
+                self.allin_call(lambda: admin.zero.join(code, body.get("name"), body.get("token")))
+                return
+            if action == "answer":
+                self.allin_call(lambda: admin.zero.answer(code, body.get("token"), body.get("i"), body.get("text")))
+                return
+            teacher = self.teacher()
+            if not teacher:
+                self.json(403, {"error": "login"})
+            elif code == "open" and not action:
+                self.allin_call(lambda: {"code": admin.zero.open(teacher, body.get("code"))})
+            elif action == "state":
+                self.allin_call(lambda: admin.zero.set_state(teacher, code, body.get("state")) or {"ok": True})
+            elif action == "close":
+                self.allin_call(lambda: admin.zero.close(teacher, code) or {"ok": True})
+            else:
+                self.send(404, "Not found", "text/plain; charset=utf-8")
+
         # -------------------------------------------------------------- routes
         def do_HEAD(self) -> None:
             self.do_GET()
@@ -2083,6 +2235,8 @@ def make_handler(admin: Admin):
                     self.json(200, admin.teachers_state())
             elif path.startswith("/api/all-in/"):
                 self.allin_get(path[len("/api/all-in/"):])
+            elif path.startswith("/api/absolute-zero/"):
+                self.zero_get(path[len("/api/absolute-zero/"):])
             elif path == "/api/me":
                 teacher = self.teacher()
                 if not teacher:
@@ -2120,6 +2274,8 @@ def make_handler(admin: Admin):
                 self.redirect("")
             elif path.startswith("/api/all-in/"):
                 self.allin_post(path[len("/api/all-in/"):])
+            elif path.startswith("/api/absolute-zero/"):
+                self.zero_post(path[len("/api/absolute-zero/"):])
             elif path == "/api/teachers":
                 self.teachers_post()
             elif path == "/api/password":
@@ -2415,6 +2571,11 @@ COMMON_SECTIONS = """
           <h2><a href="/all-in/" target="_blank" rel="noopener">All In: the Physics Casino ↗</a></h2>
           <p>A team game for the projector, 20 to 30 minutes: every round shows a short animation of a phenomenon, all teams bet chips at once on its outcome, an estimate or a short calculation, the reveal plays out what happens, and a die picks a player of the team in the hot seat to explain the result. Students join on their phones (QR code) and place their team's bets there, or you type in bet cards. Payouts, timer and scoreboard are done for you. Six standard rounds and seven spare ones, in English and German.</p>
           <p class="note">learningphysics.ch/all-in/ · you're logged in there with this account (needed for phones); students join at learningphysics.ch/all-in/play/ without one</p>
+        </li>
+        <li class="card">
+          <h2><a href="/absolute-zero/" target="_blank" rel="noopener">Absolute Zero ↗</a></h2>
+          <p>A quiz in the style of <i>Pointless</i>, for the whole class, 15 to 25 minutes: every student types one answer to an open question ("A unit of energy") on their phone, and scores the share of the class who gave the same answer. An answer nobody else thought of scores zero, absolute zero, and the lowest total wins. Answers are matched to a list (typos, German and English accepted); you judge the rest with a click. 60 questions in five topics, in English and German.</p>
+          <p class="note">learningphysics.ch/absolute-zero/ · you're logged in there with this account; students join at learningphysics.ch/absolute-zero/play/ without one</p>
         </li>
         <li class="card">
           <h2><a href="/wwtbap/" target="_blank" rel="noopener">Who Wants to Be a Physicist? ↗</a></h2>
