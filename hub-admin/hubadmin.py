@@ -2369,6 +2369,8 @@ def make_handler(admin: Admin):
                 self.send(200, SETS_JS, "text/javascript; charset=utf-8")
             elif path == "/static/accounts.js":
                 self.send(200, ACCOUNTS_JS, "text/javascript; charset=utf-8")
+            elif path == "/static/games.js":
+                self.send(200, GAMES_JS, "text/javascript; charset=utf-8")
             elif path == "/static/sheets.js":
                 self.send(200, SHEETS_JS, "text/javascript; charset=utf-8")
             elif path == "/static/online.js":
@@ -2543,7 +2545,7 @@ def page(title: str, body: str, script: bool = False, refresh: int = 0) -> str:
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
   <link rel="stylesheet" href="/admin/static/admin.css">
-  {'<link rel="stylesheet" href="/katex/katex.min.css"><script defer src="/katex/katex.min.js"></script><script defer src="/admin/static/drag.js"></script><script defer src="/admin/static/admin.js"></script><script defer src="/admin/static/sets.js"></script><script defer src="/admin/static/sheets.js"></script><script defer src="/admin/static/accounts.js"></script>' if script else ''}
+  {'<link rel="stylesheet" href="/katex/katex.min.css"><script defer src="/katex/katex.min.js"></script><script defer src="/admin/static/drag.js"></script><script defer src="/admin/static/admin.js"></script><script defer src="/admin/static/sets.js"></script><script defer src="/admin/static/sheets.js"></script><script defer src="/admin/static/accounts.js"></script><script defer src="/admin/static/games.js"></script>' if script else ''}
 </head>
 <body>
   <header class="wrap">
@@ -2735,43 +2737,74 @@ COMMON_SECTIONS = """
     </section>
     <section id="view-quizzes">
       <p class="lead">Live classroom quizzes: students join on their phones, the teacher screen runs on the projector.</p>
-      <ul class="games">
-        <li class="card">
-          <h2>Electric Circuits: the quiz</h2>
-          <p>A live quiz in the style of Kahoot on DC circuits: charge, current, voltage, power, resistance, resistor circuits and meters, in 21 questions. Points for difficulty and speed, a ranking after every question, and at the end personal feedback for every student and class statistics with a CSV export for the teacher.</p>
-          <p class="links"><a href="/electric-circuits/host" target="_blank" rel="noopener">Teacher screen ↗</a> <a href="/electric-circuits/" target="_blank" rel="noopener">Student page ↗</a> <a href="/electric-circuits/host?preview=1" target="_blank" rel="noopener">Try it alone ↗</a></p>
-          <p class="note">learningphysics.ch/electric-circuits/ · students join there with the game code of your lobby (its QR code carries it); every teacher has a game of their own, and you're logged in there with this account</p>
-        </li>
-      </ul>
+      <div class="gametools">
+        <input type="search" class="gamefind" aria-label="Search the quizzes" placeholder="Search the quizzes" autocomplete="off">
+        <div class="order" role="radiogroup" aria-label="Order of the quizzes">
+          <label><input type="radio" name="order-quizzes" value="standard" checked><span>Standard</span></label>
+          <label><input type="radio" name="order-quizzes" value="recent"><span>Recently used</span></label>
+        </div>
+      </div>
+      <p class="gamenone note" hidden>No quizzes match.</p>
+      <div class="gamegrid">
+        <article class="card game" data-id="electric-circuits">
+          <svg viewBox="0 0 240 150" role="img" aria-label="A circuit with a glowing bulb, and a phone with four answer tiles, one ticked"><path class="wire" d="M20 95 V50 H60 M84 50 H112 V125 H20 V109"/><line class="plate" x1="6" y1="95" x2="34" y2="95" stroke-width="2.5"/><line class="plate" x1="13" y1="109" x2="27" y2="109" stroke-width="5"/><circle class="halo" cx="72" cy="50" r="20" opacity="0.25"/><g class="bulb on"><circle cx="72" cy="50" r="12"/><path d="M63.5 41.5 L80.5 58.5 M80.5 41.5 L63.5 58.5"/></g><rect class="frame" x="140" y="10" width="78" height="132" rx="12"/><text class="qtext" x="179" y="38" text-anchor="middle">I = ?</text><rect class="tile t1" x="149" y="52" width="28" height="36" rx="5"/><rect class="tile t2" x="181" y="52" width="28" height="36" rx="5"/><rect class="tile t3" x="149" y="92" width="28" height="36" rx="5"/><rect class="tile t4" x="181" y="92" width="28" height="36" rx="5"/><path class="tick" d="M187 110 l5 5 l10 -12"/></svg>
+          <div class="text">
+            <h2>Electric Circuits: the quiz</h2>
+            <p>A live quiz in the style of Kahoot on DC circuits: charge, current, voltage, power, resistance, resistor circuits and meters, in 21 questions. Points for difficulty and speed, a ranking after every question, and at the end personal feedback for every student and class statistics with a CSV export for the teacher.</p>
+            <p class="links"><a href="/electric-circuits/host" target="_blank" rel="noopener">Teacher screen ↗</a> <a href="/electric-circuits/" target="_blank" rel="noopener">Student page ↗</a> <a href="/electric-circuits/host?preview=1" target="_blank" rel="noopener">Try it alone ↗</a></p>
+            <p class="note">learningphysics.ch/electric-circuits/ · students join there with the game code of your lobby (its QR code carries it); every teacher has a game of their own, and you're logged in there with this account</p>
+          </div>
+        </article>
+      </div>
     </section>
     <section id="view-games" hidden>
       <p class="lead">The games for the class, each a service of its own on this site. <i>Try it alone</i> opens a preview: you play one student or team on a phone beside the teacher screen, and the others are simulated, so nobody has to join.</p>
-      <ul class="games">
-        <li class="card">
-          <h2><a href="/all-in/" target="_blank" rel="noopener">All In: the Physics Casino ↗</a></h2>
-          <p>A team game for the projector, 20 to 30 minutes: every round shows a short animation of a phenomenon, all teams bet chips at once on its outcome, an estimate or a short calculation, the reveal plays out what happens, and a die picks a player of the team in the hot seat to explain the result. Students join on their phones (QR code) and place their team's bets there, or you type in bet cards. Payouts, timer and scoreboard are done for you. Six standard rounds and seven spare ones, in English and German.</p>
-          <p class="links"><a href="/all-in/?preview" target="_blank" rel="noopener">Try it alone ↗</a></p>
-          <p class="note">learningphysics.ch/all-in/ · you're logged in there with this account (needed for phones); students join at learningphysics.ch/all-in/play/ without one</p>
-        </li>
-        <li class="card">
-          <h2><a href="/absolute-zero/" target="_blank" rel="noopener">Absolute Zero ↗</a></h2>
-          <p>A quiz in the style of <i>Pointless</i>, for the whole class, 15 to 25 minutes: every student types one answer to an open question ("A unit of energy") on their phone, and scores the share of the class who gave the same answer. An answer nobody else thought of scores zero, absolute zero, and the lowest total wins. Answers are matched to a list (typos, German and English accepted); you judge the rest with a click. 60 questions in five topics, in English and German.</p>
-          <p class="links"><a href="/absolute-zero/?preview" target="_blank" rel="noopener">Try it alone ↗</a></p>
-          <p class="note">learningphysics.ch/absolute-zero/ · you're logged in there with this account; students join at learningphysics.ch/absolute-zero/play/ without one</p>
-        </li>
-        <li class="card">
-          <h2><a href="/wwtbap/" target="_blank" rel="noopener">Who Wants to Be a Physicist? ↗</a></h2>
-          <p>A quiz in the style of <i>Who Wants to Be a Millionaire</i>: 15 physics questions of rising difficulty, a ladder of famous physicists and three lifelines. As a classroom game, students join on their phones (QR code or room code), a Fastest Finger First round picks each contestant, and Ask the Audience can be a live class vote. A quick game starts without a lobby.</p>
-          <p class="links"><a href="/wwtbap/?preview=1" target="_blank" rel="noopener">Try it alone ↗</a></p>
-          <p class="note">learningphysics.ch/wwtbap/ · you're logged in there with this account; students join on their phones without one</p>
-        </li>
-        <li class="card">
-          <h2><a href="/crosswords/" target="_blank" rel="noopener">Crossword generator ↗</a></h2>
-          <p>Generates physics crosswords by topic and size, to solve in the browser or print. A puzzle is shared as a link that students open without logging in; it can become a timed challenge, or a class challenge in which students compete on a live teacher screen.</p>
-          <p>You're logged in there with this account, and can give a crossword a short link of your own, learningphysics.ch/<span class="prefix"></span><i>name</i>.</p>
-          <p class="note">learningphysics.ch/crosswords/ · puzzle links are public</p>
-        </li>
-      </ul>
+      <div class="gametools">
+        <input type="search" class="gamefind" aria-label="Search the games" placeholder="Search the games" autocomplete="off">
+        <div class="order" role="radiogroup" aria-label="Order of the games">
+          <label><input type="radio" name="order-games" value="standard" checked><span>Standard</span></label>
+          <label><input type="radio" name="order-games" value="recent"><span>Recently used</span></label>
+        </div>
+      </div>
+      <p class="gamenone note" hidden>No games match.</p>
+      <div class="gamegrid">
+        <article class="card game" data-id="all-in">
+          <svg viewBox="0 0 240 150" role="img" aria-label="Two stacks of casino chips and a die"><path class="coinside a" d="M30 124 v8 a26 9 0 0 0 52 0 v-8"/><ellipse class="coin a" cx="56" cy="124" rx="26" ry="9"/><path class="coinmark" d="M30 128 h4 M78 128 h4 M54 132.6 h4"/><path class="coinside a" d="M30 113 v8 a26 9 0 0 0 52 0 v-8"/><ellipse class="coin a" cx="56" cy="113" rx="26" ry="9"/><path class="coinmark" d="M30 117 h4 M78 117 h4 M54 121.6 h4"/><path class="coinside a" d="M30 102 v8 a26 9 0 0 0 52 0 v-8"/><ellipse class="coin a" cx="56" cy="102" rx="26" ry="9"/><path class="coinmark" d="M30 106 h4 M78 106 h4 M54 110.6 h4"/><path class="coinside a" d="M30 91 v8 a26 9 0 0 0 52 0 v-8"/><ellipse class="coin a" cx="56" cy="91" rx="26" ry="9"/><path class="coinmark" d="M30 95 h4 M78 95 h4 M54 99.6 h4"/><path class="coinside a" d="M30 80 v8 a26 9 0 0 0 52 0 v-8"/><ellipse class="coin a" cx="56" cy="80" rx="26" ry="9"/><path class="coinmark" d="M30 84 h4 M78 84 h4 M54 88.6 h4"/><path class="coinside a" d="M30 69 v8 a26 9 0 0 0 52 0 v-8"/><ellipse class="coin a" cx="56" cy="69" rx="26" ry="9"/><path class="coinmark" d="M30 73 h4 M78 73 h4 M54 77.6 h4"/><path class="coinside b" d="M92 124 v8 a26 9 0 0 0 52 0 v-8"/><ellipse class="coin b" cx="118" cy="124" rx="26" ry="9"/><path class="coinmark" d="M92 128 h4 M140 128 h4 M116 132.6 h4"/><path class="coinside b" d="M92 113 v8 a26 9 0 0 0 52 0 v-8"/><ellipse class="coin b" cx="118" cy="113" rx="26" ry="9"/><path class="coinmark" d="M92 117 h4 M140 117 h4 M116 121.6 h4"/><path class="coinside b" d="M92 102 v8 a26 9 0 0 0 52 0 v-8"/><ellipse class="coin b" cx="118" cy="102" rx="26" ry="9"/><path class="coinmark" d="M92 106 h4 M140 106 h4 M116 110.6 h4"/><g transform="rotate(-12 186 80)"><rect class="die" x="160" y="54" width="52" height="52" rx="9"/><circle class="pip" cx="174" cy="68" r="4.5"/><circle class="pip" cx="186" cy="80" r="4.5"/><circle class="pip" cx="198" cy="92" r="4.5"/><circle class="pip" cx="198" cy="68" r="4.5"/><circle class="pip" cx="174" cy="92" r="4.5"/></g></svg>
+          <div class="text">
+            <h2><a href="/all-in/" target="_blank" rel="noopener">All In: the Physics Casino ↗</a></h2>
+            <p>A team game for the projector, 20 to 30 minutes: every round shows a short animation of a phenomenon, all teams bet chips at once on its outcome, an estimate or a short calculation, the reveal plays out what happens, and a die picks a player of the team in the hot seat to explain the result. Students join on their phones (QR code) and place their team's bets there, or you type in bet cards. Payouts, timer and scoreboard are done for you. Six standard rounds and seven spare ones, in English and German.</p>
+            <p class="links"><a href="/all-in/?preview" target="_blank" rel="noopener">Try it alone ↗</a></p>
+            <p class="note">learningphysics.ch/all-in/ · you're logged in there with this account (needed for phones); students join at learningphysics.ch/all-in/play/ without one</p>
+          </div>
+        </article>
+        <article class="card game" data-id="absolute-zero">
+          <svg viewBox="0 0 240 150" role="img" aria-label="Bars of the answers given, shorter and shorter down to zero, and a thermometer at the bottom of its scale"><rect class="barq" x="24" y="36" width="24" height="92" rx="2"/><rect class="barq" x="58" y="64" width="24" height="64" rx="2"/><rect class="barq" x="92" y="88" width="24" height="40" rx="2"/><rect class="barq" x="126" y="110" width="24" height="18" rx="2"/><path class="axis" d="M16 128 H160"/><text class="zero" x="164" y="132" text-anchor="start">0</text><rect class="therm" x="198" y="14" width="16" height="100" rx="8"/><circle class="therm" cx="206" cy="124" r="13"/><rect class="cold" x="202" y="104" width="8" height="18"/><circle class="cold" cx="206" cy="124" r="9"/><path class="guide" d="M184 110 H194"/><path class="axis" d="M186 34 h8 M186 54 h8 M186 74 h8 M186 94 h8"/></svg>
+          <div class="text">
+            <h2><a href="/absolute-zero/" target="_blank" rel="noopener">Absolute Zero ↗</a></h2>
+            <p>A quiz in the style of <i>Pointless</i>, for the whole class, 15 to 25 minutes: every student types one answer to an open question ("A unit of energy") on their phone, and scores the share of the class who gave the same answer. An answer nobody else thought of scores zero, absolute zero, and the lowest total wins. Answers are matched to a list (typos, German and English accepted); you judge the rest with a click. 60 questions in five topics, in English and German.</p>
+            <p class="links"><a href="/absolute-zero/?preview" target="_blank" rel="noopener">Try it alone ↗</a></p>
+            <p class="note">learningphysics.ch/absolute-zero/ · you're logged in there with this account; students join at learningphysics.ch/absolute-zero/play/ without one</p>
+          </div>
+        </article>
+        <article class="card game" data-id="wwtbap">
+          <svg viewBox="0 0 240 150" role="img" aria-label="A question with four answers, one chosen, and the ladder of questions"><path class="loz q" d="M10 35.0 L25.0 20 H155.0 L170 35.0 L155.0 50 H25.0 Z"/><text class="qtext" x="90" y="40" text-anchor="middle">?</text><path class="loz a" d="M10 79.0 L23.0 66 H75.0 L88 79.0 L75.0 92 H23.0 Z"/><text class="ans" x="30" y="84">A</text><path class="loz a" d="M92 79.0 L105.0 66 H157.0 L170 79.0 L157.0 92 H105.0 Z"/><text class="ans" x="112" y="84">B</text><path class="loz pick" d="M10 113.0 L23.0 100 H75.0 L88 113.0 L75.0 126 H23.0 Z"/><text class="ans" x="30" y="118">C</text><path class="loz a" d="M92 113.0 L105.0 100 H157.0 L170 113.0 L157.0 126 H105.0 Z"/><text class="ans" x="112" y="118">D</text><rect class="rung" x="186" y="128" width="44" height="11" rx="3"/><rect class="rung" x="186" y="112" width="44" height="11" rx="3"/><rect class="rung" x="186" y="96" width="44" height="11" rx="3"/><rect class="rung" x="186" y="80" width="44" height="11" rx="3"/><rect class="rung now" x="186" y="64" width="44" height="11" rx="3"/><rect class="rung" x="186" y="48" width="44" height="11" rx="3"/><rect class="rung" x="186" y="32" width="44" height="11" rx="3"/></svg>
+          <div class="text">
+            <h2><a href="/wwtbap/" target="_blank" rel="noopener">Who Wants to Be a Physicist? ↗</a></h2>
+            <p>A quiz in the style of <i>Who Wants to Be a Millionaire</i>: 15 physics questions of rising difficulty, a ladder of famous physicists and three lifelines. As a classroom game, students join on their phones (QR code or room code), a Fastest Finger First round picks each contestant, and Ask the Audience can be a live class vote. A quick game starts without a lobby.</p>
+            <p class="links"><a href="/wwtbap/?preview=1" target="_blank" rel="noopener">Try it alone ↗</a></p>
+            <p class="note">learningphysics.ch/wwtbap/ · you're logged in there with this account; students join on their phones without one</p>
+          </div>
+        </article>
+        <article class="card game" data-id="crosswords">
+          <svg viewBox="0 0 240 150" role="img" aria-label="A crossword with the words force, field, laser and energy partly filled in"><rect class="cell" x="70" y="10" width="20" height="20"/><text class="letter" x="80.0" y="24.5" text-anchor="middle">F</text><rect class="cell" x="90" y="10" width="20" height="20"/><text class="letter" x="100.0" y="24.5" text-anchor="middle">O</text><rect class="cell" x="110" y="10" width="20" height="20"/><text class="letter" x="120.0" y="24.5" text-anchor="middle">R</text><rect class="cell" x="130" y="10" width="20" height="20"/><text class="letter" x="140.0" y="24.5" text-anchor="middle">C</text><rect class="cell" x="150" y="10" width="20" height="20"/><text class="letter" x="160.0" y="24.5" text-anchor="middle">E</text><rect class="cell" x="70" y="30" width="20" height="20"/><text class="letter" x="80.0" y="44.5" text-anchor="middle">I</text><rect class="cell" x="150" y="30" width="20" height="20"/><text class="letter" x="160.0" y="44.5" text-anchor="middle">N</text><rect class="cell" x="70" y="50" width="20" height="20"/><text class="letter" x="80.0" y="64.5" text-anchor="middle">E</text><rect class="cell" x="150" y="50" width="20" height="20"/><text class="letter" x="160.0" y="64.5" text-anchor="middle">E</text><rect class="cell" x="70" y="70" width="20" height="20"/><rect class="cell" x="90" y="70" width="20" height="20"/><rect class="cell" x="110" y="70" width="20" height="20"/><rect class="cell" x="130" y="70" width="20" height="20"/><rect class="cell" x="150" y="70" width="20" height="20"/><text class="letter" x="160.0" y="84.5" text-anchor="middle">R</text><rect class="cell" x="70" y="90" width="20" height="20"/><rect class="cell" x="150" y="90" width="20" height="20"/><rect class="cell" x="150" y="110" width="20" height="20"/><rect class="cursor" x="90" y="70" width="20" height="20"/><text class="num" x="72" y="17">1</text><text class="num" x="152" y="17">2</text><text class="num" x="72" y="77">3</text></svg>
+          <div class="text">
+            <h2><a href="/crosswords/" target="_blank" rel="noopener">Crossword generator ↗</a></h2>
+            <p>Generates physics crosswords by topic and size, to solve in the browser or print. A puzzle is shared as a link that students open without logging in; it can become a timed challenge, or a class challenge in which students compete on a live teacher screen.</p>
+            <p>You're logged in there with this account, and can give a crossword a short link of your own, learningphysics.ch/<span class="prefix"></span><i>name</i>.</p>
+            <p class="note">learningphysics.ch/crosswords/ · puzzle links are public</p>
+          </div>
+        </article>
+      </div>
     </section>"""
 
 
@@ -2817,14 +2850,64 @@ h1 { margin: 4px 0 16px; font-size: 1.6rem; }
 .lead, .note { color: var(--muted); }
 .note { font-size: 0.9rem; }
 .card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 18px 20px; }
-.games { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
-.games h2 { margin: 0 0 6px; font-size: 1.1rem; }
-.games h2 a { color: var(--accent); text-decoration: none; }
-.games h2 a:hover { text-decoration: underline; }
-.games p { margin: 0 0 6px; }
-.games p.note { margin: 0; }
-.games .links { display: flex; flex-wrap: wrap; gap: 6px 18px; font-weight: 600; }
-.games .links a { color: var(--accent); }
+/* the quizzes and games: cards with a picture, as the apps on the hub page; a search and the order
+   (standard or recently used: games.js) */
+.gametools { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; margin: 0 0 16px; }
+.gametools .gamefind { flex: 1 1 220px; max-width: 360px; width: auto; }
+.order { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: var(--card); margin-left: auto; }
+.order label { position: relative; }
+.order input { position: absolute; opacity: 0; inset: 0; margin: 0; cursor: pointer; }
+.order span { display: block; padding: 5px 12px; font-size: 0.9rem; border-left: 1px solid var(--line); white-space: nowrap; }
+.order label:first-child span { border-left: 0; }
+.order input:checked + span { background: var(--accent); color: var(--accent-ink); font-weight: 600; }
+.order input:focus-visible + span { outline: 2px solid var(--accent); outline-offset: -3px; }
+.gamegrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; }
+.game { display: flex; flex-direction: column; padding: 0; overflow: hidden; border-radius: 12px; transition: border-color 0.15s, box-shadow 0.15s; }
+.game[hidden] { display: none; }
+.game:hover, .game:focus-within { border-color: var(--accent); box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08); }
+.game > svg { display: block; width: 100%; height: auto; padding: 18px 22px 8px; border-bottom: 1px solid var(--line); }
+.game .text { padding: 14px 18px 16px; display: flex; flex-direction: column; flex: 1; }
+.game h2 { margin: 0 0 6px; font-size: 1.1rem; color: var(--accent); }
+.game h2 a { color: inherit; text-decoration: none; }
+.game h2 a:hover { text-decoration: underline; }
+.game p { margin: 0 0 8px; font-size: 0.95rem; }
+.game p.note { margin: auto 0 0; font-size: 0.85rem; }
+.game .links { display: flex; flex-wrap: wrap; gap: 6px 18px; font-weight: 600; }
+.game .links a { color: var(--accent); }
+.game .when { color: var(--muted); font-size: 0.8rem; font-weight: 400; margin-left: 6px; }
+/* the pictures, in the colours of the hub page's */
+.game svg { --glow: #ffc21a; --red: #d9483b; --blue: #2b78d0; --amber: #e0a21b; --green: #2f9a55; }
+@media (prefers-color-scheme: dark) { .game svg { --glow: #ffd23f; } }
+.game .wire { fill: none; stroke: var(--ink); stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
+.game .plate { stroke: var(--ink); stroke-linecap: round; }
+.game .halo { fill: var(--glow); }
+.game .bulb { stroke: var(--ink); stroke-width: 2.5; fill: var(--glow); }
+.game .frame { fill: var(--card); stroke: var(--ink); stroke-width: 2.5; }
+.game .qtext { fill: var(--ink); font: 600 15px system-ui, sans-serif; }
+.game .tile { stroke: none; }
+.game .t1 { fill: var(--red); } .game .t2 { fill: var(--blue); } .game .t3 { fill: var(--amber); } .game .t4 { fill: var(--green); }
+.game .tick { fill: none; stroke: #fff; stroke-width: 3.5; stroke-linecap: round; stroke-linejoin: round; }
+.game .coin, .game .coinside { stroke: var(--ink); stroke-width: 2; }
+.game .coin.a, .game .coinside.a { fill: var(--red); } .game .coin.b, .game .coinside.b { fill: var(--blue); }
+.game .coinmark { stroke: #fff; stroke-width: 3; }
+.game .die { fill: var(--card); stroke: var(--ink); stroke-width: 2.5; }
+.game .pip { fill: var(--ink); }
+.game .barq { fill: var(--accent); opacity: 0.85; }
+.game .axis { fill: none; stroke: var(--ink); stroke-width: 1.5; stroke-linecap: round; }
+.game .guide { fill: none; stroke: var(--muted); stroke-width: 1.5; stroke-dasharray: 3 3; }
+.game .zero { fill: var(--accent); font: 700 22px system-ui, sans-serif; }
+.game .therm { fill: var(--card); stroke: var(--ink); stroke-width: 2.5; }
+.game .cold { fill: var(--blue); }
+.game .loz { stroke: var(--ink); stroke-width: 2; fill: var(--card); }
+.game .loz.q { fill: var(--chip); }
+.game .loz.pick { fill: var(--amber); }
+.game .ans { fill: var(--muted); font: 600 13px system-ui, sans-serif; }
+.game .rung { fill: var(--chip); stroke: var(--line); }
+.game .rung.now { fill: var(--amber); stroke: none; }
+.game .cell { fill: var(--card); stroke: var(--ink); stroke-width: 1.5; }
+.game .cursor { fill: var(--accent); fill-opacity: 0.18; stroke: var(--accent); stroke-width: 2; }
+.game .letter { fill: var(--ink); font: 600 13px system-ui, sans-serif; }
+.game .num { fill: var(--muted); font: 7px system-ui, sans-serif; }
 .login { max-width: 420px; }
 .field { display: block; margin: 12px 0; }
 .field span { display: block; font-size: 0.9rem; color: var(--muted); margin-bottom: 4px; }
@@ -4185,6 +4268,60 @@ SETS_JS = r"""
   });
   window.addEventListener('beforeunload', (e) => { if (dirty) { e.preventDefault(); e.returnValue = ''; } });
   view();
+})();
+"""
+
+
+GAMES_JS = r"""
+// The quizzes and games (#quizzes, #games): a search, and the order of the cards, the standard one
+// or the most recently used first. When a game was used: the latest of tp-recent (lang.js notes it
+// in the games of this site, by folder) and tp-admin-games (noted here when a link of the card is
+// opened); the choice of the order is remembered (tp-admin-games-order).
+(function () {
+  'use strict';
+  const read = (key, fallback) => { try { return JSON.parse(localStorage.getItem(key)) || fallback; } catch (e) { return fallback; } };
+  const write = (key, value) => { try { localStorage.setItem(key, JSON.stringify(value)); } catch (e) { /* storage unavailable */ } };
+  const when = (id) => Math.max(Number(read('tp-recent', {})[id]) || 0, Number(read('tp-admin-games', {})[id]) || 0);
+  const ago = (t) => {
+    const days = Math.floor((Date.now() - t) / 86400000);
+    return days < 1 ? 'used today' : days < 2 ? 'used yesterday' : `used ${days} days ago`;
+  };
+  const sections = [...document.querySelectorAll('#view-quizzes, #view-games')];
+  sections.forEach((sec) => {
+    const grid = sec.querySelector('.gamegrid'), find = sec.querySelector('.gamefind'), none = sec.querySelector('.gamenone');
+    const standard = [...grid.children];
+    const radios = [...sec.querySelectorAll('.order input')];
+    function render() {
+      const recent = read('tp-admin-games-order', 'standard') === 'recent';
+      radios.forEach((r) => { r.checked = r.value === (recent ? 'recent' : 'standard'); });
+      const list = recent ? [...standard].sort((a, b) => when(b.dataset.id) - when(a.dataset.id)) : standard; // stable: the unused keep their place
+      const words = find.value.trim().toLowerCase().split(/\s+/).filter(Boolean);
+      let shown = 0;
+      list.forEach((card) => {
+        const text = card.textContent.toLowerCase() + ' ' + (card.querySelector('svg')?.getAttribute('aria-label') || '').toLowerCase();
+        card.hidden = !words.every((w) => text.includes(w));
+        if (!card.hidden) shown++;
+        const h = card.querySelector('h2'), t = when(card.dataset.id);
+        let tag = h.querySelector('.when');
+        if (recent && t) { if (!tag) { tag = document.createElement('span'); tag.className = 'when'; h.append(tag); } tag.textContent = ago(t); } else if (tag) tag.remove();
+        grid.append(card);
+      });
+      none.hidden = shown > 0;
+    }
+    radios.forEach((r) => r.addEventListener('change', () => { write('tp-admin-games-order', r.value); sections.forEach((s) => s.dispatchEvent(new Event('reorder'))); }));
+    find.addEventListener('input', render);
+    sec.addEventListener('reorder', render);
+    // a link of a card opened: the game counts as used now
+    grid.addEventListener('click', (e) => {
+      const card = e.target.closest('a') && e.target.closest('.game');
+      if (!card) return;
+      const used = read('tp-admin-games', {});
+      used[card.dataset.id] = Date.now();
+      write('tp-admin-games', used);
+    });
+    window.addEventListener('focus', render); // back from a game's tab: its time may have changed
+    render();
+  });
 })();
 """
 
