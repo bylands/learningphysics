@@ -3511,9 +3511,10 @@ SHEETS_JS = r"""
       if (!file.files[0]) { msg.textContent = 'Choose the .zip first.'; return; }
       msg.textContent = 'Uploading…';
       fetch('/admin/api/texercises', { method: 'POST', headers: { 'Content-Type': 'application/zip' }, body: file.files[0] })
-        .then((r) => r.json().then((d) => ({ ok: r.ok, d })))
+        .then((r) => r.json().catch(() => ({ error: r.status === 413 ? 'the server refused the file as too large (HTTP 413: nginx client_max_body_size)'
+          : `HTTP ${r.status} ${r.statusText}`.trim() })).then((d) => ({ ok: r.ok, d })))
         .then(({ ok, d }) => { msg.textContent = ok ? `Kept ${d.exercises} of your exercises (${d.skipped} by others left out).` : `Error: ${d.error}`; if (ok) load(true); })
-        .catch(() => { msg.textContent = 'The upload failed.'; });
+        .catch((e) => { msg.textContent = `The upload failed (${e.message || 'no answer from the server'}).`; });
     };
     box.replaceChildren(
       el('p', { class: 'note' }, `LaTeX on the server: ${st.latex ? 'yes' : 'no (PDFs need it; see hub-admin/sheets/README.md)'} · figures drawn for the browser: ${st.figures ? 'yes' : 'no (needs LaTeX and pdftocairo)'} · exercises there: ${st.exercises} (export uploaded: ${up}) · of the pool: ${st.in_pool} of ${st.pool}`),
@@ -4776,7 +4777,8 @@ REVIEW_JS = r"""
     const r = await fetch(API + path, opts);
     if (r.status === 403) { location.href = '/admin/?next=' + encodeURIComponent(location.pathname + location.hash); throw new Error('logged out'); }
     const d = await r.json().catch(() => ({}));
-    if (!r.ok) throw new Error(d.error || r.statusText);
+    if (!r.ok) throw new Error(d.error || (r.status === 413 ? 'the server refused the file as too large (HTTP 413: nginx client_max_body_size)'
+      : `HTTP ${r.status} ${r.statusText}`.trim()));
     return d;
   }
   function typeset(node) {
