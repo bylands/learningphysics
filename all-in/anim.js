@@ -16,7 +16,7 @@
   function palette() {
     const cs = getComputedStyle(document.documentElement);
     const v = (n, d) => (cs.getPropertyValue(n).trim() || d);
-    const dark = matchMedia('(prefers-color-scheme: dark)').matches;
+    const dark = v('--scheme', '') === 'dark' || matchMedia('(prefers-color-scheme: dark)').matches;
     return {
       dark, ink: v('--ink', '#1f2328'), muted: v('--muted', '#646b73'), line: v('--line', '#d9d6ce'),
       card: v('--card', '#fff'), bg: v('--bg', '#f6f5f1'), accent: v('--accent', '#2b59c3'),
@@ -450,6 +450,439 @@
     k.watch(130, 110, 34, u, mode === 'outcome' ? 't ≈ 167 s' : 't = ?');
   }
 
+  // a value to show: red with "?" before the answer, green after it
+  function result(k, s, x, y, done, o = {}) {
+    k.text(s, x, y, { size: 22, weight: 700, col: done ? k.P.ok : k.P.bad, ...o });
+  }
+  // a reproducible random number in [0, 1) for index i
+  const rand = (i, n = 0) => ((Math.sin(i * 12.9898 + n * 78.233) * 43758.5453) % 1 + 1) % 1;
+
+  // ------------------------------------------------------------------ two wires with a current
+  function drawWires(k, t, mode) {
+    const P = k.P, top = 50, bot = 290, xs = [320, 480];
+    const bow = mode === 'outcome' ? 26 * ease((t - 0.6) / 1.2) : 0;
+    k.line(250, top - 8, 550, top - 8, P.muted, 6); k.line(250, bot + 8, 550, bot + 8, P.muted, 6);
+    xs.forEach((x, i) => {
+      const s = i ? -1 : 1, mid = x + s * bow;
+      // the wire as a gentle curve, its middle pulled sideways by bow
+      const pts = [];
+      for (let j = 0; j <= 30; j++) { const u = j / 30; pts.push([x + s * bow * Math.sin(Math.PI * u), top + (bot - top) * u]); }
+      k.path(pts, P.copper, 4);
+      // the charges, moving up
+      for (let j = 0; j < 9; j++) {
+        const u = ((j / 9) - t * 0.18) % 1, uu = (u + 1) % 1;
+        k.circle(x + s * bow * Math.sin(Math.PI * uu), top + (bot - top) * uu, 3.5, { fill: P.accent });
+      }
+      k.arrow(mid - 26 * s, 200, mid - 26 * s, 140, P.accent, 3, 11);
+      k.text('I', mid - 44 * s, 170, { size: 20, weight: 700, col: P.accent });
+      // the magnetic field around the wire: rings seen in perspective
+      const rx = x + s * bow * Math.sin(Math.PI * 0.25);
+      [36, 56].forEach((r, n) => {
+        k.ctx.save(); k.ctx.strokeStyle = P.cold; k.ctx.globalAlpha = 0.6 - n * 0.2; k.ctx.lineWidth = 2;
+        k.ctx.setLineDash([6, 6]); k.ctx.lineDashOffset = -t * 20;
+        k.ctx.beginPath(); k.ctx.ellipse(rx, 110, r, r * 0.28, 0, 0, 2 * Math.PI); k.ctx.stroke(); k.ctx.restore();
+      });
+      if (mode === 'outcome' && bow > 4) k.arrow(mid + s * 8, 245, mid + s * 46, 245, P.bad, 4, 13);
+    });
+    k.text('B', 230, 110, { size: 18, weight: 700, col: P.cold });
+    if (mode === 'setup') k.ask(400, 245, t, 34);
+    else if (bow > 4) k.text('F', 400, 270, { size: 20, weight: 700, col: P.bad });
+  }
+
+  // ------------------------------------------------------------------ a glowing filament
+  function drawFilament(k, t, mode) {
+    const P = k.P, x = 400, y = 120;
+    const on = 0.75 + 0.25 * Math.abs(Math.sin(t * Math.PI * 1.2));
+    k.circle(x, y, 95, { fill: `rgba(255,210,63,${0.10 + 0.12 * on})` });
+    k.circle(x, y, 62, { fill: P.dark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.03)', stroke: P.ink, lw: 2.5 });
+    k.rect(x - 26, y + 56, 52, 40, { fill: P.muted, r: 4 });
+    for (let j = 0; j < 4; j++) k.line(x - 26, y + 64 + j * 9, x + 26, y + 60 + j * 9, P.ink, 1.5);
+    // the coil between two posts
+    k.line(x - 18, y + 56, x - 30, y, P.ink, 2); k.line(x + 18, y + 56, x + 30, y, P.ink, 2);
+    const coil = [];
+    for (let j = 0; j <= 60; j++) { const u = j / 60; coil.push([x - 30 + 60 * u, y - 6 * Math.sin(u * Math.PI * 12)]); }
+    k.path(coil, P.glow, 3.5);
+    // the leads to the socket: the charges swing back and forth (alternating current, slowed down)
+    const sw = 10 * Math.sin(t * Math.PI * 1.2);
+    k.path([[x - 10, y + 96], [x - 10, 250], [250, 250], [250, 300]], P.ink, 3);
+    k.path([[x + 10, y + 96], [x + 10, 270], [550, 270], [550, 300]], P.ink, 3);
+    for (let j = 0; j < 6; j++) {
+      k.circle(270 + j * 22 + sw, 250, 3.5, { fill: P.accent });
+      k.circle(420 + j * 22 - sw, 270, 3.5, { fill: P.accent });
+    }
+    k.rect(220, 300, 360, 30, { fill: P.card, stroke: P.ink, lw: 2, r: 6 });
+    k.text('~ 230 V', 400, 315, { size: 17, weight: 700 });
+    k.text('60 W', x + 120, y - 40, { size: 20, weight: 700, col: P.chip, align: 'left' });
+    result(k, mode === 'outcome' ? 'R ≈ 880 Ω' : 'R = ?', 140, 120, mode === 'outcome');
+  }
+
+  // ------------------------------------------------------------------ a charged phone
+  function drawPhone(k, t, mode) {
+    const P = k.P, cycle = 6, u = clamp((t % cycle) / 4.5, 0, 1);
+    // the phone, its battery draining as the student rises
+    k.rect(90, 70, 110, 200, { fill: P.card, stroke: P.ink, lw: 3, r: 16 });
+    k.rect(115, 120, 60, 110, { stroke: P.ink, lw: 2.5, r: 5 }); k.rect(133, 112, 24, 8, { fill: P.ink, r: 2 });
+    const lvl = 1 - u;
+    k.rect(120, 125 + 100 * (1 - lvl), 50, 100 * lvl, { fill: lvl > 0.2 ? P.ok : P.bad, r: 3 });
+    k.text('15 Wh', 145, 295, { size: 18, weight: 700 });
+    k.arrow(230, 170, 320, 170, P.chip, 4, 14);
+    // a tower block, and the student lifted along it
+    const bx = 470, floors = 10, fh = 27;
+    k.rect(bx - 70, 320 - floors * fh, 140, floors * fh, { stroke: P.muted, lw: 2 });
+    for (let f = 0; f < floors; f++) for (let w = 0; w < 3; w++) k.rect(bx - 55 + w * 40, 320 - (f + 1) * fh + 7, 22, 13, { fill: P.line, r: 2 });
+    const py = 312 - u * 270;
+    k.line(bx + 100, 40, bx + 100, 320, P.muted, 3);
+    k.rect(bx + 78, py, 44, 6, { fill: P.ink });
+    person(k, bx + 100, py, 0.9, null, P.accent);
+    k.text('60 kg', bx + 130, py - 26, { size: 15, weight: 700, col: P.accent, align: 'left' });
+    result(k, mode === 'outcome' && u >= 1 ? 'h ≈ 92 m' : 'h = ?', bx + 200, 170, mode === 'outcome' && u >= 1);
+  }
+
+  // ------------------------------------------------------------------ a pulse on a rope
+  // A hump runs to the fixed end; there it is reflected upside down (the image method: the rope
+  // is the incoming pulse minus its mirror image beyond the wall).
+  function drawRope(k, t, mode) {
+    const P = k.P, y0 = 190, x0 = 70, wall = 700, v = 260, A = 70, w = 32;
+    const bump = (u) => -A * Math.exp(-(u / w) * (u / w));
+    let c;
+    if (mode === 'setup') c = 120 + v * Math.min(t % 3.2, 1.85);
+    else c = 120 + v * clamp(t - 0.4, 0, 4);
+    const pts = [];
+    for (let x = x0; x <= wall; x += 3) {
+      const y = bump(x - c) - (mode === 'outcome' ? bump(2 * wall - x - c) : 0);
+      pts.push([x, y0 + y]);
+    }
+    k.path(pts, P.ink, 4);
+    // the wall, hatched
+    k.rect(wall, 60, 26, 260, { fill: P.line });
+    for (let j = 0; j < 9; j++) k.line(wall + 26, 70 + j * 28, wall + 6, 90 + j * 28, P.muted, 2);
+    k.circle(wall, y0, 6, { fill: P.ink });
+    // the hand at the start
+    k.circle(x0 - 10, y0, 14, { fill: P.chip, stroke: P.ink, lw: 2 });
+    if (mode === 'setup') { k.ask(wall - 70, 90, t, 34); return; }
+    if (c > wall + 40) {
+      const back = 2 * wall - c;
+      if (back > x0 + 40) k.arrow(back + 40, y0 + A + 30, back - 40, y0 + A + 30, P.bad, 3, 12);
+      k.text(L('upside down', 'umgekehrt'), Math.max(back, 160), y0 + A + 58, { size: 17, weight: 700, col: P.bad });
+    } else if (c > x0 + 40) k.arrow(c - 40, y0 - A - 26, c + 40, y0 - A - 26, P.accent, 3, 12);
+  }
+
+  // ------------------------------------------------------------------ a radio wave
+  function drawRadio(k, t, mode) {
+    const P = k.P, y0 = 170, x0 = 140, lam = 180, amp = 55;
+    // the mast with its antenna
+    k.path([[60, 320], [90, 90], [120, 320]], P.ink, 3);
+    k.line(70, 245, 110, 245, P.ink, 2); k.line(78, 170, 102, 170, P.ink, 2);
+    k.circle(90, 82, 8, { fill: P.bad });
+    const pts = [];
+    for (let x = x0; x <= 760; x += 3) pts.push([x, y0 - amp * Math.sin(2 * Math.PI * ((x - x0) / lam - t * 0.6))]);
+    k.path(pts, P.accent, 3.5);
+    k.line(x0, y0, 760, y0, P.line, 1.5, [4, 6]);
+    // a crest to the next one
+    const ph = ((t * 0.6) % 1 + 1) % 1, c1 = x0 + lam * (0.25 + ph) + lam;
+    k.dim(c1, y0 - amp - 22, c1 + lam, y0 - amp - 22, mode === 'outcome' ? 'λ ≈ 3.0 m' : 'λ = ?', mode === 'outcome' ? P.ok : P.bad);
+    k.text('f = 100 MHz', 300, 300, { size: 18, weight: 700 });
+    k.text('c = 3.0·10⁸ m/s', 560, 300, { size: 18, weight: 700, col: P.muted });
+  }
+
+  // ------------------------------------------------------------------ the siren
+  // The ambulance (at v) sends out a wave front every 0.22 s (at 2.5 v); the listener hears the
+  // frequency f' / f = c / (c − v·cos θ), plotted top right.
+  function drawSiren(k, t, mode) {
+    const P = k.P, road = 270, lx = 420, ly = 250, v = 170, c = 2.5 * v, start = 40;
+    const tt = mode === 'setup' ? (t % 3.4) : t;
+    const x = mode === 'setup' ? start + v * Math.min(tt, 1.5) : start + v * Math.max(0, tt - 0.3);
+    k.line(0, road + 18, 800, road + 18, P.ink, 3);
+    for (let i = 0; i < 9; i++) k.line(20 + i * 95, road + 32, 60 + i * 95, road + 32, P.line, 4);
+    if (mode === 'outcome') {
+      const T0 = 0.3, n = Math.floor(Math.max(0, tt - T0) / 0.22);
+      for (let j = 0; j <= n; j++) {
+        const te = T0 + j * 0.22, r = c * (tt - te), ex = start + v * (te - T0);
+        if (r <= 0 || r > 700) continue;
+        k.ctx.save(); k.ctx.globalAlpha = Math.max(0.08, 0.6 - r / 1100); k.ctx.strokeStyle = P.cold; k.ctx.lineWidth = 2;
+        k.ctx.beginPath(); k.ctx.arc(ex, road - 30, r, Math.PI, 2 * Math.PI); k.ctx.stroke(); k.ctx.restore();
+      }
+    }
+    person(k, lx, ly + 8, 1, null, P.accent);
+    // the ambulance, passing in front of the listener
+    k.rect(x - 70, road - 52, 120, 56, { fill: P.card, stroke: P.ink, lw: 2.5, r: 8 });
+    k.rect(x + 50, road - 32, 30, 36, { fill: P.card, stroke: P.ink, lw: 2.5, r: 6 });
+    k.rect(x - 22, road - 40, 8, 26, { fill: P.red }); k.rect(x - 31, road - 31, 26, 8, { fill: P.red });
+    [x - 40, x + 50].forEach((wx) => k.circle(wx, road + 6, 12, { fill: P.ink }));
+    k.circle(x - 10, road - 60, 7, { fill: Math.sin(t * 14) > 0 ? P.cold : P.red });
+    // what the listener hears
+    const gx = 560, gy = 30, gw = 200, gh = 90;
+    k.rect(gx, gy, gw, gh, { stroke: P.line, lw: 1.5, r: 6 });
+    k.text(L('pitch heard', 'gehörter Ton'), gx + gw / 2, gy + gh + 16, { size: 14, col: P.muted });
+    k.line(gx + 6, gy + gh / 2, gx + gw - 6, gy + gh / 2, P.line, 1, [4, 4]);
+    k.text('f', gx - 12, gy + gh / 2, { size: 15, col: P.muted });
+    if (mode === 'setup') { k.ask(gx + gw / 2, gy + gh / 2, t, 32); k.ask(lx, ly - 90, t, 30); return; }
+    const T = 4.6, heard = (s) => {
+      const ex = start + v * Math.max(0, s - 0.3), dx = lx - ex, dy = (ly - 30) - (road - 30) - 40;
+      return c / (c - v * dx / Math.hypot(dx, dy));
+    };
+    const pts = [];
+    for (let s = 0; s <= Math.min(tt, T); s += 0.03) pts.push([gx + 6 + (gw - 12) * s / T, gy + gh / 2 - (heard(s) - 1) * 50]);
+    if (pts.length > 1) k.path(pts, P.bad, 3);
+  }
+
+  // ------------------------------------------------------------------ a guitar string
+  function drawGuitar(k, t, mode) {
+    const P = k.P, x0 = 140, x1 = 660, y0 = 170;
+    k.rect(90, y0 - 26, 620, 52, { fill: P.dark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)', r: 8 });
+    k.circle(470, y0, 46, { stroke: P.line, lw: 3 });
+    k.rect(x0 - 8, y0 - 30, 8, 60, { fill: P.muted }); k.rect(x1, y0 - 30, 8, 60, { fill: P.muted });
+    // the fundamental: a standing wave, half a wavelength between the ends (slowed down)
+    const a = 34 * Math.cos(t * 2 * Math.PI * 1.4);
+    const pts = [];
+    for (let x = x0; x <= x1; x += 4) pts.push([x, y0 + a * Math.sin(Math.PI * (x - x0) / (x1 - x0))]);
+    k.path(pts, P.chip, 3);
+    k.ctx.save(); k.ctx.globalAlpha = 0.25;
+    [1, -1].forEach((s) => { const e = []; for (let x = x0; x <= x1; x += 6) e.push([x, y0 + s * 34 * Math.sin(Math.PI * (x - x0) / (x1 - x0))]); k.path(e, P.chip, 1.5); });
+    k.ctx.restore();
+    k.dim(x0, 260, x1, 260, 'L = 65 cm', P.muted);
+    k.text('λ = 2L', 400, 300, { size: 16, col: P.muted });
+    k.text('f = 110 Hz', 140, 60, { size: 20, weight: 700 });
+    result(k, mode === 'outcome' ? 'v ≈ 143 m/s' : 'v = ?', 640, 60, mode === 'outcome');
+  }
+
+  // ------------------------------------------------------------------ waves on the beach
+  // The depth falls from deep to shallow; the speed goes with √depth and the frequency stays, so the
+  // phase is ω·t − ∫ k dx with k = ω / v(x). In the setup the waves stop where it gets shallow.
+  const BEACH = (() => {
+    const x0 = 30, x1 = 770, surf = 120, depth = (x) => (x < 380 ? 170 : x > 470 ? 42 : 170 - 128 * ease((x - 380) / 90));
+    const ph = [0];
+    for (let x = x0 + 2; x <= x1; x += 2) ph.push(ph[ph.length - 1] + 2 / Math.sqrt(depth(x) / 170));
+    return { x0, x1, surf, depth, ph };
+  })();
+  function drawBeach(k, t, mode) {
+    const P = k.P, { x0, x1, surf, depth, ph } = BEACH, lam = 160;
+    const bed = [];
+    for (let x = x0; x <= x1; x += 10) bed.push([x, surf + depth(x)]);
+    k.path([[x0, 330], ...bed, [x1, 330]], null, 0, true, P.dark ? 'rgba(201,160,90,0.35)' : 'rgba(194,150,80,0.35)');
+    const pts = [];
+    ph.forEach((p, i) => {
+      const x = x0 + 2 * i;
+      let a = 16 * Math.pow(170 / depth(x), 0.25);
+      if (mode === 'setup') a *= clamp((420 - x) / 40, 0, 1);
+      pts.push([x, surf - a * Math.sin(2 * Math.PI * (p / lam - t * 0.5))]);
+    });
+    k.path([[x0, 330], ...pts, [x1, 330]], null, 0, true, P.water);
+    k.path(pts, P.cold, 3);
+    k.path(bed, P.brown, 2.5);
+    k.text(L('deep', 'tief'), 200, 260, { size: 17, weight: 600, col: P.muted });
+    k.text(L('shallow', 'flach'), 620, 200, { size: 17, weight: 600, col: P.muted });
+    k.arrow(80, 40, 160, 40, P.accent, 3, 12);
+    const crest = (from, scale) => { // the next crest after x = from, its phase a whole number of λ
+      for (let i = Math.round((from - x0) / 2); i < ph.length; i++) if (((ph[i] / lam - t * 0.5 - 0.25) % 1 + 1) % 1 < 0.02 * scale) return x0 + 2 * i;
+      return from;
+    };
+    const c1 = crest(90, 1.4);
+    k.dim(c1, 66, c1 + lam, 66, 'λ', P.muted);
+    if (mode === 'setup') { k.ask(620, 80, t, 34); return; }
+    const c2 = crest(500, 3);
+    k.dim(c2, 66, c2 + lam / 2, 66, 'λ′', P.ok);
+    k.text(L('shorter', 'kürzer'), c2 + lam / 4, 38, { size: 17, weight: 700, col: P.ok });
+  }
+
+  // ------------------------------------------------------------------ thunder and lightning
+  function drawThunder(k, t, mode) {
+    const P = k.P, cycle = 8.5, tt = t % cycle, flash = 0.6, sx = 150, sy = 250, hx = 690, d = hx - sx;
+    const s = clamp(tt - flash, 0, 6);
+    // the cloud and, for a moment, the bolt and its light everywhere
+    [[110, 60, 40], [160, 50, 50], [215, 62, 38], [160, 80, 46]].forEach(([x, y, r]) => k.circle(x, y, r, { fill: P.line }));
+    if (tt > flash && tt < flash + 0.35) {
+      k.rect(0, 0, W, H, { fill: 'rgba(255,240,180,0.18)' });
+      k.path([[160, 100], [138, 180], [166, 186], [140, 290]], P.glow, 5);
+    }
+    k.line(20, 290, 780, 290, P.ink, 3);
+    k.circle(sx - 10, 286, 4, { fill: P.muted });
+    // the sound front, at 343 m/s, so that it arrives after 6 s
+    if (tt > flash && s < 6) {
+      const r = d * s / 6;
+      [0, 14, 28].forEach((o, j) => {
+        if (r - o <= 0) return;
+        k.ctx.save(); k.ctx.globalAlpha = 0.6 - j * 0.18; k.ctx.strokeStyle = P.chip; k.ctx.lineWidth = 3;
+        k.ctx.beginPath(); k.ctx.arc(sx, 290, r - o, Math.PI, 2 * Math.PI); k.ctx.stroke(); k.ctx.restore();
+      });
+    }
+    // the house and the listener
+    k.path([[hx + 20, 290], [hx + 20, 220], [hx + 60, 190], [hx + 100, 220], [hx + 100, 290]], P.ink, 2.5, true, P.card);
+    person(k, hx, 290, 0.9, null, P.accent);
+    k.watch(400, 90, 34, s / 6, `${s.toFixed(1)} s`);
+    const done = mode === 'outcome' && s >= 6;
+    k.dim(sx, 314, hx, 314, done ? 'd ≈ 2.1 km' : 'd = ?', done ? P.ok : P.bad);
+  }
+
+  // ------------------------------------------------------------------ light on zinc
+  // Photons as short wave packets; with UV each one knocks out an electron, with red light none does.
+  function drawZinc(k, t, mode) {
+    const P = k.P, plate = { x: 560, y: 110, w: 30, h: 170 }, uv = '#a78bfa';
+    const red = mode === 'outcome' && t > 0.5;
+    const col = red ? P.red : uv, lx = 120, ly = 70;
+    // the lamp
+    k.circle(lx, ly, 34, { fill: col });
+    k.circle(lx, ly, 48, { fill: red ? 'rgba(229,72,77,0.25)' : 'rgba(167,139,250,0.25)' });
+    k.text(red ? L('bright red', 'hellrot') : 'UV', lx, ly + 66, { size: 17, weight: 700, col });
+    k.rect(plate.x, plate.y, plate.w, plate.h, { fill: P.muted, stroke: P.ink, lw: 2 });
+    k.text(L('zinc', 'Zink'), plate.x + plate.w / 2, plate.y + plate.h + 20, { size: 16, weight: 600 });
+    const n = red ? 14 : 6, rate = red ? 2.2 : 1.1;
+    for (let i = 0; i < n; i++) {
+      const age = ((t * rate + i / n) % 1);
+      const ty = plate.y + 20 + ((i * 37) % 130);
+      const x = lx + 40 + age * (plate.x - lx - 40), y = ly + (ty - ly) * age;
+      const a = Math.atan2(ty - ly, plate.x - lx - 40), wl = red ? 10 : 5;
+      const pts = [];
+      for (let s = -18; s <= 18; s += 2) pts.push([x + Math.cos(a) * s - Math.sin(a) * 5 * Math.sin(s / wl * Math.PI), y + Math.sin(a) * s + Math.cos(a) * 5 * Math.sin(s / wl * Math.PI)]);
+      k.path(pts, col, 2.5);
+      if (!red) {
+        // its electron, flying off to the right
+        const e = ((t * rate + i / n + 0.02) % 1);
+        if (e < 0.9) k.circle(plate.x + plate.w + 10 + e * 160, ty - e * 40 * ((i % 3) - 1), 6, { fill: P.cold });
+      }
+    }
+    if (!red) k.text('e⁻', plate.x + 120, 90, { size: 18, weight: 700, col: P.cold });
+    if (mode === 'setup') {
+      k.rect(240, 240, 140, 70, { stroke: P.red, lw: 2, r: 8 });
+      k.text(L('bright red?', 'hellrot?'), 310, 262, { size: 16, weight: 700, col: P.red });
+      k.ask(310, 290, t, 26);
+    } else if (red) result(k, L('no electrons', 'keine Elektronen'), 690, 190, true, { size: 20 });
+  }
+
+  // ------------------------------------------------------------------ photons from a laser pointer
+  function drawLaser(k, t, mode) {
+    const P = k.P, y = 160;
+    k.rect(60, y - 16, 150, 32, { fill: P.muted, stroke: P.ink, lw: 2, r: 14 });
+    k.rect(150, y - 22, 20, 8, { fill: P.red, r: 2 });
+    k.line(210, y, 740, y, 'rgba(229,72,77,0.35)', 8);
+    for (let i = 0; i < 40; i++) {
+      const s = ((i / 40) + t * 0.9) % 1;
+      k.circle(210 + s * 530, y + (rand(i) - 0.5) * 5, 3.5, { fill: P.red });
+    }
+    k.rect(740, 90, 18, 140, { fill: P.line, r: 3 });
+    k.text('650 nm', 135, y + 44, { size: 17, weight: 700, col: P.red });
+    k.text('1 mW', 135, y - 44, { size: 17, weight: 700 });
+    k.watch(400, 270, 30, (t % 1), '1 s');
+    result(k, mode === 'outcome' ? 'N ≈ 3·10¹⁵' : 'N = ?', 560, 60, mode === 'outcome');
+  }
+
+  // ------------------------------------------------------------------ electrons through a double slit
+  // The hits are drawn from |ψ|² of two slits (cos² fringes under a single-slit envelope).
+  const HITS = (() => {
+    const out = [];
+    for (let i = 0; out.length < 900 && i < 30000; i++) {
+      const y = rand(i, 1) * 2 - 1, p = Math.pow(Math.cos(Math.PI * 3.2 * y), 2) * Math.exp(-3 * y * y);
+      if (rand(i, 2) < p) out.push([y, rand(i, 3)]);
+    }
+    return out;
+  })();
+  function drawSlit(k, t, mode) {
+    const P = k.P, gx = 80, gy = 170, bx = 380, sx = 680, sh = 130;
+    k.rect(gx - 50, gy - 22, 60, 44, { fill: P.muted, stroke: P.ink, lw: 2, r: 6 });
+    k.text(L('electrons', 'Elektronen'), gx - 20, gy + 42, { size: 15, col: P.muted });
+    // the barrier with two slits
+    [[30, 134], [158, 182], [206, 310]].forEach(([a, b]) => k.rect(bx, a, 12, b - a, { fill: P.ink }));
+    k.rect(sx, gy - sh, 26, 2 * sh, { fill: P.card, stroke: P.ink, lw: 2 });
+    // one electron at a time
+    const per = mode === 'outcome' ? 0.5 : 0.7, i = Math.floor(t / per), u = (t % per) / per;
+    const slit = i % 2 ? 146 : 194;
+    const hit = HITS[i % HITS.length];
+    const ex = u < 0.5 ? gx + 10 + (bx - gx - 10) * u * 2 : bx + 12 + (sx - bx - 12) * (u - 0.5) * 2;
+    const ey = u < 0.5 ? gy + (slit - gy) * u * 2 : slit + (gy + hit[0] * sh - slit) * (u - 0.5) * 2;
+    if (mode === 'setup' && u >= 0.5) { k.ask(sx + 13, gy, t, 34); return; }
+    k.circle(ex, ey, 5, { fill: P.cold });
+    if (mode === 'setup') { k.ask(sx + 13, gy, t, 34); return; }
+    // the dots so far: slowly at first, then faster
+    const n = Math.min(HITS.length, Math.floor(t < 2 ? t / per : 4 + Math.pow(t - 2, 2) * 90));
+    for (let j = 0; j < n; j++) k.circle(sx + 4 + HITS[j][1] * 18, gy + HITS[j][0] * sh, 1.8, { fill: P.cold });
+    if (n >= HITS.length) {
+      const pts = [];
+      for (let y = -1; y <= 1; y += 0.01) pts.push([sx + 40 + 60 * Math.pow(Math.cos(Math.PI * 3.2 * y), 2) * Math.exp(-3 * y * y), gy + y * sh]);
+      k.path(pts, P.ok, 2.5);
+    }
+  }
+
+  // ------------------------------------------------------------------ an old bone
+  // 100 atoms of C-14, each with its own decay time, so that 50 are left after one half-life and
+  // 25 after two; 1.6 s of animation per half-life.
+  const ATOMS = Array.from({ length: 100 }, (_, i) => i).sort((a, b) => rand(a, 5) - rand(b, 5))
+    .map((q) => -Math.log2(1 - (q + 0.5) / 100));
+  function drawDecay(k, t, mode) {
+    const P = k.P, half = 1.6, cycle = 2 * half + 2.5, tt = t % cycle, h = Math.min(tt, 2 * half) / half;
+    let left = 0;
+    ATOMS.forEach((d, i) => {
+      const x = 70 + (i % 10) * 26, y = 70 + Math.floor(i / 10) * 24, alive = d > h;
+      if (alive) left++;
+      k.circle(x, y, 8, { fill: alive ? P.chip : (P.dark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.10)') });
+      if (!alive && d > h - 0.12) k.circle(x, y, 8 + (h - d) * 120, { stroke: P.bad, lw: 1.5 });
+    });
+    k.text(`¹⁴C: ${left} %`, 187, 320, { size: 20, weight: 700, col: P.chip });
+    // the decay curve, drawn as time goes on
+    const gx = 430, gy = 60, gw = 300, gh = 200;
+    k.line(gx, gy + gh, gx + gw, gy + gh, P.ink, 2); k.line(gx, gy, gx, gy + gh, P.ink, 2);
+    const pts = [];
+    for (let s = 0; s <= h; s += 0.02) pts.push([gx + gw * s / 2.4, gy + gh * (1 - Math.pow(0.5, s))]);
+    k.path(pts, P.chip, 3);
+    [1, 2].forEach((n) => {
+      const x = gx + gw * n / 2.4, y = gy + gh * (1 - Math.pow(0.5, n));
+      k.line(x, gy + gh, x, y, P.line, 1.5, [4, 4]);
+      k.text(`${n}·T½`, x, gy + gh + 18, { size: 14, col: P.muted });
+    });
+    k.text('100 %', gx - 30, gy, { size: 14, col: P.muted }); k.text('25 %', gx - 28, gy + gh * 0.75, { size: 14, col: P.muted });
+    k.text('T½ = 5730 a', gx + gw / 2, 30, { size: 18, weight: 700 });
+    result(k, mode === 'outcome' && h >= 2 ? 't ≈ 11 460 a' : 't = ?', gx + gw - 30, gy + 60, mode === 'outcome' && h >= 2);
+  }
+
+  // ------------------------------------------------------------------ the twins
+  // 9 light years at 0.9 c: 20 years on Earth, 20 / γ ≈ 8.7 years on board.
+  function drawTwins(k, t, mode) {
+    const P = k.P, ex = 110, sx = 690, y = 150, trip = 4.4, tt = mode === 'setup' ? t % (trip + 1) : Math.max(0, t - 0.4);
+    const u = clamp(tt / trip, 0, 1), out = u < 0.5, f = out ? u * 2 : 2 - u * 2;
+    k.circle(ex, y, 40, { fill: P.dark ? '#2b6cb0' : '#3b82c4' });
+    k.path([[ex - 20, y - 22], [ex + 4, y - 12], [ex + 12, y + 8], [ex - 6, y + 20]], null, 0, true, P.ok);
+    k.circle(sx, y, 22, { fill: P.glow });
+    for (let j = 0; j < 8; j++) { const a = j * Math.PI / 4 + t * 0.4; k.line(sx + 28 * Math.cos(a), y + 28 * Math.sin(a), sx + 40 * Math.cos(a), y + 40 * Math.sin(a), P.glow, 3); }
+    k.line(ex + 50, y, sx - 34, y, P.line, 1.5, [5, 7]);
+    k.text('9 ' + L('light years', 'Lichtjahre'), (ex + sx) / 2, y + 30, { size: 15, col: P.muted });
+    // the rocket
+    const rx = ex + 60 + f * (sx - ex - 110), dir = out ? 1 : -1;
+    k.path([[rx + 30 * dir, y - 40], [rx - 18 * dir, y - 52], [rx - 18 * dir, y - 28]], P.ink, 2, true, P.accent);
+    if (u > 0 && u < 1) k.path([[rx - 18 * dir, y - 46], [rx - (34 + 8 * Math.sin(t * 30)) * dir, y - 40], [rx - 18 * dir, y - 34]], null, 0, true, P.chip);
+    k.text('0.9 c', rx, y - 70, { size: 15, weight: 700, col: P.accent });
+    // the two clocks: years passed
+    const earth = 20 * u, ship = earth / 2.294;
+    const clock = (x, label, years) => {
+      k.watch(x, 270, 26, (years % 10) / 10);
+      k.text(label, x + 40, 256, { size: 15, col: P.muted, align: 'left' });
+      k.text(mode === 'setup' ? '? ' + L('years', 'Jahre') : `${years.toFixed(1)} ${L('years', 'Jahre')}`, x + 40, 282, { size: 18, weight: 700, align: 'left', col: mode === 'setup' ? P.bad : P.ink });
+    };
+    clock(250, L('on Earth', 'auf der Erde'), earth);
+    clock(500, L('in the rocket', 'in der Rakete'), ship);
+    if (mode === 'setup') k.ask(400, 60, t, 32);
+  }
+
+  // ------------------------------------------------------------------ the Sun gets lighter
+  function drawSun(k, t, mode) {
+    const P = k.P, x = 230, y = 170;
+    for (let j = 0; j < 16; j++) {
+      const a = j * Math.PI / 8, r0 = 95, r1 = 120 + 10 * Math.sin(t * 3 + j);
+      k.line(x + r0 * Math.cos(a), y + r0 * Math.sin(a), x + r1 * Math.cos(a), y + r1 * Math.sin(a), P.glow, 4);
+    }
+    k.circle(x, y, 82, { fill: P.glow });
+    k.circle(x, y, 82, { fill: 'rgba(255,140,0,0.35)' });
+    // the light leaving, and with it mass
+    for (let i = 0; i < 10; i++) {
+      const s = ((t * 0.5 + i / 10) % 1), a = rand(i) * 2 * Math.PI;
+      k.ctx.save(); k.ctx.globalAlpha = 1 - s;
+      k.circle(x + (130 + s * 120) * Math.cos(a), y + (130 + s * 120) * Math.sin(a), 4, { fill: P.glow });
+      k.ctx.restore();
+    }
+    k.text('P = 3.8·10²⁶ W', 580, 80, { size: 20, weight: 700 });
+    k.text('E = m·c²', 580, 130, { size: 20, weight: 700, col: P.muted });
+    k.watch(530, 240, 28, t % 1, '1 s');
+    result(k, mode === 'outcome' ? 'Δm ≈ 4·10⁹ kg' : 'Δm = ?', 660, 240, mode === 'outcome');
+  }
+
   const SCENES = {
     tracks: { draw: drawTracks, setup: 3, outcome: 4.6 },
     'room-air': { draw: drawRoom, setup: 1e9, outcome: 1e9 },
@@ -464,10 +897,26 @@
     shower: { draw: drawShower, setup: 1e9, outcome: 1e9 },
     braking: { draw: drawBraking, setup: 1e9, outcome: 1e9 },
     kettle: { draw: drawKettle, setup: 1e9, outcome: 1e9 },
+    wires: { draw: drawWires, setup: 3, outcome: 2.5 },
+    filament: { draw: drawFilament, setup: 1e9, outcome: 1e9 },
+    'phone-battery': { draw: drawPhone, setup: 1e9, outcome: 4.6 },
+    'rope-pulse': { draw: drawRope, setup: 3.2, outcome: 4.4 },
+    'fm-radio': { draw: drawRadio, setup: 1e9, outcome: 1e9 },
+    ambulance: { draw: drawSiren, setup: 3.4, outcome: 4.9 },
+    guitar: { draw: drawGuitar, setup: 1e9, outcome: 1e9 },
+    'shallow-water': { draw: drawBeach, setup: 1e9, outcome: 1e9 },
+    thunder: { draw: drawThunder, setup: 1e9, outcome: 7 },
+    'photo-effect': { draw: drawZinc, setup: 1e9, outcome: 1e9 },
+    'laser-photons': { draw: drawLaser, setup: 1e9, outcome: 1e9 },
+    'double-slit': { draw: drawSlit, setup: 1e9, outcome: 8 },
+    'carbon-dating': { draw: drawDecay, setup: 1e9, outcome: 3.4 },
+    twins: { draw: drawTwins, setup: 5.4, outcome: 5 },
+    'sun-mass': { draw: drawSun, setup: 1e9, outcome: 1e9 },
   };
 
   // still frames, with reduced motion: the setup as it waits, the outcome at its end
-  const STILL = { stairs: 4.5, chocolate: 4.6, shower: 5.2, braking: 7, kettle: 6.2, electrons: 1, 'room-air': 1, 'ice-cubes': 2 };
+  const STILL = { stairs: 4.5, chocolate: 4.6, shower: 5.2, braking: 7, kettle: 6.2, electrons: 1, 'room-air': 1, 'ice-cubes': 2,
+    'phone-battery': 4.6, 'rope-pulse': 1.2, ambulance: 1.6, thunder: 4, 'carbon-dating': 3.4, twins: 1.5 };
 
   function mount(canvas, id, mode) {
     const scene = SCENES[id];

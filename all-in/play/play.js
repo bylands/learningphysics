@@ -8,7 +8,7 @@
   'use strict';
 
   const G = window.AllInGame, A = window.AllIn, Lang = window.Lang;
-  const { L, tr, byId, LETTERS, TYPE, RULE, ERR, esc, withUnit, describe, api, storage } = A;
+  const { L, tr, byId, LETTERS, TYPE, RULE, ERR, esc, withUnit, describe, questionBox, optionsBox, api, storage } = A;
   const KEY = 'all-in-player';
 
   let code = (new URLSearchParams(location.search).get('c') || '').toUpperCase().replace(/[^A-Z]/g, '').slice(0, 4);
@@ -138,14 +138,12 @@
 
   function questionHtml(revealed) {
     const st = state(), r = round();
-    const opts = r.type === 'predict' ? `<div class="options">${r.options.map((o, k) => `
-      <div class="option${revealed ? (k === st.result.answer ? ' right' : ' wrong') : ''}"><span class="letter">${LETTERS[k]}</span><span>${esc(tr(o))}</span></div>`).join('')}</div>` : '';
     return `<div class="card">
       <div class="round-head"><span class="tag ${r.type}">${TYPE[r.type]()}</span>${st.final ? '<span class="tag final">All in</span>' : ''}
         <span class="count">${L(`Round ${st.i + 1} of ${st.rounds}`, `Runde ${st.i + 1} von ${st.rounds}`)}</span></div>
       <div class="anim-box"><canvas id="anim" class="anim" aria-hidden="true"></canvas></div>
-      <p class="question">${esc(tr(r.question))}${r.unit && r.type !== 'predict' ? ` <span class="muted">(${L('in', 'in')} ${esc(r.unit)})</span>` : ''}</p>
-      ${opts}</div>`;
+      ${questionBox(r)}
+      ${optionsBox(r, revealed ? st.result.answer : null)}</div>`;
   }
 
   function drawQuestion() {
