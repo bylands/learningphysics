@@ -2586,6 +2586,7 @@ COMMON_SECTIONS = """
         <li class="card">
           <h2><a href="/wwtbap/" target="_blank" rel="noopener">Who Wants to Be a Physicist? ↗</a></h2>
           <p>A quiz in the style of <i>Who Wants to Be a Millionaire</i>: 15 physics questions of rising difficulty, a ladder of famous physicists and three lifelines. As a classroom game, students join on their phones (QR code or room code), a Fastest Finger First round picks each contestant, and Ask the Audience can be a live class vote. A quick game starts without a lobby.</p>
+          <p class="links"><a href="/wwtbap/?preview=1" target="_blank" rel="noopener">Try it alone ↗</a></p>
           <p class="note">learningphysics.ch/wwtbap/ · you're logged in there with this account; students join on their phones without one</p>
         </li>
         <li class="card">
