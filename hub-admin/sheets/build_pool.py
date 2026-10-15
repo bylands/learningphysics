@@ -234,6 +234,37 @@ def reading_pass():
     return objs, apps
 
 
+def pool_md(pool, objectives):
+    """pool.md, the readable version of pool.json (its content: {'apps': ...})."""
+    md = ['# Exercise pool for the exercise sheets', '',
+          'For each app and learning objective, the exercises a sheet may take (built by `build_pool.py`;',
+          'edit `pool.json`). ★ difficulty, 🖼 has an image (not in the export: a placeholder on the sheet).', '']
+    for app, entry in objectives.items():
+        if app not in pool['apps']:
+            continue
+        objs, exs = pool['apps'][app]['objectives'], pool['apps'][app]['exercises']
+        md += [f'## {app}', '']
+        for o in entry.get('objectives', []):
+            md.append(f'- **{o["id"]}**: {o["en"]}')
+            for k in objs.get(o['id'], []):
+                e = exs[k]
+                md.append(f'  - {e["title"]} ({e["lang"]}, {"★" * e["difficulty"]}{" 🖼" if e["images"] else ""}) `{k}`')
+            if not objs.get(o['id']):
+                md.append('  - (none found)')
+        rest = [k for k in exs if not any(k in v for v in objs.values())]
+        if rest:
+            md.append('- *for the app as a whole:* ' + '; '.join(f'{exs[k]["title"]} `{k}`' for k in rest))
+        md.append('')
+    return '\n'.join(md)
+
+
+def write_md(pool=None, objectives=None):
+    """Write pool.md from pool.json (after editing pool.json by hand: python3 -c 'import build_pool; build_pool.write_md()')."""
+    pool = pool or json.load(open(os.path.join(HERE, 'pool.json'), encoding='utf-8'))
+    objectives = objectives or json.load(open(os.path.join(ROOT, 'hub', 'objectives.json'), encoding='utf-8'))
+    open(os.path.join(HERE, 'pool.md'), 'w', encoding='utf-8').write(pool_md(pool, objectives))
+
+
 def main():
     args = sys.argv[1:]
     fails = set()
@@ -288,9 +319,6 @@ def main():
                 'score': 10 * bool(obs) - 4 * images - (meta.get('default_difficulty') or 1)})
     out = {'_about': 'Built by build_pool.py: for every app, its exercises and the objectives each practises. '
                      'Review and edit by hand: move a key between objectives, or delete it.', 'apps': {}}
-    md = ['# Exercise pool for the exercise sheets', '',
-          'For each app and learning objective, the exercises a sheet may take (built by `build_pool.py`;',
-          'edit `pool.json`). ★ difficulty, 🖼 has an image (not in the export: a placeholder on the sheet).', '']
     for app, entry in objectives.items():
         cands = sorted(pool.get(app, []), key=lambda e: (-e['score'], e['title']))
         keep, objs = {}, {}
@@ -305,20 +333,8 @@ def main():
         out['apps'][app] = {
             'objectives': objs,
             'exercises': {e['key']: {k: e[k] for k in ('source', 'title', 'lang', 'difficulty', 'images', 'url')} for e in exs}}
-        md += [f'## {app}', '']
-        for o in entry.get('objectives', []):
-            md.append(f'- **{o["id"]}**: {o["en"]}')
-            for k in objs[o['id']]:
-                e = keep[k]
-                md.append(f'  - {e["title"]} ({e["lang"]}, {"★" * e["difficulty"]}{" 🖼" if e["images"] else ""}) `{k}`')
-            if not objs[o['id']]:
-                md.append('  - (none found)')
-        rest = [e for e in exs if not any(e['key'] in v for v in objs.values())]
-        if rest:
-            md.append('- *for the app as a whole:* ' + '; '.join(f'{e["title"]} `{e["key"]}`' for e in rest))
-        md.append('')
     json.dump(out, open(os.path.join(HERE, 'pool.json'), 'w', encoding='utf-8'), ensure_ascii=False, indent=1)
-    open(os.path.join(HERE, 'pool.md'), 'w', encoding='utf-8').write('\n'.join(md))
+    write_md(out, objectives)
     n = sum(len(a['exercises']) for a in out['apps'].values())
     empty = [f'{a}/{o}' for a, v in out['apps'].items() for o, ks in v['objectives'].items() if not ks]
     print(f'pool.json: {len(out["apps"])} apps, {n} entries; objectives without exercises: {len(empty)}')

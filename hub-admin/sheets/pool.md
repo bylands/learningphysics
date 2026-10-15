@@ -6,7 +6,8 @@ edit `pool.json`). ★ difficulty, 🖼 has an image (not in the export: a place
 ## bulb-brightness
 
 - **current**: Explain that the current is the same before and after a bulb or a group of bulbs: it is not used up.
-  - (none found)
+  - Junctions (en, ★) `e19627-junctions`
+  - Currents and Voltages in a Circuit (en, ★★ 🖼) `e22714-currents-and-voltages-in-a-circuit`
 - **power**: Rank the brightness of bulbs by their power ΔV · I.
   - Brightness (en, ★★ 🖼) `e22725-brightness`
 - **change**: Predict how the brightness changes when a bulb is added, removed or short-circuited, in series or in parallel.
@@ -77,7 +78,7 @@ edit `pool.json`). ★ difficulty, 🖼 has an image (not in the export: a place
   - Half-Life for Capacitors in Parallel and in Series (en, ★★) `e19060-half-life-for-capacitors-in-parallel-and`
   - Partially Filled Capacitor (en, ★★) `e17660-partially-filled-capacitor`
   - Fill Level (en, ★★★) `e17703-fill-level`
-- **sketch**: Sketch the voltage and the current against time while a capacitor charges or discharges.
+- **sketch**: Sketch the voltages and the current against time while a capacitor charges or discharges, and find them at a moment with the loop rule.
   - RC-Glied im Gleich- und Wechselstromkreis (de, ★★★★) `e19006-rc-glied-im-gleich-und-wechselstromkreis`
   - RC-Kreis (de, ★★★★) `e19023-rc-kreis-2`
 - **tau**: Read the time constant τ = R·C or the half-life from a graph, and predict what a change of R or C does.
@@ -152,11 +153,13 @@ edit `pool.json`). ★ difficulty, 🖼 has an image (not in the export: a place
 ## centre-of-mass
 
 - **locate**: Locate the centre of mass of a composite figure, such as a wire figure whose pieces have masses proportional to their lengths.
-  - (none found)
+  - Einen Hammer balancieren (de, ★★) `e24606-einen-hammer-balancieren`
+  - Schwerpunkt dreier Massen am Stab (de, ★★) `e24666-schwerpunkt-dreier-massen-am-stab`
+  - Schwerpunkt eines L-Profils (de, ★★) `e24663-schwerpunkt-eines-l-profils`
 - **stability**: Classify an equilibrium as stable, unstable or neutral from the position of the centre of mass.
   - (none found)
 - **tipping**: Predict whether a body tips over by checking whether the line of action of its weight leaves the base.
-  - (none found)
+  - Der Kipptest eines Busses (de, ★★★) `e24608-der-kipptest-eines-busses`
 
 ## coulomb
 
@@ -203,7 +206,8 @@ edit `pool.json`). ★ difficulty, 🖼 has an image (not in the export: a place
 - **path**: Explain why lifting work does not depend on the path, and where the work done by friction goes.
   - Skispringen (de, ★★★) `energy-conservation-06-skispringen`
 - **turn**: Tell the turning point of a bungee jump or a spring (v = 0) from its equilibrium position (largest speed).
-  - (none found)
+  - Ein Trampolin (de, ★★★) `e24544-ein-trampolin`
+  - Umkehrpunkte des Federpendels (de, ★★★★) `e24652-umkehrpunkte-des-federpendels`
 - **error**: Find the wrong entry in an energy table.
   - (none found)
 - *for the app as a whole:* Eine Seilschaukel über dem See `energy-conservation-07-seilschaukel`; Eine Steinschleuder `energy-conservation-08-steinschleuder`; Ein Trampolin `energy-conservation-10-trampolin`; Wasserbarometer `e19011-wasserbarometer-1`; John Deere 8400 `e18951-john-deere-8400`; Zusammenstoss `e18845-zusammenstoss`
@@ -213,9 +217,15 @@ edit `pool.json`). ★ difficulty, 🖼 has an image (not in the export: a place
 - **first**: Predict the motion of a body on which no net force acts: it stays at rest or moves on in a straight line at constant velocity.
   - Vier Kugeln vom Tisch (de, ★★★) `force-concepts-01-vier-kugeln-vom-tisch`
 - **balanced**: Explain why balanced forces do not mean that a body is at rest: it may just as well move at constant velocity.
-  - (none found)
+  - Fallende Kartonrolle (de, ★) `e24721-fallende-kartonrolle`
+  - Antriebskraft beim Velofahren (de, ★★) `e24709-antriebskraft-beim-velofahren`
+  - Sinkgeschwindigkeit zweier Stahlkugeln (de, ★★★) `e24725-sinkgeschwindigkeit-zweier-stahlkugeln`
+  - Wasserwiderstand eines Segelboots (de, ★★★) `e24722-wasserwiderstand-eines-segelboots`
 - **second**: Relate the net force to the acceleration with F = m·a (the rate of change of momentum): the net force points along the acceleration, not along the motion.
-  - (none found)
+  - Bremsender Supertanker (de, ★) `e24746-bremsender-supertanker`
+  - Abbremsende Last am Kran (de, ★★) `e24757-abbremsende-last-am-kran`
+  - Bolzen einer Armbrust (de, ★★) `e24745-bolzen-einer-armbrust`
+  - Turnerin beim Pferdsprung (de, ★★) `e24748-turnerin-beim-pferdsprung`
 - **centre**: Identify which force provides the net force towards the centre in a circular motion.
   - Senke (de, ★★★) `e18952-senke`
 
@@ -224,9 +234,12 @@ edit `pool.json`). ★ difficulty, 🖼 has an image (not in the export: a place
 - **equal**: State that the two forces of an interaction are equally large and opposite and act on different bodies, whatever their masses, charges or motion.
   - Copper Cube (en, ★) `e17318-copper-cube`
 - **partner**: Identify the partner of each force in a situation, such as mosquito and windscreen, nucleus and electron, or ice dancer and Earth.
-  - (none found)
+  - Gegen eine Wand drücken (de, ★★) `e24755-gegen-eine-wand-drucken`
+  - Gewichtheber mit Hantel (de, ★★★) `e24752-gewichtheber-mit-hantel`
+  - Metallwürfel auf der Waage (de, ★★★) `e24798-metallwurfel-auf-der-waage`
 - **normal**: Explain why the normal force is not the partner of the weight, and find a wrong pair in a list of force pairs.
-  - (none found)
+  - Astronaut auf dem Mond (de, ★★) `e24760-astronaut-auf-dem-mond`
+  - Normalkraft ist nicht die Reaktionskraft zur Gewichtskraft (de, ★★★) `e24747-normalkraft-ist-nicht-die-reaktionskraft`
 
 ## force-systems
 
@@ -290,22 +303,31 @@ edit `pool.json`). ★ difficulty, 🖼 has an image (not in the export: a place
 ## motion-data
 
 - **instant**: Tell a position from a change of position, and an instant from a time interval, when reading a value table.
-  - (none found)
+  - Fallstrecke in den ersten vier Sekunden (de, ★★) `e24632-fallstrecke-in-den-ersten-vier-sekunden`
+  - Fallstrecke in der dritten Sekunde (de, ★★) `e24633-fallstrecke-in-der-dritten-sekunde`
+  - Messtabelle: welche Bewegung ist beschleunigt? (de, ★★) `e24880-messtabelle-welche-bewegung-ist-beschleu`
+  - Anfangsgeschwindigkeit aus Sekundenstrecken (de, ★★★) `e24881-anfangsgeschwindigkeit-aus-sekundenstrec`
 - **convert**: Turn a value table or a stroboscope picture into the s(t) graph of the motion.
   - (none found)
 - **uniform**: Decide from the changes of position in equal time steps whether a motion is uniform or uniformly accelerated.
-  - (none found)
+  - Beschleunigte Bewegung im Diagramm nachweisen (de, ★★) `e24885-beschleunigte-bewegung-im-diagramm-nachw`
+  - Messtabelle: welche Bewegung ist beschleunigt? (de, ★★) `e24880-messtabelle-welche-bewegung-ist-beschleu`
 
 ## motion-graphs
 
 - **slope**: Read a velocity as the slope of the s(t) graph, not as its height.
-  - (none found)
+  - Gleichförmige Bewegung in Diagrammen (de, ★) `e24864-gleichformige-bewegung-in-diagrammen`
+  - Beschleunigte Bewegung im Diagramm nachweisen (de, ★★) `e24885-beschleunigte-bewegung-im-diagramm-nachw`
+  - s(t)- und v(t)-Diagramme zuordnen (de, ★★★) `e24888-st-und-vt-diagramme-zuordnen`
 - **negative**: Recognise a negative velocity in a falling s(t) graph or in decreasing positions in a value table.
-  - (none found)
+  - Gleichförmige Bewegung in Diagrammen (de, ★) `e24864-gleichformige-bewegung-in-diagrammen`
+  - s(t)- und v(t)-Diagramme zuordnen (de, ★★★) `e24888-st-und-vt-diagramme-zuordnen`
 - **sketch**: Sketch v(t) from s(t), and a(t) from v(t), and find the error in such a sketch.
-  - (none found)
+  - s(t)- und v(t)-Diagramme zuordnen (de, ★★★) `e24888-st-und-vt-diagramme-zuordnen`
 - **uniform**: Recognise a uniform acceleration as a straight line in v(t) and as a parabola in s(t).
-  - (none found)
+  - Gleichförmige Bewegung in Diagrammen (de, ★) `e24864-gleichformige-bewegung-in-diagrammen`
+  - Beschleunigte Bewegung im Diagramm nachweisen (de, ★★) `e24885-beschleunigte-bewegung-im-diagramm-nachw`
+  - Gleichförmig gegen beschleunigt (de, ★★) `e24882-gleichformig-gegen-beschleunigt`
 - *for the app as a whole:* Kylian Mbappé `e18844-kylian-mbappe`; Beschleunigung im v(t)-Diagramm `e19017-beschleunigung-im-vt-diagramm`
 
 ## motion-areas
@@ -317,7 +339,7 @@ edit `pool.json`). ★ difficulty, 🖼 has an image (not in the export: a place
 - **mean**: Determine the mean velocity from a v(t) graph.
   - (none found)
 - **sketch**: Sketch s(t) from v(t), and v(t) from a(t), and find the error in such a sketch.
-  - (none found)
+  - s(t)- und v(t)-Diagramme zuordnen (de, ★★★) `e24888-st-und-vt-diagramme-zuordnen`
 
 ## oscillations
 
@@ -344,11 +366,15 @@ edit `pool.json`). ★ difficulty, 🖼 has an image (not in the export: a place
 ## cyclic-processes
 
 - **states**: Tell a state (p, V and T at one moment, a point) from a process (a line from one state to the next): find a state from the process before it, and the process that links two states.
-  - (none found)
+  - Kompression und Erhitzung eines Mols (de, ★★) `e24935-kompression-und-erhitzung-eines-mols`
+  - Zweistufige Zustandsänderung (de, ★★) `e24934-zweistufige-zustandsanderung`
+  - Zustände im Heissluftmotor (de, ★★★) `e24943-zustande-im-heissluftmotor`
+  - Kreisprozess mit Luft (de, ★★★★) `e24990-kreisprozess-mit-luft`
 - **identify**: Identify isobaric, isochoric and isothermal processes in p(V), p(T) and V(T) diagrams, using pV ∝ T.
   - (none found)
 - **sketch**: Sketch a cycle from a description and transfer it from one diagram to another.
-  - (none found)
+  - Zustände im Heissluftmotor (de, ★★★) `e24943-zustande-im-heissluftmotor`
+  - Kreisprozess mit Luft (de, ★★★★) `e24990-kreisprozess-mit-luft`
 - **error**: Find the error in a sketch of a cycle.
   - (none found)
 - *for the app as a whole:* Gasflasche `e18846-gasflasche-3`
@@ -379,7 +405,9 @@ edit `pool.json`). ★ difficulty, 🖼 has an image (not in the export: a place
 ## interference
 
 - **huygens**: Explain diffraction with Huygens’ principle: how much a wave spreads behind an opening depends on its width compared with the wavelength.
-  - (none found)
+  - A Football through the Goal (en, ★) `e24578-a-football-through-the-goal`
+  - Big and Small Particles (en, ★★) `e25073-big-and-small-particles`
+  - Single Slit (en, ★★) `e20401-single-slit`
 - **maxima**: Predict where the maxima of a double slit and a grating lie, from the path difference: d·sin α = k·λ.
   - Beugung von weissem Licht (de, ★) `e18961-beugung-von-weissem-licht`
   - Double Slit (en, ★) `e20396-double-slit`
@@ -402,7 +430,7 @@ edit `pool.json`). ★ difficulty, 🖼 has an image (not in the export: a place
 
 ## electric-field
 
-- **sketch**: Sketch the field lines of point charges, of a charged wire and of a plate capacitor (a uniform field).
+- **sketch**: Sketch the field lines of point charges, of a charged wire, of a plate capacitor (a uniform field) and of plates and point charges together.
   - Field Line Image for an Electric Dipole (en, ★) `e22848-field-line-image-for-an-electric-dipole`
   - Field Line Images (en, ★ 🖼) `e17315-field-line-images`
 - **read**: Read the direction and the relative strength of a field from its field lines.
@@ -413,7 +441,7 @@ edit `pool.json`). ★ difficulty, 🖼 has an image (not in the export: a place
 - **equi**: Sketch equipotential lines at right angles to the field lines.
   - Equipotentials in field of electric dipole (en, ★) `e23028-equipotentials-in-field-of-electric-dipo`
   - Equipotentials of Two Positive Point Charges (en, ★) `e17488-equipotentials-of-two-positive-point-cha`
-- **error**: Find the error in a sketch of field lines and equipotentials: lines that cross, or equipotentials not at right angles to the field lines.
+- **error**: Find the error in a sketch of field lines and equipotentials: lines that cross, equipotentials not at right angles to the field lines or wrongly spaced.
   - (none found)
 - *for the app as a whole:* A Laser Printer `electric-field-06-laser-printer`; By What Factor? `electric-field-08-by-what-factor`; Lightning Strikes a Car `electric-field-04-lightning-strikes-a-car`; Under a Thundercloud `electric-field-03-thundercloud`; An Electrostatic Precipitator `electric-field-05-electrostatic-precipitator`; Millikan's Oil Drop `electric-field-01-millikan-oil-drop`; Two Capacitors Compared `electric-field-09-two-capacitors`
 
@@ -479,7 +507,7 @@ edit `pool.json`). ★ difficulty, 🖼 has an image (not in the export: a place
 
 ## charged-particles
 
-- **accel**: Apply |q|·ΔV = ΔE_kin to a charge accelerated through a voltage, and give its energy in electronvolts.
+- **accel**: Apply ΔE_kin = −q·ΔV to a charge accelerated through a voltage, and give its energy in electronvolts.
   - Accelerated electron (en, ★) `e23055-accelerated-electron`
   - Acceleration of Alpha Particle (en, ★) `e17533-acceleration-of-alpha-particle`
   - Acceleration voltage (en, ★) `e23054-acceleration-voltage`
@@ -487,7 +515,8 @@ edit `pool.json`). ★ difficulty, 🖼 has an image (not in the export: a place
   - Cathode Ray Tube (en, ★) `e17514-cathode-ray-tube`
   - Crossed Fields (en, ★) `e23437-crossed-fields`
 - **work**: Explain why a magnetic field changes the direction of a charge but not its speed: the magnetic force does no work, unlike the electric force in a capacitor.
-  - (none found)
+  - The Fine-Beam Tube (en, ★★★) `e24574-the-fine-beam-tube`
+  - SESAME (de, ★★★★ 🖼) `e18945-sesame`
 - **radius**: Relate the radius r = m·v/(q·B) of the circular path to mass, speed, charge and field by ratios, and explain why the period does not depend on the speed.
   - Alpha Particle (en, ★) `e18708-alpha-particle-1`
   - Compact Muon Solenoid (CMS) (en, ★) `e23451-compact-muon-solenoid-cms`
@@ -531,7 +560,7 @@ edit `pool.json`). ★ difficulty, 🖼 has an image (not in the export: a place
 ## photons
 
 - **wave**: Name the observations of the photoelectric effect that the wave model cannot explain: the threshold frequency, and a kinetic energy that does not depend on the brightness.
-  - (none found)
+  - Sunburn, but not from a Heater (en, ★★) `e24593-sunburn-but-not-from-a-heater`
 - **einstein**: Apply E = h·f and the energy balance h·f = φ + E_k,max, with E_k,max measured by the stopping voltage.
   - Bremsspektrum (de, ★) `e22043-bremsspektrum`
   - Charakteristische Röntgenlinien (de, ★) `e22041-charakteristische-rontgenlinien`
