@@ -15,7 +15,17 @@
 //   Figures.pattern(list, o) the intensity on the screen against the position y, with a strip of
 //                            the screen below (see pattern)
 //   Figures.airy(sep)        the images of two point sources side by side (the Rayleigh criterion)
-// Each returns an SVG in a <div class="fig">.
+//   Figures.watchScene(w)    the scene to watch (play.js, the run w of ifWatch in scenarios.js): the
+//                            sources seen from above with the screen below, their light as its
+//                            average brightness in a canvas (paint(canvas, t)), spreading from the
+//                            sources switched on at t = 0; the second source (the grating) the switch
+//                            to flip (data-pw-switch, with a hit area); and graph(t, marks), the
+//                            intensity along the screen with the student's answers as rings. Also
+//                            { frame, t1 (the end of the run), full(y) (when the pattern at y on the
+//                            screen is complete), level(x, y, t) (the brightness drawn), over(t) (the
+//                            wave fronts), at(y) (the place of y on the screen), geo, zoom (how many
+//                            times larger the angles are drawn, or null) }
+// Each (but watchScene) returns an SVG in a <div class="fig">.
 (function (root) {
   'use strict';
 
@@ -192,5 +202,143 @@
     return svg(W, base + 30, s, L('The images of two point sources: each is a blurred disc with dark rings; solid, the sum', 'Die Bilder zweier punktförmiger Quellen: Jedes ist ein verwaschenes Scheibchen mit dunklen Ringen; ausgezogen die Summe') + (o.caption ? `: ${o.caption}` : ''));
   }
 
-  root.Figures = { waves, huygens, sources, pathDiff, geometry, pattern, intensity, airy, airyI };
+  // ---------------------------------------------------------------- watching (play.js)
+  // The waves of the sources (w of ifWatch in scenarios.js) seen from above: the sources at the top
+  // (at the height Y0), the screen at the bottom; on a flat screen the position y lies at
+  // CX + (y/Y)·WH, on a round one (all angles) sin α at the same place. The light is drawn as
+  // its average brightness (it oscillates far too fast to see), on a grid of CELL px painted into a
+  // canvas: wherever the waves of a source have arrived, at the speed C (px per unit of scene
+  // time: the middle of the screen at t = 1). A flat screen magnifies the angles: a point at the
+  // depth h and the side x − CX is lit as the screen at y = Y·(x − CX)/WH·LS/h.
+  const WW = 440, WH_ = 236, CX = 220, Y0 = 26, LS = 196, WH = 196, C = LS, CELL = 2;
+  const SPACING = { slits: 44, speakers: 72, grating: 9 };
+  // the sources, from the right (source 0, S₁) to the left
+  const sourcesOf = (w) => Array.from({ length: w.N }, (z, j) => CX + ((w.N - 1) / 2 - j) * SPACING[w.kind]);
+  // the place of y on the screen (px)
+  const onScreen = (w, y) => (w.flat ? [CX + (y / w.Y) * WH, Y0 + LS] : [CX + WH * (y / w.Y), Y0 + WH * Math.sqrt(Math.max(0, 1 - (y / w.Y) ** 2))]);
+  // the position on the screen that lights the point (x, y) (px), null outside the field
+  function screenOf(w, x, y) {
+    const h = y - Y0;
+    if (h <= 0) return null;
+    if (w.flat) return y > Y0 + LS + 1 ? null : (w.Y * (x - CX) * LS) / (WH * h);
+    const r = Math.hypot(x - CX, h);
+    return r > WH + 1 ? null : (w.Y * (x - CX)) / r;
+  }
+  // the brightness drawn for the intensity I (0 … 1), as the strip under the patterns
+  const glow = (I) => Math.min(1, Math.pow(Math.max(0, I), 0.6) * 1.05);
+
+  function watchScene(w) {
+    const xs = sourcesOf(w), sw = xs.map((x, j) => j).filter((j) => j !== w.on);
+    const R = (t) => (t <= 0 ? 0 : C * t);
+    const arrived = (px, py, t) => (j) => Math.hypot(px - xs[j], py - Y0) <= R(t);
+    // the time the waves of every source have reached the place of y on the screen
+    const full = (y) => { const [px, py] = onScreen(w, y); return Math.max(...sw.map((j) => Math.hypot(px - xs[j], py - Y0))) / C; };
+    let far = 0;
+    for (let k = 0; k <= 80; k++) far = Math.max(far, full(-w.Y + (k / 40) * w.Y));
+    const t1 = Math.ceil((far + 0.12) * 20) / 20;
+    // Near the sources the fringes become too fine for the grid: there the pattern fades into its
+    // mean, count/N² for count sources arrived. sharp(x, y): 0 … 1, how much of the pattern is
+    // drawn, from the width in px of its finest parts (a period over N).
+    const per = (2 * Math.PI) / Math.abs(w.g(1) - w.g(0));
+    const sharp = (x, y) => { const px = w.flat ? (per * WH * (y - Y0)) / (w.Y * LS * w.N) : (per * Math.hypot(x - CX, y - Y0)) / (w.Y * w.N); return Math.max(0, Math.min(1, (px - 1.5) / 3)); };
+    const shade = (I, count, k) => glow(count / (w.N * w.N) + k * (I - count / (w.N * w.N)));
+    // the brightness at (x, y) at the time t (0 … 1), null outside the field
+    function level(x, y, t) {
+      const s = screenOf(w, x, y);
+      if (s == null) return null;
+      const k = t > 0 ? arrived(x, y, t) : () => false;
+      return shade(w.I(s, k), 1 + sw.filter(k).length, sharp(x, y));
+    }
+
+    // the canvas: one cell per CELL px, the parts that do not change with the time computed once
+    const nx = WW / CELL, ny = WH_ / CELL;
+    let grid = null, img = null, colors = null, painted = null;
+    function prepare() {
+      grid = [];
+      for (let i = 0; i < ny; i++) {
+        for (let k = 0; k < nx; k++) {
+          const x = (k + 0.5) * CELL, y = (i + 0.5) * CELL, s = screenOf(w, x, y);
+          if (s == null) { grid.push(null); continue; }
+          const d = sw.map((j) => Math.hypot(x - xs[j], y - Y0)), sh = sharp(x, y);
+          grid.push({ x, y, s, d, k: sh, lo: Math.min(...d), hi: Math.max(...d), one: shade(w.I(s, () => false), 1, sh), all: shade(w.I(s), w.N, sh) });
+        }
+      }
+    }
+    const rgb = (s) => { const m = /#([0-9a-f]{6})/i.exec(s || ''); const n = m ? parseInt(m[1], 16) : 0xe0301e; return [n >> 16, (n >> 8) & 255, n & 255]; };
+    function paint(canvas, t) {
+      if (painted === t) return;
+      painted = t;
+      if (!grid) prepare();
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
+      if (!colors) { const cs = getComputedStyle(canvas); colors = [rgb(cs.getPropertyValue(w.kind === 'speakers' ? '--if-wave' : '--if-light')), rgb(cs.getPropertyValue('--if-screen'))]; }
+      if (!img) img = ctx.createImageData(nx, ny);
+      const r = R(t), [fg, bg] = colors, px = img.data;
+      grid.forEach((c, n) => {
+        const o = 4 * n;
+        if (!c) { px[o + 3] = 0; return; }
+        const v = c.hi <= r ? c.all : c.lo > r ? c.one : shade(w.I(c.s, (j) => c.d[sw.indexOf(j)] <= r), 1 + c.d.filter((x) => x <= r).length, c.k);
+        px[o] = bg[0] + v * (fg[0] - bg[0]); px[o + 1] = bg[1] + v * (fg[1] - bg[1]); px[o + 2] = bg[2] + v * (fg[2] - bg[2]); px[o + 3] = 255;
+      });
+      ctx.putImageData(img, 0, 0);
+    }
+
+    // the drawing on top: the wall with its slits (or the loudspeakers, or the grating), the
+    // screen (or the line of P), P; the switch: the second source (the grating), with a hit area
+    const gapW = w.kind === 'grating' ? 4 : 6;
+    let s = `<defs><clipPath id="ifw-clip"><rect x="0" y="${Y0 + 3}" width="${WW}" height="${WH_ - Y0 - 3}"/></clipPath></defs>`;
+    if (w.kind === 'speakers') {
+      s += path(`M${CX - WH} ${Y0 + LS}H${CX + WH}`, 'if-axis');
+      s += xs.map((x, j) => `<g class="if-speaker${j === w.on ? '' : ' ifw-sw'}"><rect x="${x - 9}" y="${Y0 - 22}" width="18" height="10"/><path d="M${x - 6} ${Y0 - 12}L${x - 13} ${Y0}H${x + 13}L${x + 6} ${Y0 - 12}Z"/></g>`).join('');
+    } else {
+      const edges = [0, ...xs.slice().reverse().flatMap((x) => [x - gapW / 2, x + gapW / 2]), WW];
+      for (let k = 0; k < edges.length; k += 2) s += rect(edges[k], Y0 - 3, edges[k + 1] - edges[k], 6, 'if-wall');
+      // the closed slits (a shutter on each), open once switched (style.css: .ifw-on)
+      s += sw.map((j) => rect(xs[j] - gapW / 2 - 2, Y0 - 5, gapW + 4, 10, 'ifw-shutter', 1)).join('');
+      s += w.flat ? path(`M${CX - WH - 6} ${Y0 + LS}H${CX + WH + 6}`, 'if-screen-line') : path(arc(CX, Y0, WH, 0, -180), 'if-screen-line');
+    }
+    if (w.kind !== 'grating') s += text(xs[0] + (w.kind === 'speakers' ? 20 : 8), Y0 - 9, sub('S', '1'), 'tb-axis', 'start') + text(xs[1] - (w.kind === 'speakers' ? 20 : 8), Y0 - 9, sub('S', '2'), 'tb-axis', 'end');
+    if (w.P != null) { const [x, y] = onScreen(w, w.P); s += circle(x, y, 4, 'if-dot ifw-p') + text(x + 8, y - 8, it('P'), 'tb-axis ifw-plabel', 'start'); }
+    const hit = w.kind === 'grating' ? [xs[w.N - 1] - 16, xs[0] + 16] : [xs[1] - 22, xs[1] + 22];
+    s += `<g class="ifw-dyn"></g><g data-pw-switch="1"><rect class="pw-hit" x="${hit[0]}" y="${Y0 - 26}" width="${hit[1] - hit[0]}" height="44" rx="8"/></g>`;
+    const label = { slits: L('A double slit seen from above, the screen below: slit S1 is open, S2 is closed', 'Ein Doppelspalt von oben gesehen, unten der Schirm: Spalt S1 ist offen, S2 geschlossen'),
+      speakers: L('Two loudspeakers seen from above and the line through P: S1 is on, S2 is off', 'Zwei Lautsprecher von oben gesehen und die Linie durch P: S1 ist eingeschaltet, S2 ausgeschaltet'),
+      grating: L('A grating seen from above, the screen below: only one slit is lit', 'Ein Gitter von oben gesehen, unten der Schirm: Nur ein Spalt ist beleuchtet') }[w.kind];
+    const frame = `<div class="ifw-field"><canvas class="ifw-canvas" width="${nx}" height="${ny}" aria-hidden="true"></canvas><svg class="tb ifw-over" viewBox="0 0 ${WW} ${WH_}" role="img" aria-label="${label}">${s}</svg></div>`;
+
+    // what changes with the time: the fronts of the waves of the sources switched on (of the
+    // outermost two of a grating), until they have passed the screen
+    function over(t) {
+      if (t <= 0 || R(t) > C * far) return '';
+      return `<g clip-path="url(#ifw-clip)">${(w.N > 2 ? [sw[0], sw[sw.length - 1]] : sw).map((j) => circle(xs[j], Y0, R(t), 'ifw-front')).join('')}</g>`;
+    }
+
+    // the graph: the intensity along the screen at the time t (the sources arrived there), the
+    // ticks, P, and the answers (marks) where the pattern is complete
+    function graph(t, marks) {
+      const base = 112, top = 14, H = 150, X = (y) => CX + (y / w.Y) * WH, Yp = (I) => base - I * (base - top);
+      let g = path(`M${CX - WH - 8} ${base}H${CX + WH + 12}`, 'if-axis-solid') + path(`M${CX} ${base + 4}V${top - 4}`, 'if-axis');
+      g += text(CX + 6, top + 2, it('I'), 'tb-axis', 'start') + text(CX, base + 16, '0', 'tb-cap');
+      for (const [y, lab] of w.ticks) g += path(`M${f(X(y))} ${base}v5`, 'if-axis-solid') + (lab ? text(X(y), base + 17, lab, 'tb-cap') : '');
+      const unit = { mm: `${it('y')} in mm`, cm: `${it('y')} in cm`, ds: `Δ${it('s')}`, '': `sin ${it('α')}` }[w.unit];
+      g += text(CX + WH + 12, base + 32, unit, 'tb-cap', 'end');
+      if (w.P != null) g += path(`M${f(X(w.P))} ${base + 22}V${top}`, 'ifw-pline') + text(X(w.P), base + 34, it('P'), 'tb-axis');
+      let d = '';
+      for (let k = 0; k <= 400; k++) {
+        const y = -w.Y + (k / 200) * w.Y, [px, py] = onScreen(w, y);
+        d += `${d ? 'L' : 'M'}${f(X(y))} ${f(Yp(w.I(y, t > 0 ? arrived(px, py, t) : () => false)))}`;
+      }
+      g += path(d, 'if-curve');
+      marks.forEach((m) => {
+        if (t < full(m.y) - 1e-9) return;
+        const x = X(m.y), y = Yp(w.I(m.y));
+        g += `<circle class="ifw-pred" cx="${f(x)}" cy="${f(y)}" r="6"/><text class="ifw-mk ${m.ok ? 'ok' : 'bad'}" x="${f(Math.min(WW - 8, x + 8))}" y="${f(Math.max(10, y - 7))}">${m.ok ? '✓' : '✗'}</text>`;
+      });
+      return `<svg class="tb ifw-plot" viewBox="0 0 ${WW} ${H}" role="img" aria-label="${L('The intensity along the screen', 'Die Intensität entlang des Schirms')}">${g}</svg>`;
+    }
+
+    return { frame, t1, full, level, paint, over, graph, sources: xs, at: (y) => onScreen(w, y), geo: { W: WW, H: WH_, cx: CX, y0: Y0, ls: LS, wh: WH, c: C }, zoom: w.Lm ? WH / LS / ((w.Y * root.IW.UNITS[w.unit][0]) / w.Lm) : null };
+  }
+
+  root.Figures = { waves, huygens, sources, pathDiff, geometry, pattern, intensity, airy, airyI, watchScene };
 })(typeof window !== 'undefined' ? window : globalThis);

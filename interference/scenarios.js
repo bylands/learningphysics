@@ -691,8 +691,88 @@
     };
   };
 
+  // ================================================================ watching
+  // Once an exercise with two (or many) sources is solved or its solution shown (and in the last
+  // frame of two worked examples), the student switches on the second source (opens the second
+  // slit, lights the whole grating) and watches the pattern build up (app.js, play.js; the scene
+  // is Figures.watchScene): ifWatch(o), o = { kind ('slits': a double slit; 'speakers': two
+  // loudspeakers; 'grating'), N (the sources; the source on (index on) shines from the start, the
+  // others from t = 0), flat (true: a screen at the distance L, positions y on it, small angles;
+  // false: angles of any size, the position on the screen is sin α), Y (the screen shown from −Y
+  // to Y, in unit), unit ('mm', 'cm'; '' sin α; 'ds' the path difference in wavelengths), g(y)
+  // (the phase between the waves of neighbouring sources at y), ticks [[y, label]], P (the point
+  // P of the exercise, at y), T (s: how long the waves take to the middle of the screen, or to P;
+  // null: not given), f (Hz, how often the waves oscillate), Lm (m: the distance L of the screen, if
+  // given), marks(w, get) }.
+  // It returns o with I(y, k) → the intensity at y of the sources that have arrived there (a
+  // function k(j): source j has arrived; all of them without k), the brightest 1, and marks(get):
+  // get(key) is the answer of a field (a number in its unit, NaN if none, or the option chosen,
+  // null if none); each mark is { key, y (where the answer puts it, within ±Y), ok (a choice:
+  // right or not; a number: null, the app judges it as in the feedback), say (html: what the
+  // answer was) }.
+  function ifWatch(o) {
+    const w = { on: 0, ...o };
+    w.I = (y, k) => {
+      const g = w.g(y);
+      let re = 0, im = 0;
+      for (let j = 0; j < w.N; j++) if (j === w.on || !k || k(j)) { re += Math.cos(j * g); im += Math.sin(j * g); }
+      return (re * re + im * im) / (w.N * w.N);
+    };
+    w.marks = (get) => (o.marks ? o.marks(w, get) : []).filter((m) => Number.isFinite(m.y)).map((m) => ({ ...m, y: Math.max(-w.Y, Math.min(w.Y, m.y)) }));
+    return w;
+  }
+  const C_LIGHT = 3e8, C_SOUND = 343;
+  const yourAnswer = () => L('your answer', 'deine Antwort');
+  // a number answered: the ring at y
+  const numMark = (key, y, say) => ({ key, y, ok: null, say });
+  // ticks at the bright fringes j·y1 (j = 1 … n), the one of order k named
+  const fringeTicks = (y1, k, n, name = 'y') => Array.from({ length: n }, (z, j) => j + 1).flatMap((j) => [[j * y1, j === k ? `${it$(name)}${sub$(k)}` : ''], [-j * y1, '']]);
+  // a double slit or grating with the screen at L: the bright fringe of order k at k·y1 (in unit)
+  function screenWatch(o) {
+    const { lam, d, L: L0, k, unit } = o, f = IW.UNITS[unit][0], y1 = IW.inUnit((lam * L0) / d, unit), n = Math.max(k, 2);
+    return ifWatch({ kind: o.N > 2 ? 'grating' : 'slits', N: o.N, on: o.N > 2 ? Math.floor(o.N / 2) : 0, flat: true, Y: (n + 1.4) * y1, unit,
+      g: (y) => (2 * Math.PI * d * ((y * f) / L0)) / lam, ticks: fringeTicks(y1, k, n), T: L0 / C_LIGHT, f: C_LIGHT / lam, Lm: L0, marks: o.marks });
+  }
+  // where the order k lies with λ (or d) as answered, in unit
+  const yWith = (k, lam, L0, d, unit) => IW.inUnit((k * lam * L0) / d, unit);
+
+  // the path difference: the screen (or the line of P) in path differences; P at Δs = m·λ, a
+  // ring where the fringe chosen lies (and Δs as answered)
+  path.watch = (p) => ifWatch({ kind: p.sound ? 'speakers' : 'slits', N: 2, flat: true, Y: 4.3, unit: 'ds', g: (y) => 2 * Math.PI * y,
+    ticks: [1, 2, 3, 4].flatMap((j) => [[j, `${j === 1 ? '' : j}${it$('λ')}`], [-j, '']]), P: p.m,
+    T: p.sound ? (p.r1 + p.m * p.lam) / C_SOUND : null, f: (p.sound ? C_SOUND : C_LIGHT) / p.lam,
+    marks: (w, get) => {
+      const out = [], m = Number(get('ans')), ds = get('ds');
+      if (p.sound && Number.isFinite(ds)) out.push(numMark('ds', (ds * 1e-2) / p.lam, `${yourAnswer()}: Δ<i>s</i> = ${IW.num(ds)} cm`));
+      if (get('ans') != null && MS.includes(m)) out.push({ key: 'ans', y: m, ok: m === p.m, say: `${yourAnswer()}: ${fringeName(m, p.sound)}` });
+      return out;
+    } });
+  dsPos.watch = (p) => screenWatch({ lam: p.lam, d: p.d, L: p.L, k: p.k, N: 2, unit: 'mm',
+    marks: (w, get) => [numMark('y', get('y'), `${yourAnswer()}: <i>y</i><sub>${p.k}</sub> = ${IW.num(get('y'))} mm`)] });
+  // the fringe as given; the ring where it would lie with the wavelength answered
+  dsLam.watch = (p) => screenWatch({ lam: p.lam, d: p.d, L: p.L, k: p.k, N: 2, unit: 'mm',
+    marks: (w, get) => { const x = get('lam'), y = yWith(p.k, x * 1e-9, p.L, p.d, 'mm'); return [numMark('lam', y, L(`with your <i>λ</i> = ${IW.num(x)} nm, the bright fringe of order ${p.k} would be at ${IW.num(y)} mm`, `mit deinem <i>λ</i> = ${IW.num(x)} nm wäre der helle Streifen der Ordnung ${p.k} bei ${IW.num(y)} mm`))]; } });
+  grating.watch = (p) => screenWatch({ lam: p.lam, d: 1e-3 / p.n, L: p.L, k: p.k, N: 8, unit: 'cm',
+    marks: (w, get) => {
+      const x = get('d'), yd = yWith(p.k, p.lam, p.L, x * 1e-6, 'cm');
+      return [numMark('d', yd, L(`with your <i>d</i> = ${IW.num(x)} μm, the maximum of order ${p.k} would be at ${IW.num(yd)} cm`, `mit deinem <i>d</i> = ${IW.num(x)} μm wäre das Maximum der Ordnung ${p.k} bei ${IW.num(yd)} cm`)),
+        numMark('y', get('y'), `${yourAnswer()}: <i>y</i><sub>${p.k}</sub> = ${IW.num(get('y'))} cm`)];
+    } });
+  // all the orders, up to sin α = 1: the ring at sin α₁, and at the highest order chosen (at the
+  // edge, sin α = 1, if that order would need a larger sine)
+  gratingMax.watch = (p, v) => ifWatch({ kind: 'grating', N: 8, on: 4, flat: false, Y: 1, unit: '', g: (s) => (2 * Math.PI * s) / v.s,
+    ticks: [[1, '1'], [-1, '−1'], ...Array.from({ length: Number(v.kmax) }, (z, j) => [(j + 1) * v.s, `${it$('k')} = ${j + 1}`])], T: null, f: C_LIGHT / p.lam,
+    marks: (w, get) => {
+      const out = [numMark('s', get('s'), `${yourAnswer()}: sin <i>α</i><sub>1</sub> = ${IW.num(get('s'))}`)], k = Number(get('kmax'));
+      if (get('kmax') != null && k > 0) {
+        const s = k * v.s;
+        out.push({ key: 'kmax', y: Math.min(1, s), ok: String(k) === v.kmax, say: s > 1 ? L(`your highest order ${k}: it would need sin <i>α</i> = ${IW.num(sig(s))}, more than 1`, `deine höchste Ordnung ${k}: Sie bräuchte sin <i>α</i> = ${IW.num(sig(s))}, mehr als 1`) : L(`your highest order: ${k}`, `deine höchste Ordnung: ${k}`) });
+      }
+      return out;
+    } });
+
   const SCENARIOS = [gap, path, dsPos, dsLam, grating, gratingMax, change, single, resChange, resScale, resFar, conceptOf('huy'), conceptOf('ds'), conceptOf('pat'), conceptOf('res')];
 
-  root.Scenarios = { SCENARIOS, SETUPS, CONCEPTS, RES, GAP_MEDIA };
+  root.Scenarios = { SCENARIOS, SETUPS, CONCEPTS, RES, GAP_MEDIA, ifWatch };
   if (typeof module !== 'undefined') module.exports = root.Scenarios;
 })(typeof window !== 'undefined' ? window : globalThis);

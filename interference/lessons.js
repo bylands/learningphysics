@@ -1,7 +1,8 @@
 // The tutor's worked examples and the topics of practice. An example introduces its idea in a few
 // frames (intro), then works an exercise of one of the types of scenarios.js (scenario, with its
 // parameters p) step by step. A topic of practice (see topics.js) has stages, from exercises like
-// the example to variations with new ideas, and the example it belongs to (example(stage)).
+// the example to variations with new ideas, and the example it belongs to (example(stage)). Two
+// examples end with a frame to watch the pattern build up (watch; see generator.js).
 (function (root) {
   'use strict';
 
@@ -25,7 +26,7 @@
       ],
     },
     {
-      scenario: 'ds-pos', p: { lam: 600e-9, d: 0.3e-3, L: 2, k: 2 },
+      scenario: 'ds-pos', p: { lam: 600e-9, d: 0.3e-3, L: 2, k: 2 }, watch: true,
       name: () => L('The double slit', 'Der Doppelspalt'),
       idea: () => L('Bright where the path difference is a whole number of wavelengths: d·sin α = k·λ. For small angles sin α ≈ y/L, so the bright fringes are evenly spaced, Δy = λ·L/d.', 'Hell, wo der Gangunterschied eine ganze Zahl von Wellenlängen ist: d·sin α = k·λ. Für kleine Winkel ist sin α ≈ y/L; die hellen Streifen sind also gleichmässig verteilt, Δy = λ·L/d.'),
       intro: [
@@ -36,7 +37,7 @@
       ],
     },
     {
-      scenario: 'grating-max', p: { n: 500, lam: 600e-9, off: 1 },
+      scenario: 'grating-max', p: { n: 500, lam: 600e-9, off: 1 }, watch: true,
       name: () => L('The grating', 'Das Gitter'),
       idea: () => L('A grating has its maxima where a double slit of the same spacing has them, d·sin α = k·λ, but much sharper. With d = 1/n, sin α = k·n·λ, and no order can have sin α above 1.', 'Ein Gitter hat seine Maxima dort, wo ein Doppelspalt mit demselben Abstand sie hat, d·sin α = k·λ, aber viel schärfer. Mit d = 1/n ist sin α = k·n·λ, und keine Ordnung kann sin α über 1 haben.'),
       intro: [
