@@ -36,6 +36,15 @@ svg .halo { fill: var(--glow); }
 svg .lbl { fill: var(--ink); font: italic 15px var(--serif); }
 svg .lbl .sub { font-size: 70%; font-style: normal; }
 svg .plus { fill: var(--ink); font: 13px system-ui, sans-serif; }
+/* changes (predict, then watch): the switch S, an unscrewed bulb's empty socket, the prediction
+   next to each bulb, marked ✓ or ✗ once watched */
+svg .contact { fill: var(--card); stroke: var(--ink); stroke-width: 1.4; }
+svg .socket { fill: none; stroke: var(--muted); stroke-width: 1.6; stroke-dasharray: 3 3; }
+svg .note.pred { fill: var(--ink); }
+svg .note.pred.ok { fill: var(--ok); }
+svg .note.pred.bad { fill: var(--bad); }
+#task.change .fig.ref { display: none; }
+#figure .pw .fig { margin: 0; }
 
 /* answers: one row per bulb */
 #fields { display: grid; gap: 8px; margin-bottom: 16px; }

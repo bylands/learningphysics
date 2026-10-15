@@ -1621,6 +1621,41 @@ class Service(unittest.TestCase):
         self.assertEqual(self.req("/api/sets", cookie=anna)[0], 403)
         self.assertEqual(self.req("/static/accounts.js")[0], 200)
 
+    def test_stats(self):
+        boss = self.cookie_of("samuel.byland", "teacher pw")
+        pw = self.teachers({"action": "create", "id": "abc", "user": "anna", "first": "Anna", "school": "KS X"}, boss)[1]["password"]
+        self.teachers({"action": "create", "id": "xyz", "user": "xaver"}, boss)
+        anna = self.cookie_of("anna", pw)
+        self.assertEqual(self.req("/api/stats")[0], 403)
+        self.assertEqual(self.req("/api/stats", cookie=anna)[0], 403)  # the superuser's only
+        sets = {"sets": {"3a": {"title": "3a", "apps": [{"id": "torque", "modes": ["tutor"]}, {"id": "photons", "modes": ["check"]}]},
+                         "3b": {"title": "3b", "apps": [{"id": "torque", "modes": ["check"]}]}}}
+        self.assertEqual(self.req("/api/sets", json.dumps(sets).encode(), "application/json", anna)[0], 200)
+        H.write_config(self.admin.sheets_file, {"sheets": {"0123456789ab": {"title": "A", "updated": 1700000000, "token": "t" * 32},
+                                                           "0123456789ac": {"title": "B", "updated": 1700000500, "token": None}}})
+        st, _, body = self.req("/api/stats", cookie=boss)
+        self.assertEqual(st, 200)
+        d = json.loads(body)
+        rows = {t["id"]: t for t in d["teachers"]}
+        self.assertEqual([t["id"] for t in d["teachers"]], ["bys", "abc", "xyz"])
+        self.assertEqual({k: rows["abc"][k] for k in ("user", "first", "school", "sets", "apps", "sheets", "active")},
+                         {"user": "anna", "first": "Anna", "school": "KS X", "sets": 2, "apps": 2, "sheets": 0, "active": True})
+        self.assertGreater(rows["abc"]["seen"], 0)
+        self.assertGreater(rows["abc"]["sets_saved"], 0)
+        self.assertEqual((rows["xyz"]["seen"], rows["xyz"]["active"], rows["xyz"]["sets"]), (0, False, 0))  # never logged in
+        self.assertEqual((rows["bys"]["sheets"], rows["bys"]["shared"], rows["bys"]["sheets_saved"], rows["bys"]["active"]), (2, 1, 1700000500, True))
+        self.assertEqual(d["totals"], {"teachers": 3, "active": 2, "with_sets": 1, "sets": 2, "sheets": 2, "shared": 1})
+        self.assertNotIn("hash", body.decode())
+        # a visit is written at most every SEEN_EVERY seconds; the login still works after it
+        before = self.admin.teachers_file.stat().st_mtime_ns
+        self.req("/api/sets", cookie=anna)
+        self.assertEqual(self.admin.teachers_file.stat().st_mtime_ns, before)
+        self.assertEqual(self.req("/api/sets", cookie=anna)[0], 200)
+        self.cookie_of("anna", pw)
+        st, _, body = self.req("/", cookie=boss)
+        self.assertIn(b'id="view-stats"', body)
+        self.assertNotIn(b'id="view-stats"', self.req("/", cookie=anna)[2])
+
     def test_me_and_crosswords(self):
         st, headers, _ = self.req("/login", b"user=samuel.byland&password=teacher pw", "application/x-www-form-urlencoded")
         self.assertIn("Path=/;", headers["Set-Cookie"])  # the whole site: the crossword generator asks /api/me

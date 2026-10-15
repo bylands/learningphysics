@@ -287,7 +287,226 @@
       b.steps.every((s, k) => s.group === c.steps[k].group && canon(s.part) === canon(c.steps[k].part));
   }
 
-  const api = { LEVELS, ANSWERS, PS, generate, make, diagnose, sameSpot, bulbsIn, canon, compare, ftext, cmp, isExact, isZero, ONE };
+  // ---------------------------------------------------------------- changes (predict, then watch)
+  // A change is made to a circuit: a switch S is closed or opened, or a bulb is unscrewed. How does
+  // each bulb's brightness change: brighter, the same ('equal'), less bright, or off? The switch is
+  // a node { t: 'K', closed } (its state before the change): across a part (P(part, K): closed, it
+  // bridges the part) or in series with a branch of a parallel group (S(K, …)). An unscrewed bulb
+  // is a bulb node with out: true.
+  // The answers are decided twice: by reasoning (effect(): which part now lets more or less current
+  // through at the same voltage, and the voltage divider from the batteries inwards), and by the
+  // voltages of bulbs with I ∝ V^p for every p of PS; only circuits where the two agree are used.
+  const CHANGE_LEVELS = {
+    easy: { name: 'Easy', bulbs: [2, 3], flat: true, packs: ['1', '1', 'S2'], kinds: ['unscrew', 'unscrew', 'bridge', 'branch'] },
+    medium: { name: 'Medium', bulbs: [3, 3], packs: ['1', '1', 'S2'], kinds: ['unscrew', 'unscrew', 'bridge', 'bridge', 'branch'] },
+    hard: { name: 'Hard', bulbs: [3, 4], packs: ['1', 'S2', 'S2', 'S3'], kinds: ['unscrew', 'unscrew', 'bridge', 'branch'] },
+  };
+  const FILAMENT = 0.6; // the bulbs of the animation: I ∝ V^0.6, so P ∝ V^1.6
+
+  // The circuit before (after = false) or after the change: a closed switch is a wire, an open
+  // switch or an unscrewed bulb leaves a gap; a chain with a gap, or a group of gaps, is a gap
+  // (null). Bulb nodes are kept as they are (with their numbers).
+  function resolve(node, after) {
+    if (node.t === 'L') return after && node.out ? null : node;
+    if (node.t === 'W') return node;
+    if (node.t === 'K') return (after ? !node.closed : node.closed) ? { t: 'W' } : null;
+    const kids = node.kids.map((k) => resolve(k, after));
+    if (node.t === 'S') return kids.includes(null) ? null : { t: 'S', kids };
+    const live = kids.filter(Boolean);
+    return live.length ? { t: 'P', kids: live } : null;
+  }
+
+  // The voltage across every bulb (in units of V0) for bulbs with I = V^p, the load (resolved, or
+  // null: no current) on the voltage E; n bulbs in all, those outside the load get 0.
+  function bulbVolts(load, E, p, n) {
+    const out = new Array(n).fill(0);
+    if (!load) return out;
+    (function walk(node, V) {
+      if (node.t === 'L') { out[node.i] = V; return; }
+      if (node.t === 'W') return;
+      if (shorted(node)) { node.kids.forEach((k) => walk(k, 0)); return; }
+      if (node.t === 'P') { node.kids.forEach((k) => walk(k, V)); return; }
+      const I = conductance(node, p) * Math.pow(V, p);
+      node.kids.forEach((k) => walk(k, shorted(k) ? 0 : Math.pow(I / conductance(k, p), 1 / p)));
+    })(load, E);
+    return out;
+  }
+  // “Fixed current” model: the batteries drive the same current, whatever the load (1 here),
+  // passed on in series and split in parallel; the voltage across every bulb.
+  function fixedVolts(load, p, n) {
+    const out = new Array(n).fill(0);
+    if (!load) return out;
+    (function walk(node, I) {
+      if (node.t === 'L') { out[node.i] = Math.pow(I, 1 / p); return; }
+      if (node.t === 'W') return;
+      if (node.t === 'S') { node.kids.forEach((k) => walk(k, I)); return; }
+      if (shorted(node)) { node.kids.forEach((k) => walk(k, 0)); return; }
+      const K = node.kids.map((k) => conductance(k, p)), sum = K.reduce((a, b) => a + b, 0);
+      node.kids.forEach((k, j) => walk(k, (I * K[j]) / sum));
+    })(load, 1);
+    return out;
+  }
+  // brighter, equal, dimmer or off: the voltage after (a) against before (b)
+  const changeOf = (b, a) => (a < 1e-9 ? 'off' : Math.abs(a - b) <= 1e-9 * Math.max(1, a, b) ? 'equal' : a > b ? 'brighter' : 'dimmer');
+  // the same answer for every characteristic, or null
+  function decided(f) {
+    const per = PS.map(f);
+    return per[0].map((a, i) => (per.every((x) => x[i] === a) ? a : null));
+  }
+
+  const WORD = { 1: 'brighter', 0: 'equal', '-1': 'dimmer' };
+  // a voltage that rises (+1), stays (0) or falls (−1), with a share of it that grows (+1),
+  // stays or shrinks: the change of the part's voltage, or null if it is not decided
+  const combine = (a, b) => (a === 0 ? b : b === 0 || a === b ? a : null);
+
+  // The reasoning, from the change outwards and then from the batteries inwards: per bulb the
+  // answer and why (by: 'gone' the unscrewed bulb, 'chain' in series with the gap, 'bridged' by the
+  // closed switch, 'joined' its branch connected or no longer bridged, 'level' a part beside the
+  // path from the batteries to the change (step k of story), 'inside' another branch of the group
+  // that changed), and the story: { kind: 'open' | 'close' | 'bridge' | 'unbridge', x (the switch
+  // or bulb), part (what goes off or comes on), group (the part whose current changes, at the same
+  // voltage: delta +1 more, −1 less) }, then for every group from the batteries down to it
+  // { kind: 'series' | 'parallel', group, part (on the way to the change), others, dA, dD, dS }:
+  // the voltage changes of the group, the part and the others. Null if not decided, or if the
+  // change cuts off the whole circuit or would short-circuit the batteries.
+  function effect(load) {
+    const par = new Map();
+    let x = null;
+    (function walk(node) {
+      if (node.t === 'K' || node.out) x = node;
+      (node.kids || []).forEach((k) => { par.set(k, node); walk(k); });
+    })(load);
+    if (!x) return null;
+    const n = bulbsIn(load).length, ans = new Array(n).fill(null), by = new Array(n).fill(null);
+    const setAll = (node, a, why) => bulbsIn(node).forEach((b) => { if (ans[b.i] == null) { ans[b.i] = a; by[b.i] = why; } });
+    const top = (node, t) => { while (par.get(node) && par.get(node).t === t) node = par.get(node); return node; };
+    let C, delta, first;
+    if (x.t === 'L' || par.get(x).t === 'S') {
+      // a gap in a chain (or a gap closed): the chain up to its parallel group
+      const B = top(x, 'S'), opens = x.t === 'L' || x.closed;
+      C = par.get(B);
+      if (!C || C.kids.length < 2) return null;
+      if (x.t === 'L') { ans[x.i] = 'off'; by[x.i] = 'gone'; }
+      setAll(B, opens ? 'off' : 'brighter', opens ? 'chain' : 'joined');
+      delta = opens ? -1 : 1;
+      first = { kind: opens ? 'open' : 'close', x, part: B, group: C, delta };
+    } else {
+      // a switch across a part: closed, it bridges its group, and every group in parallel with that
+      const region = top(par.get(x), 'P');
+      if (!par.get(region)) return null;
+      const closes = !x.closed;
+      setAll(region, closes ? 'off' : 'brighter', closes ? 'bridged' : 'joined');
+      C = region;
+      delta = closes ? 1 : -1;
+      first = { kind: closes ? 'bridge' : 'unbridge', x, part: region, group: C, delta };
+    }
+    const path = [];
+    for (let node = C; node; node = par.get(node)) path.unshift(node);
+    const story = [first];
+    let d = 0; // the batteries keep their voltage
+    for (let k = 0; k < path.length - 1; k++) {
+      const A = path[k], D = path[k + 1], others = A.kids.filter((o) => o !== D);
+      let dD = d, dS = d;
+      if (A.t === 'S') { dD = combine(d, -delta); dS = combine(d, delta); }
+      if (dD === null || (dS === null && others.some((o) => bulbsIn(o).length))) return null;
+      others.forEach((o) => setAll(o, WORD[dS], `level${k}`));
+      story.push({ kind: A.t === 'S' ? 'series' : 'parallel', group: A, part: D, others, dA: d, dD, dS });
+      d = dD;
+    }
+    setAll(C, WORD[d], 'inside');
+    first.dC = d;
+    return { ans, by, story };
+  }
+
+  // A change exercise for the batteries packKey and a load with one switch or unscrewed bulb (it
+  // gets arranged and numbered), or null if it is not decided or not usable.
+  function makeChange(packKey, load, id, level) {
+    const pack = PACKS[packKey];
+    arrange(load);
+    const n = number(load);
+    const E = val(emf(pack));
+    const eff = effect(load);
+    if (!eff) return null;
+    const before = resolve(clone(load), false), after = resolve(clone(load), true);
+    if (!before || shorted(before) || (after && shorted(after))) return null;
+    const answers = decided((p) => {
+      const vb = bulbVolts(before, E, p, n), va = bulbVolts(after, E, p, n);
+      return vb.map((v, i) => changeOf(v, va[i]));
+    });
+    if (answers.some((a, i) => a !== eff.ans[i])) return null;
+    const fixed = decided((p) => {
+      const vb = fixedVolts(before, p, n), va = fixedVolts(after, p, n);
+      return vb.map((v, i) => changeOf(v, va[i]));
+    });
+    const power = (l) => bulbVolts(l, E, FILAMENT, n).map((v) => Math.pow(v, 1 + FILAMENT));
+    let x = null;
+    (function walk(node) { if (node.t === 'K' || node.out) x = node; (node.kids || []).forEach(walk); })(load);
+    const bulbs = answers.map((a, i) => ({
+      name: `L${i + 1}`, answer: a, by: eff.by[i], gone: x.t === 'L' && x.i === i,
+      models: { fixedCurrent: fixed[i] },
+    }));
+    const kind = x.t === 'L' ? 'unscrew' : eff.story[0].kind; // unscrew, open, close, bridge, unbridge
+    const asked = bulbs.filter((b) => !b.gone).length;
+    const d = Math.max(1, Math.min(5, asked - 1 + (depth(load) >= 3 ? 1 : 0) + (eff.story.length > 2 ? 1 : 0) + (kind === 'unbridge' || kind === 'open' ? 1 : 0)));
+    return {
+      id, level, change: kind, packKey, pack: clone(pack), load, bulbs, E: emf(pack), reversed: false,
+      story: eff.story, x, power: { before: power(before), after: power(after) }, difficulty: d,
+    };
+  }
+  const val = (f) => f.n / f.d;
+
+  // level: easy, medium, hard, or mixed (one of them at random). Easy: bulbs only in series or only
+  // in parallel; beyond, not every bulb asked gets the same answer.
+  function generateChange(level, seed) {
+    const r = rng(seed);
+    const lvName = level === 'mixed' ? r.pick(['easy', 'medium', 'hard']) : level;
+    const lv = CHANGE_LEVELS[lvName];
+    const packKey = r.pick(lv.packs);
+    for (let tries = 0; ; tries++) {
+      const n = r.int(lv.bulbs[0], lv.bulbs[1]);
+      const load = lv.flat ? { t: r.pick(['S', 'P']), kids: Array.from({ length: n }, () => ({ t: 'L' })) } : buildLoad(n, null, r);
+      const kind = r.pick(lv.kinds);
+      const nodes = [];
+      (function walk(node, parent, i) { nodes.push({ node, parent, i }); (node.kids || []).forEach((k, j) => walk(k, node, j)); })(load, null, 0);
+      if (kind === 'unscrew') {
+        r.pick(nodes.filter((s) => s.node.t === 'L')).node.out = true;
+      } else if (kind === 'bridge') {
+        const spot = r.pick(nodes.filter((s) => s.parent));
+        spot.parent.kids[spot.i] = { t: 'P', kids: [spot.node, { t: 'K', closed: r.next() < 0.35 }] };
+      } else {
+        const spots = nodes.filter((s) => s.parent && s.parent.t === 'P');
+        if (!spots.length) continue;
+        const spot = r.pick(spots), sw = { t: 'K', closed: r.next() < 0.4 };
+        spot.parent.kids[spot.i] = spot.node.t === 'S' ? { t: 'S', kids: [sw, ...spot.node.kids] } : { t: 'S', kids: [sw, spot.node] };
+      }
+      const ex = makeChange(packKey, load, `change-${level}-${seed}`, lvName);
+      if (!ex) continue;
+      const answers = ex.bulbs.filter((b) => !b.gone).map((b) => b.answer);
+      if (answers.length < 2) continue; // something to predict for at least two bulbs
+      if (lvName !== 'easy' && new Set(answers).size < 2 && tries < 500) continue;
+      if (lvName === 'hard' && ex.story.length < 3 && tries < 200) continue;
+      return ex;
+    }
+  }
+
+  // Why a student may have given `answers` (one per bulb, the unscrewed one left out: null):
+  // 'right' or a misconception: a bridged bulb still lit (short), a bulb in a chain with a gap
+  // still lit (chain), only the bulbs next to the change affected (local), the battery as a source
+  // of fixed current (fixedCurrent), or other.
+  function diagnoseChange(ex, answers) {
+    return ex.bulbs.map((b, i) => {
+      const a = answers[i];
+      if (b.gone || a === b.answer) return 'right';
+      if (b.by === 'bridged' && a !== 'off') return 'short';
+      if (b.by === 'chain' && a !== 'off') return 'chain';
+      if (b.models.fixedCurrent && a === b.models.fixedCurrent) return 'fixedCurrent';
+      if (a === 'equal' && (/^level/.test(b.by) || b.by === 'inside')) return 'local';
+      return 'other';
+    });
+  }
+
+  const api = { LEVELS, ANSWERS, PS, generate, make, diagnose, sameSpot, bulbsIn, canon, compare, ftext, cmp, isExact, isZero, ONE,
+    CHANGE_LEVELS, FILAMENT, generateChange, makeChange, diagnoseChange, resolve, bulbVolts, effect, shorted };
   root.Bulbs = api;
   if (typeof module !== 'undefined') module.exports = api;
 })(typeof window !== 'undefined' ? window : globalThis);

@@ -1,8 +1,8 @@
 (function () {
   'use strict';
 
-  const { ANSWERS, generate, make, diagnose, sameSpot, bulbsIn, canon: canonOf, ftext, cmp, isExact, isZero, ONE } = window.Bulbs;
-  const { circuit } = window.Draw;
+  const { ANSWERS, generate, make, diagnose, sameSpot, bulbsIn, canon: canonOf, ftext, cmp, isExact, isZero, ONE, generateChange, makeChange, diagnoseChange } = window.Bulbs;
+  const { circuit, glow: setGlows } = window.Draw;
   const Lang = window.Lang, Check = window.Check, L = Lang.L;
   const $ = (sel) => document.querySelector(sel);
   const MAX_TRIES = 3;
@@ -14,7 +14,7 @@
       title: 'Bulb Brightness', mode: 'Mode', difficulty: 'Difficulty', example: 'Example',
       tutor: 'Tutor', practice: 'Practice', checkMode: 'Check', new: 'New exercise',
       tutorNote: 'Use the arrow keys ← → to step through. In the diagram, the <span class="k-light">dashed box</span> marks the part whose voltage is being shared, the <span class="k-strong">highlights</span> mark the parts it is shared among, and each part shows its voltage as soon as it is known.',
-      task: 'How bright are the bulbs?',
+      task: 'How bright are the bulbs?', taskChange: 'What changes?',
       introShow: 'Instructions',
       taskText: 'All batteries are identical, and so are all bulbs. Compare each bulb with the reference circuit: one bulb connected to one battery. Is it brighter, equally bright, less bright, or off?',
       reference: 'Reference', yours: 'Your circuit', circuit: 'Circuit',
@@ -34,7 +34,7 @@
       title: 'Helligkeit von Lampen', mode: 'Modus', difficulty: 'Schwierigkeit', example: 'Beispiel',
       tutor: 'Tutor', practice: 'Üben', checkMode: 'Check', new: 'Neue Aufgabe',
       tutorNote: 'Mit den Pfeiltasten ← → blätterst du weiter. Im Schaltbild markiert der <span class="k-light">gestrichelte Rahmen</span> den Teil, dessen Spannung aufgeteilt wird, die <span class="k-strong">Hervorhebungen</span> markieren die Teile, auf die sie aufgeteilt wird, und jeder Teil zeigt seine Spannung, sobald sie bekannt ist.',
-      task: 'Wie hell leuchten die Lampen?',
+      task: 'Wie hell leuchten die Lampen?', taskChange: 'Was ändert sich?',
       introShow: 'Anleitung',
       taskText: 'Alle Batterien sind gleich, ebenso alle Lampen. Vergleiche jede Lampe mit der Vergleichsschaltung: eine Lampe an einer Batterie. Leuchtet sie heller, gleich hell, weniger hell, oder ist sie aus?',
       reference: 'Vergleich', yours: 'Deine Schaltung', circuit: 'Schaltung',
@@ -53,8 +53,14 @@
   };
   const ui = () => UI[Lang.get()];
   const WORDS = () => ({ brighter: L('brighter', 'heller'), equal: L('equally bright', 'gleich hell'), dimmer: L('less bright', 'weniger hell'), off: L('off', 'aus') });
+  // after a change, compared with before (change exercises), and as a mark next to a bulb
+  const CWORDS = () => ({ brighter: L('brighter', 'heller'), equal: L('the same', 'gleich'), dimmer: L('less bright', 'weniger hell'), off: L('off', 'aus') });
+  const SIGN = { brighter: '↑', equal: '=', dimmer: '↓', off: '○' };
+  const legend = () => ANSWERS.map((a) => `${SIGN[a]} ${CWORDS()[a]}`).join(' · ');
+  const wordsOf = (e) => (e && e.change ? CWORDS() : WORDS());
 
   let ex = null, st = null, tutor = null, checker = null, topics = null;
+  let player = null, tutorPlayer = null, tutorEx = null; // the players of change exercises (play.js)
 
   // ---------------------------------------------------------------- folded introductions
   const SMALL = window.matchMedia('(max-width: 640px)');
@@ -237,23 +243,205 @@
     try { return f(); } finally { ex = saved; }
   }
 
+  // ---------------------------------------------------------------- changes: text
+  // Change exercises (generateChange in generator.js): a switch is closed or opened, or a bulb is
+  // unscrewed; the student predicts how each bulb's brightness changes, then flips the switch in
+  // the figure and watches (play.js).
+  // A part without its switch, for its name: S(K, L2) is L2, P(X, K) is X.
+  function plain(node) {
+    if (!node.kids) return node;
+    const kids = node.kids.filter((k) => k.t !== 'K').map(plain);
+    return kids.length === 1 ? kids[0] : { ...node, kids };
+  }
+  const pname = (part, c) => name(plain(part), c);
+  const pnames = (parts, c) => and(parts.filter((p) => bulbsIn(p).length).map((p) => pname(p, c)));
+  const switchOf = (e) => (e.x.t === 'K' ? 'S' : it(e.bulbs[e.x.i].name));
+  // the change, as it is announced in the task
+  function changeText(e) {
+    const b = e.x.t === 'L' ? it(e.bulbs[e.x.i].name) : '';
+    return {
+      unscrew: L(`The bulb ${b} is unscrewed.`, `Die Lampe ${b} wird herausgeschraubt.`),
+      open: L('The switch S is opened.', 'Der Schalter S wird geöffnet.'),
+      close: L('The switch S is closed.', 'Der Schalter S wird geschlossen.'),
+      bridge: L('The switch S is closed.', 'Der Schalter S wird geschlossen.'),
+      unbridge: L('The switch S is opened.', 'Der Schalter S wird geöffnet.'),
+    }[e.change];
+  }
+  const taskTextChange = (e) => L(`All batteries are identical, and so are all bulbs. ${changeText(e)} How does the brightness of each bulb change: is it brighter than before, the same, less bright, or off? Predict, check your answer, then make the change in the figure and watch.`,
+    `Alle Batterien sind gleich, ebenso alle Lampen. ${changeText(e)} Wie ändert sich die Helligkeit jeder Lampe: Leuchtet sie heller als vorher, gleich, weniger hell, oder ist sie aus? Sag es voraus, prüfe deine Antwort, dann nimm die Änderung im Schaltbild vor und schau zu.`);
+
+  const MORE = () => ({ 1: L('more', 'mehr'), '-1': L('less', 'weniger') });
+  const VCHANGE = () => ({ 1: L('rises', 'steigt'), 0: L('stays the same', 'bleibt gleich'), '-1': L('falls', 'sinkt') });
+  // What the change does to the part it is in (the first step of the story).
+  function firstText(e) {
+    const f = e.story[0], part = f.part, group = f.group;
+    const offs = bulbsIn(part).filter((b) => !(e.x.t === 'L' && b === e.x)).map((b) => it(`L${b.i + 1}`));
+    const also = offs.length ? L(`, so ${and(offs)}, in series with it, ${offs.length > 1 ? 'go' : 'goes'} off too`, `, also ${offs.length > 1 ? 'gehen' : 'geht'} auch ${and(offs)} in Serie dazu aus`) : '';
+    const fewer = L(`${cap(pname(group))} has one branch less: at the same voltage, it lets less current through.`, `${cap(pname(group))} hat einen Zweig weniger: Bei gleicher Spannung lässt sie weniger Strom durch.`);
+    switch (f.kind) {
+      case 'open':
+        if (e.x.t === 'L') return `${L(`Unscrewing ${switchOf(e)} leaves a gap: no current flows through its place${also}.`, `Wird ${switchOf(e)} herausgeschraubt, entsteht eine Lücke: Durch diese Stelle fliesst kein Strom${also}.`)} ${fewer}`;
+        return `${L(`Opening the switch S cuts the branch of ${pname(part)}: no current flows through it any more: off.`, `Das Öffnen des Schalters S unterbricht den Zweig von ${pname(part, 'dat')}: Es fliesst kein Strom mehr hindurch: aus.`)} ${fewer}`;
+      case 'close':
+        return L(`Closing the switch S connects the branch of ${pname(part)}: current flows through it now, so it lights up (it was off before). ${cap(pname(group))} has one branch more: at the same voltage, it lets more current through.`,
+          `Das Schliessen des Schalters S verbindet den Zweig von ${pname(part, 'dat')}: Jetzt fliesst Strom hindurch, er leuchtet also auf (vorher war er aus). ${cap(pname(group))} hat einen Zweig mehr: Bei gleicher Spannung lässt sie mehr Strom durch.`);
+      case 'bridge':
+        return L(`Closing the switch S bridges ${pname(part)} with a wire: the current takes the wire, so there is no voltage across ${pname(part)}: off. That part of the circuit now lets current through without needing any voltage.`,
+          `Das Schliessen des Schalters S überbrückt ${pname(part)} mit einem Draht: Der Strom nimmt den Draht, also liegt an ${pname(part)} keine Spannung an: aus. Dieser Teil der Schaltung lässt jetzt Strom durch, ohne dass es dafür Spannung braucht.`);
+      default: // unbridge
+        return L(`Opening the switch S removes the wire across ${pname(part)}: current flows through ${pname(part)} now, so it lights up (it was off before). That part of the circuit now needs a voltage for its current: at the same voltage, it lets less current through than the wire did.`,
+          `Das Öffnen des Schalters S entfernt den Draht parallel zu ${pname(part)}: Jetzt fliesst Strom durch ${pname(part)}, also leuchtet sie auf (vorher war sie aus). Dieser Teil der Schaltung braucht jetzt eine Spannung für seinen Strom: Bei gleicher Spannung lässt er weniger Strom durch als der Draht.`);
+    }
+  }
+  // One step from the batteries inwards: how a group's voltage is shared after the change.
+  function levelText(e, s, k) {
+    const delta = e.story[0].delta, part = pname(s.part), others = pnames(s.others), whole = k === 1;
+    const of = whole ? L('of the batteries', 'der Batterien') : L(`across ${pname(s.group)}`, `über ${pname(s.group, 'dat')}`);
+    const start = whole ? L(`The batteries keep their voltage, ${volts(e.E)}. `, `Die Batterien behalten ihre Spannung, ${volts(e.E)}. `) : '';
+    if (s.kind === 'parallel') {
+      return start + L(`${cap(part)} is in parallel with ${others}: they have the same voltage, the voltage ${of}, which ${VCHANGE()[s.dA]}.`,
+        `${cap(part)} ist parallel zu ${pnames(s.others, 'dat')}: Sie haben dieselbe Spannung, die Spannung ${of}, und diese ${VCHANGE()[s.dA]}.`);
+    }
+    const bigger = delta < 0, many = s.others.filter((x) => bulbsIn(x).length).length > 1 || bulbsIn(s.others[0] || {}).length > 1;
+    if (e.story[0].kind === 'bridge' && s.part === e.story[0].part) {
+      return start + L(`${cap(part)} is in series with ${others}. Bridged, ${part} takes no share of the voltage ${of} any more, and ${others} ${many ? 'get' : 'gets'} all of it (voltage divider)${s.dA ? `, while the voltage ${of} itself ${VCHANGE()[s.dA]}` : ''}. So the voltage across ${others} ${VCHANGE()[s.dS]}, and the voltage across ${part} drops to zero.`,
+        `${cap(part)} ist in Serie mit ${pnames(s.others, 'dat')}. Überbrückt bekommt ${part} keinen Teil der Spannung ${of} mehr, und ${others} ${many ? 'bekommen' : 'bekommt'} sie ganz (Spannungsteiler)${s.dA ? `, während die Spannung ${of} selbst ${VCHANGE()[s.dA]}` : ''}. Also ${VCHANGE()[s.dS]} die Spannung über ${pnames(s.others, 'dat')}, und die Spannung über ${pname(s.part, 'dat')} sinkt auf null.`);
+    }
+    return start + L(`${cap(part)} is in series with ${others}. It now lets ${MORE()[delta]} current through at the same voltage, but the same current flows through ${s.others.length > 1 ? 'all of them' : 'both'}, so it takes a ${bigger ? 'larger' : 'smaller'} share of the voltage ${of}, and ${others} a ${bigger ? 'smaller' : 'larger'} share (voltage divider)${s.dA ? `, while the voltage ${of} itself ${VCHANGE()[s.dA]}` : ''}. So the voltage across ${others} ${VCHANGE()[s.dS]}, and the voltage across ${part} ${VCHANGE()[s.dD]}.`,
+      `${cap(part)} ist in Serie mit ${pnames(s.others, 'dat')}. Bei gleicher Spannung lässt dieser Teil jetzt ${MORE()[delta]} Strom durch, durch ${s.others.length > 1 ? 'alle' : 'beide'} fliesst aber derselbe Strom, also bekommt er einen ${bigger ? 'grösseren' : 'kleineren'} Teil der Spannung ${of} und ${others} einen ${bigger ? 'kleineren' : 'grösseren'} (Spannungsteiler)${s.dA ? `, während die Spannung ${of} selbst ${VCHANGE()[s.dA]}` : ''}. Also ${VCHANGE()[s.dS]} die Spannung über ${pnames(s.others, 'dat')}, und die Spannung über ${pname(s.part, 'dat')} ${VCHANGE()[s.dD]}.`);
+  }
+  // Inside the group that changed: its other branches follow its voltage.
+  function insideText(e) {
+    const f = e.story[0], rest = f.group.kids.filter((k) => k !== f.part && bulbsIn(k).length);
+    if (!rest.length || f.kind === 'bridge' || f.kind === 'unbridge') return '';
+    const many = rest.length > 1;
+    return L(`${cap(pnames(rest))}, the other branch${many ? 'es' : ''} of ${pname(f.group)}, ${many ? 'get' : 'gets'} the voltage across the group, which ${VCHANGE()[f.dC]}.`,
+      `${cap(pnames(rest))}, ${many ? 'die anderen Zweige' : 'der andere Zweig'} von ${pname(f.group, 'dat')}, ${many ? 'bekommen' : 'bekommt'} die Spannung über der Gruppe, und diese ${VCHANGE()[f.dC]}.`);
+  }
+  // Why a bulb changes as it does, in a few words (the solution's list).
+  function bulbWhy(e, b) {
+    const k = /^level(\d+)$/.exec(b.by || '');
+    const w = `<b>${CWORDS()[b.answer]}</b>`;
+    if (b.by === 'chain') return L(`in series with the gap, no current: ${w}`, `in Serie mit der Lücke, kein Strom: ${w}`);
+    if (b.by === 'bridged') return L(`bridged by the closed switch, no voltage: ${w}`, `durch den geschlossenen Schalter überbrückt, keine Spannung: ${w}`);
+    if (b.by === 'joined') return L(`it was off, now current flows through it: ${w}`, `sie war aus, jetzt fliesst Strom hindurch: ${w}`);
+    const d = k ? e.story[Number(k[1]) + 1].dS : e.story[0].dC;
+    return L(`its voltage ${VCHANGE()[d]}: ${w}`, `ihre Spannung ${VCHANGE()[d]}: ${w}`);
+  }
+  function changeSolution(e) {
+    const steps = [firstText(e), ...e.story.slice(1).map((s, k) => levelText(e, s, k + 1)), insideText(e)].filter(Boolean);
+    return `<p>${L('A bulb is the brighter, the more voltage it gets. The batteries keep their voltage; what changes is how it is shared. Start at the change, then go from the batteries inwards.', 'Eine Lampe leuchtet umso heller, je mehr Spannung sie bekommt. Die Batterien behalten ihre Spannung; was sich ändert, ist, wie sie aufgeteilt wird. Beginne bei der Änderung und gehe dann von den Batterien nach innen.')}</p>` +
+      steps.map((t) => `<p>${t}</p>`).join('') +
+      `<ul>${e.bulbs.filter((b) => !b.gone).map((b) => `<li>${it(b.name)}: ${bulbWhy(e, b)}.</li>`).join('')}</ul>`;
+  }
+  function changeHints(e) {
+    return [
+      L('The batteries keep their voltage. Find the part of the circuit the change affects directly: at the same voltage, does it now let more or less current through?', 'Die Batterien behalten ihre Spannung. Finde den Teil der Schaltung, den die Änderung direkt betrifft: Lässt er bei gleicher Spannung jetzt mehr oder weniger Strom durch?'),
+      firstText(e),
+      ...(e.story.length > 1 ? [`${L('From the batteries inwards', 'Von den Batterien nach innen')}: ${levelText(e, e.story[1], 1)}`] : []),
+    ];
+  }
+  // What a wrong prediction suggests (diagnoseChange); a nudge while the exercise is open.
+  function whyChange(code, b, nudge = !!st && !st.solved && !st.revealed) {
+    const n = it(b.name), k = /^level(\d+)$/.exec(b.by || ''), d = k ? ex.story[Number(k[1]) + 1].dS : b.by === 'inside' ? ex.story[0].dC : null;
+    if (nudge) {
+      const msg = {
+        short: L(`Follow the wires around ${n} once the switch is closed: does the current have to pass through ${n}?`, `Verfolge die Drähte um ${n}, wenn der Schalter geschlossen ist: Muss der Strom durch ${n} hindurch?`),
+        chain: L(`${n} is in series with the gap: can any current flow through it?`, `${n} ist in Serie mit der Lücke: Kann überhaupt Strom hindurchfliessen?`),
+        local: L(`The change affects the whole circuit, not only the bulbs next to it: does the voltage across ${n} stay the same?`, `Die Änderung betrifft die ganze Schaltung, nicht nur die Lampen daneben: Bleibt die Spannung an ${n} gleich?`),
+        fixedCurrent: L('Does a battery deliver a fixed current, or a fixed voltage?', 'Liefert eine Batterie einen festen Strom oder eine feste Spannung?'),
+      }[code];
+      if (msg) return msg;
+    }
+    return {
+      short: L(`${n} is bridged by the closed switch: the current takes the wire, so there is no voltage across ${n}: it is off.`, `${n} ist durch den geschlossenen Schalter überbrückt: Der Strom nimmt den Draht, also liegt an ${n} keine Spannung an: Sie ist aus.`),
+      chain: L(`${n} is in series with the gap: no current can flow through it, so it is off.`, `${n} ist in Serie mit der Lücke: Es kann kein Strom hindurchfliessen, also ist sie aus.`),
+      local: L(`The part with the change now lets ${MORE()[ex.story[0].delta]} current through, so the voltage is shared differently (voltage divider): the voltage across ${n} ${VCHANGE()[d == null ? 0 : d]}.`, `Der Teil mit der Änderung lässt jetzt ${MORE()[ex.story[0].delta]} Strom durch, also wird die Spannung anders aufgeteilt (Spannungsteiler): Die Spannung an ${n} ${VCHANGE()[d == null ? 0 : d]}.`),
+      fixedCurrent: L('A battery does not deliver a fixed current; it keeps a fixed voltage. ', 'Eine Batterie liefert keinen festen Strom, sondern eine feste Spannung. ') + (b.answer === 'equal'
+        ? L(`${n} gets the same voltage as before, whatever happens in the other branches.`, `${n} bekommt dieselbe Spannung wie vorher, was auch immer in den anderen Zweigen geschieht.`)
+        : L(`What changes is how that voltage is shared: the voltage across ${n} ${VCHANGE()[d == null ? 0 : d]}.`, `Was sich ändert, ist, wie diese Spannung aufgeteilt wird: Die Spannung an ${n} ${VCHANGE()[d == null ? 0 : d]}.`)),
+      other: L(`Does ${n} get more or less voltage than before? Start at the change: which part now lets more or less current through?`, `Bekommt ${n} mehr oder weniger Spannung als vorher? Beginne bei der Änderung: Welcher Teil lässt jetzt mehr oder weniger Strom durch?`),
+    }[code];
+  }
+
+  // ---------------------------------------------------------------- changes: the figure and the player
+  // A bulb's glow from its power (P / P0 of the reference bulb): 0.5 for the reference, towards 1
+  // for much more.
+  const glowOf = (P) => (P > 1e-9 ? 1 - Math.pow(2, -P) : 0);
+  // the filament warms up or cools down: how far the power has gone from before to after (u 0 … 1)
+  const warm = (u) => (u <= 0 ? 0 : u >= 1 ? 1 : (1 - Math.exp(-5 * u)) / (1 - Math.exp(-5)));
+  // The circuit before (after false) or after the change, static, glowing by power; notes: text
+  // under each bulb (null: none).
+  function changeFigure(e, after, notes = [], extra = {}) {
+    const P = after ? e.power.after : e.power.before, x = e.x;
+    return circuit(clone(e.load), clone(e.pack), (i) => ({
+      label: svgName(e.bulbs[i].name), glow: after && e.bulbs[i].gone ? 0 : glowOf(P[i]), gone: after && e.bulbs[i].gone,
+      note: notes[i] || '', noteCls: extra.cls ? extra.cls[i] : '', hit: extra.hit && x.t === 'L' && x.i === i, live: extra.live ? { i } : null,
+    }), { sw: { closed: x.t === 'K' ? (after ? !x.closed : x.closed) : false, hit: extra.hit && x.t === 'K' }, margin: 1.4 });
+  }
+
+  // The player of a change exercise e in host. o: { locked(), marks() → the predictions [answer
+  // or null per bulb] to mark at the end, or null; show: true for the answers at the end (tutor) }.
+  function mountPlayer(host, e, o = {}) {
+    let key = null;
+    const shownNotes = (s) => e.bulbs.map((b, i) => {
+      if (b.gone) return null;
+      const m = o.marks ? o.marks() : null, a = m && m[i];
+      if (s.end && o.show) return { t: SIGN[b.answer], cls: 'pred' };
+      if (!a) return null;
+      if (!s.end) return { t: SIGN[a], cls: 'pred' };
+      return a === b.answer ? { t: `✓ ${SIGN[a]}`, cls: 'pred ok' } : { t: `✗ ${SIGN[a]}`, cls: 'pred bad' };
+    });
+    return window.Play.create(host, {
+      t0: -0.35, t1: 1, instant: true,
+      locked: o.locked,
+      render(scene, s) {
+        const notes = shownNotes(s), k = `${s.after}|${JSON.stringify(notes)}|${Lang.get()}`;
+        if (k !== key) {
+          key = k;
+          scene.innerHTML = `<figure class="fig">${changeFigure(e, s.after, notes.map((n) => n && n.t), { hit: true, live: true, cls: notes.map((n) => (n ? n.cls : '')) })}<figcaption>${s.after ? L('after the change', 'nach der Änderung') : L('before the change', 'vor der Änderung')}${notes.some(Boolean) ? `<br>${legend()}` : ''}</figcaption></figure>`;
+        }
+        const f = warm(s.u);
+        setGlows(scene, e.power.before.map((pb, i) => glowOf(pb + (e.power.after[i] - pb) * f)));
+      },
+      texts: () => {
+        const unscrew = e.x.t === 'L', b = unscrew ? e.bulbs[e.x.i].name : '';
+        const what = { unscrew: L(`unscrew ${b}`, `${b} herausschrauben`), open: L('open the switch S', 'den Schalter S öffnen'), unbridge: L('open the switch S', 'den Schalter S öffnen'), close: L('close the switch S', 'den Schalter S schliessen'), bridge: L('close the switch S', 'den Schalter S schliessen') }[e.change];
+        return {
+          switch: unscrew ? L(`Bulb ${b}: ${what}`, `Lampe ${b}: ${what}`) : L(`Switch S: ${what.replace(/ the switch S| den Schalter S/, '')}`, `Schalter S: ${what.replace(/den Schalter S /, '')}`),
+          ready: unscrew ? L(`Click the bulb ${b} to unscrew it, and watch the other bulbs.`, `Klicke auf die Lampe ${b}, um sie herauszuschrauben, und schau die anderen Lampen an.`)
+            : L(`Click the switch S to ${what.replace(' the switch S', '')} it, and watch the bulbs.`, `Klicke auf den Schalter S, um ihn zu ${{ open: 'öffnen', unbridge: 'öffnen', close: 'schliessen', bridge: 'schliessen' }[e.change]}, und schau die Lampen an.`),
+          again: o.show ? L('Click it again to go back.', 'Klicke nochmals darauf, um zurückzugehen.')
+            : L('✓ and ✗ next to the bulbs: your prediction. Click again to go back.', '✓ und ✗ neben den Lampen: deine Vorhersage. Klicke nochmals, um zurückzugehen.'),
+        };
+      },
+    });
+  }
+
   // ---------------------------------------------------------------- rendering
   const ref = (glow) => circuit({ t: 'L', i: 0 }, { t: 'B', dir: 1 }, () => ({ label: svgName('L0'), glow }));
   // `glows[i]` is the answer shown for bulb i (none: unlit).
   // asked: the names of the bulbs to mark (the ones a check question is about)
   const taskOf = (e, glows, asked = []) => circuit(clone(e.load), clone(e.pack), (i) => ({ label: svgName(e.bulbs[i].name), glow: GLOW[glows[i]] || 0, asked: asked.includes(e.bulbs[i].name) }));
-  const drawAnswers = () => { $('#figure').innerHTML = taskOf(ex, answers()); };
+  const drawAnswers = () => { if (ex.change) { if (player) player.refresh(); } else $('#figure').innerHTML = taskOf(ex, answers()); };
   const starsOf = (d) => `<span class="stars" role="img" aria-label="${ui().stars(d)}" title="${ui().stars(d)}">${'★'.repeat(d)}${'☆'.repeat(5 - d)}</span>`;
 
   function render() {
-    $('#title').innerHTML = `${ui().task} ${starsOf(ex.difficulty)}`;
-    $('#ref').innerHTML = ref(GLOW.equal);
-    $('#figure').innerHTML = taskOf(ex, []);
-    $('#fields').innerHTML = ex.bulbs.map((b) => `
+    const change = !!ex.change;
+    $('#title').innerHTML = `${change ? ui().taskChange : ui().task} ${starsOf(ex.difficulty)}`;
+    $('#intro p').innerHTML = change ? taskTextChange(ex) : ui().taskText;
+    $('#task').classList.toggle('change', change);
+    $('#ref').innerHTML = change ? '' : ref(GLOW.equal);
+    if (player) player.stop();
+    player = null;
+    $('#figure').parentElement.querySelector('figcaption').hidden = change; // the player has its own
+    if (change) player = mountPlayer($('#figure'), ex, { locked: () => !(st && (st.solved || st.revealed)), marks: answers });
+    else $('#figure').innerHTML = taskOf(ex, []);
+    $('#fields').innerHTML = ex.bulbs.filter((b) => !b.gone).map((b) => `
       <div class="field" data-name="${b.name}">
         <span class="name">${it(b.name)}</span>
         <span class="choices" role="radiogroup" aria-label="${b.name}">${ANSWERS.map((a) => `
-          <label><input type="radio" name="ans-${b.name}" value="${a}"><span>${WORDS()[a]}</span></label>`).join('')}
+          <label><input type="radio" name="ans-${b.name}" value="${a}"><span>${wordsOf(ex)[a]}</span></label>`).join('')}
         </span>
         <span class="fb"></span>
       </div>`).join('');
@@ -266,7 +454,7 @@
     updateButtons();
   }
 
-  const answers = () => ex.bulbs.map((b) => (document.querySelector(`input[name="ans-${b.name}"]:checked`) || {}).value);
+  const answers = () => ex.bulbs.map((b) => (document.querySelector(`input[name="ans-${b.name}"]:checked`) || {}).value || null);
 
   // ---------------------------------------------------------------- exercise lifecycle
   const newSeed = () => 1 + Math.floor(Math.random() * 999999);
@@ -279,6 +467,7 @@
   // wire, else only series, only parallel, or both (mixed).
   const hasWire = (n) => n.t === 'W' || (n.kids || []).some(hasWire);
   function kindOf(e) {
+    if (e.change) return 'change';
     if (e.packKey[0] === 'R') return 'reversed';
     if (hasWire(e.load)) return 'bridged';
     const l = e.load;
@@ -289,6 +478,7 @@
   // from the seed on, of that kind.
   function ofType(type, seed) {
     const [kind, lv] = type.split(':');
+    if (kind === 'change') { const e = generateChange(lv, seed); e.ptype = type; return e; }
     for (let k = 0; ; k++) {
       const e = generate(lv, seed * 1000 + k);
       if (kindOf(e) === kind || k >= 5000) { e.ptype = type; return e; }
@@ -299,13 +489,15 @@
   function open(exercise) {
     finish(); // the student moves on
     ex = exercise;
-    ex.hints = hints();
+    ex.hints = hintsOf();
     st = { tries: 0, hints: 0, solved: false, revealed: false, codes: null };
     const hash = `#${ex.id}`;
     if (location.hash !== hash) history.replaceState(null, '', hash);
     render();
     topics.shown(ex);
   }
+
+  const hintsOf = () => (ex.change ? changeHints(ex) : hints());
 
   // A new exercise of the topic and stage chosen (topics.js), of another type than the current one if possible.
   function fresh() { open(topics.next(ex)); }
@@ -331,36 +523,37 @@
   function showFeedback() {
     const codes = st.codes, status = $('#status');
     if (!codes) return;
-    codes.forEach((c, i) => { document.querySelector(`.field[data-name="${ex.bulbs[i].name}"]`).className = `field ${c === 'right' ? 'ok' : 'bad'}`; });
-    const right = codes.filter((c) => c === 'right').length;
-    if (right === codes.length) {
+    const asked = codes.filter((c, i) => !ex.bulbs[i].gone);
+    codes.forEach((c, i) => { const f = document.querySelector(`.field[data-name="${ex.bulbs[i].name}"]`); if (f) f.className = `field ${c === 'right' ? 'ok' : 'bad'}`; });
+    const right = asked.filter((c) => c === 'right').length;
+    if (right === asked.length) {
       status.textContent = ui().ok + (st.advance ? ` ${st.advance}` : '');
       status.className = 'status ok';
     } else {
-      status.textContent = ui().some(right, codes.length, st.tries) + (canReveal() ? ui().canReveal : ui().tryAgain);
+      status.textContent = ui().some(right, asked.length, st.tries) + (canReveal() ? ui().canReveal : ui().tryAgain);
       status.className = 'status bad';
     }
     const seen = new Map();
     codes.forEach((c, i) => {
       if (c === 'right') return;
-      const key = ['short', 'same', 'other'].includes(c) ? `${c}-${i}` : c;
+      const key = ['short', 'same', 'other', 'chain', 'local'].includes(c) ? `${c}-${i}` : c;
       if (!seen.has(key)) seen.set(key, { c, bulbs: [] });
       seen.get(key).bulbs.push(ex.bulbs[i]);
     });
     $('#feedback').innerHTML = [...seen.values()]
-      .map(({ c, bulbs }) => `<li><b>${and(bulbs.map((b) => it(b.name)))}</b>: ${why(c, bulbs[0])}</li>`).join('');
+      .map(({ c, bulbs }) => `<li><b>${and(bulbs.map((b) => it(b.name)))}</b>: ${ex.change ? whyChange(c, bulbs[0]) : why(c, bulbs[0])}</li>`).join('');
   }
 
   function check() {
     if (st.solved) { fresh(); return; } // the button reads New exercise
     const given = answers();
-    if (given.some((a) => !a)) {
+    if (given.some((a, i) => !a && !ex.bulbs[i].gone)) {
       $('#status').textContent = ui().choose;
       $('#status').className = 'status';
       return;
     }
     st.tries++;
-    st.codes = diagnose(ex, given);
+    st.codes = ex.change ? diagnoseChange(ex, given) : diagnose(ex, given);
     if (st.codes.every((c) => c === 'right')) {
       if (!st.solved && !st.revealed) {
         const s = stored('bb-score', { solved: 0, clean: 0 });
@@ -376,6 +569,7 @@
     }
     showFeedback();
     updateButtons();
+    if (player) player.refresh(); // solved: the switch unlocks
   }
 
   function showHints() {
@@ -391,6 +585,14 @@
   }
 
   function showSolution() {
+    if (ex.change) {
+      const notes = ex.bulbs.map((b) => (b.gone ? null : SIGN[b.answer]));
+      $('#sol-figure').innerHTML = `<figure class="fig">${changeFigure(ex, false)}<figcaption>${L('before the change', 'vor der Änderung')}</figcaption></figure>` +
+        `<figure class="fig">${changeFigure(ex, true, notes, { cls: ex.bulbs.map(() => 'pred') })}<figcaption>${L('after the change', 'nach der Änderung')}<br>${legend()}</figcaption></figure>`;
+      $('#sol-text').innerHTML = changeSolution(ex);
+      $('#solution').hidden = false;
+      return;
+    }
     $('#sol-figure').innerHTML = `<figure class="fig ref">${ref(GLOW.equal)}<figcaption>${ui().reference}</figcaption></figure>` +
       `<figure class="fig">${taskOf(ex, ex.bulbs.map((b) => b.answer))}<figcaption>${ui().yours}</figcaption></figure>`;
     $('#sol-text').innerHTML = solution();
@@ -403,6 +605,7 @@
     showFeedback(); // now with the full explanations
     showSolution();
     updateButtons();
+    if (player) player.refresh(); // the switch unlocks
     $('#solution').scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
@@ -424,6 +627,11 @@
         'Ein Draht parallel zu einer Lampe nimmt den ganzen Strom: Die überbrückte Lampe geht aus, und der Rest der Schaltung bekommt die ganze Spannung.') },
     { name: () => L('Reversed', 'Verkehrt herum'), pack: 'R3', practice: [{ types: ['reversed:medium'] }, { name: () => L('more bulbs', 'mehr Lampen'), types: ['reversed:hard'] }], load: () => Par(Lb(), Ser(Lb(), Lb())),
       idea: () => L('A battery connected the other way round cancels one of the others.', 'Eine verkehrt herum angeschlossene Batterie hebt eine der anderen auf.') },
+    { name: () => L('Changes', 'Änderungen'), pack: '1', change: true,
+      practice: [{ types: ['change:easy'] }, { name: () => L('groups', 'Gruppen'), types: ['change:medium'] }, { name: () => L('more bulbs', 'mehr Lampen'), types: ['change:hard'] }],
+      load: () => Ser(Lb(), Par(Lb(), { t: 'L', out: true })),
+      idea: () => L('Unscrew a bulb or flip a switch, and every bulb can change: the batteries keep their voltage, but it is shared differently. Predict first, then watch.',
+        'Schraubt man eine Lampe heraus oder legt einen Schalter um, kann sich jede Lampe ändern: Die Batterien behalten ihre Spannung, aber sie wird anders aufgeteilt. Erst vorhersagen, dann zuschauen.') },
   ];
 
   // Voltage bounds as a note in the diagram (plain text).
@@ -513,7 +721,32 @@
       return frames;
     });
   }
-  const lessons = () => LESSONS.map((l, i) => ({ name: l.name(), idea: l.idea(), also: topics.also(i), frames: () => lesson(l) }));
+  // A worked example of a change: the circuit before, what the change does, the voltage divider
+  // from the batteries inwards, and then the student makes the change and watches (play.js).
+  function changeLesson(def) {
+    const e = makeChange(def.pack, def.load(), 'tutor', 'tutor');
+    tutorEx = e;
+    return withEx(e, () => {
+      const frames = [];
+      const figure = (o = {}) => `<div class="figs"><figure class="fig">${larger(circuit(e.load, e.pack, (i) => ({
+        label: svgName(e.bulbs[i].name), glow: glowOf(e.power.before[i]), hl: o.hl && o.hl.has(i),
+      }), { zones: o.zones || new Map(), sw: { closed: e.x.t === 'K' && e.x.closed } }), 1.3)}<figcaption>${L('before the change', 'vor der Änderung')}</figcaption></figure></div>`;
+      const frame = (title, text, fig) => frames.push({ text: `<p class="step-rule">${title}</p>${text}`, figure: fig });
+      const f = e.story[0];
+      frame(L('The task', 'Die Aufgabe'), `<p>${L(`All bulbs are identical. ${changeText(e)} How does the brightness of each bulb change?`, `Alle Lampen sind gleich. ${changeText(e)} Wie ändert sich die Helligkeit jeder Lampe?`)}</p><p>${L('Make your prediction for each bulb (brighter, the same, less bright, off) before you read on.', 'Mach für jede Lampe eine Vorhersage (heller, gleich, weniger hell, aus), bevor du weiterliest.')}</p>`, figure());
+      frame(L('At the change', 'Bei der Änderung'), `<p>${firstText(e)}</p>`, figure({ zones: new Map([[f.group, 'light'], [f.part, 'strong']]) }));
+      e.story.slice(1).forEach((s, k) => {
+        const text = levelText(e, s, k + 1) + (k === e.story.length - 2 ? ` ${insideText(e)}` : '');
+        frame(k ? L(`Inside ${pname(s.group)}`, `In ${pname(s.group, 'dat')}`) : L('From the batteries inwards', 'Von den Batterien nach innen'), `<p>${text}</p>`,
+          figure({ zones: new Map([[s.group, 'light'], ...s.others.map((o) => [o, 'strong'])]) }));
+      });
+      const rows = e.bulbs.filter((b) => !b.gone).map((b) => `<li>${it(b.name)}: ${bulbWhy(e, b)}</li>`);
+      frame(L('Watch', 'Zuschauen'), `<p>${L('So:', 'Also:')}</p><ul>${rows.join('')}</ul><p>${L('Now make the change in the figure and watch the bulbs.', 'Nimm jetzt die Änderung im Schaltbild vor und schau den Lampen zu.')}</p>`,
+        '<div class="pw-host"></div>');
+      return frames;
+    });
+  }
+  const lessons = () => LESSONS.map((l, i) => ({ name: l.name(), idea: l.idea(), also: topics.also(i), frames: () => (l.change ? changeLesson(l) : lesson(l)) }));
 
   // ---------------------------------------------------------------- check
   // The learning objectives (check.js), each with the question kinds it is asked about, its worked
@@ -526,7 +759,7 @@
         'Erklären, dass der Strom vor und nach einer Lampe oder einer Gruppe von Lampen gleich gross ist: Er wird nicht verbraucht.') },
     { id: 'power', kinds: ['mixed:medium', 'mixed:hard', 'reversed:medium'], tutor: 2, topic: 2,
       name: () => L('Rank the brightness of bulbs by their power ΔV · I.', 'Die Helligkeit von Lampen nach ihrer Leistung ΔU · I ordnen.') },
-    { id: 'change', kinds: ['series:easy', 'parallel:easy', 'bridged:medium'], tutor: 3, topic: 3,
+    { id: 'change', kinds: ['series:easy', 'parallel:easy', 'bridged:medium'], tutor: 5, topic: 5,
       name: () => L('Predict how the brightness changes when a bulb is added, removed or short-circuited, in series or in parallel.',
         'Vorhersagen, wie sich die Helligkeit ändert, wenn eine Lampe in Serie oder parallel dazukommt, wegfällt oder überbrückt wird.') },
   ];
@@ -614,11 +847,12 @@
     showScore();
     if (ex) {
       const given = answers(), keep = st;
-      ex.hints = hints();
+      ex.hints = hintsOf();
       render();
       st = keep;
       ex.bulbs.forEach((b, i) => { if (given[i]) document.querySelector(`input[name="ans-${b.name}"][value="${given[i]}"]`).checked = true; });
       drawAnswers();
+      if (player) player.refresh();
       showFeedback();
       showHints();
       if (st.revealed) showSolution();
@@ -667,6 +901,12 @@
       if (!ex || ex.id !== h) open(te);
       return true;
     }
+    m = h.match(/^change-(easy|medium|hard|mixed)-(\d+)$/);
+    if (m) {
+      setMode('practice');
+      if (!ex || ex.id !== h) open(generateChange(m[1], Number(m[2])));
+      return true;
+    }
     m = h.match(/^(easy|medium|hard|mixed)-(\d+)$/);
     if (!m) return false;
     setMode('practice');
@@ -700,7 +940,13 @@
     $('#reveal').addEventListener('click', reveal);
     $('#fields').addEventListener('change', drawAnswers);
     window.addEventListener('hashchange', fromHash);
-    tutor = window.createTutor(lessons(), { done: practise, practise: (i) => { topics.go(i); setMode('practice'); fresh(); } });
+    tutor = window.createTutor(lessons(), {
+      after: () => {
+        if (tutorPlayer) tutorPlayer.stop();
+        const host = $('#t-figure .pw-host');
+        tutorPlayer = host && tutorEx ? mountPlayer(host, tutorEx, { show: true }) : null;
+      },
+      done: practise, practise: (i) => { topics.go(i); setMode('practice'); fresh(); } });
     checker = Check.create(checkSource, {
       math: () => {}, markScrollable: () => {}, stored, store, // no formulas to typeset
       tutor: (i) => { setMode('tutor'); tutor.open(i); },

@@ -10,6 +10,8 @@ cards in its order, shows their tags, and lets visitors filter by tag. This serv
     /admin/login         POST user=...&password=...  sets the session cookie (the identifier works as a user name too)
     /admin/logout        POST                       ends the session
     /admin/api/teachers  GET  the accounts (the superuser only)
+    /admin/api/stats     GET  the statistics (the superuser only): per teacher their sets and sheets,
+                         when last seen (a visit with a session) and when their sets last changed; totals
                          POST {"action": "create", "id", "user", "first", "last", "school"} |
                               {"action": "update", "id", ...} | {"action": "reset" | "delete", "id"}
     /admin/api/password  POST {"current", "new"}    a teacher's own new password
@@ -200,6 +202,8 @@ SUPER, SUPER_USER = "bys", "samuel.byland"
 TEACHER_ID = re.compile(r"[a-z]{3}")
 USER_NAME = re.compile(r"[a-z0-9](?:[a-z0-9._-]{0,38}[a-z0-9])?")
 MAX_TEACHERS = 100
+SEEN_EVERY = 3600  # s: a teacher's last visit (for the statistics) is written at most this often
+ACTIVE_DAYS = 30  # a teacher seen within these days counts as active (the statistics)
 # what an account says of its teacher, with the longest each may be
 PROFILE = {"first": 60, "last": 60, "school": 100}
 MIN_PASSWORD, MAX_PASSWORD = 8, 200
@@ -548,6 +552,7 @@ class Admin:
         self.audit_file = config.parent / "exercise-audit.json"  # the exercises' review, for the hub page (the superuser's)
         self.allin = AllInRooms()  # the rooms of the game All In (/all-in/), in memory
         self.zero = ZeroRooms()  # the rooms of the quiz Absolute Zero (/absolute-zero/), in memory
+        self.seen_at: Dict[str, float] = {}  # teacher -> when their last visit was written (statistics)
 
     def stored_hash(self, teacher: Optional[str] = None) -> str:
         """The password hash of a teacher (the superuser's without one), from teachers.json. Read on
@@ -680,6 +685,47 @@ class Admin:
         return {"super": self.super, "super_user": self.user_of(self.super), "teachers": [
             {"id": t, "user": user_name(t, e), **profile(e), "created": e.get("created", 0), "sets": len(sets.get(t, {}))}
             for t, e in sorted(self.read_teachers().items())], "super_sets": len(sets.get(self.super, {}))}
+
+    def note(self, teacher: str, what: str, every: float = 0) -> None:
+        """Note the time of a teacher's visit ("seen") or last change of their sets ("sets_saved") in
+        their account, for the statistics; a visit at most every SEEN_EVERY seconds (in memory
+        which were written). Never fails: the statistics are not worth an error."""
+        now = time.time()
+        if every and now - self.seen_at.get(f"{teacher}/{what}", 0) < every:
+            return
+        self.seen_at[f"{teacher}/{what}"] = now
+
+        def change(teachers, mine):
+            entry = mine if teacher == self.super else teachers.get(teacher)
+            if entry is not None:
+                entry[what] = int(now)
+        try:
+            self.change_teachers(change, own=True)
+        except OSError:
+            pass
+
+    def stats(self) -> Dict[str, object]:
+        """The statistics (the superuser's): per teacher, the superuser first, their details, when
+        they were last seen and last changed their sets, their sets (and the apps in them) and
+        exercise sheets (the superuser's only: the others have none); and the totals."""
+        sets, sheets, now = self.read_all_sets(), self.read_sheets(), time.time()
+        accounts = [(self.super, self.read_super())] + sorted(self.read_teachers().items())
+        rows = []
+        for t, e in accounts:
+            own = sets.get(t, {})
+            apps = {a.get("id") for s in own.values() if isinstance(s, dict) for a in (s.get("apps") or []) if isinstance(a, dict)}
+            mine = sheets.values() if t == self.super else []
+            seen = e.get("seen") if isinstance(e.get("seen"), int) else 0
+            rows.append({"id": t, "user": self.user_of(t), **profile(e), "super": t == self.super,
+                         "created": e.get("created", 0) if isinstance(e.get("created"), int) else 0, "seen": seen,
+                         "active": bool(seen) and now - seen < ACTIVE_DAYS * 86400,
+                         "sets": len(own), "apps": len(apps - {None}),
+                         "sets_saved": e.get("sets_saved") if isinstance(e.get("sets_saved"), int) else 0,
+                         "sheets": len(mine), "shared": sum(1 for s in mine if s.get("token")),
+                         "sheets_saved": max((s.get("updated", 0) for s in mine if isinstance(s.get("updated"), int)), default=0)})
+        return {"teachers": rows, "active_days": ACTIVE_DAYS, "totals": {
+            "teachers": len(rows), "active": sum(r["active"] for r in rows), "with_sets": sum(1 for r in rows if r["sets"]),
+            "sets": sum(r["sets"] for r in rows), "sheets": sum(r["sheets"] for r in rows), "shared": sum(r["shared"] for r in rows)}}
 
     def change_teachers(self, change, own: bool = False) -> object:
         """Read, change and write the accounts under the lock: change(teachers) returns the answer
@@ -886,6 +932,7 @@ class Admin:
             every = self.read_all_sets()
             every[teacher] = sets["sets"]
             self.write_all_sets(every)
+        self.note(teacher, "sets_saved")
         return {"apps": apps, "teacher": teacher, **sets}
 
     # ------------------------------------------------------------------ exercise sheets
@@ -1797,8 +1844,11 @@ def make_handler(admin: Admin):
             return out
 
         def teacher(self) -> Optional[str]:
-            """The teacher logged in, or None."""
-            return next((t for t in map(admin.session_teacher, self.cookies()) if t), None)
+            """The teacher logged in, or None (their visit noted, for the statistics)."""
+            teacher = next((t for t in map(admin.session_teacher, self.cookies()) if t), None)
+            if teacher:
+                admin.note(teacher, "seen", SEEN_EVERY)
+            return teacher
 
         def logged_in(self) -> bool:
             return self.teacher() is not None
@@ -2341,11 +2391,11 @@ def make_handler(admin: Admin):
                     self.send(200, f.read_bytes(), "font/otf", {"Cache-Control": "public, max-age=604800"})
             elif path == "/static/admin.css":
                 self.send(200, ADMIN_CSS, "text/css; charset=utf-8")
-            elif path == "/api/teachers":
+            elif path in ("/api/teachers", "/api/stats"):
                 if not self.is_super():
                     self.json(403, {"error": "login"})
                 else:
-                    self.json(200, admin.teachers_state())
+                    self.json(200, admin.teachers_state() if path == "/api/teachers" else admin.stats())
             elif path == "/api/exercise-audit":
                 if not self.is_super():
                     self.json(403, {"error": "the superuser only"})
@@ -2591,7 +2641,7 @@ def panel_page(teacher: str = SUPER, superuser: bool = True, user: str = "") -> 
     tabs = ('<a href="#quizzes" data-view="quizzes">Quizzes</a><a href="#games" data-view="games">Games</a>'
             '<a href="#sets" data-view="sets">Sets</a>'
             + ('<a href="#sheets" data-view="sheets">Sheets</a><a href="#apps" data-view="apps">Apps &amp; tags</a>'
-               '<a href="#teachers" data-view="teachers">Teachers</a>' if superuser else '')
+               '<a href="#teachers" data-view="teachers">Teachers</a><a href="#stats" data-view="stats">Statistics</a>' if superuser else '')
             + '<a href="#account" data-view="account">Account</a>')
     return page("Admin", f"""
     <div class="bar top">
@@ -2615,6 +2665,13 @@ TEACHERS_SECTION = """
       </form>
       <p id="teachers-status" class="status" aria-live="polite"></p>
       <div id="teacher-list"></div>
+    </section>
+    <section id="view-stats" hidden>
+      <p class="lead">Who uses the panel: per teacher their sets and exercise sheets, when they were last here and when they last changed their sets. Visits are counted since this page exists.</p>
+      <div id="stats-totals" class="stattiles"></div>
+      <p id="stats-status" class="status" aria-live="polite"></p>
+      <div class="stattable"><table id="stats-table"><thead><tr><th scope="col">Teacher</th><th scope="col">School</th><th scope="col" class="n">Sets</th><th scope="col" class="n">Apps</th><th scope="col" class="n">Sheets</th><th scope="col">Last seen</th><th scope="col">Sets changed</th><th scope="col">Account since</th></tr></thead><tbody></tbody></table></div>
+      <p class="note">Apps: the different apps in a teacher's sets. Sheets: only you make exercise sheets. Active: seen in the panel (or the crossword generator or a quiz, logged in) in the last 30 days.</p>
     </section>"""
 
 ACCOUNT_SECTION = """
@@ -2823,6 +2880,20 @@ h2.section { font-size: 1.15rem; margin: 28px 0 4px; }
 .tagtable th { text-align: left; font-size: 0.85rem; color: var(--muted); font-weight: 600; padding: 4px 6px; }
 .tagtable td { padding: 4px 6px; }
 .tagtable td.n { color: var(--muted); font-size: 0.9rem; white-space: nowrap; }
+.stattiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; margin: 12px 0; }
+.stattiles .card { padding: 12px 14px; }
+.stattiles strong { display: block; font-size: 1.6rem; line-height: 1.2; font-variant-numeric: tabular-nums; }
+.stattiles span { color: var(--muted); font-size: 0.9rem; }
+.stattable { overflow-x: auto; margin: 8px 0 24px; }
+.stattable table { border-collapse: collapse; width: 100%; font-size: 0.95rem; }
+.stattable th { text-align: left; font-size: 0.85rem; color: var(--muted); font-weight: 600; padding: 4px 8px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+.stattable td { padding: 6px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+.stattable .n { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.stattable td.when { white-space: nowrap; }
+.stattable tr.idle td { color: var(--muted); }
+.stattable .tid { font-family: ui-monospace, monospace; }
+.stattable .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; background: var(--line); }
+.stattable tr.active .dot { background: var(--ok); }
 .tagtable input.same { border-color: var(--bad); }
 .tagtable tr.new input { outline: 2px solid var(--accent); }
 .bar.top { position: static; padding-top: 0; }
@@ -4199,6 +4270,50 @@ ACCOUNTS_JS = r"""
       } catch (err) { status(`Not created: ${err.message}`, 'bad'); }
     });
     const show = (v) => { if (v === 'teachers' && !loaded) load().catch(() => status('Could not load the teachers.', 'bad')); };
+    window.addEventListener('admin-view', (e) => show(e.detail));
+    show(location.hash.slice(1));
+  }
+
+  // ---------------------------------------------------------------- the statistics (the superuser)
+  if ($('#view-stats')) {
+    const status = (text, cls) => { const e = $('#stats-status'); e.textContent = text; e.className = `status ${cls || ''}`; };
+    const date = (t) => new Date(t * 1000).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' });
+    function ago(t) {
+      if (!t) return '—';
+      const days = Math.floor((Date.now() / 1000 - t) / 86400);
+      return days < 1 ? 'today' : days < 2 ? 'yesterday' : days < 31 ? `${days} days ago` : date(t);
+    }
+    function render(d) {
+      const n = d.totals, tile = (v, label) => el('div', { class: 'card' }, el('strong', {}, String(v)), el('span', {}, label));
+      $('#stats-totals').replaceChildren(
+        tile(n.teachers, n.teachers === 1 ? 'teacher' : 'teachers'),
+        tile(n.active, `active (last ${d.active_days} days)`),
+        tile(n.with_sets, 'with sets'),
+        tile(n.sets, n.sets === 1 ? 'set' : 'sets'),
+        tile(n.sheets, `sheets (${n.shared} shared)`));
+      // the active first, by their last visit; then the others by identifier
+      const rows = [...d.teachers].sort((a, b) => (b.seen || 0) - (a.seen || 0) || a.id.localeCompare(b.id));
+      $('#stats-table tbody').replaceChildren(...rows.map((t) => {
+        const full = [t.first, t.last].filter(Boolean).join(' ');
+        return el('tr', { class: t.active ? 'active' : 'idle', title: t.active ? 'active' : `not seen in the last ${d.active_days} days` },
+          el('td', {}, el('span', { class: 'dot', 'aria-hidden': 'true' }), el('span', { class: 'tid' }, t.id), ' ', full || t.user, t.super ? ' (you)' : ''),
+          el('td', {}, t.school || ''),
+          el('td', { class: 'n' }, String(t.sets)),
+          el('td', { class: 'n' }, String(t.apps)),
+          el('td', { class: 'n' }, t.super ? `${t.sheets}${t.shared ? ` (${t.shared} shared)` : ''}` : '—'),
+          el('td', { class: 'when' }, ago(t.seen)),
+          el('td', { class: 'when' }, ago(t.sets_saved)),
+          el('td', { class: 'when' }, t.created ? date(t.created) : '—'));
+      }));
+      status('', '');
+    }
+    async function load() {
+      const r = await fetch('/admin/api/stats', { credentials: 'same-origin' });
+      if (r.status === 403) { location.reload(); return; }
+      render(await r.json());
+    }
+    // loaded anew whenever the tab is opened
+    const show = (v) => { if (v === 'stats') load().catch(() => status('Could not load the statistics.', 'bad')); };
     window.addEventListener('admin-view', (e) => show(e.detail));
     show(location.hash.slice(1));
   }

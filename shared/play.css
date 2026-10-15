@@ -1,0 +1,25 @@
+/* Shared by the learningphysics.ch apps (canonical copy in shared/, copied by sync.sh with
+   play.js): "predict, then watch", the scene with its switch, ▶/❚❚, the time slider and the note.
+   The scene's drawing and colours are the app's. Load it after ui.css and before the app's
+   style.css. */
+.pw { display: flex; flex-direction: column; align-items: center; gap: 4px; max-width: 100%; }
+.pw-scene { max-width: 100%; }
+.pw-bar { display: flex; align-items: center; gap: 10px; width: min(100%, 440px); }
+.pw-play { min-width: 2.8em; min-height: 2.2em; padding: 4px 10px; font-size: 1rem; touch-action: manipulation; }
+.pw-seek { flex: 1; min-width: 0; accent-color: var(--accent); touch-action: pan-y; }
+.pw-time { min-width: 4.5em; color: var(--muted); font-size: 0.85rem; font-variant-numeric: tabular-nums; text-align: right; }
+.pw-instant .pw-bar { display: none; }
+.pw-note { margin: 2px 0 0; color: var(--muted); font-size: 0.9rem; text-align: center; min-height: 1.2em; }
+.pw-note:empty { display: none; }
+/* the switch the student flips: a button in the figure, with a hit area (class pw-hit) */
+.pw [data-pw-switch] { cursor: pointer; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+.pw [data-pw-switch]:focus { outline: none; }
+.pw .pw-hit { fill: transparent; stroke: transparent; stroke-width: 2; }
+.pw-ready .pw-hit { stroke: var(--accent); stroke-dasharray: 4 3; }
+.pw [data-pw-switch]:hover .pw-hit, .pw [data-pw-switch]:focus-visible .pw-hit { stroke: var(--accent); stroke-dasharray: none; fill: color-mix(in srgb, var(--accent) 10%, transparent); }
+.pw-locked [data-pw-switch] { cursor: not-allowed; }
+.pw-locked .pw-hit { stroke: var(--line); stroke-dasharray: 2 3; }
+@media (prefers-reduced-motion: no-preference) {
+  .pw-ready .pw-hit { animation: pw-pulse 1.6s ease-in-out infinite; }
+}
+@keyframes pw-pulse { 50% { stroke-opacity: 0.35; } }
