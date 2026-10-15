@@ -8,9 +8,11 @@
 (function () {
   'use strict';
 
-  const G = window.AllInGame, A = window.AllIn, Lang = window.Lang;
+  const G = window.AllInGame, A = window.AllIn, Lang = window.Lang, P = window.Preview, Bots = window.AllInBots;
   const { L, tr, byId, ROUNDS, TOPICS, LETTERS, TYPE, RULE, ERR, esc, fmt, withUnit, describe, questionBox, optionsBox, api, storage } = A;
-  const KEY = 'all-in-game';
+  // a preview (preview.js, ?preview) keeps its game apart and plays against bots (bots.js)
+  const KEY = P.on ? 'all-in-preview' : 'all-in-game';
+  const LOGIN = `/admin/?next=${encodeURIComponent(location.pathname + location.search)}`;
 
   const T = {
     title: () => L('All In: the Physics Casino', 'All In: das Physik-Casino'),
@@ -57,7 +59,7 @@
   }
 
   async function openRoom() {
-    const r = await api('open', { code: S.code });
+    const r = await api('open', { code: S.code, preview: P.on });
     if (!r.ok) {
       setNotice(r.status === 403 ? 'login' : L('The game server cannot be reached.', 'Der Spielserver ist nicht erreichbar.'));
       return false;
@@ -76,7 +78,7 @@
     if (!el) return;
     el.hidden = !n;
     el.innerHTML = n === 'login'
-      ? `${L('The game on phones needs your teacher login.', 'Das Spiel auf den Handys braucht Ihr Lehrer-Login.')} <a href="/admin/?next=/all-in/">${L('Log in', 'Einloggen')}</a>`
+      ? `${L('The game on phones needs your teacher login.', 'Das Spiel auf den Handys braucht Ihr Lehrer-Login.')} <a href="${LOGIN}">${L('Log in', 'Einloggen')}</a>`
       : esc(n);
   }
 
@@ -134,7 +136,7 @@
   }
 
   // ------------------------------------------------------------------ setup
-  const setup = { teams: 4, names: [], sizes: [], seconds: 90, mode: 'phones', rounds: TOPICS[0].rounds.slice() };
+  const setup = { teams: 4, names: [], sizes: [], seconds: P.on ? 60 : 90, mode: 'phones', rounds: TOPICS[0].rounds.slice() };
   const teamDefault = (i) => `Team ${i + 1}`;
   const ICON = { mixed: '⚛', mechanics: '⚙', em: '⚡', waves: '∿', modern: '☢' };
   // the topic whose six rounds are chosen, in its order
@@ -171,7 +173,7 @@
       </div>
       <div class="card">
         <h2>${L('Teams', 'Teams')}</h2>
-        <div class="row">
+        <div class="row"${P.on ? ' hidden' : ''}>
           <span class="levels" role="radiogroup" aria-label="${esc(L('Bets', 'Wetten'))}">
             <label><input type="radio" name="mode" value="phones"${setup.mode === 'phones' ? ' checked' : ''}><span>${L('Bets on phones', 'Wetten auf Handys')}</span></label>
             <label><input type="radio" name="mode" value="screen"${setup.mode === 'screen' ? ' checked' : ''}><span>${L('Bet cards, typed here', 'Wettkarten, hier eingetippt')}</span></label>
@@ -184,7 +186,9 @@
             <select id="seconds">${[60, 90, 120].map((n) => `<option value="${n}"${n === setup.seconds ? ' selected' : ''}>${n} s</option>`).join('')}</select></label>
         </div>
         <div class="teams-setup">${teams}</div>
-        <p class="muted small">${setup.mode === 'phones'
+        <p class="muted small">${P.on ? L('In the preview, you join one team on the phone at the right; two or three simulated players (🤖) join each team and bet for the teams without you.',
+            'In der Vorschau treten Sie auf dem Handy rechts einem Team bei; jedem Team treten zwei oder drei simulierte Personen (🤖) bei und wetten für die Teams ohne Sie.')
+          : setup.mode === 'phones'
           ? L('Students join on their phones with a QR code and pick their team; any member can place the team’s bet, and the last one sent counts. The die in the hot seat picks one of the team’s players by name. Needs your teacher login.',
             'Die Schülerinnen und Schüler treten mit einem QR-Code auf dem Handy bei und wählen ihr Team; jedes Mitglied kann die Wette des Teams abgeben, die zuletzt gesendete zählt. Der Würfel im heissen Stuhl wählt eine Person des Teams mit Namen. Braucht Ihr Lehrer-Login.')
           : L('The members of each team number themselves 1 to 4: the die in the hot seat picks one of them.',
@@ -243,13 +247,13 @@
     if (game.mode === 'phones') {
       const btn = document.getElementById('start');
       btn.disabled = true;
-      const r = await api('open', {});
+      const r = await api('open', { preview: P.on });
       btn.disabled = false;
       if (!r.ok) {
         const err = document.getElementById('setup-error');
         err.hidden = false;
         err.innerHTML = r.status === 403
-          ? `${L('The game on phones needs your teacher login.', 'Das Spiel auf den Handys braucht Ihr Lehrer-Login.')} <a href="/admin/?next=/all-in/">${L('Log in', 'Einloggen')}</a> · ${L('or choose bet cards.', 'oder Wettkarten wählen.')}`
+          ? `${L('The game on phones needs your teacher login.', 'Das Spiel auf den Handys braucht Ihr Lehrer-Login.')} <a href="${LOGIN}">${L('Log in', 'Einloggen')}</a> · ${L('or choose bet cards.', 'oder Wettkarten wählen.')}`
           : esc(L('The game server cannot be reached. Try again, or choose bet cards.', 'Der Spielserver ist nicht erreichbar. Nochmals versuchen oder Wettkarten wählen.'));
         return;
       }
@@ -597,6 +601,7 @@
     document.title = T.title();
     document.getElementById('restart').hidden = !S;
     renderBoard();
+    if (P.on) { P.phone(S && S.code ? `/all-in/play/?c=${S.code}&lang=${Lang.get()}` : null); Bots.sync(S, () => storage.set(KEY, S)); }
     if (!S) { clearTimeout(poller); renderSetup(); return; }
     ({ lobby: renderLobby, show: renderShow, bet: renderBet, reveal: renderReveal, hot: renderHot, end: renderEnd })[S.phase]();
     poll();
@@ -612,6 +617,7 @@
   }
 
   Lang.init();
+  P.mount(L);
   Lang.wire(() => render());
   document.getElementById('restart').addEventListener('click', newGame);
   render();

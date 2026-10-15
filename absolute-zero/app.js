@@ -9,9 +9,10 @@
 (function () {
   'use strict';
 
-  const G = window.AbsoluteZeroGame, Z = window.AbsoluteZero, Lang = window.Lang;
+  const G = window.AbsoluteZeroGame, Z = window.AbsoluteZero, Lang = window.Lang, P = window.Preview, Bots = window.AbsoluteZeroBots;
   const { L, tr, TOPICS, QUESTIONS, byId, esc, api, storage, questionBox, place, RULES } = Z;
-  const KEY = 'absolute-zero-game';
+  // a preview (preview.js, ?preview) keeps its game apart and plays against bots (bots.js)
+  const KEY = P.on ? 'absolute-zero-preview' : 'absolute-zero-game';
   const GRACE = 2500; // after the timer, the phones' last answers still arrive
 
   const T = {
@@ -62,7 +63,7 @@
   }
 
   async function openRoom() {
-    const r = await api('open', { code: S.code });
+    const r = await api('open', { code: S.code, preview: P.on });
     if (!r.ok) {
       setNotice(r.status === 403 ? 'login' : L('The game server cannot be reached.', 'Der Spielserver ist nicht erreichbar.'));
       return false;
@@ -74,7 +75,7 @@
     return true;
   }
 
-  const loginLink = () => `${L('The game needs your teacher login.', 'Das Spiel braucht Ihr Lehrer-Login.')} <a href="/admin/?next=/absolute-zero/">${L('Log in', 'Einloggen')}</a>`;
+  const loginLink = () => `${L('The game needs your teacher login.', 'Das Spiel braucht Ihr Lehrer-Login.')} <a href="/admin/?next=${encodeURIComponent(location.pathname + location.search)}">${L('Log in', 'Einloggen')}</a>`;
   function setNotice(n) {
     if (n === notice) return;
     notice = n;
@@ -143,6 +144,7 @@
           <button type="button" class="primary big" id="start">${L('Open the game', 'Spiel eröffnen')}</button>
           <button type="button" id="redraw">${L('Other questions', 'Andere Fragen')}</button>
         </div>
+        ${P.on ? `<p class="muted small">${L('In the preview, you join on the phone at the right, with twelve simulated players (🤖) who answer as a class might.', 'In der Vorschau treten Sie auf dem Handy rechts bei, mit zwölf simulierten Personen (🤖), die wie eine Klasse antworten.')}</p>` : ''}
         <p class="muted small">${L(`About two minutes a question. Students join on their phones with a QR code, without an account; the game needs your teacher login.`,
           `Etwa zwei Minuten pro Frage. Die Schülerinnen und Schüler treten mit einem QR-Code auf dem Handy bei, ohne Konto; das Spiel braucht Ihr Lehrer-Login.`)}</p>
         <p id="setup-error" class="error" hidden></p>
@@ -169,7 +171,7 @@
   async function start() {
     const btn = document.getElementById('start');
     btn.disabled = true;
-    const r = await api('open', {});
+    const r = await api('open', { preview: P.on });
     btn.disabled = false;
     if (!r.ok) {
       const err = document.getElementById('setup-error');
@@ -458,6 +460,7 @@
     Lang.apply(T);
     document.title = T.title();
     document.getElementById('restart').hidden = !S;
+    if (P.on) { P.phone(S && S.code ? `/absolute-zero/play/?c=${S.code}&lang=${Lang.get()}` : null); Bots.sync(S, () => storage.set(KEY, S)); }
     if (!S) { clearTimeout(poller); renderSetup(); return; }
     ({ lobby: renderLobby, answer: renderAnswer, judge: renderJudge, reveal: renderReveal, scores: renderScores, end: renderEnd })[S.phase]();
     poll();
@@ -473,6 +476,7 @@
   }
 
   Lang.init();
+  P.mount(L);
   Lang.wire(() => { fresh = false; render(); });
   document.getElementById('restart').addEventListener('click', newGame);
   render();
