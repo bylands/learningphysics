@@ -9,6 +9,7 @@
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
   <link rel="stylesheet" href="/katex/katex.min.css">
   <link rel="stylesheet" href="ui.css">
+  <link rel="stylesheet" href="arrow.css">
   <link rel="stylesheet" href="style.css">
   <script defer src="/katex/katex.min.js"></script>
   <script defer src="/katex/contrib/auto-render.min.js"></script>
@@ -18,6 +19,7 @@
   <script defer src="sign.js"></script>
   <script defer src="core.js"></script>
   <script defer src="draw.js"></script>
+  <script defer src="arrow.js"></script>
   <script defer src="scenarios.js"></script>
   <script defer src="equations.js"></script>
   <script defer src="generator.js"></script>
@@ -83,8 +85,8 @@
         <div id="forces-part">
           <h3 data-i18n="forcesHead">1 · Forces on each box</h3>
           <p class="note" id="forces-note"></p>
-          <div id="ftable"></div>
-          <p id="ftable-fb" class="table-fb" aria-live="polite"></p>
+          <div id="fpalette"></div>
+          <div id="forces-fb" class="table-fb" aria-live="polite"></div>
         </div>
         <div id="comps-part" hidden>
           <h3 id="comps-head">2 · Components</h3>

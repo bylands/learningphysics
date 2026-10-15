@@ -14,7 +14,7 @@
   class Scene {
     constructor(w, h, label) {
       this.w = w; this.h = h; this.label = label || '';
-      this.parts = []; this.forces = []; this.marks = [];
+      this.parts = []; this.forces = []; this.marks = []; this.bodies = [];
       this.box0 = [Infinity, Infinity, -Infinity, -Infinity];
     }
     // Extends the bounding box.
@@ -61,9 +61,11 @@
       return this.add(`<polyline class="w spring" points="${pts.map((q) => q.map(f).join(',')).join(' ')}"/>`);
     }
     // A box from its bottom-left corner, along the unit vector u (its base) and n (upwards).
-    // right: the mass in the top-right corner (on a slope, clear of the components of the weight)
+    // right: the mass in the top-right corner (on a slope, clear of the components of the weight).
+    // Its corners join this.bodies, in the order of the boxes (where the student puts forces).
     box(o, u, n, w, h, label, right = false) {
       const at = (s, t) => [o[0] + s * u[0] + t * n[0], o[1] + s * u[1] + t * n[1]];
+      this.bodies.push([at(0, 0), at(w, 0), at(w, h), at(0, h)]);
       this.poly([at(0, 0), at(w, 0), at(w, h), at(0, h)]);
       // the mass in the top-left corner, clear of the arrows that start at the centre and the base
       if (label && right) this.text(...at(0.68 * w, h - 16), label, 'lbl mass', 'middle');
@@ -85,6 +87,13 @@
       this.add(`<path class="w thin" d="M${f(x0)} ${f(y0)} A${f(r)} ${f(r)} 0 0 0 ${f(x1)} ${f(y1)}"/>`);
       const [lx, ly] = pt((a0 + a1) / 2, r + dist);
       return this.text(lx, ly + 5, label, 'lbl small');
+    }
+
+    // The length of each force's arrow in the free-body diagram, by id (as render draws them all
+    // at the diagram's scale: the solved drawing, the steps of a worked solution).
+    lengths() {
+      const sized = this.forces.filter((s) => s.mag > 1e-9 && !s.fixed), k = MAX_LEN / Math.max(...sized.map((s) => s.mag), 1e-9);
+      return Object.fromEntries(sized.map((s) => [s.id, Math.min(Math.max(MIN_LEN, s.mag * k), s.max || Infinity)]));
     }
 
     render(view = {}) {

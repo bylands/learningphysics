@@ -30,6 +30,7 @@ Besides the shared files that every app gets, `shared/` holds widgets for intera
 
 - `dnd.js`, `dnd.css`: dragging cards into boxes, to rank them (ties allowed) or to match them (force-concepts, interaction, em-waves).
 - `reader.js`, `reader.css`: reading values off a graph: a free point, a point on the curve, the tangent, pinned points. Most graphs need only `data-read…` attributes on their `<svg>` (photons, capacitors, impedance).
+- `arrow.js`, `arrow.css`: vector arrows placed on a figure and turned: dragged from a palette onto a body, their tips dragged to a direction from a given set (and a length), optionally ⊙ ⊗; with a pure judge of the drawing against the right arrows (Free-Body Diagrams).
 - `sketch.js`, `sketch.css`: sketching a graph, as straight pieces between breakpoints (optionally bent into parabolas) or as one value per column (motion-graphs, motion-areas, wave-propagation, induction-match).
 
 All of them work with mouse, pen, touch and keyboard. Interactive exercises are for practice and the worked examples only: Check mode (`shared/check.js`) asks four-option questions, so every learning objective practised interactively also needs a question kind for the check, usually the same task with a static figure and four answers.
