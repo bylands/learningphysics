@@ -15,6 +15,9 @@ cards in its order, shows their tags, and lets visitors filter by tag. This serv
     /admin/api/password  POST {"current", "new"}    a teacher's own new password
     /admin/api/account   POST {"user", "first", "last", "school"}  a teacher's own details
     /admin/api/me        GET  the teacher logged in (the crossword generator and the quiz ask it, with the cookie)
+    /admin/api/all-in/…  the game All In on phones (AllInRooms): open, <code>/state, <code>/close and
+                         GET <code>/host for the teacher's screen; GET <code>?token=, <code>/join and
+                         <code>/bet for the phones, without login
     /admin/api/config    GET  the apps of the hub page with their order and tags
                          POST {"order": [id, ...], "tags": {id: [key, ...]},
                                "labels": {key: {"en": name, "de": name}}}      saves apps.json
@@ -113,6 +116,7 @@ import argparse
 import hashlib
 import hmac
 import json
+import math
 import os
 import re
 import secrets
@@ -164,7 +168,7 @@ MAX_SETS, MAX_TITLE = 100, 80
 MAX_EXAMPLES, MAX_STAGES, MAX_OBJECTIVES = 100, 300, 50  # per app in a set
 # names a set cannot have, besides the apps and what is in the web root: the services and paths
 # nginx serves itself, and some kept free
-RESERVED = {"admin", "api", "apps", "crosswords", "electric-circuits", "hub", "hub-admin", "hub-data", "index", "katex", "texercises",
+RESERVED = {"admin", "all-in", "api", "apps", "crosswords", "electric-circuits", "hub", "hub-admin", "hub-data", "index", "katex", "texercises",
             "lang", "millionaire", "objectives", "privacy", "set", "sets", "static", "wwtbap", "www"}
 MAX_UPLOAD = 64 * 1024 * 1024  # a TeXercises export
 MAX_REVIEW_RENDER = 40  # exercises the review renders at once
@@ -530,6 +534,7 @@ class Admin:
         self.sheets_lock = threading.Lock()
         self.own = own
         self.review = config.parent / "texercises-review"  # the TeXercises review (sheets/review.py)
+        self.allin = AllInRooms()  # the rooms of the game All In (/all-in/), in memory
 
     def stored_hash(self, teacher: Optional[str] = None) -> str:
         """The password hash of a teacher (the superuser's without one), from teachers.json. Read on
@@ -1371,6 +1376,209 @@ def normalize_sheet(raw: object, apps: List[Dict[str, object]], pool: Dict[str, 
 API = ("/api/config", "/api/sets")
 
 
+# ---------------------------------------------------------------------- All In (/all-in/)
+# The game All In on the students' phones: the teacher's screen (/all-in/, logged in) opens a room
+# and runs the game in the browser (the rules are in all-in/game.js); it sends this service what the
+# phones should show (the round, its phase, the teams' chips, the result) and reads the bets back.
+# The phones (/all-in/play/, no login) join a team with a name and place their team's bet; the last
+# bet a member of a team sends counts. Rooms live in memory only: after a restart the teacher's
+# screen opens its room again under the same code, and the phones join again by themselves.
+ALLIN_PHASES = ("lobby", "show", "bet", "reveal", "hot", "end")
+ALLIN_CODE = "ABCDEFGHJKLMNPQRSTUVWXYZ"  # (no I and O)
+ALLIN_IDLE = 4 * 3600  # a room nobody touched for this long is gone
+ALLIN_MAX_ROOMS, ALLIN_MAX_PLAYERS, ALLIN_MAX_TEAMS = 200, 80, 6
+ALLIN_GRACE = 2.0  # seconds after the timer in which a bet still counts
+
+
+def allin_name(raw: object, limit: int = 24) -> str:
+    return re.sub(r"\s+", " ", str(raw or "")).strip()[:limit]
+
+
+def allin_number(raw: object) -> Optional[float]:
+    if isinstance(raw, bool) or not isinstance(raw, (int, float)):
+        return None
+    x = float(raw)
+    return x if math.isfinite(x) and abs(x) < 1e100 else None
+
+
+def allin_chips(raw: object) -> Optional[int]:
+    return raw if isinstance(raw, int) and not isinstance(raw, bool) and 0 <= raw <= 10**7 else None
+
+
+def allin_state(raw: object) -> Dict[str, object]:
+    """What the teacher's screen sends for the phones, cleaned: the phase, the round (its index and
+    id), the teams (name, chips, minimum stake, insurance left), the seconds left to bet, and in the
+    reveal, the hot seat and at the end what the phones show of it."""
+    if not isinstance(raw, dict) or raw.get("phase") not in ALLIN_PHASES:
+        raise ValueError("a phase expected")
+    teams = raw.get("teams")
+    if not isinstance(teams, list) or not 2 <= len(teams) <= ALLIN_MAX_TEAMS:
+        raise ValueError(f"2 to {ALLIN_MAX_TEAMS} teams expected")
+    out: Dict[str, object] = {"phase": raw["phase"], "teams": []}
+    for t in teams:
+        if not isinstance(t, dict) or not allin_name(t.get("name")):
+            raise ValueError("a team needs a name")
+        out["teams"].append({"name": allin_name(t.get("name")), "chips": allin_chips(t.get("chips")) or 0,
+                             "min": allin_chips(t.get("min")) or 0, "insurance": t.get("insurance") is True})
+    i = raw.get("i")
+    out["i"] = i if isinstance(i, int) and not isinstance(i, bool) and 0 <= i < 100 else 0
+    out["rounds"] = min(allin_chips(raw.get("rounds")) or 0, 100)
+    out["round"] = re.sub(r"[^a-z0-9-]", "", str(raw.get("round") or ""))[:40]
+    out["final"] = raw.get("final") is True
+    left = allin_number(raw.get("left"))
+    out["left"] = None if left is None else max(0.0, min(left, 600.0))
+    # the reveal: the answer and each team's result; the hot seat: the team and who explains
+    for key in ("result", "hot"):
+        v = raw.get(key)
+        if isinstance(v, (dict, list)) and len(json.dumps(v)) <= 4000:
+            out[key] = v
+    return out
+
+
+def allin_bet(raw: object) -> Dict[str, object]:
+    """A bet as a phone sends it: chips per option (Predict), or low, high and stake (Estimate), or
+    value and stake (Calculate), and insurance."""
+    if not isinstance(raw, dict):
+        raise ValueError("a bet expected")
+    bet: Dict[str, object] = {"insurance": raw.get("insurance") is True}
+    if "chips" in raw:
+        chips = raw.get("chips")
+        if not isinstance(chips, list) or not 2 <= len(chips) <= 4 or any(allin_chips(c) is None for c in chips):
+            raise ValueError("whole chips expected")
+        bet["chips"] = chips
+        return bet
+    stake = allin_chips(raw.get("stake"))
+    if stake is None:
+        raise ValueError("a stake expected")
+    bet["stake"] = stake
+    keys = ("low", "high") if "low" in raw else ("value",)
+    for k in keys:
+        x = allin_number(raw.get(k))
+        if x is None:
+            raise ValueError("a number expected")
+        bet[k] = x
+    return bet
+
+
+class AllInRooms:
+    """The rooms of All In, in memory: { code: { owner, touched, state, deadline, players: { token:
+    { name, team } }, bets: { team: { bet, by, n } }, n } }; n counts the bets, so that the teacher's
+    screen sees which changed."""
+
+    def __init__(self, clock=time.time):
+        self.rooms: Dict[str, Dict[str, object]] = {}
+        self.lock = threading.Lock()
+        self.clock = clock
+
+    def _sweep(self) -> None:
+        now = self.clock()
+        for code in [c for c, r in self.rooms.items() if now - r["touched"] > ALLIN_IDLE]:
+            del self.rooms[code]
+
+    def _room(self, code: str, owner: Optional[str] = None) -> Dict[str, object]:
+        self._sweep()
+        room = self.rooms.get(code)
+        if room is None:
+            raise KeyError("no such game")
+        if owner is not None and room["owner"] != owner:
+            raise PermissionError("not your game")
+        room["touched"] = self.clock()
+        return room
+
+    def open(self, teacher: str, code: object = None) -> str:
+        """A room for the teacher (their earlier ones are closed), or theirs again under its code."""
+        with self.lock:
+            self._sweep()
+            code = str(code or "").upper()
+            if code in self.rooms and self.rooms[code]["owner"] == teacher:
+                self.rooms[code]["touched"] = self.clock()
+                return code
+            if not (len(code) == 4 and all(c in ALLIN_CODE for c in code)) or code in self.rooms:
+                code = ""
+                while not code or code in self.rooms:
+                    code = "".join(secrets.choice(ALLIN_CODE) for _ in range(4))
+            for c in [c for c, r in self.rooms.items() if r["owner"] == teacher]:
+                del self.rooms[c]
+            if len(self.rooms) >= ALLIN_MAX_ROOMS:
+                raise ValueError("too many games at the moment")
+            self.rooms[code] = {"owner": teacher, "touched": self.clock(), "state": None, "deadline": None,
+                                "players": {}, "bets": {}, "n": 0}
+            return code
+
+    def close(self, teacher: str, code: str) -> None:
+        with self.lock:
+            self._room(code, teacher)
+            del self.rooms[code]
+
+    def set_state(self, teacher: str, code: str, raw: object) -> None:
+        state = allin_state(raw)
+        with self.lock:
+            room = self._room(code, teacher)
+            old = room["state"] or {}
+            if old.get("i") != state["i"] or old.get("round") != state["round"] or state["phase"] in ("lobby", "show"):
+                room["bets"] = {}
+            if state["phase"] == "bet" and state["left"] is not None:
+                room["deadline"] = self.clock() + state["left"]
+            elif state["phase"] != "bet":
+                room["deadline"] = None
+            room["state"] = state
+
+    def host_view(self, teacher: str, code: str) -> Dict[str, object]:
+        with self.lock:
+            room = self._room(code, teacher)
+            return {"code": code, "players": self._players(room), "bets": room["bets"], "left": self._left(room)}
+
+    def _players(self, room: Dict[str, object]) -> List[Dict[str, object]]:
+        return sorted(({"name": p["name"], "team": p["team"]} for p in room["players"].values()), key=lambda p: (p["team"], p["name"].lower()))
+
+    def _left(self, room: Dict[str, object]) -> Optional[float]:
+        return None if room["deadline"] is None else round(max(0.0, room["deadline"] - self.clock()), 1)
+
+    def join(self, code: str, name: object, team: object, token: object = None) -> Dict[str, object]:
+        name = allin_name(name)
+        if not name:
+            raise ValueError("a name expected")
+        with self.lock:
+            room = self._room(code)
+            teams = len((room["state"] or {}).get("teams") or [])
+            if not (isinstance(team, int) and not isinstance(team, bool) and 0 <= team < teams):
+                raise ValueError("no such team")
+            token = str(token or "")
+            if token not in room["players"]:
+                if len(room["players"]) >= ALLIN_MAX_PLAYERS:
+                    raise ValueError("the game is full")
+                token = secrets.token_urlsafe(12)
+            room["players"][token] = {"name": name, "team": team}
+            return {"token": token}
+
+    def view(self, code: str, token: object = None) -> Dict[str, object]:
+        """What a phone shows: the state, the seconds left, the player and their team's bet."""
+        with self.lock:
+            room = self._room(code)
+            me = room["players"].get(str(token or ""))
+            out: Dict[str, object] = {"state": room["state"], "left": self._left(room), "players": self._players(room), "me": me}
+            if me:
+                out["bet"] = room["bets"].get(str(me["team"]))
+            return out
+
+    def bet(self, code: str, token: object, i: object, raw: object) -> Dict[str, object]:
+        bet = allin_bet(raw)
+        with self.lock:
+            room = self._room(code)
+            me = room["players"].get(str(token or ""))
+            if not me:
+                raise PermissionError("join first")
+            state = room["state"] or {}
+            if state.get("phase") != "bet" or state.get("i") != i:
+                raise ValueError("betting is closed")
+            if room["deadline"] is not None and self.clock() > room["deadline"] + ALLIN_GRACE:
+                raise ValueError("time is up")
+            room["n"] += 1
+            entry = {"bet": bet, "by": me["name"], "n": room["n"]}
+            room["bets"][str(me["team"])] = entry
+            return entry
+
+
 def make_handler(admin: Admin):
     class Handler(BaseHTTPRequestHandler):
         server_version = "hub-admin"
@@ -1773,6 +1981,57 @@ def make_handler(admin: Admin):
             except OSError:
                 self.json(500, {"error": "could not store it"})
 
+        # -------------------------------------------------------------- All In
+        def allin_call(self, fn) -> None:
+            try:
+                self.json(200, fn())
+            except KeyError:
+                self.json(404, {"error": "no such game"})
+            except PermissionError as e:
+                self.json(403, {"error": str(e)})
+            except ValueError as e:
+                self.json(400, {"error": str(e)})
+
+        def allin_get(self, rest: str) -> None:
+            """/api/all-in/<code>?token=… (a phone), /api/all-in/<code>/host (the teacher's screen)."""
+            code, _, action = rest.partition("/")
+            if action == "host":
+                teacher = self.teacher()
+                if not teacher:
+                    self.json(403, {"error": "login"})
+                    return
+                self.allin_call(lambda: admin.allin.host_view(teacher, code))
+            elif not action:
+                token = (parse_qs(self.path.partition("?")[2]).get("token") or [""])[0]
+                self.allin_call(lambda: admin.allin.view(code, token))
+            else:
+                self.send(404, "Not found", "text/plain; charset=utf-8")
+
+        def allin_post(self, rest: str) -> None:
+            """/api/all-in/open, <code>/state and <code>/close (the teacher's screen); <code>/join and
+            <code>/bet (a phone)."""
+            code, _, action = rest.partition("/")
+            body = self.json_body()
+            if body is None:
+                return
+            if action in ("join", "bet"):
+                if action == "join":
+                    self.allin_call(lambda: admin.allin.join(code, body.get("name"), body.get("team"), body.get("token")))
+                else:
+                    self.allin_call(lambda: admin.allin.bet(code, body.get("token"), body.get("i"), body.get("bet")))
+                return
+            teacher = self.teacher()
+            if not teacher:
+                self.json(403, {"error": "login"})
+            elif code == "open" and not action:
+                self.allin_call(lambda: {"code": admin.allin.open(teacher, body.get("code"))})
+            elif action == "state":
+                self.allin_call(lambda: admin.allin.set_state(teacher, code, body.get("state")) or {"ok": True})
+            elif action == "close":
+                self.allin_call(lambda: admin.allin.close(teacher, code) or {"ok": True})
+            else:
+                self.send(404, "Not found", "text/plain; charset=utf-8")
+
         # -------------------------------------------------------------- routes
         def do_HEAD(self) -> None:
             self.do_GET()
@@ -1822,6 +2081,8 @@ def make_handler(admin: Admin):
                     self.json(403, {"error": "login"})
                 else:
                     self.json(200, admin.teachers_state())
+            elif path.startswith("/api/all-in/"):
+                self.allin_get(path[len("/api/all-in/"):])
             elif path == "/api/me":
                 teacher = self.teacher()
                 if not teacher:
@@ -1857,6 +2118,8 @@ def make_handler(admin: Admin):
                     self.send(403, login_page(bool(admin.stored_hash()), "Wrong user name or password.", back))
             elif path == "/logout":
                 self.redirect("")
+            elif path.startswith("/api/all-in/"):
+                self.allin_post(path[len("/api/all-in/"):])
             elif path == "/api/teachers":
                 self.teachers_post()
             elif path == "/api/password":
@@ -2148,6 +2411,11 @@ COMMON_SECTIONS = """
     <section id="view-games" hidden>
       <p class="lead">The games for the class, each a service of its own on this site.</p>
       <ul class="games">
+        <li class="card">
+          <h2><a href="/all-in/" target="_blank" rel="noopener">All In: the Physics Casino ↗</a></h2>
+          <p>A team game for the projector, 20 to 30 minutes: every round shows a short animation of a phenomenon, all teams bet chips at once on its outcome, an estimate or a short calculation, the reveal plays out what happens, and a die picks a player of the team in the hot seat to explain the result. Students join on their phones (QR code) and place their team's bets there, or you type in bet cards. Payouts, timer and scoreboard are done for you. Six standard rounds and seven spare ones, in English and German.</p>
+          <p class="note">learningphysics.ch/all-in/ · you're logged in there with this account (needed for phones); students join at learningphysics.ch/all-in/play/ without one</p>
+        </li>
         <li class="card">
           <h2><a href="/wwtbap/" target="_blank" rel="noopener">Who Wants to Be a Physicist? ↗</a></h2>
           <p>A quiz in the style of <i>Who Wants to Be a Millionaire</i>: 15 physics questions of rising difficulty, a ladder of famous physicists and three lifelines. As a classroom game, students join on their phones (QR code or room code), a Fastest Finger First round picks each contestant, and Ask the Audience can be a live class vote. A quick game starts without a lobby.</p>

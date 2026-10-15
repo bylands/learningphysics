@@ -18,7 +18,7 @@ DRY=""
 [ "${1:-}" = "--dry-run" ] && DRY="--dry-run"
 
 # local folder:path on the server (the energy app is served at /coe)
-APPS="bulb-brightness circuit-trainer potential-circuit capacitors force-concepts force-systems impedance induction-match motion-graphs motion-data motion-areas rl-switch torque centre-of-mass interaction coulomb oscillations cyclic-processes wave-propagation interference magnetic-forces charged-particles electric-field electric-potential em-waves photons matter-waves energy-conservation:coe privacy katex"
+APPS="bulb-brightness circuit-trainer potential-circuit capacitors force-concepts force-systems impedance induction-match motion-graphs motion-data motion-areas rl-switch torque centre-of-mass interaction coulomb oscillations cyclic-processes wave-propagation interference magnetic-forces charged-particles electric-field electric-potential em-waves photons matter-waves energy-conservation:coe all-in privacy katex"
 
 shared/sync.sh --check >/dev/null || { echo "Shared files differ: run shared/sync.sh first." >&2; exit 1; }
 node hub/build-objectives.js --check >/dev/null || { echo "The hub's learning objectives differ from the apps: run node hub/build-objectives.js first." >&2; exit 1; }
