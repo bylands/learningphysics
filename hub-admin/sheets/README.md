@@ -101,6 +101,8 @@ service and open to every teacher account (logged in; teachingphysics.ch/texerci
   `build_sheet.py` (the exercises as a LaTeX document, a section per module) and LuaLaTeX with
   `texercises-lp.sty` (the TeXercises macros) and `lp-minion.sty` in its modern look (Erewhon, Fira Sans:
   free fonts). `preview.py` makes the HTML of the preview and the online version.
+  Both follow TeXercises in an `abclist`: `\setcounter{abc}{N}` makes the next item the N-th letter (so a list
+  continued after a table starts with `\setcounter{abc}{3}` for c)).
 - The exercises: the export uploaded in the admin panel (kept in `hub-data/texercises/`, only the teacher's
   own: `OWN_CREATOR` in hubadmin.py), and the drafts that `deploy.sh` copies to `hub-admin/sheets/drafts/`.
   Neither is served by nginx. Exercise texts and solutions never go into this public repository: `pool.json`

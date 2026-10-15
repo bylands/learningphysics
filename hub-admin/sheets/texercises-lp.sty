@@ -341,9 +341,10 @@
 \DeclareSIPostPower\squred{2} \DeclareSIPrePower\squar{2}
 
 % ---------------------------------------------------------------- layout helpers
+% as on TeXercises, abc holds the number of the next item: \setcounter{abc}{N} makes the next item the N-th letter
 \newcounter{abc}
 \newenvironment{abcliste}
-  {\begin{list}{\alph{abc})}{\usecounter{abc}\setlength\leftmargin{2em}\setlength\labelwidth{1.5em}%
+  {\setcounter{abc}{1}\begin{list}{\alph{abc})\stepcounter{abc}}{\setlength\leftmargin{2em}\setlength\labelwidth{1.5em}%
      \setlength\itemsep{0.3ex}\setlength\topsep{0.5ex}}}
   {\end{list}}
 \newenvironment{abclist}{\begin{abcliste}}{\end{abcliste}}

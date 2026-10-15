@@ -1140,6 +1140,8 @@ class Exercise:
             if s.startswith("*", j):
                 j += 1
             _, j = read_group(s, j)
+            if name in IGNORED_TWO_ARGS:
+                _, j = read_group(s, j)
             return j
         if name in TEXT_WRAP:
             a, j = read_group(s, j)
@@ -1284,13 +1286,15 @@ class Exercise:
             items = list_items(body[k:])
             tag = "ul" if env in ("itemize", "wf", "description") else "ol"
             cls = {"abcliste": "tx-abc", "abclist": "tx-abc", "wf": "tx-wf"}.get(env, "")
+            starts = abc_starts(body[k:]) if cls == "tx-abc" else {}
             lis = []
-            for label, item in items:
+            for idx, (label, item) in enumerate(items):
                 inner = self.html(item)
                 if inner.count("<p>") == 1 and inner.startswith("<p>") and inner.endswith("</p>"):
                     inner = inner[3:-4]
                 head = f'<span class="tx-label">{self.inline(label)}</span> ' if label is not None else ""
-                lis.append(f"<li>{head}{inner}</li>")
+                value = f' class="tx-abc-{starts[idx]}"' if 0 < starts.get(idx, 0) <= 26 else ""
+                lis.append(f"<li{value}>{head}{inner}</li>")
             out.block(f"<{tag}{f' class={chr(34)}{cls}{chr(34)}' if cls else ''}>{''.join(lis)}</{tag}>")
             return after
         if env in TABLES:
@@ -1541,6 +1545,16 @@ def chem(s: str) -> str:
     return r"\mathrm{" + "".join(out) + "}"
 
 
+ABC_SET = re.compile(r"\\setcounter\s*\{abc\}\s*\{\s*(\d+)\s*\}")
+ITEM_CS = re.compile(r"\\(?:abc|item)(?![A-Za-z])")
+
+
+def abc_starts(body: str) -> Dict[int, int]:
+    """{item index: number} for an abc list: as on TeXercises, \\setcounter{abc}{N} makes the next item
+    the N-th letter."""
+    return {len(ITEM_CS.findall(body, 0, m.start())): int(m.group(1)) for m in ABC_SET.finditer(body)}
+
+
 def list_items(body: str) -> List[Tuple[Optional[str], str]]:
     """The items of a list's body: [(label of \\item[label] or None, text)], split at \\item and \\abc
     outside groups and nested environments."""
@@ -1671,6 +1685,7 @@ IGNORED = {"small", "footnotesize", "scriptsize", "tiny", "large", "Large", "LAR
            "notag", "normalfont", "leavevmode", "strut", "break", "allowbreak", "sloppy", "fussy",
            "columnbreak", "hline", "toprule", "midrule", "bottomrule", "ignorespaces", "unskip",
            "tightlist", "makeatletter", "makeatother", "boldmath", "unboldmath", "onehalfspacing", "singlespacing"}
+IGNORED_TWO_ARGS = {"setlength", "addtolength", "setcounter", "addtocounter"}  # and their value
 IGNORED_ARG = {"vspace", "hspace", "label", "color", "setlength", "addtolength", "setcounter", "addtocounter",
                "phantom", "hphantom", "vphantom", "rule", "index", "footnote", "pagestyle", "thispagestyle",
                "selectlanguage", "tcbset", "sisetup", "tikzset", "usetikzlibrary", "definecolor", "ref", "eqref",

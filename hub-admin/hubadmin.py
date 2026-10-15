@@ -2744,6 +2744,8 @@ TX_CSS = r"""
 .tx u.tx-uu { text-decoration: underline double; }
 .tx .tx-claim .tx-mark { color: var(--muted); white-space: nowrap; }
 """
+# \setcounter{abc}{N} in an abc list: the next item is the N-th letter (sheets/preview.py, class tx-abc-N)
+TX_CSS += "".join(f".tx ol.tx-abc > li.tx-abc-{n} {{ counter-set: abc {n}; }}\n" for n in range(1, 27))
 
 ADMIN_CSS = """
 :root { --bg: #f6f5f1; --card: #fff; --ink: #1f2328; --muted: #646b73; --line: #d9d6ce; --accent: #2b59c3; --accent-ink: #fff; --ok: #1d7a3e; --bad: #b3261e; --chip: #eef2fb; color-scheme: light; }

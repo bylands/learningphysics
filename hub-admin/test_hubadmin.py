@@ -640,6 +640,15 @@ class Preview(unittest.TestCase):
         self.assertIn('<li><span class="tx-label">i)</span> one</li>', h)
         self.assertEqual(e.fallbacks, [])
 
+    def test_abc_setcounter(self):
+        # as on TeXercises, \\setcounter{abc}{N} makes the next item the N-th letter
+        h = self.ex("").html("\\begin{abclist}\\abc a\\end{abclist}\n\n"
+                             "\\begin{abclist}\n\\setcounter{abc}{2}\n\\setcounter{enumii}{1}\n\\abc b \\abc c"
+                             "\\setcounter{abc}{6}\n\\abc f\\end{abclist}")
+        self.assertIn('<ol class="tx-abc"><li>a</li></ol>', h)
+        self.assertIn('<li class="tx-abc-2">b</li><li>c</li><li class="tx-abc-6">f</li>', h)
+        self.assertIn("li.tx-abc-6 { counter-set: abc 6; }", H.TX_CSS)
+
     def test_text_fallbacks(self):
         e = self.ex()
         h = e.html("See \\begin{tikzpicture}\\draw (0,0) -- (1,1);\\end{tikzpicture} and "
