@@ -94,6 +94,39 @@ def available(export: Path) -> Dict[str, Path]:
     return out
 
 
+MAX_TOPICS = 20  # TeXercises topics (subbranches) of an exercise
+
+
+def exercise_topics(folder: Path) -> List[str]:
+    """An exercise's TeXercises topics: the subbranches of its exercise.json ("Thermal Expansion", ...),
+    the strings among them, cleaned, each once."""
+    try:
+        meta = json.loads((folder / "exercise.json").read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return []
+    got = meta.get("subbranches") if isinstance(meta, dict) and isinstance(meta.get("subbranches"), list) else []
+    out: List[str] = []
+    for t in got:
+        t = re.sub(r"\s+", " ", re.sub(r"[\x00-\x1f\x7f]", " ", t)).strip()[:80] if isinstance(t, str) else ""
+        if t and t not in out:
+            out.append(t)
+    return out[:MAX_TOPICS]
+
+
+def topic_counts(have: Dict[str, Path]) -> List[Dict[str, object]]:
+    """The TeXercises topics of the exercises there (have), each with how many of them, the most frequent
+    first (then by name); "" for those without one, if any, last."""
+    counts: Dict[str, int] = {}
+    none = 0
+    for folder in have.values():
+        ts = exercise_topics(folder)
+        none += not ts
+        for t in ts:
+            counts[t] = counts.get(t, 0) + 1
+    out = [{"name": t, "exercises": n} for t, n in sorted(counts.items(), key=lambda x: (-x[1], x[0].lower()))]
+    return out + ([{"name": "", "exercises": none}] if none and counts else [])
+
+
 def level(difficulty: object) -> int:
     """1 easy, 2 average, 3 hard (difficulty 3 and more)."""
     d = difficulty if isinstance(difficulty, int) and not isinstance(difficulty, bool) else 1

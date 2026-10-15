@@ -2,9 +2,11 @@
 
 In the admin panel's **Sheets** tab (logged in), the teacher makes exercise sheets from their TeXercises
 exercises. The tab begins with the sheets (**+ New sheet**) and the editor of the one chosen; at the top
-of the editor, the **topics of the imported exercises**: per module and learning objective the
-exercises there (in the uploaded export or the drafts); a click on a module or an objective chooses it
-for the sheet. Below the sheets, folded, the **topics covered by the exercise pool** (`pool.json`,
+of the editor, the **topics of the imported exercises**: their TeXercises topics (the `subbranches`
+of exercise.json, `topic_counts` in `sheets.py`), each with how many of the exercises there (in the
+uploaded export or the drafts) have it, the most frequent first. A click on one marks its exercises in
+the sheet and among the alternatives (a bar at the left, the topic as a chip) and limits "Add an
+exercise of" to them; a second click clears it. Each exercise shows its topics as chips. Below the sheets, folded, the **topics covered by the exercise pool** (`pool.json`,
 `coverage` in `sheets.py`): per module (the hub's apps, in their order) its exercises, how many of them
 are there, and per learning objective the exercises that practise it; an objective without any shows a
 red 0, and a module's exercises tied to none of its objectives are counted as the module as a whole.

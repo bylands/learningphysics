@@ -279,6 +279,25 @@ class Sheets(unittest.TestCase):
         self.assertEqual((coulomb["exercises"], coulomb["there"], coulomb["general"]), (9, 8, 0))
         self.assertEqual([m["id"] for m in S.coverage(self.POOL, apps[:1], set())], ["photons", "coulomb"])  # (not on the hub: after)
 
+    def test_exercise_topics(self):
+        # the TeXercises topics (subbranches) of the exercises there: cleaned, each once, counted, the most
+        # frequent first, those without one last
+        with tempfile.TemporaryDirectory() as d:
+            metas = {"a": {"subbranches": ["Optics", "Waves", "Optics", 7, " ", "Wa\nves "]}, "b": {"subbranches": ["Waves"]},
+                     "c": {"title": "C"}, "d": {"subbranches": "Waves"}}
+            have = {}
+            for k, m in metas.items():
+                (Path(d) / k).mkdir()
+                (Path(d) / k / "exercise.json").write_text(json.dumps(m))
+                have[k] = Path(d) / k
+            (Path(d) / "e").mkdir()
+            (Path(d) / "e" / "exercise.json").write_text("{not json")
+            have["e"] = Path(d) / "e"
+            self.assertEqual([S.exercise_topics(have[k]) for k in "abcde"], [["Optics", "Waves", "Wa ves"], ["Waves"], [], [], []])
+            self.assertEqual(S.topic_counts(have), [{"name": "Waves", "exercises": 2}, {"name": "Optics", "exercises": 1},
+                                                    {"name": "Wa ves", "exercises": 1}, {"name": "", "exercises": 3}])
+            self.assertEqual(S.topic_counts({"c": have["c"]}), [])
+
     def test_suggest_covers_every_objective(self):
         keys = S.suggest(self.mods(), "en", self.POOL, self.have(), 4)
         self.assertEqual(len(keys), 4)
@@ -1149,6 +1168,12 @@ class Service(unittest.TestCase):
         coulomb = next(a for a in state["apps"] if a["id"] == "coulomb")
         self.assertEqual([o["id"] for o in coulomb["objectives"]], ["direction", "factor", "vector", "field"])
         self.assertTrue(coulomb["objectives"][0]["de"])
+        # the TeXercises topics of the exercises there (for the editor), and of each exercise in a plan
+        topics = {t for k in drafts for t in S.exercise_topics(next(ROOT.glob(f"texercises-drafts*/exercises/{k}")))}
+        self.assertIn("Electrostatics", topics)
+        self.assertEqual({t["name"] for t in state["subjects"]} - {""}, topics)
+        self.assertEqual(sum(t["exercises"] for t in state["subjects"] if t["name"] == "Electrostatics"),
+                         sum("Electrostatics" in S.exercise_topics(next(ROOT.glob(f"texercises-drafts*/exercises/{k}"))) for k in drafts))
         # a suggestion for two modules (JSON only)
         draft = {"title": "Kräfte <3", "lang": "en", "modules": [{"id": "photons"}, {"id": "coulomb", "objectives": ["direction", "vector"]}]}
         self.assertEqual(self.req("/api/plan", j({"sheet": draft, "suggest": True}), "text/plain", cookie)[0], 415)
@@ -1160,6 +1185,8 @@ class Service(unittest.TestCase):
         self.assertEqual(len(keys), len(set(keys)))
         self.assertTrue(all(k in drafts for k in keys))
         self.assertEqual(plan["default_count"], len(keys))
+        self.assertEqual({k: plan["details"][k]["topics"] for k in keys},
+                         {k: S.exercise_topics(next(ROOT.glob(f"texercises-drafts*/exercises/{k}"))) for k in keys})
         self.assertEqual({(t["app"], t["objective"]) for t in plan["targets"]},
                          {("coulomb", "direction"), ("coulomb", "vector"), ("photons", "wave"), ("photons", "einstein"), ("photons", "threshold"), ("photons", "rate")})
         covered = {(plan["details"][k]["app"], o) for k in keys for o in plan["details"][k]["objectives"]}
