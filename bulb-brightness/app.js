@@ -759,7 +759,7 @@
         'Erklären, dass der Strom vor und nach einer Lampe oder einer Gruppe von Lampen gleich gross ist: Er wird nicht verbraucht.') },
     { id: 'power', kinds: ['mixed:medium', 'mixed:hard', 'reversed:medium'], tutor: 2, topic: 2,
       name: () => L('Rank the brightness of bulbs by their power ΔV · I.', 'Die Helligkeit von Lampen nach ihrer Leistung ΔU · I ordnen.') },
-    { id: 'change', kinds: ['series:easy', 'parallel:easy', 'bridged:medium'], tutor: 3, topic: 3,
+    { id: 'change', kinds: ['series:easy', 'parallel:easy', 'bridged:medium'], tutor: 5, topic: 5,
       name: () => L('Predict how the brightness changes when a bulb is added, removed or short-circuited, in series or in parallel.',
         'Vorhersagen, wie sich die Helligkeit ändert, wenn eine Lampe in Serie oder parallel dazukommt, wegfällt oder überbrückt wird.') },
   ];
