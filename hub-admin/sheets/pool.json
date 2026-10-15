@@ -3,7 +3,10 @@
  "apps": {
   "bulb-brightness": {
    "objectives": {
-    "current": [],
+    "current": [
+     "e19627-junctions",
+     "e22714-currents-and-voltages-in-a-circuit"
+    ],
     "power": [
      "e22725-brightness"
     ],
@@ -12,6 +15,14 @@
     ]
    },
    "exercises": {
+    "e19627-junctions": {
+     "source": "export",
+     "title": "Junctions",
+     "lang": "en",
+     "difficulty": 1,
+     "images": false,
+     "url": "/exercise/junctions/"
+    },
     "e22725-brightness": {
      "source": "export",
      "title": "Brightness",
@@ -19,6 +30,14 @@
      "difficulty": 2,
      "images": true,
      "url": "/exercise/brightness/"
+    },
+    "e22714-currents-and-voltages-in-a-circuit": {
+     "source": "export",
+     "title": "Currents and Voltages in a Circuit",
+     "lang": "en",
+     "difficulty": 2,
+     "images": true,
+     "url": "/exercise/currents-and-voltages-in-a-circuit/"
     },
     "e22499-battery": {
      "source": "export",
@@ -999,11 +1018,50 @@
   },
   "centre-of-mass": {
    "objectives": {
-    "locate": [],
+    "locate": [
+     "e24606-einen-hammer-balancieren",
+     "e24666-schwerpunkt-dreier-massen-am-stab",
+     "e24663-schwerpunkt-eines-l-profils"
+    ],
     "stability": [],
-    "tipping": []
+    "tipping": [
+     "e24608-der-kipptest-eines-busses"
+    ]
    },
-   "exercises": {}
+   "exercises": {
+    "e24606-einen-hammer-balancieren": {
+     "source": "export",
+     "title": "Einen Hammer balancieren",
+     "lang": "de",
+     "difficulty": 2,
+     "images": false,
+     "url": "/exercise/einen-hammer-balancieren/"
+    },
+    "e24666-schwerpunkt-dreier-massen-am-stab": {
+     "source": "export",
+     "title": "Schwerpunkt dreier Massen am Stab",
+     "lang": "de",
+     "difficulty": 2,
+     "images": false,
+     "url": "/exercise/schwerpunkt-dreier-massen-am-stab/"
+    },
+    "e24663-schwerpunkt-eines-l-profils": {
+     "source": "export",
+     "title": "Schwerpunkt eines L-Profils",
+     "lang": "de",
+     "difficulty": 2,
+     "images": false,
+     "url": "/exercise/schwerpunkt-eines-l-profils/"
+    },
+    "e24608-der-kipptest-eines-busses": {
+     "source": "export",
+     "title": "Der Kipptest eines Busses",
+     "lang": "de",
+     "difficulty": 3,
+     "images": false,
+     "url": "/exercise/der-kipptest-eines-busses/"
+    }
+   }
   },
   "coulomb": {
    "objectives": {
@@ -1226,7 +1284,10 @@
     "path": [
      "energy-conservation-06-skispringen"
     ],
-    "turn": [],
+    "turn": [
+     "e24544-ein-trampolin",
+     "e24652-umkehrpunkte-des-federpendels"
+    ],
     "error": []
    },
    "exercises": {
@@ -1278,6 +1339,14 @@
      "images": false,
      "url": ""
     },
+    "e24544-ein-trampolin": {
+     "source": "export",
+     "title": "Ein Trampolin",
+     "lang": "de",
+     "difficulty": 3,
+     "images": false,
+     "url": "/exercise/ein-trampolin/"
+    },
     "energy-conservation-06-skispringen": {
      "source": "drafts",
      "title": "Skispringen",
@@ -1285,6 +1354,14 @@
      "difficulty": 3,
      "images": false,
      "url": ""
+    },
+    "e24652-umkehrpunkte-des-federpendels": {
+     "source": "export",
+     "title": "Umkehrpunkte des Federpendels",
+     "lang": "de",
+     "difficulty": 4,
+     "images": false,
+     "url": "/exercise/umkehrpunkte-des-federpendels/"
     },
     "energy-conservation-07-seilschaukel": {
      "source": "drafts",
@@ -1341,13 +1418,79 @@
     "first": [
      "force-concepts-01-vier-kugeln-vom-tisch"
     ],
-    "balanced": [],
-    "second": [],
+    "balanced": [
+     "e24721-fallende-kartonrolle",
+     "e24709-antriebskraft-beim-velofahren",
+     "e24725-sinkgeschwindigkeit-zweier-stahlkugeln",
+     "e24722-wasserwiderstand-eines-segelboots"
+    ],
+    "second": [
+     "e24746-bremsender-supertanker",
+     "e24757-abbremsende-last-am-kran",
+     "e24745-bolzen-einer-armbrust",
+     "e24748-turnerin-beim-pferdsprung"
+    ],
     "centre": [
      "e18952-senke"
     ]
    },
    "exercises": {
+    "e24746-bremsender-supertanker": {
+     "source": "export",
+     "title": "Bremsender Supertanker",
+     "lang": "de",
+     "difficulty": 1,
+     "images": false,
+     "url": "/exercise/bremsender-supertanker/"
+    },
+    "e24721-fallende-kartonrolle": {
+     "source": "export",
+     "title": "Fallende Kartonrolle",
+     "lang": "de",
+     "difficulty": 1,
+     "images": false,
+     "url": "/exercise/fallende-kartonrolle/"
+    },
+    "e24757-abbremsende-last-am-kran": {
+     "source": "export",
+     "title": "Abbremsende Last am Kran",
+     "lang": "de",
+     "difficulty": 2,
+     "images": false,
+     "url": "/exercise/abbremsende-last-am-kran/"
+    },
+    "e24709-antriebskraft-beim-velofahren": {
+     "source": "export",
+     "title": "Antriebskraft beim Velofahren",
+     "lang": "de",
+     "difficulty": 2,
+     "images": false,
+     "url": "/exercise/antriebskraft-beim-velofahren/"
+    },
+    "e24745-bolzen-einer-armbrust": {
+     "source": "export",
+     "title": "Bolzen einer Armbrust",
+     "lang": "de",
+     "difficulty": 2,
+     "images": false,
+     "url": "/exercise/bolzen-einer-armbrust/"
+    },
+    "e24748-turnerin-beim-pferdsprung": {
+     "source": "export",
+     "title": "Turnerin beim Pferdsprung",
+     "lang": "de",
+     "difficulty": 2,
+     "images": false,
+     "url": "/exercise/turnerin-beim-pferdsprung/"
+    },
+    "e24725-sinkgeschwindigkeit-zweier-stahlkugeln": {
+     "source": "export",
+     "title": "Sinkgeschwindigkeit zweier Stahlkugeln",
+     "lang": "de",
+     "difficulty": 3,
+     "images": false,
+     "url": "/exercise/sinkgeschwindigkeit-zweier-stahlkugeln/"
+    },
     "force-concepts-01-vier-kugeln-vom-tisch": {
      "source": "drafts",
      "title": "Vier Kugeln vom Tisch",
@@ -1363,6 +1506,14 @@
      "difficulty": 3,
      "images": false,
      "url": "/exercise/senke/"
+    },
+    "e24722-wasserwiderstand-eines-segelboots": {
+     "source": "export",
+     "title": "Wasserwiderstand eines Segelboots",
+     "lang": "de",
+     "difficulty": 3,
+     "images": false,
+     "url": "/exercise/wasserwiderstand-eines-segelboots/"
     }
    }
   },
@@ -1371,8 +1522,15 @@
     "equal": [
      "e17318-copper-cube"
     ],
-    "partner": [],
-    "normal": []
+    "partner": [
+     "e24755-gegen-eine-wand-drucken",
+     "e24752-gewichtheber-mit-hantel",
+     "e24798-metallwurfel-auf-der-waage"
+    ],
+    "normal": [
+     "e24760-astronaut-auf-dem-mond",
+     "e24747-normalkraft-ist-nicht-die-reaktionskraft"
+    ]
    },
    "exercises": {
     "e17318-copper-cube": {
@@ -1382,6 +1540,46 @@
      "difficulty": 1,
      "images": false,
      "url": "/exercise/copper-cube/"
+    },
+    "e24760-astronaut-auf-dem-mond": {
+     "source": "export",
+     "title": "Astronaut auf dem Mond",
+     "lang": "de",
+     "difficulty": 2,
+     "images": false,
+     "url": "/exercise/astronaut-auf-dem-mond/"
+    },
+    "e24755-gegen-eine-wand-drucken": {
+     "source": "export",
+     "title": "Gegen eine Wand drücken",
+     "lang": "de",
+     "difficulty": 2,
+     "images": false,
+     "url": "/exercise/gegen-eine-wand-drucken/"
+    },
+    "e24752-gewichtheber-mit-hantel": {
+     "source": "export",
+     "title": "Gewichtheber mit Hantel",
+     "lang": "de",
+     "difficulty": 3,
+     "images": false,
+     "url": "/exercise/gewichtheber-mit-hantel/"
+    },
+    "e24798-metallwurfel-auf-der-waage": {
+     "source": "export",
+     "title": "Metallwürfel auf der Waage",
+     "lang": "de",
+     "difficulty": 3,
+     "images": false,
+     "url": "/exercise/metallwurfel-auf-der-waage/"
+    },
+    "e24747-normalkraft-ist-nicht-die-reaktionskraft": {
+     "source": "export",
+     "title": "Normalkraft ist nicht die Reaktionskraft zur Gewichtskraft",
+     "lang": "de",
+     "difficulty": 3,
+     "images": false,
+     "url": "/exercise/normalkraft-ist-nicht-die-reaktionskraft-zur-gewichtskraft/"
     }
    }
   },
@@ -1755,20 +1953,114 @@
   },
   "motion-data": {
    "objectives": {
-    "instant": [],
+    "instant": [
+     "e24632-fallstrecke-in-den-ersten-vier-sekunden",
+     "e24633-fallstrecke-in-der-dritten-sekunde",
+     "e24880-messtabelle-welche-bewegung-ist-beschleu",
+     "e24881-anfangsgeschwindigkeit-aus-sekundenstrec"
+    ],
     "convert": [],
-    "uniform": []
+    "uniform": [
+     "e24885-beschleunigte-bewegung-im-diagramm-nachw",
+     "e24880-messtabelle-welche-bewegung-ist-beschleu"
+    ]
    },
-   "exercises": {}
+   "exercises": {
+    "e24885-beschleunigte-bewegung-im-diagramm-nachw": {
+     "source": "export",
+     "title": "Beschleunigte Bewegung im Diagramm nachweisen",
+     "lang": "de",
+     "difficulty": 2,
+     "images": false,
+     "url": "/exercise/beschleunigte-bewegung-im-diagramm-nachweisen/"
+    },
+    "e24632-fallstrecke-in-den-ersten-vier-sekunden": {
+     "source": "export",
+     "title": "Fallstrecke in den ersten vier Sekunden",
+     "lang": "de",
+     "difficulty": 2,
+     "images": false,
+     "url": "/exercise/fallstrecke-in-den-ersten-vier-sekunden/"
+    },
+    "e24633-fallstrecke-in-der-dritten-sekunde": {
+     "source": "export",
+     "title": "Fallstrecke in der dritten Sekunde",
+     "lang": "de",
+     "difficulty": 2,
+     "images": false,
+     "url": "/exercise/fallstrecke-in-der-dritten-sekunde/"
+    },
+    "e24880-messtabelle-welche-bewegung-ist-beschleu": {
+     "source": "export",
+     "title": "Messtabelle: welche Bewegung ist beschleunigt?",
+     "lang": "de",
+     "difficulty": 2,
+     "images": false,
+     "url": "/exercise/messtabelle-welche-bewegung-ist-beschleunigt/"
+    },
+    "e24881-anfangsgeschwindigkeit-aus-sekundenstrec": {
+     "source": "export",
+     "title": "Anfangsgeschwindigkeit aus Sekundenstrecken",
+     "lang": "de",
+     "difficulty": 3,
+     "images": false,
+     "url": "/exercise/anfangsgeschwindigkeit-aus-sekundenstrecken/"
+    }
+   }
   },
   "motion-graphs": {
    "objectives": {
-    "slope": [],
-    "negative": [],
-    "sketch": [],
-    "uniform": []
+    "slope": [
+     "e24864-gleichformige-bewegung-in-diagrammen",
+     "e24885-beschleunigte-bewegung-im-diagramm-nachw",
+     "e24888-st-und-vt-diagramme-zuordnen"
+    ],
+    "negative": [
+     "e24864-gleichformige-bewegung-in-diagrammen",
+     "e24888-st-und-vt-diagramme-zuordnen"
+    ],
+    "sketch": [
+     "e24888-st-und-vt-diagramme-zuordnen"
+    ],
+    "uniform": [
+     "e24864-gleichformige-bewegung-in-diagrammen",
+     "e24885-beschleunigte-bewegung-im-diagramm-nachw",
+     "e24882-gleichformig-gegen-beschleunigt"
+    ]
    },
    "exercises": {
+    "e24864-gleichformige-bewegung-in-diagrammen": {
+     "source": "export",
+     "title": "Gleichförmige Bewegung in Diagrammen",
+     "lang": "de",
+     "difficulty": 1,
+     "images": false,
+     "url": "/exercise/gleichformige-bewegung-in-diagrammen/"
+    },
+    "e24885-beschleunigte-bewegung-im-diagramm-nachw": {
+     "source": "export",
+     "title": "Beschleunigte Bewegung im Diagramm nachweisen",
+     "lang": "de",
+     "difficulty": 2,
+     "images": false,
+     "url": "/exercise/beschleunigte-bewegung-im-diagramm-nachweisen/"
+    },
+    "e24882-gleichformig-gegen-beschleunigt": {
+     "source": "export",
+     "title": "Gleichförmig gegen beschleunigt",
+     "lang": "de",
+     "difficulty": 2,
+     "images": false,
+     "url": "/exercise/gleichformig-gegen-beschleunigt/"
+    },
+    "e24888-st-und-vt-diagramme-zuordnen": {
+     "source": "export",
+     "title": "s(t)- und v(t)-Diagramme zuordnen",
+     "lang": "de",
+     "difficulty": 3,
+     "images": false,
+     "url": "/exercise/st-und-vt-diagramme-zuordnen/"
+    },
     "e18844-kylian-mbappe": {
      "source": "export",
      "title": "Kylian Mbappé",
@@ -1794,9 +2086,19 @@
     ],
     "farther": [],
     "mean": [],
-    "sketch": []
+    "sketch": [
+     "e24888-st-und-vt-diagramme-zuordnen"
+    ]
    },
    "exercises": {
+    "e24888-st-und-vt-diagramme-zuordnen": {
+     "source": "export",
+     "title": "s(t)- und v(t)-Diagramme zuordnen",
+     "lang": "de",
+     "difficulty": 3,
+     "images": false,
+     "url": "/exercise/st-und-vt-diagramme-zuordnen/"
+    },
     "e18962-beschleunigung-und-strecke-im-vt-diagram": {
      "source": "export",
      "title": "Beschleunigung und Strecke im v(t)-Diagramm",
@@ -1947,12 +2249,52 @@
   },
   "cyclic-processes": {
    "objectives": {
-    "states": [],
+    "states": [
+     "e24935-kompression-und-erhitzung-eines-mols",
+     "e24934-zweistufige-zustandsanderung",
+     "e24943-zustande-im-heissluftmotor",
+     "e24990-kreisprozess-mit-luft"
+    ],
     "identify": [],
-    "sketch": [],
+    "sketch": [
+     "e24943-zustande-im-heissluftmotor",
+     "e24990-kreisprozess-mit-luft"
+    ],
     "error": []
    },
    "exercises": {
+    "e24935-kompression-und-erhitzung-eines-mols": {
+     "source": "export",
+     "title": "Kompression und Erhitzung eines Mols",
+     "lang": "de",
+     "difficulty": 2,
+     "images": false,
+     "url": "/exercise/kompression-und-erhitzung-eines-mols/"
+    },
+    "e24934-zweistufige-zustandsanderung": {
+     "source": "export",
+     "title": "Zweistufige Zustandsänderung",
+     "lang": "de",
+     "difficulty": 2,
+     "images": false,
+     "url": "/exercise/zweistufige-zustandsanderung/"
+    },
+    "e24943-zustande-im-heissluftmotor": {
+     "source": "export",
+     "title": "Zustände im Heissluftmotor",
+     "lang": "de",
+     "difficulty": 3,
+     "images": false,
+     "url": "/exercise/zustande-im-heissluftmotor/"
+    },
+    "e24990-kreisprozess-mit-luft": {
+     "source": "export",
+     "title": "Kreisprozess mit Luft",
+     "lang": "de",
+     "difficulty": 4,
+     "images": false,
+     "url": "/exercise/kreisprozess-mit-luft/"
+    },
     "e18846-gasflasche-3": {
      "source": "export",
      "title": "Gasflasche",
@@ -2106,7 +2448,11 @@
   },
   "interference": {
    "objectives": {
-    "huygens": [],
+    "huygens": [
+     "e24578-a-football-through-the-goal",
+     "e25073-big-and-small-particles",
+     "e20401-single-slit"
+    ],
     "maxima": [
      "e18961-beugung-von-weissem-licht",
      "e20396-double-slit",
@@ -2130,6 +2476,14 @@
     ]
    },
    "exercises": {
+    "e24578-a-football-through-the-goal": {
+     "source": "export",
+     "title": "A Football through the Goal",
+     "lang": "en",
+     "difficulty": 1,
+     "images": false,
+     "url": "/exercise/a-football-through-the-goal/"
+    },
     "e18961-beugung-von-weissem-licht": {
      "source": "export",
      "title": "Beugung von weissem Licht",
@@ -2202,6 +2556,14 @@
      "images": false,
      "url": "/exercise/satellite-dish/"
     },
+    "e25073-big-and-small-particles": {
+     "source": "export",
+     "title": "Big and Small Particles",
+     "lang": "en",
+     "difficulty": 2,
+     "images": false,
+     "url": "/exercise/big-and-small-particles/"
+    },
     "e18950-elektronenbeugung-1": {
      "source": "export",
      "title": "Elektronenbeugung",
@@ -2225,6 +2587,14 @@
      "difficulty": 2,
      "images": false,
      "url": "/exercise/hot-air-balloon/"
+    },
+    "e20401-single-slit": {
+     "source": "export",
+     "title": "Single Slit",
+     "lang": "en",
+     "difficulty": 2,
+     "images": false,
+     "url": "/exercise/single-slit/"
     },
     "e20385-un-dimanche-apres-midi-a-la-grande-jatte": {
      "source": "export",
@@ -2781,7 +3151,10 @@
      "e17514-cathode-ray-tube",
      "e23437-crossed-fields"
     ],
-    "work": [],
+    "work": [
+     "e24574-the-fine-beam-tube",
+     "e18945-sesame"
+    ],
     "radius": [
      "e18708-alpha-particle-1",
      "e23451-compact-muon-solenoid-cms",
@@ -2919,6 +3292,22 @@
      "difficulty": 1,
      "images": false,
      "url": "/exercise/velocity-selector/"
+    },
+    "e24574-the-fine-beam-tube": {
+     "source": "export",
+     "title": "The Fine-Beam Tube",
+     "lang": "en",
+     "difficulty": 3,
+     "images": false,
+     "url": "/exercise/the-fine-beam-tube/"
+    },
+    "e18945-sesame": {
+     "source": "export",
+     "title": "SESAME",
+     "lang": "de",
+     "difficulty": 4,
+     "images": true,
+     "url": "/exercise/sesame/"
     },
     "e23753-lead-ions": {
      "source": "export",
@@ -3130,7 +3519,9 @@
   },
   "photons": {
    "objectives": {
-    "wave": [],
+    "wave": [
+     "e24593-sunburn-but-not-from-a-heater"
+    ],
     "einstein": [
      "e22043-bremsspektrum",
      "e22041-charakteristische-rontgenlinien",
@@ -3252,6 +3643,14 @@
      "difficulty": 1,
      "images": false,
      "url": "/exercise/photon-rate-for-laser/"
+    },
+    "e24593-sunburn-but-not-from-a-heater": {
+     "source": "export",
+     "title": "Sunburn, but not from a Heater",
+     "lang": "en",
+     "difficulty": 2,
+     "images": false,
+     "url": "/exercise/sunburn-but-not-from-a-heater/"
     },
     "e21441-plancksche-konstante": {
      "source": "export",

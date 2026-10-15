@@ -193,7 +193,7 @@ exercise_id,title,creator,language,url,objectives
 18861,Cobalt 60,by,GER,https://texercises.com/exercise/cobalt-60/,
 18871,Gedämpfte Schwingung,by,GER,https://texercises.com/exercise/gedampfte-schwingung-11/,
 18885,Leiterplatte,by,GER,https://texercises.com/exercise/leiterplatte/,
-18945,SESAME,by,GER,https://texercises.com/exercise/sesame/,charged-particles:radius
+18945,SESAME,by,GER,https://texercises.com/exercise/sesame/,charged-particles:radius charged-particles:work
 18948,Tau-Leptonen,by,GER,https://texercises.com/exercise/tau-leptonen/,
 18949,Zeitdilatation,by,GER,https://texercises.com/exercise/zeitdilatation/,
 18950,Elektronenbeugung,by,GER,https://texercises.com/exercise/elektronenbeugung-1/,interference:changes matter-waves:debroglie
@@ -382,7 +382,7 @@ exercise_id,title,creator,language,url,objectives
 19569,RCL Parallel Circuit,by,ENG,https://texercises.com/exercise/rcl-parallel-circuit/,
 19625,Current as Derivative,by,ENG,https://texercises.com/exercise/current-as-derivative/,
 19626,Electric Current,by,ENG,https://texercises.com/exercise/electric-current/,
-19627,Junctions,by,ENG,https://texercises.com/exercise/junctions/,potential-circuit:rules
+19627,Junctions,by,ENG,https://texercises.com/exercise/junctions/,potential-circuit:rules bulb-brightness:current
 19628,Silver Wire,by,ENG,https://texercises.com/exercise/silver-wire-1/,
 19629,Copper Wire,by,ENG,https://texercises.com/exercise/copper-wire/,
 19630,Drift Velocity,by,ENG,https://texercises.com/exercise/drift-velocity/,
@@ -508,7 +508,7 @@ exercise_id,title,creator,language,url,objectives
 20398,Spectral Lines,by,ENG,https://texercises.com/exercise/spectral-lines/,interference:maxima
 20399,Feather,by,ENG,https://texercises.com/exercise/feather/,interference:maxima
 20400,Precious Opal,by,ENG,https://texercises.com/exercise/precious-opal/,interference:maxima
-20401,Single Slit,by,ENG,https://texercises.com/exercise/single-slit/,
+20401,Single Slit,by,ENG,https://texercises.com/exercise/single-slit/,interference:huygens
 20402,Suppressed Maximum,by,ENG,https://texercises.com/exercise/suppressed-maximum/,interference:maxima
 20408,Loudspeaker Interference,by,ENG,https://texercises.com/exercise/loudspeaker-interference/,interference:maxima
 20411,Half-Speed,by,ENG,https://texercises.com/exercise/half-speed/,
@@ -809,7 +809,7 @@ exercise_id,title,creator,language,url,objectives
 22524,Potential Difference,by,ENG,https://texercises.com/exercise/potential-difference/,potential-circuit:voltage electric-potential:energy
 22525,Filament,by,ENG,https://texercises.com/exercise/filament/,
 22582,Resistor Tetrahedron,by,ENG,https://texercises.com/exercise/resistor-tetrahedron/,potential-circuit:rules
-22714,Currents and Voltages in a Circuit,by,ENG,https://texercises.com/exercise/currents-and-voltages-in-a-circuit/,potential-circuit:rules potential-circuit:voltage potential-circuit:track
+22714,Currents and Voltages in a Circuit,by,ENG,https://texercises.com/exercise/currents-and-voltages-in-a-circuit/,potential-circuit:rules potential-circuit:voltage potential-circuit:track bulb-brightness:current
 22725,Brightness,by,ENG,https://texercises.com/exercise/brightness/,bulb-brightness:change bulb-brightness:power
 22773,Force between point charges,by,ENG,https://texercises.com/exercise/force-between-point-charges/,
 22774,Electrostatic force vectors,by,ENG,https://texercises.com/exercise/electrostatic-force-vectors/,coulomb:direction coulomb:vector
@@ -1011,3 +1011,38 @@ exercise_id,title,creator,language,url,objectives
 24455,Choice of Material,by,ENG,https://texercises.com/exercise/choice-of-material/,
 24456,Switch-On Current of a Light Bulb,by,ENG,https://texercises.com/exercise/switch-on-current-of-a-light-bulb/,
 24457,Temperature Sensor,by,ENG,https://texercises.com/exercise/temperature-sensor/,circuit-trainer:divide
+24544,Ein Trampolin,by,GER,https://texercises.com/exercise/ein-trampolin/,coe:turn
+24574,The Fine-Beam Tube,by,ENG,https://texercises.com/exercise/the-fine-beam-tube/,charged-particles:work
+24578,A Football through the Goal,by,ENG,https://texercises.com/exercise/a-football-through-the-goal/,interference:huygens
+24593,"Sunburn, but not from a Heater",by,ENG,https://texercises.com/exercise/sunburn-but-not-from-a-heater/,photons:wave
+24606,Einen Hammer balancieren,by,GER,https://texercises.com/exercise/einen-hammer-balancieren/,centre-of-mass:locate
+24608,Der Kipptest eines Busses,by,GER,https://texercises.com/exercise/der-kipptest-eines-busses/,centre-of-mass:tipping
+24632,Fallstrecke in den ersten vier Sekunden,by,GER,https://texercises.com/exercise/fallstrecke-in-den-ersten-vier-sekunden/,motion-data:instant
+24633,Fallstrecke in der dritten Sekunde,by,GER,https://texercises.com/exercise/fallstrecke-in-der-dritten-sekunde/,motion-data:instant
+24652,Umkehrpunkte des Federpendels,by,GER,https://texercises.com/exercise/umkehrpunkte-des-federpendels/,coe:turn
+24663,Schwerpunkt eines L-Profils,by,GER,https://texercises.com/exercise/schwerpunkt-eines-l-profils/,centre-of-mass:locate
+24666,Schwerpunkt dreier Massen am Stab,by,GER,https://texercises.com/exercise/schwerpunkt-dreier-massen-am-stab/,centre-of-mass:locate
+24709,Antriebskraft beim Velofahren,by,GER,https://texercises.com/exercise/antriebskraft-beim-velofahren/,force-concepts:balanced
+24721,Fallende Kartonrolle,by,GER,https://texercises.com/exercise/fallende-kartonrolle/,force-concepts:balanced
+24722,Wasserwiderstand eines Segelboots,by,GER,https://texercises.com/exercise/wasserwiderstand-eines-segelboots/,force-concepts:balanced
+24725,Sinkgeschwindigkeit zweier Stahlkugeln,by,GER,https://texercises.com/exercise/sinkgeschwindigkeit-zweier-stahlkugeln/,force-concepts:balanced
+24745,Bolzen einer Armbrust,by,GER,https://texercises.com/exercise/bolzen-einer-armbrust/,force-concepts:second
+24746,Bremsender Supertanker,by,GER,https://texercises.com/exercise/bremsender-supertanker/,force-concepts:second
+24747,Normalkraft ist nicht die Reaktionskraft zur Gewichtskraft,by,GER,https://texercises.com/exercise/normalkraft-ist-nicht-die-reaktionskraft-zur-gewichtskraft/,interaction:normal
+24748,Turnerin beim Pferdsprung,by,GER,https://texercises.com/exercise/turnerin-beim-pferdsprung/,force-concepts:second
+24752,Gewichtheber mit Hantel,by,GER,https://texercises.com/exercise/gewichtheber-mit-hantel/,interaction:partner
+24755,Gegen eine Wand drücken,by,GER,https://texercises.com/exercise/gegen-eine-wand-drucken/,interaction:partner
+24757,Abbremsende Last am Kran,by,GER,https://texercises.com/exercise/abbremsende-last-am-kran/,force-concepts:second
+24760,Astronaut auf dem Mond,by,GER,https://texercises.com/exercise/astronaut-auf-dem-mond/,interaction:normal
+24798,Metallwürfel auf der Waage,by,GER,https://texercises.com/exercise/metallwurfel-auf-der-waage/,interaction:partner
+24864,Gleichförmige Bewegung in Diagrammen,by,GER,https://texercises.com/exercise/gleichformige-bewegung-in-diagrammen/,motion-graphs:slope motion-graphs:negative motion-graphs:uniform
+24880,Messtabelle: welche Bewegung ist beschleunigt?,by,GER,https://texercises.com/exercise/messtabelle-welche-bewegung-ist-beschleunigt/,motion-data:instant motion-data:uniform
+24881,Anfangsgeschwindigkeit aus Sekundenstrecken,by,GER,https://texercises.com/exercise/anfangsgeschwindigkeit-aus-sekundenstrecken/,motion-data:instant
+24882,Gleichförmig gegen beschleunigt,by,GER,https://texercises.com/exercise/gleichformig-gegen-beschleunigt/,motion-graphs:uniform
+24885,Beschleunigte Bewegung im Diagramm nachweisen,by,GER,https://texercises.com/exercise/beschleunigte-bewegung-im-diagramm-nachweisen/,motion-data:uniform motion-graphs:slope motion-graphs:uniform
+24888,s(t)- und v(t)-Diagramme zuordnen,by,GER,https://texercises.com/exercise/st-und-vt-diagramme-zuordnen/,motion-graphs:slope motion-graphs:negative motion-graphs:sketch motion-areas:sketch
+24934,Zweistufige Zustandsänderung,by,GER,https://texercises.com/exercise/zweistufige-zustandsanderung/,cyclic-processes:states
+24935,Kompression und Erhitzung eines Mols,by,GER,https://texercises.com/exercise/kompression-und-erhitzung-eines-mols/,cyclic-processes:states
+24943,Zustände im Heissluftmotor,by,GER,https://texercises.com/exercise/zustande-im-heissluftmotor/,cyclic-processes:states cyclic-processes:sketch
+24990,Kreisprozess mit Luft,by,GER,https://texercises.com/exercise/kreisprozess-mit-luft/,cyclic-processes:states cyclic-processes:sketch
+25073,Big and Small Particles,by,ENG,https://texercises.com/exercise/big-and-small-particles/,interference:huygens
