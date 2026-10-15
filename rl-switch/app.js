@@ -164,7 +164,11 @@
     stars.setAttribute('role', 'img');
     $('#title').append(' ', stars);
     $('#prompt').innerHTML = ex.text;
-    $('#figure').innerHTML = ex.figure(false);
+    if (player) player.stop();
+    player = mountWatch($('#figure'), ex, {
+      locked: () => !(st && (st.solved || st.revealed)),
+      preds: () => ex.fields.map((f) => { const el = $(`#in-${f.key}`); return el && el.value.trim() ? parse(el.value) : NaN; }),
+    });
     $('#fields').innerHTML = ex.fields.map((f) => `
       <div class="field" data-key="${f.key}">
         <label for="in-${f.key}" class="sym">$${f.sym}$&nbsp;=</label>
@@ -246,6 +250,7 @@
       showStatus('ok');
     } else showStatus('bad');
     updateButtons();
+    if (player) player.refresh(); // solved: the switch unlocks
   }
 
   function showHints() {
@@ -275,7 +280,111 @@
     finish();
     showSolution();
     updateButtons();
+    if (player) player.refresh(); // the switch unlocks
     $('#solution').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  // ---------------------------------------------------------------- predict, then watch
+  // Once the exercise is solved or its solution shown (and in the last frame of each worked
+  // example), the student flips the switch in the figure and watches every current run from its
+  // value before switching, through the jump at t = 0, to its value long after (play.js), on a
+  // small I(t) graph with the values read off at the time of the slider; rings at t = 0 are the
+  // values the student entered.
+  let player = null, tutorPlayer = null, tutorEx = null;
+  const symHtml = (sym) => sym.replace(/^([A-Za-z])_\{(.+)\}$/, '<i>$1</i><sub>$2</sub>');
+  const num = (x, d = 1) => (Math.abs(x) < 0.5 * Math.pow(10, -d) ? 0 : x).toFixed(d).replace('-', '−');
+  // a time: in ms below 0.1 s
+  const timeText = (t, T) => (T < 0.1 ? `${num(1000 * t, T < 0.01 ? 2 : 1)} ms` : `${num(t, 2)} s`);
+  // a tidy step for about n intervals of size `span`
+  function niceStep(span, n) {
+    const raw = span / n, p = Math.pow(10, Math.floor(Math.log10(raw))), m = raw / p;
+    return (m <= 1 ? 1 : m <= 2 ? 2 : m <= 2.5 ? 2.5 : m <= 5 ? 5 : 10) * p;
+  }
+
+  // The currents asked for (mA): { f, j (branch, or null for R1), value(at) in mA }.
+  const currentsOf = (e) => e.fields.filter((f) => f.unit === 'mA').map((f) => {
+    const j = f.key === 'IR1' ? null : Number(f.key.slice(1));
+    return { f, value: (a) => 1000 * (j === null ? a.IR1 : a.Ib[j]) };
+  });
+
+  // The graph at time t: each current as a line up to t (before switching flat, the jump at t = 0),
+  // a line at t with a dot on each curve, and the predictions as rings at t = 0.
+  function graph(e, run, t, preds) {
+    const W = 320, H = 190, ml = 48, mr = 12, mt = 22, mb = 28;
+    const cur = currentsOf(e), T = run.T, t0 = -0.15 * T;
+    const ts = Array.from({ length: 161 }, (_, k) => (k * T) / 160);
+    const vals = cur.map((c) => [c.value(run.at(-1)), ...ts.map((x) => c.value(run.at(x)))]);
+    let lo = Math.min(0, ...vals.flat(), ...preds.filter((p) => p != null)), hi = Math.max(0, ...vals.flat(), ...preds.filter((p) => p != null));
+    if (hi - lo < 1e-9) hi = lo + 1;
+    const step = niceStep(hi - lo, 4);
+    lo = Math.floor(lo / step - 1e-9) * step; hi = Math.ceil(hi / step + 1e-9) * step;
+    const X = (x) => ml + ((x - t0) / (T - t0)) * (W - ml - mr), Y = (y) => mt + ((hi - y) / (hi - lo)) * (H - mt - mb);
+    const f1 = (x) => x.toFixed(1);
+    let svg = `<svg class="rlw-plot" viewBox="0 0 ${W} ${H}" role="img" aria-label="${L('The currents against time', 'Die Ströme in Abhängigkeit der Zeit')}">`;
+    for (let y = lo; y <= hi + step / 2; y += step) {
+      svg += `<line class="grid${Math.abs(y) < step / 2 ? ' zero' : ''}" x1="${ml}" x2="${W - mr}" y1="${f1(Y(y))}" y2="${f1(Y(y))}"/><text class="tick" x="${ml - 5}" y="${f1(Y(y) + 4)}" text-anchor="end">${num(y, step < 1 ? 1 : 0)}</text>`;
+    }
+    svg += `<line class="axis" x1="${f1(X(0))}" x2="${f1(X(0))}" y1="${mt}" y2="${H - mb}"/><text class="tick" x="${f1(X(0))}" y="${H - mb + 16}" text-anchor="middle">0</text>`;
+    svg += `<text class="tick" x="${W - mr}" y="${H - mb + 16}" text-anchor="end">${timeText(T, T)}</text><text class="tick" x="${ml - 5}" y="11" text-anchor="end">mA</text>`;
+    const until = Math.min(t, T);
+    cur.forEach((c, k) => {
+      const v0 = vals[k][0];
+      let d = `M${f1(X(t0))} ${f1(Y(v0))}L${f1(X(Math.min(0, until)))} ${f1(Y(v0))}`;
+      if (until >= 0) {
+        ts.filter((x) => x <= until).forEach((x) => { d += `L${f1(X(x))} ${f1(Y(c.value(run.at(x))))}`; });
+        d += `L${f1(X(until))} ${f1(Y(c.value(run.at(until))))}`;
+      }
+      svg += `<path class="curve s${k}" d="${d}"/>`;
+    });
+    if (t > t0) svg += `<line class="now" x1="${f1(X(until))}" x2="${f1(X(until))}" y1="${mt}" y2="${H - mb}"/>`;
+    cur.forEach((c, k) => { if (t >= 0 && preds[k] != null) svg += `<circle class="pred s${k}" cx="${f1(X(0))}" cy="${f1(Y(preds[k]))}" r="6"/>`; });
+    cur.forEach((c, k) => { svg += `<circle class="dot s${k}" cx="${f1(X(until))}" cy="${f1(Y(c.value(run.at(until))))}" r="4"/>`; });
+    return `${svg}</svg>`;
+  }
+
+  // The player of exercise e in host. o: { locked(), preds() → the values entered for the currents
+  // (mA, NaN if none), tutor: true in a worked example }.
+  function mountWatch(host, e, o = {}) {
+    let shown = null;
+    const cur = currentsOf(e);
+    const near = (y, z) => Math.abs(y - z) <= e.tol * Math.max(Math.abs(z), 0.05);
+    const what = e.st.then ? L('close', 'schliessen') : L('open', 'öffnen');
+    const prediction = () => {
+      if (!o.preds) return cur.map(() => null);
+      const p = o.preds();
+      return cur.map((c) => { const v = p[e.fields.indexOf(c.f)]; return Number.isFinite(v) ? v : null; });
+    };
+    return window.Play.create(host, {
+      t0: -0.15 * e.curves().T, t1: e.curves().T, seconds: 3,
+      locked: o.locked,
+      render(scene, s) {
+        const lock = !!(o.locked && o.locked()), key = `${s.after}|${lock}|${Lang.get()}`;
+        if (key !== shown) {
+          shown = key;
+          scene.innerHTML = `<div class="rlw"><div class="rlw-circ"></div><div class="rlw-side"></div></div>`;
+          scene.querySelector('.rlw-circ').innerHTML = e.watch()[s.after ? 1 : 0];
+          const svg = scene.querySelector('svg.circuit');
+          if (svg) requestAnimationFrame(() => fitText(svg));
+          markScrollable();
+        }
+        const side = scene.querySelector('.rlw-side');
+        if (lock) { side.innerHTML = `<p class="note rlw-wait">${L('The graph of the currents appears here once you have solved the exercise or looked at the solution.', 'Der Graph der Ströme erscheint hier, sobald du die Aufgabe gelöst oder die Lösung angeschaut hast.')}</p>`; return; }
+        const run = e.curves(), preds = prediction(), a = run.at(Math.min(s.t, run.T)), a0 = run.at(0);
+        const rows = cur.map((c, k) => {
+          const p = preds[k], ok = p != null && near(p, c.value(a0));
+          const mark = s.after && p != null ? ` <span class="pred ${ok ? 'ok' : 'bad'}">${ok ? '✓' : '✗'} ${L('your answer', 'deine Antwort')} (<i>t</i> = 0⁺): ${num(p)}</span>` : '';
+          return `<li><span class="key s${k}" aria-hidden="true"></span>${symHtml(c.f.sym)} = ${num(c.value(a))} mA${mark}</li>`;
+        });
+        side.innerHTML = graph(e, run, s.t, preds) + `<ul class="rlw-read">${rows.join('')}</ul>`;
+      },
+      texts: () => ({
+        switch: L(`Switch S: ${what}`, `Schalter S: ${what}`),
+        ready: L(`Click the switch S to ${what} it, and watch the currents.`, `Klicke auf den Schalter S, um ihn zu ${what}, und schau den Strömen zu.`),
+        again: o.preds ? L('Rings at t = 0: your answers. Click the switch again to go back, or ▶ to watch once more.', 'Ringe bei t = 0: deine Antworten. Klicke nochmals auf den Schalter, um zurückzugehen, oder ▶, um nochmals zuzuschauen.')
+          : L('Click the switch again to go back, or ▶ to watch once more.', 'Klicke nochmals auf den Schalter, um zurückzugehen, oder ▶, um nochmals zuzuschauen.'),
+        time: (t) => `t = ${timeText(t, e.curves().T)}`,
+      }),
+    });
   }
 
   // ---------------------------------------------------------------- check
@@ -369,9 +478,24 @@
   };
 
   // ---------------------------------------------------------------- language
+  // The worked examples, each with a last frame to watch (mountWatch).
+  const watchFrame = () => ({
+    text: `<p class="step-rule">${L('Watch it happen', 'Zuschauen')}</p><p>${L('Flip the switch S in the figure and watch every current: before switching, the jump at <i>t</i> = 0 (all currents except the inductor current can jump), and how the currents then run to their values long after switching.',
+      'Lege den Schalter S im Schaltbild um und schau jedem Strom zu: vor dem Schalten, der Sprung bei <i>t</i> = 0 (alle Ströme ausser dem Spulenstrom können springen), und wie die Ströme danach zu ihren Werten lange nach dem Schalten laufen.')}</p>`,
+    figure: '<div class="pw-host"></div>',
+  });
   const lessons = () => window.Lessons.EXAMPLES.map((e, i) => ({
-    name: e.name[Lang.get()], idea: e.idea[Lang.get()], also: topics.also(i), frames: () => tutorial(e.circuit).frames,
+    name: e.name[Lang.get()], idea: e.idea[Lang.get()], also: topics.also(i),
+    frames: () => { const t = tutorial(e.circuit); return [...t.frames, watchFrame()]; },
   }));
+  function watchInTutor() {
+    if (tutorPlayer) tutorPlayer.stop();
+    tutorPlayer = null;
+    const host = $('#t-figure .pw-host'), i = tutor ? tutor.current() : 0;
+    if (!host) return;
+    tutorEx = window.Switching.tutorial(window.Lessons.EXAMPLES[i].circuit).ex;
+    tutorPlayer = mountWatch(host, tutorEx, {});
+  }
 
   function applyStatic() {
     document.title = ui().title;
@@ -396,6 +520,7 @@
       if (st.revealed) showSolution();
       if ($('#task').hidden) { $('#hints').hidden = true; $('#solution').hidden = true; }
       updateButtons();
+      if (player) player.refresh();
     }
     tutor.relabel(lessons());
     checker.relabel();
@@ -468,7 +593,7 @@
     window.addEventListener('hashchange', fromHash);
     window.addEventListener('resize', markScrollable);
     tutor = window.createTutor(lessons(), {
-      after: () => { math($('#tutor')); markScrollable(); },
+      after: () => { math($('#tutor')); watchInTutor(); markScrollable(); },
       done: practise,
       practise: (i) => { topics.go(i); setMode('practice'); fresh(); },
       t: () => ui().tutorBtns,

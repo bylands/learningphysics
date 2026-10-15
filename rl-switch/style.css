@@ -7,6 +7,8 @@
   --zone-light-line: rgba(43, 89, 195, 0.45);
   --zone-strong: rgba(43, 89, 195, 0.16);
   --zone-strong-line: rgba(43, 89, 195, 0.6);
+  /* the currents in the graph (watching), in a fixed order */
+  --s0: #2a78d6; --s1: #eb6834; --s2: #1baf7a; --s3: #eda100;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -17,6 +19,7 @@
     --zone-light-line: rgba(122, 162, 255, 0.45);
     --zone-strong: rgba(122, 162, 255, 0.2);
     --zone-strong-line: rgba(122, 162, 255, 0.65);
+    --s0: #3987e5; --s1: #d95926; --s2: #199e70; --s3: #c98500;
   }
 }
 
@@ -69,3 +72,30 @@ table.compare th:first-child { text-align: left; font-weight: 600; }
 /* check: the current the question asks for, bold */
 #ck svg text.ask { font-weight: 700; font-size: 16px; }
 
+
+/* predict, then watch (play.js): the circuit and, once unlocked, the graph of the currents with
+   the values at the time of the slider; the rings at t = 0 are the student's answers */
+.rlw { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 8px 24px; }
+.rlw-circ { max-width: 100%; }
+.rlw-side { width: min(100%, 340px); }
+.rlw-wait { max-width: 30em; margin: 0; }
+svg.rlw-plot { display: block; width: 100%; height: auto; }
+.rlw-plot .grid { stroke: var(--line); stroke-width: 1; }
+.rlw-plot .grid.zero { stroke: var(--muted); }
+.rlw-plot .axis { stroke: var(--muted); stroke-width: 1; stroke-dasharray: 3 3; }
+.rlw-plot .now { stroke: var(--ink); stroke-width: 1; opacity: 0.5; }
+.rlw-plot .tick { fill: var(--muted); font: 11px system-ui, sans-serif; }
+.rlw-plot .curve { fill: none; stroke-width: 2; stroke-linejoin: round; }
+.rlw-plot .dot { stroke: var(--card); stroke-width: 2; }
+.rlw-plot .pred { fill: none; stroke-width: 2; stroke-dasharray: 2 2; }
+.rlw-plot .s0 { stroke: var(--s0); } .rlw-plot .dot.s0 { fill: var(--s0); stroke: var(--card); }
+.rlw-plot .s1 { stroke: var(--s1); } .rlw-plot .dot.s1 { fill: var(--s1); stroke: var(--card); }
+.rlw-plot .s2 { stroke: var(--s2); } .rlw-plot .dot.s2 { fill: var(--s2); stroke: var(--card); }
+.rlw-plot .s3 { stroke: var(--s3); } .rlw-plot .dot.s3 { fill: var(--s3); stroke: var(--card); }
+.rlw-read { list-style: none; margin: 4px 0 0; padding: 0; font-variant-numeric: tabular-nums; font-size: 0.95rem; }
+.rlw-read li { margin: 2px 0; }
+.rlw-read .key { display: inline-block; width: 14px; height: 3px; border-radius: 2px; vertical-align: middle; margin-right: 6px; }
+.rlw-read .key.s0 { background: var(--s0); } .rlw-read .key.s1 { background: var(--s1); }
+.rlw-read .key.s2 { background: var(--s2); } .rlw-read .key.s3 { background: var(--s3); }
+.rlw-read .pred { font-size: 0.85rem; margin-left: 6px; }
+.rlw-read .pred.ok { color: var(--ok); } .rlw-read .pred.bad { color: var(--bad); }

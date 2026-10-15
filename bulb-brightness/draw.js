@@ -19,6 +19,19 @@
   const MARGIN = 0.9;      // above the top wire
 
   const f1 = (x) => Math.round(x * S * 10) / 10;
+  // the glow around a lit bulb (glow 0 … 1); live: its data-b attribute (see glow())
+  const haloR = (g) => f1(R + 0.15 + 0.35 * g), haloO = (g) => (g > 0 ? (0.25 + 0.5 * g).toFixed(2) : '0');
+  const halo = (cx, cy, g, live = '') => `<circle class="halo"${live} cx="${f1(cx)}" cy="${f1(cy)}" r="${haloR(g)}" style="opacity:${haloO(g)}"/>`;
+
+  // Sets the glow of the bulbs drawn with live (in the element el): glows[i] in 0 … 1.
+  function glow(el, glows) {
+    el.querySelectorAll('[data-b]').forEach((c) => {
+      const g = glows[Number(c.dataset.b)] || 0;
+      if (c.classList.contains('halo')) { c.setAttribute('r', haloR(g)); c.style.opacity = haloO(g); return; }
+      c.classList.toggle('lit', g > 0);
+      c.style.fillOpacity = g > 0 ? (0.35 + 0.65 * g).toFixed(2) : '';
+    });
+  }
 
   // ---------------------------------------------------------------- drawing kit
   function sketch() {
@@ -35,24 +48,45 @@
       // A bulb from p to q (horizontal or vertical), label beside it. look: { label, glow,
       // note (a second line under the label), hl (a ring around the bulb), asked (the bulb a
       // question is about: drawn in another colour) }.
+      // For the animation (live: { i }), the halo is always there and both circles carry data-b,
+      // so that glow() can change them; gone: an unscrewed bulb (an empty socket); hit: the bulb
+      // is the switch the student flips (play.js).
       bulb(p, q, look, side) {
         const cx = (p[0] + q[0]) / 2, cy = (p[1] + q[1]) / 2;
         const len = Math.hypot(q[0] - p[0], q[1] - p[1]);
         const dx = (R * (q[0] - p[0])) / len, dy = (R * (q[1] - p[1])) / len; // towards q, whichever way the bulb is drawn
         wire(p[0], p[1], cx - dx, cy - dy);
         wire(cx + dx, cy + dy, q[0], q[1]);
-        if (look.glow > 0) {
-          parts.push(`<circle class="halo" cx="${f1(cx)}" cy="${f1(cy)}" r="${f1(R + 0.15 + 0.35 * look.glow)}" style="opacity:${(0.25 + 0.5 * look.glow).toFixed(2)}"/>`);
-        }
+        const live = look.live ? ` data-b="${look.live.i}"` : '';
+        if (look.hit) parts.push(`<g data-pw-switch="1"><circle class="pw-hit" cx="${f1(cx)}" cy="${f1(cy)}" r="${f1(R + 0.3)}"/>`);
+        if (look.glow > 0 || (live && !look.gone)) parts.push(halo(cx, cy, look.glow, live));
         const asked = look.asked ? ' asked' : '';
-        parts.push(`<circle class="bulb${look.glow > 0 ? ' lit' : ''}${asked}" cx="${f1(cx)}" cy="${f1(cy)}" r="${f1(R)}"${look.glow > 0 ? ` style="fill-opacity:${(0.35 + 0.65 * look.glow).toFixed(2)}"` : ''}/>`);
-        const d = R * Math.SQRT1_2;
-        parts.push(`<path class="w thin${asked}" d="M${f1(cx - d)},${f1(cy - d)} L${f1(cx + d)},${f1(cy + d)} M${f1(cx - d)},${f1(cy + d)} L${f1(cx + d)},${f1(cy - d)}"/>`);
+        if (look.gone) {
+          parts.push(`<circle class="socket" cx="${f1(cx)}" cy="${f1(cy)}" r="${f1(R)}"/>`);
+        } else {
+          parts.push(`<circle class="bulb${look.glow > 0 ? ' lit' : ''}${asked}"${live} cx="${f1(cx)}" cy="${f1(cy)}" r="${f1(R)}"${look.glow > 0 ? ` style="fill-opacity:${(0.35 + 0.65 * look.glow).toFixed(2)}"` : ''}/>`);
+          const d = R * Math.SQRT1_2;
+          parts.push(`<path class="w thin${asked}" d="M${f1(cx - d)},${f1(cy - d)} L${f1(cx + d)},${f1(cy + d)} M${f1(cx - d)},${f1(cy + d)} L${f1(cx + d)},${f1(cy - d)}"/>`);
+        }
+        if (look.hit) parts.push('</g>');
         if (look.hl) parts.push(`<circle class="ring" cx="${f1(cx)}" cy="${f1(cy)}" r="${f1(R + 0.14)}"/>`);
         const [lx, ly, anchor] = side === 'right' ? [cx + R + 0.15, cy + 0.18, 'start'] : side === 'below' ? [cx, cy + R + 0.5, 'middle'] : [cx, cy - R - 0.2, 'middle'];
         labels.push(`<text class="lbl${asked}" x="${f1(lx)}" y="${f1(ly)}" text-anchor="${anchor}">${look.label}</text>`);
         // The note goes under the label, or above it for a bulb on the top wire.
         if (look.note) labels.push(`<text class="note${look.noteCls ? ' ' + look.noteCls : ''}" x="${f1(lx)}" y="${f1(ly + (side === 'above' ? -0.45 : 0.45))}" text-anchor="${anchor}">${look.note}</text>`);
+      },
+      // A switch on a vertical wire from p (top) to q, its lever pivoting at the lower contact and
+      // opening to the right; label on the right. look: { closed, hit (the switch the student flips, play.js), label }.
+      toggle(p, q, look) {
+        const x = p[0], a = p[1] + 0.35, b = q[1] - 0.35, L = b - a;
+        wire(x, p[1], x, a);
+        wire(x, b, x, q[1]);
+        if (look.hit) parts.push(`<g data-pw-switch="1"><rect class="pw-hit" x="${f1(x - 0.45)}" y="${f1(a - 0.3)}" width="${f1(0.9 + 0.55)}" height="${f1(L + 0.6)}" rx="6"/>`);
+        const ang = look.closed ? 0 : 0.55, tx = x + L * Math.sin(ang), ty = b - L * Math.cos(ang);
+        parts.push(`<line class="w lever" x1="${f1(x)}" y1="${f1(b)}" x2="${f1(tx)}" y2="${f1(ty)}"/>`);
+        for (const y of [a, b]) parts.push(`<circle class="contact" cx="${f1(x)}" cy="${f1(y)}" r="2.6"/>`);
+        if (look.hit) parts.push('</g>');
+        labels.push(`<text class="lbl" x="${f1(x + 0.62)}" y="${f1((a + b) / 2 + 0.18)}" text-anchor="start">${look.label || 'S'}</text>`);
       },
       // A cell on the vertical battery wire between y1 (top) and y2; + at the top for dir = +1.
       cell(x, y1, y2, dir) {
@@ -99,6 +133,8 @@
     // a bridging wire stands where a bulb's wire would, so that its column lines up with the
     // columns of the groups above and below it (no room needed for a label on its right)
     if (node.t === 'W') return (node.vl = { ax: COL.left, w: COL.left + 0.3, h: 0 });
+    // a switch: room for the open lever and its label on the right
+    if (node.t === 'K') return (node.vl = { ax: COL.left, w: COL.left + 1, h: 1.6 });
     const kids = node.kids.map((k) => measure(k, right));
     if (node.t === 'S') {
       const ax = Math.max(...kids.map((k) => k.ax));
@@ -116,6 +152,7 @@
     box(node, x, y, x + g.w, y + g.h);
     if (node.t === 'L') { s.bulb([x + g.ax, y], [x + g.ax, y + g.h], bulb(node.i), 'right'); return; }
     if (node.t === 'W') { s.wire(x + g.ax, y, x + g.ax, y + g.h); return; }
+    if (node.t === 'K') { s.toggle([x + g.ax, y], [x + g.ax, y + g.h], s.sw || { closed: node.closed }); return; }
     if (node.t === 'S') {
       let cy = y;
       for (const k of node.kids) { drawV(s, k, x + g.ax - k.vl.ax, cy, bulb, box); cy += k.vl.h; }
@@ -132,10 +169,13 @@
   }
 
   // ---------------------------------------------------------------- whole circuit
-  // `bulb(i)` gives the look of bulb i (reading order): { label, glow } with glow in 0 … 1, and
+  // `bulb(i)` gives the look of bulb i (reading order): { label, glow } with glow in 0 … 1 (and
+  // live, gone, hit for the animation, see sketch().bulb), and
   // for the tutorial note and hl (see sketch().bulb). The tutorial also passes opts.zones:
   // part → 'strong' | 'light' (shaded; the whole load or its parts), opts.captions: part →
-  // text above its zone, and opts.bat: the class of a zone around the batteries.
+  // text above its zone, and opts.bat: the class of a zone around the batteries. A switch (node
+  // { t: 'K', closed }) is drawn as opts.sw gives it ({ closed, hit, label }), else as node.closed;
+  // opts.margin: the room above the top wire (more for notes above the bulbs there).
   function circuit(load, pack, bulb, opts = {}) {
     const cells = pack.t === 'B' ? [pack] : pack.kids;
     let top = [], bottom = [], middle = null;
@@ -169,6 +209,7 @@
     if (middle && middle.t === 'P') middle.vl.h = bottomY; // a group reaches down to the bottom wire
 
     const s = sketch();
+    s.sw = opts.sw; // the look of the switch (toggle)
     s.wire(BAT_X, 0, X0, 0);
     top.forEach((leaf, k) => {
       box(leaf, X0 + k * HB + 0.2, notes ? -1.2 : -0.8, X0 + (k + 1) * HB - 0.2, 0.6);
@@ -198,7 +239,7 @@
     s.wire(BAT_X, y0 + cells.length * cell, BAT_X, bottomY);
 
     const width = col + (middle ? middle.vl.w - middle.vl.ax : 0) + 0.5;
-    if (!notes) return s.toSVG(width, bottomY + (bottom.length ? 1.1 : 0.5));
+    if (!notes) return s.toSVG(width, bottomY + (bottom.length ? 1.1 : 0.5), opts.margin);
 
     // Zones: larger ones first (behind); nested zones get a wider margin.
     box(load, X0 - 0.2, -1.3, width - 0.15, bottomY + (bottom.length ? 1.4 : 0.35));
@@ -212,7 +253,7 @@
     return s.toSVG(width, bottomY + (bottom.length ? 1.5 : 0.5), 2);
   }
 
-  const api = { circuit };
+  const api = { circuit, glow };
   root.Draw = api;
   if (typeof module !== 'undefined') module.exports = api;
 })(typeof window !== 'undefined' ? window : globalThis);

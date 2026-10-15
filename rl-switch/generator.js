@@ -507,7 +507,7 @@
     // the height of a branch: 1.3 per element, an inductor a little more (its label has a note)
     const tall = (b) => ((b.sw ? 1 : 0) + (b.R ? 1 : 0)) * 1.3 + (b.L ? 1.6 : 0);
     const H = Math.max(3.2, 0.9 + Math.max(...c.branches.map(tall)));
-    const sw = (p, q2, extra) => s.sw(p, q2, { l: 'S', closed: view.closed, note: view.swNote, hl: hl.has('S'), ...extra });
+    const sw = (p, q2, extra) => s.sw(p, q2, { l: 'S', closed: view.closed, note: view.swNote, hl: hl.has('S'), hit: view.hit, ...extra });
 
     // Main line: the switch on the top wire, R1 on the bottom wire (the current goes back to
     // the battery through it, so its arrow points left), a bridge switch below R1.
@@ -579,8 +579,63 @@
     return out;
   }
 
-  // the note under the switch in the task
+  // the note under the switch in the task, and once it has been switched (the animation)
   const swNote = (closed) => (closed ? L('opens at t = 0', 'öffnet bei t = 0') : L('closes at t = 0', 'schliesst bei t = 0'));
+  const swDone = (closed) => (closed ? L('closed at t = 0', 'bei t = 0 geschlossen') : L('opened at t = 0', 'bei t = 0 geöffnet'));
+
+  // ---------------------------------------------------------------- the currents in time
+  // Immediately after switching, as after(), in plain numbers (A, V) for any inductor currents IL.
+  function afterNum(c, closed, IL) {
+    const { main, bridged, r, active } = config(c, closed), V = fval(c.V), rr = fval(r);
+    const sumIL = IL.reduce((a, b) => a + b, 0);
+    const res = c.branches.map((b, j) => j).filter((j) => active[j] && !c.branches[j].L);
+    const G = res.reduce((sum, j) => sum + 1 / fval(c.branches[j].R), 0);
+    let U;
+    if (main && rr) U = (V - rr * sumIL) / (1 + rr * G);
+    else if (main) U = V;
+    else if (!G) return null;
+    else U = -sumIL / G;
+    const Ib = c.branches.map((b, j) => (b.L ? IL[j] : active[j] ? U / fval(b.R) : 0));
+    const I = main ? Ib.reduce((a, b) => a + b, 0) : 0;
+    const VL = c.branches.map((b, j) => (b.L ? U - (b.R ? fval(b.R) * IL[j] : 0) : null));
+    return { I, U, Ib, VL, IR1: bridged ? 0 : I };
+  }
+
+  // How the currents run after switching, from their values right after (s1) to those long after
+  // (s2): each inductor current changes at the rate V_L / L (V_L from Kirchhoff's rules, as right
+  // after switching), integrated (Runge–Kutta) up to T = 6 times the longest time constant.
+  // Returns { T, taus, at(t) → { IR1, Ib } in A }; before t = 0, the values before switching (s0).
+  function curves(c, st) {
+    const n = c.branches.length, Ls = c.branches.map((b, j) => j).filter((j) => c.branches[j].L);
+    const rate = (IL) => { const a = afterNum(c, st.then, IL); return IL.map((x, j) => (c.branches[j].L ? a.VL[j] / c.branches[j].H : 0)); };
+    // the rates are linear in the inductor currents: dIL/dt = A·IL + b
+    const zero = new Array(n).fill(0), b0 = rate(zero);
+    const A = Ls.map((k) => Ls.map((l) => { const e = zero.slice(); e[l] = 1; return rate(e)[k] - b0[k]; }));
+    let lams;
+    if (Ls.length === 1) lams = [A[0][0]];
+    else {
+      const tr = A[0][0] + A[1][1], det = A[0][0] * A[1][1] - A[0][1] * A[1][0], disc = Math.sqrt(Math.max(0, tr * tr - 4 * det));
+      lams = [(tr + disc) / 2, (tr - disc) / 2];
+    }
+    const taus = lams.map((l) => -1 / l);
+    const T = 6 * Math.max(...taus), steps = Math.min(20000, Math.max(600, Math.ceil((40 * T) / Math.min(...taus))));
+    const dt = T / steps, IL0 = st.IL.map(fval), path = [IL0];
+    const plus = (x, k, h) => x.map((v, j) => v + h * k[j]);
+    let IL = IL0;
+    for (let k = 0; k < steps; k++) {
+      const k1 = rate(IL), k2 = rate(plus(IL, k1, dt / 2)), k3 = rate(plus(IL, k2, dt / 2)), k4 = rate(plus(IL, k3, dt));
+      IL = IL.map((v, j) => v + (dt / 6) * (k1[j] + 2 * k2[j] + 2 * k3[j] + k4[j]));
+      path.push(IL);
+    }
+    const s0 = { IR1: fval(st.s0.IR1), Ib: st.s0.Ib.map(fval) };
+    function at(t) {
+      if (t < 0) return s0;
+      const x = Math.min(steps, t / dt), k = Math.min(steps - 1, Math.floor(x)), f = x - k;
+      const a = afterNum(c, st.then, path[k].map((v, j) => v + f * (path[k + 1][j] - v)));
+      return { IR1: a.IR1, Ib: a.Ib };
+    }
+    return { T, taus, at };
+  }
 
   // Difficulty for the stars and the arcade: easy 1 (switched on from rest, or a single loop) or
   // 2; medium 3; hard 4, or 5 with three branches, two inductors or the switch across R1.
@@ -602,8 +657,19 @@
         : { closed: st.first, cur: syms((t) => (t.key === ask ? { t: `$${t.sym}$`, cls: 'ask' } : `$${t.sym}$`)), swNote: swNote(st.first) };
       return `<div class="fig">${draw(c, nm, view).toSVG()}</div>`;
     };
+    // The circuit before and after switching, the switch the one the student flips (play.js), in
+    // the same frame: [before, after].
+    const watch = () => {
+      const views = [{ closed: st.first, cur: syms((t) => `$${t.sym}$`), swNote: swNote(st.first), hit: true },
+        { closed: st.then, cur: syms((t) => `$${t.sym}$`), dim: dead(c, st.then), swNote: swDone(st.then), hit: true }];
+      const gaps = views.reduce((g, v) => draw(c, nm, v).gaps.map((x, j) => Math.max(x, g[j] || 0)), []);
+      const sk = views.map((v) => draw(c, nm, { ...v, gaps }));
+      const box = sk.reduce((b, k) => [Math.min(b[0], k.box[0]), Math.min(b[1], k.box[1]), Math.max(b[2], k.box[2]), Math.max(b[3], k.box[3])], [Infinity, Infinity, -Infinity, -Infinity]);
+      return sk.map((k) => `<div class="fig">${k.toSVG('circuit', box)}</div>`);
+    };
+    let run = null;
     return {
-      id, level, circuit: c, st, nm,
+      id, level, circuit: c, st, nm, watch, curves: () => (run = run || curves(c, st)),
       title: `${LEVELS[level] ? LEVELS[level].name() : L('Example', 'Beispiel')} · ${st.first ? L('switch opened', 'Schalter geöffnet') : L('switch closed', 'Schalter geschlossen')}`,
       difficulty: difficulty(c, level),
       text: taskText(c, nm, list),
@@ -691,7 +757,7 @@
     return { frames: frames.map((f) => ({ text: f.text, figure: `<div class="fig">${f.sketch.toSVG('circuit', box)}</div>` })), ex };
   }
 
-  const api = { LEVELS, generate, tutorial, solve, fromDef, steady, after, config, F, fval, difficulty };
+  const api = { LEVELS, generate, tutorial, solve, fromDef, steady, after, afterNum, curves, config, F, fval, difficulty };
   root.Switching = api;
   if (typeof module !== 'undefined') module.exports = api;
 })(typeof window !== 'undefined' ? window : globalThis);
