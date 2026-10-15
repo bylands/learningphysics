@@ -6,6 +6,15 @@
 //                             o.angle: the angle φ₀ marked
 //   Figures.lc(k, o)          an LC circuit in the k-th quarter of its period (0 … 3); o.caption:
 //                             false for none
+//   Figures.watchScene(w)     the scene to watch (play.js, the run w of oscWatch in scenarios.js):
+//                             { frame: the SVG, the whole of it the switch to flip (data-pw-switch,
+//                             a hit area on top), with an empty <g class="osw-pose">; pose(s) → its
+//                             contents at the state s = w.at(t) and s.held (before the release) }.
+//                             w.kind 'spring': a body hanging on a spring, the equilibrium and ±A
+//                             marked, held from below until let go (or at rest at the equilibrium,
+//                             w.push), with its velocity and acceleration as arrows (w.arrows);
+//                             'track': a body on a vertical track, at the height y of the axis
+//                             w.axis, held until let go; 'pointer': the pointer and its body
 // Each returns an SVG in a <div class="fig">.
 (function (root) {
   'use strict';
@@ -27,6 +36,9 @@
   // The circle of radius A, the pointer at phi (from the horizontal, anticlockwise positive), the
   // sense of rotation (ω) just ahead of it, and on the right the body at the pointer's height.
   function pointer(phi, o = {}) {
+    return svg(330, 226, pointerBody(phi, o), L('A pointer of length A turning anticlockwise at the angular velocity ω, and on the right a body always at the height of its tip', 'Ein Zeiger der Länge A, der sich mit der Winkelgeschwindigkeit ω im Gegenuhrzeigersinn dreht, und rechts ein Körper, immer auf der Höhe seiner Spitze'));
+  }
+  function pointerBody(phi, o = {}) {
     const cx = 118, cy = 112, R = 76, bx = 272, at = (r, a) => [cx + r * Math.cos(a), cy - r * Math.sin(a)];
     const [px, py] = at(R, phi);
     let s = line(cx - R - 16, cy, cx + R + 16, cy, 'tb-thin') + line(cx, cy + R + 16, cx, cy - R - 16, 'tb-thin') + circle(cx, cy, R, 'tb-line');
@@ -43,7 +55,7 @@
     s += line(px, py, bx, py, 'tb-ghost') + `<rect class="osc-body" x="${f(bx - 9)}" y="${f(py - 7)}" width="18" height="14" rx="2"/>`;
     const [nx, ny] = at(R * 0.55, phi), off = Math.abs(Math.sin(phi)) > 0.6 ? [12, 0] : [0, -10];
     s += line(cx, cy, px, py, 'osc-ptr') + circle(px, py, 4.5, 'osc-dot') + text(nx + off[0] * Math.sign(Math.cos(phi) || 1), ny + off[1] + 4, it('A'), 'tb-axis');
-    return svg(330, 226, s, L('A pointer of length A turning anticlockwise at the angular velocity ω, and on the right a body always at the height of its tip', 'Ein Zeiger der Länge A, der sich mit der Winkelgeschwindigkeit ω im Gegenuhrzeigersinn dreht, und rechts ein Körper, immer auf der Höhe seiner Spitze'));
+    return s;
   }
 
   // ---------------------------------------------------------------- the LC circuit
@@ -73,5 +85,48 @@
     return svg(420, o.caption === false ? 200 : 240, s + (o.caption === false ? '' : text(210, 212, c2 ? `${c1}:` : c1, 'tb-cap') + (c2 ? text(210, 228, c2, 'tb-cap') : '')), L(`An LC circuit: ${cap}`, `Ein Schwingkreis: ${cap}`));
   }
 
-  root.Figures = { pointer, lc };
+  // ---------------------------------------------------------------- watching (play.js)
+  // The body hangs on a spring (or slides on a track) in a column of 170 × 250 px: the
+  // equilibrium at the height cy, the turning points ±A (the axis of the track) R px above and
+  // below it. Its velocity v and acceleration a are arrows beside it, as long as they are large
+  // compared with their largest sizes.
+  const CW = 170, CH = 250, cy = 140, R = 62, bx = 70;
+  // the body, its centre at the height y (px), and the support under it while it is held
+  const block = (y, held) => `<rect class="osc-body" x="${bx - 17}" y="${f(y - 13)}" width="34" height="26" rx="2"/>` +
+    (held ? `<rect class="tb-metal" x="${bx - 4}" y="${f(y + 13)}" width="44" height="5" rx="1"/>` + line(bx + 40, y + 15.5, CW - 14, y + 15.5, 'tb-thin') : '');
+  function arrows(y, s, amp) {
+    let out = '';
+    for (const [q, x, cls] of [['v', 116, 'v'], ['a', 146, 'a']]) {
+      const k = s[q] / amp[q], len = 44 * Math.abs(k);
+      if (Number.isFinite(k) && len >= 9) out += root.Fig.force([x, y], [0, k > 0 ? -1 : 1], len, it(q), [9, k > 0 ? 4 : -2], cls);
+    }
+    return out;
+  }
+  function watchScene(w) {
+    const label = { spring: L('A body on a spring, its displacement y from the equilibrium', 'Ein Körper an einer Feder, seine Auslenkung y aus der Gleichgewichtslage'),
+      track: L('A body on a vertical track, at the height y', 'Ein Körper auf einer senkrechten Schiene, auf der Höhe y'),
+      pointer: L('The turning pointer and the body at the height of its tip', 'Der drehende Zeiger und der Körper auf der Höhe seiner Spitze') }[w.kind];
+    const [W, H] = w.kind === 'pointer' ? [330, 226] : [CW, CH];
+    const frame = svg(W, H, `<g class="osw-pose"></g><g data-pw-switch="1"><rect class="pw-hit" x="3" y="3" width="${W - 6}" height="${H - 6}" rx="8"/></g>`, label);
+    // the height in px of y: ±A at cy ∓ R; on a track, its axis from cy + R + 20 to cy − R − 20
+    const lo = w.axis ? w.axis.lo : -1, hi = w.axis ? w.axis.hi : 1, span = w.kind === 'track' ? R + 20 : R;
+    const py = (y) => cy + span - ((Math.max(lo, Math.min(hi, w.kind === 'track' ? y : y / w.amp.y)) - lo) / (hi - lo)) * 2 * span;
+    const level = (y, name) => line(bx - 32, py(y), bx + 32, py(y), 'tb-ghost') + text(30, py(y) + 5, name, 'tb-axis', 'end');
+    function pose(s) {
+      if (w.kind === 'pointer') return pointerBody(s.ph);
+      const y = py(s.y);
+      if (w.kind === 'track') {
+        return `<rect class="tb-metal" x="${bx - 3}" y="${cy - span - 12}" width="6" height="${2 * span + 24}" rx="2"/>` + level(0, '0') +
+          text(bx - 12, cy - span - 2, it(w.name || 'y'), 'tb-axis', 'end') + block(y, s.held);
+      }
+      // the ceiling, hatched above
+      let h = '';
+      for (let x = bx - 30; x < bx + 30; x += 8) h += `M${x} 14l7 -8`;
+      return path(`M${bx - 32} 14H${bx + 32}`, 'tb-ground') + path(h, 'tb-hatch') + level(1, it('A')) + level(0, '0') + level(-1, `−${it('A')}`) +
+        root.Fig.spring(bx, 14, y - 13, 7, 9) + block(y, s.held) + (w.arrows ? arrows(y, s, w.amp) : '');
+    }
+    return { frame, pose };
+  }
+
+  root.Figures = { pointer, lc, watchScene };
 })(typeof window !== 'undefined' ? window : globalThis);

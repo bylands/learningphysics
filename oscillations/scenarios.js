@@ -17,13 +17,14 @@
 //   kinematics       vmax, back-w, back-A
 //   LC circuit       lc-eq (the same equation: which quantity is which, ω and T, when the
 //                    current is largest), lc-scale (f when L or C change)
+// A type may have watch(p, v) → the run to watch once the exercise is solved (oscWatch, below).
 (function (root) {
   'use strict';
 
   const OC = root.OC || require('./core.js');
   const Eq = root.Equations || require('./equations.js');
   const Plot = root.Plot || require('./plot.js');
-  const { L, pick, shuffle, tnum, q, tq, sig, speedUnit, rng } = OC;
+  const { L, pick, shuffle, tnum, q, tq, sig, speedUnit, rng, inUnit } = OC;
   const { MISTAKES, PWHY, PNUDGE, FORMS, byId } = Eq;
 
   // ---------------------------------------------------------------- helpers
@@ -659,8 +660,92 @@
     figure: (p, v, view) => (view.task ? root.Figures.lc(0, { caption: false }) : lcGraph()),
   };
 
+  // ================================================================ watching
+  // Once an exercise is solved or its solution shown (and in the last frame of three worked
+  // examples), the student lets the body go and watches it move (app.js, play.js; the scene is
+  // Figures.watchScene): oscWatch(o), o = { kind ('spring': a body on a spring; 'pointer': the
+  // turning pointer and its body; 'track': a body on a track, moving by an equation), and either
+  // A, w, phi (spring, pointer: y = A·sin(ωt + φ₀) once let go, at rest at y = A·sin φ₀ before;
+  // push: at rest at the equilibrium and pushed upwards at t = 0), or given and curve [[t, y]]
+  // (track: the kind of equation, NKINDS, and its motion from rest at y(0) > 0) and axis (that of the exercise's graphs); t1 (the end of the
+  // run: two periods, or the time of the exercise's graphs), unit ('s': numbers in SI, shown in
+  // units { y, v, a }; 'T': times in periods, y in units of A, no numbers; '': no numbers at
+  // all), panels (['y'], or ['y', 'v', 'a'] with the arrows of v and a in the scene), name (the
+  // letter of y), marks(w, get) }.
+  // It returns o with at(t) → { y, v, a, ph (the pointer's angle) } (before t = 0 at rest, a = 0:
+  // the support holds the body; at t = 0 the acceleration jumps, or with a push the velocity),
+  // amp { y, v, a } (the largest sizes) and marks(get): get(key) is the answer of a field (a
+  // number in its unit, NaN if none, or the option chosen, null if none); each mark is { key, q
+  // ('y', 'v' or 'a': the curve), t, y (in the unit of the graph), ok (a choice: right or not; a
+  // number: null, the app judges it as in the feedback), say (html: what the answer was) }, at a
+  // time from 0 to t1 (later ones at t1).
+  function oscWatch(o) {
+    const w = { arrows: o.panels.length > 1, ...o };
+    if (o.curve) {
+      const pts = o.curve, dt = pts[1][0] - pts[0][0];
+      const yAt = (t) => { const k = Math.min(pts.length - 2, Math.floor(t / dt)), u = Math.min(1, (t - pts[k][0]) / dt); return pts[k][1] + u * (pts[k + 1][1] - pts[k][1]); };
+      w.at = (t) => ({ y: t < 0 ? pts[0][1] : yAt(t), v: null, a: null });
+      w.amp = { y: Math.max(Math.abs(o.axis.lo), Math.abs(o.axis.hi)) };
+    } else {
+      const { A, w: om, phi } = o;
+      w.T = PI2 / om;
+      w.at = (t) => (t < 0 ? { y: A * Math.sin(phi), v: 0, a: 0, ph: phi }
+        : { y: A * Math.sin(om * t + phi), v: A * om * Math.cos(om * t + phi), a: -A * om * om * Math.sin(om * t + phi), ph: om * t + phi });
+      w.amp = { y: A, v: A * om, a: A * om * om };
+    }
+    w.marks = (get) => (o.marks ? o.marks(w, get) : []).filter((m) => Number.isFinite(m.t) && m.t >= 0 && Number.isFinite(m.y)).map((m) => ({ ...m, t: Math.min(m.t, w.t1) }));
+    return w;
+  }
+  const yourAnswer = () => L('your answer', 'deine Antwort');
+  const yourGraph = () => L('your graph', 'dein Graph');
+  // a number answered: the ring at (t, y) on the curve q
+  const numMark = (key, q, t, y, say) => ({ key, q, t, y, ok: null, say });
+  // a graph chosen (f: its y at t): rings at the times, each ✓ where it lies on the motion (within
+  // tol; on a track as far as the axis goes); a wrong one also where it is farthest off
+  function curveMarks(w, key, f, times, tol, say) {
+    const clip = (y) => (w.axis ? Math.max(w.axis.lo - tol, Math.min(w.axis.hi + tol, y)) : y);
+    const off = (t) => Math.abs(clip(f(t)) - clip(w.at(t).y)), out = times.map((t) => ({ key, q: 'y', t, y: clip(f(t)), ok: off(t) <= tol, say }));
+    if (out.every((m) => m.ok)) {
+      const grid = Array.from({ length: 401 }, (z, k) => (k * w.t1) / 400), far = grid.reduce((a, t) => (off(t) > off(a) ? t : a), 0);
+      if (off(far) > tol) out.push({ key, q: 'y', t: far, y: clip(f(far)), ok: false, say });
+    }
+    return out.sort((a, b) => a.t - b.t);
+  }
+  // the kinematics: a body on a spring let go from y = A, y = A·cos(ωt), for two periods
+  const kinWatch = (p, panels, marks) => oscWatch({ kind: 'spring', A: p.A, w: p.w, phi: Math.PI / 2, t1: (2 * PI2) / p.w, unit: 's', panels,
+    units: { y: unitOfA(p.A), v: speedUnit(p.A * p.w), a: 'm/s²' }, marks });
+  // the motion of an equation, finer than the graphs (the same for the same kind)
+  const FINE = {};
+  const fineCurve = (kind) => (FINE[kind] = FINE[kind] || Eq.trace(NKINDS[kind].motion(), T_END, 960, Y0));
+  const matchWatch = (p, key, axis) => oscWatch({ kind: 'track', given: p.given, curve: fineCurve(p.given), axis, t1: T_END, unit: '', panels: ['y'], name: p.y,
+    marks: (w, get) => { const k = get(key); if (!k || !NKINDS[k] || !p.kinds.includes(k)) return []; const c = matchWatch({ ...p, given: k }, key, axis); return curveMarks(w, key, (t) => c.at(t).y, [Math.PI, 2.5 * Math.PI, 5 * Math.PI], 0.04 * (w.axis.hi - w.axis.lo), key === 'eq' ? L('the motion of your equation', 'die Bewegung deiner Gleichung') : yourGraph()); } });
+  circle.watch = (p) => {
+    const phi = (p.k * Math.PI) / 4;
+    return oscWatch({ kind: 'pointer', A: 1, w: PI2, phi, t1: 2, unit: 'T', panels: ['y'],
+      marks: (w, get) => { const k = get('graph'); return CIRCLE[k] && p.kinds.includes(k) ? curveMarks(w, 'graph', (u) => CIRCLE[k](u, phi), [0.25, 0.75, 1.5], 0.08, yourGraph()) : []; } });
+  };
+  match1.watch = (p) => matchWatch(p, 'graph', axisOf(p.kinds));
+  match2.watch = (p) => matchWatch(p, 'graph', axisOf(p.kinds));
+  matchBack.watch = (p) => matchWatch(p, 'eq', axisOf([p.given]));
+  // y = A·sin(ωt): at rest at the equilibrium, pushed upwards at t = 0; the point chosen
+  points.watch = (p) => oscWatch({ kind: 'spring', push: true, A: 1, w: PI2, phi: 0, t1: 2, unit: 'T', panels: ['y', 'v', 'a'],
+    marks: (w, get) => {
+      const i = PTS.indexOf(get('pt'));
+      return i < 0 ? [] : [{ key: 'pt', q: 'y', t: p.us[i], y: Math.sin(PI2 * p.us[i]), ok: ASK[p.ask].ok(p.us[i]), say: L(`your point ${PTS[i]}`, `dein Punkt ${PTS[i]}`) }];
+    } });
+  // v̂ where v = +v̂ (at 3T/4), â where a = +â (at T/2); ω as the period, where y is back at A; A at
+  // the lower turning point
+  const hat = (s) => `<i>${s}&#770;</i>`;
+  const omegaMark = (p) => (x) => numMark('w', 'y', PI2 / x, inUnit(p.A, unitOfA(p.A)), `${yourAnswer()}: <i>ω</i> = ${OC.num(x)} s⁻¹, ${L('one period', 'eine Periode')} <i>T</i> = 2π/<i>ω</i> = ${OC.num(PI2 / x)} s`);
+  const amaxMark = (p) => (x) => numMark('amax', 'a', Math.PI / p.w, x, `${yourAnswer()}: ${hat('a')} = ${OC.num(x)} m/s²`);
+  vmax.watch = (p) => kinWatch(p, ['y', 'v', 'a'], (w, get) => [
+    numMark('vmax', 'v', (1.5 * Math.PI) / p.w, get('vmax'), `${yourAnswer()}: ${hat('v')} = ${OC.num(get('vmax'))} ${speedUnit(p.A * p.w)}`), amaxMark(p)(get('amax'))]);
+  backW.watch = (p) => kinWatch(p, ['y', 'v', 'a'], (w, get) => [omegaMark(p)(get('w')), amaxMark(p)(get('amax'))]);
+  backA.watch = (p) => kinWatch(p, ['y', 'v', 'a'], (w, get) => [omegaMark(p)(get('w')),
+    numMark('A', 'y', Math.PI / p.w, -get('A'), `${yourAnswer()}: <i>A</i> = ${OC.num(get('A'))} ${unitOfA(p.A)}`)]);
+
   const SCENARIOS = [circle, pickShm, shm1, shm2, shm3, match1, match2, matchBack, points, vmax, backW, backA, lcEq, lcScale];
 
-  root.Scenarios = { SCENARIOS, NKINDS, curveOf, Y0, AXIS, xGraph, CIRCLE };
+  root.Scenarios = { SCENARIOS, NKINDS, curveOf, Y0, AXIS, xGraph, CIRCLE, oscWatch };
   if (typeof module !== 'undefined') module.exports = root.Scenarios;
 })(typeof window !== 'undefined' ? window : globalThis);

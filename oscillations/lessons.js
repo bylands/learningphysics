@@ -2,14 +2,16 @@
 // "S2 Charakteristische Differentialgleichung". Each is a topic of practice (see topics.js) with
 // its stages: first exercises like the example, then variations with new ideas (types: the
 // exercise types of scenarios.js). An example gives its parameters p, or a seed for them, and
-// may go on with more exercises of its topic (more: [{ scenario, p }]).
+// may go on with more exercises of its topic (more: [{ scenario, p }]). Three end with a frame
+// to watch the run of one of their exercises (watch: its index, 0 the example itself, 1 the first
+// of more; see generator.js).
 (function (root) {
   'use strict';
 
   const P = { c: 1.3, A: 1, m: 1, D: 4, g: 2, gamma: 0.3, B: 1, C1: 1, C2: 0.6, phi: 0.5 };
   const EXAMPLES = [
     {
-      scenario: 'circle', p: { k: 2, kinds: ['late', 'right', 'proj', 'start'] },
+      scenario: 'circle', p: { k: 2, kinds: ['late', 'right', 'proj', 'start'] }, watch: 0,
       practice: [{ types: ['circle'] }],
       name: { en: 'The turning pointer', de: 'Der drehende Zeiger' },
       idea: { en: 'A simple harmonic motion is the shadow of a pointer turning evenly: y(t) = A·sin(ωt + φ₀). The length of the pointer is the amplitude, its angular velocity is ω, one turn is one period, and its angle at t = 0 is the phase φ₀.', de: 'Eine harmonische Schwingung ist der Schatten eines gleichmässig drehenden Zeigers: y(t) = A·sin(ωt + φ₀). Die Länge des Zeigers ist die Amplitude, seine Winkelgeschwindigkeit ist ω, eine Umdrehung ist eine Periode, und sein Winkel bei t = 0 ist die Phase φ₀.' },
@@ -26,14 +28,14 @@
       idea: { en: 'A simple harmonic motion has an equation of motion ÿ = −ω²·y: the acceleration is proportional to the displacement and points back. Solve for ÿ and compare: if it fits, T = 2π/ω (the factor is ω², not ω); if not, find the term that differs.', de: 'Eine harmonische Schwingung hat eine Bewegungsgleichung ÿ = −ω²·y: Die Beschleunigung ist proportional zur Auslenkung und zeigt zurück. Löse nach ÿ auf und vergleiche: Passt sie, ist T = 2π/ω (der Faktor ist ω², nicht ω); sonst such den Term, der abweicht.' },
     },
     {
-      scenario: 'match-1', seed: 2,
+      scenario: 'match-1', seed: 2, watch: 0,
       practice: [{ types: ['match-1'] }, { en: 'damped and shifted', de: 'gedämpft und verschoben', types: ['match-2'] }, { en: 'from the graph to the equation', de: 'vom Graphen zur Gleichung', types: ['match-back'] }],
       name: { en: 'Equation and graph', de: 'Gleichung und Graph' },
       idea: { en: 'Read the form of the equation: an oscillation needs ÿ = −ω²·y; a term with ẏ damps or drives it, a constant shifts the equilibrium, a plus sign or only ẏ gives no oscillation.', de: 'Lies die Form der Gleichung: Eine Schwingung braucht ÿ = −ω²·y; ein Term mit ẏ dämpft oder treibt sie an, eine Konstante verschiebt die Gleichgewichtslage, ein Pluszeichen oder nur ẏ gibt keine Schwingung.' },
     },
     {
       scenario: 'points', p: { ask: 'aplus', us: [0.25, 0.625, 1, 1.375] },
-      more: [{ scenario: 'vmax', p: { A: 0.02, w: 4 } }],
+      more: [{ scenario: 'vmax', p: { A: 0.02, w: 4 } }], watch: 1,
       practice: [{ types: ['points'] }, { en: 'how fast, how strong', de: 'wie schnell, wie stark', types: ['vmax'] }, { en: 'the other way round', de: 'umgekehrt', types: ['back-w', 'back-A'] }],
       name: { en: 'Fastest and strongest', de: 'Am schnellsten, am stärksten' },
       idea: { en: 'The velocity is the slope of y(t): largest at the equilibrium, v̂ = A·ω, and zero at the turning points. The acceleration a = −ω²·y points back to the equilibrium: largest at the turning points, â = A·ω², and zero at the equilibrium.', de: 'Die Geschwindigkeit ist die Steigung von y(t): am grössten in der Gleichgewichtslage, v̂ = A·ω, und null an den Umkehrpunkten. Die Beschleunigung a = −ω²·y zeigt zur Gleichgewichtslage zurück: am grössten an den Umkehrpunkten, â = A·ω², und null in der Gleichgewichtslage.' },
