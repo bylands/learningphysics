@@ -24,9 +24,12 @@
 //                             with symbols or with numbers)
 //     situationOf(ex),        (optional) the situation an exercise shows (e.g. its title): the next
 //                             exercise shows another one than the last, if the stage has another
+//     later(fn),              (optional) runs fn a little later: the steps are then worked out in
+//                             the background (by default in the browser, with setTimeout)
 //   })
 // The steps the student sees are the topic's stages, but a stage with fewer than three different
-// exercises (in the current variant) is merged with the next one; after the last step comes one
+// exercises (in the current variant) is merged with the next one (worked out in the background,
+// see stagesOf); after the last step comes one
 // with the exercises of all steps. When a step has no new exercises left, a note says so and
 // suggests moving on; the exercises then come round again.
 //   T.mount(el)               the topic menu, the stages and the links to the worked example and the
@@ -86,34 +89,92 @@
     const seenHere = () => { const k = `${cur.topic}.${cur.stage}`; if (!seen.has(k)) seen.set(k, new Set()); return seen.get(k); };
     // The steps of a topic, in the current variant: stages with fewer than MIN different exercises
     // (counted in SAMPLES of them) merged with the next, then the step with all of them.
-    const MIN = 3, SAMPLES = 24, plans = new Map();
-    // whether the types make at least MIN different exercises: stops as soon as they do, as making
-    // an exercise can be slow (figures to compute)
-    function enough(types) {
-      const keys = new Set();
-      for (let k = 1; k <= SAMPLES; k++) {
-        const kk = keyOf(o.make(types[k % types.length], 7919 * k));
-        if (kk == null) return true;
-        keys.add(kk);
-        if (keys.size >= MIN) return true;
+    // Working this out makes exercises, which can be slow (figures to compute). So in the browser,
+    // once BUDGET ms have gone into it, the plan worked out last time (kept in storage), or else
+    // every stage a step of its own, stands in at once, and the plan is worked out in the
+    // background, a few exercises at a time; when it differs, the steps change. Elsewhere (the tests) it is worked out at once; o.later(fn), if
+    // given, runs fn a little later instead of setTimeout.
+    const MIN = 3, SAMPLES = 24, plans = new Map(), queue = [];
+    const later = o.later || (typeof document !== 'undefined' ? (fn) => setTimeout(fn, 0) : null);
+    const now = () => (typeof performance !== 'undefined' ? performance.now() : Date.now());
+    let budget = o.later ? 0 : 60; // ms, at once, before the background takes over
+    // runs g on until it is done or ms have passed: its value, or undefined
+    function runFor(g, ms) {
+      const t0 = now();
+      let r;
+      do r = g.next(); while (!r.done && now() - t0 < ms);
+      return r.done ? r.value : undefined;
+    }
+    // the groups of stages (their indices) that make the steps; yields after each exercise made
+    function* grouping(raw) {
+      const groups = [];
+      let open = null;
+      for (let i = 0; i < raw.length; i++) {
+        open = open ? [...open, i] : [i];
+        const types = open.flatMap((j) => raw[j].types), keys = new Set();
+        let ok = false;
+        for (let k = 1; k <= SAMPLES && !ok; k++) {
+          const kk = keyOf(o.make(types[k % types.length], 7919 * k));
+          if (kk == null) ok = true; else { keys.add(kk); ok = keys.size >= MIN; }
+          yield;
+        }
+        if (ok) { groups.push(open); open = null; }
       }
-      return false;
+      if (open && groups.length) groups.push([...groups.pop(), ...open]); else if (open) groups.push(open);
+      return groups;
+    }
+    function stepsOf(raw, groups) {
+      const steps = groups.map((g) => ({ name: () => g.map((j) => (raw[j].name ? raw[j].name() : tx().like)).join(', '), types: [...new Set(g.flatMap((j) => raw[j].types))] }));
+      if (steps.length > 1) steps.push({ name: () => tx().allSteps, types: [...new Set(raw.flatMap((st) => st.types))], all: true });
+      return steps;
+    }
+    const PLANS = `${o.app}-plans`;
+    const stored = () => { try { return JSON.parse(localStorage.getItem(PLANS)) || {}; } catch (e) { return {}; } };
+    function store(sig, groups) {
+      const all = stored();
+      all[sig] = groups;
+      try { localStorage.setItem(PLANS, JSON.stringify(all)); } catch (e) { /* storage unavailable */ }
     }
     function stagesOf(t) {
       if (t < 0) return [];
       const id = `${t}|${o.variant ? o.variant() : ''}`;
-      if (plans.has(id)) return plans.get(id);
-      const raw = stagesIn(t), groups = [];
-      let open = null;
-      raw.forEach((st) => {
-        open = { names: [...(open ? open.names : []), st.name || null], types: [...(open ? open.types : []), ...st.types] };
-        if (enough(open.types)) { groups.push(open); open = null; }
-      });
-      if (open && groups.length) { const g = groups.pop(); groups.push({ names: [...g.names, ...open.names], types: [...g.types, ...open.types] }); } else if (open) groups.push(open);
-      const steps = groups.map((g) => ({ name: () => g.names.map((n) => (n ? n() : tx().like)).join(', '), types: [...new Set(g.types)] }));
-      if (steps.length > 1) steps.push({ name: () => tx().allSteps, types: [...new Set(raw.flatMap((st) => st.types))], all: true });
-      plans.set(id, steps);
-      return steps;
+      if (plans.has(id)) return plans.get(id).steps;
+      const raw = stagesIn(t);
+      if (!later) {
+        const g = grouping(raw);
+        let r;
+        do r = g.next(); while (!r.done);
+        plans.set(id, { steps: stepsOf(raw, r.value) });
+        return plans.get(id).steps;
+      }
+      // what makes the plan: the stages' types (which a set or a new version may change)
+      const sig = `${id}|${JSON.stringify(raw.map((st) => st.types))}`, g = grouping(raw);
+      if (budget > 0) {
+        const t0 = now(), done = runFor(g, budget);
+        budget -= now() - t0;
+        if (done) { store(sig, done); plans.set(id, { steps: stepsOf(raw, done) }); return plans.get(id).steps; }
+      }
+      const groups = stored()[sig] || raw.map((_, i) => [i]);
+      const plan = { steps: stepsOf(raw, groups), groups };
+      plans.set(id, plan);
+      queue.push({ id, sig, raw, plan, g });
+      if (queue.length === 1) later(work);
+      return plan.steps;
+    }
+    // the plan being worked out in the background, on for a moment (at least one exercise)
+    function work() {
+      const job = queue[0];
+      if (!job) return;
+      const groups = runFor(job.g, 20);
+      if (groups) {
+        queue.shift();
+        store(job.sig, groups);
+        if (plans.get(job.id) === job.plan && JSON.stringify(groups) !== JSON.stringify(job.plan.groups)) {
+          plans.set(job.id, { steps: stepsOf(job.raw, groups), groups });
+          render();
+        }
+      }
+      if (queue.length) later(work);
     }
     // what the set leaves (again once its objectives are known, see sets.js)
     function limit() {
