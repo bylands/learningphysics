@@ -142,7 +142,7 @@ class Unit(unittest.TestCase):
         # same path would be hidden behind them, and so would a set of that name
         conf = (ROOT / "deploy" / "nginx" / "learningphysics.conf").read_text()
         services = set(re.findall(r"location /([a-z0-9-]+)/ \{[^}]*proxy_pass", conf))
-        self.assertIn("millionaire", services)
+        self.assertIn("wwtbap", services)
         self.assertLessEqual(services, H.RESERVED, "a service is missing from RESERVED (set names)")
         apps = re.search(r'^APPS="([^"]*)"', (ROOT / "deploy.sh").read_text(), re.M).group(1).split()
         paths = {a.split(":")[-1] for a in apps}
@@ -714,6 +714,108 @@ class Preview(unittest.TestCase):
             self.assertTrue(r["text"] and r["solution"], f.name)
 
 
+class AllInUnit(unittest.TestCase):
+    """The rooms of the game All In: opening, the state, joining, bets and the timer."""
+
+    def setUp(self):
+        self.now = [1000.0]
+        self.rooms = H.AllInRooms(clock=lambda: self.now[0])
+
+    def state(self, phase="bet", i=0, left=90, **kw):
+        return {"phase": phase, "i": i, "round": "tracks", "rounds": 6, "left": left,
+                "teams": [{"name": "Newtons", "chips": 100, "min": 10}, {"name": "Curies", "chips": 100, "min": 10}], **kw}
+
+    def test_room(self):
+        code = self.rooms.open("bys")
+        self.assertRegex(code, r"^[A-HJ-NP-Z]{4}$")
+        self.assertEqual(self.rooms.open("bys", code), code)  # the same room again
+        other = self.rooms.open("abc")
+        self.assertNotEqual(other, code)
+        with self.assertRaises(PermissionError):
+            self.rooms.set_state("abc", code, self.state())
+        # a new room closes the teacher's old one; after a restart the code comes back
+        new = self.rooms.open("bys")
+        self.assertNotIn(code, self.rooms.rooms)
+        fresh = H.AllInRooms()
+        self.assertEqual(fresh.open("bys", new), new)
+        self.assertNotEqual(fresh.open("abc", "IOIO"), "IOIO")  # not a code: a new one
+        with self.assertRaises(KeyError):
+            self.rooms.view("ZZZZ")
+
+    def test_game(self):
+        code = self.rooms.open("bys")
+        with self.assertRaises(ValueError):
+            self.rooms.join(code, "Anna", 0)  # no teams yet
+        self.rooms.set_state("bys", code, self.state("lobby", left=None))
+        with self.assertRaises(ValueError):
+            self.rooms.join(code, "  ", 0)
+        with self.assertRaises(ValueError):
+            self.rooms.join(code, "Anna", 2)
+        anna = self.rooms.join(code, " Anna  B ", 0)["token"]
+        ben = self.rooms.join(code, "Ben", 1)["token"]
+        self.assertEqual(self.rooms.join(code, "Anna", 1, anna)["token"], anna)  # changes team, same token
+        self.rooms.join(code, "Anna B", 0, anna)
+        view = self.rooms.view(code, anna)
+        self.assertEqual(view["me"], {"name": "Anna B", "team": 0})
+        self.assertEqual(view["players"], [{"name": "Anna B", "team": 0}, {"name": "Ben", "team": 1}])
+        self.assertIsNone(self.rooms.view(code, "nope")["me"])
+        with self.assertRaises(ValueError):  # not betting yet
+            self.rooms.bet(code, anna, 0, {"chips": [0, 10, 0]})
+        self.rooms.set_state("bys", code, self.state("bet", left=90))
+        with self.assertRaises(PermissionError):
+            self.rooms.bet(code, "nope", 0, {"chips": [0, 10, 0]})
+        with self.assertRaises(ValueError):
+            self.rooms.bet(code, anna, 1, {"chips": [0, 10, 0]})  # another round
+        for bad in ({"chips": [1.5, 0, 0]}, {"chips": [-1, 0, 0]}, {"chips": [1]}, {"stake": 10}, {"stake": 10, "value": "x"}, {"stake": True, "value": 3}, "x"):
+            with self.assertRaises(ValueError):
+                self.rooms.bet(code, anna, 0, bad)
+        self.rooms.bet(code, anna, 0, {"chips": [0, 10, 0], "extra": 1})
+        self.rooms.bet(code, anna, 0, {"chips": [0, 20, 0], "insurance": True})  # the last one counts
+        self.rooms.bet(code, ben, 0, {"chips": [30, 0, 0]})
+        host = self.rooms.host_view("bys", code)
+        self.assertEqual(host["bets"]["0"], {"bet": {"insurance": True, "chips": [0, 20, 0]}, "by": "Anna B", "n": 2})
+        self.assertEqual(host["bets"]["1"]["by"], "Ben")
+        self.assertEqual(host["left"], 90)
+        self.assertEqual(self.rooms.view(code, ben)["bet"]["bet"]["chips"], [30, 0, 0])
+        self.now[0] += 91.5  # in the grace period
+        self.rooms.bet(code, ben, 0, {"chips": [40, 0, 0]})
+        self.now[0] += 1
+        with self.assertRaises(ValueError):
+            self.rooms.bet(code, ben, 0, {"chips": [50, 0, 0]})
+        self.assertEqual(self.rooms.view(code, ben)["left"], 0)
+        # the reveal keeps the bets; the next round clears them
+        self.rooms.set_state("bys", code, self.state("reveal", result=[{"net": 40}, {"net": -40}]))
+        self.assertEqual(len(self.rooms.host_view("bys", code)["bets"]), 2)
+        self.assertEqual(self.rooms.view(code)["state"]["result"], [{"net": 40}, {"net": -40}])
+        self.assertIsNone(self.rooms.view(code)["left"])
+        self.rooms.set_state("bys", code, self.state("show", i=1, left=None))
+        self.assertEqual(self.rooms.host_view("bys", code)["bets"], {})
+        # estimates and calculations
+        self.rooms.set_state("bys", code, self.state("bet", i=1))
+        self.assertEqual(self.rooms.bet(code, anna, 1, {"low": 100, "high": 300.5, "stake": 20})["bet"], {"insurance": False, "stake": 20, "low": 100.0, "high": 300.5})
+        self.assertEqual(self.rooms.bet(code, anna, 1, {"value": 4.5e22, "stake": 20})["bet"]["value"], 4.5e22)
+        with self.assertRaises(ValueError):
+            self.rooms.bet(code, anna, 1, {"low": float("inf"), "high": 3, "stake": 20})
+        with self.assertRaises(PermissionError):
+            self.rooms.close("abc", code)
+        # idle rooms go
+        self.now[0] += H.ALLIN_IDLE + 1
+        with self.assertRaises(KeyError):
+            self.rooms.view(code)
+
+    def test_state_cleaned(self):
+        st = H.allin_state({"phase": "show", "i": 2, "round": "<b>x</b>", "teams": [{"name": " A " * 20, "chips": -5}, {"name": "B", "chips": 3, "min": 2}], "left": 10000, "hot": {"team": 1, "name": "Anna"}, "result": "x" })
+        self.assertEqual(st["round"], "bxb")
+        self.assertEqual(len(st["teams"][0]["name"]), 24)
+        self.assertEqual(st["teams"][0]["chips"], 0)
+        self.assertEqual(st["left"], 600)
+        self.assertEqual(st["hot"], {"team": 1, "name": "Anna"})
+        self.assertNotIn("result", st)
+        for bad in ({"phase": "x", "teams": []}, {"phase": "show", "teams": [{"name": "A"}]}, {"phase": "show", "teams": [{"name": "A"}, {"name": " "}]}, []):
+            with self.assertRaises(ValueError):
+                H.allin_state(bad)
+
+
 class Service(unittest.TestCase):
     def setUp(self):
         self.dir = tempfile.TemporaryDirectory()
@@ -751,6 +853,38 @@ class Service(unittest.TestCase):
 
     def login(self, password="teacher pw"):
         return self.req("/login", f"password={password}".encode(), "application/x-www-form-urlencoded")
+
+    def test_all_in(self):
+        st, headers, _ = self.login()
+        cookie = headers["Set-Cookie"].split(";")[0]
+        js = "application/json"
+        post = lambda path, obj, c=None: self.req(path, json.dumps(obj).encode(), js, c)
+        self.assertEqual(post("/api/all-in/open", {})[0], 403)  # the teacher's screen needs the login
+        st, _, body = post("/api/all-in/open", {}, cookie)
+        self.assertEqual(st, 200)
+        code = json.loads(body)["code"]
+        teams = [{"name": "Newtons", "chips": 100, "min": 10}, {"name": "Curies", "chips": 100, "min": 10}]
+        self.assertEqual(post(f"/api/all-in/{code}/state", {"state": {"phase": "lobby", "teams": teams}})[0], 403)
+        self.assertEqual(post(f"/api/all-in/{code}/state", {"state": {"phase": "lobby", "teams": teams}}, cookie)[0], 200)
+        self.assertEqual(post(f"/api/all-in/{code}/state", {"state": {"phase": "nope", "teams": teams}}, cookie)[0], 400)
+        # a phone joins and bets, without login
+        st, _, body = post(f"/api/all-in/{code}/join", {"name": "Anna", "team": 1})
+        self.assertEqual(st, 200)
+        token = json.loads(body)["token"]
+        self.assertEqual(post("/api/all-in/ZZZZ/join", {"name": "Anna", "team": 1})[0], 404)
+        self.assertEqual(self.req(f"/api/all-in/{code}/join", b"name=x", "application/x-www-form-urlencoded")[0], 415)
+        post(f"/api/all-in/{code}/state", {"state": {"phase": "bet", "i": 0, "round": "tracks", "left": 90, "teams": teams}}, cookie)
+        st, _, body = post(f"/api/all-in/{code}/bet", {"token": token, "i": 0, "bet": {"chips": [0, 20, 0]}})
+        self.assertEqual(st, 200)
+        self.assertEqual(post(f"/api/all-in/{code}/bet", {"token": "x", "i": 0, "bet": {"chips": [0, 20, 0]}})[0], 403)
+        st, _, body = self.req(f"/api/all-in/{code}?token={token}")
+        view = json.loads(body)
+        self.assertEqual((view["me"], view["bet"]["by"], view["state"]["round"]), ({"name": "Anna", "team": 1}, "Anna", "tracks"))
+        self.assertEqual(self.req(f"/api/all-in/{code}/host")[0], 403)
+        st, _, body = self.req(f"/api/all-in/{code}/host", cookie=cookie)
+        self.assertEqual(json.loads(body)["bets"]["1"]["bet"]["chips"], [0, 20, 0])
+        self.assertEqual(post(f"/api/all-in/{code}/close", {}, cookie)[0], 200)
+        self.assertEqual(self.req(f"/api/all-in/{code}")[0], 404)
 
     def test_flow(self):
         st, _, body = self.req("/")
