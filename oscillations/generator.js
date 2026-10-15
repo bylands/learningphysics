@@ -1,6 +1,7 @@
 // Exercises and worked examples from the exercise types (see scenarios.js).
 // practiceOf(type, seed) gives { scenario, difficulty, title, text, fields, figure(view),
-// solutionFigure(), hints, solution, results, p, v }: a number field has its value in its unit and
+// solutionFigure(), hints, solution, results, watch(), p, v }: watch() the run to watch once
+// solved (oscWatch in scenarios.js; null for a type without one); a number field has its value in its unit and
 // traps [{ value, why, flag }] (the answers under typical wrong ideas), a choice field its right
 // answer. quiz(exercise, seed) gives a multiple-choice question about one of its fields (for the
 // check), tutorial(lesson) the tutor's frames.
@@ -45,6 +46,7 @@
       solution: steps.map((s) => s.text),
       results: fields.map((f) => (f.pics ? '' : answerHtml(f))).filter(Boolean).join(', '),
       steps,
+      watch: scn.watch ? () => scn.watch(p, v) : null,
       p, v,
     };
   }
@@ -80,7 +82,8 @@
   }
 
   // The tutor: the task with what is wanted, then the steps of the solution; then the same for
-  // each further exercise of the example (lesson.more).
+  // each further exercise of the example (lesson.more). With lesson.watch (the index of one of
+  // these exercises), a last frame to watch its run (app.js): tutorial(lesson).watch().
   // a choice of graphs or pictures: its options, read-only, so that the task can be read
   const pics = (ex) => ex.fields.filter((f) => f.type === 'choice' && f.pics && !f.after)
     .map((f) => `<span class="choices levels small pics tq-pics">${f.options.map((o) => `<label><span>${o[1]}</span></label>`).join('')}</span>`).join('');
@@ -93,12 +96,23 @@
     };
     return [first, ...ex.steps.map((s) => ({ text: s.text, figure: ex.figure({ show: new Set(s.show || []) }) }))];
   }
+  const WATCH_TEXT = {
+    spring: () => L('Let the body go and watch: at the turning points it stops for a moment, and its acceleration is largest, pointing back; through the equilibrium it is fastest, and the acceleration is zero.',
+      'Lass den Körper los und schau zu: An den Umkehrpunkten steht er einen Moment still, und seine Beschleunigung ist am grössten und zeigt zurück; durch die Gleichgewichtslage geht er am schnellsten, und die Beschleunigung ist null.'),
+    pointer: () => L('Set the pointer turning and watch the body follow the height of its tip: one turn is one period, and the graph of y(t) is a sine.',
+      'Lass den Zeiger drehen und schau zu, wie der Körper der Höhe seiner Spitze folgt: Eine Umdrehung ist eine Periode, und der Graph von y(t) ist ein Sinus.'),
+    track: () => L('Let the body go and watch it move as the equation says, while its graph is drawn.',
+      'Lass den Körper los und schau zu, wie er sich gemäss der Gleichung bewegt, während sein Graph entsteht.'),
+  };
   function tutorial(lesson) {
-    const parts = [lesson, ...(lesson.more || [])].map(framesOf);
+    const all = [lesson, ...(lesson.more || [])], parts = all.map(framesOf);
     // a further exercise starts with a heading: the next equation (or exercise)
     const eq = byId(lesson.scenario).kind === 'shm';
     parts.slice(1).forEach((fr, i) => { fr[0].text = `<p class="step-rule">${eq ? L(`Another equation (${i + 2} of ${parts.length})`, `Eine weitere Gleichung (${i + 2} von ${parts.length})`) : L(`Another exercise (${i + 2} of ${parts.length})`, `Eine weitere Aufgabe (${i + 2} von ${parts.length})`)}</p>${fr[0].text.replace(/^<p class="step-rule">[^<]*<\/p>/, '')}`; });
-    return { frames: parts.flat() };
+    if (lesson.watch == null) return { frames: parts.flat(), watch: null };
+    const one = all[lesson.watch], scn = byId(one.scenario), watch = () => exercise(scn, one.p || make(scn, rng(one.seed))).watch();
+    const frame = { text: `<p class="step-rule">${L('Watch it happen', 'Zuschauen')}</p><p>${WATCH_TEXT[watch().kind]()}</p>`, figure: '<div class="pw-host osw-host"></div>' };
+    return { frames: [...parts.flat(), frame], watch };
   }
 
   root.Osc = { SCENARIOS, practiceOf, quiz, tutorial, exercise, byId };
