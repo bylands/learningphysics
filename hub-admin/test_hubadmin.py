@@ -1547,8 +1547,9 @@ class Service(unittest.TestCase):
         self.assertEqual(self.req("/api/sets", cookie=anna)[0], 200)
         self.cookie_of("anna", pw)
         st, _, body = self.req("/", cookie=boss)
-        self.assertIn(b'id="view-stats"', body)
-        self.assertNotIn(b'id="view-stats"', self.req("/", cookie=anna)[2])
+        self.assertIn(b'id="stats-table"', body)  # under Teachers
+        self.assertNotIn(b'data-view="stats"', body)
+        self.assertNotIn(b'id="stats-table"', self.req("/", cookie=anna)[2])
 
     def test_me_and_crosswords(self):
         st, headers, _ = self.req("/login", b"user=samuel.byland&password=teacher pw", "application/x-www-form-urlencoded")

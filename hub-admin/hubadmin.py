@@ -10,7 +10,7 @@ cards in its order, shows their tags, and lets visitors filter by tag. This serv
     /admin/login         POST user=...&password=...  sets the session cookie (the identifier works as a user name too)
     /admin/logout        POST                       ends the session
     /admin/api/teachers  GET  the accounts (the superuser only)
-    /admin/api/stats     GET  the statistics (the superuser only): per teacher their sets and sheets,
+    /admin/api/stats     GET  the statistics (the superuser only, under Teachers): per teacher their sets and sheets,
                          when last seen (a visit with a session) and when their sets last changed; totals
                          POST {"action": "create", "id", "user", "first", "last", "school"} |
                               {"action": "update", "id", ...} | {"action": "reset" | "delete", "id"}
@@ -2523,7 +2523,7 @@ def panel_page(teacher: str = SUPER, superuser: bool = True, user: str = "") -> 
     tabs = ('<a href="#quizzes" data-view="quizzes">Quizzes</a><a href="#games" data-view="games">Games</a>'
             '<a href="#sets" data-view="sets">Sets</a>'
             + ('<a href="#sheets" data-view="sheets">Sheets</a><a href="#apps" data-view="apps">Apps &amp; tags</a>'
-               '<a href="#teachers" data-view="teachers">Teachers</a><a href="#stats" data-view="stats">Statistics</a>' if superuser else '')
+               '<a href="#teachers" data-view="teachers">Teachers</a>' if superuser else '')
             + '<a href="#account" data-view="account">Account</a>')
     return page("Admin", f"""
     <div class="bar top">
@@ -2537,6 +2537,13 @@ def panel_page(teacher: str = SUPER, superuser: bool = True, user: str = "") -> 
 TEACHERS_SECTION = """
     <section id="view-teachers" hidden>
       <p class="lead">The teachers who may use this panel. Each logs in with a user name, has a three-letter identifier and makes their own sets, opened at learningphysics.ch/<i>identifier</i>/<i>name</i>. A new account gets a password shown once: give it to the teacher, who can change it under Account.</p>
+      <h2 class="section">Statistics</h2>
+      <p class="note">Per teacher their sets and exercise sheets, when they were last here and when they last changed their sets (visits are counted since 15 October 2026).</p>
+      <div id="stats-totals" class="stattiles"></div>
+      <p id="stats-status" class="status" aria-live="polite"></p>
+      <div class="stattable"><table id="stats-table"><thead><tr><th scope="col">Teacher</th><th scope="col">School</th><th scope="col" class="n">Sets</th><th scope="col" class="n">Apps</th><th scope="col" class="n">Sheets</th><th scope="col">Last seen</th><th scope="col">Sets changed</th><th scope="col">Account since</th></tr></thead><tbody></tbody></table></div>
+      <p class="note">Apps: the different apps in a teacher's sets. Sheets: only you make exercise sheets. Active: seen in the panel (or the crossword generator or a quiz, logged in) in the last 30 days.</p>
+      <h2 class="section">Accounts</h2>
       <form id="teacher-new" class="card teacherform">
         <label class="field"><span>Identifier (3 letters)</span><input type="text" name="id" required maxlength="3" pattern="[a-z]{3}" autocomplete="off" spellcheck="false" autocapitalize="none" placeholder="abc"></label>
         <label class="field"><span>User name (to log in)</span><input type="text" name="user" required maxlength="40" autocomplete="off" spellcheck="false" autocapitalize="none" placeholder="anna.beispiel"></label>
@@ -2547,13 +2554,6 @@ TEACHERS_SECTION = """
       </form>
       <p id="teachers-status" class="status" aria-live="polite"></p>
       <div id="teacher-list"></div>
-    </section>
-    <section id="view-stats" hidden>
-      <p class="lead">Who uses the panel: per teacher their sets and exercise sheets, when they were last here and when they last changed their sets. Visits are counted since this page exists.</p>
-      <div id="stats-totals" class="stattiles"></div>
-      <p id="stats-status" class="status" aria-live="polite"></p>
-      <div class="stattable"><table id="stats-table"><thead><tr><th scope="col">Teacher</th><th scope="col">School</th><th scope="col" class="n">Sets</th><th scope="col" class="n">Apps</th><th scope="col" class="n">Sheets</th><th scope="col">Last seen</th><th scope="col">Sets changed</th><th scope="col">Account since</th></tr></thead><tbody></tbody></table></div>
-      <p class="note">Apps: the different apps in a teacher's sets. Sheets: only you make exercise sheets. Active: seen in the panel (or the crossword generator or a quiz, logged in) in the last 30 days.</p>
     </section>"""
 
 ACCOUNT_SECTION = """
@@ -4097,6 +4097,7 @@ ACCOUNTS_JS = r"""
       $('#teacher-list').replaceChildren(
         el('p', { class: 'note' }, `You: ${state.super_user} (${state.super}), ${sets(state.super_sets)}. Your own details and password: Account.`),
         rows.length ? el('ul', { class: 'teachers' }, ...rows) : el('p', { class: 'empty' }, 'No other teachers yet.'));
+      if (loaded) window.dispatchEvent(new Event('teachers-changed')); // the statistics follow
     }
     async function load() {
       const r = await fetch('/admin/api/teachers', { credentials: 'same-origin' });
@@ -4122,7 +4123,7 @@ ACCOUNTS_JS = r"""
   }
 
   // ---------------------------------------------------------------- the statistics (the superuser)
-  if ($('#view-stats')) {
+  if ($('#stats-table')) {
     const status = (text, cls) => { const e = $('#stats-status'); e.textContent = text; e.className = `status ${cls || ''}`; };
     const date = (t) => new Date(t * 1000).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' });
     function ago(t) {
@@ -4159,9 +4160,10 @@ ACCOUNTS_JS = r"""
       if (r.status === 403) { location.reload(); return; }
       render(await r.json());
     }
-    // loaded anew whenever the tab is opened
-    const show = (v) => { if (v === 'stats') load().catch(() => status('Could not load the statistics.', 'bad')); };
+    // loaded anew whenever the Teachers tab is opened
+    const show = (v) => { if (v === 'teachers') load().catch(() => status('Could not load the statistics.', 'bad')); };
     window.addEventListener('admin-view', (e) => show(e.detail));
+    window.addEventListener('teachers-changed', () => show('teachers'));
     show(location.hash.slice(1));
   }
 
