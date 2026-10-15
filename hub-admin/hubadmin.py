@@ -2563,7 +2563,7 @@ COMMON_SECTIONS = """
         <li class="card">
           <h2>Electric Circuits: the quiz</h2>
           <p>A live quiz in the style of Kahoot on DC circuits: charge, current, voltage, power, resistance, resistor circuits and meters, in 21 questions. Points for difficulty and speed, a ranking after every question, and at the end personal feedback for every student and class statistics with a CSV export for the teacher.</p>
-          <p class="links"><a href="/electric-circuits/host" target="_blank" rel="noopener">Teacher screen ↗</a> <a href="/electric-circuits/" target="_blank" rel="noopener">Student page ↗</a></p>
+          <p class="links"><a href="/electric-circuits/host" target="_blank" rel="noopener">Teacher screen ↗</a> <a href="/electric-circuits/" target="_blank" rel="noopener">Student page ↗</a> <a href="/electric-circuits/host?preview=1" target="_blank" rel="noopener">Try it alone ↗</a></p>
           <p class="note">learningphysics.ch/electric-circuits/ · students join there with the game code of your lobby (its QR code carries it); every teacher has a game of their own, and you're logged in there with this account</p>
         </li>
       </ul>
