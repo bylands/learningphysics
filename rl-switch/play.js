@@ -1,5 +1,6 @@
 // Shared by the learningphysics.ch apps (canonical copy in shared/, copied by sync.sh into the apps
-// whose index.html loads it: Bulb Brightness, Switching RL Circuits; its look is in play.css).
+// whose index.html loads it: Bulb Brightness, Switching RL Circuits, Capacitors and RC Circuits;
+// its look is in play.css).
 // "Predict, then watch": a scene that changes when a switch in the figure is flipped (a switch
 // closed or opened, a bulb unscrewed), played as an animation with ▶/❚❚ and a time slider, built
 // on the players of Energy Conservation and Wave Propagation. The student first answers (the

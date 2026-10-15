@@ -6,7 +6,10 @@
 //                     (marked) with that name and value
 //   rc(kind, o)       the circuit that charges (kind 'charge': battery, switch, R, C) or
 //                     discharges a capacitor (kind 'discharge': the charged C, switch, R);
-//                     o: { closed, R, C, U0 (labels), cur (the current arrow) }
+//                     o: { closed, R, C, U0 (labels), cur (the current arrow), hit (the switch
+//                     the student flips while watching, play.js) }
+//   rcWatch(kind, o)  the same circuit before (switch open) and after closing the switch (with
+//                     the current arrow), in the same frame, the switch to flip: [before, after]
 //   graph(o)          a graph against time: o.curves [{ f(t) or pts [[t, y]], cls }], o.tEnd,
 //                     o.yMax, o.name [letter, index] (e.g. ['U', 'C']), o.unit; with numbers:
 //                     o.tStep, o.yStep, o.tUnit; without (o.bare): only the levels named;
@@ -91,22 +94,28 @@
   }
 
   // ---------------------------------------------------------------- RC circuits
-  function rc(kind, o = {}) {
+  function rcSketch(kind, o = {}) {
     const sk = new Sketch();
     sk.autoDots = false;
     const R = o.R || '$R$', C = o.C || '$C$', U0 = o.U0 || L('$ΔV_0$', '$U_0$'); // labels
     if (kind === 'charge') {
       sk.wire([0, 0], [0, 0.45]).bat([0, 0.45], [0, 1.55], { l: U0, ls: 'left' }).wire([0, 1.55], [0, 2.2], [0.5, 2.2]);
-      sk.sw([0.5, 2.2], [1.7, 2.2], { closed: o.closed, l: '$S$' });
+      sk.sw([0.5, 2.2], [1.7, 2.2], { closed: o.closed, l: '$S$', hit: o.hit });
       sk.wire([1.7, 2.2], [2.1, 2.2]).res([2.1, 2.2], [3.7, 2.2], { l: R }).wire([3.7, 2.2], [4.4, 2.2], [4.4, 1.3]);
       sk.cap([4.4, 1.3], [4.4, 0.9], { l: C, ls: 'right' }).wire([4.4, 0.9], [4.4, 0], [0, 0]);
     } else {
       sk.wire([0, 0], [0, 0.9]).cap([0, 1.3], [0, 0.9], { l: C, ls: 'left', pm: true }).wire([0, 1.3], [0, 2.2], [0.5, 2.2]);
-      sk.sw([0.5, 2.2], [1.7, 2.2], { closed: o.closed, l: '$S$' });
+      sk.sw([0.5, 2.2], [1.7, 2.2], { closed: o.closed, l: '$S$', hit: o.hit });
       sk.wire([1.7, 2.2], [3, 2.2], [3, 1.9]).res([3, 1.9], [3, 0.3], { l: R, ls: 'right' }).wire([3, 0.3], [3, 0], [0, 0]);
     }
     if (o.cur) sk.cur(kind === 'charge' ? [2.1, 2.2] : [1.7, 2.2], kind === 'charge' ? [3.7, 2.2] : [3, 2.2], '$I$', 'below', kind === 'charge' ? 0.5 : 0.6);
-    return `<div class="fig">${sk.toSVG()}</div>`;
+    return sk;
+  }
+  const rc = (kind, o = {}) => `<div class="fig">${rcSketch(kind, o).toSVG()}</div>`;
+  function rcWatch(kind, o = {}) {
+    const sk = [rcSketch(kind, { ...o, hit: true }), rcSketch(kind, { ...o, closed: true, cur: true, hit: true })];
+    const box = sk.reduce((b, k) => [Math.min(b[0], k.box[0]), Math.min(b[1], k.box[1]), Math.max(b[2], k.box[2]), Math.max(b[3], k.box[3])], [Infinity, Infinity, -Infinity, -Infinity]);
+    return sk.map((k) => `<div class="fig">${k.toSVG('circuit', box)}</div>`);
   }
 
   // ---------------------------------------------------------------- graphs
@@ -166,7 +175,7 @@
       ` data-yn="${name}" data-yu="V" data-yp="0.1" data-read-num="trim" data-read-curve="rc" data-read-args="${args}"${mode} tabindex="0"`;
   }
 
-  const api = { network, rc, graph, label, Uq };
+  const api = { network, rc, rcWatch, graph, label, Uq };
   root.Figures = api;
   if (typeof module !== 'undefined') module.exports = api;
 })(typeof window !== 'undefined' ? window : globalThis);

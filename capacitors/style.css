@@ -120,3 +120,40 @@ svg.tgraph[data-read]:not(.rd-reading) { touch-action: pan-y; }
 svg.tgraph g.rd .rd-guide { stroke-width: 1.2; stroke-dasharray: 4 3; }
 svg.tgraph g.rd .rd-pt:not(.rd-on) { r: 3.5px; }
 svg.tgraph g.rd .rd-tan { stroke: var(--vol); }
+
+/* predict, then watch (play.js): the circuit with the switch S and, once unlocked, the graph of
+   the voltages and the current, drawn up to the time of the slider, with the values read off
+   beside it; rings are the student's answers (✓ on the curve, ✗ off it) */
+:root { --s0: #2a78d6; --s1: #eb6834; --s2: #1baf7a; }
+@media (prefers-color-scheme: dark) { :root { --s0: #3987e5; --s1: #d95926; --s2: #199e70; } }
+.capw-host { flex: 1 1 100%; min-width: 0; }
+.capw { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 8px 24px; }
+.capw-circ { max-width: 100%; }
+.capw-side { width: min(100%, 340px); }
+.capw-wait { max-width: 30em; margin: 0; }
+svg.capw-plot { display: block; width: 100%; height: auto; }
+.capw-plot .grid { stroke: var(--grid-major); stroke-width: 1; }
+.capw-plot .grid.zero { stroke: var(--muted); }
+.capw-plot .axis { stroke: var(--muted); stroke-width: 1; stroke-dasharray: 3 3; }
+.capw-plot .now { stroke: var(--ink); stroke-width: 1; opacity: 0.45; }
+.capw-plot .tick, .capw-plot .pname { fill: var(--muted); font: 11px system-ui, sans-serif; }
+.capw-plot .pname { fill: var(--ink); font-size: 12px; }
+.capw-plot .it { font-style: italic; }
+.capw-plot .sub { font-size: 9px; }
+.capw-plot .curve { fill: none; stroke-width: 2; stroke-linejoin: round; }
+.capw-plot .ghost { fill: none; stroke: var(--ghost); stroke-width: 1.6; stroke-dasharray: 5 4; }
+.capw-plot .dot { stroke: var(--card); stroke-width: 2; }
+.capw-plot .pred { fill: none; stroke-width: 2; stroke-dasharray: 2 2; }
+.capw-plot .mk { font: 700 12px system-ui, sans-serif; }
+.capw-plot .mk.ok { fill: var(--ok); } .capw-plot .mk.bad { fill: var(--bad); }
+.capw-plot .s0 { stroke: var(--s0); } .capw-plot .dot.s0 { fill: var(--s0); stroke: var(--card); }
+.capw-plot .s1 { stroke: var(--s1); } .capw-plot .dot.s1 { fill: var(--s1); stroke: var(--card); }
+.capw-plot .s2 { stroke: var(--s2); } .capw-plot .dot.s2 { fill: var(--s2); stroke: var(--card); }
+.capw-read { list-style: none; margin: 4px 0 0; padding: 0; font-variant-numeric: tabular-nums; font-size: 0.95rem; }
+.capw-read li { margin: 2px 0; }
+.capw-read .key { display: inline-block; width: 14px; height: 3px; border-radius: 2px; vertical-align: middle; margin-right: 6px; }
+.capw-read .key.s0 { background: var(--s0); } .capw-read .key.s1 { background: var(--s1); } .capw-read .key.s2 { background: var(--s2); }
+.capw-read .key.ghost { height: 0; border-top: 2px dashed var(--ghost); border-radius: 0; }
+.capw-read .ghost-note { color: var(--muted); font-size: 0.85rem; }
+.capw-read .pred { font-size: 0.85rem; }
+.capw-read .pred.ok { color: var(--ok); } .capw-read .pred.bad { color: var(--bad); }
