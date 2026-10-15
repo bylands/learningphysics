@@ -73,10 +73,22 @@
     remove(key) { try { localStorage.removeItem(key); } catch (e) { /* storage unavailable */ } },
   };
 
+  // the question and, in a Predict round, its answers: lozenges as on the game show; with the
+  // answer known, the right one lights up green and the others fade
+  function questionBox(round) {
+    const unit = round.unit && round.type !== 'predict' ? ` <span class="muted">(${L('in', 'in')} ${esc(round.unit)})</span>` : '';
+    return `<div class="question-wrap"><div class="lozenge question"><span>${esc(tr(round.question))}${unit}</span></div></div>`;
+  }
+  function optionsBox(round, answer) {
+    if (round.type !== 'predict') return '';
+    return `<div class="options">${round.options.map((o, k) => `<div class="lozenge option${answer == null ? '' : k === answer ? ' right' : ' wrong'}">
+      <span><span class="letter">${LETTERS[k]}</span><span>${esc(tr(o))}</span></span></div>`).join('')}</div>`;
+  }
+
   // a canvas with the round's animation; returns the animation (stop() before replacing it)
   function animate(canvas, id, mode) {
     return canvas && root.AllInAnim ? root.AllInAnim.mount(canvas, id, mode) : { stop() {}, replay() {} };
   }
 
-  root.AllIn = { L, tr, byId, ROUNDS, LETTERS, TYPE, RULE, ERR, esc, fmt, withUnit, describe, api, storage, animate };
+  root.AllIn = { L, tr, byId, ROUNDS, TOPICS: root.ALL_IN_TOPICS, LETTERS, TYPE, RULE, ERR, esc, fmt, withUnit, describe, questionBox, optionsBox, api, storage, animate };
 })(typeof window !== 'undefined' ? window : globalThis);

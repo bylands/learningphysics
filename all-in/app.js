@@ -9,7 +9,7 @@
   'use strict';
 
   const G = window.AllInGame, A = window.AllIn, Lang = window.Lang;
-  const { L, tr, byId, ROUNDS, LETTERS, TYPE, RULE, ERR, esc, fmt, withUnit, describe, api, storage } = A;
+  const { L, tr, byId, ROUNDS, TOPICS, LETTERS, TYPE, RULE, ERR, esc, fmt, withUnit, describe, questionBox, optionsBox, api, storage } = A;
   const KEY = 'all-in-game';
 
   const T = {
@@ -134,8 +134,11 @@
   }
 
   // ------------------------------------------------------------------ setup
-  const setup = { teams: 4, names: [], sizes: [], seconds: 90, mode: 'phones', rounds: ROUNDS.filter((r) => r.standard).map((r) => r.id) };
+  const setup = { teams: 4, names: [], sizes: [], seconds: 90, mode: 'phones', rounds: TOPICS[0].rounds.slice() };
   const teamDefault = (i) => `Team ${i + 1}`;
+  const ICON = { mixed: '⚛', mechanics: '⚙', em: '⚡', waves: '∿', modern: '☢' };
+  // the topic whose six rounds are chosen, in its order
+  const topicOf = (rounds) => TOPICS.find((tp) => tp.rounds.join() === rounds.join());
 
   function renderSetup() {
     const saved = load();
@@ -147,9 +150,13 @@
           ${[2, 3, 4].map((n) => `<option value="${n}"${(setup.sizes[i] || 3) === n ? ' selected' : ''}>${n} ${L('members', 'Personen')}</option>`).join('')}
         </select>` : ''}
       </div>`).join('');
+    const chosen = topicOf(setup.rounds);
+    const topics = TOPICS.map((tp) => `<button type="button" class="topic" data-topic="${tp.id}" aria-pressed="${chosen === tp ? 'true' : 'false'}">
+        <span class="topic-icon" aria-hidden="true">${ICON[tp.id] || '★'}</span><span class="topic-name">${esc(tr(tp.title))}</span>
+        <span class="muted small">${tp.rounds.map((id) => esc(tr(byId[id].title))).join(' · ')}</span></button>`).join('');
     const rounds = order.map((id) => {
       const r = byId[id], on = setup.rounds.includes(id), pos = setup.rounds.indexOf(id);
-      return `<li><label><input type="checkbox" data-round="${id}"${on ? ' checked' : ''}>
+      return `<li${on ? '' : ' class="off"'}><label><input type="checkbox" data-round="${id}"${on ? ' checked' : ''}>
         <span><span class="tag ${r.type}">${TYPE[r.type]()}</span> ${esc(tr(r.title))}${r.demo ? ` <span class="muted small">(${L('demo', 'Demo')})</span>` : ''}
         ${on ? `<span class="muted small">· ${L('round', 'Runde')} ${pos + 1}${pos === setup.rounds.length - 1 ? ' · <b>All in</b>' : ''}</span>` : ''}</span></label></li>`;
     }).join('');
@@ -157,6 +164,11 @@
       ${saved && saved.phase !== 'end' ? `<div class="card"><h2>${L('A game is in progress', 'Ein Spiel läuft noch')}</h2>
         <p>${L(`Round ${saved.i + 1} of ${saved.rounds.length}`, `Runde ${saved.i + 1} von ${saved.rounds.length}`)} · ${saved.teams.map((t) => `${esc(t.name)}: ${t.chips}`).join(' · ')}</p>
         <div class="actions"><button type="button" class="primary" id="resume">${L('Continue it', 'Weiterspielen')}</button></div></div>` : ''}
+      <div class="card">
+        <h2>${L('Topic', 'Thema')}</h2>
+        <p class="muted small">${L('Each topic is a ready game of six rounds: three Predict, two Estimate and one Calculate.', 'Jedes Thema ist ein fertiges Spiel mit sechs Runden: dreimal Vorhersage, zweimal Schätzung und eine Rechnung.')}</p>
+        <div class="topics">${topics}</div>
+      </div>
       <div class="card">
         <h2>${L('Teams', 'Teams')}</h2>
         <div class="row">
@@ -181,12 +193,11 @@
       </div>
       <div class="card">
         <h2>${L('Rounds', 'Runden')}</h2>
-        <p class="muted small">${L('In the order you tick them; the last one is the final round, All in, where the stake is at least half of a team’s chips. Six rounds take about 25 minutes.',
-          'In der Reihenfolge des Ankreuzens; die letzte ist die Finalrunde All in, in der der Einsatz mindestens die Hälfte der Chips eines Teams ist. Sechs Runden dauern etwa 25 Minuten.')}</p>
+        <p class="muted small">${L('To make your own game, tick and untick rounds of any topic, in the order you want them; the last one is the final round, All in, where the stake is at least half of a team’s chips. Six rounds take about 25 minutes.',
+          'Für ein eigenes Spiel Runden aus allen Themen an- und abwählen, in der gewünschten Reihenfolge; die letzte ist die Finalrunde All in, in der der Einsatz mindestens die Hälfte der Chips eines Teams ist. Sechs Runden dauern etwa 25 Minuten.')}</p>
         <ul class="round-list">${rounds}</ul>
         <div class="actions">
           <button type="button" class="primary big" id="start"${setup.rounds.length ? '' : ' disabled'}>${L(`Start the game (${setup.rounds.length} rounds)`, `Spiel starten (${setup.rounds.length} Runden)`)}</button>
-          <button type="button" id="standard">${L('Standard six rounds', 'Die sechs Standardrunden')}</button>
         </div>
       </div>
       <div class="card">
@@ -208,7 +219,11 @@
       setup.rounds = cb.checked ? setup.rounds.concat(id) : setup.rounds.filter((x) => x !== id);
       renderSetup();
     }));
-    el.querySelector('#standard').addEventListener('click', () => { readSetup(); setup.rounds = ROUNDS.filter((r) => r.standard).map((r) => r.id); renderSetup(); });
+    el.querySelectorAll('[data-topic]').forEach((b) => b.addEventListener('click', () => {
+      readSetup();
+      setup.rounds = TOPICS.find((tp) => tp.id === b.dataset.topic).rounds.slice();
+      renderSetup();
+    }));
     el.querySelector('#start').addEventListener('click', () => { readSetup(); start(); });
   }
 
@@ -327,8 +342,6 @@
   // ------------------------------------------------------------------ the phases
   function questionCard(revealed) {
     const r = round();
-    const opts = r.type === 'predict' ? `<div class="options">${r.options.map((o, k) => `
-      <div class="option${revealed ? (k === S.answer ? ' right' : ' wrong') : ''}"><span class="letter">${LETTERS[k]}</span><span>${esc(tr(o))}</span></div>`).join('')}</div>` : '';
     return `<div class="card">
       <div class="round-head">
         <span class="tag ${r.type}">${TYPE[r.type]()}</span>
@@ -337,8 +350,8 @@
       </div>
       <div class="anim-box"><canvas id="anim" class="anim" aria-hidden="true"></canvas>
         ${revealed ? `<button type="button" class="replay" id="replay" title="${esc(L('Play again', 'Nochmals abspielen'))}">↻</button>` : ''}</div>
-      <p class="question">${esc(tr(r.question))}${r.unit && r.type !== 'predict' ? ` <span class="muted">(${L('in', 'in')} ${esc(r.unit)})</span>` : ''}</p>
-      ${opts}
+      ${questionBox(r)}
+      ${optionsBox(r, revealed ? S.answer : null)}
       <p class="rules">${RULE[r.type](r.options ? r.options.length : 0)} ${isFinal() ? L('All in: the stake is at least half of the team’s chips.', 'All in: der Einsatz ist mindestens die Hälfte der Chips des Teams.') : L(`Minimum stake ${G.MIN_STAKE} chips.`, `Mindesteinsatz ${G.MIN_STAKE} Chips.`)}</p>
     </div>`;
   }

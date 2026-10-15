@@ -10,7 +10,7 @@
 'use strict';
 
 const G = require('../game.js');
-const ROUNDS = require('../rounds.js');
+const { ROUNDS, TOPICS } = require('../rounds.js');
 require('../anim.js');
 
 let failures = 0, checked = 0;
@@ -99,11 +99,18 @@ for (const r of ROUNDS) {
     if (typeof r.unit !== 'string') fail(`${r.id}: unit`);
   }
 }
-eq(ROUNDS.filter((r) => r.standard).length, 6, 'six standard rounds');
 const scenes = globalThis.AllInAnim.SCENES;
 for (const r of ROUNDS) { checked++; if (!scenes[r.id] || typeof scenes[r.id].draw !== 'function') fail(`${r.id}: no animation`); }
 eq(Object.keys(scenes).sort(), ROUNDS.map((r) => r.id).sort(), 'an animation per round, and no other');
-eq(ROUNDS.filter((r) => r.standard).map((r) => r.type), ['predict', 'estimate', 'predict', 'calculate', 'predict', 'estimate'], 'the standard order');
+// the topics: six known rounds each, in the order of the rules, and every round in some topic
+eq(TOPICS.map((tp) => tp.id), ['mixed', 'mechanics', 'em', 'waves', 'modern'], 'the topics');
+for (const tp of TOPICS) {
+  text(tp.title, `topic ${tp.id} title`);
+  checked++; if (!tp.rounds.every((id) => ids.has(id)) || new Set(tp.rounds).size !== 6) fail(`${tp.id}: six known rounds`);
+  eq(tp.rounds.map((id) => ROUNDS.find((r) => r.id === id).type), ['predict', 'estimate', 'predict', 'calculate', 'predict', 'estimate'], `${tp.id}: the order`);
+}
+const inTopic = new Set(TOPICS.flatMap((tp) => tp.rounds));
+checked++; if (ROUNDS.some((r) => !inTopic.has(r.id) && !['shower', 'kettle'].includes(r.id))) fail('a round outside every topic (only the spares shower and kettle)');
 
 // the worked answers, from the physics
 const g = 9.81, c = 4182, e = 1.602e-19;
@@ -115,6 +122,15 @@ close(A.electrons, (2 * 3600) / e, 0.01, 'electrons');
 close(A.shower, c * 50 * 25, 0.02, 'shower');
 close(A.braking, 30 ** 2 / (2 * 6.0), 0.001, 'braking');
 close(A.kettle, (c * 1.0 * 80) / 2000, 0.01, 'kettle');
+const h = 6.626e-34, cl = 2.998e8;
+close(A.filament, 230 ** 2 / 60, 0.002, 'filament');
+close(A['phone-battery'], (15 * 3600) / (60 * g), 0.005, 'phone battery');
+close(A['fm-radio'], cl / 100e6, 0.01, 'FM radio');
+close(A.guitar, 2 * 0.65 * 110, 0.005, 'guitar string');
+close(A.thunder, 343 * 6, 0.01, 'thunder');
+close(A['laser-photons'], 1e-3 / ((h * cl) / 650e-9), 0.01, 'laser photons');
+close(A['carbon-dating'], 5730 * Math.log2(1 / 0.25), 0.001, 'carbon dating');
+close(A['sun-mass'], 3.8e26 / cl ** 2, 0.01, 'the Sun’s mass loss');
 
 console.log(`${checked} checks, ${failures} failures`);
 process.exit(failures ? 1 : 0);
