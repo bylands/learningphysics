@@ -11,7 +11,8 @@ TeXercises exercises (made elsewhere, uploaded or replaced here as JSON, kept in
 `normalize_audit` in `../hubadmin.py`): the exercises reviewed, those with issues and the issues by
 severity (error, warning, doubt), then the exercises with issues, the most serious first, each issue
 with its category, where it is (text, solution, short solution, solver, title) and a suggested fix,
-filtered by severity, category and a search; the titles link to the exercises on TeXercises. A sheet is independent of the sets: a title, a language (English or German), modules (the
+filtered by severity, category, collection (the titles of the collections an exercise is in, the
+report's `"collections"`, if it has them; also "No collection") and a search; the titles link to the exercises on TeXercises. A sheet is independent of the sets: a title, a language (English or German), modules (the
 hub's apps) with the learning objectives it practises (all of a module's by default), and its exercises
 in order, kept in `hub-data/exercise-sheets.json` (not served).
 

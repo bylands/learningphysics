@@ -1480,7 +1480,8 @@ class Service(unittest.TestCase):
         st, _, body = self.req("/api/exercise-audit", cookie=boss)
         self.assertEqual((st, json.loads(body)), (200, {"report": None}))  # none yet
         report = {"generated": "2026-10-15", "source": "review of the export", "reviewed": 844, "exercises": [
-            {"id": 12345, "key": "e12345-slug", "title": "Ein <b>Titel</b>", "lang": "GER", "url": "/exercise/slug/", "issues": [
+            {"id": 12345, "key": "e12345-slug", "title": "Ein <b>Titel</b>", "lang": "GER", "url": "/exercise/slug/",
+             "collections": ["Kinematik 1", 7, "", "Kinematik 1", "Dynamik\n2", None, "x" * 300] + [f"c{i}" for i in range(60)], "issues": [
                 {"severity": "error", "category": "Physics", "where": "solution", "issue": "v = s/t\r\nnot s*t\x07", "fix": "use $v<c$"},
                 {"severity": "doubt", "category": "language", "where": "text", "issue": "Komma?"}]},
             {"id": 7, "key": "e7-fine", "title": "Fine", "lang": "ENG", "url": "javascript:alert(1)", "issues": []},
@@ -1507,7 +1508,11 @@ class Service(unittest.TestCase):
         self.assertEqual((first["id"], first["title"], first["lang"], first["url"]), (12345, "Ein <b>Titel</b>", "GER", "/exercise/slug/"))  # (escaped by the page)
         self.assertEqual(first["issues"][0], {"severity": "error", "category": "physics", "where": "solution", "issue": "v = s/t\nnot s*t", "fix": "use $v<c$"})
         self.assertEqual(first["issues"][1]["fix"], "")
-        self.assertEqual((second["id"], second["key"], second["lang"], second["url"]), (None, "draft-x", "", ""))  # no url but TeXercises'
+        self.assertEqual((second["id"], second["key"], second["lang"], second["url"]), (None, "draft-x", "", ""))
+        # the collections: strings only, each once, cut, at most MAX_AUDIT_COLLECTIONS; none without them
+        self.assertEqual(first["collections"][:3], ["Kinematik 1", "Dynamik 2", "x" * 200])
+        self.assertEqual(len(first["collections"]), H.MAX_AUDIT_COLLECTIONS)
+        self.assertEqual(second["collections"], [])  # no url but TeXercises'
         self.assertEqual(self.admin.audit_file.parent, self.config.parent)  # hub-data/, which nginx does not serve
         self.assertEqual(self.admin.audit_file.stat().st_mode & 0o777, 0o600)
         self.assertEqual(self.req("/api/exercise-audit", cookie=anna)[0], 403)

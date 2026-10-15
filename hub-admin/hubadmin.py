@@ -183,6 +183,7 @@ MAX_UPLOAD = 64 * 1024 * 1024  # a TeXercises export
 MAX_REVIEW_RENDER = 40  # exercises the review renders at once
 MAX_AUDIT = 8 * 1024 * 1024  # the exercise review's report (nginx: /admin/api/exercise-audit)
 MAX_AUDIT_EXERCISES, MAX_AUDIT_ISSUES = 20000, 200  # in a report; issues per exercise
+MAX_AUDIT_COLLECTIONS = 50  # collections an exercise of the report names
 AUDIT_SEVERITIES = ("error", "warning", "doubt")  # the most serious first
 # exercise sheets: their ids, the secret of a shared one's online version (in its address), limits
 SHEET_ID = re.compile(r"[0-9a-f]{12}")
@@ -1464,13 +1465,16 @@ def normalize_audit(raw: object) -> Dict[str, object]:
     """The report of a review of the TeXercises exercises (made elsewhere), as stored:
 
         {"generated": "2026-10-15", "source": "...", "reviewed": 844, "exercises": [{"id": 12345,
-         "key": "e12345-slug", "title": "...", "lang": "ENG" | "GER", "url": "/exercise/slug/", "issues": [
+         "key": "e12345-slug", "title": "...", "lang": "ENG" | "GER", "url": "/exercise/slug/",
+         "collections": ["the titles of the collections it is in", ...], "issues": [
            {"severity": "error" | "warning" | "doubt", "category": "physics" | "solution" | ..., "where":
             "text" | "solution" | "short" | "solver" | "title", "issue": "...", "fix": "..."}]}]}
 
     An exercise needs a key or an id and its issues a severity of AUDIT_SEVERITIES and a text: anything
     else is a ValueError. Texts are cut to their length, a url that is no TeXercises exercise's is
-    dropped, and the exercises without issues are left out (reviewed still counts them)."""
+    dropped, the collections are the strings among them (each once, at most MAX_AUDIT_COLLECTIONS; a
+    report without them is fine), and the exercises without issues are left out (reviewed still
+    counts them)."""
     if not isinstance(raw, dict) or not isinstance(raw.get("exercises"), list):
         raise ValueError('a report is an object with "exercises": [...]')
     if len(raw["exercises"]) > MAX_AUDIT_EXERCISES:
@@ -1497,9 +1501,14 @@ def normalize_audit(raw: object) -> Dict[str, object]:
                          "where": audit_text(i.get("where"), 40).lower(), "issue": text, "fix": audit_text(i.get("fix"), 4000)})
         if not kept:
             continue
+        colls: List[str] = []
+        for c in e.get("collections") if isinstance(e.get("collections"), list) else []:
+            c = audit_text(c, 200).replace("\n", " ")
+            if c and c not in colls and len(colls) < MAX_AUDIT_COLLECTIONS:
+                colls.append(c)
         url = e.get("url") if isinstance(e.get("url"), str) and re.fullmatch(r"/exercise/[A-Za-z0-9_-]+/?", e["url"]) else ""
         out.append({"id": eid, "key": key, "title": audit_text(e.get("title"), 300).replace("\n", " ") or key or str(eid),
-                    "lang": e.get("lang") if e.get("lang") in ("ENG", "GER") else "", "url": url, "issues": kept})
+                    "lang": e.get("lang") if e.get("lang") in ("ENG", "GER") else "", "url": url, "collections": colls, "issues": kept})
     reviewed = raw.get("reviewed")
     reviewed = reviewed if isinstance(reviewed, int) and not isinstance(reviewed, bool) and reviewed >= 0 else len(raw["exercises"])
     return {"generated": audit_text(raw.get("generated"), 40).replace("\n", " "), "source": audit_text(raw.get("source"), 300).replace("\n", " "),
@@ -3041,13 +3050,14 @@ h2.section { font-size: 1.15rem; margin: 28px 0 4px; }
 .audit .stat.s-error { border-left: 4px solid var(--sev-error); }
 .audit .stat.s-warning { border-left: 4px solid var(--sev-warning); }
 .audit .stat.s-doubt { border-left: 4px solid var(--sev-doubt); }
-.audit .filters { display: grid; gap: 6px; margin: 0 0 10px; }
+.audit .filters { display: grid; grid-template-columns: minmax(0, 1fr); gap: 6px; margin: 0 0 10px; }  /* (a long collection name: not wider than the page) */
 .audit .filters .row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
 .audit .filters .what { width: 5rem; color: var(--muted); font-size: 0.88rem; }
 .audit .filters button { border-radius: 999px; padding: 2px 11px; font-size: 0.86rem; }
 .audit .filters button .n { margin-left: 5px; color: var(--muted); font-size: 0.8rem; font-variant-numeric: tabular-nums; }
 .audit .filters button[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); font-weight: 600; }
 .audit .filters button[aria-pressed="true"] .n { color: inherit; opacity: 0.85; }
+.audit .filters select { font: inherit; font-size: 0.9rem; color: inherit; background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: 4px 8px; flex: 0 1 auto; max-width: 100%; min-width: 0; }
 .audit .filters input[type=search] { flex: 1 1 200px; max-width: 420px; width: auto; min-width: 0; padding: 4px 10px; }
 .audit .shown { color: var(--muted); font-size: 0.88rem; margin: 0 0 8px; }
 .audit ol.exs { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
@@ -3927,7 +3937,8 @@ SHEETS_JS = r"""
 // with its numbers; unfolded, how many exercises were reviewed and have issues, by severity, then the
 // exercises with issues, the most serious first (PAGE at a time), each issue with its severity,
 // category, where it is and a suggested fix, filtered by severity, category and a search. The texts
-// are the report's: put in as text, never as HTML.
+// are the report's: put in as text, never as HTML. A report whose exercises name their collections
+// (titles) also filters by collection (a select; the search finds them too).
 (function () {
   'use strict';
   const box = document.querySelector('#sheets-audit');
@@ -3936,7 +3947,9 @@ SHEETS_JS = r"""
   const WHERE = { text: 'exercise text', solution: 'solution', short: 'short solution', solver: 'solver', title: 'title', compile: 'LaTeX compile' };
   const PAGE = 60;
   const body = box.querySelector('.audit-body'), line = box.querySelector('summary .note');
-  let report = null, sevOn = '', catOn = '', query = '', shown = PAGE, loaded = false;
+  let report = null, sevOn = '', catOn = '', collOn = '', query = '', shown = PAGE, loaded = false;
+  const NONE = '\u0000none'; // collOn: the exercises in no collection
+  const collsOf = (e) => (Array.isArray(e.collections) ? e.collections : []);
 
   function el(tag, attrs, ...kids) {
     const e = document.createElement(tag);
@@ -3974,7 +3987,7 @@ SHEETS_JS = r"""
     const title = e.url ? el('a', { href: `https://texercises.com${e.url}`, target: '_blank', rel: 'noopener' }, `${e.title} ↗`) : e.title;
     return el('li', { class: `ex s-${issues[0].severity}` },
       el('h3', {}, title),
-      el('div', { class: 'id' }, [e.id ? `id ${e.id}` : '', e.key, e.lang].filter(Boolean).join(' · ')),
+      el('div', { class: 'id' }, [e.id ? `id ${e.id}` : '', e.key, e.lang, collsOf(e).join(', ')].filter(Boolean).join(' · ')),
       el('ul', {}, issues.map((i) => el('li', {},
         el('div', {}, el('span', { class: `sev s-${i.severity}` }, SEV[i.severity]),
           el('span', { class: 'where' }, [i.category, WHERE[i.where] || i.where].filter(Boolean).join(' · '))),
@@ -3999,6 +4012,17 @@ SHEETS_JS = r"""
     const list = el('ol', { class: 'exs' }), info = el('p', { class: 'shown' });
     const search = el('input', { type: 'search', placeholder: 'Search title, id, key or issue', 'aria-label': 'Search the exercises and their issues', value: query });
     const sevRow = el('div', { class: 'row' }), catRow = el('div', { class: 'row' });
+    // the collections, by name, each with its exercises with issues (as the chips: of the whole report)
+    const colls = new Map();
+    let loose = 0;
+    all.forEach((e) => { if (!collsOf(e).length) loose += 1; collsOf(e).forEach((c) => colls.set(c, (colls.get(c) || 0) + 1)); });
+    if (collOn && collOn !== NONE && !colls.has(collOn)) collOn = '';
+    const collSel = el('select', { 'aria-label': 'Filter by collection', onchange: () => { collOn = collSel.value; shown = PAGE; fill(); } },
+      el('option', { value: '' }, `All collections (${all.length})`),
+      loose ? el('option', { value: NONE }, `No collection (${loose})`) : '',
+      [...colls].sort((a, b) => a[0].localeCompare(b[0])).map(([c, k]) => el('option', { value: c }, `${c} (${k})`)));
+    collSel.value = collOn;
+    if (colls.size) search.placeholder = 'Search title, id, key, collection or issue';
     const more = el('button', { type: 'button', onclick: () => { shown += PAGE; fill(); } });
     const pick = (f) => () => { f(); shown = PAGE; fill(); };
     function fill() {
@@ -4009,13 +4033,14 @@ SHEETS_JS = r"""
       const words = fold(query).split(/\s+/).filter(Boolean);
       const rows = [];
       all.forEach((e) => {
-        const head = fold([e.title, e.id, e.key, e.lang].join(' '));
+        if (collOn && (collOn === NONE ? collsOf(e).length : !collsOf(e).includes(collOn))) return;
+        const head = fold([e.title, e.id, e.key, e.lang, ...collsOf(e)].join(' '));
         const kept = e.issues.filter((i) => (!sevOn || i.severity === sevOn) && (!catOn || i.category === catOn)
           && words.every((w) => head.includes(w) || fold([i.issue, i.fix, i.category, i.where].join(' ')).includes(w)))
           .sort((a, b) => RANK[a.severity] - RANK[b.severity]);
         if (kept.length) rows.push([e, kept]);
       });
-      info.textContent = !sevOn && !catOn && !words.length ? `${all.length} exercises with issues, the most serious first.`
+      info.textContent = !sevOn && !catOn && !collOn && !words.length ? `${all.length} exercises with issues, the most serious first.`
         : `${rows.length} of ${all.length} exercises with issues match.`;
       list.replaceChildren(...rows.slice(0, shown).map(([e, kept]) => exercise(e, kept)));
       more.hidden = rows.length <= shown;
@@ -4027,7 +4052,9 @@ SHEETS_JS = r"""
       el('p', { class: 'meta' }, [report.generated && `Review of ${report.generated}`, report.source, when && `uploaded ${when}`].filter(Boolean).join(' · ')),
       el('div', { class: 'stats' }, stat(report.reviewed, 'exercises reviewed'), stat(all.length, 'with issues'),
         stat(n('error'), 'errors', 's-error'), stat(n('warning'), 'warnings', 's-warning'), stat(n('doubt'), 'doubts', 's-doubt')),
-      el('div', { class: 'filters' }, sevRow, cats.length ? catRow : '', el('div', { class: 'row' }, el('span', { class: 'what' }, 'Search'), search)),
+      el('div', { class: 'filters' }, sevRow, cats.length ? catRow : '',
+        colls.size ? el('div', { class: 'row' }, el('span', { class: 'what' }, 'Collection'), collSel) : '',
+        el('div', { class: 'row' }, el('span', { class: 'what' }, 'Search'), search)),
       info, list, el('div', { class: 'tools-line' }, more),
       el('details', { class: 'replace' }, el('summary', {}, 'Replace report'), upload('Replace report')));
     fill();
