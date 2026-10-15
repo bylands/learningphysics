@@ -184,7 +184,18 @@
     stars.setAttribute('role', 'img');
     $('#title').append(' ', stars);
     $('#prompt').innerHTML = ex.text;
-    $('#figure').innerHTML = ex.figure();
+    // an exercise on charging or discharging: the circuit with the switch to flip once solved
+    // (a graph to read stays, the circuit to watch below it)
+    if (player) player.stop();
+    player = null;
+    const w = ex.watch ? ex.watch() : null;
+    $('#figure').innerHTML = !w ? ex.figure() : w.keep ? `${ex.figure()}<div class="pw-host capw-host"></div>` : '<div class="pw-host capw-host"></div>';
+    if (w) {
+      player = mountWatch($('#figure .pw-host'), w, {
+        locked: () => !(st && (st.solved || st.revealed)),
+        marks: () => w.marks(answerOf),
+      });
+    }
     $('#fields').innerHTML = ex.fields.map(fieldHtml).join('');
     $('#hint-list').innerHTML = '';
     $('#hints').hidden = true;
@@ -260,6 +271,7 @@
       showStatus('ok');
     } else showStatus('bad');
     updateButtons();
+    if (player) player.refresh(); // solved: the switch unlocks
   }
 
   function showHints() {
@@ -289,13 +301,165 @@
     finish();
     showSolution();
     updateButtons();
+    if (player) player.refresh(); // the switch unlocks
     $('#solution').scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
+  // ---------------------------------------------------------------- predict, then watch
+  // Once an exercise on charging or discharging is solved or its solution shown (and in the last
+  // frame of the worked examples on it), the student closes the switch S in the circuit and
+  // watches the run (play.js, the model is rcWatch in generator.js): the voltages U_C and U_R and
+  // the current I drawn up to the time of the slider on a small graph, with a dot on each curve
+  // and the values read off beside it; the student's answers are rings (✓ on the curve, ✗ off
+  // it), shown once the run has reached their time.
+  let player = null, tutorPlayer = null;
+  const SER = { UC: 's1', UR: 's2', I: 's0' }; // the colours of the curves
+  const nf = (x, d) => (Math.abs(x) < 0.5 * Math.pow(10, -d) ? 0 : x).toFixed(d).replace('-', '−');
+  const n2 = (x) => nf(x, Math.abs(x) >= 10 ? 1 : 2);
+  const vH = (i) => (Lang.get() === 'de' ? '<i>U</i>' : 'Δ<i>V</i>') + (i ? `<sub>${i}</sub>` : '');
+  const vS = (i) => (Lang.get() === 'de' ? '<tspan class="it">U</tspan>' : 'Δ<tspan class="it">V</tspan>') + (i ? `<tspan class="sub" dy="3">${i}</tspan><tspan dy="-3"></tspan>` : '');
+  // a value: in V or mA, or in units of U₀ or I₀
+  const valH = (w, q, y) => (w.norm ? `${n2(y)}&#8202;${q === 'I' ? '<i>I</i><sub>0</sub>' : vH('0')}` : `${n2(y)} ${q === 'I' ? 'mA' : 'V'}`);
+  const timeH = (w, t) => (w.unit === 'τ' ? `${n2(t)} τ` : `${n2(t)} ${w.unit}`);
+  // a tidy step for about n intervals of size `span`
+  function niceStep(span, n) {
+    const raw = span / n, p = Math.pow(10, Math.floor(Math.log10(raw))), m = raw / p;
+    return (m <= 1 ? 1 : m <= 2 ? 2 : m <= 2.5 ? 2.5 : m <= 5 ? 5 : 10) * p;
+  }
+  // a step for the values from 0 to hi: two to four intervals, the top as low as possible
+  function valueStep(hi) {
+    let best = null;
+    for (let e = Math.floor(Math.log10(hi)) - 2; e <= Math.floor(Math.log10(hi)) + 1; e++) {
+      for (const m of [1, 2, 2.5, 3, 4, 5]) {
+        const s = m * Math.pow(10, e), n = Math.ceil(hi / s - 1e-9);
+        if (n < 2 || n > 4) continue;
+        if (!best || n * s < best.top - 1e-12 || (Math.abs(n * s - best.top) < 1e-12 && s > best.s)) best = { s, top: n * s };
+      }
+    }
+    return best ? best.s : niceStep(hi, 3);
+  }
+  const decimals = (s) => (Number.isInteger(s) ? 0 : Number.isInteger(Math.round(s * 1e6) / 1e5) ? 1 : 2);
+  // the student's answer of field key: a number (NaN if none) or the option chosen (null)
+  function answerOf(key) {
+    const f = ex.fields.find((x) => x.key === key), v = f && valueOf(f);
+    if (!f) return null;
+    return f.type === 'num' ? (empty(f, v) ? NaN : parse(v)) : v;
+  }
+
+  // The graph at time t: the voltages (and below, the current) up to t, the line of t with a dot
+  // on each curve, the first charging grey (R or C changed) and the marks reached.
+  function graph(w, t, marks) {
+    const W = 320, ml = 46, mr = 16, T = w.T, t0 = -0.15 * T, hasI = w.I0 != null;
+    const panels = [{ id: 'V', qs: w.charge ? ['UC', 'UR'] : ['UC'], top: 28, h: hasI ? 96 : 116 }];
+    if (hasI) panels.push({ id: 'I', qs: ['I'], top: 28 + 96 + 36, h: 66 });
+    const bottom = panels[panels.length - 1].top + panels[panels.length - 1].h, H = bottom + 34;
+    const X = (x) => ml + ((x - t0) / (T - t0)) * (W - ml - mr), f1 = (x) => x.toFixed(1);
+    const ts = Array.from({ length: 161 }, (_, k) => (k * T) / 160), until = Math.min(t, T);
+    const panelOf = (q) => (q === 'I' ? 'I' : 'V');
+    let svg = `<svg class="capw-plot" viewBox="0 0 ${W} ${H}" role="img" aria-label="${Lang.L('The voltages and the current against time', 'Die Spannungen und der Strom gegen die Zeit')}">`;
+    panels.forEach((pn) => {
+      const base = pn.id === 'I' ? Math.max(w.I0, w.ghost ? w.ghost.I0 : 0) : w.U0;
+      const hi = Math.min(2.2 * base, Math.max(base, ...marks.filter((m) => panelOf(m.q) === pn.id).map((m) => m.y)));
+      const step = w.norm ? (hi > 1.6 ? 1 : 0.5) : valueStep(hi), top = Math.ceil(hi / step - 1e-9) * step;
+      const Y = (y) => pn.top + pn.h - (Math.max(-0.04 * top, Math.min(1.08 * top, y)) / top) * pn.h;
+      pn.Y = Y;
+      for (let k = 0; k * step <= top + 1e-9; k++) {
+        const y = k * step, unitLabel = pn.id === 'I' ? '<tspan class="it">I</tspan><tspan class="sub" dy="3">0</tspan>' : vS('0');
+        const lab = !w.norm ? nf(y, decimals(step)) : y === 0 ? '0' : Math.abs(y - Math.round(y)) > 1e-9 ? '' : `${y === 1 ? '' : y}${unitLabel}`;
+        svg += `<line class="grid${k ? '' : ' zero'}" x1="${ml}" x2="${W - mr}" y1="${f1(Y(y))}" y2="${f1(Y(y))}"/>`;
+        if (lab) svg += `<text class="tick" x="${ml - 5}" y="${f1(Y(y) + 4)}" text-anchor="end">${lab}</text>`;
+      }
+      const name = pn.id === 'I' ? '<tspan class="it">I</tspan>' : vS('');
+      svg += `<text class="pname" x="${ml - 5}" y="${pn.top - 14}" text-anchor="end">${name}${w.norm ? '' : `<tspan> in ${pn.id === 'I' ? 'mA' : 'V'}</tspan>`}</text>`;
+      svg += `<line class="axis" x1="${f1(X(0))}" x2="${f1(X(0))}" y1="${pn.top - 4}" y2="${pn.top + pn.h}"/>`;
+      // the first charging (grey)
+      if (w.ghostAt) {
+        pn.qs.filter((q) => q !== 'UR').forEach((q) => {
+          svg += `<path class="ghost" d="M${f1(X(t0))} ${f1(Y(w.ghostAt(-1)[q]))}L${f1(X(0))} ${f1(Y(w.ghostAt(-1)[q]))}${ts.map((x) => `L${f1(X(x))} ${f1(Y(w.ghostAt(x)[q]))}`).join('')}"/>`;
+        });
+      }
+      pn.qs.forEach((q) => {
+        const v0 = w.at(-1)[q];
+        let d = `M${f1(X(t0))} ${f1(Y(v0))}L${f1(X(Math.min(0, until)))} ${f1(Y(v0))}`;
+        if (until >= 0) {
+          ts.filter((x) => x <= until).forEach((x) => { d += `L${f1(X(x))} ${f1(Y(w.at(x)[q]))}`; });
+          d += `L${f1(X(until))} ${f1(Y(w.at(until)[q]))}`;
+        }
+        svg += `<path class="curve ${SER[q]}" d="${d}"/>`;
+      });
+      if (t > t0) svg += `<line class="now" x1="${f1(X(until))}" x2="${f1(X(until))}" y1="${pn.top - 4}" y2="${pn.top + pn.h}"/>`;
+    });
+    // the time axis
+    const tStep = niceStep(T, 6), tick = (k) => (w.unit === 'τ' ? (k === 0 ? '0' : `${k === 1 ? '' : nf(k, decimals(tStep))}τ`) : nf(k, decimals(tStep)));
+    for (let k = 0; k * tStep <= T + 1e-9; k++) svg += `<text class="tick" x="${f1(X(k * tStep))}" y="${bottom + 15}" text-anchor="middle">${tick(k * tStep)}</text>`;
+    svg += `<text class="tick" x="${W - mr}" y="${bottom + 29}" text-anchor="end"><tspan class="it">t</tspan>${w.unit === 'τ' ? '' : ` in ${w.unit}`}</text>`;
+    // the answers reached, then a dot on each curve
+    marks.forEach((m) => {
+      const pn = panels.find((x) => x.id === panelOf(m.q)), q = pn.qs.includes(m.q) ? m.q : 'UC';
+      const cx = X(Math.max(0, Math.min(T, m.t))), cy = pn.Y(m.y);
+      svg += `<circle class="pred ${SER[q]}" cx="${f1(cx)}" cy="${f1(cy)}" r="6"/><text class="mk ${m.ok ? 'ok' : 'bad'}" x="${f1(Math.min(W - 6, cx + 9))}" y="${f1(cy - 6)}">${m.ok ? '✓' : '✗'}</text>`;
+    });
+    panels.forEach((pn) => pn.qs.forEach((q) => { svg += `<circle class="dot ${SER[q]}" cx="${f1(X(until))}" cy="${f1(pn.Y(w.at(until)[q]))}" r="4"/>`; }));
+    return `${svg}</svg>`;
+  }
+
+  // The player of the run w in host. o: { locked(), marks() → the student's answers (rcWatch) }.
+  function mountWatch(host, w, o = {}) {
+    let shown = null;
+    const L = Lang.L, fieldOf = (key) => ex && ex.fields.find((f) => f.key === key);
+    // a number answered is right as in the feedback
+    const okOf = (m) => (m.ok != null ? m.ok : (() => { const f = fieldOf(m.key); return !!f && judge(f, valueOf(f)).cls === 'ok'; })());
+    return window.Play.create(host, {
+      t0: -0.15 * w.T, t1: w.T, seconds: 3,
+      locked: o.locked,
+      render(scene, s) {
+        const lock = !!(o.locked && o.locked()), key = `${s.after}|${lock}|${Lang.get()}`;
+        if (key !== shown) {
+          shown = key;
+          scene.innerHTML = '<div class="capw"><div class="capw-circ"></div><div class="capw-side"></div></div>';
+          scene.querySelector('.capw-circ').innerHTML = w.figures()[s.after ? 1 : 0];
+          const svg = scene.querySelector('svg.circuit');
+          if (svg) requestAnimationFrame(() => fitText(svg));
+          markScrollable();
+        }
+        const side = scene.querySelector('.capw-side');
+        if (lock) { side.innerHTML = `<p class="note capw-wait">${L('The graph of the voltages and the current appears here once you have solved the exercise or looked at the solution.', 'Der Graph der Spannungen und des Stroms erscheint hier, sobald du die Aufgabe gelöst oder die Lösung angeschaut hast.')}</p>`; return; }
+        const at = w.at(Math.min(s.t, w.T));
+        const marks = (o.marks ? o.marks() : []).map((m) => ({ ...m, ok: okOf(m) })).filter((m) => s.after && s.t >= m.t - 1e-9);
+        const row = (q, label) => `<li><span class="key ${SER[q]}" aria-hidden="true"></span>${label} = ${valH(w, q, at[q])}</li>`;
+        const rows = [w.charge ? row('UC', vH('C')) + row('UR', vH('R')) : row('UC', `${vH('C')} = ${vH('R')}`)];
+        if (w.I0 != null) rows.push(row('I', '<i>I</i>'));
+        if (w.ghostAt) rows.push(`<li class="ghost-note"><span class="key ghost" aria-hidden="true"></span>${L('the first charging', 'das erste Laden')}</li>`);
+        marks.forEach((m) => rows.push(`<li class="pred ${m.ok ? 'ok' : 'bad'}">${m.ok ? '✓' : '✗'} ${m.say}</li>`));
+        side.innerHTML = graph(w, s.t, marks) + `<ul class="capw-read">${rows.join('')}</ul>`;
+      },
+      texts: () => ({
+        switch: L('Switch S: close', 'Schalter S: schliessen'),
+        ready: w.charge ? L('Click the switch S to close it, and watch the capacitor charge.', 'Klicke auf den Schalter S, um ihn zu schliessen, und schau zu, wie sich der Kondensator lädt.')
+          : L('Click the switch S to close it, and watch the capacitor discharge.', 'Klicke auf den Schalter S, um ihn zu schliessen, und schau zu, wie sich der Kondensator entlädt.'),
+        again: o.marks ? L('Rings: your answers (✓ on the curve, ✗ off it). Click the switch again to go back, or ▶ to watch once more.', 'Ringe: deine Antworten (✓ auf der Kurve, ✗ daneben). Klicke nochmals auf den Schalter, um zurückzugehen, oder ▶, um nochmals zuzuschauen.')
+          : L('Click the switch again to go back, or ▶ to watch once more.', 'Klicke nochmals auf den Schalter, um zurückzugehen, oder ▶, um nochmals zuzuschauen.'),
+        time: (t) => `t = ${timeH(w, t)}`,
+      }),
+    });
+  }
+
   // ---------------------------------------------------------------- language
+  // The worked examples; those on charging and discharging end with a frame to watch (mountWatch).
+  const watchFrame = () => ({
+    text: `<p class="step-rule">${Lang.L('Watch it happen', 'Zuschauen')}</p><p>${Lang.L('Close the switch S in the circuit and watch: the voltage of the capacitor cannot jump, the current can; then everything runs exponentially, with the time constant τ, towards its value long after.',
+      'Schliesse den Schalter S im Schaltbild und schau zu: Die Spannung des Kondensators kann nicht springen, der Strom schon; dann läuft alles exponentiell, mit der Zeitkonstante τ, zu seinem Wert lange danach.')}</p>`,
+    figure: '<div class="figs"><div class="pw-host capw-host"></div></div>',
+  });
   const lessons = () => EXAMPLES.map((e, i) => ({
-    name: e.name(), idea: e.idea(), also: topics.also(topicOf(i).t), frames: () => e.frames(),
+    name: e.name(), idea: e.idea(), also: topics.also(topicOf(i).t), frames: () => (e.watch ? [...e.frames(), watchFrame()] : e.frames()),
   }));
+  function watchInTutor() {
+    if (tutorPlayer) tutorPlayer.stop();
+    tutorPlayer = null;
+    const host = $('#t-figure .pw-host'), e = EXAMPLES[tutor ? tutor.current() : 0];
+    if (host && e && e.watch) tutorPlayer = mountWatch(host, window.Caps.rcWatch(e.watch()), {});
+  }
 
   function applyStatic() {
     document.title = ui().title;
@@ -319,6 +483,7 @@
       if (st.revealed) showSolution();
       if ($('#task').hidden) { $('#hints').hidden = true; $('#solution').hidden = true; }
       updateButtons();
+      if (player) player.refresh();
     }
     tutor.relabel(lessons());
     checker.relabel();
@@ -389,7 +554,7 @@
     window.addEventListener('hashchange', fromHash);
     window.addEventListener('resize', markScrollable);
     tutor = window.createTutor(lessons(), {
-      after: () => { math($('#tutor')); markScrollable(); },
+      after: () => { math($('#tutor')); watchInTutor(); markScrollable(); },
       done: practise,
       practise: (i) => { const { t, s } = topicOf(i); topics.go(t, s); setMode('practice'); fresh(); },
       t: () => ui().tutorBtns,

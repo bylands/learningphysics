@@ -2,6 +2,8 @@
 // in the manner of the lecture notes (Electrostatics 4 and 5): capacitors combined from small
 // blocks to larger ones; discharging and charging, from the start and the end to the curve
 // between; the half-life and the time constant read from a graph, and what R and C change.
+// The examples on discharging, charging and the time constant end with a frame to watch the run
+// (app.js): watch() gives the numbers of the example for rcWatch (generator.js).
 // A topic of practice (see topics.js) has stages, from exercises like the example to variations,
 // and the example each stage belongs to (example(stage)).
 (function (root) {
@@ -38,6 +40,8 @@
     },
     {
       name: () => L('Discharging', 'Entladen'),
+      // the numbers of the frame "With numbers": τ not known, times in units of τ
+      watch: () => ({ charge: false, U0: 12, I0: 3, tau: 1, unit: 'τ', R: '4 kΩ' }),
       idea: () => L('Which graph shows the discharge? Start with t = 0 and the end; between them, the less charge is left, the smaller the current, and the slower the discharge: an exponential decay.', 'Welcher Graph zeigt das Entladen? Beginne bei t = 0 und beim Ende; dazwischen gilt: Je weniger Ladung übrig ist, desto kleiner der Strom und desto langsamer das Entladen: ein exponentieller Zerfall.'),
       frames() {
         const c = C(), list = [{ f: c.linDown }, { f: c.down }, { pts: [[0, 1], [1.5, 1], [1.5, 0], [5, 0]] }, { f: c.up }];
@@ -59,6 +63,7 @@
     },
     {
       name: () => L('Charging', 'Laden'),
+      watch: () => ({ charge: true, U0: 12, I0: 6, tau: 1, unit: 'τ', R: '2 kΩ', U0l: '12 V' }),
       idea: () => L('An empty capacitor is charged through a resistor. The current is largest at the start, not at the end; it falls as the capacitor fills, and the voltage of the capacitor rises ever more slowly towards ΔV₀.', 'Ein leerer Kondensator wird über einen Widerstand geladen. Der Strom ist am Anfang am grössten, nicht am Ende; er nimmt ab, während sich der Kondensator füllt, und U_C steigt immer langsamer gegen U₀.'),
       frames() {
         const c = C();
@@ -80,6 +85,8 @@
     },
     {
       name: () => L('Time constant and half-life', 'Zeitkonstante und Halbwertszeit'),
+      // the discharge of the first frames: R not known, so no current
+      watch: () => ({ charge: false, U0: 10, I0: null, tau: 2, unit: 's' }),
       idea: () => L('The half-life T½ is read where the voltage is ΔV₀/2, the time constant τ = R·C where it has fallen to 37 % (or risen to 63 %): T½ ≈ 0.69 τ. A larger R or C stretches the curve, but does not change where it starts or ends.', 'Die Halbwertszeit T½ liest man dort ab, wo die Spannung U₀/2 ist, die Zeitkonstante τ = R·C dort, wo sie auf 37 % gefallen (oder auf 63 % gestiegen) ist: T½ ≈ 0.69 τ. Ein grösseres R oder C streckt die Kurve, ändert aber nicht, wo sie beginnt oder endet.'),
       frames() {
         const f = (t) => 10 * Math.exp(-t / 2), th = 2 * Math.LN2;

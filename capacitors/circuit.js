@@ -230,17 +230,27 @@
     }
 
     // Switch from p to q: two contacts, and a lever that is closed (o.closed) or open.
-    // o.l label above it, o.note a line under it.
+    // o.l label above it, o.note a line under it. o.hit: the switch the student flips (play.js):
+    // wrapped in <g data-pw-switch> with a hit area (class pw-hit).
     sw(p, q, o = {}) {
       const g = this._two(p, q, Math.min(0.8, len(sub(q, p)) * 0.6));
       const side = normalTowards(g.d, o.ls || this._defaultSide(g.d));
       const L = len(sub(g.b, g.a)), ang = 0.5; // an open lever is lifted by about 30°
-      const tip = o.closed ? g.b : add(g.a, add(mul(g.d, L * Math.cos(ang)), mul(side, L * Math.sin(ang))));
+      const open = add(g.a, add(mul(g.d, L * Math.cos(ang)), mul(side, L * Math.sin(ang))));
+      const tip = o.closed ? g.b : open;
+      if (o.hit) {
+        // around both contacts and the open lever
+        const pts = [g.a, g.b, open].map((c) => this.P(c)), pad = 0.3 * S;
+        const x0 = Math.min(...pts.map((c) => c[0])) - pad, x1 = Math.max(...pts.map((c) => c[0])) + pad;
+        const y0 = Math.min(...pts.map((c) => c[1])) - pad, y1 = Math.max(...pts.map((c) => c[1])) + pad;
+        this.els.push(`<g data-pw-switch="1"><rect class="pw-hit" x="${x0.toFixed(1)}" y="${y0.toFixed(1)}" width="${(x1 - x0).toFixed(1)}" height="${(y1 - y0).toFixed(1)}" rx="6"/>`);
+      }
       this._path([g.a, tip], o.hl ? 'w lever hl' : 'w lever');
       for (const c of [g.a, g.b]) {
         const [x, y] = this.P(c);
         this.els.push(`<circle class="${this._cls('contact')}" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="2.6"/>`);
       }
+      if (o.hit) this.els.push('</g>');
       this.P(add(g.m, mul(side, L * 0.6)));
       this._text(add(g.m, mul(side, 0.55)), side, o.l, 'lbl');
       if (o.note) this._text(add(g.m, mul(side, -0.3)), mul(side, -1), o.note, 'note');

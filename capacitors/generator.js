@@ -476,6 +476,7 @@
         solution: curveSteps(q, p.charge),
         results: L('the exponential curve', 'die Exponentialkurve'),
         ask: ASK[q](),
+        watch: () => rcWatch({ charge: p.charge, U0: 1, I0: 1, tau: 1, unit: 'τ', norm: true, marks: graphMarks(q, p.charge) }),
       };
     },
     check: ['graph'],
@@ -496,6 +497,7 @@
     build(p) {
       const { U0, R, moment } = p, kind = charge ? 'charge' : 'discharge';
       const UC = moment === 'start' ? (charge ? 0 : U0) : p.UC, UR = charge ? U0 - UC : UC, I = UR / R;
+      const tm = moment === 'start' ? 0 : charge ? -Math.log(1 - UC / U0) : Math.log(U0 / UC); // in units of τ
       const rule = charge ? L('The loop rule holds at every moment: $\\Delta V_0 = \\Delta V_R + \\Delta V_C$.', 'Die Maschenregel gilt in jedem Moment: $U_0 = U_R + U_C$.')
         : L('The resistor is connected straight across the capacitor: $\\Delta V_R = \\Delta V_C$ at every moment.', 'Der Widerstand ist direkt an den Kondensator angeschlossen: $U_R = U_C$ in jedem Moment.');
       const ohm = L('The current through the resistor is $I = \\Delta V_R/R$; with $R$ in kΩ it comes out in mA.', 'Der Strom durch den Widerstand ist $I = U_R/R$; mit $R$ in kΩ ergibt er sich in mA.');
@@ -537,6 +539,12 @@
         hints: [moment === 'start' ? L('The voltage of a capacitor cannot jump: what is it right after switching?', 'Die Spannung eines Kondensators kann nicht springen: Wie gross ist sie unmittelbar nach dem Schalten?') : rule, moment === 'start' ? rule : ohm, ohm],
         solution,
         results: moment === 'fromI' ? `$${Vs('R')} = ${tq(UR, 'V')}$, $${Vs('C')} = ${tq(UC, 'V')}$` : `$${Vs('R')} = ${tq(UR, 'V')}$, $I = ${tq(I, 'mA')}$`,
+        // τ is not known: times in units of τ; the moment asked for, where U_C has its value
+        watch: () => rcWatch({ charge, U0, I0: U0 / R, tau: 1, unit: 'τ', R: `${num(R)} kΩ`, U0l: `${num(U0)} V`, moment: tm,
+          marks: (w, get) => [['UR', 'UR', 'V'], moment === 'fromI' ? ['UC', 'UC', 'V'] : ['I', 'I', 'mA']].map(([key, q, u]) => {
+            const x = get(key), when = moment === 'start' ? '<i>t</i> = 0⁺' : `<i>t</i> ≈ ${tH(w, tm)}`;
+            return numMark(key, q, tm, x, `${yourAnswer()} (${when}): ${QH[q]()} = ${num(x)} ${u}`);
+          }) }),
       };
     },
     check: ['UR'],
@@ -601,6 +609,12 @@
           step(L('The time constant', 'Die Zeitkonstante'), p$(L(`From $T_{1/2} = \\tau\\cdot\\ln 2$: $\\tau = T_{1/2}/\\ln 2 \\approx 1.44\\cdot ${tq(th, unit)} \\approx ${tq(tau, unit)}$.`, `Aus $T_{1/2} = \\tau\\cdot\\ln 2$: $\\tau = T_{1/2}/\\ln 2 \\approx 1.44\\cdot ${tq(th, unit)} \\approx ${tq(tau, unit)}$.`))),
         ],
         results: `$T_{1/2} = ${tq(th, unit)}$, ${ask === 'time' ? `$t_2 = ${tq(t2, unit)}$` : `$${Vs('2')} = ${tq(q, 'V')}$`}`,
+        watch: () => rcWatch({ charge, U0, I0: null, tau, unit, U0l: `${num(U0)} V`, keep: true,
+          marks: (w, get) => {
+            const a = get('th'), b = get('t2');
+            return [numMark('th', 'UC', a, U0 / 2, `${yourAnswer()}: <i>T</i><sub>½</sub> = ${tH(w, a)}`),
+              ask === 'time' ? numMark('t2', 'UC', b, q, `${yourAnswer()}: <i>t</i><sub>2</sub> = ${tH(w, b)}`) : numMark('t2', 'UC', t2, b, `${yourAnswer()}: ${Vh('2')} = ${num(b)} V`)];
+          } }),
       };
     },
     check: ['th', 't2'],
@@ -637,6 +651,8 @@
           step(L('Not the half-life', 'Nicht die Halbwertszeit'), p$(L(`At $\\Delta V_0/2$ you would read the half-life, $T_{1/2} = \\tau\\cdot\\ln 2 \\approx ${tq(tau * LN2, unit)}$, shorter than $\\tau$.`, `Bei $U_0/2$ liest man die Halbwertszeit ab, $T_{1/2} = \\tau\\cdot\\ln 2 \\approx ${tq(tau * LN2, unit)}$, kürzer als $\\tau$.`))),
         ],
         results: `$\\tau = ${tq(tau, unit)}$`,
+        watch: () => rcWatch({ charge, U0, I0: null, tau, unit, U0l: `${num(U0)} V`, keep: true,
+          marks: (w, get) => [numMark('tau', 'UC', get('tau'), charge ? U0 * (1 - E(-1)) : U0 * E(-1), `${yourAnswer()}: <i>τ</i> = ${tH(w, get('tau'))}`)] }),
       };
     },
     check: ['tau'],
@@ -665,6 +681,9 @@
     step(L('The time constant', 'Die Zeitkonstante'), p$(L(`$\\tau = R\\cdot C$ ${kText(k)}: <span class="result">${factor(k)}</span>. The curve is stretched (or squeezed) along the time axis by this factor.`, `$\\tau = R\\cdot C$ ${kText(k)}: <span class="result">${factor(k)}</span>. Die Kurve wird um diesen Faktor entlang der Zeitachse gestreckt (oder gestaucht).`))),
     step(L('Start and end', 'Anfang und Ende'), p$(`${WHY_I0()} ${L(`So $I_0$ is <span class="result">${c.kR > 1 ? 'smaller' : c.kR < 1 ? 'larger' : 'the same'}</span>.`, `Also ist $I_0$ <span class="result">${c.kR > 1 ? 'kleiner' : c.kR < 1 ? 'grösser' : 'gleich'}</span>.`)} ${WHY_FINAL()}`)),
   ];
+  // watching the new charging (τ × kR·kC, I₀ × 1/kR) beside the first one (grey), in units of the
+  // first τ, U₀ and I₀
+  const changeWatch = (c, marks) => rcWatch({ charge: true, U0: 1, I0: 1 / c.kR, tau: c.kR * c.kC, unit: 'τ', norm: true, ghost: { tau: 1, I0: 1 }, marks });
   // the factor on τ: the right one, the inverse one (the typical wrong idea), then the nearest
   const tauField = (k) => {
     const near = [4, 2, 1, 0.5, 0.25].filter((x) => x !== k && x !== 1 / k).sort((a, b) => Math.abs(Math.log(a / k)) - Math.abs(Math.log(b / k)) || b - a);
@@ -679,16 +698,27 @@
     build(p) {
       const c = changeOf(p), k = c.kR * c.kC, i0 = c.kR > 1 ? 'down' : c.kR < 1 ? 'up' : 'same';
       const i0Why = (v) => (v === 'zero' ? WHY.start() : WHY_I0());
-      return {
-        text: changeText(c) + p$(L('Compare with the first charging:', 'Vergleiche mit dem ersten Laden:')),
-        fields: [
+      const fields = [
           tauField(k),
           choiceF('i0', L('The current right after closing the switch:', 'Der Strom unmittelbar nach dem Schliessen:'), i0,
             [['up', L('larger', 'grösser')], ['down', L('smaller', 'kleiner')], ['same', L('the same', 'gleich')], ['zero', L('zero in both', 'in beiden null')]]
               .map(([v, h]) => opt(v, h, v === i0 ? '' : i0Why(v), v === i0 ? null : v === 'zero' ? 'start' : 'i0')), { ask: L('How does the current right after closing the switch change?', 'Wie ändert sich der Strom unmittelbar nach dem Schliessen?') }),
           choiceF('fin', L('The voltage of the capacitor at the end:', 'Die Spannung des Kondensators am Schluss:'), 'same',
             [['up', L('larger', 'grösser')], ['down', L('smaller', 'kleiner')], ['same', L('the same, ΔV₀', 'gleich, U₀')]].map(([v, h]) => opt(v, h, v === 'same' ? '' : WHY_FINAL(), v === 'same' ? null : 'final'))),
-        ],
+      ];
+      // larger, smaller: twice or half (R and C change by these factors)
+      const LV = { up: 2, down: 0.5, same: 1, zero: 0 };
+      const chosen = (key, v) => fields.find((f) => f.key === key).options.find((o) => o.v === v);
+      return {
+        text: changeText(c) + p$(L('Compare with the first charging:', 'Vergleiche mit dem ersten Laden:')),
+        fields,
+        watch: () => changeWatch(c, (w, get) => {
+          const on = (q, t, y) => Math.abs(y - w.at(t)[q]) <= 0.04, out = [], a = get('tau'), b = get('i0'), f = get('fin');
+          if (a != null && chosen('tau', a)) { const x = Number(a); out.push({ key: 'tau', q: 'UC', t: x, y: 1 - E(-1), ok: on('UC', x, 1 - E(-1)), say: `${yourAnswer()}: <i>τ</i> ${factor(x)} (63&#8202;% ${L('at', 'bei')} ${tH(w, x)})` }); }
+          if (b != null && chosen('i0', b)) out.push({ key: 'i0', q: 'I', t: 0, y: LV[b], ok: on('I', 0, LV[b]), say: `${yourAnswer()}: <i>I</i><sub>0</sub> ${chosen('i0', b).html}` });
+          if (f != null && chosen('fin', f)) out.push({ key: 'fin', q: 'UC', t: w.T, y: LV[f], ok: on('UC', w.T, LV[f]), say: `${yourAnswer()}: ${L('at the end', 'am Schluss')} ${chosen('fin', f).html}` });
+          return out;
+        }),
         figure: () => Fg.rc('charge'),
         solutionFigure: () => `<div class="fig">${predictGraph(k, 1, true)}</div>`,
         hints: [L('The time constant is $\\tau = R\\cdot C$.', 'Die Zeitkonstante ist $\\tau = R\\cdot C$.'), WHY_I0(), L('When does the charging stop? When no current flows any more: then $\\Delta V_R = 0$, so $\\Delta V_C = \\dots$', 'Wann hört das Laden auf? Wenn kein Strom mehr fliesst: Dann ist $U_R = 0$, also $U_C = \\dots$')],
@@ -732,10 +762,78 @@
         solution: changeSteps(c, k),
         results: L(`τ ${factor(k)}, the same final voltage ΔV₀`, `τ ${factor(k)}, dieselbe Endspannung U₀`),
         ask: L('Which graph shows the new charging?', 'Welcher Graph zeigt das neue Laden?'),
+        // the chosen graph (τ × k', final voltage × m') at its τ and at the end
+        watch: () => changeWatch(c, (w, get) => {
+          const km = { ok: [k, 1], inv: [1 / k, 1], lvl: [k, m], lvl1: [1, m] }[get('graph')];
+          if (!km) return [];
+          const [k1, m1] = km;
+          return [[k1, L(`at <i>t</i> = ${tH(w, k1)}`, `bei <i>t</i> = ${tH(w, k1)}`)], [w.T, L('at the end', 'am Schluss')]].map(([t, when]) => {
+            const y = m1 * (1 - E(-t / k1));
+            return { key: 'graph', q: 'UC', t, y, ok: Math.abs(y - w.at(t).UC) <= 0.04, say: `${yourGraph()} ${when}: ${yH(w, 'UC', y)}` };
+          });
+        }),
       };
     },
     check: ['graph'],
   };
+
+  // ================================================================ watching
+  // Once an exercise on charging or discharging is solved or its solution shown (and in the last
+  // frame of the worked examples on it), the student closes the switch S in the circuit and
+  // watches the run (app.js, play.js): rcWatch(o), o = { charge, U0 (V; 1: in units of U₀), I0
+  // (mA, the current right after switching; 1: in units of I₀; null: R not known, no current
+  // shown), tau, unit ('s' or 'ms'; 'τ': times in units of τ), norm (values in units of U₀ and
+  // I₀), R, U0l (labels in the circuit), ghost { tau, I0 } (the first charging, drawn grey: R or C
+  // changed), keep (the figure of the exercise stays, the circuit to watch below it: a graph to
+  // read), marks(run, get) (the student's answers, see below) }.
+  // It returns o with T (5τ, or five of the first τ if longer), at(t) → { UC, UR, I }, ghostAt(t),
+  // figures() → [before, after] and marks(get). Before t = 0 the switch is open: no current, U_C
+  // as before (0 while charging, U₀ while discharging). After: U_C = U₀(1 − e^(−t/τ)) or
+  // U₀·e^(−t/τ); U_R = U₀ − U_C (charging) or U_C (discharging) = U₀·e^(−t/τ); I = U_R/R =
+  // I₀·e^(−t/τ) (its size).
+  // marks(get): get(key) is the answer of a field (a number, NaN if none, or the option chosen,
+  // null if none); each mark is { key, q ('UC', 'UR' or 'I': the curve it belongs to), t, y, ok
+  // (for a choice: whether the point lies on the curve; for a number null: the app judges it as
+  // in the feedback), say (html: what the answer was) }.
+  const Vh = (i) => L(`Δ<i>V</i><sub>${i}</sub>`, `<i>U</i><sub>${i}</sub>`);
+  const QH = { UC: () => Vh('C'), UR: () => Vh('R'), I: () => '<i>I</i>' };
+  const yourAnswer = () => L('your answer', 'deine Antwort');
+  const yourGraph = () => L('your graph', 'dein Graph');
+  function rcWatch(o) {
+    const T = 5 * Math.max(o.tau, o.ghost ? o.ghost.tau : 0);
+    const run = (tau, I0) => (t) => {
+      if (t < 0) return { UC: o.charge ? 0 : o.U0, UR: 0, I: I0 == null ? null : 0 };
+      const e = E(-t / tau);
+      return { UC: o.charge ? o.U0 * (1 - e) : o.U0 * e, UR: o.U0 * e, I: I0 == null ? null : I0 * e };
+    };
+    const w = { ...o, T, at: run(o.tau, o.I0), ghostAt: o.ghost ? run(o.ghost.tau, o.ghost.I0) : null };
+    w.figures = () => Fg.rcWatch(o.charge ? 'charge' : 'discharge', { R: o.R, U0: o.U0l });
+    w.marks = (get) => (o.marks ? o.marks(w, get) : []).filter((m) => Number.isFinite(m.t) && Number.isFinite(m.y));
+    return w;
+  }
+  // a time and a value for the texts: 1.4 s, 0.63 ΔV₀
+  const tH = (w, t) => (w.unit === 'τ' ? `${num(t)}&#8202;<i>τ</i>` : `${num(t)} ${w.unit}`);
+  const yH = (w, q, y) => (w.norm ? `${num(y)}&#8202;${q === 'I' ? '<i>I</i><sub>0</sub>' : Vh('0')}` : `${num(y)} ${q === 'I' ? 'mA' : 'V'}`);
+  // a choice of graphs: the chosen one at t = 0⁺, at τ and at the end (5τ)
+  const graphMarks = (q, charge) => (w, get) => {
+    const v = get('graph'), c = v != null && LISTS[q](charge).find((x) => x.id === v);
+    if (!c) return [];
+    const at = (t) => (c.f ? c.f(t) : interp(c.pts, t)), key = { U: 'UC', I: 'I', R: 'UR' }[q];
+    return [[1e-9, '0⁺'], [1, '<i>τ</i>'], [5, '5&#8202;<i>τ</i>']].map(([t, when]) => {
+      const y = at(t);
+      return { key: 'graph', q: key, t, y, ok: Math.abs(y - w.at(t)[key]) <= 0.04, say: L(`${yourGraph()} at <i>t</i> = ${when}: ${yH(w, key, y)}`, `${yourGraph()} bei <i>t</i> = ${when}: ${yH(w, key, y)}`) };
+    });
+  };
+  // a polyline [[t, y]] at t (a jump: the later point)
+  function interp(pts, t) {
+    for (let k = pts.length - 1; k > 0; k--) {
+      const [ta, ya] = pts[k - 1], [tb, yb] = pts[k];
+      if (t >= ta && t <= tb) return tb === ta ? yb : ya + ((t - ta) / (tb - ta)) * (yb - ya);
+    }
+    return pts[pts.length - 1][1];
+  }
+  // a number answered: the ring at (t, y) on the curve q
+  const numMark = (key, q, t, y, say) => ({ key, q, t, y, ok: null, say });
 
   // ================================================================ exercises
   const TYPES = {
@@ -772,7 +870,7 @@
     return { field: f, options: options.map((o) => ({ html: `$${tq(o.value, f.unit)}$`, correct: !!o.correct, flag: o.flag || null, why: o.why || '' })) };
   }
 
-  const api = { TYPES, practiceOf, quiz, rng, num, tq, NICE, CURVES, ser2 };
+  const api = { TYPES, practiceOf, quiz, rng, num, tq, NICE, CURVES, ser2, rcWatch };
   root.Caps = api;
   if (typeof module !== 'undefined') module.exports = api;
 })(typeof window !== 'undefined' ? window : globalThis);
