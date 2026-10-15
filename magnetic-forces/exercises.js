@@ -22,6 +22,17 @@
 //   stmts                          which statements are correct?
 // A tiles question with wide: the options are sentences, one per row.
 // A wrong option may carry a nudge: shown in practice in place of a why that gives the answer away.
+// The direction exercises (dir-current, dir-particle, dir-missing) also carry draw: in practice
+// (app.js) the student draws the vector with arrow.js instead of choosing it; the check keeps the
+// four options of questions (check-src.js).
+//   draw = { kind ('F', 'B' or 'v'), name (for the palette), ask, fig (the figure without the
+//     unknown vector), at (where the arrow starts in the svg: the middle of the charge or wire),
+//     gap (the arrow clears the charge or wire), aside (where ⊙ ⊗ go: beside the figure's own),
+//     start (the direction of a new arrow, degrees: never a right one), none (a button "no force":
+//     there may be none), show (the direction drawn with the solution; absent: no force),
+//     judge(d) for d a direction [x, y, z] or null (no force): { ok, tag (as the options': the
+//     idea behind a wrong answer), nudge (while the exercise is open), why (once done) } }
+//   toArrow(d), fromArrow(a)   a direction as arrow.js has it (degrees, 'out', 'in') and back
 (function (root) {
   'use strict';
 
@@ -30,7 +41,7 @@
   const Lang = root.Lang || require('./lang.js');
   const L = (en, de) => Lang.L(en, de);
   const { rng, AXES, CANDS, same, key, force, wireField, fitting } = M;
-  const { icon, scene, linesFig } = P;
+  const { icon, scene, sceneAt, linesFig } = P;
 
   // ---------------------------------------------------------------- words
   const DIR = {
@@ -87,6 +98,8 @@
     alongB: () => L('The magnetic force is perpendicular to the field, not along the field lines.', 'Die magnetische Kraft steht senkrecht zum Feld, nicht längs der Feldlinien.'),
     none: () => L('There is a force: the charge moves across the field.', 'Es gibt eine Kraft: Die Ladung bewegt sich quer zum Feld.'),
     some: () => L('Check whether the charge moves across the field at all.', 'Prüfe, ob sich die Ladung überhaupt quer zum Feld bewegt.'),
+    // (a direction drawn that is neither along nor against the force, nor along the motion or the field)
+    perp: () => L('The magnetic force is perpendicular both to the motion and to the field: this direction is not.', 'Die magnetische Kraft steht senkrecht zur Bewegung und zum Feld: Diese Richtung tut das nicht.'),
   };
   // In practice, while the exercise is open, a nudge in place of a reason that would give the answer
   // away (app.js); the reason itself stays for the check and once the exercise is solved.
@@ -107,6 +120,20 @@
   }
   const neg = (d) => d && d.map((x) => (x === 0 ? 0 : -x));
   const tiles = (key2, label, options, multi = false) => ({ type: 'tiles', key: key2, label, multi, options });
+
+  // ---------------------------------------------------------------- the vector drawn (practice)
+  const toArrow = (d) => (d[2] ? (d[2] > 0 ? 'out' : 'in') : (((Math.round((Math.atan2(d[1], d[0]) * 180) / Math.PI) % 360) + 360) % 360));
+  const fromArrow = (a) => (a === 'out' ? [0, 0, 1] : a === 'in' ? [0, 0, -1] : [Math.round(Math.cos((a * Math.PI) / 180)) + 0, Math.round(Math.sin((a * Math.PI) / 180)) + 0, 0]);
+  const NAMES = { F: () => L('Force', 'Kraft'), B: () => L('Field', 'Feld'), v: () => L('Velocity', 'Geschwindigkeit') };
+  // the figure without the unknown vector, and where the drawn one starts: at the middle of the
+  // charge or wire (clear of it), its ⊙ ⊗ beside it in the first slot the figure leaves free
+  function drawSpec(kind, o, rest) {
+    const g = sceneAt(o.items[0].at, o), it = o.items[0], gap = it.kind === 'piece' && !it.d[2] ? 9 : 16;
+    // a new arrow points where no answer and no vector of the figure does
+    const taken = [...rest.fits, ...o.vecs.filter((v) => v.dir).map((v) => v.dir)];
+    const start = [45, 135, 225, 315, 0, 90, 180, 270].find((a) => !taken.some((d) => same(d, fromArrow(a))));
+    return { kind, name: NAMES[kind](), fig: scene(o), at: g.at, gap, aside: [30 + 30 * g.slot, -30], start, ...rest };
+  }
   const choice = (key2, label, options) => ({ type: 'choice', key: key2, label, options });
 
   // ---------------------------------------------------------------- the direction of the force
@@ -124,8 +151,19 @@
       const text = kind === 'I'
         ? L(`<p>A piece of wire carries a current ${it('I')} (${dirName(v)}) in a magnetic field (${dirName(B)}).</p>`, `<p>Ein Drahtstück führt einen Strom ${it('I')} (${dirName(v)}) in einem Magnetfeld (${dirName(B)}).</p>`)
         : L(`<p>${cap(pt.name())} moves ${dirName(v)} through a magnetic field that points ${dirName(B)}.</p>`, `<p>${cap(pt.name())} bewegt sich ${dirName(v)} durch ein Magnetfeld, das ${dirName(B)} zeigt.</p>`);
+      // drawn: a wrong direction has the tag of the option it would be (or perp)
+      const against = (d, x) => same(d, x) || same(d, neg(x));
+      const judge = (d) => {
+        if (F ? d && same(d, F) : !d) return { ok: true, why: how };
+        const tag = !F ? 'some' : !d ? 'none' : same(d, neg(F)) ? 'hand' : against(d, v) ? 'alongV' : against(d, B) ? 'alongB' : 'perp';
+        return { ok: false, tag, nudge: tag === 'hand' ? NUDGE.hand() : WHYF[tag](), why: `${WHYF[tag]()} ${how}` };
+      };
+      const draw = drawSpec('F', { field: { dir: B }, items, vecs: [{ of: 0, kind: kind === 'I' ? 'I' : 'v', dir: v }] }, {
+        ask: kind === 'I' ? L('Draw the magnetic force on the wire.', 'Zeichne die magnetische Kraft auf den Draht.') : L('Draw the magnetic force on the particle.', 'Zeichne die magnetische Kraft auf das Teilchen.'),
+        none: true, fits: F ? [F] : [], ...(F ? { show: F } : {}), judge,
+      });
       return {
-        kind: 'dir', title: L('The direction of the force', 'Die Richtung der Kraft'), text, figs: `<div class="fig">${fig}</div>`,
+        kind: 'dir', title: L('The direction of the force', 'Die Richtung der Kraft'), text, figs: `<div class="fig">${fig}</div>`, draw,
         questions: [tiles('F', L('In which direction does the magnetic force point?', 'In welche Richtung zeigt die magnetische Kraft?'), forceOptions(r, F, tempt, how))],
         hints: [PERP(), RULE(), kind === 'I' ? L('A current counts as positive charges moving along it.', 'Ein Strom zählt als positive Ladungen, die sich in Stromrichtung bewegen.') : chargeOf(pt)],
         solution: [how], p: { q, v: key(v), B: key(B), pt: pt.id },
@@ -160,10 +198,30 @@
         ? L(`Only the part of ${what} perpendicular to the ${missing === 'B' ? 'velocity' : 'field'} matters for the force; a part along it adds nothing. So several directions fit: all those whose perpendicular part gives the force ${dirName(F)} with the ${q > 0 ? 'right' : 'left'} hand: ${fit.map(dirName).join(', ')}.`,
           `Für die Kraft zählt nur der Teil ${missing === 'B' ? 'des Feldes senkrecht zur Geschwindigkeit' : 'der Geschwindigkeit senkrecht zum Feld'}; ein Teil längs dazu trägt nichts bei. Also passen mehrere Richtungen: alle, deren senkrechter Teil mit der ${q > 0 ? 'rechten' : 'linken'} Hand die Kraft ${dirName(F)} ergibt: ${fit.map(dirName).join(', ')}.`)
         : L(`Only one of the directions here fits: ${dirName(fit[0])}. Check it with the ${q > 0 ? 'right' : 'left'} hand.`, `Nur eine der Richtungen hier passt: ${dirName(fit[0])}. Prüfe sie mit der ${q > 0 ? 'rechten' : 'linken'} Hand.`);
+      // drawn: one direction that fits is enough; once done, the others that fit are named
+      const others = (d) => fit.filter((f) => !same(f, d));
+      const judge = (d) => {
+        const Fd = d && (missing === 'B' ? force(q, a, d) : force(q, d, a)), ok = !!d && same(Fd, F);
+        const wDe = missing === 'B' ? 'dem Feld' : 'der Geschwindigkeit';
+        if (ok) {
+          const also = others(d).length ? L(` These fit as well: ${others(d).map(dirName).join(', ')}.`, ` Ebenso passen: ${others(d).map(dirName).join(', ')}.`) : '';
+          return { ok, why: `${L(`With ${what} ${dirName(d)}, the force points ${dirName(F)}.`, `Mit ${wDe} ${dirName(d)} zeigt die Kraft ${dirName(F)}.`)}${also} ${sol}` };
+        }
+        const tag = Fd && same(Fd, neg(F)) ? 'hand' : 'other';
+        const nudge = !d ? L(`Draw a direction of ${what}.`, `Zeichne eine Richtung ${missing === 'B' ? 'des Feldes' : 'der Geschwindigkeit'}.`)
+          : Fd ? L(`With ${what} ${dirName(d)}, the force would point ${dirName(Fd)}.`, `Mit ${wDe} ${dirName(d)} würde die Kraft ${dirName(Fd)} zeigen.`)
+            : L(`With ${what} ${dirName(d)}, ${missing === 'B' ? 'the field would be parallel to the velocity' : 'the velocity would be parallel to the field'}: no force.`, `Mit ${wDe} ${dirName(d)} wäre ${missing === 'B' ? 'das Feld parallel zur Geschwindigkeit' : 'die Geschwindigkeit parallel zum Feld'}: keine Kraft.`);
+        return { ok, tag, nudge, why: `${nudge} ${sol}` };
+      };
+      const draw = drawSpec(missing, { field: { dir: B }, items: [drawn(pt, [0, 0])], vecs: [...(missing === 'B' ? [{ of: 0, kind: 'v', dir: v }] : []), { of: 0, kind: 'F', dir: F }] }, {
+        ask: missing === 'B' ? L('Draw a direction of the field that gives this force. More than one may fit: one is enough.', 'Zeichne eine Richtung des Feldes, die diese Kraft ergibt. Es können mehrere passen: Eine genügt.')
+          : L('Draw a direction of motion that gives this force. More than one may fit: one is enough.', 'Zeichne eine Bewegungsrichtung, die diese Kraft ergibt. Es können mehrere passen: Eine genügt.'),
+        none: false, fits: fit, show: fit.find((f) => AXES.some((x) => same(x, f))) || fit[0], judge,
+      });
       return {
-        kind: 'dir', title: missing === 'B' ? L('Which field?', 'Welches Feld?') : L('Which velocity?', 'Welche Geschwindigkeit?'), text, figs: `<div class="fig">${fig}</div>`,
+        kind: 'dir', title: missing === 'B' ? L('Which field?', 'Welches Feld?') : L('Which velocity?', 'Welche Geschwindigkeit?'), text, figs: `<div class="fig">${fig}</div>`, draw,
         questions: [tiles('m', missing === 'B' ? L('Which directions of the field fit? Tick all that do.', 'Welche Richtungen des Feldes passen? Kreuze alle an, die passen.') : L('Which directions of motion fit? Tick all that do.', 'Welche Bewegungsrichtungen passen? Kreuze alle an, die passen.'), options, true)],
-        hints: [chargeOf(pt), RULE(), L(`The force is perpendicular to ${missing === 'B' ? 'the field' : 'the velocity'}: rule out the directions that are not.`, `Die Kraft steht senkrecht zu${missing === 'B' ? 'm Feld' : 'r Geschwindigkeit'}: Schliesse die Richtungen aus, die das nicht tun.`),
+        hints: [chargeOf(pt), RULE(), L(`The force is perpendicular to ${missing === 'B' ? 'the field' : 'the velocity'}: a direction along the force or against it cannot fit.`, `Die Kraft steht senkrecht zu${missing === 'B' ? 'm Feld' : 'r Geschwindigkeit'}: Eine Richtung längs der Kraft oder ihr entgegen kann nicht passen.`),
           L(`Only the part of ${what} perpendicular to the ${missing === 'B' ? 'velocity' : 'field'} counts: a slanting direction can fit as well as a straight one.`, `Nur der Teil ${missing === 'B' ? 'des Feldes senkrecht zur Geschwindigkeit' : 'der Geschwindigkeit senkrecht zum Feld'} zählt: Eine schräge Richtung kann ebenso passen wie eine gerade.`)],
         solution: [sol], p: { q, missing, a: key(a), F: key(F), o: opts.map(key), pt: pt.id },
       };
@@ -531,7 +589,7 @@
     return { ...f(seed), type, difficulty, id: `${type}-${seed}`, seed };
   }
 
-  const api = { TYPES: Object.keys(TYPES), make, vec, LAW, dirName, howForce, RULE, PERP, GRIP, hand, signName, tile, nice, coilFig, coilFigs };
+  const api = { TYPES: Object.keys(TYPES), make, toArrow, fromArrow, vec, LAW, dirName, howForce, RULE, PERP, GRIP, hand, signName, tile, nice, coilFig, coilFigs };
   root.MagEx = api;
   if (typeof module !== 'undefined') module.exports = api;
 })(typeof window !== 'undefined' ? window : globalThis);

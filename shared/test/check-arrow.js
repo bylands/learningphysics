@@ -1,7 +1,8 @@
 // Checks the pure parts of shared/arrow.js: the directions (8 and 16, extra axes, the nearest,
 // the turn of the keys with ⊙ ⊗), lengths kept to steps, limits and the room in the figure, the
 // anchor a point takes, the words for screen readers, and judging a drawing against a target set
-// (right, wrong direction, wrong length, missing, extra).   node shared/test/check-arrow.js
+// (right, wrong direction, wrong length, missing, extra), and the palette: its buttons ⊙ ⊗ (only
+// with outIn, in both languages, named by words()) and what they do.   node shared/test/check-arrow.js
 const assert = require('assert');
 const Lang = require('../lang.js');
 const A = require('../arrow.js');
@@ -117,5 +118,34 @@ j = A.judge([{ kind: 'g', anchor: 0, dir: 270, len: 40 }, { kind: 'n', anchor: 0
   [{ kind: 'g', anchor: 0, dir: 270, len: 1, group: 0 }, { kind: 'n', anchor: 0, dir: 90, len: 1, group: 0 }, { kind: 'g', anchor: 1, dir: 270, len: 1, group: 1 }, { kind: 'n', anchor: 1, dir: 90, len: 1, group: 1 }]);
 assert(j.ok, 'two boxes of different weights');
 assert(A.judge([], []).ok);
+
+// ---------------------------------------------------------------- the buttons ⊙ ⊗
+const D8 = A.dirs(8);
+assert.deepStrictEqual(A.press(90, null, 'out', D8), { dir: 'out', keep: 90 }, '⊙: the direction in the plane kept');
+assert.deepStrictEqual(A.press('out', 90, 'in', D8), { dir: 'in', keep: 90 }, '⊙ to ⊗');
+assert.deepStrictEqual(A.press('in', 90, 'in', D8), { dir: 90, keep: null }, '⊗ again: back to the plane');
+assert.deepStrictEqual(A.press('out', null, 'out', D8), { dir: 0, keep: null }, 'nothing kept: the first direction');
+const arr = [{ id: 'a1' }, { id: 'a2' }];
+assert.strictEqual(A.pressTarget(arr, 'a2'), 'a2', 'the selected arrow');
+assert.strictEqual(A.pressTarget(arr, null), null, 'several, none selected: none');
+assert.strictEqual(A.pressTarget([{ id: 'a1' }], null), 'a1', 'the only one');
+assert.strictEqual(A.pressTarget([{ id: 'a1' }], 'a9'), 'a1', 'a selected arrow that is gone');
+assert.strictEqual(A.pressTarget([], null), null);
+// the palette: the buttons only with outIn (Free-Body Diagrams has none), in the page language
+const kinds = [{ id: 'F', label: 'Force', cls: 'k-F' }];
+Lang.set('en', true);
+let html = A.paletteHtml({ kinds });
+assert(!/ar-oi/.test(html) && /ar-kind/.test(html) && /Remove arrow/.test(html), 'no ⊙ ⊗ without outIn');
+html = A.paletteHtml({ kinds, outIn: true, note: 'Draw it.' });
+assert.strictEqual((html.match(/class="ar-oi"/g) || []).length, 2);
+assert(/data-oi="out"[^>]*>.*⊙.*out of the page<\/button>/.test(html) && /data-oi="in"[^>]*>.*⊗.*into the page<\/button>/.test(html), html);
+assert(html.indexOf('ar-oi') < html.indexOf('ar-remove') && /Draw it\./.test(html), 'between the kinds and Remove, with the note given');
+assert(!/ar-oi/.test(A.paletteHtml({ kinds, outIn: true, outInButtons: false })), 'outInButtons: false');
+html = A.paletteHtml({ kinds, outIn: true, words: (d) => (d === 'out' ? 'aus der Seite heraus' : null) });
+assert(/aus der Seite heraus<\/button>/.test(html) && /into the page<\/button>/.test(html), 'named by words(), or the default');
+Lang.set('de', true);
+html = A.paletteHtml({ kinds, outIn: true });
+assert(/aus der Ebene heraus<\/button>/.test(html) && /in die Ebene hinein<\/button>/.test(html) && /Pfeil entfernen/.test(html));
+Lang.set('en', true);
 
 console.log('all checks passed');
