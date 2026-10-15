@@ -209,7 +209,7 @@ exercise_id,title,creator,language,url,objectives
 19002,Schallgeschwindigkeit im Ferrit-Stab,pw,GER,https://texercises.com/exercise/schallgeschwindigkeit-im-ferrit-stab/,
 19005,Gedämpfte Schwingung,by,GER,https://texercises.com/exercise/gedampfte-schwingung-13/,
 19006,RC-Glied im Gleich- und Wechselstromkreis,by,GER,https://texercises.com/exercise/rc-glied-im-gleich-und-wechselstromkreis-1/,capacitors:sketch capacitors:tau
-19007,SESAME,by,GER,https://texercises.com/exercise/sesame-2/,charged-particles:radius
+19007,SESAME,by,GER,https://texercises.com/exercise/sesame-2/,charged-particles:radius charged-particles:work charged-particles:accel
 19008,Schallgeschwindigkeit im Ferrit-Stab,by,GER,https://texercises.com/exercise/schallgeschwindigkeit-im-ferrit-stab-1/,
 19009,Bergbau in Südafrika,by,GER,https://texercises.com/exercise/bergbau-in-sudafrika/,
 19010,Bergbau in Südafrika,by,GER,https://texercises.com/exercise/bergbau-in-sudafrika-1/,
@@ -222,7 +222,7 @@ exercise_id,title,creator,language,url,objectives
 19021,Leiterplatte,by,GER,https://texercises.com/exercise/leiterplatte-6YBe0BMPI0-cloned/,
 19022,Leiterplatte,by,GER,https://texercises.com/exercise/leiterplatte-1/,
 19023,RC-Kreis,by,GER,https://texercises.com/exercise/rc-kreis-2/,capacitors:sketch capacitors:tau
-19027,SESAME,by,GER,https://texercises.com/exercise/sesame-3/,charged-particles:radius
+19027,SESAME,by,GER,https://texercises.com/exercise/sesame-3/,charged-particles:radius charged-particles:work
 19029,Zeitdilatation,by,GER,https://texercises.com/exercise/zeitdilatation-hMpI7EyFuv-cloned/,
 19030,Lorenzfaktor,by,GER,https://texercises.com/exercise/lorenzfaktor/,
 19031,Lorentzfaktor,by,GER,https://texercises.com/exercise/lorentzfaktor-1/,
@@ -846,7 +846,7 @@ exercise_id,title,creator,language,url,objectives
 22946,Circular Arc,by,ENG,https://texercises.com/exercise/circular-arc/,
 22947,Charged Wire (non-uniform),by,ENG,https://texercises.com/exercise/charged-wire-non-uniform/,
 22975,Dipole in Field of Point Charge,by,ENG,https://texercises.com/exercise/dipole-in-field-of-point-charge/,
-22980,Dipole in Field of Charged Wire,by,ENG,https://texercises.com/exercise/dipole-in-field-of-charged-wire/,
+22980,Dipole in Field of Charged Wire,by,ENG,https://texercises.com/exercise/dipole-in-field-of-charged-wire/,electric-field:dipole
 23023,Potential energy of proton,by,ENG,https://texercises.com/exercise/potential-energy-of-proton/,electric-potential:energy electric-potential:uniform
 23024,Potential in electric field,by,ENG,https://texercises.com/exercise/potential-in-electric-field-1/,electric-potential:quantities electric-potential:energy
 23025,Voltage in uniform field,by,ENG,https://texercises.com/exercise/voltage-in-uniform-field/,electric-potential:uniform
@@ -1002,7 +1002,7 @@ exercise_id,title,creator,language,url,objectives
 24446,Which Way?,by,ENG,https://texercises.com/exercise/which-way/,
 24447,Ions and Electron Beams,by,ENG,https://texercises.com/exercise/ions-and-electron-beams/,
 24448,Battery Pack,by,ENG,https://texercises.com/exercise/battery-pack/,
-24449,Best Arrangement,by,ENG,https://texercises.com/exercise/best-arrangement/,
+24449,Best Arrangement,by,ENG,https://texercises.com/exercise/best-arrangement/,circuit-trainer:combine
 24450,Old and New Batteries,by,ENG,https://texercises.com/exercise/old-and-new-batteries/,potential-circuit:rules
 24451,Voltage Drop,by,ENG,https://texercises.com/exercise/voltage-drop/,circuit-trainer:backwards
 24452,Two Loads,by,ENG,https://texercises.com/exercise/two-loads/,circuit-trainer:backwards
@@ -1046,3 +1046,138 @@ exercise_id,title,creator,language,url,objectives
 24943,Zustände im Heissluftmotor,by,GER,https://texercises.com/exercise/zustande-im-heissluftmotor/,cyclic-processes:states cyclic-processes:sketch
 24990,Kreisprozess mit Luft,by,GER,https://texercises.com/exercise/kreisprozess-mit-luft/,cyclic-processes:states cyclic-processes:sketch
 25073,Big and Small Particles,by,ENG,https://texercises.com/exercise/big-and-small-particles/,interference:huygens
+24496,A Long Extension Cable,by,ENG,https://texercises.com/exercise/a-long-extension-cable/,circuit-trainer:divide
+24500,A Hair Dryer with Two Settings,by,ENG,https://texercises.com/exercise/a-hair-dryer-with-two-settings/,circuit-trainer:combine
+24508,Coulomb's Torsion Balance,by,ENG,https://texercises.com/exercise/coulombs-torsion-balance/,coulomb:factor
+24512,Quarks in a Proton,by,ENG,https://texercises.com/exercise/quarks-in-a-proton/,coulomb:vector
+24520,An X-Ray Tube,by,ENG,https://texercises.com/exercise/an-x-ray-tube/,charged-particles:accel
+24536,Ein Springbrunnen,by,GER,https://texercises.com/exercise/ein-springbrunnen/,coe:forms coe:balance
+24540,Skispringen,by,GER,https://texercises.com/exercise/skispringen/,coe:balance
+24545,Eine Waage im Lift,by,GER,https://texercises.com/exercise/eine-waage-im-lift/,force-systems:law
+24549,Abschleppen,by,GER,https://texercises.com/exercise/abschleppen/,force-systems:system force-systems:law
+24553,Auf der Rampe geparkt,by,GER,https://texercises.com/exercise/auf-der-rampe-geparkt/,force-systems:slope
+24557,A Tweeter and its Capacitor,by,ENG,https://texercises.com/exercise/a-tweeter-and-its-capacitor/,impedance:limits
+24561,A Metal Detector,by,ENG,https://texercises.com/exercise/a-metal-detector/,impedance:resonance
+24565,A Quartz Crystal,by,ENG,https://texercises.com/exercise/a-quartz-crystal/,impedance:resonance
+24569,An Induction Hob,by,ENG,https://texercises.com/exercise/an-induction-hob/,induction-match:change
+24573,A Cyclotron,by,ENG,https://texercises.com/exercise/a-cyclotron/,charged-particles:radius
+24579,"Davisson and Germer, 1927",by,ENG,https://texercises.com/exercise/davisson-and-germer-1927/,matter-waves:debroglie
+24587,An Earthquake,by,ENG,https://texercises.com/exercise/an-earthquake/,oscillations:harmonic oscillations:extremes
+24591,Atoms in a Crystal,by,ENG,https://texercises.com/exercise/atoms-in-a-crystal/,oscillations:extremes
+24600,Eine festsitzende Radmutter,by,GER,https://texercises.com/exercise/eine-festsitzende-radmutter/,torque:arm
+24604,Ein Turmdrehkran,by,GER,https://texercises.com/exercise/ein-turmdrehkran/,torque:balance
+24610,A Rope on a Wall or a Ring,by,ENG,https://texercises.com/exercise/a-rope-on-a-wall-or-a-ring/,wave-propagation:reflect
+24648,Flughöhe einer Feuerwerksrakete,by,GER,https://texercises.com/exercise/flughohe-einer-feuerwerksrakete/,coe:balance
+24657,Waage mit gleich schweren Kugeln,by,GER,https://texercises.com/exercise/waage-mit-gleich-schweren-kugeln/,torque:balance
+24691,Kiste am Hang festhalten,by,GER,https://texercises.com/exercise/kiste-am-hang-festhalten/,force-systems:slope
+24695,Geneigte Personenwaage,by,GER,https://texercises.com/exercise/geneigte-personenwaage/,force-systems:slope
+24699,Lokomotive an einer Rampe,by,GER,https://texercises.com/exercise/lokomotive-an-einer-rampe/,force-systems:system force-systems:slope
+24763,Gezogene Kiste mit Beschleunigung,by,GER,https://texercises.com/exercise/gezogene-kiste-mit-beschleunigung/,force-systems:law
+24767,Beschleunigen und Bremsen eines Zuges,by,GER,https://texercises.com/exercise/beschleunigen-und-bremsen-eines-zuges/,force-systems:law
+24783,Was ist die Zentripetalkraft?,by,GER,https://texercises.com/exercise/was-ist-die-zentripetalkraft/,force-concepts:centre
+25070,Radius and Period of an Alpha Particle,by,ENG,https://texercises.com/exercise/radius-and-period-of-an-alpha-particle/,charged-particles:radius
+25075,Electrons at a Double Slit,by,ENG,https://texercises.com/exercise/electrons-at-a-double-slit/,matter-waves:debroglie interference:maxima interference:changes
+25087,Eine Schubkarre,by,GER,https://texercises.com/exercise/eine-schubkarre/,torque:balance
+25091,Eine Leiter an der Wand,by,GER,https://texercises.com/exercise/eine-leiter-an-der-wand/,torque:balance torque:weight
+24501,A Temperature Sensor,by,ENG,https://texercises.com/exercise/a-temperature-sensor/,circuit-trainer:divide circuit-trainer:backwards
+24509,The Hydrogen Molecule Ion,by,ENG,https://texercises.com/exercise/the-hydrogen-molecule-ion/,coulomb:vector
+24513,Millikan's Oil Drop,by,ENG,https://texercises.com/exercise/millikans-oil-drop/,coulomb:field electric-potential:uniform
+24517,An Electrostatic Precipitator,by,ENG,https://texercises.com/exercise/an-electrostatic-precipitator/,coulomb:field
+24521,An Electron Gun,by,ENG,https://texercises.com/exercise/an-electron-gun/,charged-particles:accel
+24525,The Membrane of a Nerve Cell,by,ENG,https://texercises.com/exercise/the-membrane-of-a-nerve-cell/,electric-potential:uniform electric-potential:energy
+24537,Eine Achterbahn,by,GER,https://texercises.com/exercise/eine-achterbahn/,coe:balance
+24541,Eine Seilschaukel über dem See,by,GER,https://texercises.com/exercise/eine-seilschaukel-uber-dem-see/,coe:balance
+24546,Ein Kran hebt einen Container,by,GER,https://texercises.com/exercise/ein-kran-hebt-einen-container/,force-systems:law
+24550,Ein Güterzug,by,GER,https://texercises.com/exercise/ein-guterzug/,force-systems:law force-systems:system
+24554,Die Piste hinunter,by,GER,https://texercises.com/exercise/die-piste-hinunter/,force-systems:slope force-systems:law
+24558,An Electric Guitar and its Cable,by,ENG,https://texercises.com/exercise/an-electric-guitar-and-its-cable/,impedance:resonance
+24562,A Wireless Charger,by,ENG,https://texercises.com/exercise/a-wireless-charger/,impedance:resonance
+24566,A Magnet Falls through a Coil,by,ENG,https://texercises.com/exercise/a-magnet-falls-through-a-coil/,induction-match:slope induction-match:change
+24570,A Bicycle Dynamo,by,ENG,https://texercises.com/exercise/a-bicycle-dynamo/,induction-match:change
+24575,A Particle Detector,by,ENG,https://texercises.com/exercise/a-particle-detector/,charged-particles:radius
+24580,The Electron Microscope,by,ENG,https://texercises.com/exercise/the-electron-microscope/,matter-waves:debroglie
+24584,A Tuning Fork,by,ENG,https://texercises.com/exercise/a-tuning-fork/,oscillations:extremes
+24588,A Baby Bouncer,by,ENG,https://texercises.com/exercise/a-baby-bouncer/,oscillations:extremes
+24592,A Laser Pointer in the Eye,by,ENG,https://texercises.com/exercise/a-laser-pointer-in-the-eye/,photons:rate
+24601,Wippe mit Elternteil,by,GER,https://texercises.com/exercise/wippe-mit-elternteil/,torque:balance
+24605,Eine Einkaufstasche halten,by,GER,https://texercises.com/exercise/eine-einkaufstasche-halten/,torque:balance
+24611,Finding a Break in a Cable,by,ENG,https://texercises.com/exercise/finding-a-break-in-a-cable/,wave-propagation:reflect
+24641,Energieumwandlungen beschreiben,by,GER,https://texercises.com/exercise/energieumwandlungen-beschreiben/,coe:forms
+24649,Halbe Aufprallgeschwindigkeit,by,GER,https://texercises.com/exercise/halbe-aufprallgeschwindigkeit/,coe:balance
+24658,Maximale Last eines Krans,by,GER,https://texercises.com/exercise/maximale-last-eines-krans/,torque:balance
+24662,Drehbar aufgehängtes Brett,by,GER,https://texercises.com/exercise/drehbar-aufgehangtes-brett/,torque:balance torque:weight
+24692,Umkehrzeit auf schiefer Ebene,by,GER,https://texercises.com/exercise/umkehrzeit-auf-schiefer-ebene/,force-systems:slope
+24696,Beschleunigung auf schiefer Ebene,by,GER,https://texercises.com/exercise/beschleunigung-auf-schiefer-ebene/,force-systems:slope
+24723,Inlineskaterin am Hang,by,GER,https://texercises.com/exercise/inlineskaterin-am-hang/,force-systems:drag force-systems:slope
+24764,Zwei verbundene Holzklötze,by,GER,https://texercises.com/exercise/zwei-verbundene-holzklotze/,force-systems:law
+25059,Two Capacitors Compared,by,ENG,https://texercises.com/exercise/two-capacitors-compared/,coulomb:field
+25071,Two Moving Charges,by,ENG,https://texercises.com/exercise/two-moving-charges/,magnetic-forces:pair magnetic-forces:charge
+25088,Eine Seilwinde,by,GER,https://texercises.com/exercise/eine-seilwinde/,torque:balance torque:arm
+24498,A Car on a Winter Evening,by,ENG,https://texercises.com/exercise/a-car-on-a-winter-evening/,circuit-trainer:combine
+24506,Ions in a Crystal,by,ENG,https://texercises.com/exercise/ions-in-a-crystal/,coulomb:vector
+24514,An Inkjet Printer,by,ENG,https://texercises.com/exercise/an-inkjet-printer/,coulomb:field
+24522,The Ion Thruster of Dawn,by,ENG,https://texercises.com/exercise/the-ion-thruster-of-dawn/,charged-particles:accel
+24526,An Electron Microscope,by,ENG,https://texercises.com/exercise/an-electron-microscope/,charged-particles:accel
+24538,Stabhochsprung,by,GER,https://texercises.com/exercise/stabhochsprung/,coe:balance
+24542,Eine Steinschleuder,by,GER,https://texercises.com/exercise/eine-steinschleuder/,coe:balance
+24547,Eine Kiste auf dem Lastwagen,by,GER,https://texercises.com/exercise/eine-kiste-auf-dem-lastwagen/,force-concepts:second
+24551,Eine Fallschirmspringerin,by,GER,https://texercises.com/exercise/eine-fallschirmspringerin/,force-systems:drag
+24555,Einen Schlitten ziehen,by,GER,https://texercises.com/exercise/einen-schlitten-ziehen/,force-systems:law
+24559,Tuning a Radio,by,ENG,https://texercises.com/exercise/tuning-a-radio/,impedance:resonance
+24576,A Short Circuit between Two Cables,by,ENG,https://texercises.com/exercise/a-short-circuit-between-two-cables/,magnetic-forces:pair
+24581,Neutrons Look into a Crystal,by,ENG,https://texercises.com/exercise/neutrons-look-into-a-crystal/,matter-waves:debroglie
+24585,A Bouncing Ball,by,ENG,https://texercises.com/exercise/a-bouncing-ball/,oscillations:harmonic
+24589,A Swaying Skyscraper,by,ENG,https://texercises.com/exercise/a-swaying-skyscraper/,oscillations:extremes
+24602,Bergauf treten,by,GER,https://texercises.com/exercise/bergauf-treten/,torque:arm
+24607,Ein Sprungbrett,by,GER,https://texercises.com/exercise/ein-sprungbrett/,torque:balance
+24612,A Wave at the Harbour Wall,by,ENG,https://texercises.com/exercise/a-wave-at-the-harbour-wall/,wave-propagation:reflect
+24650,Springende Spiralfeder,by,GER,https://texercises.com/exercise/springende-spiralfeder/,coe:balance
+24664,Kräfte an einer Zugbrücke,by,GER,https://texercises.com/exercise/krafte-an-einer-zugbrucke/,torque:balance
+24693,Motorrad am Hang: Antriebskraft,by,GER,https://texercises.com/exercise/motorrad-am-hang-antriebskraft/,force-systems:slope force-systems:law
+24697,Auto rollt in den See,by,GER,https://texercises.com/exercise/auto-rollt-in-den-see/,force-systems:slope
+24701,Stahlwürfel auf Stahlplatte,by,GER,https://texercises.com/exercise/stahlwurfel-auf-stahlplatte/,force-systems:slope
+24749,Maximale Beschleunigung beim Absprung,by,GER,https://texercises.com/exercise/maximale-beschleunigung-beim-absprung/,force-concepts:second
+24793,Bob in der Kurve,by,GER,https://texercises.com/exercise/bob-in-der-kurve/,force-concepts:centre
+25072,Electrons Through 150 Volts,by,ENG,https://texercises.com/exercise/electrons-through-150-volts/,charged-particles:accel matter-waves:debroglie
+25081,From the Energy to the Wavelength,by,ENG,https://texercises.com/exercise/from-the-energy-to-the-wavelength/,em-waves:spectrum
+25089,Ein Mobile,by,GER,https://texercises.com/exercise/ein-mobile/,torque:balance
+24495,Touching a Live Wire,by,ENG,https://texercises.com/exercise/touching-a-live-wire/,circuit-trainer:combine
+24503,Building an Ammeter and a Voltmeter,by,ENG,https://texercises.com/exercise/building-an-ammeter-and-a-voltmeter/,circuit-trainer:meters
+24511,"Two Electrons, One Nucleus",by,ENG,https://texercises.com/exercise/two-electrons-one-nucleus/,coulomb:vector coulomb:direction
+24515,Under a Thundercloud,by,ENG,https://texercises.com/exercise/under-a-thundercloud/,electric-potential:uniform
+24523,Proton Therapy,by,ENG,https://texercises.com/exercise/proton-therapy/,charged-particles:accel
+24527,Rutherford's Experiment: Closest Approach,by,ENG,https://texercises.com/exercise/rutherfords-experiment-closest-approach/,electric-potential:energy
+24535,Ein Crashtest,by,GER,https://texercises.com/exercise/ein-crashtest/,coe:balance
+24539,Durch ein Tal rollen,by,GER,https://texercises.com/exercise/durch-ein-tal-rollen/,coe:forms coe:balance
+24543,Ein Flipperkasten,by,GER,https://texercises.com/exercise/ein-flipperkasten/,coe:forms coe:balance
+24548,Notbremsung,by,GER,https://texercises.com/exercise/notbremsung-1/,force-concepts:second
+24552,Raketenstart,by,GER,https://texercises.com/exercise/raketenstart-2/,force-systems:law
+24556,Lift und Gegengewicht,by,GER,https://texercises.com/exercise/lift-und-gegengewicht/,force-systems:system force-systems:law
+24560,A Body-Fat Scale,by,ENG,https://texercises.com/exercise/a-body-fat-scale/,impedance:limits
+24564,A Contactless Card,by,ENG,https://texercises.com/exercise/a-contactless-card/,impedance:resonance
+24568,A Guitar Pickup,by,ENG,https://texercises.com/exercise/a-guitar-pickup/,induction-match:slope
+24572,A Mass Spectrometer,by,ENG,https://texercises.com/exercise/a-mass-spectrometer/,charged-particles:radius
+24577,Cosmic Rays and the Earth's Field,by,ENG,https://texercises.com/exercise/cosmic-rays-and-the-earths-field/,magnetic-forces:charge
+24586,Salt on a Loudspeaker,by,ENG,https://texercises.com/exercise/salt-on-a-loudspeaker/,oscillations:extremes
+24590,The Tide in a Harbour,by,ENG,https://texercises.com/exercise/the-tide-in-a-harbour/,oscillations:circle oscillations:extremes
+24595,A Night-Vision Device,by,ENG,https://texercises.com/exercise/a-night-vision-device/,photons:threshold photons:einstein
+24599,Eine schwere Tür öffnen,by,GER,https://texercises.com/exercise/eine-schwere-tur-offnen/,torque:arm
+24603,Ein Brett tragen,by,GER,https://texercises.com/exercise/ein-brett-tragen/,torque:balance torque:weight
+24609,The Stadium Wave,by,ENG,https://texercises.com/exercise/the-stadium-wave/,wave-propagation:medium
+24613,Two Pulses on a Slinky,by,ENG,https://texercises.com/exercise/two-pulses-on-a-slinky/,wave-propagation:superpose
+24651,Angestossenes Fadenpendel,by,GER,https://texercises.com/exercise/angestossenes-fadenpendel/,coe:balance
+24660,Länge eines Schraubenschlüssels,by,GER,https://texercises.com/exercise/lange-eines-schraubenschlussels/,torque:arm
+24665,Zwei Arbeiter tragen einen Balken,by,GER,https://texercises.com/exercise/zwei-arbeiter-tragen-einen-balken/,torque:balance torque:weight
+24690,Kiste auf einer Rampe,by,GER,https://texercises.com/exercise/kiste-auf-einer-rampe/,force-systems:slope
+24694,Motorrad am Hang: Haftreibung,by,GER,https://texercises.com/exercise/motorrad-am-hang-haftreibung/,force-systems:slope force-systems:law
+24698,Zwei Kisten an schiefer Ebene,by,GER,https://texercises.com/exercise/zwei-kisten-an-schiefer-ebene/,force-systems:law force-systems:slope
+24702,Kiste auf einer Holzrampe,by,GER,https://texercises.com/exercise/kiste-auf-einer-holzrampe/,force-systems:slope
+24750,Reissende Schnur,by,GER,https://texercises.com/exercise/reissende-schnur/,force-systems:law
+24756,Kraftgesetz von Professor Siebenschlau,by,GER,https://texercises.com/exercise/kraftgesetz-von-professor-siebenschlau/,interaction:equal
+24786,Kurvenfahrt auf trockener Strasse,by,GER,https://texercises.com/exercise/kurvenfahrt-auf-trockener-strasse/,force-concepts:centre
+24790,Mindestgeschwindigkeit im Looping,by,GER,https://texercises.com/exercise/mindestgeschwindigkeit-im-looping/,force-concepts:centre
+24794,Snowboarderin in Senke und Buckel,by,GER,https://texercises.com/exercise/snowboarderin-in-senke-und-buckel/,force-concepts:centre
+25074,Electrons Diffracted by Graphite,by,ENG,https://texercises.com/exercise/electrons-diffracted-by-graphite/,matter-waves:debroglie
+25082,Photons from a Remote Control,by,ENG,https://texercises.com/exercise/photons-from-a-remote-control/,photons:rate
+25086,Ein Brecheisen,by,GER,https://texercises.com/exercise/ein-brecheisen/,torque:arm
+25090,Ein Kranausleger,by,GER,https://texercises.com/exercise/ein-kranausleger/,torque:balance torque:arm

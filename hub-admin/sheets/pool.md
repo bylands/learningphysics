@@ -23,6 +23,18 @@ edit `pool.json`). ★ difficulty, 🖼 has an image (not in the export: a place
   - Series Resistors (en, ★) `e24402-series-resistors`
   - Terminal Voltage (en, ★) `e22519-terminal-voltage`
   - Voltage Divider (en, ★) `e22514-voltage-divider`
+  - A Long Extension Cable (en, ★★) `e24496-a-long-extension-cable`
+  - A Temperature Sensor (en, ★★) `e24501-a-temperature-sensor`
+  - Parallel Branches (en, ★★) `e24405-parallel-branches`
+  - Parallel Pair between Two Series Resistors (en, ★★) `e24407-parallel-pair-between-two-series-resisto`
+  - Resistors in Parallel (en, ★★) `e18123-resistors-in-parallel`
+  - Temperature Sensor (en, ★★) `e24457-temperature-sensor`
+  - Two Parallel Pairs in Series (en, ★★) `e24414-two-parallel-pairs-in-series`
+  - Voltage Divider with Parallel Resistors (en, ★★) `e24404-voltage-divider-with-parallel-resistors`
+  - Diagonal Resistor (en, ★★★) `e24409-diagonal-resistor`
+  - Three Branches with a Twist (en, ★★★) `e24406-three-branches-with-a-twist`
+  - Three Resistors in Parallel (en, ★★★) `e24415-three-resistors-in-parallel`
+  - Unknown Series Resistor (en, ★★★) `e24416-unknown-series-resistor`
 - **combine**: Reduce groups of resistors to one equivalent resistance and work out every current and voltage step by step.
   - Internal Resistance (en, ★) `e18409-internal-resistance`
   - Parallel Resistors (en, ★) `e24403-parallel-resistors`
@@ -30,6 +42,12 @@ edit `pool.json`). ★ difficulty, 🖼 has an image (not in the export: a place
   - A Car on a Winter Evening (en, ★★) `circuit-trainer-05-car-lights`
   - Ammeter (en, ★★) `e18403-ammeter`
   - Branch with Two Series Resistors (en, ★★) `e24408-branch-with-two-series-resistors`
+  - Touching a Live Wire (en, ★) `e24495-touching-a-live-wire`
+  - A Car on a Winter Evening (en, ★★) `e24498-a-car-on-a-winter-evening`
+  - A Hair Dryer with Two Settings (en, ★★) `e24500-a-hair-dryer-with-two-settings`
+  - Best Arrangement (en, ★★★) `e24449-best-arrangement`
+  - Drahtfigur (de, ★★ 🖼) `e18851-drahtfigur`
+  - Resistor Circuit (en, ★★ 🖼) `e22512-resistor-circuit`
 - **backwards**: Find an unknown resistance from measured currents and voltages.
   - Ageing Battery (en, ★) `e24454-ageing-battery`
   - Internal Resistance (en, ★) `e22520-internal-resistance-1`
@@ -37,6 +55,12 @@ edit `pool.json`). ★ difficulty, 🖼 has an image (not in the export: a place
   - Resistors in Series (en, ★) `e18122-resistors-in-series`
   - Series Resistors (en, ★) `e24402-series-resistors`
   - Branch with Two Series Resistors (en, ★★) `e24408-branch-with-two-series-resistors`
+  - A Temperature Sensor (en, ★★) `e24501-a-temperature-sensor`
+  - Parallel Pair between Two Series Resistors (en, ★★) `e24407-parallel-pair-between-two-series-resisto`
+  - Two Parallel Pairs in Series (en, ★★) `e24414-two-parallel-pairs-in-series`
+  - Voltage Drop (en, ★★) `e24451-voltage-drop`
+  - Three Branches with a Twist (en, ★★★) `e24406-three-branches-with-a-twist`
+  - Unknown Series Resistor (en, ★★★) `e24416-unknown-series-resistor`
 - **meters**: Place an ammeter (in series) and a voltmeter (in parallel) correctly and read what an ideal meter shows in a circuit.
   - Ammeter (en, ★) `e22515-ammeter-1`
   - Voltmeter (en, ★) `e22516-voltmeter-1`
@@ -44,6 +68,8 @@ edit `pool.json`). ★ difficulty, 🖼 has an image (not in the export: a place
   - Range Extension (en, ★★★) `e18404-range-extension`
   - The Resistance inside a Battery (en, ★★★) `circuit-trainer-09-internal-resistance`
   - Voltmeter (en, ★★★) `e18405-voltmeter`
+  - Building an Ammeter and a Voltmeter (en, ★★★) `e24503-building-an-ammeter-and-a-voltmeter`
+  - How Not Connect an Ammeter (en, ★ 🖼) `e22518-how-not-connect-an-ammeter`
 
 ## potential-circuit
 
@@ -60,6 +86,7 @@ edit `pool.json`). ★ difficulty, 🖼 has an image (not in the export: a place
   - Opposing Batteries (en, ★) `e24444-opposing-batteries`
   - Potential Along a Series Circuit (en, ★) `e24443-potential-along-a-series-circuit`
   - Multi-Branch Circuit (en, ★★) `e24445-multi-branch-circuit`
+  - Resistor Tetrahedron (en, ★★★★ 🖼) `e22582-resistor-tetrahedron`
 - **voltage**: Find the voltage between any two points as the difference of their potentials.
   - Potential Along a Series Circuit (en, ★) `e24443-potential-along-a-series-circuit`
   - Potential Difference (en, ★) `e22524-potential-difference`
@@ -78,6 +105,8 @@ edit `pool.json`). ★ difficulty, 🖼 has an image (not in the export: a place
   - Half-Life for Capacitors in Parallel and in Series (en, ★★) `e19060-half-life-for-capacitors-in-parallel-and`
   - Partially Filled Capacitor (en, ★★) `e17660-partially-filled-capacitor`
   - Fill Level (en, ★★★) `e17703-fill-level`
+  - Simple Double Capacitor (en, ★★ 🖼) `e17699-simple-double-capacitor`
+  - Partially filled capacitor (en, ★★★ 🖼) `e23106-partially-filled-capacitor-1`
 - **sketch**: Sketch the voltages and the current against time while a capacitor charges or discharges, and find them at a moment with the loop rule.
   - RC-Glied im Gleich- und Wechselstromkreis (de, ★★★★) `e19006-rc-glied-im-gleich-und-wechselstromkreis`
   - RC-Kreis (de, ★★★★) `e19023-rc-kreis-2`
@@ -88,6 +117,7 @@ edit `pool.json`). ★ difficulty, 🖼 has an image (not in the export: a place
   - Current in RC Circuit (en, ★★) `e19062-current-in-rc-circuit`
   - Discharging Capacitor (en, ★★) `e19049-discharging-capacitor`
   - Half-Life for Capacitors in Parallel and in Series (en, ★★) `e19060-half-life-for-capacitors-in-parallel-and`
+  - Charging Voltage (en, ★★★ 🖼) `e19061-charging-voltage`
 - *for the app as a whole:* Charging Current `e19050-charging-current`; Photo Flash `e19054-photo-flash`; Static Voltmeter `e17706-static-voltmeter`
 
 ## impedance
@@ -106,6 +136,9 @@ edit `pool.json`). ★ difficulty, 🖼 has an image (not in the export: a place
   - Low Pass Filter (en, ★★★) `e22922-low-pass-filter-ViI4WBsSMl-cloned`
   - Maximum and Asymptotic Behaviour of Parallel Impedance (en, ★★★) `e19482-maximum-and-asymptotic-behaviour-of-para`
   - L in series to R and C (en, ★★★ 🖼) `e22856-l-in-series-to-r-and-c`
+  - A Tweeter and its Capacitor (en, ★★) `e24557-a-tweeter-and-its-capacitor`
+  - Tone Control (en, ★★) `e19543-tone-control`
+  - A Body-Fat Scale (en, ★★★) `e24560-a-body-fat-scale`
 - **resonance**: Identify the resonance as the minimum of the impedance of a series RLC circuit and the maximum of a parallel one.
   - Radio Receiver (en, ★) `e22858-radio-receiver`
   - Resonance Frequency (en, ★★) `e19632-resonance-frequency`
@@ -113,6 +146,13 @@ edit `pool.json`). ★ difficulty, 🖼 has an image (not in the export: a place
   - An Electric Guitar and its Cable (en, ★★★) `impedance-02-guitar-pickup`
   - Maximum and Asymptotic Behaviour of Parallel Impedance (en, ★★★) `e19482-maximum-and-asymptotic-behaviour-of-para`
   - Tuning a Radio (en, ★★★) `impedance-03-tuning-a-radio`
+  - A Contactless Card (en, ★★) `e24564-a-contactless-card`
+  - A Metal Detector (en, ★★) `e24561-a-metal-detector`
+  - A Wireless Charger (en, ★★) `e24562-a-wireless-charger`
+  - An Electric Guitar and its Cable (en, ★★) `e24558-an-electric-guitar-and-its-cable`
+  - Tuning a Radio (en, ★★) `e24559-tuning-a-radio`
+  - A Quartz Crystal (en, ★★★) `e24565-a-quartz-crystal`
+  - Band-Pass Filter (en, ★★★) `e22923-band-pass-filter`
 
 ## rl-switch
 
@@ -120,6 +160,7 @@ edit `pool.json`). ★ difficulty, 🖼 has an image (not in the export: a place
   - Voltage Peak (en, ★★) `e19314-voltage-peak`
   - Making and Breaking Current (en, ★★★ 🖼) `e19309-making-and-breaking-current`
   - Advanced RL Circuit (en, ★★★★ 🖼) `e19343-advanced-rl-circuit`
+  - Self-Induced EMF in RL Circuit (en, ★★★★) `e19308-self-induced-emf-in-rl-circuit`
 - **after**: Find the currents right after a switch closes or opens: the inductor current is kept, the others follow from Kirchhoff’s rules.
   - Voltage Peak (en, ★★) `e19314-voltage-peak`
   - Advanced RL Circuit (en, ★★★★ 🖼) `e19343-advanced-rl-circuit`
@@ -137,6 +178,13 @@ edit `pool.json`). ★ difficulty, 🖼 has an image (not in the export: a place
   - Eine Schubkarre (de, ★★) `torque-12-schubkarre`
   - Eine Seilwinde (de, ★★) `torque-13-seilwinde`
   - Eine festsitzende Radmutter (de, ★★) `torque-02-radmutter`
+  - Eine festsitzende Radmutter (de, ★) `e24600-eine-festsitzende-radmutter`
+  - Eine schwere Tür öffnen (de, ★) `e24599-eine-schwere-tur-offnen`
+  - Länge eines Schraubenschlüssels (de, ★) `e24660-lange-eines-schraubenschlussels`
+  - Bergauf treten (de, ★★) `e24602-bergauf-treten`
+  - Ein Brecheisen (de, ★★) `e25086-ein-brecheisen`
+  - Eine Seilwinde (de, ★★) `e25088-eine-seilwinde`
+  - Ein Kranausleger (de, ★★★) `e25090-ein-kranausleger`
 - **rank**: Rank the torques of forces drawn to scale.
   - (none found)
 - **weight**: Place the weight of a body at its centre of mass.
@@ -144,10 +192,29 @@ edit `pool.json`). ★ difficulty, 🖼 has an image (not in the export: a place
   - Eine Einkaufstasche halten (de, ★★★) `torque-07-einkaufstasche`
   - Einen Hammer balancieren (de, ★★★) `torque-08-hammer-balancieren`
   - Der Kipptest eines Busses (de, ★★★★) `torque-10-kipptest-bus`
+  - Drehbar aufgehängtes Brett (de, ★★) `e24662-drehbar-aufgehangtes-brett`
+  - Zwei Arbeiter tragen einen Balken (de, ★★) `e24665-zwei-arbeiter-tragen-einen-balken`
+  - Ein Brett tragen (de, ★★★) `e24603-ein-brett-tragen`
+  - Eine Leiter an der Wand (de, ★★★★) `e25091-eine-leiter-an-der-wand`
 - **balance**: Apply both conditions of equilibrium, zero net force and zero net torque, including the force at the pivot.
   - Bergauf treten (de, ★★) `torque-04-bergauf-treten`
   - Wippe mit Elternteil (de, ★★) `torque-03-wippe`
   - Ein Turmdrehkran (de, ★★★) `torque-06-turmdrehkran`
+  - Ein Turmdrehkran (de, ★) `e24604-ein-turmdrehkran`
+  - Maximale Last eines Krans (de, ★) `e24658-maximale-last-eines-krans`
+  - Drehbar aufgehängtes Brett (de, ★★) `e24662-drehbar-aufgehangtes-brett`
+  - Eine Einkaufstasche halten (de, ★★) `e24605-eine-einkaufstasche-halten`
+  - Eine Schubkarre (de, ★★) `e25087-eine-schubkarre`
+  - Eine Seilwinde (de, ★★) `e25088-eine-seilwinde`
+  - Waage mit gleich schweren Kugeln (de, ★★) `e24657-waage-mit-gleich-schweren-kugeln`
+  - Wippe mit Elternteil (de, ★★) `e24601-wippe-mit-elternteil`
+  - Zwei Arbeiter tragen einen Balken (de, ★★) `e24665-zwei-arbeiter-tragen-einen-balken`
+  - Ein Brett tragen (de, ★★★) `e24603-ein-brett-tragen`
+  - Ein Kranausleger (de, ★★★) `e25090-ein-kranausleger`
+  - Ein Mobile (de, ★★★) `e25089-ein-mobile`
+  - Ein Sprungbrett (de, ★★★) `e24607-ein-sprungbrett`
+  - Kräfte an einer Zugbrücke (de, ★★★) `e24664-krafte-an-einer-zugbrucke`
+  - Eine Leiter an der Wand (de, ★★★★) `e25091-eine-leiter-an-der-wand`
 - *for the app as a whole:* Ein Brett tragen `torque-05-brett-tragen`; Ein Kranausleger `torque-15-kranausleger`; Ein Mobile `torque-14-mobile`
 
 ## centre-of-mass
@@ -170,11 +237,13 @@ edit `pool.json`). ★ difficulty, 🖼 has an image (not in the export: a place
   - The Hydrogen Molecule Ion (en, ★★★) `coulomb-06-hydrogen-molecule-ion`
   - Two Electrons, One Nucleus (en, ★★★★) `coulomb-08-two-electrons-one-nucleus`
   - Electrostatic force vectors (en, ★★ 🖼) `e22774-electrostatic-force-vectors`
+  - Two Electrons, One Nucleus (en, ★★) `e24511-two-electrons-one-nucleus`
 - **factor**: Predict by what factor the force changes when the charges or their distance change (the inverse square law).
   - Halving Force Between Point Charges (en, ★) `e10732-halving-force-between-point-charges`
   - Reducing Distance Between Point Charges (en, ★) `e10731-reducing-distance-between-point-charges`
   - The Hydrogen Atom (en, ★) `coulomb-01-hydrogen-atom`
   - Percentage Change to Force Between Point Charges (en, ★★) `e10733-percentage-change-to-force-between-point`
+  - Coulomb's Torsion Balance (en, ★★) `e24508-coulombs-torsion-balance`
 - **vector**: Add the forces of several charges as vectors: the net force, its direction, and where it is zero.
   - The Hydrogen Molecule Ion (en, ★★★) `coulomb-06-hydrogen-molecule-ion`
   - Quarks in a Proton (en, ★★★★) `coulomb-09-quarks-in-a-proton`
@@ -182,6 +251,12 @@ edit `pool.json`). ★ difficulty, 🖼 has an image (not in the export: a place
   - Electrostatic force vectors (en, ★★ 🖼) `e22774-electrostatic-force-vectors`
   - Point Charges in Square (en, ★★ 🖼) `e19409-point-charges-in-square`
   - Forces Between Three Point Charges (1D) (en, ★★★ 🖼) `e10729-forces-between-three-point-charges-1d`
+  - Ions in a Crystal (en, ★★) `e24506-ions-in-a-crystal`
+  - The Hydrogen Molecule Ion (en, ★★) `e24509-the-hydrogen-molecule-ion`
+  - Two Electrons, One Nucleus (en, ★★) `e24511-two-electrons-one-nucleus`
+  - Quarks in a Proton (en, ★★★) `e24512-quarks-in-a-proton`
+  - Two Point Charges (en, ★★★) `e10734-two-point-charges`
+  - Forces Between Three Point Charges (2D) (en, ★★ 🖼) `e10735-forces-between-three-point-charges-2d`
 - **field**: Relate field and force with E = F/q: the force on a positive charge along the field, on a negative charge against it.
   - Copper Cube (en, ★) `e17318-copper-cube`
   - Field Between Point Charges (en, ★) `e17317-field-between-point-charges`
@@ -189,6 +264,11 @@ edit `pool.json`). ★ difficulty, 🖼 has an image (not in the export: a place
   - Force on Test Charge (en, ★) `e22846-force-on-test-charge`
   - Accelerated Electrons (en, ★★) `e17335-accelerated-electrons`
   - Millikan's Oil Drop Experiment (en, ★★) `e17316-millikans-oil-drop-experiment`
+  - An Electrostatic Precipitator (en, ★★) `e24517-an-electrostatic-precipitator`
+  - An Inkjet Printer (en, ★★★) `e24514-an-inkjet-printer`
+  - Millikan's Oil Drop (en, ★★★) `e24513-millikans-oil-drop`
+  - Two Capacitors Compared (en, ★★★) `e25059-two-capacitors-compared`
+  - Charged Wire in Uniform Field (en, ★★ 🖼) `e22910-charged-wire-in-uniform-field`
 - *for the app as a whole:* Proton und Alphateilchen im elektrischen Feld `e18849-proton-und-alphateilchen-im-elektrischen`
 
 ## coe
@@ -200,9 +280,26 @@ edit `pool.json`). ★ difficulty, 🖼 has an image (not in the export: a place
   - Stabhochsprung (de, ★★) `energy-conservation-04-stabhochsprung`
   - Durch ein Tal rollen (de, ★★★) `energy-conservation-05-durch-ein-tal`
   - Ein Flipperkasten (de, ★★★) `energy-conservation-09-flipperkasten`
+  - Durch ein Tal rollen (de, ★★) `e24539-durch-ein-tal-rollen`
+  - Ein Flipperkasten (de, ★★) `e24543-ein-flipperkasten`
+  - Ein Springbrunnen (de, ★★) `e24536-ein-springbrunnen`
+  - Energieumwandlungen beschreiben (de, ★★) `e24641-energieumwandlungen-beschreiben`
 - **balance**: Set up the energy balance of two states and solve it with symbols before inserting numbers, e.g. to see how a height or speed scales.
   - Ein Crashtest (de, ★) `energy-conservation-01-crashtest`
   - Ein Springbrunnen (de, ★★) `energy-conservation-02-springbrunnen`
+  - Ein Crashtest (de, ★) `e24535-ein-crashtest`
+  - Flughöhe einer Feuerwerksrakete (de, ★) `e24648-flughohe-einer-feuerwerksrakete`
+  - Durch ein Tal rollen (de, ★★) `e24539-durch-ein-tal-rollen`
+  - Ein Flipperkasten (de, ★★) `e24543-ein-flipperkasten`
+  - Ein Springbrunnen (de, ★★) `e24536-ein-springbrunnen`
+  - Eine Achterbahn (de, ★★) `e24537-eine-achterbahn`
+  - Eine Steinschleuder (de, ★★) `e24542-eine-steinschleuder`
+  - Halbe Aufprallgeschwindigkeit (de, ★★) `e24649-halbe-aufprallgeschwindigkeit`
+  - Skispringen (de, ★★) `e24540-skispringen`
+  - Springende Spiralfeder (de, ★★) `e24650-springende-spiralfeder`
+  - Stabhochsprung (de, ★★) `e24538-stabhochsprung`
+  - Angestossenes Fadenpendel (de, ★★★) `e24651-angestossenes-fadenpendel`
+  - Eine Seilschaukel über dem See (de, ★★★) `e24541-eine-seilschaukel-uber-dem-see`
 - **path**: Explain why lifting work does not depend on the path, and where the work done by friction goes.
   - Skispringen (de, ★★★) `energy-conservation-06-skispringen`
 - **turn**: Tell the turning point of a bungee jump or a spring (v = 0) from its equilibrium position (largest speed).
@@ -226,13 +323,22 @@ edit `pool.json`). ★ difficulty, 🖼 has an image (not in the export: a place
   - Abbremsende Last am Kran (de, ★★) `e24757-abbremsende-last-am-kran`
   - Bolzen einer Armbrust (de, ★★) `e24745-bolzen-einer-armbrust`
   - Turnerin beim Pferdsprung (de, ★★) `e24748-turnerin-beim-pferdsprung`
+  - Eine Kiste auf dem Lastwagen (de, ★★) `e24547-eine-kiste-auf-dem-lastwagen`
+  - Maximale Beschleunigung beim Absprung (de, ★★) `e24749-maximale-beschleunigung-beim-absprung`
+  - Notbremsung (de, ★★) `e24548-notbremsung-1`
 - **centre**: Identify which force provides the net force towards the centre in a circular motion.
   - Senke (de, ★★★) `e18952-senke`
+  - Bob in der Kurve (de, ★★) `e24793-bob-in-der-kurve`
+  - Kurvenfahrt auf trockener Strasse (de, ★★) `e24786-kurvenfahrt-auf-trockener-strasse`
+  - Mindestgeschwindigkeit im Looping (de, ★★) `e24790-mindestgeschwindigkeit-im-looping`
+  - Snowboarderin in Senke und Buckel (de, ★★★) `e24794-snowboarderin-in-senke-und-buckel`
+  - Was ist die Zentripetalkraft? (de, ★★★) `e24783-was-ist-die-zentripetalkraft`
 
 ## interaction
 
 - **equal**: State that the two forces of an interaction are equally large and opposite and act on different bodies, whatever their masses, charges or motion.
   - Copper Cube (en, ★) `e17318-copper-cube`
+  - Kraftgesetz von Professor Siebenschlau (de, ★★★) `e24756-kraftgesetz-von-professor-siebenschlau`
 - **partner**: Identify the partner of each force in a situation, such as mosquito and windscreen, nucleus and electron, or ice dancer and Earth.
   - Gegen eine Wand drücken (de, ★★) `e24755-gegen-eine-wand-drucken`
   - Gewichtheber mit Hantel (de, ★★★) `e24752-gewichtheber-mit-hantel`
@@ -251,11 +357,30 @@ edit `pool.json`). ★ difficulty, 🖼 has an image (not in the export: a place
   - Auf der Rampe geparkt (de, ★★★) `force-systems-09-parkhausrampe`
   - Die Piste hinunter (de, ★★★★) `force-systems-10-skipiste`
   - Acceleration Ramp (en, ★★★ 🖼) `e18575-acceleration-ramp`
+  - Beschleunigung auf schiefer Ebene (de, ★★) `e24696-beschleunigung-auf-schiefer-ebene`
+  - Geneigte Personenwaage (de, ★★) `e24695-geneigte-personenwaage`
+  - Kiste am Hang festhalten (de, ★★) `e24691-kiste-am-hang-festhalten`
+  - Kiste auf einer Rampe (de, ★★) `e24690-kiste-auf-einer-rampe`
+  - Umkehrzeit auf schiefer Ebene (de, ★★) `e24692-umkehrzeit-auf-schiefer-ebene`
+  - Auf der Rampe geparkt (de, ★★★) `e24553-auf-der-rampe-geparkt`
+  - Auto rollt in den See (de, ★★★) `e24697-auto-rollt-in-den-see`
+  - Die Piste hinunter (de, ★★★) `e24554-die-piste-hinunter`
+  - Inlineskaterin am Hang (de, ★★★) `e24723-inlineskaterin-am-hang`
+  - Kiste auf einer Holzrampe (de, ★★★) `e24702-kiste-auf-einer-holzrampe`
+  - Lokomotive an einer Rampe (de, ★★★) `e24699-lokomotive-an-einer-rampe`
+  - Motorrad am Hang: Antriebskraft (de, ★★★) `e24693-motorrad-am-hang-antriebskraft`
+  - Motorrad am Hang: Haftreibung (de, ★★★) `e24694-motorrad-am-hang-haftreibung`
+  - Stahlwürfel auf Stahlplatte (de, ★★★) `e24701-stahlwurfel-auf-stahlplatte`
+  - Zwei Kisten an schiefer Ebene (de, ★★★) `e24698-zwei-kisten-an-schiefer-ebene`
 - **system**: Choose the system so that a wanted force between two bodies, such as a rope force, becomes an external force.
   - Ein Kran hebt einen Container (de, ★★) `force-systems-02-hafenkran`
   - Abschleppen (de, ★★★) `force-systems-05-abschleppen`
   - Einen Schlitten ziehen (de, ★★★★) `force-systems-11-schlitten-ziehen`
   - Lift und Gegengewicht (de, ★★★★) `force-systems-12-lift-gegengewicht`
+  - Ein Güterzug (de, ★★) `e24550-ein-guterzug`
+  - Abschleppen (de, ★★★) `e24549-abschleppen`
+  - Lift und Gegengewicht (de, ★★★) `e24556-lift-und-gegengewicht`
+  - Lokomotive an einer Rampe (de, ★★★) `e24699-lokomotive-an-einer-rampe`
 - **law**: Set up Newton’s second law along each axis, following the strategy: system, forces, axes, components, equations, then solve.
   - Ein Kran hebt einen Container (de, ★★) `force-systems-02-hafenkran`
   - Eine Kiste auf dem Lastwagen (de, ★★) `force-systems-03-kiste-auf-lastwagen`
@@ -263,12 +388,29 @@ edit `pool.json`). ★ difficulty, 🖼 has an image (not in the export: a place
   - Ein Güterzug (de, ★★★) `force-systems-06-gueterzug`
   - Eine Fallschirmspringerin (de, ★★★) `force-systems-07-fallschirmspringerin`
   - Raketenstart (de, ★★★) `force-systems-08-raketenstart`
+  - Ein Güterzug (de, ★★) `e24550-ein-guterzug`
+  - Ein Kran hebt einen Container (de, ★★) `e24546-ein-kran-hebt-einen-container`
+  - Eine Waage im Lift (de, ★★) `e24545-eine-waage-im-lift`
+  - Gezogene Kiste mit Beschleunigung (de, ★★) `e24763-gezogene-kiste-mit-beschleunigung`
+  - Raketenstart (de, ★★) `e24552-raketenstart-2`
+  - Reissende Schnur (de, ★★) `e24750-reissende-schnur`
+  - Abschleppen (de, ★★★) `e24549-abschleppen`
+  - Beschleunigen und Bremsen eines Zuges (de, ★★★) `e24767-beschleunigen-und-bremsen-eines-zuges`
+  - Die Piste hinunter (de, ★★★) `e24554-die-piste-hinunter`
+  - Einen Schlitten ziehen (de, ★★★) `e24555-einen-schlitten-ziehen`
+  - Lift und Gegengewicht (de, ★★★) `e24556-lift-und-gegengewicht`
+  - Motorrad am Hang: Antriebskraft (de, ★★★) `e24693-motorrad-am-hang-antriebskraft`
+  - Motorrad am Hang: Haftreibung (de, ★★★) `e24694-motorrad-am-hang-haftreibung`
+  - Zwei Kisten an schiefer Ebene (de, ★★★) `e24698-zwei-kisten-an-schiefer-ebene`
+  - Zwei verbundene Holzklötze (de, ★★★) `e24764-zwei-verbundene-holzklotze`
 - **spring**: Draw the spring force where the spring is attached, back towards its relaxed length (a stretched spring pulls, a compressed one pushes), find it with F = k Δx and use it in Newton’s second law.
   - Eine Fallschirmspringerin (de, ★★★) `force-systems-07-fallschirmspringerin`
 - **drag**: Draw air resistance against the velocity (not the acceleration), knowing that it grows with speed, and use it in Newton’s second law: at terminal velocity it balances the weight.
   - Eine Fallschirmspringerin (de, ★★★) `force-systems-07-fallschirmspringerin`
   - Luftwiderstand (de, ★★★) `e18963-luftwiderstand`
   - Die Piste hinunter (de, ★★★★) `force-systems-10-skipiste`
+  - Eine Fallschirmspringerin (de, ★★) `e24551-eine-fallschirmspringerin`
+  - Inlineskaterin am Hang (de, ★★★) `e24723-inlineskaterin-am-hang`
 - **error**: Find the wrong step in a student’s free-body diagram and equations.
   - (none found)
 - *for the app as a whole:* Senke `e18952-senke`
@@ -288,9 +430,14 @@ edit `pool.json`). ★ difficulty, 🖼 has an image (not in the export: a place
   - The Magnetic Brake of a Drop Tower (en, ★★★) `induction-match-02-magnetic-brake`
   - Faraday's Law (en, ★★★★) `e19274-faradays-law`
   - Faraday's Law with Graphs (en, ★★ 🖼) `e19310-faradays-law-with-graphs`
+  - A Guitar Pickup (en, ★★) `e24568-a-guitar-pickup`
+  - A Magnet Falls through a Coil (en, ★★★) `e24566-a-magnet-falls-through-a-coil`
 - **change**: Decide when a voltage is induced in a loop moving through a field: only while the flux through it changes.
   - Falling Ring (en, ★ 🖼) `e19304-falling-ring`
   - Rectangular Coil (en, ★★ 🖼) `e19316-rectangular-coil`
+  - A Bicycle Dynamo (en, ★★) `e24570-a-bicycle-dynamo`
+  - An Induction Hob (en, ★★) `e24569-an-induction-hob`
+  - A Magnet Falls through a Coil (en, ★★★) `e24566-a-magnet-falls-through-a-coil`
 - **lenz**: Find the direction of an induced current with Lenz's rule.
   - A Bicycle Dynamo (en, ★★) `induction-match-05-bicycle-dynamo`
   - Two Coils (en, ★★) `e19296-two-coils`
@@ -344,7 +491,7 @@ edit `pool.json`). ★ difficulty, 🖼 has an image (not in the export: a place
 ## oscillations
 
 - **circle**: Describe a simple harmonic motion as the projection of a uniform circular motion: the radius is the amplitude, the angular velocity is ω, one turn is one period.
-  - (none found)
+  - The Tide in a Harbour (en, ★★★) `e24590-the-tide-in-a-harbour`
 - **harmonic**: Decide whether a system oscillates harmonically by checking that its acceleration is proportional and opposite to its displacement, and read off ω.
   - A Tuning Fork (en, ★★) `oscillations-01-tuning-fork`
   - A Baby Bouncer (en, ★★★) `oscillations-05-baby-bouncer`
@@ -352,6 +499,9 @@ edit `pool.json`). ★ difficulty, 🖼 has an image (not in the export: a place
   - A Swaying Skyscraper (en, ★★★) `oscillations-06-swaying-skyscraper`
   - Amplitude, Period and Phase from a Graph (en, ★★★) `oscillations-09-amplitude-period-phase`
   - An Earthquake (en, ★★★) `oscillations-04-earthquake`
+  - An Earthquake (en, ★★) `e24587-an-earthquake`
+  - A Bouncing Ball (en, ★★★) `e24585-a-bouncing-ball`
+  - Oscillating Test Tube (en, ★★★★) `e19867-oscillating-test-tube`
 - **extremes**: Locate the largest speed Aω (at the equilibrium) and the largest acceleration Aω² (at the turning points) in the cycle.
   - Increasing Amplitude (en, ★) `e19786-increasing-amplitude`
   - Maximum Velocity and Acceleration (en, ★) `e19785-maximum-velocity-and-acceleration`
@@ -359,6 +509,13 @@ edit `pool.json`). ★ difficulty, 🖼 has an image (not in the export: a place
   - Schwingungen (wahr oder falsch?) (de, ★) `e18854-schwingungen-wahr-oder-falsch`
   - A Tuning Fork (en, ★★) `oscillations-01-tuning-fork`
   - Oscillating Rod (en, ★★) `e19879-oscillating-rod`
+  - A Baby Bouncer (en, ★★) `e24588-a-baby-bouncer`
+  - A Swaying Skyscraper (en, ★★) `e24589-a-swaying-skyscraper`
+  - A Tuning Fork (en, ★★) `e24584-a-tuning-fork`
+  - An Earthquake (en, ★★) `e24587-an-earthquake`
+  - Atoms in a Crystal (en, ★★) `e24591-atoms-in-a-crystal`
+  - Salt on a Loudspeaker (en, ★★★) `e24586-salt-on-a-loudspeaker`
+  - The Tide in a Harbour (en, ★★★) `e24590-the-tide-in-a-harbour`
 - **lc**: Recognise the LC circuit as the same equation with other quantities: the charge for the displacement, the current for the velocity, L for the mass and 1/C for the spring constant.
   - Resonance for Mechanical Oscillator (en, ★★) `e19904-resonance-for-mechanical-oscillator`
 - *for the app as a whole:* Speed Bump `e19791-speed-bump`; Characteristic Equation `e19788-characteristic-equation`
@@ -386,13 +543,19 @@ edit `pool.json`). ★ difficulty, 🖼 has an image (not in the export: a place
   - The Stadium Wave (en, ★★) `wave-propagation-01-stadium-wave`
   - A Stop-and-Go Wave (en, ★★★★) `wave-propagation-06-stop-and-go-wave`
   - Wave Reflection (en, ★★ 🖼) `e20057-wave-reflection`
+  - Sawtooth Wave (en, ★★) `e19944-sawtooth-wave`
+  - The Stadium Wave (en, ★★) `e24609-the-stadium-wave`
 - **reflect**: Predict the crest reflected at a fixed end (upside down) and at a free end (upright).
   - A Rope on a Wall or a Ring (en, ★★) `wave-propagation-02-rope-wall-ring`
   - A Wave at the Harbour Wall (en, ★★★) `wave-propagation-04-harbour-wall`
   - Finding a Break in a Cable (en, ★★★) `wave-propagation-03-cable-fault`
   - Wave Reflection (en, ★★ 🖼) `e20057-wave-reflection`
+  - A Rope on a Wall or a Ring (en, ★★) `e24610-a-rope-on-a-wall-or-a-ring`
+  - A Wave at the Harbour Wall (en, ★★★) `e24612-a-wave-at-the-harbour-wall`
+  - Finding a Break in a Cable (en, ★★★) `e24611-finding-a-break-in-a-cable`
 - **superpose**: Add the displacements of two overlapping crests point by point.
   - Triangle Superposition (en, ★ 🖼) `e20055-triangle-superposition`
+  - Two Pulses on a Slinky (en, ★★★) `e24613-two-pulses-on-a-slinky`
 - **standing**: Locate the nodes and antinodes of a standing wave on a rope: nodes λ/2 apart, a node at a fixed end, an antinode at a free end.
   - Organ pipe (en, ★) `e23218-organ-pipe`
   - Guitar String (en, ★★) `e20014-guitar-string-1`
@@ -415,10 +578,18 @@ edit `pool.json`). ★ difficulty, 🖼 has an image (not in the export: a place
   - Sodium-Vapour Lamp (en, ★) `e20383-sodium-vapour-lamp`
   - Track spacing for a compact disc (CD) (en, ★) `e23400-track-spacing-for-a-compact-disc-cd`
   - Wavelength of a Helium-Neon laser (en, ★) `e23399-wavelength-of-a-helium-neon-laser`
+  - Spectral Lines (en, ★) `e20398-spectral-lines`
+  - Microwave Diffraction (en, ★★) `e20381-microwave-diffraction`
+  - Electrons at a Double Slit (en, ★★★) `e25075-electrons-at-a-double-slit`
+  - Precious Opal (en, ★ 🖼) `e20400-precious-opal`
+  - Beugung von Mikrowellen (de, ★★ 🖼) `e18859-beugung-von-mikrowellen`
+  - Double-Slit Interference (de, ★★ 🖼) `e20420-double-slit-interference`
+  - Molecular waves (en, ★★ 🖼) `e23448-molecular-waves`
 - **changes**: Predict how the pattern changes when the slit width, the slit spacing or the wavelength changes.
   - Beugung von weissem Licht (de, ★) `e18961-beugung-von-weissem-licht`
   - Elektronenbeugung (de, ★★) `e18950-elektronenbeugung-1`
   - Interference Patterns (en, ★ 🖼) `e20423-interference-patterns`
+  - Electrons at a Double Slit (en, ★★★) `e25075-electrons-at-a-double-slit`
 - **resolve**: Relate the resolving power to the aperture and the wavelength: θₘᵢₙ = 1.22·λ/D.
   - James Webb Telescope (en, ★) `e23403-james-webb-telescope-1`
   - Microperforation (en, ★) `e23402-microperforation`
@@ -438,6 +609,7 @@ edit `pool.json`). ★ difficulty, 🖼 has an image (not in the export: a place
 - **dipole**: Determine the force and the torque on a dipole in a uniform field.
   - A Jet of Water and a Charged Rod (en, ★★★) `electric-field-07-bent-jet-of-water`
   - Force and Torque on Dipole (en, ★★ 🖼) `e22905-force-and-torque-on-dipole`
+  - Dipole in Field of Charged Wire (en, ★★★★) `e22980-dipole-in-field-of-charged-wire`
 - **equi**: Sketch equipotential lines at right angles to the field lines.
   - Equipotentials in field of electric dipole (en, ★) `e23028-equipotentials-in-field-of-electric-dipo`
   - Equipotentials of Two Positive Point Charges (en, ★) `e17488-equipotentials-of-two-positive-point-cha`
@@ -458,6 +630,9 @@ edit `pool.json`). ★ difficulty, 🖼 has an image (not in the export: a place
   - Voltage in uniform field (en, ★) `e23025-voltage-in-uniform-field`
   - Thundercloud (en, ★★) `e17530-thundercloud`
   - Protons in Uniform Field (en, ★★★) `e17520-protons-in-uniform-field`
+  - Under a Thundercloud (en, ★) `e24515-under-a-thundercloud`
+  - The Membrane of a Nerve Cell (en, ★★) `e24525-the-membrane-of-a-nerve-cell`
+  - Millikan's Oil Drop (en, ★★★) `e24513-millikans-oil-drop`
 - **point**: Predict how the potential of a point charge depends on its sign and on the distance.
   - Voltage in Field of Sphere (en, ★) `e23052-voltage-in-field-of-sphere`
   - Voltage in field of charged sphere (en, ★) `e23027-voltage-in-field-of-charged-sphere`
@@ -472,6 +647,8 @@ edit `pool.json`). ★ difficulty, 🖼 has an image (not in the export: a place
   - The Membrane of a Nerve Cell (en, ★★★) `electric-potential-06-nerve-cell-membrane`
   - Rutherford's Experiment: Closest Approach (en, ★★★★) `electric-potential-08-rutherford-closest-approach`
   - Potential in Electric Field (en, ★ 🖼) `e23048-potential-in-electric-field`
+  - The Membrane of a Nerve Cell (en, ★★) `e24525-the-membrane-of-a-nerve-cell`
+  - Rutherford's Experiment: Closest Approach (en, ★★★) `e24527-rutherfords-experiment-closest-approach`
 
 ## magnetic-forces
 
@@ -486,6 +663,7 @@ edit `pool.json`). ★ difficulty, 🖼 has an image (not in the export: a place
   - Wire in Magnetic Field (en, ★) `e18567-wire-in-magnetic-field`
   - Floating Wire (en, ★★) `e18571-floating-wire`
   - Force Between Parallel Wires (en, ★★) `e19199-force-between-parallel-wires`
+  - Magnetic Force on Current (en, ★★★) `e18573-magnetic-force-on-current`
 - **charge**: Find the direction of the force on a moving charge, reversed for a negative charge.
   - Ions in Salt Solution (en, ★) `e18715-ions-in-salt-solution`
   - Kraftrichtungen (de, ★) `e19016-kraftrichtungen-2`
@@ -493,6 +671,9 @@ edit `pool.json`). ★ difficulty, 🖼 has an image (not in the export: a place
   - Electrons in Equilibrium (en, ★★) `e18591-electrons-in-equilibrium`
   - The Aurora (en, ★★) `magnetic-forces-01-aurora`
   - A Mass Spectrometer (en, ★★★) `magnetic-forces-02-mass-spectrometer`
+  - Cosmic Rays and the Earth's Field (en, ★★★) `e24577-cosmic-rays-and-the-earths-field`
+  - Two Moving Charges (en, ★★★★) `e25071-two-moving-charges`
+  - Direction of Magnetic Force on Particles (en, ★ 🖼) `e18713-direction-of-magnetic-force-on-particles`
 - **coil**: Explain the torque on a coil in a magnetic field and when it is largest, as in the electric motor, the loudspeaker and the moving-coil meter.
   - DC Motor (en, ★) `e18570-dc-motor`
   - Electric motor (en, ★) `e23386-electric-motor-1`
@@ -501,6 +682,8 @@ edit `pool.json`). ★ difficulty, 🖼 has an image (not in the export: a place
   - Square Coil in Magnetic Field (en, ★ 🖼) `e18576-square-coil-in-magnetic-field`
 - **pair**: Predict whether two parallel currents attract or repel each other.
   - Helmholtz coil force (en, ★★) `e23736-helmholtz-coil-force`
+  - A Short Circuit between Two Cables (en, ★★) `e24576-a-short-circuit-between-two-cables`
+  - Two Moving Charges (en, ★★★★) `e25071-two-moving-charges`
 - **error**: Find the wrong step in a student’s hand rule: the wrong hand, or the sign of the charge ignored.
   - (none found)
 - *for the app as a whole:* Loudspeaker `e23384-loudspeaker`
@@ -514,9 +697,25 @@ edit `pool.json`). ★ difficulty, 🖼 has an image (not in the export: a place
   - Bremsspektrum (de, ★) `e22043-bremsspektrum`
   - Cathode Ray Tube (en, ★) `e17514-cathode-ray-tube`
   - Crossed Fields (en, ★) `e23437-crossed-fields`
+  - Alpha Particle (en, ★) `e17476-alpha-particle`
+  - Electrons Through 150 Volts (en, ★) `e25072-electrons-through-150-volts`
+  - Proton accelerator (en, ★) `e17474-proton-accelerator`
+  - X-Ray Tube (en, ★) `e17515-x-ray-tube`
+  - An Electron Gun (en, ★★) `e24521-an-electron-gun`
+  - An X-Ray Tube (en, ★★) `e24520-an-x-ray-tube`
+  - Electron Repelled from Sphere (en, ★★) `e17531-electron-repelled-from-sphere`
+  - Speed Increase (en, ★★) `e17487-speed-increase`
+  - Voltage Increase (en, ★★) `e17475-voltage-increase`
+  - An Electron Microscope (en, ★★★) `e24526-an-electron-microscope`
+  - Proton Therapy (en, ★★★) `e24523-proton-therapy`
+  - The Ion Thruster of Dawn (en, ★★★) `e24522-the-ion-thruster-of-dawn`
+  - Dawn (en, ★ 🖼) `e17510-dawn`
+  - SESAME (de, ★★★★ 🖼) `e19007-sesame-2`
 - **work**: Explain why a magnetic field changes the direction of a charge but not its speed: the magnetic force does no work, unlike the electric force in a capacitor.
   - The Fine-Beam Tube (en, ★★★) `e24574-the-fine-beam-tube`
   - SESAME (de, ★★★★ 🖼) `e18945-sesame`
+  - SESAME (de, ★★★★ 🖼) `e19007-sesame-2`
+  - SESAME (de, ★★★★ 🖼) `e19027-sesame-3`
 - **radius**: Relate the radius r = m·v/(q·B) of the circular path to mass, speed, charge and field by ratios, and explain why the period does not depend on the speed.
   - Alpha Particle (en, ★) `e18708-alpha-particle-1`
   - Compact Muon Solenoid (CMS) (en, ★) `e23451-compact-muon-solenoid-cms`
@@ -524,6 +723,12 @@ edit `pool.json`). ★ difficulty, 🖼 has an image (not in the export: a place
   - Cyclotron radius (en, ★) `e23410-cyclotron-radius`
   - Particle Accelerator (en, ★) `e18709-particle-accelerator`
   - Proton Cyclotron (en, ★) `e18712-proton-cyclotron`
+  - A Mass Spectrometer (en, ★★) `e24572-a-mass-spectrometer`
+  - A Particle Detector (en, ★★) `e24575-a-particle-detector`
+  - Mass Spectrometer (en, ★★) `e18707-mass-spectrometer`
+  - A Cyclotron (en, ★★★) `e24573-a-cyclotron`
+  - Radius and Period of an Alpha Particle (en, ★★★) `e25070-radius-and-period-of-an-alpha-particle`
+  - TV Set (en, ★★★) `e18711-tv-set`
 - **crossed**: Find the speed that passes crossed electric and magnetic fields undeflected, and explain how the Hall voltage builds up.
   - Bismuth (en, ★) `e23432-bismuth-1`
   - Crossed Fields (en, ★) `e23437-crossed-fields`
@@ -531,6 +736,7 @@ edit `pool.json`). ★ difficulty, 🖼 has an image (not in the export: a place
   - Velocity Selector (en, ★) `e18589-velocity-selector`
   - Drift Speed (en, ★★) `e18727-drift-speed`
   - Electrons in Crossed Fields (en, ★★) `e22072-electrons-in-crossed-fields`
+  - Hall Coefficient (en, ★★) `e18728-hall-coefficient`
 - *for the app as a whole:* Lead ions `e23753-lead-ions`; Lead ions `e23754-lead-ions-1`
 
 ## em-waves
@@ -542,6 +748,7 @@ edit `pool.json`). ★ difficulty, 🖼 has an image (not in the export: a place
   - Magnetic Field (en, ★) `e23389-magnetic-field`
   - Radio Transmitter (en, ★) `e20341-radio-transmitter`
   - Field Vectors in Electromagnetic Waves (en, ★★) `e23435-field-vectors-in-electromagnetic-waves`
+  - Poynting Vector (en, ★★★) `e20388-poynting-vector`
 - **speed**: Use the speed c in vacuum and c/n in a medium, where the frequency stays the same and the wavelength shrinks to λ₀/n.
   - Light in Water (en, ★) `e20339-light-in-water`
   - Liquid (en, ★) `e20395-liquid`
@@ -556,6 +763,7 @@ edit `pool.json`). ★ difficulty, 🖼 has an image (not in the export: a place
   - A Standing Microwave (en, ★★★) `em-waves-14-standing-microwave`
   - How Strong are the Fields? (en, ★★★) `em-waves-12-fields-of-sunlight-and-radio`
   - The FM Band (en, ★★★) `em-waves-02-fm-band`
+  - From the Energy to the Wavelength (en, ★★) `e25081-from-the-energy-to-the-wavelength`
 
 ## photons
 
@@ -568,6 +776,11 @@ edit `pool.json`). ★ difficulty, 🖼 has an image (not in the export: a place
   - Ionising hydrogen (en, ★) `e23445-ionising-hydrogen`
   - Photonenenergie (de, ★) `e21442-photonenenergie`
   - Planck's constant (en, ★) `e20554-plancks-constant`
+  - A Night-Vision Device (en, ★★) `e24595-a-night-vision-device`
+  - Gegenspannung (de, ★★) `e21445-gegenspannung`
+  - Kupferplatte (de, ★★) `e21443-kupferplatte`
+  - Maximum Kinetic Energy (en, ★★) `e20503-maximum-kinetic-energy`
+  - Stopping Voltage (en, ★★) `e20550-stopping-voltage`
 - **threshold**: Determine the threshold frequency, the cut-off wavelength and the work function, for instance from a V_s(f) graph with slope h/e.
   - Siliziumplatte (de, ★) `e21444-siliziumplatte`
   - Threshold frequency and cut-off wavelength (en, ★) `e23444-threshold-frequency-and-cut-off-waveleng`
@@ -575,6 +788,7 @@ edit `pool.json`). ★ difficulty, 🖼 has an image (not in the export: a place
   - Photozelle (de, ★★) `e21446-photozelle`
   - Work Function (en, ★★) `e20549-work-function`
   - A Night-Vision Device (en, ★★★) `photons-04-night-vision`
+  - A Night-Vision Device (en, ★★) `e24595-a-night-vision-device`
 - **rate**: Tell the photon energy from the number of photons per second when the brightness or the frequency of the light changes, also in the characteristic of a photocell.
   - Microwave (en, ★) `e20553-microwave`
   - Mikrowellen (de, ★) `e21447-mikrowellen-1`
@@ -582,6 +796,10 @@ edit `pool.json`). ★ difficulty, 🖼 has an image (not in the export: a place
   - A Laser Pointer in the Eye (en, ★★) `photons-01-laser-pointer`
   - Photonen von der Sonne (de, ★★) `e21448-photonen-von-der-sonne`
   - Photons from a Remote Control (en, ★★) `photons-09-infrared-remote-control`
+  - A Laser Pointer in the Eye (en, ★★) `e24592-a-laser-pointer-in-the-eye`
+  - Photons from a Remote Control (en, ★★) `e25082-photons-from-a-remote-control`
+  - Human Eye (en, ★★★) `e20555-human-eye`
+  - Menschliches Auge (de, ★★★) `e21450-menschliches-auge`
 - *for the app as a whole:* Plancksche Konstante `e21441-plancksche-konstante`; Sonnenbrand `e21451-sonnenbrand`
 
 ## matter-waves
@@ -593,6 +811,26 @@ edit `pool.json`). ★ difficulty, 🖼 has an image (not in the export: a place
   - Galoppierendes Pferd (de, ★) `e21478-galoppierendes-pferd`
   - Galopping Horse (en, ★) `e20569-galopping-horse`
   - de Broglie Wavelength (en, ★) `e20570-de-broglie-wavelength`
+  - Electrons Through 150 Volts (en, ★) `e25072-electrons-through-150-volts`
+  - Batterie (de, ★★) `e21479-batterie`
+  - Battery Voltage (en, ★★) `e20574-battery-voltage`
+  - Cold Neutrons (en, ★★) `e20568-cold-neutrons`
+  - Davisson and Germer, 1927 (en, ★★) `e24579-davisson-and-germer-1927`
+  - Electron Diffraction (en, ★★) `e20567-electron-diffraction`
+  - Elektronenbeugung (de, ★★) `e21481-elektronenbeugung-2`
+  - Human Body (en, ★★) `e20573-human-body`
+  - Kalte Neutronen (de, ★★) `e21482-kalte-neutronen`
+  - Menschlicher Körper (de, ★★) `e21484-menschlicher-korper-1`
+  - Neutrons Look into a Crystal (en, ★★) `e24581-neutrons-look-into-a-crystal`
+  - Radon 220 (en, ★★) `e20566-radon-220`
+  - Radon 220 (de, ★★) `e21480-radon-220-1`
+  - The Electron Microscope (en, ★★) `e24580-the-electron-microscope`
+  - Ultracold Sodium Atoms (en, ★★) `e20572-ultracold-sodium-atoms`
+  - Ultrakalte Natriumatome (de, ★★) `e21483-ultrakalte-natriumatome`
+  - Electrons at a Double Slit (en, ★★★) `e25075-electrons-at-a-double-slit`
+  - Human Body (en, ★★★) `e21653-human-body-1`
+  - Electrons Diffracted by Graphite (en, ★★★★) `e25074-electrons-diffracted-by-graphite`
+  - Molecular waves (en, ★★ 🖼) `e23448-molecular-waves`
 - **box**: Sketch the standing waves of a particle in a box, and explain why its energies are quantised, with E_n ∝ n² and ∝ 1/L².
   - Electron in a box (en, ★) `e23595-electron-in-a-box`
   - Ball in Box (de, ★★) `e21554-ball-in-box`
@@ -606,4 +844,10 @@ edit `pool.json`). ★ difficulty, 🖼 has an image (not in the export: a place
   - Varianz (de, ★) `e21563-varianz`
   - An Electron and a Grain of Dust (en, ★★) `matter-waves-11-electron-and-grain-of-dust`
   - Average Radius for 2s (en, ★★) `e20637-average-radius-for-2s`
+  - Expectation value and uncertainty (en, ★★★) `e23596-expectation-value-and-uncertainty`
+  - Nichtstationärer Zustand (de, ★★★) `e21557-nichtstationarer-zustand`
+  - Non-Stationary State (en, ★★★) `e20604-non-stationary-state`
+  - Elektron im Grundzustand (de, ★★★★) `e21642-elektron-im-grundzustand`
+  - Ortsoperator (de, ★★★★) `e21560-ortsoperator`
+  - Position Operator (en, ★★★★) `e20598-position-operator`
 - *for the app as a whole:* de Broglie-Wellenlänge `e21477-de-broglie-wellenlange`
