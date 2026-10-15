@@ -12,7 +12,10 @@
        /crosswords/ set a session cookie), no analytics, nothing loaded from other servers
        (KaTeX is served with the apps); nginx access logs (IP, time, URL, status, size, referrer,
        user agent), rotated daily and kept 14 days (/etc/logrotate.d/nginx on the server);
-       localStorage keys tp-lang, tp-recent (lang.js), tp-hub-order (hub) and <app>-* in the apps. Update it when any of these change. -->
+       localStorage keys tp-lang, tp-recent (lang.js), tp-hub-order (hub) and <app>-* in the apps;
+       teacher accounts in hub-data/teachers.json (user name, identifier, names, school, password
+       hash, created, last visit "seen" at most hourly, "sets_saved"), shown in the superuser's
+       Statistics tab (hub-admin/hubadmin.py), session cookie 30 days. Update it when any of these change. -->
   <style>
     :root {
       --bg: #f6f5f1;
@@ -104,7 +107,7 @@
   <main class="wrap">
     <article data-lang="de" lang="de">
       <h1>Datenschutz</h1>
-      <p class="date">Stand: 5. Oktober 2026</p>
+      <p class="date">Stand: 15. Oktober 2026</p>
 
       <h2>Verantwortlich</h2>
       <p>Samuel Byland, MNG Rämibühl, Zürich<br>Kontakt: <a href="mailto:samuel.byland@mng.ch">samuel.byland@mng.ch</a></p>
@@ -126,16 +129,27 @@
       <h2>Daten in deinem Browser</h2>
       <p>Damit du beim nächsten Besuch weitermachen kannst, speichern die Apps einige Angaben im lokalen Speicher deines Browsers (localStorage): die gewählte Sprache, den Modus, das gewählte Thema und wie weit du in jedem Thema gekommen bist, die Zahl der gelösten Aufgaben, das Resultat deines letzten Checks (welche Lernziele du beherrschst; die Startseite zeigt es auf den Karten), welche Aufgabentypen dir schwerfielen (damit diese im Übungsmodus häufiger drankommen), wann du welche App zuletzt geöffnet hast (für die Reihenfolge «Zuletzt verwendet» auf der Startseite) und bei «Kraftkonzepte», hinter welchen deiner falschen Antworten welche Fehlvorstellung steckte und welche Aufgabentypen zuletzt kamen. Diese Angaben bleiben auf deinem Gerät und werden nicht an den Server übertragen. Du kannst sie jederzeit löschen, indem du in den Einstellungen deines Browsers die Websitedaten von learningphysics.ch löschst.</p>
 
+      <h2>Für Lehrpersonen mit Konto</h2>
+      <p>Lehrpersonen, die mit einem Konto Sets oder andere Inhalte verwalten, melden sich auf den Verwaltungsseiten an. Dafür werden auf dem Server gespeichert:</p>
+      <ul>
+        <li>Benutzername, Kürzel (drei Buchstaben), Vor- und Nachname und Schule,</li>
+        <li>das Passwort, nur als nicht umkehrbarer Hash (das Passwort selbst wird nicht gespeichert),</li>
+        <li>wann das Konto eröffnet wurde,</li>
+        <li>wann du zuletzt angemeldet aktiv warst (höchstens einmal pro Stunde festgehalten) und wann du deine Sets zuletzt geändert hast,</li>
+        <li>deine Sets und, falls du welche schreibst, deine Rückmeldungen zu Aufgaben.</li>
+      </ul>
+      <p>Die Anmeldung setzt ein Sitzungscookie, das nach 30 Tagen abläuft oder beim Abmelden gelöscht wird. Die Angaben dienen dem Betrieb der Konten und einer Übersicht für den Verantwortlichen (oben genannt), wie die Plattform genutzt wird: wie viele Lehrpersonen aktiv sind und wie viele Sets und Arbeitsblätter es gibt. Nur er sieht diese Übersicht; andere Lehrpersonen sehen deine Angaben nicht, und sie werden nicht weitergegeben. Deine Sets sind unter ihrer Adresse (learningphysics.ch/<i>kürzel</i>/<i>name</i>) öffentlich, enthalten aber keine Personendaten ausser deinem Kürzel. Wird dein Konto gelöscht, werden diese Angaben und deine Sets gelöscht.</p>
+
       <h2>Links</h2>
       <p>Für Websites, auf die verlinkt wird (zum Beispiel mng.ch), gelten deren eigene Datenschutzbestimmungen.</p>
 
       <h2>Deine Rechte</h2>
-      <p>Nach dem Schweizer Datenschutzgesetz (DSG) kannst du Auskunft darüber verlangen, welche Personendaten über dich bearbeitet werden, und ihre Berichtigung oder Löschung verlangen. Da die Website ausser den Server-Logdateien keine Personendaten speichert, kann eine Auskunft nur diese betreffen. Wende dich dafür an die oben genannte Kontaktadresse.</p>
+      <p>Nach dem Schweizer Datenschutzgesetz (DSG) kannst du Auskunft darüber verlangen, welche Personendaten über dich bearbeitet werden, und ihre Berichtigung oder Löschung verlangen. Da die Website ausser den Server-Logdateien und den Konten der Lehrpersonen keine Personendaten speichert, kann eine Auskunft nur diese betreffen. Wende dich dafür an die oben genannte Kontaktadresse.</p>
     </article>
 
     <article data-lang="en" lang="en" hidden>
       <h1>Privacy</h1>
-      <p class="date">Last updated: 5 October 2026</p>
+      <p class="date">Last updated: 15 October 2026</p>
 
       <h2>Responsible</h2>
       <p>Samuel Byland, MNG Rämibühl, Zurich<br>Contact: <a href="mailto:samuel.byland@mng.ch">samuel.byland@mng.ch</a></p>
@@ -157,11 +171,22 @@
       <h2>Data in your browser</h2>
       <p>So that you can carry on where you left off, the apps keep a few settings in your browser's local storage (localStorage): the language, mode and topic you chose, how far you have got in each topic, how many exercises you solved, the result of your last check (which learning objectives you master; the start page shows it on the cards), which exercise types you found hard (so that those come up more often in practice), when you last opened each app (for the order “Recently used” on the start page) and, in Force Concepts, which misconception was behind which of your wrong answers and which exercise types came up last. This stays on your device and is never sent to the server. You can delete it at any time by clearing the site data of learningphysics.ch in your browser's settings.</p>
 
+      <h2>For teachers with an account</h2>
+      <p>Teachers who manage sets or other content with an account log in to the admin pages. For this, the server stores:</p>
+      <ul>
+        <li>your user name, identifier (three letters), first and last name and school,</li>
+        <li>your password, only as an irreversible hash (the password itself is never stored),</li>
+        <li>when your account was created,</li>
+        <li>when you were last active while logged in (recorded at most once an hour) and when you last changed your sets,</li>
+        <li>your sets and, if you write any, your feedback on exercises.</li>
+      </ul>
+      <p>Logging in sets a session cookie that expires after 30 days or when you log out. This data serves to run the accounts and to give the person responsible (named above) an overview of how the platform is used: how many teachers are active and how many sets and exercise sheets there are. Only he sees this overview; other teachers do not see your data, and it is not passed on to anyone. Your sets are public at their address (learningphysics.ch/<i>identifier</i>/<i>name</i>) but contain no personal data apart from your identifier. When your account is deleted, this data and your sets are deleted with it.</p>
+
       <h2>Links</h2>
       <p>Websites linked from here (for example mng.ch) have their own privacy policies.</p>
 
       <h2>Your rights</h2>
-      <p>Under the Swiss Federal Act on Data Protection (FADP), you can ask which personal data about you is processed, and ask for it to be corrected or deleted. As the website stores no personal data apart from the server logs, such a request can only concern those. Please use the contact address above.</p>
+      <p>Under the Swiss Federal Act on Data Protection (FADP), you can ask which personal data about you is processed, and ask for it to be corrected or deleted. As the website stores no personal data apart from the server logs and the teachers' accounts, such a request can only concern those. Please use the contact address above.</p>
     </article>
   </main>
 
