@@ -1,7 +1,11 @@
 # Exercise sheets
 
 In the admin panel's **Sheets** tab (logged in), the teacher makes exercise sheets from their TeXercises
-exercises. A sheet is independent of the sets: a title, a language (English or German), modules (the
+exercises. The tab begins, folded, with the **topics covered by the exercise pool** (`pool.json`, `coverage` in
+`sheets.py`): per module (the hub's apps, in their order) its exercises, how many of them are there (in
+the uploaded export or the drafts), and per learning objective the exercises that practise it; an
+objective without any shows a red 0, and a module's exercises tied to none of its objectives are counted
+as the module as a whole. A sheet is independent of the sets: a title, a language (English or German), modules (the
 hub's apps) with the learning objectives it practises (all of a module's by default), and its exercises
 in order, kept in `hub-data/exercise-sheets.json` (not served).
 
@@ -62,6 +66,10 @@ service and open to every teacher account (logged in; teachingphysics.ch/texerci
 - **Collections**: each collection's exercises in order, rendered as in the preview (text, solution,
   short solution; the TikZ figures drawn as for the sheets), solutions shown or hidden. **All
   exercises**: the list, searchable by title, key or id.
+- **Topics**: an exercise's TeXercises subbranches (`subbranches` in exercise.json, any number). The
+  topics of the upload, with how many exercises each, filter the list of all exercises (together with
+  the search), the collections (those with exercises on the topic, and how many) and a collection's
+  exercises; **All** shows everything again, **No topic** the exercises without one.
 - **Difficulty** (the superuser): an exercise's standard difficulty (`default_difficulty`, 1 to 6). The
   change is kept beside the upload; **Download** gives the whole bundle with the changes, or only the
   changed exercises (no collections): imported into TeXercises, an exercise with an id is updated in

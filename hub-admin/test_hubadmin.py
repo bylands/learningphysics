@@ -13,7 +13,9 @@ everything escaped, and every draft of this repository), and the service: a shee
 shared, duplicated and deleted, everything only when logged in except a shared sheet's online
 version, which shows no solutions; the figures (the LaTeX of an exercise's TikZ pictures, their
 hash and cache) and the gallery images (uploaded, as a .zip, fetched from TeXercises, served only
-to the panel and a shared sheet, never outside their folder), and both in the preview's HTML.
+to the panel and a shared sheet, never outside their folder), and both in the preview's HTML. The
+topics the pool covers, a review bundle's topics (subbranches), and the exercises' review for the hub
+page (the superuser alone reads and uploads it, the report checked and cleaned).
 """
 import io
 import zipfile
@@ -258,6 +260,23 @@ class Sheets(unittest.TestCase):
         self.assertEqual(S.targets([{"id": "coulomb", "objectives": ["field", "nope"]}, {"id": "nope", "objectives": []}], self.POOL), [("coulomb", "field")])
         self.assertEqual(S.candidates(("coulomb", "vector"), self.POOL, self.have("v1")), ["v2", "f2"])
         self.assertEqual(S.covers("f2", S.targets(self.mods(), self.POOL), self.POOL), [("coulomb", "factor"), ("coulomb", "vector")])
+
+    def test_coverage(self):
+        # the topics of the pool, per module in the hub's order (then the pool's other apps), objectives
+        # without exercises with 0, those of the pool that the hub does not name after the others
+        apps = [{"id": "photons", "name": "Photoelectric Effect", "de": "Photoeffekt", "objectives": [{"id": "wave", "en": "Wave model", "de": "Wellenmodell"}]},
+                {"id": "torque", "name": "Torque", "objectives": [{"id": "arm", "en": "Lever arm", "de": "Hebelarm"}]},
+                {"id": "coulomb", "name": "Point Charges", "objectives": [{"id": "vector", "en": "Vector sum", "de": "Vektorsumme"}]}]
+        got = S.coverage(self.POOL, apps, self.have("f1", "p3"))
+        self.assertEqual([m["id"] for m in got], ["photons", "torque", "coulomb"])
+        photons, torque, coulomb = got
+        self.assertEqual((photons["name"], photons["de"], photons["exercises"], photons["there"], photons["general"]), ("Photoelectric Effect", "Photoeffekt", 3, 2, 3))
+        self.assertEqual(photons["objectives"], [{"id": "wave", "en": "Wave model", "de": "Wellenmodell", "exercises": 0, "there": 0}])
+        self.assertEqual((torque["exercises"], torque["objectives"][0]["exercises"]), (0, 0))
+        self.assertEqual([(o["id"], o["en"], o["exercises"], o["there"]) for o in coulomb["objectives"]],
+                         [("vector", "Vector sum", 3, 3), ("factor", "factor", 5, 4), ("field", "field", 2, 2)])
+        self.assertEqual((coulomb["exercises"], coulomb["there"], coulomb["general"]), (9, 8, 0))
+        self.assertEqual([m["id"] for m in S.coverage(self.POOL, apps[:1], set())], ["photons", "coulomb"])  # (not on the hub: after)
 
     def test_suggest_covers_every_objective(self):
         keys = S.suggest(self.mods(), "en", self.POOL, self.have(), 4)
@@ -1361,6 +1380,10 @@ class Service(unittest.TestCase):
         self.assertFalse([k for k in kept if "evil" in k or "README" in k])
         st, _, body = self.req(f"/texercises/api/bundles/{b['id']}", cookie=anna)
         view = json.loads(body)
+        # the topics: each exercise's TeXercises subbranches, and how many exercises the bundle has of each
+        self.assertEqual(view["topics"], [{"name": "Kinematics", "exercises": 2}])
+        self.assertEqual({e["key"]: e["topics"] for e in view["exercises"]},
+                         {"freier-fall-01-groessen-vergleichen": ["Kinematics"], "freier-fall-02-einheiten-von-parametern": ["Kinematics"]})
         self.assertEqual([e["key"] for e in view["collections"][0]["items"] if "key" in e][:2],
                          ["freier-fall-01-groessen-vergleichen", "freier-fall-02-einheiten-von-parametern"])
         key = "freier-fall-01-groessen-vergleichen"
@@ -1411,6 +1434,80 @@ class Service(unittest.TestCase):
         st, _, page = self.req("/texercises/", cookie=anna)
         self.assertIn(b'data-super="0"', page)
         self.assertIn(b'/texercises/static/review.js', page)
+
+    def test_review_topics(self):
+        """A bundle's topics: the subbranches of its exercises (each once, cleaned), counted, the most
+        frequent first; an exercise without them has none."""
+        from sheets import review as R
+        root = Path(self.dir.name) / "rv"
+        buf = io.BytesIO()
+        metas = {"a": {"title": "A", "subbranches": ["Optics", "Waves", "Optics", 7, " "]}, "b": {"title": "B", "subbranches": ["Waves"]},
+                 "c": {"title": "C"}, "d": {"title": "D", "subbranches": "Waves"}}
+        with zipfile.ZipFile(buf, "w") as zf:
+            for k, m in metas.items():
+                zf.writestr(f"exercises/{k}/exercise.json", json.dumps(m))
+        bid = R.store_bundle(root, buf.getvalue(), "t.zip", "bys")["id"]
+        view = R.bundle_view(root, bid)
+        self.assertEqual({e["key"]: e["topics"] for e in view["exercises"]}, {"a": ["Optics", "Waves"], "b": ["Waves"], "c": [], "d": []})
+        self.assertEqual(view["topics"], [{"name": "Waves", "exercises": 2}, {"name": "Optics", "exercises": 1}])
+
+    def audit(self, body, cookie, ctype="application/json"):
+        data = body if isinstance(body, bytes) else json.dumps(body).encode()
+        st, _, out = self.req("/api/exercise-audit", data, ctype, cookie)
+        return st, json.loads(out or b"{}")
+
+    def test_exercise_audit(self):
+        """The exercises' review for the hub page: the superuser alone reads and uploads it (nobody
+        else, logged in or not); a report is checked, cleaned and replaces the one stored, which is
+        not under a served name."""
+        boss = self.cookie_of("samuel.byland", "teacher pw")
+        pw = self.teachers({"action": "create", "id": "abc", "user": "anna"}, boss)[1]["password"]
+        anna = self.cookie_of("anna", pw)
+        # who asks: /api/me, and with ?probe=1 an answer without an error for the hub page's visitors
+        self.assertEqual(self.req("/api/me")[0], 403)
+        st, _, body = self.req("/api/me?probe=1")
+        self.assertEqual((st, json.loads(body)), (200, {"teacher": None, "super": False}))
+        self.assertIs(json.loads(self.req("/api/me?probe=1", cookie=anna)[2])["super"], False)
+        self.assertIs(json.loads(self.req("/api/me?probe=1", cookie=boss)[2])["super"], True)
+        self.assertEqual(self.req("/api/exercise-audit")[0], 403)
+        self.assertEqual(self.req("/api/exercise-audit", cookie=anna)[0], 403)
+        st, _, body = self.req("/api/exercise-audit", cookie=boss)
+        self.assertEqual((st, json.loads(body)), (200, {"report": None}))  # none yet
+        report = {"generated": "2026-10-15", "source": "review of the export", "reviewed": 844, "exercises": [
+            {"id": 12345, "key": "e12345-slug", "title": "Ein <b>Titel</b>", "lang": "GER", "url": "/exercise/slug/", "issues": [
+                {"severity": "error", "category": "Physics", "where": "solution", "issue": "v = s/t\r\nnot s*t\x07", "fix": "use $v<c$"},
+                {"severity": "doubt", "category": "language", "where": "text", "issue": "Komma?"}]},
+            {"id": 7, "key": "e7-fine", "title": "Fine", "lang": "ENG", "url": "javascript:alert(1)", "issues": []},
+            {"key": "draft-x", "title": "Draft", "lang": "FR", "url": "https://evil.example/", "issues": [{"severity": "warning", "category": "latex", "where": "short", "issue": "x", "fix": ""}]}]}
+        self.assertEqual(self.audit(report, anna)[0], 403)
+        self.assertEqual(self.audit(report, None)[0], 403)
+        self.assertFalse(self.admin.audit_file.exists())
+        for bad, why in [({"exercises": "x"}, "exercises"), ([], "exercises"),
+                         ({"exercises": [{"title": "no id"}]}, "neither"),
+                         ({"exercises": [{"id": 1, "issues": [{"severity": "fatal", "issue": "x"}]}]}, "severity"),
+                         ({"exercises": [{"id": 1, "issues": [{"severity": "error", "issue": " "}]}]}, "without a text")]:
+            st, d = self.audit(bad, boss)
+            self.assertEqual(st, 400, bad)
+            self.assertIn(why, d["error"], bad)
+        self.assertEqual(self.audit(b"{not json", boss)[0], 400)
+        self.assertEqual(self.audit(report, boss, "text/plain")[0], 415)
+        with mock.patch.object(H, "MAX_AUDIT", 100):
+            self.assertEqual(self.audit(report, boss)[0], 413)
+        st, d = self.audit(report, boss)
+        self.assertEqual((st, d), (200, {"reviewed": 844, "exercises": 2, "issues": 3, "error": 1, "warning": 1, "doubt": 1}))
+        got = json.loads(self.req("/api/exercise-audit", cookie=boss)[2])["report"]
+        self.assertEqual((got["generated"], got["source"], got["reviewed"]), ("2026-10-15", "review of the export", 844))
+        first, second = got["exercises"]
+        self.assertEqual((first["id"], first["title"], first["lang"], first["url"]), (12345, "Ein <b>Titel</b>", "GER", "/exercise/slug/"))  # (escaped by the page)
+        self.assertEqual(first["issues"][0], {"severity": "error", "category": "physics", "where": "solution", "issue": "v = s/t\nnot s*t", "fix": "use $v<c$"})
+        self.assertEqual(first["issues"][1]["fix"], "")
+        self.assertEqual((second["id"], second["key"], second["lang"], second["url"]), (None, "draft-x", "", ""))  # no url but TeXercises'
+        self.assertEqual(self.admin.audit_file.parent, self.config.parent)  # hub-data/, which nginx does not serve
+        self.assertEqual(self.admin.audit_file.stat().st_mode & 0o777, 0o600)
+        self.assertEqual(self.req("/api/exercise-audit", cookie=anna)[0], 403)
+        # replaced by the next one
+        self.assertEqual(self.audit({"exercises": []}, boss)[1], {"reviewed": 0, "exercises": 0, "issues": 0, "error": 0, "warning": 0, "doubt": 0})
+        self.assertEqual(json.loads(self.req("/api/exercise-audit", cookie=boss)[2])["report"]["exercises"], [])
 
     def teachers(self, body, cookie):
         st, _, data = self.req("/api/teachers", json.dumps(body).encode(), "application/json", cookie)

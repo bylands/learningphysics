@@ -146,6 +146,34 @@ def covers(key: str, tgts: List[Tuple[str, Optional[str]]], pool: Dict[str, obje
     return out
 
 
+def coverage(pool: Dict[str, object], apps: List[Dict[str, object]], have) -> List[Dict[str, object]]:
+    """The topics the pool covers (the first section of the Sheets tab): per module, in the order of
+    apps (the hub's, each {id, name, de?, objectives: [{id, en, de}]}; then any other app of the
+    pool), its exercises, those of them that are there (have), those that practise none of its
+    objectives (the module as a whole), and per objective the same two numbers. An objective of the
+    pool that apps does not name comes after the others, by its id; one without exercises has 0."""
+    out = []
+    known = [a for a in apps if isinstance(a, dict) and isinstance(a.get("id"), str)]
+    extra = [{"id": k, "name": k, "objectives": []} for k in pool if k not in {a["id"] for a in known}]
+    for a in known + extra:
+        entry = pool.get(a["id"]) if isinstance(pool.get(a["id"]), dict) else {}
+        exs = entry.get("exercises") if isinstance(entry.get("exercises"), dict) else {}
+        objs = entry.get("objectives") if isinstance(entry.get("objectives"), dict) else {}
+        named = [o for o in a.get("objectives", []) if isinstance(o, dict) and isinstance(o.get("id"), str)]
+        named += [{"id": o, "en": o, "de": o} for o in objs if o not in {x["id"] for x in named}]
+        tied = set()
+        rows = []
+        for o in named:
+            keys = [k for k in objs.get(o["id"], []) if isinstance(k, str)]
+            tied.update(keys)
+            rows.append({"id": o["id"], "en": str(o.get("en") or o["id"]), "de": str(o.get("de") or o.get("en") or o["id"]),
+                         "exercises": len(keys), "there": len([k for k in keys if k in have])})
+        out.append({"id": a["id"], "name": str(a.get("name") or a["id"]), **({"de": a["de"]} if a.get("de") else {}),
+                    "exercises": len(exs), "there": len([k for k in exs if k in have]),
+                    "general": len([k for k in exs if k not in tied]), "objectives": rows})
+    return out
+
+
 def default_count(modules: List[Dict[str, object]], pool: Dict[str, object], have) -> int:
     n = sum(1 for t in targets(modules, pool) if candidates(t, pool, have))
     return max(1, min(DEFAULT_MAX, PER_OBJECTIVE * n))
