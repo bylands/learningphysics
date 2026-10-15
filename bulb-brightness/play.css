@@ -8,6 +8,7 @@
 .pw-play { min-width: 2.8em; min-height: 2.2em; padding: 4px 10px; font-size: 1rem; touch-action: manipulation; }
 .pw-seek { flex: 1; min-width: 0; accent-color: var(--accent); touch-action: pan-y; }
 .pw-time { min-width: 4.5em; color: var(--muted); font-size: 0.85rem; font-variant-numeric: tabular-nums; text-align: right; }
+.pw-instant .pw-bar { display: none; }
 .pw-note { margin: 2px 0 0; color: var(--muted); font-size: 0.9rem; text-align: center; min-height: 1.2em; }
 .pw-note:empty { display: none; }
 /* the switch the student flips: a button in the figure, with a hit area (class pw-hit) */
