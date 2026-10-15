@@ -393,7 +393,7 @@
       return a === b.answer ? { t: `✓ ${SIGN[a]}`, cls: 'pred ok' } : { t: `✗ ${SIGN[a]}`, cls: 'pred bad' };
     });
     return window.Play.create(host, {
-      t0: -0.35, t1: 1, seconds: 2.2,
+      t0: -0.35, t1: 1, instant: true,
       locked: o.locked,
       render(scene, s) {
         const notes = shownNotes(s), k = `${s.after}|${JSON.stringify(notes)}|${Lang.get()}`;
@@ -411,8 +411,8 @@
           switch: unscrew ? L(`Bulb ${b}: ${what}`, `Lampe ${b}: ${what}`) : L(`Switch S: ${what.replace(/ the switch S| den Schalter S/, '')}`, `Schalter S: ${what.replace(/den Schalter S /, '')}`),
           ready: unscrew ? L(`Click the bulb ${b} to unscrew it, and watch the other bulbs.`, `Klicke auf die Lampe ${b}, um sie herauszuschrauben, und schau die anderen Lampen an.`)
             : L(`Click the switch S to ${what.replace(' the switch S', '')} it, and watch the bulbs.`, `Klicke auf den Schalter S, um ihn zu ${{ open: 'öffnen', unbridge: 'öffnen', close: 'schliessen', bridge: 'schliessen' }[e.change]}, und schau die Lampen an.`),
-          again: o.show ? L('Click it again to go back, or ▶ to watch once more.', 'Klicke nochmals darauf, um zurückzugehen, oder ▶, um nochmals zuzuschauen.')
-            : L('✓ and ✗ next to the bulbs: your prediction. Click again to go back, or ▶ to watch once more.', '✓ und ✗ neben den Lampen: deine Vorhersage. Klicke nochmals, um zurückzugehen, oder ▶, um nochmals zuzuschauen.'),
+          again: o.show ? L('Click it again to go back.', 'Klicke nochmals darauf, um zurückzugehen.')
+            : L('✓ and ✗ next to the bulbs: your prediction. Click again to go back.', '✓ und ✗ neben den Lampen: deine Vorhersage. Klicke nochmals, um zurückzugehen.'),
         };
       },
     });

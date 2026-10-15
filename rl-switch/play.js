@@ -28,6 +28,8 @@
 //                     (after switching: e.g. "Click the switch again to watch once more."), time:
 //                     a function t → the time shown next to the slider (optional) }, in the
 //                     current language (the app's L(en, de))
+//     instant         true: no animation and no ▶/slider; the switch toggles at once between
+//                     before and the end state (Bulb Brightness)
 //     onEnd()         the run reached t1 (by playing, the slider or with reduced motion): e.g. mark
 //                     the predictions
 //   Returns { refresh() (redraw, after a change of language or of the lock), stop() (no more
@@ -88,14 +90,16 @@
   const tx = () => TX[root.Lang && root.Lang.get() === 'de' ? 'de' : 'en'];
 
   function create(host, o) {
-    const reduced = () => isReduced(root.matchMedia && root.matchMedia.bind(root));
+    const reduced = () => !!o.instant || isReduced(root.matchMedia && root.matchMedia.bind(root));
     const locked = () => !!(o.locked && o.locked());
     const texts = () => ({ ...(o.texts ? o.texts() : {}) });
     host.innerHTML = '<div class="pw"><div class="pw-scene"></div><div class="pw-bar">' +
       '<button type="button" class="pw-play">▶</button>' +
       `<input type="range" class="pw-seek" min="0" max="${STEPS}" step="10" value="0">` +
       '<span class="pw-time" aria-hidden="true"></span></div><p class="pw-note" aria-live="polite"></p></div>';
-    const box = host.querySelector('.pw'), scene = box.querySelector('.pw-scene'), btn = box.querySelector('.pw-play');
+    const box = host.querySelector('.pw');
+    box.classList.toggle('pw-instant', !!o.instant);
+    const scene = box.querySelector('.pw-scene'), btn = box.querySelector('.pw-play');
     const slider = box.querySelector('.pw-seek'), time = box.querySelector('.pw-time'), note = box.querySelector('.pw-note');
     let s = { t: o.t0, playing: false }, raf = 0, last = null, ended = false, warned = false, stopped = false;
 
