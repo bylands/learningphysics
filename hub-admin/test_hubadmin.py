@@ -14,8 +14,9 @@ shared, duplicated and deleted, everything only when logged in except a shared s
 version, which shows no solutions; the figures (the LaTeX of an exercise's TikZ pictures, their
 hash and cache) and the gallery images (uploaded, as a .zip, fetched from TeXercises, served only
 to the panel and a shared sheet, never outside their folder), and both in the preview's HTML. The
-topics the pool covers, a review bundle's topics (subbranches), and the exercises' review in the Sheets
-tab (the superuser alone reads and uploads it, the report checked and cleaned).
+topics the pool covers, and the exercises' review in the Sheets tab (the superuser alone reads and
+uploads it, the report checked and cleaned; the feedback on it kept by exercise id and fingerprint of
+the issue, and its export); the TeXercises review page that was at /texercises/ gone.
 """
 import io
 import zipfile
@@ -1361,105 +1362,18 @@ class Service(unittest.TestCase):
         self.assertEqual(st, 303, user)
         return headers["Set-Cookie"].split(";")[0]
 
-    def test_texercises_review(self):
-        """/texercises/: logged in only; the superuser uploads a bundle (only its exercises and
-        collections kept, nothing outside its folder), changes a difficulty and downloads the bundle
-        with it; any teacher previews and writes feedback, which only its author or the superuser
-        changes."""
-        self.assertEqual(self.req("/texercises/")[0], 303)
-        self.assertEqual(self.req("/texercises/api/bundles")[0], 403)
+    def test_texercises_review_gone(self):
+        """The TeXercises review page (/texercises/) is gone: the service no longer answers there (nginx
+        and the dev server send its old addresses to the admin panel), and its module is no more."""
         boss = self.cookie_of("samuel.byland", "teacher pw")
-        pw = self.teachers({"action": "create", "id": "abc", "user": "anna"}, boss)[1]["password"]
-        anna = self.cookie_of("anna", pw)
-        src = ROOT / "texercises-aufgaben"
-        buf = io.BytesIO()
-        with zipfile.ZipFile(buf, "w") as zf:
-            for f in sorted((src / "exercises").glob("freier-fall-0[12]*/*")):
-                zf.write(f, f"export/exercises/{f.parent.name}/{f.name}")
-            zf.write(src / "collections" / "freier-fall.json", "export/collections/freier-fall.json")
-            zf.writestr("export/exercises/../../evil/exercise.json", "{}")
-            zf.writestr("export/README.md", "x")
-        data = buf.getvalue()
-        self.assertEqual(self.req("/texercises/api/upload?name=ff.zip", data, "application/zip", anna)[0], 403)
-        self.assertEqual(self.req("/texercises/api/upload?name=x.zip", b"not a zip", "application/zip", boss)[0], 400)
-        st, _, body = self.req("/texercises/api/upload?name=ff.zip", data, "application/zip", boss)
-        self.assertEqual(st, 200)
-        b = json.loads(body)
-        self.assertEqual((b["name"], b["exercises"], b["collections"]), ("ff.zip", 2, 1))
-        kept = {p.relative_to(self.admin.review).as_posix() for p in self.admin.review.rglob("*") if p.is_file()}
-        self.assertFalse([k for k in kept if "evil" in k or "README" in k])
-        st, _, body = self.req(f"/texercises/api/bundles/{b['id']}", cookie=anna)
-        view = json.loads(body)
-        # the topics: each exercise's TeXercises subbranches, and how many exercises the bundle has of each
-        self.assertEqual(view["topics"], [{"name": "Kinematics", "exercises": 2}])
-        self.assertEqual({e["key"]: e["topics"] for e in view["exercises"]},
-                         {"freier-fall-01-groessen-vergleichen": ["Kinematics"], "freier-fall-02-einheiten-von-parametern": ["Kinematics"]})
-        self.assertEqual([e["key"] for e in view["collections"][0]["items"] if "key" in e][:2],
-                         ["freier-fall-01-groessen-vergleichen", "freier-fall-02-einheiten-von-parametern"])
-        key = "freier-fall-01-groessen-vergleichen"
-        st, _, body = self.req(f"/texercises/api/bundles/{b['id']}/render?keys={key},nope", cookie=anna)
-        got = json.loads(body)["exercises"]
-        self.assertEqual(list(got), [key])
-        self.assertIn("tx-m", got[key]["text"])
-        self.assertTrue(got[key]["short"])
-        # the difficulty: the superuser only, 1 to 6
-        change = lambda n, who: self.req(f"/texercises/api/bundles/{b['id']}", json.dumps({"action": "difficulty", "key": key, "difficulty": n}).encode(), "application/json", who)
-        self.assertEqual(change(4, anna)[0], 403)
-        self.assertEqual(change(7, boss)[0], 400)
-        self.assertEqual(json.loads(change(4, boss)[2])["changed"], True)
-        st, headers, body = self.req(f"/texercises/api/bundles/{b['id']}/export.zip?changed=1", cookie=boss)
-        self.assertEqual(st, 200)
-        self.assertIn('filename="ff-changed.zip"', headers["Content-Disposition"])
-        with zipfile.ZipFile(io.BytesIO(body)) as zf:
-            self.assertEqual(sorted({n.split("/")[1] for n in zf.namelist()}), [key])
-            meta = json.loads(zf.read(f"exercises/{key}/exercise.json"))
-        self.assertEqual((meta["default_difficulty"], meta["id"]), (4, 24627))
-        with zipfile.ZipFile(io.BytesIO(self.req(f"/texercises/api/bundles/{b['id']}/export.zip", cookie=boss)[2])) as zf:
-            self.assertIn("collections/freier-fall.json", zf.namelist())
-            self.assertEqual(json.loads(zf.read("exercises/freier-fall-02-einheiten-von-parametern/exercise.json"))["default_difficulty"], 2)
-        self.assertEqual(self.req(f"/texercises/api/bundles/{b['id']}/export.zip", cookie=anna)[0], 403)
-        self.assertEqual(json.loads(change(1, boss)[2])["changed"], False)  # back to what was uploaded
-        # feedback: anyone logged in; changed by its author or the superuser
-        post = lambda body, who: self.req("/texercises/api/feedback", json.dumps(body).encode(), "application/json", who)
-        self.assertEqual(post({"bundle": b["id"], "key": key, "kind": "bug", "text": "  "}, anna)[0], 400)
-        self.assertEqual(post({"bundle": b["id"], "key": "nope", "text": "x"}, anna)[0], 404)
-        st, _, body = post({"bundle": b["id"], "key": key, "kind": "bug", "text": "Einheit fehlt in b)", "collection": "freier-fall"}, anna)
-        f = json.loads(body)
-        self.assertEqual((f["by"], f["exercise_id"], f["title"]), ("abc", 24627, "Grössen vergleichen (freier Fall)"))
-        mine = json.loads(post({"bundle": b["id"], "key": key, "kind": "idea?", "text": "<b>x</b>"}, boss)[2])
-        self.assertEqual(mine["kind"], "other")
-        self.assertEqual(post({"action": "done", "id": mine["id"]}, anna)[0], 403)
-        self.assertEqual(post({"action": "done", "id": f["id"]}, anna)[0], 200)
-        st, headers, md = self.req("/texercises/api/feedback.md?all=1", cookie=anna)
-        self.assertIn("### Grössen vergleichen (freier Fall) (id 24627)", md.decode())
-        self.assertIn("**Bug** (abc,", md.decode())
-        self.assertNotIn("Einheit fehlt", self.req("/texercises/api/feedback.md", cookie=anna)[2].decode())  # done
-        self.assertEqual({e["key"]: e["feedback"] for e in json.loads(self.req(f"/texercises/api/bundles/{b['id']}", cookie=anna)[2])["exercises"]}[key], 1)  # open
-        # deleted: the bundle goes, its feedback stays
-        self.assertEqual(self.req(f"/texercises/api/bundles/{b['id']}", b'{"action": "delete"}', "application/json", anna)[0], 403)
-        self.assertEqual(self.req(f"/texercises/api/bundles/{b['id']}", b'{"action": "delete"}', "application/json", boss)[0], 200)
-        self.assertEqual(json.loads(self.req("/texercises/api/bundles", cookie=boss)[2])["bundles"], [])
-        fb = json.loads(self.req("/texercises/api/feedback", cookie=boss)[2])["feedback"]
-        self.assertEqual([(x["title"], x["bundle_exists"]) for x in fb], [("Grössen vergleichen (freier Fall)", False)] * 2)
-        st, _, page = self.req("/texercises/", cookie=anna)
-        self.assertIn(b'data-super="0"', page)
-        self.assertIn(b'/texercises/static/review.js', page)
-
-    def test_review_topics(self):
-        """A bundle's topics: the subbranches of its exercises (each once, cleaned), counted, the most
-        frequent first; an exercise without them has none."""
-        from sheets import review as R
-        root = Path(self.dir.name) / "rv"
-        buf = io.BytesIO()
-        metas = {"a": {"title": "A", "subbranches": ["Optics", "Waves", "Optics", 7, " "]}, "b": {"title": "B", "subbranches": ["Waves"]},
-                 "c": {"title": "C"}, "d": {"title": "D", "subbranches": "Waves"}}
-        with zipfile.ZipFile(buf, "w") as zf:
-            for k, m in metas.items():
-                zf.writestr(f"exercises/{k}/exercise.json", json.dumps(m))
-        bid = R.store_bundle(root, buf.getvalue(), "t.zip", "bys")["id"]
-        view = R.bundle_view(root, bid)
-        self.assertEqual({e["key"]: e["topics"] for e in view["exercises"]}, {"a": ["Optics", "Waves"], "b": ["Waves"], "c": [], "d": []})
-        self.assertEqual(view["topics"], [{"name": "Waves", "exercises": 2}, {"name": "Optics", "exercises": 1}])
+        for path in ("/texercises/", "/texercises/api/bundles", "/texercises/static/review.js"):
+            self.assertEqual(self.req(path, cookie=boss)[0], 404, path)
+        self.assertEqual(self.req("/texercises/api/upload?name=x.zip", b"x", "application/zip", boss)[0], 404)
+        self.assertFalse((ROOT / "hub-admin" / "sheets" / "review.py").exists())
+        conf = (ROOT / "deploy" / "nginx" / "learningphysics.conf").read_text()
+        self.assertIn("location = /texercises { return 301 /admin/; }", conf)
+        self.assertIn("location /texercises/ { return 301 /admin/; }", conf)
+        self.assertNotIn("8040/texercises", conf)
 
     def audit(self, body, cookie, ctype="application/json"):
         data = body if isinstance(body, bytes) else json.dumps(body).encode()
@@ -1478,7 +1392,7 @@ class Service(unittest.TestCase):
         self.assertEqual(self.req("/api/exercise-audit")[0], 403)
         self.assertEqual(self.req("/api/exercise-audit", cookie=anna)[0], 403)
         st, _, body = self.req("/api/exercise-audit", cookie=boss)
-        self.assertEqual((st, json.loads(body)), (200, {"report": None}))  # none yet
+        self.assertEqual((st, json.loads(body)), (200, {"report": None, "feedback": {}}))  # none yet
         report = {"generated": "2026-10-15", "source": "review of the export", "reviewed": 844, "exercises": [
             {"id": 12345, "key": "e12345-slug", "title": "Ein <b>Titel</b>", "lang": "GER", "url": "/exercise/slug/",
              "collections": ["Kinematik 1", 7, "", "Kinematik 1", "Dynamik\n2", None, "x" * 300] + [f"c{i}" for i in range(60)], "issues": [
@@ -1506,7 +1420,8 @@ class Service(unittest.TestCase):
         self.assertEqual((got["generated"], got["source"], got["reviewed"]), ("2026-10-15", "review of the export", 844))
         first, second = got["exercises"]
         self.assertEqual((first["id"], first["title"], first["lang"], first["url"]), (12345, "Ein <b>Titel</b>", "GER", "/exercise/slug/"))  # (escaped by the page)
-        self.assertEqual(first["issues"][0], {"severity": "error", "category": "physics", "where": "solution", "issue": "v = s/t\nnot s*t", "fix": "use $v<c$"})
+        self.assertEqual(first["issues"][0], {"severity": "error", "category": "physics", "where": "solution", "issue": "v = s/t\nnot s*t", "fix": "use $v<c$",
+                                              "fp": H.audit_fingerprint({"severity": "error", "where": "solution", "issue": "v = s/t\nnot s*t"})})
         self.assertEqual(first["issues"][1]["fix"], "")
         self.assertEqual((second["id"], second["key"], second["lang"], second["url"]), (None, "draft-x", "", ""))
         # the collections: strings only, each once, cut, at most MAX_AUDIT_COLLECTIONS; none without them
@@ -1519,6 +1434,82 @@ class Service(unittest.TestCase):
         # replaced by the next one
         self.assertEqual(self.audit({"exercises": []}, boss)[1], {"reviewed": 0, "exercises": 0, "issues": 0, "error": 0, "warning": 0, "doubt": 0})
         self.assertEqual(json.loads(self.req("/api/exercise-audit", cookie=boss)[2])["report"]["exercises"], [])
+
+    def test_exercise_audit_feedback(self):
+        """The superuser's feedback on the review: accepted fixes and a comment per exercise, the superuser
+        only, checked, kept by exercise id and issue fingerprint (a regenerated report keeps it; feedback
+        on issues no longer there is kept but not exported), and the export for Claude."""
+        boss = self.cookie_of("samuel.byland", "teacher pw")
+        pw = self.teachers({"action": "create", "id": "abc", "user": "anna"}, boss)[1]["password"]
+        anna = self.cookie_of("anna", pw)
+        issue = lambda sev, text, fix="do it": {"severity": sev, "category": "physics", "where": "solution", "issue": text, "fix": fix}
+        report = {"generated": "2026-10-15", "source": "test", "reviewed": 3, "exercises": [
+            {"id": 11, "key": "e11-a", "title": "A", "lang": "ENG", "url": "/exercise/a/", "collections": ["Optik"],
+             "issues": [issue("error", "wrong sign"), issue("warning", "unit missing")]},
+            {"key": "draft-b", "title": "B", "issues": [issue("doubt", "really?")]},
+            {"id": 13, "key": "e13-c", "title": "C", "issues": [issue("error", "typo")]}]}
+        self.assertEqual(self.audit(report, boss)[0], 200)
+        got = json.loads(self.req("/api/exercise-audit", cookie=boss)[2])
+        a, b, c = got["report"]["exercises"]
+        self.assertEqual((a["ref"], b["ref"], got["feedback"]), ("11", "key:draft-b", {}))
+        fp = [i["fp"] for i in a["issues"]]
+        self.assertEqual(fp[0], H.audit_fingerprint(issue("error", "wrong sign", "another fix")))  # (the fix does not count)
+        self.assertNotEqual(fp[0], fp[1])
+        post = lambda body, who=boss: self.req("/api/exercise-audit/feedback", json.dumps(body).encode(), "application/json", who)
+        # the superuser only
+        for path in ("/api/exercise-audit/feedback", "/api/exercise-audit/export"):
+            self.assertEqual(self.req(path)[0], 403, path)
+            self.assertEqual(self.req(path, cookie=anna)[0], 403, path)
+        self.assertEqual(post({"exercise": "11", "comment": "x"}, anna)[0], 403)
+        self.assertEqual(post({"exercise": "11", "comment": "x"}, None)[0], 403)
+        self.assertFalse(self.admin.audit_feedback_file.exists())
+        # checked
+        for bad in ({"exercise": "../x", "comment": "x"}, {"exercise": 11, "comment": "x"}, {"exercise": "11"},
+                    {"exercise": "11", "accept": {"fp": "nothex", "on": True}}, {"exercise": "11", "accept": {"fp": fp[0], "on": 1}},
+                    {"exercise": "11", "comment": 5}, {"exercise": "11", "comment": "x" * (H.MAX_AUDIT_COMMENT + 1)}):
+            self.assertEqual(post(bad)[0], 400, bad)
+        self.assertEqual(self.req("/api/exercise-audit/feedback", b"x=1", "application/x-www-form-urlencoded", boss)[0], 415)
+        # kept
+        st, _, body = post({"exercise": "11", "accept": {"fp": fp[0], "on": True}})
+        self.assertEqual((st, json.loads(body)["accepted"]), (200, [fp[0]]))
+        self.assertEqual(json.loads(post({"exercise": "11", "comment": "  Bitte auch b) prüfen\x07 "})[2])["comment"], "Bitte auch b) prüfen")
+        self.assertEqual(json.loads(post({"exercise": "key:draft-b", "comment": "ok"})[2])["accepted"], [])
+        post({"exercise": "13", "accept": {"fp": c["issues"][0]["fp"], "on": True}})
+        post({"exercise": "13", "accept": {"fp": c["issues"][0]["fp"], "on": False}})  # undone: nothing left of it
+        fb = json.loads(self.req("/api/exercise-audit/feedback", cookie=boss)[2])["feedback"]
+        self.assertEqual(sorted(fb), ["11", "key:draft-b"])
+        self.assertEqual((fb["11"]["comment"], fb["11"]["accepted"]), ("Bitte auch b) prüfen", [fp[0]]))
+        self.assertEqual(self.admin.audit_feedback_file.stat().st_mode & 0o777, 0o600)
+        self.assertEqual(self.admin.audit_feedback_file.parent, self.config.parent)
+        with mock.patch.object(H, "MAX_AUDIT_FEEDBACK", 2):
+            self.assertEqual(post({"exercise": "14", "comment": "one too many"})[0], 400)
+        # the export: the exercises with an accepted fix or a comment
+        st, headers, body = self.req("/api/exercise-audit/export", cookie=boss)
+        self.assertEqual(st, 200)
+        self.assertRegex(headers["Content-Disposition"], r'attachment; filename="exercise-review-feedback-\d{4}-\d{2}-\d{2}\.json"')
+        out = json.loads(body)
+        self.assertEqual((out["generated"], out["source"]), ("2026-10-15", "test"))
+        self.assertEqual([e["key"] for e in out["exercises"]], ["e11-a", "draft-b"])
+        first = out["exercises"][0]
+        self.assertEqual((first["id"], first["url"], first["collections"], first["comment"]), (11, "https://texercises.com/exercise/a/", ["Optik"], "Bitte auch b) prüfen"))
+        self.assertEqual(first["accepted"], [issue("error", "wrong sign")])
+        self.assertEqual(first["not_accepted"], [issue("warning", "unit missing")])
+        # a regenerated report: the same issue (another fix) is still accepted, a gone one is kept but not exported
+        report["exercises"][0]["issues"] = [issue("error", "wrong sign", "a better fix"), issue("doubt", "new one")]
+        report["exercises"][1]["issues"] = [issue("doubt", "something else")]
+        self.assertEqual(self.audit(report, boss)[0], 200)
+        out = json.loads(self.req("/api/exercise-audit/export", cookie=boss)[2])
+        first = out["exercises"][0]
+        self.assertEqual(first["accepted"], [issue("error", "wrong sign", "a better fix")])
+        self.assertEqual([i["issue"] for i in first["not_accepted"]], ["new one"])
+        post({"exercise": "11", "accept": {"fp": fp[1], "on": True}})  # (an issue no longer in the report)
+        self.assertEqual(len(json.loads(self.req("/api/exercise-audit/export", cookie=boss)[2])["exercises"][0]["accepted"]), 1)
+        self.assertIn(fp[1], json.loads(self.req("/api/exercise-audit/feedback", cookie=boss)[2])["feedback"]["11"]["accepted"])
+        # an exercise no longer in the report: kept, not exported
+        report["exercises"] = report["exercises"][2:]
+        self.audit(report, boss)
+        self.assertEqual(json.loads(self.req("/api/exercise-audit/export", cookie=boss)[2])["exercises"], [])
+        self.assertIn("11", json.loads(self.req("/api/exercise-audit/feedback", cookie=boss)[2])["feedback"])
 
     def teachers(self, body, cookie):
         st, _, data = self.req("/api/teachers", json.dumps(body).encode(), "application/json", cookie)

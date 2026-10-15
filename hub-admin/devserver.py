@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Tries out the site locally, as nginx serves it: the hub page at /, the apps (the energy app at
-/coe/), /apps.json and /sets.json, the sets at /<name>, the admin panel at /admin/ and the TeXercises review at /texercises/ (with a
+/coe/), /apps.json and /sets.json, the sets at /<name>, the admin panel at /admin/ (with a
 password of its own, not the server's). Standard library only.
 
     python3 hub-admin/devserver.py                     then open http://localhost:8090/admin/
@@ -77,8 +77,7 @@ def main() -> int:
         def proxy(self) -> None:  # /admin/... to the admin panel (and /crosswords/...), as nginx does
             n = int(self.headers.get("Content-Length") or 0)
             headers = {k: v for k, v in self.headers.items() if k.lower() in ("cookie", "content-type", "content-length")}
-            prefix, port = (("/admin", admin_port) if self.path.startswith("/admin/") else ("", admin_port)
-                            if self.path.startswith("/texercises") else ("/crosswords", args.crosswords))
+            prefix, port = ("/admin", admin_port) if self.path.startswith("/admin/") else ("/crosswords", args.crosswords)
             c = http.client.HTTPConnection("127.0.0.1", port)
             c.request(self.command, self.path[len(prefix):], self.rfile.read(n) if n else None, headers)
             r = c.getresponse()
@@ -93,17 +92,17 @@ def main() -> int:
             self.wfile.write(body)
 
         def do_GET(self) -> None:
-            if self.path == "/admin":
-                self.send_response(301)
+            if self.path == "/admin" or self.path.split("?")[0] == "/texercises" or self.path.startswith("/texercises/"):
+                self.send_response(301)  # (the TeXercises review that was at /texercises/: gone, as with nginx)
                 self.send_header("Location", "/admin/")
                 self.end_headers()
-            elif self.path.startswith(("/admin/", "/texercises")) or (args.crosswords and self.path.startswith("/crosswords/")):
+            elif self.path.startswith("/admin/") or (args.crosswords and self.path.startswith("/crosswords/")):
                 self.proxy()
             else:
                 super().do_GET()
 
         def do_POST(self) -> None:
-            if self.path.startswith(("/admin/", "/texercises/")) or (args.crosswords and self.path.startswith("/crosswords/")):
+            if self.path.startswith("/admin/") or (args.crosswords and self.path.startswith("/crosswords/")):
                 self.proxy()
             else:
                 self.send_error(405)
