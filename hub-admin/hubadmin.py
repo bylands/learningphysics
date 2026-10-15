@@ -22,6 +22,11 @@ cards in its order, shows their tags, and lets visitors filter by tag. This serv
                          POST the report as JSON (up to 8 MB; see normalize_audit), replacing it. Kept in
                          hub-data/exercise-audit.json (not served): the repository is public, the report never
                          goes into it
+    /admin/api/exercise-audit/feedback  GET  the superuser's feedback on it: {ref: {"comment", "accepted":
+                         [fingerprints]}}; POST {"exercise": ref, "comment"} | {"exercise": ref, "accept":
+                         {"fp", "on"}} (hub-data/exercise-audit-feedback.json, kept by exercise id and issue
+                         fingerprint, so a new report keeps it); /export: the exercises with an accepted fix
+                         or a comment, as JSON to download, for Claude to work on
     /admin/api/all-in/…  the game All In on phones (AllInRooms): open, <code>/state, <code>/close and
                          GET <code>/host for the teacher's screen; GET <code>?token=, <code>/join and
                          <code>/bet for the phones, without login
@@ -54,13 +59,6 @@ cards in its order, shows their tags, and lets visitors filter by tag. This serv
                          (all of these logged in only, except the online version: whoever has its link,
                          and the figures)
     /admin/static/fonts/<file>  the PDF's fonts (Erewhon, Fira Sans) from the server's TeX Live
-    /texercises/         the TeXercises review (nginx passes /texercises/ on as it is; logged in, else
-                         the login): a TeXercises export uploaded (the superuser; api/upload?name=), its
-                         collections and exercises previewed (api/bundles/<id>[/render?keys=a,b]), an
-                         exercise's standard difficulty changed and the bundle downloaded with it to
-                         import (the superuser; api/bundles/<id> {"action": "difficulty" | "delete"},
-                         api/bundles/<id>/export.zip[?changed=1]), feedback on an exercise (any teacher;
-                         api/feedback, api/feedback.md). See sheets/review.py.
     /admin/static/...    the panel's scripts and styles
 
 Exercise sheets (Sheets; sheets/sheets.py, sheets/preview.py): a sheet is the teacher's own,
@@ -180,9 +178,12 @@ MAX_EXAMPLES, MAX_STAGES, MAX_OBJECTIVES = 100, 300, 50  # per app in a set
 RESERVED = {"absolute-zero", "admin", "all-in", "api", "apps", "crosswords", "electric-circuits", "hub", "hub-admin", "hub-data", "index", "katex", "texercises",
             "lang", "millionaire", "objectives", "privacy", "set", "sets", "static", "wwtbap", "www"}
 MAX_UPLOAD = 64 * 1024 * 1024  # a TeXercises export
-MAX_REVIEW_RENDER = 40  # exercises the review renders at once
 MAX_AUDIT = 8 * 1024 * 1024  # the exercise review's report (nginx: /admin/api/exercise-audit)
 MAX_AUDIT_EXERCISES, MAX_AUDIT_ISSUES = 20000, 200  # in a report; issues per exercise
+MAX_AUDIT_COLLECTIONS = 50  # collections an exercise of the report names
+MAX_AUDIT_COMMENT, MAX_AUDIT_FEEDBACK = 4000, 20000  # characters of a comment; exercises with feedback
+AUDIT_REF = re.compile(r"[0-9]{1,12}|key:[A-Za-z0-9_-]{1,160}")  # an exercise in the feedback (audit_ref)
+AUDIT_FP = re.compile(r"[0-9a-f]{16}")  # an issue in it (audit_fingerprint)
 AUDIT_SEVERITIES = ("error", "warning", "doubt")  # the most serious first
 # exercise sheets: their ids, the secret of a shared one's online version (in its address), limits
 SHEET_ID = re.compile(r"[0-9a-f]{12}")
@@ -547,8 +548,9 @@ class Admin:
         self.sheet_figures = config.parent / "sheet-figures"  # the TikZ figures as SVG (figures.py)
         self.sheets_lock = threading.Lock()
         self.own = own
-        self.review = config.parent / "texercises-review"  # the TeXercises review (sheets/review.py)
         self.audit_file = config.parent / "exercise-audit.json"  # the exercises' review, in the Sheets tab (the superuser's)
+        self.audit_feedback_file = config.parent / "exercise-audit-feedback.json"  # what the superuser accepted and wrote on it
+        self.audit_lock = threading.Lock()
         self.allin = AllInRooms()  # the rooms of the game All In (/all-in/), in memory
         self.zero = ZeroRooms()  # the rooms of the quiz Absolute Zero (/absolute-zero/), in memory
         self.seen_at: Dict[str, float] = {}  # teacher -> when their last visit was written (statistics)
@@ -1298,33 +1300,82 @@ class Admin:
             raise ValueError("exercise sheets are not installed")
         return sheetlib.store_export(data, self.texercises, self.own)
 
-    # ------------------------------------------------------------------ TeXercises review (/texercises/)
-    def review_render(self, bid: str, keys: List[str]) -> Dict[str, object]:
-        """A bundle's exercises as HTML: text, solution and short solution (KeyError: no such bundle)."""
-        rv, lib = sheets_module("review"), sheets_module("preview")
-        if rv is None or lib is None:
-            raise ValueError("the review is not installed")
-        media = SheetMedia(self, "/admin/sheet/")
-        out = {}
-        for k in keys[:MAX_REVIEW_RENDER]:
-            try:
-                folder = rv.exercise_folder(self.review, bid, k)
-            except KeyError:
-                continue
-            parts = lib.read_exercise(folder)
-            got = lib.render_parts(parts, True, media)
-            if parts.get("solution") and parts.get("short"):
-                short = lib.render_parts({**parts, "solution": parts["short"]}, True, media)
-                got["short"] = short.get("solution", "")
-                got["fallbacks"] = sorted(set(got.get("fallbacks", [])) | set(short.get("fallbacks", [])))
-            out[k] = got
-        return {"exercises": out}
-
     # ------------------------------------------------------------------ the exercises' review (Sheets tab)
     def audit(self) -> Optional[Dict[str, object]]:
-        """The report stored (cleaned when it was uploaded), or None."""
+        """The report stored (cleaned when it was uploaded), or None; each exercise with its ref and each
+        issue with its fingerprint (fp), which the feedback is kept by."""
         got = read_config(self.audit_file)
-        return got if isinstance(got, dict) and isinstance(got.get("exercises"), list) else None
+        if not isinstance(got, dict) or not isinstance(got.get("exercises"), list):
+            return None
+        for e in got["exercises"]:
+            e["ref"] = audit_ref(e)
+            for i in e.get("issues", []):
+                i["fp"] = audit_fingerprint(i)
+        return got
+
+    def audit_feedback(self) -> Dict[str, Dict[str, object]]:
+        """{ref: {"comment", "accepted": [fp], "updated"}}: the feedback on the review, also on exercises
+        and issues no longer in the report (kept, but not shown or exported)."""
+        got = read_config(self.audit_feedback_file)
+        got = got.get("exercises") if isinstance(got, dict) else None
+        return {r: f for r, f in got.items() if AUDIT_REF.fullmatch(r) and isinstance(f, dict)} if isinstance(got, dict) else {}
+
+    def change_audit_feedback(self, raw: object) -> Dict[str, object]:
+        """{"exercise": ref, "comment": text} and/or {"exercise": ref, "accept": {"fp": fp, "on": bool}}:
+        an exercise's comment, or an issue's suggested fix accepted or not (ValueError: why it cannot be);
+        the exercise's feedback now. An exercise without comment and accepted fix has none."""
+        raw = raw if isinstance(raw, dict) else {}
+        ref = raw.get("exercise")
+        if not isinstance(ref, str) or not AUDIT_REF.fullmatch(ref):
+            raise ValueError("exercise: its id (or key:<key> for one without)")
+        accept = raw.get("accept")
+        if accept is not None and (not isinstance(accept, dict) or not isinstance(accept.get("fp"), str)
+                                   or not AUDIT_FP.fullmatch(accept["fp"]) or not isinstance(accept.get("on"), bool)):
+            raise ValueError('accept: {"fp": the issue\'s fingerprint, "on": true | false}')
+        if "comment" in raw and not isinstance(raw["comment"], str):
+            raise ValueError("comment: a text")
+        if len(raw.get("comment") or "") > MAX_AUDIT_COMMENT:
+            raise ValueError(f"a comment has at most {MAX_AUDIT_COMMENT} characters")
+        if accept is None and "comment" not in raw:
+            raise ValueError("nothing to change: comment or accept")
+        with self.audit_lock:
+            every = self.audit_feedback()
+            entry = dict(every.get(ref) or {})
+            accepted = [f for f in entry.get("accepted", []) if isinstance(f, str) and AUDIT_FP.fullmatch(f)]
+            if accept is not None:
+                accepted = [f for f in accepted if f != accept["fp"]] + ([accept["fp"]] if accept["on"] else [])
+                if len(accepted) > MAX_AUDIT_ISSUES:
+                    raise ValueError(f"at most {MAX_AUDIT_ISSUES} accepted fixes per exercise")
+            comment = audit_text(raw["comment"], MAX_AUDIT_COMMENT) if "comment" in raw else str(entry.get("comment") or "")
+            entry = {"comment": comment, "accepted": accepted, "updated": int(time.time())}
+            if comment or accepted:
+                if ref not in every and len(every) >= MAX_AUDIT_FEEDBACK:
+                    raise ValueError(f"feedback on at most {MAX_AUDIT_FEEDBACK} exercises")
+                every[ref] = entry
+            else:
+                every.pop(ref, None)
+            write_config(self.audit_feedback_file, {"exercises": every}, 0o600)
+        return {"exercise": ref, **entry}
+
+    def audit_export(self) -> Dict[str, object]:
+        """The review's feedback for Claude to work on: every exercise of the report with an accepted fix
+        or a comment, its accepted issues, the others, and the comment."""
+        report = self.audit() or {"exercises": []}
+        feedback = self.audit_feedback()
+        out = []
+        for e in report["exercises"]:
+            f = feedback.get(e["ref"]) or {}
+            on = set(f.get("accepted") or [])
+            fields = ("severity", "category", "where", "issue", "fix")
+            accepted = [{k: i.get(k, "") for k in fields} for i in e.get("issues", []) if i["fp"] in on]
+            if not accepted and not f.get("comment"):
+                continue
+            out.append({"id": e.get("id"), "key": e.get("key", ""), "title": e.get("title", ""), "lang": e.get("lang", ""),
+                        "url": TEXERCISES + e["url"] if e.get("url") else "", "collections": e.get("collections", []),
+                        "accepted": accepted, "not_accepted": [{k: i.get(k, "") for k in fields} for i in e.get("issues", []) if i["fp"] not in on],
+                        "comment": f.get("comment", "")})
+        return {"generated": report.get("generated", ""), "source": report.get("source", ""),
+                "exported": time.strftime("%Y-%m-%d"), "exercises": out}
 
     def store_audit(self, raw: object) -> Dict[str, object]:
         """A new report replaces the one stored (ValueError: why it cannot be); what it holds."""
@@ -1335,11 +1386,6 @@ class Admin:
         return {"reviewed": report["reviewed"], "exercises": len(report["exercises"]), "issues": len(issues),
                 **{s: sum(1 for i in issues if i["severity"] == s) for s in AUDIT_SEVERITIES}}
 
-    def review_feedback(self, bid: str = "") -> Dict[str, object]:
-        rv = sheets_module("review")
-        items = rv.read_feedback(self.review) if rv else []
-        have = {b["id"] for b in rv.list_bundles(self.review)} if rv else set()
-        return {"feedback": [{**f, "bundle_exists": f.get("bundle") in have} for f in items if not bid or f.get("bundle") == bid]}
 
 
 class SheetMedia:
@@ -1460,17 +1506,34 @@ def audit_text(raw: object, limit: int) -> str:
     return re.sub(r"[\x00-\x08\x0b-\x1f\x7f]", "", s).strip()[:limit].strip()
 
 
+def audit_ref(e: Dict[str, object]) -> str:
+    """What the feedback on a review knows an exercise by: its TeXercises id (it stays when the report
+    is made anew), or "key:<key>" for one without."""
+    eid = e.get("id")
+    return str(eid) if isinstance(eid, int) and not isinstance(eid, bool) else "key:" + re.sub(r"[^A-Za-z0-9_-]", "-", str(e.get("key") or ""))[:160]
+
+
+def audit_fingerprint(issue: Dict[str, object]) -> str:
+    """An issue's fingerprint: its severity, where it is and its text, hashed (an issue found again by a
+    new report has the same one)."""
+    text = "\n".join(str(issue.get(k) or "") for k in ("severity", "where", "issue"))
+    return hashlib.sha256(text.encode("utf-8")).hexdigest()[:16]
+
+
 def normalize_audit(raw: object) -> Dict[str, object]:
     """The report of a review of the TeXercises exercises (made elsewhere), as stored:
 
         {"generated": "2026-10-15", "source": "...", "reviewed": 844, "exercises": [{"id": 12345,
-         "key": "e12345-slug", "title": "...", "lang": "ENG" | "GER", "url": "/exercise/slug/", "issues": [
+         "key": "e12345-slug", "title": "...", "lang": "ENG" | "GER", "url": "/exercise/slug/",
+         "collections": ["the titles of the collections it is in", ...], "issues": [
            {"severity": "error" | "warning" | "doubt", "category": "physics" | "solution" | ..., "where":
             "text" | "solution" | "short" | "solver" | "title", "issue": "...", "fix": "..."}]}]}
 
     An exercise needs a key or an id and its issues a severity of AUDIT_SEVERITIES and a text: anything
     else is a ValueError. Texts are cut to their length, a url that is no TeXercises exercise's is
-    dropped, and the exercises without issues are left out (reviewed still counts them)."""
+    dropped, the collections are the strings among them (each once, at most MAX_AUDIT_COLLECTIONS; a
+    report without them is fine), and the exercises without issues are left out (reviewed still
+    counts them)."""
     if not isinstance(raw, dict) or not isinstance(raw.get("exercises"), list):
         raise ValueError('a report is an object with "exercises": [...]')
     if len(raw["exercises"]) > MAX_AUDIT_EXERCISES:
@@ -1497,9 +1560,14 @@ def normalize_audit(raw: object) -> Dict[str, object]:
                          "where": audit_text(i.get("where"), 40).lower(), "issue": text, "fix": audit_text(i.get("fix"), 4000)})
         if not kept:
             continue
+        colls: List[str] = []
+        for c in e.get("collections") if isinstance(e.get("collections"), list) else []:
+            c = audit_text(c, 200).replace("\n", " ")
+            if c and c not in colls and len(colls) < MAX_AUDIT_COLLECTIONS:
+                colls.append(c)
         url = e.get("url") if isinstance(e.get("url"), str) and re.fullmatch(r"/exercise/[A-Za-z0-9_-]+/?", e["url"]) else ""
         out.append({"id": eid, "key": key, "title": audit_text(e.get("title"), 300).replace("\n", " ") or key or str(eid),
-                    "lang": e.get("lang") if e.get("lang") in ("ENG", "GER") else "", "url": url, "issues": kept})
+                    "lang": e.get("lang") if e.get("lang") in ("ENG", "GER") else "", "url": url, "collections": colls, "issues": kept})
     reviewed = raw.get("reviewed")
     reviewed = reviewed if isinstance(reviewed, int) and not isinstance(reviewed, bool) and reviewed >= 0 else len(raw["exercises"])
     return {"generated": audit_text(raw.get("generated"), 40).replace("\n", " "), "source": audit_text(raw.get("source"), 300).replace("\n", " "),
@@ -2105,127 +2173,6 @@ def make_handler(admin: Admin):
             self.send(200, json.dumps({"ok": True}), "application/json; charset=utf-8",
                       {"Set-Cookie": set_cookie(admin.new_session(teacher))})
 
-        def review_get(self, path: str) -> None:
-            """/texercises/...: the page (logged in, else the login), its script and style, and the API:
-            api/bundles, api/bundles/<id>, api/bundles/<id>/render?keys=a,b,
-            api/bundles/<id>/export.zip[?changed=1] (the superuser), api/feedback[?bundle=<id>],
-            api/feedback.md[?all=1]."""
-            if path == "/texercises/static/review.js":
-                self.send(200, REVIEW_JS, "text/javascript; charset=utf-8")
-                return
-            if path == "/texercises/static/review.css":
-                self.send(200, REVIEW_CSS, "text/css; charset=utf-8")
-                return
-            teacher = self.teacher()
-            if path == "/texercises/":
-                if not teacher:
-                    self.send(HTTPStatus.SEE_OTHER, "", headers={"Location": "/admin/?next=/texercises/"})
-                else:
-                    self.send(200, review_page(teacher, teacher == admin.super, admin.user_of(teacher)))
-                return
-            if not teacher:
-                self.json(403, {"error": "login"})
-                return
-            rv = sheets_module("review")
-            if rv is None:
-                self.json(500, {"error": "the review is not installed"})
-                return
-            query = parse_qs(self.path.partition("?")[2])
-            api = path[len("/texercises/api/"):] if path.startswith("/texercises/api/") else None
-            try:
-                if api == "bundles":
-                    self.json(200, {"bundles": rv.list_bundles(admin.review)})
-                elif api == "feedback":
-                    self.json(200, admin.review_feedback((query.get("bundle") or [""])[0]))
-                elif api == "feedback.md":
-                    md = rv.feedback_markdown(admin.review, bool(query.get("all")))
-                    self.send(200, md, "text/markdown; charset=utf-8",
-                              {"Content-Disposition": 'attachment; filename="texercises-feedback.md"'})
-                elif api and (m := re.fullmatch(r"bundles/([0-9a-f]{12})(?:/(render|export\.zip))?", api)):
-                    bid, what = m.group(1), m.group(2)
-                    if what is None:
-                        self.json(200, rv.bundle_view(admin.review, bid, rv.feedback_counts(admin.review, bid)))
-                    elif what == "render":
-                        keys = [k for k in (query.get("keys") or [""])[0].split(",") if k]
-                        self.json(200, admin.review_render(bid, keys))
-                    elif teacher != admin.super:
-                        self.json(403, {"error": "the superuser only"})
-                    else:
-                        changed = bool(query.get("changed"))
-                        uploaded = next((b["name"] for b in rv.list_bundles(admin.review) if b["id"] == bid), "")
-                        name = re.sub(r"[^A-Za-z0-9._-]+", "-", str(uploaded)).strip("-")
-                        name = re.sub(r"\.(zip|tgz|gz)$", "", name) or "texercises"
-                        self.send(200, rv.export_zip(admin.review, bid, changed), "application/zip",
-                                  {"Content-Disposition": f'attachment; filename="{name}{"-changed" if changed else ""}.zip"'})
-                else:
-                    self.json(404, {"error": "not found"})
-            except KeyError:
-                self.json(404, {"error": "no such upload or exercise"})
-            except ValueError as e:
-                self.json(400, {"error": str(e)})
-
-        def review_post(self, path: str) -> None:
-            """/texercises/api/upload?name=<file name> (the superuser; the file as the body),
-            api/bundles/<id> {"action": "delete"} | {"action": "difficulty", "key", "difficulty"} (the
-            superuser), api/feedback {"bundle", "key", "kind", "text", "collection"} | {"action": "done" |
-            "reopen" | "delete", "id"} (anyone logged in; changing an entry: its author or the superuser)."""
-            teacher = self.teacher()
-            if not teacher:
-                self.json(403, {"error": "login"})
-                return
-            rv = sheets_module("review")
-            if rv is None:
-                self.json(500, {"error": "the review is not installed"})
-                return
-            superuser = teacher == admin.super
-            api = path[len("/texercises/api/"):]
-            try:
-                if api == "upload":
-                    if not superuser:
-                        self.json(403, {"error": "the superuser only"})
-                        return
-                    try:
-                        n = int(self.headers.get("Content-Length") or 0)
-                    except ValueError:
-                        n = -1
-                    if n <= 0 or n > MAX_UPLOAD:
-                        self.json(413, {"error": "the file is too large (at most 64 MB)"})
-                        return
-                    name = (parse_qs(self.path.partition("?")[2]).get("name") or [""])[0]
-                    self.json(200, rv.store_bundle(admin.review, self.rfile.read(n), name, teacher))
-                    return
-                body = self.json_body()
-                if body is None:
-                    return
-                m = re.fullmatch(r"bundles/([0-9a-f]{12})", api)
-                if m:
-                    if not superuser:
-                        self.json(403, {"error": "the superuser only"})
-                    elif body.get("action") == "delete":
-                        rv.delete_bundle(admin.review, m.group(1))
-                        self.json(200, {"ok": True})
-                    elif body.get("action") == "difficulty":
-                        self.json(200, rv.set_difficulty(admin.review, m.group(1), str(body.get("key") or ""), body.get("difficulty")))
-                    else:
-                        self.json(400, {"error": "action: delete or difficulty"})
-                elif api == "feedback":
-                    if body.get("action"):
-                        rv.change_feedback(admin.review, str(body.get("id") or ""), str(body.get("action")), teacher, superuser)
-                        self.json(200, {"ok": True})
-                    else:
-                        self.json(200, rv.add_feedback(admin.review, str(body.get("bundle") or ""), str(body.get("key") or ""),
-                                                       body.get("kind"), body.get("text"), teacher, body.get("collection")))
-                else:
-                    self.json(404, {"error": "not found"})
-            except KeyError:
-                self.json(404, {"error": "no such upload, exercise or feedback"})
-            except PermissionError as e:
-                self.json(403, {"error": str(e)})
-            except ValueError as e:
-                self.json(400, {"error": str(e)})
-            except OSError:
-                self.json(500, {"error": "could not store it"})
-
         def audit_post(self) -> None:
             """/api/exercise-audit (the superuser): the report of the exercises' review as JSON (up to
             MAX_AUDIT; nginx lets that through here), replacing the one stored."""
@@ -2376,10 +2323,6 @@ def make_handler(admin: Admin):
                 self.send(200, ONLINE_JS, "text/javascript; charset=utf-8")
             elif path == "/static/online.css":
                 self.send(200, ONLINE_CSS, "text/css; charset=utf-8")
-            elif path == "/texercises":
-                self.send(HTTPStatus.MOVED_PERMANENTLY, "", headers={"Location": "/texercises/"})
-            elif path.startswith("/texercises/"):
-                self.review_get(path)
             elif path.startswith("/sheet/"):
                 self.sheet_route(path[len("/sheet/"):])
             elif path in ("/api/sheets", "/api/preview", "/api/images") or path.startswith("/api/sheets/"):
@@ -2397,11 +2340,16 @@ def make_handler(admin: Admin):
                     self.json(403, {"error": "login"})
                 else:
                     self.json(200, admin.teachers_state() if path == "/api/teachers" else admin.stats())
-            elif path == "/api/exercise-audit":
+            elif path in ("/api/exercise-audit", "/api/exercise-audit/feedback", "/api/exercise-audit/export"):
                 if not self.is_super():
                     self.json(403, {"error": "the superuser only"})
+                elif path == "/api/exercise-audit":
+                    self.json(200, {"report": admin.audit(), "feedback": admin.audit_feedback()})
+                elif path.endswith("/feedback"):
+                    self.json(200, {"feedback": admin.audit_feedback()})
                 else:
-                    self.json(200, {"report": admin.audit()})
+                    self.send(200, json.dumps(admin.audit_export(), ensure_ascii=False, indent=1), "application/json; charset=utf-8",
+                              {"Content-Disposition": f'attachment; filename="exercise-review-feedback-{time.strftime("%Y-%m-%d")}.json"'})
             elif path.startswith("/api/all-in/"):
                 self.allin_get(path[len("/api/all-in/"):])
             elif path.startswith("/api/absolute-zero/"):
@@ -2455,6 +2403,19 @@ def make_handler(admin: Admin):
                 self.sheets_post(path)
             elif path == "/api/exercise-audit":
                 self.audit_post()
+            elif path == "/api/exercise-audit/feedback":
+                if not self.is_super():
+                    self.json(403, {"error": "the superuser only"})
+                    return
+                body = self.json_body()
+                if body is None:
+                    return
+                try:
+                    self.json(200, admin.change_audit_feedback(body))
+                except ValueError as e:
+                    self.json(400, {"error": str(e)})
+                except OSError:
+                    self.json(500, {"error": "could not store the feedback"})
             elif path == "/api/images/fetch":
                 if not self.is_super():
                     self.json(403, {"error": "login"})
@@ -2469,8 +2430,6 @@ def make_handler(admin: Admin):
                     self.json(400, {"error": str(e)})
                 except OSError:
                     self.json(500, {"error": "could not store the image"})
-            elif path.startswith("/texercises/api/"):
-                self.review_post(path)
             elif path == "/api/texercises":
                 # the uploads of the sheets (nginx lets 64 MB through here): a TeXercises export, or with
                 # ?image=<file name> an image of the gallery or a .zip of them
@@ -2711,16 +2670,16 @@ SUPER_SECTIONS = """
       <p id="no-tags" class="note" hidden>No tags yet: add one to an app above.</p>
     </section>
     <section id="view-sheets" hidden>
-      <details id="sheets-topics" class="card topics"><summary>Topics covered by the exercise pool <span class="note">Loading…</span></summary><div class="topicgrid"></div></details>
-      <details id="sheets-audit" class="card audit"><summary>Exercise review <span class="only">only you see this</span> <span class="note">Loading…</span></summary><div class="audit-body"></div></details>
-      <p class="lead">Exercise sheets from your TeXercises exercises: choose modules and their learning objectives, let the panel suggest a balanced sheet, replace or reorder its exercises, and preview them. Then download it as a PDF (with or without the solutions) or share an online version with your students: a secret link that works without logging in and shows no solutions.</p>
-      <div id="sheets-state" class="sheetstate"><p class="note">Loading…</p></div>
       <div class="bar">
         <button type="button" id="sheet-save" class="primary" disabled>Save</button>
         <span id="sheet-status" class="status" aria-live="polite"></span>
       </div>
       <div id="sheet-list" class="setlist"></div>
       <div id="sheet-edit"></div>
+      <details id="sheets-topics" class="card topics"><summary>Topics covered by the exercise pool <span class="note">Loading…</span></summary><div class="topicgrid"></div></details>
+      <details id="sheets-audit" class="card audit"><summary>Exercise review <span class="only">only you see this</span> <span class="note">Loading…</span></summary><div class="audit-body"></div></details>
+      <p class="lead">Exercise sheets from your TeXercises exercises: choose modules and their learning objectives, let the panel suggest a balanced sheet, replace or reorder its exercises, and preview them. Then download it as a PDF (with or without the solutions) or share an online version with your students: a secret link that works without logging in and shows no solutions.</p>
+      <div id="sheets-state" class="sheetstate"><p class="note">Loading…</p></div>
     </section>""" + TEACHERS_SECTION
 
 COMMON_SECTIONS = """
@@ -3027,6 +2986,13 @@ h2.section { font-size: 1.15rem; margin: 28px 0 4px; }
 .topicmod li.zero, .topicmod.zero .head { color: var(--muted); }
 .topicmod li.zero .n { color: var(--bad); font-weight: 600; }
 .topicmod .note { margin: 4px 0 0; font-size: 0.8rem; }
+.edtopics { border: 1px solid var(--line); border-radius: 8px; padding: 8px 12px; margin: 14px 0 4px; }
+.edtopics .topicgrid { max-height: 420px; overflow-y: auto; }
+.topicmod button.pickname { all: unset; cursor: pointer; text-align: left; flex: 1 1 auto; border-radius: 4px; }
+.topicmod button.pickname:hover { color: var(--accent); text-decoration: underline; }
+.topicmod button.pickname:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.topicmod button.pickname.on { color: var(--accent); font-weight: 600; }
+.topicmod .head button.pickname { font-weight: 600; }
 /* the exercises' review (#sheets-audit): its severities by colour and by name (s-error, not error: .error is red text) */
 .audit { --sev-error: var(--bad); --sev-warning: #a35a00; --sev-doubt: #6a4bb0; padding: 10px 16px; margin: 0 0 14px; }
 @media (prefers-color-scheme: dark) { .audit { --sev-warning: #ffb74d; --sev-doubt: #c2a8ff; } }
@@ -3041,13 +3007,14 @@ h2.section { font-size: 1.15rem; margin: 28px 0 4px; }
 .audit .stat.s-error { border-left: 4px solid var(--sev-error); }
 .audit .stat.s-warning { border-left: 4px solid var(--sev-warning); }
 .audit .stat.s-doubt { border-left: 4px solid var(--sev-doubt); }
-.audit .filters { display: grid; gap: 6px; margin: 0 0 10px; }
+.audit .filters { display: grid; grid-template-columns: minmax(0, 1fr); gap: 6px; margin: 0 0 10px; }  /* (a long collection name: not wider than the page) */
 .audit .filters .row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
 .audit .filters .what { width: 5rem; color: var(--muted); font-size: 0.88rem; }
 .audit .filters button { border-radius: 999px; padding: 2px 11px; font-size: 0.86rem; }
 .audit .filters button .n { margin-left: 5px; color: var(--muted); font-size: 0.8rem; font-variant-numeric: tabular-nums; }
 .audit .filters button[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); font-weight: 600; }
 .audit .filters button[aria-pressed="true"] .n { color: inherit; opacity: 0.85; }
+.audit .filters select { font: inherit; font-size: 0.9rem; color: inherit; background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: 4px 8px; flex: 0 1 auto; max-width: 100%; min-width: 0; }
 .audit .filters input[type=search] { flex: 1 1 200px; max-width: 420px; width: auto; min-width: 0; padding: 4px 10px; }
 .audit .shown { color: var(--muted); font-size: 0.88rem; margin: 0 0 8px; }
 .audit ol.exs { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
@@ -3070,6 +3037,18 @@ h2.section { font-size: 1.15rem; margin: 28px 0 4px; }
 .audit .fix b { color: var(--ok); font-weight: 600; }
 .audit .tools-line { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin: 12px 0 0; font-size: 0.9rem; }
 .audit .tools-line input[type=file] { width: auto; max-width: 100%; font-size: 0.85rem; }
+.audit .rv-line { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 4px 12px; }
+.audit a.export { display: inline-block; background: var(--accent); color: var(--accent-ink); border-radius: 6px; padding: 4px 12px; font-weight: 600; font-size: 0.9rem; text-decoration: none; margin: 0 0 8px; }
+.audit a.export.off { background: var(--card); color: var(--muted); border: 1px solid var(--line); pointer-events: none; font-weight: 400; }
+.audit .ihead { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 0; }
+.audit label.accept { margin-left: auto; display: inline-flex; align-items: center; gap: 5px; font-size: 0.85rem; cursor: pointer; padding-left: 10px; }
+.audit label.accept input { width: auto; margin: 0; accent-color: var(--ok); }
+.audit .comment { border-top: 1px solid var(--line); margin-top: 8px; padding-top: 8px; display: grid; gap: 2px; }
+.audit .comment textarea { font: inherit; font-size: 0.92rem; color: inherit; background: var(--card); border: 1px solid var(--line); border-radius: 6px; padding: 5px 8px; width: 100%; resize: vertical; min-height: 2.6em; }
+.audit .comment textarea:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+.audit .saved { font-size: 0.78rem; color: var(--muted); min-height: 1.1em; }
+.audit .saved.ok { color: var(--ok); }
+.audit .saved.bad { color: var(--bad); }
 .audit .replace > summary { cursor: pointer; color: var(--accent); font-size: 0.9rem; margin-top: 12px; }
 @media (max-width: 560px) { .audit .stat { flex: 1 1 5.5rem; padding: 3px 8px; } .audit .filters .what { width: auto; flex-basis: 100%; } }
 .sheetstate .upload summary { cursor: pointer; color: var(--accent); font-size: 0.95rem; }
@@ -3563,11 +3542,49 @@ SHEETS_JS = r"""
       cur.id ? el('div', { class: 'setactions' },
         el('button', { type: 'button', onclick: () => act('duplicate') }, 'Duplicate'),
         el('button', { type: 'button', class: 'danger', onclick: () => act('delete') }, 'Delete sheet')) : '',
+      editorTopics(),
       el('h3', {}, 'Modules and learning objectives'), modules(),
       el('h3', {}, 'Exercises'), exercises(),
       el('h3', {}, 'Images'), imagesBox(),
       el('h3', {}, 'Preview'), preview(),
       el('h3', {}, 'PDF and online version'), output()));
+  }
+
+  // the topics of the imported exercises, at the top of the editor: per module and learning objective
+  // the exercises there (uploaded or drafts) for it; a click chooses the module or the objective below
+  let edTopicsOpen = true;
+  try { edTopicsOpen = localStorage.getItem('sheet-edit-topics') !== '0'; } catch (e) { /* none */ }
+  function choose(appId, ob) {
+    const app = appOf(appId);
+    let m = cur.modules.find((x) => x.id === appId);
+    if (!m) {
+      m = { id: appId, objectives: ob ? [] : app.objectives.map((o) => o.id) };
+      cur.modules.push(m);
+      const order = st.apps.map((x) => x.id);
+      cur.modules.sort((x, y) => order.indexOf(x.id) - order.indexOf(y.id));
+    }
+    if (ob && app.objectives.some((o) => o.id === ob) && !m.objectives.includes(ob)) {
+      m.objectives = app.objectives.filter((o) => o.id === ob || m.objectives.includes(o.id)).map((o) => o.id);
+    }
+    changed(true);
+    render();
+  }
+  function editorTopics() {
+    const mods = (st.topics || []).filter((m) => st.apps.some((a) => a.id === m.id));
+    const chosen = (id, ob) => { const m = cur.modules.find((x) => x.id === id); return !!m && (!ob || m.objectives.includes(ob)); };
+    const there = mods.reduce((n, m) => n + m.there, 0);
+    const d = el('details', { class: 'topics edtopics', open: edTopicsOpen },
+      el('summary', {}, 'Topics of the imported exercises', el('span', { class: 'note' }, `${there} exercises there · click a module or an objective to choose it`)),
+      el('div', { class: 'topicgrid' }, ...mods.map((m) => el('div', { class: `topicmod${m.there ? '' : ' zero'}` },
+        el('div', { class: 'head' },
+          el('button', { type: 'button', class: `pickname${chosen(m.id) ? ' on' : ''}`, title: chosen(m.id) ? 'On the sheet' : 'Choose this module', onclick: () => choose(m.id, null) }, appName(m)),
+          el('span', { class: 'n', title: `${m.there} of the module's ${m.exercises} exercises in the pool are there` }, `${m.there} ex.`)),
+        m.objectives.length ? el('ul', {}, ...m.objectives.map((o) => el('li', { class: o.there ? '' : 'zero' },
+          el('button', { type: 'button', class: `pickname${chosen(m.id, o.id) ? ' on' : ''}`, title: chosen(m.id, o.id) ? 'On the sheet' : 'Choose this objective', onclick: () => choose(m.id, o.id) },
+            cur.lang === 'de' ? o.de || o.en : o.en),
+          el('span', { class: 'n', title: `${o.there} of its ${o.exercises} exercises in the pool are there` }, String(o.there))))) : ''))));
+    d.addEventListener('toggle', () => { edTopicsOpen = d.open; try { localStorage.setItem('sheet-edit-topics', d.open ? '1' : '0'); } catch (e) { /* none */ } });
+    return d;
   }
 
   function modules() {
@@ -3927,7 +3944,12 @@ SHEETS_JS = r"""
 // with its numbers; unfolded, how many exercises were reviewed and have issues, by severity, then the
 // exercises with issues, the most serious first (PAGE at a time), each issue with its severity,
 // category, where it is and a suggested fix, filtered by severity, category and a search. The texts
-// are the report's: put in as text, never as HTML.
+// are the report's: put in as text, never as HTML. A report whose exercises name their collections
+// (titles) also filters by collection (a select; the search finds them too).
+// The superuser's feedback on it (/admin/api/exercise-audit/feedback, kept by exercise id and issue
+// fingerprint, so a regenerated report keeps it): per issue "Accept fix", per exercise a comment (saved
+// as it is typed); the exercises marked so (or not yet) are a filter, and "Export for Claude" downloads
+// them (/admin/api/exercise-audit/export) with their accepted and other issues and the comment.
 (function () {
   'use strict';
   const box = document.querySelector('#sheets-audit');
@@ -3936,7 +3958,11 @@ SHEETS_JS = r"""
   const WHERE = { text: 'exercise text', solution: 'solution', short: 'short solution', solver: 'solver', title: 'title', compile: 'LaTeX compile' };
   const PAGE = 60;
   const body = box.querySelector('.audit-body'), line = box.querySelector('summary .note');
-  let report = null, sevOn = '', catOn = '', query = '', shown = PAGE, loaded = false;
+  let report = null, sevOn = '', catOn = '', collOn = '', markOn = '', query = '', shown = PAGE, loaded = false;
+  let feedback = {}; // ref → { comment, accepted: [fp] }
+  let counted = () => {}; // (draw's: the numbers of the marked exercises, after a change)
+  const NONE = '\u0000none'; // collOn: the exercises in no collection
+  const collsOf = (e) => (Array.isArray(e.collections) ? e.collections : []);
 
   function el(tag, attrs, ...kids) {
     const e = document.createElement(tag);
@@ -3970,16 +3996,56 @@ SHEETS_JS = r"""
     return el('div', { class: 'tools-line' }, file, el('button', { type: 'button', onclick: send }, label), msg);
   }
 
+  // the feedback: an exercise is marked with a comment or an accepted fix of one of its issues (of
+  // this report: those of issues no longer in it are kept, but do not count)
+  const fbOf = (e) => feedback[e.ref] || { comment: '', accepted: [] };
+  const acceptedIn = (e) => e.issues.filter((i) => fbOf(e).accepted.includes(i.fp));
+  const marked = (e) => !!(fbOf(e).comment || acceptedIn(e).length);
+  async function send(e, change) {
+    const r = await fetch('/admin/api/exercise-audit/feedback', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ exercise: e.ref, ...change }) });
+    const d = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(d.error || r.statusText);
+    feedback[e.ref] = { comment: d.comment, accepted: d.accepted };
+    counted();
+  }
+
   function exercise(e, issues) {
     const title = e.url ? el('a', { href: `https://texercises.com${e.url}`, target: '_blank', rel: 'noopener' }, `${e.title} ↗`) : e.title;
+    const state = el('span', { class: 'saved', 'aria-live': 'polite' });
+    const said = (text, cls) => { state.textContent = text; state.className = `saved ${cls || ''}`; };
+    const accept = (i) => {
+      const box = el('input', { type: 'checkbox', checked: fbOf(e).accepted.includes(i.fp) });
+      box.addEventListener('change', () => {
+        said('Saving…');
+        send(e, { accept: { fp: i.fp, on: box.checked } }).then(() => said('Saved', 'ok'))
+          .catch((err) => { box.checked = !box.checked; said(`Not saved: ${err.message}`, 'bad'); });
+      });
+      return el('label', { class: 'accept', title: 'Accept the suggested fix' }, box, 'Accept fix');
+    };
+    // the comment: saved a moment after typing stops, and on leaving the field
+    const comment = el('textarea', { rows: '2', maxlength: '4000', placeholder: 'Comment (for whoever fixes it)', 'aria-label': `Comment on ${e.title}` });
+    comment.value = fbOf(e).comment || '';
+    let timer = 0, sent = comment.value;
+    const save = () => {
+      clearTimeout(timer);
+      const text = comment.value;
+      if (text === sent) return;
+      sent = text;
+      said('Saving…');
+      send(e, { comment: text }).then(() => said('Saved', 'ok')).catch((err) => { sent = null; said(`Not saved: ${err.message}`, 'bad'); });
+    };
+    comment.addEventListener('input', () => { clearTimeout(timer); timer = setTimeout(save, 800); said(''); });
+    comment.addEventListener('blur', save);
     return el('li', { class: `ex s-${issues[0].severity}` },
       el('h3', {}, title),
-      el('div', { class: 'id' }, [e.id ? `id ${e.id}` : '', e.key, e.lang].filter(Boolean).join(' · ')),
+      el('div', { class: 'id' }, [e.id ? `id ${e.id}` : '', e.key, e.lang, collsOf(e).join(', ')].filter(Boolean).join(' · ')),
       el('ul', {}, issues.map((i) => el('li', {},
-        el('div', {}, el('span', { class: `sev s-${i.severity}` }, SEV[i.severity]),
-          el('span', { class: 'where' }, [i.category, WHERE[i.where] || i.where].filter(Boolean).join(' · '))),
+        el('div', { class: 'ihead' }, el('span', { class: `sev s-${i.severity}` }, SEV[i.severity]),
+          el('span', { class: 'where' }, [i.category, WHERE[i.where] || i.where].filter(Boolean).join(' · ')), accept(i)),
         el('p', { class: 'issue' }, i.issue),
-        i.fix ? el('p', { class: 'fix' }, el('b', {}, 'Fix: '), i.fix) : ''))));
+        i.fix ? el('p', { class: 'fix' }, el('b', {}, 'Fix: '), i.fix) : ''))),
+      el('div', { class: 'comment' }, comment, state));
   }
 
   function draw() {
@@ -3998,7 +4064,28 @@ SHEETS_JS = r"""
     const chip = (label, num, pressed, onclick) => el('button', { type: 'button', 'aria-pressed': String(pressed), onclick }, label, el('span', { class: 'n' }, String(num)));
     const list = el('ol', { class: 'exs' }), info = el('p', { class: 'shown' });
     const search = el('input', { type: 'search', placeholder: 'Search title, id, key or issue', 'aria-label': 'Search the exercises and their issues', value: query });
-    const sevRow = el('div', { class: 'row' }), catRow = el('div', { class: 'row' });
+    const sevRow = el('div', { class: 'row' }), catRow = el('div', { class: 'row' }), markRow = el('div', { class: 'row' });
+    const exportLink = el('a', { class: 'export', href: '/admin/api/exercise-audit/export', download: '' });
+    const MARK = { yes: 'Accepted or commented', no: 'Not yet' };
+    counted = () => {
+      const k = all.filter(marked).length;
+      markRow.replaceChildren(el('span', { class: 'what' }, 'Marked'), chip('All', all.length, !markOn, pick(() => { markOn = ''; })),
+        ...Object.entries(MARK).map(([m, label]) => chip(label, m === 'yes' ? k : all.length - k, markOn === m, pick(() => { markOn = markOn === m ? '' : m; }))));
+      exportLink.textContent = `Export for Claude (${k})`;
+      exportLink.title = k ? `The ${k} exercises with an accepted fix or a comment, as JSON` : 'Accept a fix or write a comment first';
+      exportLink.classList.toggle('off', !k);
+    };
+    // the collections, by name, each with its exercises with issues (as the chips: of the whole report)
+    const colls = new Map();
+    let loose = 0;
+    all.forEach((e) => { if (!collsOf(e).length) loose += 1; collsOf(e).forEach((c) => colls.set(c, (colls.get(c) || 0) + 1)); });
+    if (collOn && collOn !== NONE && !colls.has(collOn)) collOn = '';
+    const collSel = el('select', { 'aria-label': 'Filter by collection', onchange: () => { collOn = collSel.value; shown = PAGE; fill(); } },
+      el('option', { value: '' }, `All collections (${all.length})`),
+      loose ? el('option', { value: NONE }, `No collection (${loose})`) : '',
+      [...colls].sort((a, b) => a[0].localeCompare(b[0])).map(([c, k]) => el('option', { value: c }, `${c} (${k})`)));
+    collSel.value = collOn;
+    if (colls.size) search.placeholder = 'Search title, id, key, collection or issue';
     const more = el('button', { type: 'button', onclick: () => { shown += PAGE; fill(); } });
     const pick = (f) => () => { f(); shown = PAGE; fill(); };
     function fill() {
@@ -4006,16 +4093,19 @@ SHEETS_JS = r"""
         ...Object.keys(SEV).filter((s) => n(s)).map((s) => chip(SEV[s], n(s), sevOn === s, pick(() => { sevOn = sevOn === s ? '' : s; }))));
       catRow.replaceChildren(el('span', { class: 'what' }, 'Category'), chip('All', issues.length, !catOn, pick(() => { catOn = ''; })),
         ...cats.map((c) => chip(c, issues.filter((i) => i.category === c).length, catOn === c, pick(() => { catOn = catOn === c ? '' : c; }))));
+      counted();
       const words = fold(query).split(/\s+/).filter(Boolean);
       const rows = [];
       all.forEach((e) => {
-        const head = fold([e.title, e.id, e.key, e.lang].join(' '));
+        if (collOn && (collOn === NONE ? collsOf(e).length : !collsOf(e).includes(collOn))) return;
+        if (markOn && marked(e) !== (markOn === 'yes')) return;
+        const head = fold([e.title, e.id, e.key, e.lang, ...collsOf(e)].join(' '));
         const kept = e.issues.filter((i) => (!sevOn || i.severity === sevOn) && (!catOn || i.category === catOn)
           && words.every((w) => head.includes(w) || fold([i.issue, i.fix, i.category, i.where].join(' ')).includes(w)))
           .sort((a, b) => RANK[a.severity] - RANK[b.severity]);
         if (kept.length) rows.push([e, kept]);
       });
-      info.textContent = !sevOn && !catOn && !words.length ? `${all.length} exercises with issues, the most serious first.`
+      info.textContent = !sevOn && !catOn && !collOn && !markOn && !words.length ? `${all.length} exercises with issues, the most serious first.`
         : `${rows.length} of ${all.length} exercises with issues match.`;
       list.replaceChildren(...rows.slice(0, shown).map(([e, kept]) => exercise(e, kept)));
       more.hidden = rows.length <= shown;
@@ -4027,8 +4117,10 @@ SHEETS_JS = r"""
       el('p', { class: 'meta' }, [report.generated && `Review of ${report.generated}`, report.source, when && `uploaded ${when}`].filter(Boolean).join(' · ')),
       el('div', { class: 'stats' }, stat(report.reviewed, 'exercises reviewed'), stat(all.length, 'with issues'),
         stat(n('error'), 'errors', 's-error'), stat(n('warning'), 'warnings', 's-warning'), stat(n('doubt'), 'doubts', 's-doubt')),
-      el('div', { class: 'filters' }, sevRow, cats.length ? catRow : '', el('div', { class: 'row' }, el('span', { class: 'what' }, 'Search'), search)),
-      info, list, el('div', { class: 'tools-line' }, more),
+      el('div', { class: 'filters' }, sevRow, cats.length ? catRow : '',
+        colls.size ? el('div', { class: 'row' }, el('span', { class: 'what' }, 'Collection'), collSel) : '',
+        markRow, el('div', { class: 'row' }, el('span', { class: 'what' }, 'Search'), search)),
+      el('div', { class: 'rv-line' }, info, exportLink), list, el('div', { class: 'tools-line' }, more),
       el('details', { class: 'replace' }, el('summary', {}, 'Replace report'), upload('Replace report')));
     fill();
   }
@@ -4038,6 +4130,7 @@ SHEETS_JS = r"""
     if (r.status === 403) { location.reload(); return; }
     const d = await r.json();
     report = d.report && Array.isArray(d.report.exercises) ? d.report : null;
+    feedback = d.feedback && typeof d.feedback === 'object' ? d.feedback : {};
     loaded = true;
     draw();
   }
@@ -4674,464 +4767,6 @@ ACCOUNTS_JS = r"""
   }
 })();
 """
-
-
-# ---------------------------------------------------------------------- TeXercises review (/texercises/)
-REVIEW_CSS = r"""
-[hidden] { display: none !important; }
-.wrap.wide { max-width: 980px; }
-nav.tabs { display: flex; flex-wrap: wrap; gap: 6px 16px; margin: 0 0 16px; font-size: 0.95rem; }
-nav.tabs a { color: var(--accent); text-decoration: none; }
-nav.tabs a.on { color: var(--ink); font-weight: 600; }
-.rv-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
-.rv-list li { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 12px 16px; }
-.rv-list h3 { margin: 0 0 2px; font-size: 1.05rem; }
-.rv-list h3 a { color: var(--accent); text-decoration: none; }
-.rv-list h3 a:hover { text-decoration: underline; }
-.rv-row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; }
-.rv-row .grow { flex: 1 1 auto; }
-.badge { display: inline-block; background: var(--chip); border-radius: 999px; padding: 0 9px; font-size: 0.82rem; color: var(--ink); }
-.badge.warn { background: #fde8c8; color: #6b3a00; }
-@media (prefers-color-scheme: dark) { .badge.warn { background: #4a3413; color: #ffd9a0; } }
-.rv-upload { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
-.rv-upload input[type=file] { width: auto; flex: 1 1 260px; }
-.rv-search { max-width: 360px; }
-.rv-topics { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 0 0 12px; }
-.rv-topics .note { margin-right: 4px; }
-.rv-topics button { border-radius: 999px; padding: 2px 11px; font-size: 0.88rem; }
-.rv-topics button .n { color: var(--muted); font-size: 0.8rem; margin-left: 6px; }
-.rv-topics button[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); font-weight: 600; }
-.rv-topics button[aria-pressed="true"] .n { color: inherit; opacity: 0.85; }
-.rv-tp { font-size: 0.8rem; }
-table.rv-table { width: 100%; border-collapse: collapse; font-size: 0.93rem; }
-table.rv-table th, table.rv-table td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
-table.rv-table th { color: var(--muted); font-weight: 500; }
-table.rv-table a { color: var(--accent); }
-.rv-ex { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 14px 18px; margin: 0 0 14px; }
-.rv-ex > header { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; margin: 0 0 8px; }
-.rv-ex > header h3 { margin: 0; font-size: 1.08rem; flex: 1 1 auto; }
-.rv-ex > header h3 .nr { color: var(--accent); margin-right: 8px; }
-.rv-ex .meta { color: var(--muted); font-size: 0.85rem; }
-.rv-ex .meta a { color: inherit; }
-.rv-ex select { font: inherit; color: inherit; background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: 3px 6px; }
-.rv-part { border-top: 1px solid var(--line); margin-top: 10px; padding-top: 6px; }
-.rv-part > h4 { margin: 0 0 4px; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); font-weight: 600; }
-.rv-fb { border-top: 1px solid var(--line); margin-top: 10px; padding-top: 8px; font-size: 0.93rem; }
-.rv-fb ul { list-style: none; margin: 0 0 8px; padding: 0; display: grid; gap: 6px; }
-.rv-fb li { background: var(--chip); border-radius: 8px; padding: 6px 10px; }
-.rv-fb li.done { opacity: 0.6; }
-.rv-fb li .who { margin-right: 6px; }
-.rv-fb li .acts { float: right; display: flex; gap: 6px; }
-.rv-fb li .acts button { padding: 1px 8px; font-size: 0.82rem; }
-.rv-fb .txt { white-space: pre-wrap; }
-.rv-fb form { display: grid; gap: 8px; }
-.rv-fb form .rv-row select { width: auto; }
-textarea { font: inherit; color: inherit; background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: 7px 9px; width: 100%; min-height: 4.5em; resize: vertical; }
-.rv-gap { margin-bottom: 14px; }
-.rv-h { margin: 0 0 6px; font-size: 1.1rem; }
-.rv-tight { margin: 0 0 10px; }
-.rv-after { margin-left: 6px; }
-.rv-plain { color: inherit; text-decoration: none; }
-.rv-txt { white-space: pre-wrap; margin-top: 4px; }
-.rv-sticky { position: sticky; top: 0; z-index: 2; background: var(--bg); padding: 8px 0; margin-bottom: 8px; }
-label.check { display: inline-flex; align-items: center; gap: 6px; }
-label.check input { width: auto; }
-@media (max-width: 600px) { table.rv-table .opt { display: none; } }
-"""
-
-REVIEW_JS = r"""
-// TeXercises review (/texercises/): uploads (bundles in the TeXercises export format), their collections
-// and exercises (the server renders them: HTML whose math, in .tx-m and .tx-d, KaTeX sets here), an
-// exercise's standard difficulty (the superuser), feedback on an exercise (anyone logged in), and
-// the bundle with the changes to import into TeXercises. Views by the address: #b/<id>,
-// #b/<id>/all, #b/<id>/c/<collection>, #b/<id>/e/<exercise>, #feedback. The topics of the exercises
-// (their TeXercises subbranches) filter the collections, the list of all exercises (with the search)
-// and a collection's exercises; the topic chosen stays while the bundle does.
-(function () {
-  'use strict';
-  const root = document.querySelector('#review');
-  if (!root) return;
-  const SUPER = root.dataset.super === '1', ME = root.dataset.me || '';
-  const KINDS = { bug: 'Bug', suggestion: 'Suggestion', question: 'Question', other: 'Other' };
-  const API = '/texercises/api/';
-  let bundle = null; // the bundle shown: its collections and exercises
-  let feedback = []; // of that bundle (or all, on #feedback)
-  let solutions = true, query = '', fbOpenOnly = true;
-  let topic = ''; // the topic chosen ('' all of them, NONE the exercises without one)
-  const NONE = '\u0000none';
-  try { solutions = localStorage.getItem('rv-solutions') !== '0'; } catch (e) { /* none */ }
-
-  function el(tag, attrs, ...kids) {
-    const e = document.createElement(tag);
-    Object.entries(attrs || {}).forEach(([k, v]) => {
-      if (v === false || v == null) return;
-      if (k === 'class') e.className = v; else if (k.startsWith('on')) e.addEventListener(k.slice(2), v); else e.setAttribute(k, v === true ? '' : v);
-    });
-    kids.flat().forEach((k) => { if (k !== '' && k != null && k !== false) e.append(k); });
-    return e;
-  }
-  async function api(path, body, raw) {
-    const opts = body === undefined ? { credentials: 'same-origin' }
-      : raw ? { method: 'POST', credentials: 'same-origin', body }
-        : { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) };
-    const r = await fetch(API + path, opts);
-    if (r.status === 403) { location.href = '/admin/?next=' + encodeURIComponent(location.pathname + location.hash); throw new Error('logged out'); }
-    const d = await r.json().catch(() => ({}));
-    if (!r.ok) throw new Error(d.error || (r.status === 413 ? 'the server refused the file as too large (HTTP 413: nginx client_max_body_size)'
-      : `HTTP ${r.status} ${r.statusText}`.trim()));
-    return d;
-  }
-  function typeset(node) {
-    if (!window.katex) return;
-    node.querySelectorAll('.tx-m, .tx-d').forEach((e) => {
-      const src = e.textContent;
-      try { katex.render(src, e, { displayMode: e.classList.contains('tx-d'), throwOnError: true, strict: 'ignore' }); } catch (err) {
-        e.replaceChildren(el('code', { class: 'tx-raw', title: `Not shown: ${err.message}` }, src));
-      }
-    });
-  }
-  function html(markup) { const d = el('div', { class: 'tx' }); d.innerHTML = markup; typeset(d); return d; } // escaped by the server
-  const day = (t) => new Date(t * 1000).toLocaleDateString('de-CH');
-  const stars = (n) => '★'.repeat(n) + '☆'.repeat(Math.max(0, 6 - n));
-  const status = (text, cls) => { const s = document.querySelector('#rv-status'); if (s) { s.textContent = text || ''; s.className = `status ${cls || ''}`; } };
-  function fail(e) { status(e.message, 'bad'); }
-  function show(...kids) { root.replaceChildren(...kids); window.scrollTo(0, 0); }
-  function tabs(active) {
-    const b = bundle;
-    return el('nav', { class: 'tabs' },
-      el('a', { href: '#', class: active === 'home' ? 'on' : '' }, 'Uploads'),
-      b && el('a', { href: `#b/${b.id}`, class: active === 'colls' ? 'on' : '' }, 'Collections'),
-      b && el('a', { href: `#b/${b.id}/all`, class: active === 'all' ? 'on' : '' }, 'All exercises'),
-      el('a', { href: '#feedback', class: active === 'feedback' ? 'on' : '' }, 'Feedback'),
-      el('span', { id: 'rv-status', class: 'status' }));
-  }
-
-  // ---------------------------------------------------------------- uploads
-  async function home() {
-    const d = await api('bundles');
-    const file = el('input', { type: 'file', accept: '.zip,.tgz,.gz,application/zip' });
-    const upload = SUPER && el('section', { class: 'card rv-gap' },
-      el('h2', { class: 'rv-h' }, 'Upload'),
-      el('p', { class: 'note rv-tight' }, 'A TeXercises export (Settings → Export) or a bundle to import, as .zip or .tgz, at most 64 MB.'),
-      el('div', { class: 'rv-upload' }, file, el('button', { class: 'primary', onclick: async (ev) => {
-        const f = file.files[0];
-        if (!f) { status('Choose a file first.', 'bad'); return; }
-        ev.target.disabled = true; status('Uploading…');
-        try {
-          const b = await api('upload?name=' + encodeURIComponent(f.name), f, true);
-          location.hash = `#b/${b.id}`;
-        } catch (e) { fail(e); ev.target.disabled = false; }
-      } }, 'Upload')));
-    const list = d.bundles.length ? el('ul', { class: 'rv-list' }, d.bundles.map((b) => el('li', {},
-      el('div', { class: 'rv-row' },
-        el('h3', { class: 'grow' }, el('a', { href: `#b/${b.id}` }, b.name)),
-        b.changed ? el('span', { class: 'badge warn' }, `${b.changed} changed`) : '',
-        SUPER && el('button', { onclick: async () => {
-          if (!confirm(`Delete the upload "${b.name}"? Its feedback stays.`)) return;
-          try { await api(`bundles/${b.id}`, { action: 'delete' }); route(); } catch (e) { fail(e); }
-        } }, 'Delete')),
-      el('div', { class: 'note' }, `${b.exercises} exercises, ${b.collections} collections · uploaded ${day(b.uploaded)} by ${b.by}`))))
-      : el('p', { class: 'lead' }, SUPER ? 'Nothing uploaded yet.' : 'Nothing uploaded yet: the superuser uploads the exports.');
-    bundle = null;
-    show(tabs('home'), upload || '', list);
-  }
-
-  async function loadBundle(id) {
-    if (!bundle || bundle.id !== id) { bundle = await api(`bundles/${id}`); topic = ''; }
-    feedback = (await api(`feedback?bundle=${id}`)).feedback;
-  }
-  function downloads() {
-    if (!SUPER) return '';
-    const b = bundle;
-    return el('p', { class: 'note' }, 'Download for TeXercises (Import): ',
-      el('a', { href: `${API}bundles/${b.id}/export.zip` }, 'the whole bundle'),
-      b.changed ? [' · ', el('a', { href: `${API}bundles/${b.id}/export.zip?changed=1` }, `only the ${b.changed} changed exercise${b.changed > 1 ? 's' : ''}`)] : '',
-      b.changed ? ' (with their changed difficulty; exercises with an id are updated in place, those without are created anew).' : '');
-  }
-  const exOf = (k) => bundle.exercises.find((e) => e.key === k);
-  const openFb = (k) => feedback.filter((f) => f.key === k && !f.done).length;
-
-  // ---------------------------------------------------------------- topics
-  const topicsOf = (e) => (e && Array.isArray(e.topics) ? e.topics : []);
-  const onTopic = (e) => !topic || (topic === NONE ? !topicsOf(e).length : topicsOf(e).includes(topic));
-  // the topics of these exercises as chips with their counts ("All" first, "No topic" last); a click
-  // chooses one and calls redraw; nothing when no exercise has a topic
-  function topicChips(exercises, redraw) {
-    const counts = new Map();
-    let none = 0;
-    exercises.forEach((e) => { if (!topicsOf(e).length) none += 1; topicsOf(e).forEach((t) => counts.set(t, (counts.get(t) || 0) + 1)); });
-    if (!counts.size) return '';
-    const list = [...counts].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
-    if (topic && topic !== NONE && !counts.has(topic)) list.push([topic, 0]); // (chosen elsewhere: still shown, to undo it)
-    const nav = el('nav', { class: 'rv-topics', 'aria-label': 'Filter by topic' });
-    const draw = () => nav.replaceChildren(el('span', { class: 'note' }, 'Topic'),
-      ...[['', exercises.length, 'All'], ...list.map(([t, n]) => [t, n, t]), ...(none ? [[NONE, none, 'No topic']] : [])].map(([t, n, label]) =>
-        el('button', { type: 'button', 'aria-pressed': String(topic === t), onclick: () => { topic = t; draw(); redraw(); } },
-          label, el('span', { class: 'n' }, String(n)))));
-    draw();
-    return nav;
-  }
-
-  async function collections(id) {
-    await loadBundle(id);
-    const b = bundle;
-    const box = el('div');
-    // (with a topic chosen: the collections with exercises on it, and how many)
-    const fill = () => {
-      const items = b.collections.map((c) => {
-        const keys = c.items.filter((i) => i.key).map((i) => i.key);
-        const on = keys.filter((k) => onTopic(exOf(k))).length;
-        if (topic && !on) return null;
-        const fb = keys.reduce((n, k) => n + openFb(k), 0), ch = keys.filter((k) => exOf(k).changed).length;
-        return el('li', {},
-          el('div', { class: 'rv-row' },
-            el('h3', { class: 'grow' }, el('a', { href: `#b/${b.id}/c/${encodeURIComponent(c.key)}` }, c.title)),
-            c.kind ? el('span', { class: 'badge' }, c.kind) : '',
-            fb ? el('span', { class: 'badge warn' }, `${fb} feedback`) : '',
-            ch ? el('span', { class: 'badge' }, `${ch} changed`) : ''),
-          el('div', { class: 'note' }, (topic ? `${on} of ` : '') + `${c.items.length} exercise${c.items.length !== 1 ? 's' : ''}` + (topic ? ' on the topic' : '')
-            + (c.id ? ` · id ${c.id}` : ' · new (no id)')));
-      }).filter(Boolean);
-      box.replaceChildren(items.length ? el('ul', { class: 'rv-list' }, items)
-        : el('p', { class: 'lead' }, b.collections.length ? 'No collection has exercises on this topic.' : 'This upload has no collections: see All exercises.'));
-    };
-    fill();
-    show(el('h2', {}, b.name), tabs('colls'), downloads(), b.collections.length ? topicChips(b.exercises, fill) : '', box);
-  }
-
-  async function allExercises(id) {
-    await loadBundle(id);
-    const b = bundle;
-    const body = el('tbody');
-    const count = el('span', { class: 'note' });
-    const fill = () => {
-      const q = query.trim().toLowerCase();
-      const found = b.exercises.filter((e) => onTopic(e) && (!q || e.title.toLowerCase().includes(q) || e.key.includes(q) || String(e.id || '') === q));
-      count.textContent = found.length === b.exercises.length ? `${found.length} exercises` : `${found.length} of ${b.exercises.length} exercises`;
-      body.replaceChildren(...found.slice(0, 500).map((e) => el('tr', {},
-          el('td', {}, el('a', { href: `#b/${b.id}/e/${encodeURIComponent(e.key)}` }, e.title),
-            topicsOf(e).length ? el('div', { class: 'note rv-tp' }, topicsOf(e).join(' · ')) : ''),
-          el('td', { class: 'opt' }, e.id ? String(e.id) : 'new'),
-          el('td', { title: `difficulty ${e.difficulty}` }, stars(e.difficulty), e.changed ? el('span', { class: 'badge rv-after' }, 'changed') : ''),
-          el('td', {}, openFb(e.key) ? el('span', { class: 'badge warn' }, String(openFb(e.key))) : ''))));
-    };
-    const search = el('input', { type: 'search', class: 'rv-search', placeholder: 'Search title, key or id', value: query,
-      oninput: (ev) => { query = ev.target.value; fill(); } });
-    fill();
-    show(el('h2', {}, b.name), tabs('all'), downloads(), topicChips(b.exercises, fill), el('p', { class: 'rv-row' }, search, count),
-      el('table', { class: 'rv-table' }, el('thead', {}, el('tr', {}, el('th', {}, 'Exercise'), el('th', { class: 'opt' }, 'Id'), el('th', {}, 'Difficulty'), el('th', {}, 'Feedback'))), body));
-  }
-
-  // ---------------------------------------------------------------- exercises
-  function feedbackBox(key, coll) {
-    const box = el('div', { class: 'rv-fb' });
-    const draw = () => {
-      const mine = feedback.filter((f) => f.key === key);
-      const kind = el('select', {}, Object.entries(KINDS).map(([k, v]) => el('option', { value: k }, v)));
-      const text = el('textarea', { placeholder: 'What should change? (e.g. a wrong number in b, a unit missing, the sketch unreadable)', maxlength: '4000' });
-      const form = el('form', { hidden: true, onsubmit: async (ev) => {
-        ev.preventDefault();
-        try {
-          const f = await api('feedback', { bundle: bundle.id, key, collection: coll || '', kind: kind.value, text: text.value });
-          feedback.push(f); status('Feedback saved.', 'ok'); draw();
-        } catch (e) { fail(e); }
-      } }, text, el('div', { class: 'rv-row' }, kind, el('button', { type: 'submit', class: 'primary' }, 'Save'),
-        el('button', { type: 'button', onclick: () => { form.hidden = true; add.hidden = false; } }, 'Cancel')));
-      const add = el('button', { type: 'button', onclick: () => { form.hidden = false; add.hidden = true; text.focus(); } }, 'Give feedback');
-      box.replaceChildren(
-        mine.length ? el('ul', {}, mine.map((f) => el('li', { class: f.done ? 'done' : '' },
-          (SUPER || f.by === ME) ? el('span', { class: 'acts' },
-            el('button', { onclick: () => act(f, f.done ? 'reopen' : 'done') }, f.done ? 'Reopen' : 'Done'),
-            el('button', { onclick: () => act(f, 'delete') }, 'Delete')) : '',
-          el('strong', {}, KINDS[f.kind] || 'Other'), ' ', el('span', { class: 'who note' }, `${f.by}, ${day(f.at)}${f.done ? ', done' : ''}`),
-          el('div', { class: 'txt' }, f.text)))) : '',
-        add, form);
-    };
-    async function act(f, action) {
-      if (action === 'delete' && !confirm('Delete this feedback?')) return;
-      try {
-        await api('feedback', { action, id: f.id });
-        if (action === 'delete') feedback = feedback.filter((x) => x.id !== f.id); else f.done = action === 'done';
-        draw();
-      } catch (e) { fail(e); }
-    }
-    draw();
-    return box;
-  }
-
-  function difficulty(e) {
-    if (!SUPER) return el('span', { class: 'meta', title: 'standard difficulty' }, stars(e.difficulty));
-    const sel = el('select', { title: 'standard difficulty (default_difficulty)', onchange: async () => {
-      try {
-        const r = await api(`bundles/${bundle.id}`, { action: 'difficulty', key: e.key, difficulty: Number(sel.value) });
-        e.difficulty = r.difficulty; e.changed = r.changed; bundle.changed = r.bundle_changed;
-        note.textContent = e.changed ? `changed (was ${e.original})` : '';
-        status('Difficulty saved.', 'ok');
-      } catch (err) { fail(err); sel.value = String(e.difficulty); }
-    } }, [1, 2, 3, 4, 5, 6].map((n) => el('option', { value: String(n), selected: n === e.difficulty }, `${n} ${stars(n)}`)));
-    const note = el('span', { class: 'badge' }, e.changed ? `changed (was ${e.original})` : '');
-    if (!e.changed) note.textContent = '';
-    return el('span', { class: 'rv-row' }, el('span', { class: 'meta' }, 'Difficulty'), sel, note);
-  }
-
-  function card(e, nr, coll, r) {
-    const link = e.url ? el('a', { href: 'https://texercises.com' + e.url, target: '_blank', rel: 'noopener' }, 'on TeXercises ↗') : '';
-    const sol = el('div', { class: 'rv-sol' });
-    const fill = (got) => {
-      sol.replaceChildren(
-        got.solution ? el('div', { class: 'rv-part' }, el('h4', {}, 'Solution'), html(got.solution)) : '',
-        got.short ? el('div', { class: 'rv-part' }, el('h4', {}, 'Short solution'), html(got.short)) : '');
-      sol.hidden = !solutions;
-    };
-    const text = el('div', { class: 'rv-text' }, el('p', { class: 'note' }, 'Loading…'));
-    const c = el('article', { class: 'rv-ex', id: `ex-${e.key}` },
-      el('header', {},
-        el('h3', {}, nr ? el('span', { class: 'nr' }, String(nr)) : '', el('a', { href: `#b/${bundle.id}/e/${encodeURIComponent(e.key)}`, class: 'rv-plain' }, e.title)),
-        difficulty(e)),
-      el('div', { class: 'meta' }, (e.id ? `id ${e.id}` : 'new (no id)') + ` · ${e.key}` + (e.creator ? ` · by ${e.creator}` : '')
-        + (topicsOf(e).length ? ` · ${topicsOf(e).join(', ')}` : '') + ' ', link),
-      text, sol, feedbackBox(e.key, coll));
-    c.fill = (got) => { text.replaceChildren(html(got.text)); fill(got); };
-    if (r) c.fill(r);
-    return c;
-  }
-
-  async function render(keys, cards, tries) {
-    if (!keys.length) return;
-    const got = (await api(`bundles/${bundle.id}/render?keys=${keys.map(encodeURIComponent).join(',')}`)).exercises;
-    const pending = [];
-    keys.forEach((k) => { if (got[k]) { cards[k].fill(got[k]); if ((got[k].fallbacks || []).includes('pending')) pending.push(k); } });
-    if (pending.length && tries < 60) setTimeout(() => render(pending, cards, tries + 1).catch(fail), 4000); // TikZ being drawn
-  }
-  function solutionsToggle(cards) {
-    return el('label', { class: 'check' }, el('input', { type: 'checkbox', checked: solutions, onchange: (ev) => {
-      solutions = ev.target.checked;
-      try { localStorage.setItem('rv-solutions', solutions ? '1' : '0'); } catch (e) { /* none */ }
-      Object.values(cards).forEach((c) => { const s = c.querySelector('.rv-sol'); if (s) s.hidden = !solutions; });
-    } }), 'Show solutions');
-  }
-
-  async function collection(id, slug) {
-    await loadBundle(id);
-    const c = bundle.collections.find((x) => x.key === slug);
-    if (!c) { show(tabs('colls'), el('p', { class: 'lead' }, 'There is no such collection in this upload.')); return; }
-    const cards = {};
-    const list = c.items.map((it, i) => {
-      if (!it.key) return el('p', { class: 'note' }, `${i + 1}. An exercise on TeXercises that is not in this upload (id ${it.exercise_id}).`);
-      const e = exOf(it.key);
-      cards[it.key] = card(e, i + 1, slug, null);
-      return cards[it.key];
-    });
-    // (a topic chosen: only its exercises; the numbers stay those of the collection)
-    const here = c.items.filter((it) => it.key).map((it) => exOf(it.key));
-    const off = el('p', { class: 'note' });
-    const filter = () => {
-      Object.entries(cards).forEach(([k, cd]) => { cd.hidden = !onTopic(exOf(k)); });
-      list.forEach((x) => { if (!Object.values(cards).includes(x)) x.hidden = !!topic; });
-      const n = here.filter(onTopic).length;
-      off.textContent = topic ? `${n} of ${c.items.length} exercises on the topic.` : '';
-      off.hidden = !topic;
-    };
-    filter();
-    show(el('h2', {}, c.title), tabs('colls'),
-      el('div', { class: 'rv-sticky rv-row' }, el('span', { class: 'grow note' }, `${bundle.name} · ${c.items.length} exercises` + (c.id ? ` · collection id ${c.id}` : '')), solutionsToggle(cards)),
-      c.description ? el('p', { class: 'lead' }, c.description) : '', downloads(), topicChips(here, filter), off, ...list);
-    const keys = Object.keys(cards);
-    for (let i = 0; i < keys.length; i += 20) await render(keys.slice(i, i + 20), cards, 0);
-  }
-
-  async function exercise(id, key) {
-    await loadBundle(id);
-    const e = exOf(key);
-    if (!e) { show(tabs('all'), el('p', { class: 'lead' }, 'There is no such exercise in this upload.')); return; }
-    const cards = { [key]: card(e, 0, '', null) };
-    const colls = e.collections.map((s) => bundle.collections.find((c) => c.key === s)).filter(Boolean);
-    show(el('h2', {}, e.title), tabs('all'),
-      el('div', { class: 'rv-sticky rv-row' }, el('span', { class: 'grow note' }, colls.length ? ['In ', ...colls.flatMap((c, i) => [i ? ', ' : '', el('a', { href: `#b/${bundle.id}/c/${encodeURIComponent(c.key)}` }, c.title)])] : 'In no collection'), solutionsToggle(cards)),
-      cards[key]);
-    await render([key], cards, 0);
-  }
-
-  // ---------------------------------------------------------------- all feedback
-  async function allFeedback() {
-    feedback = (await api('feedback')).feedback;
-    const listBox = el('div');
-    const draw = () => {
-      const items = feedback.filter((f) => !fbOpenOnly || !f.done).sort((a, b) => b.at - a.at);
-      listBox.replaceChildren(items.length ? el('ul', { class: 'rv-list' }, items.map((f) => el('li', {},
-        el('div', { class: 'rv-row' },
-          el('h3', { class: 'grow' }, f.bundle_exists ? el('a', { href: `#b/${f.bundle}/e/${encodeURIComponent(f.key)}` }, f.title) : f.title),
-          el('span', { class: 'badge' + (f.kind === 'bug' ? ' warn' : '') }, KINDS[f.kind] || 'Other'),
-          (SUPER || f.by === ME) ? [el('button', { onclick: () => act(f, f.done ? 'reopen' : 'done') }, f.done ? 'Reopen' : 'Done'),
-            el('button', { onclick: () => act(f, 'delete') }, 'Delete')] : ''),
-        el('div', { class: 'note' }, `${f.bundle_name}${f.exercise_id ? ` · id ${f.exercise_id}` : ''} · ${f.by}, ${day(f.at)}${f.done ? ' · done' : ''}`),
-        el('div', { class: 'txt rv-txt' }, f.text))))
-        : el('p', { class: 'lead' }, fbOpenOnly ? 'No open feedback.' : 'No feedback yet.'));
-    };
-    async function act(f, action) {
-      if (action === 'delete' && !confirm('Delete this feedback?')) return;
-      try {
-        await api('feedback', { action, id: f.id });
-        if (action === 'delete') feedback = feedback.filter((x) => x.id !== f.id); else f.done = action === 'done';
-        draw();
-      } catch (e) { fail(e); }
-    }
-    draw();
-    show(el('h2', {}, 'Feedback'), tabs('feedback'),
-      el('div', { class: 'rv-row rv-gap' },
-        el('label', { class: 'check grow' }, el('input', { type: 'checkbox', checked: fbOpenOnly, onchange: (ev) => { fbOpenOnly = ev.target.checked; draw(); } }), 'Open only'),
-        el('a', { href: `${API}feedback.md` }, 'Download open feedback (.md)'), el('a', { href: `${API}feedback.md?all=1` }, 'all (.md)')),
-      listBox);
-  }
-
-  // ---------------------------------------------------------------- the address
-  async function route() {
-    const h = decodeURIComponent(location.hash.slice(1));
-    let m;
-    try {
-      if (h === 'feedback') await allFeedback();
-      else if ((m = h.match(/^b\/([0-9a-f]{12})\/c\/(.+)$/))) await collection(m[1], m[2]);
-      else if ((m = h.match(/^b\/([0-9a-f]{12})\/e\/(.+)$/))) await exercise(m[1], m[2]);
-      else if ((m = h.match(/^b\/([0-9a-f]{12})\/all$/))) await allExercises(m[1]);
-      else if ((m = h.match(/^b\/([0-9a-f]{12})$/))) { bundle = null; await collections(m[1]); }
-      else await home();
-    } catch (e) {
-      show(tabs(''), el('p', { class: 'lead error' }, e.message));
-    }
-  }
-  window.addEventListener('hashchange', route);
-  route();
-})();
-"""
-
-
-def review_page(teacher: str, superuser: bool, user: str) -> str:
-    return f"""<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="robots" content="noindex">
-  <title>TeXercises review</title>
-  <link rel="icon" href="/favicon.ico" sizes="48x48">
-  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="/admin/static/admin.css">
-  <link rel="stylesheet" href="/texercises/static/review.css">
-  <link rel="stylesheet" href="/katex/katex.min.css">
-  <script defer src="/katex/katex.min.js"></script>
-  <script defer src="/texercises/static/review.js"></script>
-</head>
-<body>
-  <header class="wrap wide">
-    <p class="crumb"><a href="/">Learning Physics</a> / <a href="/admin/">Admin</a> / TeXercises
-      <span class="who">· {escape(user or teacher)}</span></p>
-    <h1>TeXercises review</h1>
-  </header>
-  <main class="wrap wide" id="review" data-super="{'1' if superuser else '0'}" data-me="{escape(teacher)}">
-    <p class="lead">Loading…</p>
-  </main>
-</body>
-</html>"""
 
 
 def main(argv: Optional[List[str]] = None) -> int:

@@ -1,17 +1,15 @@
 # Exercise sheets
 
 In the admin panel's **Sheets** tab (logged in), the teacher makes exercise sheets from their TeXercises
-exercises. The tab begins, folded, with the **topics covered by the exercise pool** (`pool.json`, `coverage` in
-`sheets.py`): per module (the hub's apps, in their order) its exercises, how many of them are there (in
-the uploaded export or the drafts), and per learning objective the exercises that practise it; an
-objective without any shows a red 0, and a module's exercises tied to none of its objectives are counted
-as the module as a whole. Then, folded too, the **exercise review**: the report of a review of all
-TeXercises exercises (made elsewhere, uploaded or replaced here as JSON, kept in
-`hub-data/exercise-audit.json`, never in this public repository; `/admin/api/exercise-audit`,
-`normalize_audit` in `../hubadmin.py`): the exercises reviewed, those with issues and the issues by
-severity (error, warning, doubt), then the exercises with issues, the most serious first, each issue
-with its category, where it is (text, solution, short solution, solver, title) and a suggested fix,
-filtered by severity, category and a search; the titles link to the exercises on TeXercises. A sheet is independent of the sets: a title, a language (English or German), modules (the
+exercises. The tab begins with the sheets (**+ New sheet**) and the editor of the one chosen; at the top
+of the editor, the **topics of the imported exercises**: per module and learning objective the
+exercises there (in the uploaded export or the drafts); a click on a module or an objective chooses it
+for the sheet. Below the sheets, folded, the **topics covered by the exercise pool** (`pool.json`,
+`coverage` in `sheets.py`): per module (the hub's apps, in their order) its exercises, how many of them
+are there, and per learning objective the exercises that practise it; an objective without any shows a
+red 0, and a module's exercises tied to none of its objectives are counted as the module as a whole.
+Then, folded too, the **exercise review** (below), and last the state of the server and the upload of
+a TeXercises export. A sheet is independent of the sets: a title, a language (English or German), modules (the
 hub's apps) with the learning objectives it practises (all of a module's by default), and its exercises
 in order, kept in `hub-data/exercise-sheets.json` (not served).
 
@@ -60,33 +58,31 @@ in order, kept in `hub-data/exercise-sheets.json` (not served).
   all of them. It needs no login. **New link** replaces the secret (the old link stops working),
   **Stop sharing** removes it.
 
-## TeXercises review (learningphysics.ch/texercises/)
+## Exercise review (Sheets tab, the superuser's)
 
-A page of its own for checking exercises before (or after) they go to TeXercises, served by the admin
-service and open to every teacher account (logged in; teachingphysics.ch/texercises redirects there).
+The report of a review of all TeXercises exercises, made elsewhere (by Claude) and uploaded or replaced
+here as JSON (`/admin/api/exercise-audit`, `normalize_audit` in `../hubadmin.py`), kept in
+`hub-data/exercise-audit.json`: never in this public repository.
 
-- **Uploads** (the superuser): a TeXercises export (Settings → Export) or a bundle to import in the same
-  format, as .zip or .tgz up to 64 MB. Only `exercises/<key>/` (exercise.json and the four .tex parts)
-  and `collections/*.json` are kept, as an upload of its own in `hub-data/texercises-review/bundles/`
-  (at most 40; deleting one keeps its feedback). The sheets' export (above) is not touched.
-- **Collections**: each collection's exercises in order, rendered as in the preview (text, solution,
-  short solution; the TikZ figures drawn as for the sheets), solutions shown or hidden. **All
-  exercises**: the list, searchable by title, key or id.
-- **Topics**: an exercise's TeXercises subbranches (`subbranches` in exercise.json, any number). The
-  topics of the upload, with how many exercises each, filter the list of all exercises (together with
-  the search), the collections (those with exercises on the topic, and how many) and a collection's
-  exercises; **All** shows everything again, **No topic** the exercises without one.
-- **Difficulty** (the superuser): an exercise's standard difficulty (`default_difficulty`, 1 to 6). The
-  change is kept beside the upload; **Download** gives the whole bundle with the changes, or only the
-  changed exercises (no collections): imported into TeXercises, an exercise with an id is updated in
-  place, one without is created anew.
-- **Feedback** (any teacher): a bug, a suggestion, a question or other, on an exercise, in
-  `hub-data/texercises-review/feedback.json`. Its author or the superuser marks it done or deletes it.
-  The Feedback tab lists all of it and downloads it as Markdown (open entries, or all), by upload and
-  exercise, to pass on to whoever fixes the exercises.
+- The exercises reviewed, those with issues and the issues by severity (error, warning, doubt), then
+  the exercises with issues, the most serious first, each issue with its category, where it is (text,
+  solution, short solution, solver, title) and a suggested fix; the titles link to the exercises on
+  TeXercises. Filtered by severity, category, collection (the titles of the collections an exercise is
+  in, the report's `"collections"`, if it has them; also "No collection"), marked or not (below) and a
+  search.
+- **Feedback**: per issue **Accept fix**, per exercise a comment (saved as it is typed), in
+  `hub-data/exercise-audit-feedback.json` (`/admin/api/exercise-audit/feedback`). It is kept by the
+  exercise's id and a fingerprint of the issue (its severity, where it is and its text), so a
+  regenerated report keeps it for the issues found again; feedback on issues or exercises no longer in
+  the report is kept, but not shown or exported.
+- **Export for Claude** (`/admin/api/exercise-audit/export`) downloads
+  `exercise-review-feedback-YYYY-MM-DD.json`: the report's date and source, and every exercise with an
+  accepted fix or a comment (id, key, title, language, address, collections), its accepted issues, the
+  others (`not_accepted`) and the comment, for Claude to work on.
 
-`review.py` keeps the uploads and the feedback; `hubadmin.py` serves the page (`/texercises/`, nginx:
-`deploy/nginx/learningphysics.conf`).
+The TeXercises review page that was at learningphysics.ch/texercises/ is gone: nginx sends its old
+addresses to the admin panel. What it kept on the server (`hub-data/texercises-review/`) is no longer
+used and can be deleted.
 
 ## How the exercises are chosen
 
