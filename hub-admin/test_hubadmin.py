@@ -742,6 +742,19 @@ class AllInUnit(unittest.TestCase):
         with self.assertRaises(KeyError):
             self.rooms.view("ZZZZ")
 
+    def test_preview(self):
+        # a preview's room leaves the game in class open, and a new preview closes the old one
+        game = self.rooms.open("bys")
+        preview = self.rooms.open("bys", preview=True)
+        self.assertNotEqual(preview, game)
+        self.assertIn(game, self.rooms.rooms)
+        again = self.rooms.open("bys", preview=True)
+        self.assertNotIn(preview, self.rooms.rooms)
+        self.assertIn(game, self.rooms.rooms)
+        self.rooms.open("bys")
+        self.assertNotIn(game, self.rooms.rooms)
+        self.assertIn(again, self.rooms.rooms)
+
     def test_game(self):
         code = self.rooms.open("bys")
         with self.assertRaises(ValueError):

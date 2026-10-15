@@ -1,0 +1,18 @@
+/* The games' preview (canonical copy in shared/, copied by sync.sh into all-in/ and absolute-zero/,
+   see preview.js): the teacher's screen beside a phone, with a banner above. Uses the games'
+   colours (style.css). */
+.preview-grid { display: grid; grid-template-columns: minmax(0, 1fr) 380px; grid-template-areas: "banner banner" "main phone"; gap: 0 20px; align-items: start; }
+.preview-grid > main { grid-area: main; min-width: 0; }
+.preview-banner { grid-area: banner; margin: 12px 0 0; padding: 8px 14px; border: 1px dashed var(--gold); border-radius: var(--radius); color: var(--muted); font-size: 0.95rem; }
+.preview-banner b { color: var(--gold); margin-right: 6px; text-transform: uppercase; letter-spacing: 0.06em; }
+.preview-banner a { color: var(--accent); margin-left: 6px; white-space: nowrap; }
+.preview-phone { grid-area: phone; position: sticky; top: 12px; margin-top: 16px; }
+.preview-phone-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin: 0 0 6px; font-size: 0.9rem; }
+.preview-phone-head a { color: var(--accent); }
+.preview-device { height: min(760px, calc(100vh - 80px)); min-height: 480px; border: 10px solid #000; border-radius: 34px; overflow: hidden; background: var(--bg-0); box-shadow: 0 0 0 2px var(--line), 0 12px 40px rgba(0, 0, 0, 0.5); }
+.preview-device iframe { width: 100%; height: 100%; border: 0; display: block; }
+.preview-wait { margin: 0; padding: 40% 24px 0; text-align: center; color: var(--muted); }
+@media (max-width: 1000px) {
+  .preview-grid { grid-template-columns: minmax(0, 1fr); grid-template-areas: "banner" "main" "phone"; }
+  .preview-phone { position: static; max-width: 400px; margin-inline: auto; }
+}

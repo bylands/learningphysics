@@ -1,7 +1,7 @@
 #!/bin/bash
 # Copies the shared files (ui.css, lang.js, fit.js, sign.js, tutor.js, check.js, practice.js, topics.js, identify.js, artkit.js, figkit.js, sets.js) into every app, so that
 # each app stays a folder of its own for deployment; pages that are no app (the privacy page, the games All In and Absolute
-# Zero, and the hub, whose lang.js is served as /lang.js) get lang.js only. The interactive widgets (WIDGETS) go
+# Zero, and the hub, whose lang.js is served as /lang.js) get lang.js only, the games also preview.js and preview.css. The interactive widgets (WIDGETS) go
 # only into the apps whose index.html loads them (<script … src="name">, or a stylesheet link).
 # Edit the files here, never an app's copy.
 #   shared/sync.sh          copy
@@ -33,5 +33,7 @@ for app in $APPS; do
   for f in $WIDGETS; do if grep -q "\(src\|href\)=\"$f\"" "$app/index.html"; then copy "$f" "$app"; fi; done
 done
 for page in $PAGES; do copy lang.js "$page"; done
+# the games' preview: the teacher alone against simulated players
+for game in all-in absolute-zero; do copy preview.js "$game"; copy preview.css "$game"; done
 [ "$MODE" = "--check" ] && [ $status = 0 ] && echo "all shared files in sync"
 exit $status

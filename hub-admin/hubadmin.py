@@ -1488,8 +1488,10 @@ class AllInRooms:
         room["touched"] = self.clock()
         return room
 
-    def open(self, teacher: str, code: object = None) -> str:
-        """A room for the teacher (their earlier ones are closed), or theirs again under its code."""
+    def open(self, teacher: str, code: object = None, preview: bool = False) -> str:
+        """A room for the teacher (their earlier ones are closed), or theirs again under its code. A
+        preview's room (the teacher alone with simulated players, see shared/preview.js) closes only
+        the teacher's earlier preview, so that a game in class goes on."""
         with self.lock:
             self._sweep()
             code = str(code or "").upper()
@@ -1500,11 +1502,13 @@ class AllInRooms:
                 code = ""
                 while not code or code in self.rooms:
                     code = "".join(secrets.choice(ALLIN_CODE) for _ in range(4))
-            for c in [c for c, r in self.rooms.items() if r["owner"] == teacher]:
+            for c in [c for c, r in self.rooms.items() if r["owner"] == teacher and r.get("preview", False) == preview]:
                 del self.rooms[c]
             if len(self.rooms) >= ALLIN_MAX_ROOMS:
                 raise ValueError("too many games at the moment")
             self.rooms[code] = self._new_room(teacher)
+            if preview:
+                self.rooms[code]["preview"] = True
             return code
 
     def _new_room(self, teacher: str) -> Dict[str, object]:
@@ -2135,7 +2139,7 @@ def make_handler(admin: Admin):
             if not teacher:
                 self.json(403, {"error": "login"})
             elif code == "open" and not action:
-                self.allin_call(lambda: {"code": admin.allin.open(teacher, body.get("code"))})
+                self.allin_call(lambda: {"code": admin.allin.open(teacher, body.get("code"), body.get("preview") is True)})
             elif action == "state":
                 self.allin_call(lambda: admin.allin.set_state(teacher, code, body.get("state")) or {"ok": True})
             elif action == "close":
@@ -2176,7 +2180,7 @@ def make_handler(admin: Admin):
             if not teacher:
                 self.json(403, {"error": "login"})
             elif code == "open" and not action:
-                self.allin_call(lambda: {"code": admin.zero.open(teacher, body.get("code"))})
+                self.allin_call(lambda: {"code": admin.zero.open(teacher, body.get("code"), body.get("preview") is True)})
             elif action == "state":
                 self.allin_call(lambda: admin.zero.set_state(teacher, code, body.get("state")) or {"ok": True})
             elif action == "close":
@@ -2559,27 +2563,30 @@ COMMON_SECTIONS = """
         <li class="card">
           <h2>Electric Circuits: the quiz</h2>
           <p>A live quiz in the style of Kahoot on DC circuits: charge, current, voltage, power, resistance, resistor circuits and meters, in 21 questions. Points for difficulty and speed, a ranking after every question, and at the end personal feedback for every student and class statistics with a CSV export for the teacher.</p>
-          <p class="links"><a href="/electric-circuits/host" target="_blank" rel="noopener">Teacher screen ↗</a> <a href="/electric-circuits/" target="_blank" rel="noopener">Student page ↗</a></p>
+          <p class="links"><a href="/electric-circuits/host" target="_blank" rel="noopener">Teacher screen ↗</a> <a href="/electric-circuits/" target="_blank" rel="noopener">Student page ↗</a> <a href="/electric-circuits/host?preview=1" target="_blank" rel="noopener">Try it alone ↗</a></p>
           <p class="note">learningphysics.ch/electric-circuits/ · students join there with the game code of your lobby (its QR code carries it); every teacher has a game of their own, and you're logged in there with this account</p>
         </li>
       </ul>
     </section>
     <section id="view-games" hidden>
-      <p class="lead">The games for the class, each a service of its own on this site.</p>
+      <p class="lead">The games for the class, each a service of its own on this site. <i>Try it alone</i> opens a preview: you play one student or team on a phone beside the teacher screen, and the others are simulated, so nobody has to join.</p>
       <ul class="games">
         <li class="card">
           <h2><a href="/all-in/" target="_blank" rel="noopener">All In: the Physics Casino ↗</a></h2>
           <p>A team game for the projector, 20 to 30 minutes: every round shows a short animation of a phenomenon, all teams bet chips at once on its outcome, an estimate or a short calculation, the reveal plays out what happens, and a die picks a player of the team in the hot seat to explain the result. Students join on their phones (QR code) and place their team's bets there, or you type in bet cards. Payouts, timer and scoreboard are done for you. Six standard rounds and seven spare ones, in English and German.</p>
+          <p class="links"><a href="/all-in/?preview" target="_blank" rel="noopener">Try it alone ↗</a></p>
           <p class="note">learningphysics.ch/all-in/ · you're logged in there with this account (needed for phones); students join at learningphysics.ch/all-in/play/ without one</p>
         </li>
         <li class="card">
           <h2><a href="/absolute-zero/" target="_blank" rel="noopener">Absolute Zero ↗</a></h2>
           <p>A quiz in the style of <i>Pointless</i>, for the whole class, 15 to 25 minutes: every student types one answer to an open question ("A unit of energy") on their phone, and scores the share of the class who gave the same answer. An answer nobody else thought of scores zero, absolute zero, and the lowest total wins. Answers are matched to a list (typos, German and English accepted); you judge the rest with a click. 60 questions in five topics, in English and German.</p>
+          <p class="links"><a href="/absolute-zero/?preview" target="_blank" rel="noopener">Try it alone ↗</a></p>
           <p class="note">learningphysics.ch/absolute-zero/ · you're logged in there with this account; students join at learningphysics.ch/absolute-zero/play/ without one</p>
         </li>
         <li class="card">
           <h2><a href="/wwtbap/" target="_blank" rel="noopener">Who Wants to Be a Physicist? ↗</a></h2>
           <p>A quiz in the style of <i>Who Wants to Be a Millionaire</i>: 15 physics questions of rising difficulty, a ladder of famous physicists and three lifelines. As a classroom game, students join on their phones (QR code or room code), a Fastest Finger First round picks each contestant, and Ask the Audience can be a live class vote. A quick game starts without a lobby.</p>
+          <p class="links"><a href="/wwtbap/?preview=1" target="_blank" rel="noopener">Try it alone ↗</a></p>
           <p class="note">learningphysics.ch/wwtbap/ · you're logged in there with this account; students join on their phones without one</p>
         </li>
         <li class="card">
