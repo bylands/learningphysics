@@ -46,11 +46,20 @@
   // A drawing of point charges: pts [{ c (m), q (sign), lab, cls }], scale px/m, dims [[a, b, label,
   // off]], forces { key: { at, F (N), lab, cls } } of which those in view.show are drawn, their
   // lengths in proportion (the largest 85 px).
+  // With view.draw (the figure the student draws the forces on, see draw below): no forces, room
+  // around the points view.draw.room for the arrows drawn, and the scale (px per unit) noted in
+  // view.draw.s.
   function drawing(o, view = {}) {
     const P = new Pic(o.scale, o.label || '');
     if (o.before) o.before(P);
     (o.dims || []).forEach(([a, b, l, off, cls]) => P.dim(a, b, l, off, `dimline${cls ? ` ${cls}` : ''}`));
     o.pts.forEach((pt) => P.charge(pt.c, pt.q, pt.lab, pt.cls || '', pt.off));
+    if (view.draw) {
+      view.draw.s = o.scale;
+      (view.draw.room || []).forEach((c) => { const [x, y] = P.px(c), R = view.draw.R || 125; P.see(x - R, y - R); P.see(x + R, y + R); });
+      if (o.after) o.after(P, {});
+      return P.svg();
+    }
     // all forces, those not shown hidden: every frame of a worked example has the same size, and an
     // arrow the same length in every frame
     const all = Object.entries(o.forces || {});
@@ -923,6 +932,189 @@
     },
     figure: fieldSumFigure,
   };
+
+  // ---------------------------------------------------------------- 11 drawing the forces
+  // In practice and in the tutor, the student draws the forces on a charge instead of choosing
+  // their directions (arrow.js; the check keeps its four options, see quiz in generator.js):
+  //   draw(p, v) → { keys (the direction fields the drawing answers), ask, anchors [{ id, label,
+  //     c (where, as in the figure) }], kinds [{ id, name (in the palette), sub (of the arrow's
+  //     label F: '' none, '@' the anchor's name, null numbered as drawn), cls, max, dirs }], dirs
+  //     (degrees; default the eight of the compass), tails { kind: [dx, dy] } (px from the anchor:
+  //     forces along one line stacked beside it), target [{ kind, anchor, F (the force, y up), net,
+  //     name }], none (a button "No net force": the forces may cancel), say(problem) → { flag,
+  //     nudge, why } }
+  // say tells what is wrong with the drawing (judged in generator.js: drawOf): a nudge while the
+  // exercise is open, why (the explanation, with the answer) once it is done; flag is the typical
+  // wrong idea behind it, if any. problem: { type: 'dir' (a force turned the wrong way), 'equal'
+  // (two equal forces drawn unequal), 'order' (the larger of two clearly unequal forces drawn
+  // shorter), t (the target concerned; order: big, small), dir (as drawn, degrees), targets,
+  // rights (the targets drawn right) }.
+  const DEG8 = [0, 45, 90, 135, 180, 225, 270, 315], DEG12 = Array.from({ length: 12 }, (x, i) => 30 * i), DEG24 = Array.from({ length: 24 }, (x, i) => 15 * i);
+  const compass = (d) => DIRS[Math.round(d / 45) % 8]; // a direction of the eight, from degrees
+  const angle = (a, b) => { const d = Math.abs((((a - b) % 360) + 360) % 360); return Math.min(d, 360 - d); };
+  const opposed = (pr, kind) => pr.targets.some((t) => t.kind === kind && angle(t.dir, pr.dir + 180) <= 10);
+  const ON_RING = () => L('the charge in the ring', 'die Ladung im Ring');
+  const NET = () => ({ id: 'F', name: L('Net force', 'Resultierende Kraft'), sub: '', cls: 'k-net', max: 1 });
+  const netName = () => L('the net force', 'die resultierende Kraft');
+  const TIPS = () => L('Put the forces tip to tail: the net force goes from the first tail to the last tip. How long is it?', 'Setze die Kräfte Pfeil an Pfeil: Die resultierende Kraft geht vom ersten Anfang zur letzten Spitze. Wie lang ist sie?');
+  const f0 = (x) => `$${sig(x, 3)}\\,F_0$`;
+
+  pairDir.draw = (p, v) => ({
+    keys: ['dB', 'dA'],
+    ask: L('Draw the force on B and the force on A.', 'Zeichne die Kraft auf B und die Kraft auf A.'),
+    anchors: [{ id: 'A', label: 'A', c: p.a }, { id: 'B', label: 'B', c: p.b }],
+    kinds: [{ id: 'F', name: L('Force', 'Kraft'), sub: '@', cls: 'k-1', max: 1 }],
+    target: [{ kind: 'F', anchor: 'B', F: v.fb, name: L('the force on B', 'die Kraft auf B') }, { kind: 'F', anchor: 'A', F: v.fa, name: L('the force on A', 'die Kraft auf A') }],
+    say(pr) {
+      if (pr.type === 'equal') return { flag: 'third', nudge: pairDir.nudge.third(), why: `${pairDir.why.third()} ${L('Draw them equally long.', 'Zeichne sie gleich lang.')}` };
+      const x = pr.t.anchor, key = `d${x}`, d = compass(pr.dir), fact = L(`The force on ${x} points ${arrowWord(v[key])}.`, `Die Kraft auf ${x} zeigt ${arrowWord(v[key])}.`);
+      // A's force the way of B's, with B's right: the third law; else turned round: the signs
+      const third = x === 'A' && d === v.dB && pr.rights.some((t) => t.anchor === 'B');
+      const flag = third ? 'third' : ['signs', 'third'].find((f) => pairDirSolve(p, { [f]: true })[key] === d);
+      if (flag) return { flag, nudge: pairDir.nudge[flag](), why: `${pairDir.why[flag]()} ${fact}` };
+      return { flag: null, nudge: L(`The force on ${x} lies on the line through A and B. Which way along it?`, `Die Kraft auf ${x} liegt auf der Geraden durch A und B. In welche Richtung auf ihr?`),
+        why: `${L('The force lies on the line through the two charges: like charges repel, unlike charges attract.', 'Die Kraft liegt auf der Geraden durch die beiden Ladungen: Gleichnamige Ladungen stossen sich ab, ungleichnamige ziehen sich an.')} ${fact}` };
+    },
+  });
+
+  // three in a line: the forces of A and B stacked below the line, the net force on it (as in the figure)
+  const lineDraw = (p, v) => {
+    const sizes = () => L(`In units of $F_0 = k\\,q^2/d^2$, the force of A is $${fracF0(Math.abs(v.Fa))}$, that of B $${fracF0(Math.abs(v.Fb))}$, the net force $${fracF0(Math.abs(v.net))}$.`,
+      `In Einheiten von $F_0 = k\\,q^2/d^2$ ist die Kraft von A $${fracF0(Math.abs(v.Fa))}$, die von B $${fracF0(Math.abs(v.Fb))}$, die resultierende Kraft $${fracF0(Math.abs(v.net))}$.`);
+    const traps = p.mid ? ['noSquare'] : ['noSquare', 'sameDist'], nudge = (f) => (lineNudge[f] || lineWhy[f])();
+    const of = (k) => ({ id: `F${k}`, name: L(`Force of ${k}`, `Kraft von ${k}`), sub: k, cls: k === 'A' ? 'k-1' : 'k-2', max: 1, dirs: [0, 180] });
+    return {
+      keys: ['dA', 'dB', 'dir'],
+      ask: L('Draw the force of A and the force of B on the charge in the ring, then the net force. Draw the larger force longer.', 'Zeichne die Kraft von A und die Kraft von B auf die Ladung im Ring, dann die resultierende Kraft. Zeichne die grössere Kraft länger.'),
+      anchors: [{ id: 't', label: ON_RING(), c: [0, 0] }],
+      kinds: [of('A'), of('B'), { ...NET(), dirs: [0, 180] }],
+      tails: { FA: [0, 15], FB: [0, 30] },
+      target: [{ kind: 'FA', anchor: 't', F: [v.Fa, 0], name: L('the force of A', 'die Kraft von A') }, { kind: 'FB', anchor: 't', F: [v.Fb, 0], name: L('the force of B', 'die Kraft von B') },
+        { kind: 'F', anchor: 't', F: [v.net, 0], net: true, name: netName() }],
+      say(pr) {
+        if (pr.type === 'dir' && pr.t.kind !== 'F') {
+          const k = pr.t.kind.slice(1);
+          return { flag: 'signs', nudge: lineNudge.signs(), why: `${lineWhy.signs()} ${L(`The force of ${k} points ${arrowWord(v[`d${k}`])}.`, `Die Kraft von ${k} zeigt ${arrowWord(v[`d${k}`])}.`)}` };
+        }
+        if (pr.type === 'dir') {
+          // (with the forces of A and B drawn right, the net force turned is not a sign mixed up)
+          const flag = traps.find((f) => lineSolve(p, { [f]: true }).dir === compass(pr.dir));
+          return { flag: flag || null, nudge: flag ? nudge(flag) : L('The net force is the sum of the two forces: which of them is larger?', 'Die resultierende Kraft ist die Summe der beiden Kräfte: Welche ist grösser?'),
+            why: `${sizes()} ${L(`The net force points ${arrowWord(v.dir)}.`, `Die resultierende Kraft zeigt ${arrowWord(v.dir)}.`)}` };
+        }
+        if (!pr.big.net && !pr.small.net) {
+          const flag = traps.find((f) => { const w = lineSolve(p, { [f]: true }); return Math.abs(w.Fa) > Math.abs(w.Fb) !== Math.abs(v.Fa) > Math.abs(v.Fb); });
+          const k = pr.big.kind.slice(1);
+          return { flag: flag || null, nudge: flag ? nudge(flag) : L('Compare the sizes: proportional to the charge, and to 1/(distance)².', 'Vergleiche die Beträge: proportional zur Ladung und zu 1/(Abstand)².'),
+            why: `${sizes()} ${L(`Draw the force of ${k} longer.`, `Zeichne die Kraft von ${k} länger.`)}` };
+        }
+        return { flag: null, nudge: TIPS(), why: `${sizes()} ${v.Fa * v.Fb < 0 ? L('The forces point in opposite directions: the net force is their difference.', 'Die Kräfte zeigen in entgegengesetzte Richtungen: Die resultierende Kraft ist ihre Differenz.')
+          : L('Both forces point the same way: the net force is their sum, longer than each.', 'Beide Kräfte zeigen in dieselbe Richtung: Die resultierende Kraft ist ihre Summe, länger als jede.')}` };
+      },
+    };
+  };
+  lineEnd.draw = lineDraw;
+  lineMid.draw = lineDraw;
+
+  // which way: a force of each other charge (one kind, numbered as drawn), then the net force
+  const ONE_LINE = () => L('Each force lies on the line through the two charges: towards the other charge for opposite signs, away from it for like signs.', 'Jede Kraft liegt auf der Geraden durch die beiden Ladungen: zur anderen Ladung hin bei entgegengesetzten Vorzeichen, von ihr weg bei gleichen.');
+  const whichDraw = (p, v) => {
+    const n = v.Fs.length, one = L('a force of one of the other charges', 'eine Kraft einer der anderen Ladungen');
+    const sizes = () => L(`Each single force is ${[...new Set(v.Fs.map((F) => f0(len(F) * p.scaleF)))].join(' or ')}, with $F_0 = k\\,q^2/d^2$; added tip to tail, they give a net force of ${f0(len(v.net) * p.scaleF)}.`,
+      `Jede einzelne Kraft ist ${[...new Set(v.Fs.map((F) => f0(len(F) * p.scaleF)))].join(' oder ')}, mit $F_0 = k\\,q^2/d^2$; Pfeil an Pfeil addiert, ergeben sie eine resultierende Kraft von ${f0(len(v.net) * p.scaleF)}.`);
+    return {
+      keys: ['d'],
+      ask: L(`Draw the force of each of the other ${word(n)} charges on the charge in the ring, then the net force. Draw equal forces equally long, a smaller one shorter.`, `Zeichne die Kraft jeder der anderen ${word(n)} Ladungen auf die Ladung im Ring, dann die resultierende Kraft. Zeichne gleich grosse Kräfte gleich lang, eine kleinere kürzer.`),
+      anchors: [{ id: 't', label: ON_RING(), c: p.pts[0].c }],
+      kinds: [{ id: 'Fi', name: L('Force of one charge', 'Kraft einer Ladung'), sub: null, cls: 'k-1', max: n }, NET()],
+      dirs: p.shape === 'tri' ? DEG12 : DEG8,
+      none: true, // the forces may cancel
+      target: [...v.Fs.map((F) => ({ kind: 'Fi', anchor: 't', F, name: one })), { kind: 'F', anchor: 't', F: v.net, net: true, name: netName() }],
+      say(pr) {
+        if (pr.type === 'dir' && pr.t.kind === 'Fi') {
+          return opposed(pr, 'Fi') ? { flag: 'signs', nudge: NUDGE.signs(), why: ONE_LINE() }
+            : { flag: null, nudge: L('Each force lies on the line through the charge in the ring and the other charge.', 'Jede Kraft liegt auf der Geraden durch die Ladung im Ring und die andere Ladung.'), why: ONE_LINE() };
+        }
+        const why = (s) => `${sizes()} ${s}`;
+        if (pr.type === 'dir') return { flag: null, nudge: TIPS(), why: why(v.dir === '0' ? L('They cancel: there is no net force.', 'Sie heben sich auf: Es gibt keine resultierende Kraft.') : L(`The net force points ${arrowWord(v.dir)}.`, `Die resultierende Kraft zeigt ${arrowWord(v.dir)}.`)) };
+        if (pr.type === 'equal') return { flag: null, nudge: L('Equal charges at equal distances: compare the sizes of their forces.', 'Gleiche Ladungen in gleichen Abständen: Vergleiche die Beträge ihrer Kräfte.'), why: why(L('Equal charges at the same distance exert forces of the same size: draw them equally long.', 'Gleiche Ladungen im gleichen Abstand üben gleich grosse Kräfte aus: Zeichne sie gleich lang.')) };
+        if (!pr.big.net && !pr.small.net) return { flag: null, nudge: L('Which of the other charges are nearer? Compare the distances.', 'Welche der anderen Ladungen sind näher? Vergleiche die Abstände.'), why: why(L('A charge on the diagonal, at $\\sqrt{2}\\,d$, exerts half the force of one at $d$: draw its force shorter.', 'Eine Ladung auf der Diagonalen, im Abstand $\\sqrt{2}\\,d$, übt die halbe Kraft aus wie eine im Abstand $d$: Zeichne ihre Kraft kürzer.')) };
+        return { flag: null, nudge: TIPS(), why: why('') };
+      },
+    };
+  };
+  which.draw = whichDraw;
+  whichSquare.draw = whichDraw;
+
+  // at a right angle: the forces of charges 1 and 2 along the sides, the net force at any angle
+  const rightDraw = (p, v) => {
+    const pull = (i) => (p.t * (i === 1 ? p.q1 : p.q2) < 0);
+    const vals = () => `$F_1 = ${tq(v.F1, 'N')}$, $F_2 = ${tq(v.F2, 'N')}$, $F = ${tq(len(v.net), 'N')}$`;
+    const of = (i) => ({ id: `F${i}`, name: L(`Force of charge ${i}`, `Kraft von Ladung ${i}`), sub: String(i), cls: `k-${i}`, max: 1 });
+    return {
+      keys: ['dir'],
+      ask: L('Draw the force of charge 1 and the force of charge 2 on the charge in the corner, then the net force. Draw the larger force longer.', 'Zeichne die Kraft von Ladung 1 und die Kraft von Ladung 2 auf die Ladung in der Ecke, dann die resultierende Kraft. Zeichne die grössere Kraft länger.'),
+      anchors: [{ id: 't', label: L('the charge in the corner', 'die Ladung in der Ecke'), c: [0, 0] }],
+      kinds: [of(1), of(2), { ...NET(), dirs: DEG24 }],
+      target: [{ kind: 'F1', anchor: 't', F: v.f1, name: L('the force of charge 1', 'die Kraft von Ladung 1') }, { kind: 'F2', anchor: 't', F: v.f2, name: L('the force of charge 2', 'die Kraft von Ladung 2') },
+        { kind: 'F', anchor: 't', F: v.net, net: true, name: netName() }],
+      say(pr) {
+        if (pr.type === 'dir' && pr.t.kind !== 'F') {
+          const i = Number(pr.t.kind.slice(1)), d = i === 1 ? (v.f1[0] > 0 ? 'E' : 'W') : v.f2[1] > 0 ? 'N' : 'S';
+          return { flag: 'signs', nudge: NUDGE.signs(), why: pull(i) ? L(`Charge ${i} attracts the charge in the corner: its force points ${arrowWord(d)}, towards charge ${i}.`, `Ladung ${i} zieht die Ladung in der Ecke an: Ihre Kraft zeigt ${arrowWord(d)}, zu Ladung ${i} hin.`)
+            : L(`Charge ${i} repels the charge in the corner: its force points ${arrowWord(d)}, away from charge ${i}.`, `Ladung ${i} stösst die Ladung in der Ecke ab: Ihre Kraft zeigt ${arrowWord(d)}, von Ladung ${i} weg.`) };
+        }
+        if (pr.type === 'dir') {
+          const a = Math.round((Math.atan2(Math.abs(v.net[1]), Math.abs(v.net[0])) * 180) / Math.PI);
+          return { flag: null, nudge: L('The net force is the diagonal of the rectangle that the two forces span.', 'Die resultierende Kraft ist die Diagonale des Rechtecks, das die beiden Kräfte aufspannen.'),
+            why: L(`The net force is the diagonal of the rectangle of the two forces: it points ${arrowWord(v.dir)}, at about ${a}° to the horizontal, nearer the larger force (${vals()}).`, `Die resultierende Kraft ist die Diagonale des Rechtecks der beiden Kräfte: Sie zeigt ${arrowWord(v.dir)}, etwa ${a}° gegen die Horizontale, näher bei der grösseren Kraft (${vals()}).`) };
+        }
+        if (!pr.big.net && !pr.small.net) {
+          const w = rightSolve(p, { noSquare: true }), flag = (w.ratio > 1) !== (v.ratio > 1) ? 'noSquare' : null, i = pr.big.kind.slice(1);
+          return { flag, nudge: flag ? NUDGE.noSquare() : L('Compare the two forces: how do the charges and the distances enter?', 'Vergleiche die beiden Kräfte: Wie gehen die Ladungen und die Abstände ein?'),
+            why: L(`${vals()}: draw the force of charge ${i} longer.`, `${vals()}: Zeichne die Kraft von Ladung ${i} länger.`) };
+        }
+        return { flag: null, nudge: L('How long is the diagonal of a rectangle compared with its sides?', 'Wie lang ist die Diagonale eines Rechtecks im Vergleich zu seinen Seiten?'),
+          why: L(`The net force is the diagonal of the rectangle of the two forces, longer than each side: ${vals()}.`, `Die resultierende Kraft ist die Diagonale des Rechtecks der beiden Kräfte, länger als jede Seite: ${vals()}.`) };
+      },
+    };
+  };
+  right.draw = rightDraw;
+  rightDist.draw = rightDraw;
+
+  // moved slightly: the forces of the two outer charges (one kind), then the net force; along the
+  // line, the two forces stacked beside it
+  const nudgeDraw = (p, v) => {
+    const c = (x) => R90(x, p.vert), one = L('a force of an outer charge', 'eine Kraft einer äusseren Ladung');
+    const first = nudgeSteps(p, v)[0].text.replace(/^<p class="step-rule">.*?<\/p>/, '').replace(/<\/?p>/g, '');
+    const sizes = () => (p.across
+      ? L(`Each force is ${f0(len(v.fa))} (with $F_0 = k\\,q^2/d^2$); their components across the line add up to a net force of ${f0(len(v.net))}, shorter than each.`, `Jede Kraft ist ${f0(len(v.fa))} (mit $F_0 = k\\,q^2/d^2$); ihre Komponenten quer zur Geraden addieren sich zu einer resultierenden Kraft von ${f0(len(v.net))}, kürzer als jede.`)
+      : L(`The forces are ${f0(Math.max(len(v.fa), len(v.fb)))} and ${f0(Math.min(len(v.fa), len(v.fb)))} (with $F_0 = k\\,q^2/d^2$), in opposite directions: the net force is their difference, ${f0(len(v.net))}.`, `Die Kräfte sind ${f0(Math.max(len(v.fa), len(v.fb)))} und ${f0(Math.min(len(v.fa), len(v.fb)))} (mit $F_0 = k\\,q^2/d^2$), entgegengesetzt: Die resultierende Kraft ist ihre Differenz, ${f0(len(v.net))}.`));
+    return {
+      keys: ['d'],
+      ask: L('Draw the forces of the two outer charges on the moved charge, then the net force. Draw equal forces equally long, a larger one longer.', 'Zeichne die Kräfte der beiden äusseren Ladungen auf die verschobene Ladung, dann die resultierende Kraft. Zeichne gleich grosse Kräfte gleich lang, eine grössere länger.'),
+      anchors: [{ id: 't', label: L('the moved charge', 'die verschobene Ladung'), c: c(v.at) }],
+      kinds: [{ id: 'Fi', name: L('Force of an outer charge', 'Kraft einer äusseren Ladung'), sub: null, cls: 'k-1', max: 2 }, NET()],
+      dirs: p.across ? DEG24 : DEG8,
+      tails: p.across ? {} : { Fi: p.vert ? [15, 0] : [0, 15] },
+      target: [{ kind: 'Fi', anchor: 't', F: c(v.fa), name: one }, { kind: 'Fi', anchor: 't', F: c(v.fb), name: one }, { kind: 'F', anchor: 't', F: c(v.net), net: true, name: netName() }],
+      say(pr) {
+        if (pr.type === 'dir' && pr.t.kind === 'Fi') {
+          return opposed(pr, 'Fi') ? { flag: 'signs', nudge: NUDGE.signs(), why: first }
+            : { flag: null, nudge: L('Each force lies on the line from the outer charge to the moved charge.', 'Jede Kraft liegt auf der Geraden von der äusseren Ladung zur verschobenen.'), why: first };
+        }
+        if (pr.type === 'dir') {
+          return { flag: null, nudge: p.across ? L('Which components of the two forces cancel, and which remain?', 'Welche Komponenten der beiden Kräfte heben sich auf, welche bleiben?') : L('Which of the two forces is larger now? The net force is their sum.', 'Welche der beiden Kräfte ist jetzt grösser? Die resultierende Kraft ist ihre Summe.'),
+            why: `${first} ${L(`The net force points ${arrowWord(v.d)}.`, `Die resultierende Kraft zeigt ${arrowWord(v.d)}.`)}` };
+        }
+        if (pr.type === 'equal') return { flag: null, nudge: L('The moved charge is equally far from both outer charges: compare their forces.', 'Die verschobene Ladung ist von beiden äusseren Ladungen gleich weit entfernt: Vergleiche ihre Kräfte.'), why: `${sizes()} ${L('Draw the two forces equally long.', 'Zeichne die beiden Kräfte gleich lang.')}` };
+        if (!pr.big.net && !pr.small.net) return { flag: null, nudge: L('Which outer charge is nearer now? How does that change its force?', 'Welche äussere Ladung ist jetzt näher? Wie ändert das ihre Kraft?'), why: `${L('The nearer charge acts with the larger force (1/r²): draw its force longer.', 'Die nähere Ladung wirkt mit der grösseren Kraft (1/r²): Zeichne ihre Kraft länger.')} ${sizes()}` };
+        return { flag: null, nudge: TIPS(), why: sizes() };
+      },
+    };
+  };
+  nudgeAlong.draw = nudgeDraw;
+  nudgeAcross.draw = nudgeDraw;
 
   const SCENARIOS = [pairDir, pair, factor, factorMix, factorFind, lineEnd, lineMid, which, whichSquare, rank3, rank4, right, rightDist, zeroLike, zeroUnlike, nudgeAlong, nudgeAcross, fieldForce, fieldSum];
   root.Scenarios = { SCENARIOS, drawing, sv };

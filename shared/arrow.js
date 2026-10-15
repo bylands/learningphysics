@@ -1,5 +1,5 @@
 // Shared by the learningphysics.ch apps (canonical copy in shared/, copied by sync.sh into the apps
-// whose index.html loads it: Free-Body Diagrams, Magnetic Forces; its look is in arrow.css). Vector arrows the
+// whose index.html loads it: Free-Body Diagrams, Magnetic Forces, Point Charges; its look is in arrow.css). Vector arrows the
 // student places on a figure (an <svg>) and turns: each starts at an anchor (a body, a charge, a
 // point of a bar), its direction snapped to a set of directions, its length to steps within
 // limits (or fixed); optionally out of or into the page (⊙ ⊗). Arrows come from a palette of kinds
@@ -11,7 +11,7 @@
 //                     content stays below them as the backdrop); svg becomes a group for screen
 //                     readers, with the app's label. o:
 //     kinds           [{ id, label (html, for the palette), cls (classes of the arrow, e.g. its
-//                     colour), len, dirs (both optional: the kind's own, see below) }]
+//                     colour), len, dirs, max (all optional: the kind's own, see below) }]
 //     anchors         [{ id, label (text, for screen readers), area ([[x, y], …]: a polygon) or r
 //                     (a circle around x, y; default 24), x, y (default the middle of area) }]: a
 //                     press or drop within area (or 12 units of it) takes the anchor, the nearest
@@ -32,7 +32,8 @@
 //     aside           [dx, dy]: where ⊙ and ⊗ are drawn, from the tail (default [0, 0]: on it), e.g.
 //                     beside a charge rather than over it
 //     max             at most this many arrows of a kind on an anchor: placing one more there
-//                     selects the last of them instead (e.g. 1: one direction to draw)
+//                     selects the last of them instead (e.g. 1: one direction to draw); a kind's
+//                     own max comes first (e.g. one net force, but a force of each other charge)
 //     len             { lo, hi, step, init } in svg units (step 0: free), or a number: fixed;
 //                     default { lo: 20, hi: 100, step: 8, init: 48 }. An arrow never reaches
 //                     beyond the viewBox: it is shortened to fit (below lo if need be)
@@ -73,9 +74,10 @@
 //                     with result 'right', 'dir', 'len', 'missing' (a target with no arrow of its
 //                     kind on its anchor) or 'extra' (an arrow drawn that no target takes); an
 //                     arrow of the right kind on another anchor is extra there and missing here.
-// Later uses fit this frame: Coulomb and electric field (anchors: the charges; 16 directions;
-// relative lengths of the forces of a pair), magnetic forces and EM waves (outIn for B and the
-// Lorentz force), Force Concepts and Interaction (the forces on several bodies, a palette per
+// Point Charges draws the forces on a charge from each of the others and their sum (kinds of
+// their own max, tail() stacking forces along one line beside it, 24 directions for a sum at any
+// angle, judged within 10°, its lengths ordered where clearly so). Later uses fit this frame:
+// electric field (anchors: the charges), EM waves (outIn for B and the Lorentz force), Force Concepts and Interaction (the forces on several bodies, a palette per
 // body), torque (an anchor per point of the bar, its area a strip, tail() snapping the drop to
 // the nearest point).
 //   Arrow.press(dir, keep, which, dirs)  what a button ⊙ (which 'out') or ⊗ ('in') makes of an
@@ -413,9 +415,10 @@
     function add(kind, anchorId, pt = null, focus = true) {
       const an = anchorOf(anchorId);
       if (!an || isLocked()) return null;
-      if (o.max) {
+      const max = kindOf(kind).max != null ? kindOf(kind).max : o.max;
+      if (max) {
         const there = list.filter((x) => x.kind === kind && String(x.anchor) === String(an.id));
-        if (there.length >= o.max) { const last = there[there.length - 1].id; select(last, focus); return last; }
+        if (there.length >= max) { const last = there[there.length - 1].id; select(last, focus); return last; }
       }
       const at = o.tail ? o.tail(kind, an, pt) : centre(an);
       const a = { id: `a${++seq}`, kind, anchor: an.id, at: [...at], dir: nearest(dirsOf({ kind }), o.start != null ? o.start : 45) };

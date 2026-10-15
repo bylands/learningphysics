@@ -19,6 +19,9 @@
       notYet: (n) => `Not quite yet (attempt ${n}).`, tryAgain: ' Try again, or take a hint.', canReveal: ' You can take a hint or look at the worked solution.',
       number: 'Enter a number', correct: 'Correct', sign: 'Give the size (a positive number)', close: 'Close: check your rounding', wrong: 'Not correct', power: 'Off by a power of ten: check the units (cm, μC, nC, mN, μN)',
       rankWrong: (n) => `${n === 1 ? 'One place is' : `${n} places are`} not right yet`, sci: 'Powers of ten: type 3.2e-8 or 3.2*10^-8.', none: 'none',
+      drawNote: 'Drag a force onto the charge it acts on (or tap the force, then the charge), then drag its tip to set its direction and length; drag an arrow off the drawing to remove it. (Keys on a selected arrow: ← → turn, ↑ ↓ length, Delete removes.)',
+      drawOk: '✓ The forces are right.', drawBad: '✗ Not right yet:', drawShown: 'The right forces are drawn.', noNet: 'No net force', drawFirst: 'Draw the forces first, then check.',
+      fillDraw: 'Draw the forces and answer every part, then check again.', drawTutorOk: '✓ The forces are right. Go on to compare with the worked solution.',
       tutorBtns: { example: (i, n) => `Example ${i} of ${n}`, back: '← Back', prevEx: '← Previous example', next: 'Next →', nextEx: 'Next example →', done: 'Practise on your own →' },
     },
     de: {
@@ -33,6 +36,9 @@
       notYet: (n) => `Noch nicht ganz (Versuch ${n}).`, tryAgain: ' Versuche es nochmals, oder nimm einen Tipp.', canReveal: ' Du kannst einen Tipp nehmen oder die ausführliche Lösung anschauen.',
       number: 'Gib eine Zahl ein', correct: 'Richtig', sign: 'Gib den Betrag an (eine positive Zahl)', close: 'Knapp daneben: Prüfe deine Rundung', wrong: 'Nicht richtig', power: 'Um eine Zehnerpotenz daneben: Prüfe die Einheiten (cm, μC, nC, mN, μN)',
       rankWrong: (n) => `${n === 1 ? 'Ein Platz stimmt' : `${n} Plätze stimmen`} noch nicht`, sci: 'Zehnerpotenzen: Tippe 3.2e-8 oder 3.2*10^-8.', none: 'keine',
+      drawNote: 'Ziehe eine Kraft auf die Ladung, auf die sie wirkt (oder tippe die Kraft an und dann die Ladung), und dann ihre Spitze, um Richtung und Länge einzustellen; ziehe einen Pfeil aus der Zeichnung, um ihn zu entfernen. (Tasten bei einem gewählten Pfeil: ← → drehen, ↑ ↓ Länge, Entf entfernt.)',
+      drawOk: '✓ Die Kräfte stimmen.', drawBad: '✗ Noch nicht richtig:', drawShown: 'Die richtigen Kräfte sind eingezeichnet.', noNet: 'Keine resultierende Kraft', drawFirst: 'Zeichne zuerst die Kräfte und prüfe dann.',
+      fillDraw: 'Zeichne die Kräfte und beantworte alle Teile, dann prüfe nochmals.', drawTutorOk: '✓ Die Kräfte stimmen. Vergleiche nun mit der ausführlichen Lösung.',
       tutorBtns: { example: (i, n) => `Beispiel ${i} von ${n}`, back: '← Zurück', prevEx: '← Vorheriges Beispiel', next: 'Weiter →', nextEx: 'Nächstes Beispiel →', done: 'Selbst üben →' },
     },
   };
@@ -102,7 +108,7 @@
   function open(exercise) {
     finish(); // the student moves on
     ex = exercise;
-    st = { tries: 0, hints: 0, solved: false, revealed: false, checked: false };
+    st = { tries: 0, hints: 0, solved: false, revealed: false, checked: false, arrows: [], none: false, drawn: false, shownRight: false };
     const hash = `#${ex.id}`;
     if (location.hash !== hash) history.replaceState(null, '', hash);
     render();
@@ -146,6 +152,100 @@
     const list = dirs ? dirs.map((d) => [d, d === '0' ? (compass ? '0' : ui().none) : CL.ARROW[d], CL.dirName(d)]) : f.options;
     return `<div class="field choice${compass ? ' compass' : ''}" data-key="${f.key}"><span class="what">${f.what}</span>${radios(f, list)}${fb}</div>`;
   }
+  // ---------------------------------------------------------------- the forces drawn
+  // Where a situation has draw (generator.js: drawOf), practice asks to draw the forces on the
+  // figure (shared arrow.js) instead of choosing their directions; the other answers stay fields,
+  // and the check keeps its four options. The arrows are kept in st.arrows, so that they survive
+  // a redraw (the other language); a check marks them, with a nudge per thing wrong while the
+  // exercise is open and the explanation once it is solved or the solution shown; the marks go
+  // once the drawing changes. The tutor's example asks the same before its steps (see tutorDraw).
+  let drawing = null;
+  const drawnKeys = () => new Set(ex.draw ? ex.draw.keys : []);
+  // The arrows on the svg of the drawing d, kept in h() (its arrows, and none: "No net force"
+  // chosen, a button where the forces may cancel); o: { locked, palette, onChange }. Returns {
+  // ar (the arrows, arrow.js), lock(), mark(marks, none) }.
+  function arrowsIn(svg, d, h, o) {
+    const isNet = (a) => d.target.some((t) => t.net && t.kind === a.kind);
+    let btn = null;
+    const ar = window.Arrow.create(svg, {
+      kinds: d.kinds.map((k) => ({ id: k.id, label: k.name, cls: k.cls, dirs: k.dirs, max: k.max })),
+      anchors: d.anchors,
+      tail: (kind, an) => d.tail(kind, an),
+      len: d.len, gap: d.gap, start: d.start,
+      label: (a) => d.label(a, h().arrows), labelCls: 'flbl',
+      note: ui().drawNote,
+      state: h().arrows,
+      locked: o.locked,
+      palette: o.palette,
+      onEdit: (x) => {
+        h().arrows = x.state();
+        if (h().none && h().arrows.some(isNet)) { h().none = false; showNone(); }
+        o.onChange();
+      },
+    });
+    function showNone() {
+      if (!btn) return;
+      btn.setAttribute('aria-pressed', h().none ? 'true' : 'false');
+      btn.disabled = !!o.locked;
+    }
+    if (d.none && o.palette) {
+      btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'ar-none';
+      btn.innerHTML = `<span class="ar-oi-sym" aria-hidden="true">0</span> ${ui().noNet}`;
+      btn.addEventListener('click', () => {
+        if (o.locked) return;
+        h().none = !h().none;
+        if (h().none) { h().arrows = h().arrows.filter((a) => !isNet(a)); ar.restore(h().arrows); }
+        showNone();
+        o.onChange();
+      });
+      o.palette.querySelector('.ar-kinds').insertBefore(btn, o.palette.querySelector('.ar-remove'));
+      showNone();
+    }
+    return {
+      ar,
+      lock() { o.locked = true; ar.select(null); ar.show({ locked: true }); showNone(); },
+      mark(marks, none) {
+        ar.mark(marks);
+        if (btn) { btn.classList.toggle('ok', none === 'ok'); btn.classList.toggle('bad', none === 'bad'); }
+      },
+    };
+  }
+  // the judging of the drawing w (arrowsIn) shown in el: true if right, false if wrong, null if
+  // nothing is drawn
+  function drawJudged(el, w, d, h, done, okText) {
+    if (!h.arrows.length && !h.none) { w.mark({}); el.className = 'draw-fb'; el.innerHTML = ''; return null; }
+    const j = d.judge(h.arrows, done, !!h.none);
+    w.mark(j.marks, h.none ? (d.zero ? 'ok' : 'bad') : null);
+    el.className = `draw-fb ${j.ok ? 'ok' : 'bad'}`;
+    el.innerHTML = j.ok ? `<p>${okText}</p>` : `<p>${ui().drawBad}</p><ul class="draw-notes">${j.notes.map((n) => `<li>${n.text}</li>`).join('')}</ul>`;
+    math(el);
+    return j.ok;
+  }
+  const drawHtml = () => `<div class="field draw" data-key="draw"><p class="what ask">${ex.draw.ask}</p><div id="cpalette"></div><div id="draw-fb" class="draw-fb" aria-live="polite"></div></div>`;
+  function mountDrawing() {
+    drawing = null;
+    const svg = $('#figure svg');
+    if (!ex.draw || !svg) return;
+    drawing = arrowsIn(svg, ex.draw, () => st, { locked: st.solved || st.revealed, palette: $('#cpalette'), onChange: clearDrawn });
+  }
+  // the marks of a check, gone once the drawing changes
+  function clearDrawn() {
+    if (!st.drawn) return;
+    st.drawn = false;
+    drawing.mark({}, null);
+    $('#draw-fb').className = 'draw-fb';
+    $('#draw-fb').innerHTML = '';
+  }
+  // the drawing judged: true if right, false if wrong, null if nothing is drawn
+  function drawFeedback() {
+    const r = drawJudged($('#draw-fb'), drawing, ex.draw, st, st.solved || st.revealed, st.shownRight ? ui().drawShown : ui().drawOk);
+    st.drawn = r !== null;
+    return r;
+  }
+  const lockDrawing = () => { if (drawing) drawing.lock(); };
+
   function valueOf(f) {
     if (f.type === 'num') return $(`#in-${f.key}`).value;
     if (f.type === 'rank') { const o = {}; for (const it of f.items) { const v = $(`#in-${f.key}-${it}`).value; if (!v) return null; o[it] = Number(v); } return o; }
@@ -178,8 +278,9 @@
     stars.setAttribute('role', 'img');
     $('#title').append(' ', stars);
     $('#prompt').innerHTML = ex.text + (ex.fields.some((f) => f.sci) ? `<p class="note">${ui().sci}</p>` : '');
-    $('#figure').innerHTML = ex.figure({ task: true });
-    $('#fields').innerHTML = ex.fields.map(fieldHtml).join('');
+    $('#figure').innerHTML = ex.draw ? ex.draw.fig : ex.figure({ task: true });
+    $('#fields').innerHTML = (ex.draw ? drawHtml() : '') + ex.fields.filter((f) => !drawnKeys().has(f.key)).map(fieldHtml).join('');
+    mountDrawing();
     $('#hint-list').innerHTML = '';
     $('#hints').hidden = true;
     $('#solution').hidden = true;
@@ -210,7 +311,8 @@
   // Marks every field; true if all are right, null if some are empty.
   function feedback() {
     let allOk = true, anyEmpty = false;
-    ex.fields.forEach((f) => {
+    if (ex.draw) { const r = drawFeedback(); if (r === null) anyEmpty = true; if (r !== true) allOk = false; }
+    ex.fields.filter((f) => !drawnKeys().has(f.key)).forEach((f) => {
       const row = $('#fields').querySelector(`.field[data-key="${f.key}"]`), base = row.className.replace(/ (ok|warn|bad)\b/g, ''), val = valueOf(f);
       if (empty(f, val)) { anyEmpty = true; allOk = false; row.className = base; row.querySelector('.fb').textContent = ''; return; }
       const r = judge(f, val);
@@ -226,7 +328,7 @@
     const el = $('#status');
     st.status = kind;
     el.className = 'status' + (kind === 'ok' ? ' ok' : kind === 'bad' ? ' bad' : '');
-    el.textContent = !kind ? '' : kind === 'fill' ? ui().fill
+    el.textContent = !kind ? '' : kind === 'fill' ? (ex.draw ? ui().fillDraw : ui().fill)
       : kind === 'ok' ? (st.revealed ? ui().ok : ui().okWell) + (st.advance ? ` ${st.advance}` : '')
         : ui().notYet(st.tries) + (st.tries < MAX_TRIES && !canReveal() ? ui().tryAgain : ui().canReveal);
   }
@@ -250,6 +352,7 @@
       Practice.markSolved(PRACTICE, ex.id);
       finish();
       st.advance = topics.solved(st, ex);
+      lockDrawing();
       showStatus('ok');
     } else showStatus('bad');
     updateButtons();
@@ -280,9 +383,42 @@
     if (!canReveal()) return;
     st.revealed = true;
     finish();
+    if (ex.draw) {
+      // the drawing explained; if nothing is drawn, the right forces
+      if (!st.arrows.length && !st.none) { st.arrows = ex.draw.right(); st.none = ex.draw.zero; st.shownRight = true; $('#figure').innerHTML = ex.draw.fig; mountDrawing(); }
+      lockDrawing();
+      drawFeedback();
+    }
     showSolution();
     updateButtons();
     $('#solution').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  // ---------------------------------------------------------------- the tutor's drawing
+  // An example whose forces can be drawn asks for them after the situation (a frame with .t-draw,
+  // see tutorial in generator.js): the student draws and checks, with nudges, before the steps
+  // show the solution; or simply goes on. The arrows of each example are kept (tutorDraw).
+  const tutorDraw = {};
+  function mountTutorDrawing() {
+    const box = $('#t-text .t-draw'), svg = $('#t-figure svg');
+    if (!box || !svg) return;
+    const i = tutor.current(), e = window.Lessons.EXAMPLES[i], d = window.Coulomb.exercise(window.Coulomb.byId(e.scenario), e.p).draw;
+    const s = tutorDraw[i] || (tutorDraw[i] = { arrows: [], none: false, drawn: false, ok: false });
+    box.innerHTML = `<div id="t-palette"></div><div class="actions"><button type="button" id="t-dcheck" class="primary">${ui().check}</button></div><div id="t-dfb" class="draw-fb" aria-live="polite"></div>`;
+    const fb = $('#t-dfb');
+    const w = arrowsIn(svg, d, () => s, {
+      locked: s.ok, palette: $('#t-palette'),
+      onChange: () => { if (s.drawn) { s.drawn = false; w.mark({}, null); fb.className = 'draw-fb'; fb.innerHTML = ''; } },
+    });
+    const judge = () => {
+      const r = drawJudged(fb, w, d, s, false, ui().drawTutorOk);
+      if (r === null) { fb.className = 'draw-fb'; fb.textContent = ui().drawFirst; return; }
+      s.drawn = true;
+      if (r) { s.ok = true; w.lock(); $('#t-dcheck').disabled = true; }
+    };
+    $('#t-dcheck').disabled = s.ok;
+    $('#t-dcheck').addEventListener('click', judge);
+    if (s.drawn) judge();
   }
 
   // ---------------------------------------------------------------- language
@@ -307,6 +443,7 @@
       st = keep;
       ex.fields.forEach((f, k) => setValue(f, values[k]));
       if (st.checked) feedback();
+      else if (st.drawn && ex.draw) drawFeedback();
       showStatus(st.status);
       showHints();
       if (st.revealed) showSolution();
@@ -378,7 +515,7 @@
     window.addEventListener('hashchange', fromHash);
     window.addEventListener('resize', markScrollable);
     tutor = window.createTutor(lessons(), {
-      after: () => { math($('#tutor')); markScrollable(); },
+      after: () => { mountTutorDrawing(); math($('#tutor')); markScrollable(); },
       done: practise,
       practise: (i) => { topics.go(i); setMode('practice'); fresh(); },
       t: () => ui().tutorBtns,
