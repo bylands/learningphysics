@@ -39,7 +39,7 @@
   };
   const ui = () => UI[IW.getLang()];
 
-  let ex = null, st = null, tutor = null, checker = null, topics = null;
+  let ex = null, st = null, tutor = null, checker = null, topics = null, player = null, tutorPlayer = null;
 
   // ---------------------------------------------------------------- persistence
   function stored(key, fallback) {
@@ -175,8 +175,13 @@
     stars.setAttribute('role', 'img');
     $('#title').append(' ', stars);
     $('#prompt').innerHTML = ex.text + (ex.fields.some((f) => f.sci) ? `<p class="note">${ui().sci}</p>` : '');
-    $('#figure').innerHTML = ex.figure({ task: true });
+    // the pattern to watch once solved, below the figure
+    if (player) player.stop();
+    player = null;
+    const w = ex.watch ? ex.watch() : null;
+    $('#figure').innerHTML = ex.figure({ task: true }) + (w ? '<div class="pw-host ifw-host"></div>' : '');
     $('#fields').innerHTML = ex.fields.map(fieldHtml).join('');
+    if (w) player = mountWatch($('#figure .pw-host'), w, { locked: () => !(st && (st.solved || st.revealed)), marks: () => w.marks(answerOf) });
     $('#hint-list').innerHTML = '';
     $('#hints').hidden = true;
     $('#solution').hidden = true;
@@ -263,6 +268,7 @@
       showStatus('ok');
     } else showStatus('bad');
     updateButtons();
+    if (player) player.refresh(); // solved: the second source can be switched on
   }
 
   function showHints() {
@@ -294,13 +300,95 @@
     finish();
     showSolution();
     updateButtons();
+    if (player) player.refresh(); // the second source can be switched on
     $('#solution').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  // ---------------------------------------------------------------- predict, then watch
+  // Once an exercise with a run (ifWatch in scenarios.js) is solved or its solution shown (and in
+  // the last frame of two worked examples), the student switches on the second source (opens the
+  // second slit, lights the whole grating) and watches the pattern build up (play.js): the waves
+  // seen from above, as their average brightness, spreading from the sources at their speed, and
+  // below them the intensity along the screen, drawn as far as the waves have arrived; the
+  // student's answers are rings on it (✓ right, ✗ not), shown once the pattern there is complete.
+  // A run lasts SECONDS: far slower than the light or sound, as the note under the graph says.
+  const SECONDS = 3;
+  // the student's answer of field key: a number (NaN if none) or the option chosen (null)
+  function answerOf(key) {
+    const f = ex && ex.fields.find((x) => x.key === key);
+    if (!f) return null;
+    const v = valueOf(f);
+    return f.type === 'num' ? (empty(f, v) ? NaN : parse(v)) : v;
+  }
+  // a number in words: 5·10⁸ (one digit)
+  const about = (x) => IW.num(IW.sig(x, 1));
+
+  // The player of the run w in host. o: { locked(), marks() → the student's answers (w.marks) }.
+  function mountWatch(host, w, o = {}) {
+    let shown = null, scene = window.Figures.watchScene(w);
+    const L = IW.L, fieldOf = (key) => ex && ex.fields.find((f) => f.key === key);
+    // a number answered is right as in the feedback
+    const okOf = (m) => (m.ok != null ? m.ok : (() => { const f = fieldOf(m.key); return !!f && judge(f, valueOf(f)).cls === 'ok'; })());
+    // T: the real time per unit of scene time (the waves reach the middle of the screen, or P, at
+    // the time they take in reality)
+    const sound = w.kind === 'speakers', t1 = scene.t1, T = w.T && w.P != null ? w.T / scene.full(w.P) : w.T;
+    const what = sound ? L('the loudspeaker S₂', 'den Lautsprecher S₂') : w.kind === 'grating' ? L('the grating', 'das Gitter') : L('the slit S₂', 'den Spalt S₂');
+    // the note: how much slower than in reality, why the brightness is an average, how much larger the angles
+    function scale() {
+      const slow = T ? SECONDS / t1 / T : null, ms = w.T * 1e3, ns = w.T * 1e9;
+      const first = sound ? L(`Slow motion: about ${about(slow)} times slower than in reality (the sound reaches P after ${IW.num(ms, 2)} ms).`, `Zeitlupe: etwa ${about(slow)}-mal langsamer als in Wirklichkeit (der Schall erreicht P nach ${IW.num(ms, 2)} ms).`)
+        : slow ? L(`Slow motion: about ${about(slow)} times slower than in reality (the light reaches the screen after ${IW.num(ns, 2)} ns).`, `Zeitlupe: etwa ${about(slow)}-mal langsamer als in Wirklichkeit (das Licht erreicht den Schirm nach ${IW.num(ns, 2)} ns).`)
+          : L('Extreme slow motion: in reality the light crosses the set-up in a few nanoseconds.', 'Extreme Zeitlupe: In Wirklichkeit durchquert das Licht die Anordnung in wenigen Nanosekunden.');
+      const avg = sound ? L(`The sound oscillates ${IW.num(w.f, 2)} times per second, far too fast to show: the colour shows how loud it is on average. Not to scale.`, `Der Schall schwingt ${IW.num(w.f, 2)}-mal pro Sekunde, viel zu schnell zum Zeigen: Die Farbe zeigt, wie laut er im Mittel ist. Nicht massstäblich.`)
+        : L(`The light oscillates about ${about(w.f)} times per second, far too fast to show: you see its average brightness.`, `Das Licht schwingt etwa ${about(w.f)}-mal pro Sekunde, viel zu schnell zum Zeigen: Du siehst seine mittlere Helligkeit.`);
+      const zoom = scene.zoom ? L(` The angles are drawn about ${about(scene.zoom)} times larger.`, ` Die Winkel sind etwa ${about(scene.zoom)}-mal grösser gezeichnet.`) : w.kind === 'grating' ? L(' Only 8 slits are drawn.', ' Nur 8 Spalte sind gezeichnet.') : '';
+      return `${first} ${avg}${zoom}`;
+    }
+    const fmt = (x) => (Math.abs(x) < 0.005 ? '0' : x.toFixed(x > -10 && x < 10 ? 2 : 1).replace('-', '−'));
+    return window.Play.create(host, {
+      t0: -0.2 * t1, t1, seconds: SECONDS,
+      locked: o.locked,
+      render(el, s) {
+        const lock = !!(o.locked && o.locked()), key = `${lock}|${IW.getLang()}`;
+        if (key !== shown) {
+          shown = key;
+          scene = window.Figures.watchScene(w);
+          el.innerHTML = `<div class="ifw">${scene.frame}<div class="ifw-side"></div></div>`;
+        }
+        const t = Math.min(s.t, t1);
+        el.querySelector('.ifw-field').classList.toggle('ifw-on', s.after);
+        scene.paint(el.querySelector('.ifw-canvas'), t);
+        el.querySelector('.ifw-dyn').innerHTML = scene.over(t);
+        const side = el.querySelector('.ifw-side');
+        if (lock) { side.innerHTML = `<p class="note ifw-wait">${L('The pattern on the screen appears here once you have solved the exercise or looked at the solution.', 'Das Muster auf dem Schirm erscheint hier, sobald du die Aufgabe gelöst oder die Lösung angeschaut hast.')}</p>`; return; }
+        const marks = (o.marks ? o.marks() : []).map((m) => ({ ...m, ok: okOf(m) })).filter((m) => s.after && t >= scene.full(m.y) - 1e-9);
+        const rows = marks.map((m) => `<li class="pred ${m.ok ? 'ok' : 'bad'}">${m.ok ? '✓' : '✗'} ${m.say}</li>`);
+        side.innerHTML = scene.graph(s.t, marks) + (rows.length ? `<ul class="ifw-read">${rows.join('')}</ul>` : '') + `<p class="note ifw-scale">${scale()}</p>`;
+      },
+      texts: () => ({
+        switch: sound ? L('The loudspeaker S₂: switch it on', 'Der Lautsprecher S₂: einschalten') : w.kind === 'grating' ? L('The grating: light all its slits', 'Das Gitter: alle Spalte beleuchten') : L('The slit S₂: open it', 'Der Spalt S₂: öffnen'),
+        locked: L(`Check your answer first: you can switch on ${what} once you have solved the exercise or looked at the solution.`, `Prüfe zuerst deine Antwort: Du kannst ${what} einschalten, sobald du die Aufgabe gelöst oder die Lösung angeschaut hast.`),
+        ready: sound ? L('Click the loudspeaker S₂ to switch it on, and watch where the sound gets loud and where quiet.', 'Klicke auf den Lautsprecher S₂, um ihn einzuschalten, und schau zu, wo der Schall laut und wo er leise wird.')
+          : w.kind === 'grating' ? L('Click the grating to widen the beam onto all its slits, and watch the maxima form.', 'Klicke auf das Gitter, um den Strahl auf alle Spalte aufzuweiten, und schau zu, wie die Maxima entstehen.')
+            : L('Click the slit S₂ to open it, and watch the fringes form on the screen.', 'Klicke auf den Spalt S₂, um ihn zu öffnen, und schau zu, wie die Streifen auf dem Schirm entstehen.'),
+        again: (o.marks ? L('Rings: your answers (✓ right, ✗ not). ', 'Ringe: deine Antworten (✓ richtig, ✗ nicht). ') : '') +
+          L(`Click ${what} again to go back, or ▶ to watch once more.`, `Klicke nochmals auf ${what}, um zurückzugehen, oder ▶, um nochmals zuzuschauen.`),
+        time: T ? (t) => (sound ? `t = ${fmt(t * T * 1e3)} ms` : `t = ${fmt(t * T * 1e9)} ns`) : null,
+      }),
+    });
   }
 
   // ---------------------------------------------------------------- language
   const lessons = () => EXAMPLES.map((e, i) => ({
     name: e.name(), idea: e.idea(), also: topics.also(topicOf(i).t), frames: () => tutorial(e).frames,
   }));
+  // the last frame of an example with a run to watch (tutorial(lesson).watch, generator.js)
+  function watchInTutor() {
+    if (tutorPlayer) tutorPlayer.stop();
+    tutorPlayer = null;
+    const host = $('#t-figure .pw-host'), e = EXAMPLES[tutor ? tutor.current() : 0];
+    if (host && e && e.watch) tutorPlayer = mountWatch(host, tutorial(e).watch(), {});
+  }
 
   function applyStatic() {
     document.title = ui().title;
@@ -325,6 +413,7 @@
       if (st.revealed) showSolution();
       if ($('#task').hidden) { $('#hints').hidden = true; $('#solution').hidden = true; }
       updateButtons();
+      if (player) player.refresh();
     }
     tutor.relabel(lessons());
     checker.relabel();
@@ -398,7 +487,7 @@
     window.addEventListener('hashchange', fromHash);
     window.addEventListener('resize', markScrollable);
     tutor = window.createTutor(lessons(), {
-      after: () => { math($('#tutor')); markScrollable(); },
+      after: () => { math($('#tutor')); watchInTutor(); markScrollable(); },
       done: practise,
       practise: (i) => { const { t, s } = topicOf(i); topics.go(t, s); setMode('practice'); fresh(); },
       t: () => ui().tutorBtns,

@@ -1,6 +1,7 @@
 // Exercises and worked examples from the exercise types (see scenarios.js).
 // practiceOf(type, seed) gives { scenario, difficulty, title, text, fields, figure(view),
-// solutionFigure(), hints, solution, results, p, v }: a number field has its value in its unit and
+// solutionFigure(), hints, solution, results, watch(), p, v }: watch() the run to watch once solved
+// (ifWatch in scenarios.js; null for a type without one); a number field has its value in its unit and
 // traps [{ value, why, nudge, flag }] (the answers under typical wrong ideas), a choice field its right
 // answer. quiz(exercise, seed) gives a multiple-choice question about one of its fields (for the
 // check), tutorial(lesson) the tutor's frames.
@@ -47,6 +48,7 @@
       solution: steps.map((s) => s.text),
       results: fields.map(answerHtml).filter(Boolean).join(', '),
       steps,
+      watch: scn.watch ? () => scn.watch(p, v) : null,
       p, v,
     };
   }
@@ -85,7 +87,8 @@
   }
 
   // The tutor: the frames that introduce the idea (lesson.intro), then the task with what is
-  // wanted, then the steps of its solution.
+  // wanted, then the steps of its solution; with lesson.watch, a last frame to watch its run
+  // (app.js): tutorial(lesson).watch().
   // a choice of graphs or pictures: its options, read-only, so that the task can be read
   const pics = (ex) => ex.fields.filter((f) => f.type === 'choice' && f.pics && !f.after)
     .map((f) => `<span class="choices levels small pics tq-pics">${f.options.map((o) => `<label><span>${o[1]}</span></label>`).join('')}</span>`).join('');
@@ -97,7 +100,12 @@
       text: `<p class="step-rule">${L('An exercise', 'Eine Aufgabe')}</p>${ex.text}<p>${L('Wanted', 'Gesucht')}: ${wanted}</p>` + pics(ex),
       figure: ex.figure({ task: true }) || ex.solutionFigure(),
     };
-    return { frames: [...intro, task, ...ex.steps.map((s) => ({ text: s.text, figure: ex.figure({ show: new Set(s.show || []) }) }))] };
+    const frames = [...intro, task, ...ex.steps.map((s) => ({ text: s.text, figure: ex.figure({ show: new Set(s.show || []) }) }))];
+    if (!lesson.watch || !ex.watch) return { frames, watch: null };
+    const w = ex.watch(), grid = w.kind === 'grating';
+    const text = grid ? L('Light the whole grating and watch: where the waves of all its slits arrive in step, narrow bright maxima form, up to the highest order; in between it is dark.', 'Beleuchte das ganze Gitter und schau zu: Wo die Wellen aller Spalte im Gleichtakt ankommen, entstehen schmale helle Maxima, bis zur höchsten Ordnung; dazwischen ist es dunkel.')
+      : L('Open the second slit and watch: with one slit the screen is evenly lit; where the waves of both slits meet, bright and dark fringes form, evenly spaced on the screen.', 'Öffne den zweiten Spalt und schau zu: Mit einem Spalt ist der Schirm gleichmässig beleuchtet; wo sich die Wellen beider Spalte treffen, entstehen helle und dunkle Streifen, gleichmässig verteilt auf dem Schirm.');
+    return { frames: [...frames, { text: `<p class="step-rule">${L('Watch it happen', 'Zuschauen')}</p><p>${text}</p>`, figure: '<div class="pw-host ifw-host"></div>' }], watch: ex.watch };
   }
 
   root.Interf = { SCENARIOS, practiceOf, quiz, tutorial, exercise, byId };

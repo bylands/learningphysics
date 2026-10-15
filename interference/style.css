@@ -67,3 +67,30 @@ svg.tb .if-light { fill: var(--if-light); }
 
 /* a result in the text of a step (in formulas, KaTeX marks it: see ui.css) */
 span.result { background: var(--ok-bg); border-radius: 3px; padding: 0.05em 0.25em; }
+
+/* predict, then watch (play.js): the waves seen from above, as their average brightness (a canvas
+   under the drawing), and below them, once unlocked, the intensity along the screen; rings are
+   the student's answers (✓ right, ✗ not) */
+.ifw-host { flex: 1 1 100%; min-width: 0; }
+.ifw-host .pw-scene { width: 100%; }
+.ifw { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.ifw-field { position: relative; width: min(100%, 440px); }
+.ifw-canvas { display: block; width: 100%; height: auto; aspect-ratio: 440 / 236; }
+svg.tb.ifw-over { position: absolute; inset: 0; width: 100%; height: 100%; background: none; }
+.ifw-side { width: min(100%, 440px); }
+.ifw-wait { max-width: 30em; margin: 4px auto 0; }
+svg.ifw-plot { display: block; width: 100%; height: auto; }
+svg.tb .ifw-shutter { fill: var(--tb-metal1); stroke: var(--ink); stroke-width: 1; }
+.ifw-on .ifw-shutter { display: none; }
+.ifw-field:not(.ifw-on) .ifw-sw { opacity: 0.35; }
+svg.tb .ifw-front { fill: none; stroke: #ffffff; stroke-opacity: 0.55; stroke-width: 1.2; stroke-dasharray: 4 4; }
+svg.tb .ifw-p { fill: #ffffff; stroke: var(--if-screen); stroke-width: 1.5; }
+svg.tb .ifw-plabel { fill: #ffffff; paint-order: stroke; stroke: var(--if-screen); stroke-width: 3px; }
+svg.tb .ifw-pline { fill: none; stroke: var(--muted); stroke-width: 1; stroke-dasharray: 3 3; }
+svg.tb .ifw-pred { fill: none; stroke: var(--ink); stroke-width: 2; stroke-dasharray: 2 2; }
+svg.tb .ifw-mk { font: 700 12px system-ui, sans-serif; }
+svg.tb .ifw-mk.ok { fill: var(--ok); } svg.tb .ifw-mk.bad { fill: var(--bad); }
+.ifw-read { list-style: none; margin: 4px 0 0; padding: 0; font-size: 0.85rem; }
+.ifw-read li { margin: 2px 0; }
+.ifw-read .pred.ok { color: var(--ok); } .ifw-read .pred.bad { color: var(--bad); }
+.ifw-scale { margin: 4px 0 0; font-size: 0.85rem; }
