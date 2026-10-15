@@ -140,3 +140,21 @@ svg.mf .eye { fill: var(--card); stroke: var(--ink); stroke-width: 1.5; }
 svg.mf .pupil { fill: var(--ink); }
 svg.mf .turn { fill: none; stroke: var(--ink); stroke-width: 2.2; }
 svg.mf .turn-head { fill: var(--ink); }
+
+/* practice: the vector drawn at the charge or wire (arrow.js, arrow.css), its colour that of its
+   quantity; the button "No force" next to ⊙ ⊗ */
+#mpalette { margin: 4px 0 6px; }
+svg.mf .ar-arrow.mf-F, .ar-kind.mf-F .ar-swatch { color: var(--mf-f); }
+svg.mf .ar-arrow.mf-B, .ar-kind.mf-B .ar-swatch { color: var(--mf-b); }
+svg.mf .ar-arrow.mf-v, .ar-kind.mf-v .ar-swatch { color: var(--mf-v); }
+svg.mf .mf-al { font: italic 16px var(--serif); paint-order: stroke; stroke: var(--card); stroke-width: 3px; }
+.ar-none {
+  padding: 6px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--card); line-height: 1.35;
+  display: inline-flex; align-items: center; gap: 6px; min-height: 36px;
+}
+.ar-none:hover:not(:disabled) { border-color: var(--accent); }
+.ar-none[aria-pressed="true"] { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent); font-weight: 600; }
+.ar-none:disabled { opacity: 0.55; cursor: default; }
+.ar-none.ok { border-color: var(--ok); background: var(--ok-bg); }
+.ar-none.bad { border-color: var(--bad); background: var(--bad-bg); }
+.qfb.ok { color: var(--ok); }

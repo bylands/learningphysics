@@ -19,6 +19,9 @@
       fill: 'Answer every question, then check.', okWell: 'All correct, well done!',
       notYet: (n) => `Not quite yet (attempt ${n}).`, tryAgain: ' Try again, or take a hint.', canReveal: ' You can take a hint or look at the solution.',
       correct: 'Correct', notThis: 'Not this one: check your reasoning, or take a hint.', notAll: 'Not all the answers that fit are chosen yet.', stmtsWrong: (n) => (n === 1 ? 'One statement is judged wrong.' : `${n} statements are judged wrong.`), missed: 'This one fits too:', shown: 'The right answers are marked.',
+      drawNote: (k) => `Tap “${k}” to put the arrow on the drawing, then drag its tip to turn it; for out of or into the page, use ⊙ or ⊗. (Keys on the selected arrow: ← → turn it, also to ⊙ and ⊗.)`,
+      noForce: 'No force', fillDraw: 'Draw the arrow first, then check.', shownDraw: 'The right direction is drawn.',
+      onParticle: 'the particle', onWire: 'the wire',
     },
     de: {
       title: 'Magnetische Kräfte und Felder von Strömen', mode: 'Modus', difficulty: 'Schwierigkeit', example: 'Beispiel',
@@ -30,6 +33,9 @@
       hint: (n) => `Tipp (${n} übrig)`, noHints: 'Keine Tipps mehr', unlocks: (n) => `Wird nach allen Tipps oder ${n} Versuchen freigeschaltet`,
       fill: 'Beantworte jede Frage und prüfe dann.', okWell: 'Alles richtig, gut gemacht!',
       notYet: (n) => `Noch nicht ganz (Versuch ${n}).`, tryAgain: ' Versuche es nochmals, oder nimm einen Tipp.', canReveal: ' Du kannst einen Tipp nehmen oder die Lösung anschauen.',
+      drawNote: (k) => `Tippe auf «${k}», um den Pfeil in die Zeichnung zu setzen, und ziehe dann an seiner Spitze, um ihn zu drehen; für aus der Seite heraus oder in sie hinein nimm ⊙ oder ⊗. (Tasten beim gewählten Pfeil: ← → drehen ihn, auch zu ⊙ und ⊗.)`,
+      noForce: 'Keine Kraft', fillDraw: 'Zeichne zuerst den Pfeil und prüfe dann.', shownDraw: 'Die richtige Richtung ist eingezeichnet.',
+      onParticle: 'das Teilchen', onWire: 'den Draht',
       correct: 'Richtig', notThis: 'Das stimmt nicht: Überprüfe deine Überlegung, oder nimm einen Hinweis.', notAll: 'Noch sind nicht alle passenden Antworten gewählt.', stmtsWrong: (n) => (n === 1 ? 'Eine Aussage ist falsch beurteilt.' : `${n} Aussagen sind falsch beurteilt.`), missed: 'Auch diese passt:', shown: 'Die richtigen Antworten sind markiert.',
     },
   };
@@ -60,6 +66,7 @@
   // While the exercise is open, a wrong answer gets a nudge, not the solution: the steps of the
   // solution are taken out of its explanation, and single statements or missed tiles are not marked.
   function feedback() {
+    if (ex.draw) return drawFeedback();
     let all = true, missing = false;
     const done = st && (st.solved || st.revealed);
     // n: the option's own nudge, where its reason would give the answer away
@@ -108,14 +115,102 @@
     return all ? true : missing && !document.querySelector('.field.bad, .cand.bad, .tile.bad, .tile.miss, .stmts li.bad, .stmts-fb:not(:empty)') ? null : false;
   }
 
+  // ---------------------------------------------------------------- the vector drawn
+  // In practice the direction exercises are answered by drawing the vector (shared arrow.js) at
+  // the charge or wire, in the page or ⊙ ⊗, or with the button "No force" where there may be none
+  // (exercises.js: draw, with the judging). The check keeps the four options. The arrow is kept in
+  // st.arrows (st.none: no force), so that it survives a redraw (the other language). A check
+  // marks it, with a nudge while the exercise is open and the explanation once it is solved or
+  // the solution shown; the marks go once the drawing changes.
+  let drawing = null;
+  const LEN = 60;
+  function drawHtml() {
+    return `<p class="ask">${ex.draw.ask}</p><div id="mpalette"></div><ul class="qfb" data-fb="draw" aria-live="polite"></ul>`;
+  }
+  function mountDrawing() {
+    drawing = null;
+    const d = ex.draw, svg = d && $('#figure svg.mf');
+    if (!svg) return;
+    const kindLabel = `${d.name} <i>${d.kind}</i>`;
+    drawing = window.Arrow.create(svg, {
+      kinds: [{ id: d.kind, label: kindLabel, cls: `mf-${d.kind}` }],
+      anchors: [{ id: 0, label: ex.type === 'dir-current' ? ui().onWire : ui().onParticle, x: d.at[0], y: d.at[1], r: 26 }],
+      len: LEN, outIn: true, gap: d.gap, aside: d.aside, start: d.start, max: 1,
+      label: () => `<tspan class="it">${d.kind}</tspan>`, labelCls: 'mf-al',
+      words: (dir) => X.dirName(X.fromArrow(dir)),
+      note: ui().drawNote(d.name),
+      state: st.arrows,
+      locked: st.solved || st.revealed,
+      palette: $('#mpalette'),
+      onEdit: (ar) => { st.arrows = ar.state(); if (st.arrows.length && st.none) { st.none = false; showNone(); } clearDrawn(); },
+    });
+    if (d.none) {
+      const pal = $('#mpalette'), b = document.createElement('button');
+      b.type = 'button';
+      b.id = 'no-force';
+      b.className = 'ar-none';
+      b.innerHTML = `<span class="ar-oi-sym" aria-hidden="true">0</span> ${ui().noForce}`;
+      b.addEventListener('click', () => {
+        if (st.solved || st.revealed) return;
+        st.none = !st.none;
+        if (st.none) { st.arrows = []; drawing.restore([]); }
+        showNone();
+        clearDrawn();
+      });
+      pal.querySelector('.ar-kinds').insertBefore(b, pal.querySelector('.ar-remove'));
+      showNone();
+    }
+  }
+  function showNone() {
+    const b = $('#no-force');
+    if (!b) return;
+    b.setAttribute('aria-pressed', st.none ? 'true' : 'false');
+    b.disabled = st.solved || st.revealed;
+  }
+  // the marks of a check, gone once the drawing changes
+  function clearDrawn() {
+    if (!st.drawn) return;
+    st.drawn = false;
+    drawing.mark({});
+    const b = $('#no-force');
+    if (b) b.classList.remove('ok', 'bad');
+    const fb = $('[data-fb="draw"]');
+    fb.className = 'qfb';
+    fb.innerHTML = '';
+  }
+  // the drawing judged and marked: true if right, false if wrong, null if nothing is drawn
+  function drawFeedback() {
+    const arrows = st.arrows || [], a = arrows[arrows.length - 1], fb = $('[data-fb="draw"]'), b = $('#no-force');
+    if (!a && !st.none) return null;
+    const j = ex.draw.judge(a ? X.fromArrow(a.dir) : null), done = st.solved || st.revealed || j.ok;
+    st.drawn = true;
+    drawing.mark(a ? { [a.id]: j.ok ? 'ok' : 'bad' } : {});
+    if (b) { b.classList.toggle('ok', !a && j.ok); b.classList.toggle('bad', !a && !j.ok); }
+    fb.className = `qfb${j.ok ? ' ok' : ''}`;
+    fb.innerHTML = `<li>${j.ok ? `${ui().correct}: ${j.why}` : done ? j.why : j.nudge}</li>`;
+    return j.ok;
+  }
+  // the solution shown: the right direction drawn (or "No force")
+  function drawRight() {
+    const show = ex.draw.show;
+    st.none = !show;
+    st.arrows = show ? [{ id: 'a1', kind: ex.draw.kind, anchor: 0, at: [...ex.draw.at], dir: X.toArrow(show), len: LEN }] : [];
+    drawing.restore(st.arrows);
+    drawing.select(null);
+    drawing.show({ locked: true });
+    showNone();
+    drawFeedback();
+  }
+
   // ---------------------------------------------------------------- exercises
   const PRACTICE = 'mf', typeOf = (e) => e.type;
   const finish = () => { if (ex && st) Practice.finish(PRACTICE, typeOf(ex), st); };
-  const maxTries = () => (ex.questions.length === 1 && !ex.questions[0].multi && ex.questions[0].type !== 'multi' ? 2 : 3);
+  const maxTries = () => (ex.draw ? (ex.type === 'dir-missing' ? 3 : 2)
+    : ex.questions.length === 1 && !ex.questions[0].multi && ex.questions[0].type !== 'multi' ? 2 : 3);
   function open(exercise) {
     finish();
     ex = exercise;
-    st = { tries: 0, hints: 0, solved: false, revealed: false, checked: false, status: null };
+    st = { tries: 0, hints: 0, solved: false, revealed: false, checked: false, status: null, arrows: [], none: false, drawn: false };
     if (location.hash !== `#${ex.id}`) history.replaceState(null, '', `#${ex.id}`);
     render();
     topics.shown(ex);
@@ -126,8 +221,9 @@
   function render() {
     $('#title').innerHTML = `${ex.title} ${starsOf(ex.difficulty)}`;
     $('#prompt').innerHTML = ex.text;
-    $('#figure').innerHTML = ex.figs || '';
-    $('#fields').innerHTML = ex.questions.map(questionHtml).join('');
+    $('#figure').innerHTML = ex.draw ? `<div class="fig">${ex.draw.fig}</div>` : ex.figs || '';
+    $('#fields').innerHTML = ex.draw ? drawHtml() : ex.questions.map(questionHtml).join('');
+    mountDrawing();
     $('#hint-list').innerHTML = '';
     $('#hints').hidden = true;
     $('#solution').hidden = true;
@@ -152,7 +248,7 @@
     const el = $('#status');
     if (st) st.status = kind;
     el.className = 'status' + (kind === 'ok' ? ' ok' : kind === 'bad' ? ' bad' : '');
-    el.textContent = !kind ? '' : kind === 'fill' ? ui().fill : kind === 'shown' ? ui().shown
+    el.textContent = !kind ? '' : kind === 'fill' ? (ex.draw ? ui().fillDraw : ui().fill) : kind === 'shown' ? (ex.draw ? ui().shownDraw : ui().shown)
       : kind === 'ok' ? ui().okWell + (st.advance ? ` ${st.advance}` : '') : ui().notYet(st.tries) + (!canReveal() ? ui().tryAgain : ui().canReveal);
   }
   function check(evt) {
@@ -177,6 +273,7 @@
     finish();
     st.advance = topics.solved(st, ex);
     document.querySelectorAll('#fields input').forEach((x) => { x.disabled = true; });
+    if (drawing) { drawing.select(null); drawing.show({ locked: true }); showNone(); } // (the mark shows, not the selection)
     showStatus('ok');
   }
   function showHints() { $('#hint-list').innerHTML = ex.hints.slice(0, st.hints).map((h) => `<li>${h}</li>`).join(''); $('#hints').hidden = !st.hints; }
@@ -194,6 +291,7 @@
   }
   // The right answers chosen and marked.
   function markRight() {
+    if (ex.draw) { drawRight(); return; }
     for (const q of ex.questions) {
       if (q.type === 'multi') q.statements.forEach((s, k) => { document.querySelector(`.stmts li[data-k="${k}"] input`).checked = s.ok; });
       else q.options.forEach((o, k) => { document.querySelector(`input[name="q-${q.key}"][value="${k}"]`).checked = o.ok; });
@@ -242,7 +340,7 @@
             fig(scene({ items: [{ kind: 'particle', q: 1, at: [0, 0] }], vecs: [{ of: 0, kind: 'v', dir: v }, { of: 0, kind: 'F', dir: F }, { of: 0, kind: 'B', dir: UP }] }))),
           frame(L('But not only that one', 'Aber nicht nur dieses'), `<p>${L(`A field ${dn([1, 1, 0])} has a part ${dn(UP)} and a part ${dn(RIGHT)}, along the motion. The part along the motion gives no force: this field gives a force ${dn(F)} as well. All these fit: ${fit.map(dn).join(', ')}.`, `Ein Feld ${dn([1, 1, 0])} hat einen Teil ${dn(UP)} und einen Teil ${dn(RIGHT)}, längs der Bewegung. Der Teil längs der Bewegung ergibt keine Kraft: Auch dieses Feld ergibt eine Kraft ${dn(F)}. Alle diese passen: ${fit.map(dn).join(', ')}.`)}</p>`,
             fig(scene({ items: [{ kind: 'particle', q: 1, at: [0, 0] }], vecs: [{ of: 0, kind: 'v', dir: v }, { of: 0, kind: 'F', dir: F }, ...fit.map((d, i) => ({ of: 0, kind: 'B', dir: d, name: `B<tspan class="sub" dy="3">${i + 1}</tspan>` }))] }))),
-          frame(L('In the exercises', 'In den Aufgaben'), `<p>${L('When the field or the velocity is missing, tick all the directions that fit. Rule out those that are not perpendicular to the force, then check the rest with the hand rule.', 'Wenn das Feld oder die Geschwindigkeit fehlt, kreuze alle Richtungen an, die passen. Schliesse jene aus, die nicht senkrecht zur Kraft stehen, und prüfe die übrigen mit der Handregel.')}</p>`,
+          frame(L('In the exercises', 'In den Aufgaben'), `<p>${L('When the field or the velocity is missing, find the directions that fit: rule out those that are not perpendicular to the force, then check the rest with the hand rule. In practice you draw one of them; in the check you choose among four.', 'Wenn das Feld oder die Geschwindigkeit fehlt, suche die Richtungen, die passen: Schliesse jene aus, die nicht senkrecht zur Kraft stehen, und prüfe die übrigen mit der Handregel. Beim Üben zeichnest du eine davon, im Check wählst du aus vier aus.')}</p>`,
             fig(scene({ items: [{ kind: 'particle', q: 1, at: [0, 0] }], vecs: [{ of: 0, kind: 'v', dir: v }, { of: 0, kind: 'F', dir: F }, { of: 0, kind: 'B', unknown: true }] }))),
         ];
       } },
@@ -322,7 +420,7 @@
       render();
       st = keep;
       chosen.forEach(([n, v]) => { const x = document.querySelector(`input[name="${n}"][value="${v}"]`); if (x) x.checked = true; });
-      if (st.revealed) markRight(); else if (st.checked) feedback();
+      if (st.revealed) markRight(); else if (ex.draw ? st.drawn : st.checked) feedback();
       if (st.solved) document.querySelectorAll('#fields input').forEach((x) => { x.disabled = true; });
       showStatus(status);
       showHints();

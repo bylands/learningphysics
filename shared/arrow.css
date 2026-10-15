@@ -28,7 +28,7 @@
 .arrows .ar-target:focus { outline: none; }
 .arrows .ar-target:focus-visible { fill-opacity: 0.22; stroke-width: 2.6; }
 
-/* the palette: a button per kind, then Remove */
+/* the palette: a button per kind, ⊙ ⊗ (outIn), then Remove */
 .ar-palette .ar-note { margin: 0 0 8px; }
 .ar-kinds { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
 .ar-kind {
@@ -42,3 +42,11 @@
 .ar-swatch { display: inline-block; font-weight: 700; }
 .ar-ghost { position: fixed; z-index: 1000; pointer-events: none; cursor: grabbing; opacity: 0.95; box-shadow: 0 8px 20px rgba(0, 0, 0, 0.18); margin: 0; }
 .ar-remove { margin-left: auto; }
+.ar-oi {
+  padding: 6px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--card); line-height: 1.35;
+  display: inline-flex; align-items: center; gap: 6px; min-height: 36px;
+}
+.ar-oi:hover:not(:disabled) { border-color: var(--accent); }
+.ar-oi[aria-pressed="true"] { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent); font-weight: 600; }
+.ar-oi:disabled { opacity: 0.55; cursor: default; }
+.ar-oi-sym { font-size: 1.25em; line-height: 1; }

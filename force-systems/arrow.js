@@ -1,5 +1,5 @@
 // Shared by the learningphysics.ch apps (canonical copy in shared/, copied by sync.sh into the apps
-// whose index.html loads it: Free-Body Diagrams; its look is in arrow.css). Vector arrows the
+// whose index.html loads it: Free-Body Diagrams, Magnetic Forces; its look is in arrow.css). Vector arrows the
 // student places on a figure (an <svg>) and turns: each starts at an anchor (a body, a charge, a
 // point of a bar), its direction snapped to a set of directions, its length to steps within
 // limits (or fixed); optionally out of or into the page (⊙ ⊗). Arrows come from a palette of kinds
@@ -22,7 +22,17 @@
 //                     Arrow.dirs(8). Arrow.dirs(16), Arrow.dirs(8, Arrow.axes(-30)) (and along and
 //                     perpendicular to a slope of 30°) and the like
 //     outIn           ⊙ and ⊗ follow the directions in the turn of the keys; a tap on the tail of
-//                     the selected arrow sets ⊙, then ⊗, then the plane again
+//                     the selected arrow sets ⊙, then ⊗, then the plane again. With a palette, two
+//                     buttons "⊙ out of the page" and "⊗ into the page" (easier to find on a phone)
+//                     set it for the selected arrow, or the only one (with one kind and one anchor
+//                     and no arrow yet, they place one); pressed again, the arrow lies in the plane
+//                     again. outInButtons: false leaves them out
+//     gap             arrows in the plane start this far (svg units) from their tail, so that they
+//                     clear what is drawn there (a charge, a wire seen end-on); default 0
+//     aside           [dx, dy]: where ⊙ and ⊗ are drawn, from the tail (default [0, 0]: on it), e.g.
+//                     beside a charge rather than over it
+//     max             at most this many arrows of a kind on an anchor: placing one more there
+//                     selects the last of them instead (e.g. 1: one direction to draw)
 //     len             { lo, hi, step, init } in svg units (step 0: free), or a number: fixed;
 //                     default { lo: 20, hi: 100, step: 8, init: 48 }. An arrow never reaches
 //                     beyond the viewBox: it is shortened to fit (below lo if need be)
@@ -35,8 +45,9 @@
 //     label(a)        svg markup of the arrow's label (default none), placed beyond the tip or else
 //                     beside it, where it covers least of the backdrop's texts and lines, the other
 //                     labels and the shafts; labelCls its classes besides ar-label
-//     words(d)        the name of direction d for screen readers, or null for the default
-//                     (Arrow.words: "up", "down and to the left", "at 330°")
+//     words(d)        the name of direction d for screen readers (and of 'out' and 'in' on the
+//                     buttons), or null for the default (Arrow.words: "up", "down and to the left",
+//                     "at 330°")
 //     describe(a)     { label, text } for screen readers (default: kind on anchor; direction and
 //                     length)
 //     head            the arrowhead { len, notch, barb } (default 11, 8, 4.2, as in Force Systems)
@@ -67,7 +78,11 @@
 // Lorentz force), Force Concepts and Interaction (the forces on several bodies, a palette per
 // body), torque (an anchor per point of the bar, its area a strip, tail() snapping the drop to
 // the nearest point).
-// The pure parts (directions, lengths, judge, which anchor a point takes) are checked in
+//   Arrow.press(dir, keep, which, dirs)  what a button ⊙ (which 'out') or ⊗ ('in') makes of an
+//                     arrow in direction dir (keep: its direction in the plane before ⊙ ⊗):
+//                     { dir, keep }; Arrow.pressTarget(arrows, sel) the arrow the buttons act on
+// The pure parts (directions, lengths, judge, which anchor a point takes, the palette's markup and
+// what its buttons ⊙ ⊗ do) are checked in
 // shared/test/check-arrow.js. The texts come in the page language (Lang.L, lang.js).
 (function (root) {
   'use strict';
@@ -211,10 +226,31 @@
     return { ok: results.every((r) => r.result === 'right'), results };
   }
 
+  // ---------------------------------------------------------------- the buttons ⊙ ⊗
+  // ⊙ or ⊗ pressed: that direction (the one in the plane kept), or, pressed again, the plane again
+  function press(dir, keep, which, list) {
+    if (dir === which) return { dir: keep != null ? keep : list[0], keep: null };
+    return { dir: which, keep: planar(dir) ? dir : keep != null ? keep : null };
+  }
+  // the arrow they act on: the selected one, or else the only one
+  const pressTarget = (arrows, sel) => (sel && arrows.some((a) => a.id === sel) ? sel : arrows.length === 1 ? arrows[0].id : null);
+
   // ---------------------------------------------------------------- the widget
   const copy = (s) => JSON.parse(JSON.stringify(s));
   const NOTE = () => T('Drag a force onto the body, then drag its tip to set its direction and length; drag an arrow off the drawing to remove it. (Or tap a force, then the body. Keys on a selected arrow: ← → turn, ↑ ↓ length, Delete removes.)',
     'Ziehe eine Kraft auf den Körper und dann ihre Spitze, um Richtung und Länge einzustellen; ziehe einen Pfeil aus der Zeichnung, um ihn zu entfernen. (Oder tippe eine Kraft an und dann den Körper. Tasten bei einem gewählten Pfeil: ← → drehen, ↑ ↓ Länge, Entf entfernt.)');
+
+  // the palette: the note, a button per kind, ⊙ ⊗ (outIn), Remove
+  function paletteHtml(o) {
+    const w = (d, en, de) => (o.words && o.words(d)) || T(en, de);
+    const oi = o.outIn && o.outInButtons !== false
+      ? [['out', '⊙', w('out', 'out of the page', 'aus der Ebene heraus')], ['in', '⊗', w('in', 'into the page', 'in die Ebene hinein')]].map(([d, sym, text]) =>
+        `<button type="button" class="ar-oi" data-oi="${d}" aria-pressed="false" disabled><span class="ar-oi-sym" aria-hidden="true">${sym}</span> ${text}</button>`).join('')
+      : '';
+    return `<p class="note ar-note">${o.note || NOTE()}</p><div class="ar-kinds">${o.kinds.map((k) =>
+      `<button type="button" class="ar-kind${k.cls ? ` ${k.cls}` : ''}" data-kind="${k.id}" aria-pressed="false"><span class="ar-swatch" aria-hidden="true">→</span> ${k.label}</button>`).join('')}` +
+      `${oi}<button type="button" class="ar-remove" disabled>${T('Remove arrow', 'Pfeil entfernen')}</button></div>`;
+  }
 
   function create(svg, o) {
     const kindOf = (id) => o.kinds.find((k) => k.id === id) || { id, label: id };
@@ -222,6 +258,12 @@
     const dirsOf = (a) => kindOf(a.kind).dirs || o.dirs || dirs(8);
     const lenOf = (a) => (kindOf(a.kind).len != null ? kindOf(a.kind).len : o.len != null ? o.len : LEN);
     const head = { len: 11, notch: 8, barb: 4.2, ...(o.head || {}) };
+    const skip = o.gap || 0, aside = (a) => (typeof o.aside === 'function' ? o.aside(a) : o.aside) || [0, 0];
+    // where an arrow in direction d from the tail at starts: o.gap further on (⊙ ⊗: aside)
+    const startAt = (at, d) => { if (!planar(d)) return at; const u = vec(d); return [at[0] + skip * u[0], at[1] + skip * u[1]]; };
+    const baseOf = (a) => { if (planar(a.dir)) return startAt(a.at, a.dir); const s = aside(a); return [a.at[0] + s[0], a.at[1] + s[1]]; };
+    // with one kind and one anchor, the buttons ⊙ ⊗ place the arrow if there is none yet
+    const lone = () => o.kinds.length === 1 && o.anchors.length === 1;
     const vb = svg.viewBox && svg.viewBox.baseVal && svg.viewBox.baseVal.width ? svg.viewBox.baseVal : null;
     const box = vb ? { x0: vb.x, y0: vb.y, x1: vb.x + vb.width, y1: vb.y + vb.height } : null;
     let seq = 0, list = [], sel = null, locked = o.locked || false, hidden = false, marks = {};
@@ -242,11 +284,11 @@
 
     const byId = (id) => list.find((a) => a.id === id) || null;
     const elOf = (id) => layer.querySelector(`[data-id="${id}"]`);
-    const tipOf = (a) => { const u = vec(a.dir); return [a.at[0] + a.len * u[0], a.at[1] + a.len * u[1]]; };
+    const tipOf = (a) => { const u = vec(a.dir), b = baseOf(a); return [b[0] + a.len * u[0], b[1] + a.len * u[1]]; };
 
     // ---------------------------------------------------------------- drawing
     function markup(a, active) {
-      const [x, y] = a.at, lbl = o.label ? o.label(a) : '', cls = `ar-label${o.labelCls ? ` ${o.labelCls}` : ''}`;
+      const [x, y] = baseOf(a), lbl = o.label ? o.label(a) : '', cls = `ar-label${o.labelCls ? ` ${o.labelCls}` : ''}`;
       if (!planar(a.dir)) {
         const r = 9, mark = a.dir === 'out' ? `<circle class="ar-fill" cx="${f1(x)}" cy="${f1(y)}" r="2.6"/>`
           : `<path class="ar-cross" d="M${f1(x - 6)} ${f1(y - 6)}L${f1(x + 6)} ${f1(y + 6)}M${f1(x - 6)} ${f1(y + 6)}L${f1(x + 6)} ${f1(y - 6)}"/>`;
@@ -305,6 +347,11 @@
       if (o.palette) {
         const rm = o.palette.querySelector('.ar-remove');
         if (rm) rm.disabled = !sel || hidden || isLocked();
+        const t = byId(pressTarget(list, sel));
+        o.palette.querySelectorAll('.ar-oi').forEach((btn) => {
+          btn.disabled = hidden || isLocked() || (!t && !lone());
+          btn.setAttribute('aria-pressed', t && t.dir === btn.dataset.oi ? 'true' : 'false');
+        });
         o.palette.querySelectorAll('.ar-kind').forEach((btn) => {
           btn.disabled = hidden || isLocked();
           btn.classList.toggle('selected', placing === btn.dataset.kind);
@@ -320,7 +367,7 @@
       const rect = (e) => { try { const b = e.getBBox(); return b.width ? { x0: b.x, y0: b.y, x1: b.x + b.width, y1: b.y + b.height } : null; } catch (err) { return null; } };
       const taken = [...plot.querySelectorAll('text')].map(rect).filter(Boolean);
       const lines = [...plot.querySelectorAll('line')].map((l) => ['x1', 'y1', 'x2', 'y2'].map((k) => Number(l.getAttribute(k))))
-        .concat(shown.filter((a) => planar(a.dir)).map((a) => [...a.at, ...tipOf(a)]));
+        .concat(shown.filter((a) => planar(a.dir)).map((a) => [...baseOf(a), ...tipOf(a)]));
       const overlap = (r, q) => Math.max(0, Math.min(r.x1, q.x1) - Math.max(r.x0, q.x0)) * Math.max(0, Math.min(r.y1, q.y1) - Math.max(r.y0, q.y0));
       const crossed = (r, [x1, y1, x2, y2]) => {
         let n = 0;
@@ -330,7 +377,7 @@
       shown.forEach((a) => {
         const t = elOf(a.id) && elOf(a.id).querySelector('.ar-label'), b = t && rect(t);
         if (!b || !planar(a.dir)) return;
-        const w = b.x1 - b.x0, h = b.y1 - b.y0, [ux, uy] = vec(a.dir), tip = tipOf(a), mid = [(a.at[0] + tip[0]) / 2, (a.at[1] + tip[1]) / 2];
+        const w = b.x1 - b.x0, h = b.y1 - b.y0, [ux, uy] = vec(a.dir), tip = tipOf(a), from = baseOf(a), mid = [(from[0] + tip[0]) / 2, (from[1] + tip[1]) / 2];
         const turn45 = (s) => [ux * Math.SQRT1_2 - s * uy * Math.SQRT1_2, uy * Math.SQRT1_2 + s * ux * Math.SQRT1_2];
         // [from, outwards], in the order preferred
         // [from, outwards, further], in the order preferred: near first, then a little further out
@@ -366,10 +413,14 @@
     function add(kind, anchorId, pt = null, focus = true) {
       const an = anchorOf(anchorId);
       if (!an || isLocked()) return null;
+      if (o.max) {
+        const there = list.filter((x) => x.kind === kind && String(x.anchor) === String(an.id));
+        if (there.length >= o.max) { const last = there[there.length - 1].id; select(last, focus); return last; }
+      }
       const at = o.tail ? o.tail(kind, an, pt) : centre(an);
       const a = { id: `a${++seq}`, kind, anchor: an.id, at: [...at], dir: nearest(dirsOf({ kind }), o.start != null ? o.start : 45) };
       const L = lenOf(a);
-      a.len = fit(typeof L === 'number' ? L : L.init != null ? L.init : (L.lo + L.hi) / 2, a.at, a.dir, L, box);
+      a.len = fit(typeof L === 'number' ? L : L.init != null ? L.init : (L.lo + L.hi) / 2, startAt(a.at, a.dir), a.dir, L, box);
       list.push(a);
       change(a);
       select(a.id, focus);
@@ -394,7 +445,7 @@
     function set(a, d, len) {
       const L = lenOf(a);
       a.dir = d;
-      if (planar(d)) { a.len = fit(len, a.at, d, L, box); delete a.keep; }
+      if (planar(d)) { a.len = fit(len, startAt(a.at, d), d, L, box); delete a.keep; }
       change(a);
     }
     // ⊙, ⊗ and the plane again (its last direction)
@@ -402,6 +453,17 @@
       if (!o.outIn || isLocked()) return;
       if (planar(a.dir)) { a.keep = a.dir; set(a, 'out'); } else if (a.dir === 'out') set(a, 'in');
       else set(a, a.keep != null ? a.keep : dirsOf(a)[0], a.len);
+    }
+    // a button ⊙ or ⊗ pressed
+    function pressOutIn(which) {
+      if (!o.outIn || hidden || isLocked()) return;
+      let a = byId(pressTarget(list, sel));
+      if (!a && lone()) a = byId(add(o.kinds[0].id, o.anchors[0].id, null, false));
+      if (!a) return;
+      const r = press(a.dir, a.keep, which, dirsOf(a));
+      if (r.keep != null) a.keep = r.keep; else delete a.keep;
+      if (sel !== a.id) { sel = a.id; if (o.onSelect) o.onSelect(byId(a.id)); }
+      set(a, r.dir, a.len);
     }
     function startPlacing(kind) {
       placing = placing === kind ? null : kind;
@@ -435,14 +497,14 @@
       const r = radius(), d = (q) => Math.hypot(p[0] - q[0], p[1] - q[1]);
       let best = null, score = Infinity;
       for (const a of list) {
-        const s = d(planar(a.dir) ? tipOf(a) : a.at) - (a.id === sel ? 4 : 0);
+        const s = d(planar(a.dir) ? tipOf(a) : baseOf(a)) - (a.id === sel ? 4 : 0);
         if (s <= r && s < score) { score = s; best = { id: a.id, part: planar(a.dir) ? 'tip' : 'tail' }; }
       }
       if (best) return best;
       for (const a of list) {
+        if (o.outIn && a.id === sel && d(a.at) <= Math.max(8, skip)) return { id: a.id, part: 'tail' };
         if (!planar(a.dir)) continue;
-        if (o.outIn && a.id === sel && d(a.at) <= 8) return { id: a.id, part: 'tail' };
-        const s = toSegment(p, a.at, tipOf(a)) - (a.id === sel ? 2 : 0); // where shafts cross: the selected one
+        const s = toSegment(p, baseOf(a), tipOf(a)) - (a.id === sel ? 2 : 0); // where shafts cross: the selected one
         if (s <= 0.6 * r && s < score) { score = s; best = { id: a.id, part: 'shaft' }; }
       }
       return best;
@@ -478,9 +540,9 @@
       if (drag.part === 'tip' || (drag.part === 'tail' && !planar(a.dir))) {
         // the tip follows the pointer: the nearest direction allowed, the length snapped
         const dx = p[0] - a.at[0], dy = p[1] - a.at[1];
-        if (Math.hypot(dx, dy) < 6) return;
-        const d = nearest(dirsOf(a), angleOf(dx, dy)), len = Math.hypot(dx, dy);
-        if (d !== a.dir || fit(len, a.at, d, lenOf(a), box) !== a.len) set(a, d, len);
+        if (Math.hypot(dx, dy) < Math.max(6, skip / 2)) return;
+        const d = nearest(dirsOf(a), angleOf(dx, dy)), len = Math.hypot(dx, dy) - skip;
+        if (d !== a.dir || fit(len, startAt(a.at, d), d, lenOf(a), box) !== a.len) set(a, d, len);
         drag.part = 'tip';
         return;
       }
@@ -506,7 +568,7 @@
         if (an && an.id !== a.anchor) {
           a.anchor = an.id;
           a.at = [...(o.tail ? o.tail(a.kind, an, p) : centre(an))];
-          if (planar(a.dir)) a.len = fit(a.len, a.at, a.dir, lenOf(a), box);
+          if (planar(a.dir)) a.len = fit(a.len, startAt(a.at, a.dir), a.dir, lenOf(a), box);
           change(a);
           return;
         }
@@ -545,9 +607,7 @@
       // the same element may hold the palette of an earlier drawing: its listeners go
       const pal = o.palette, on = { signal: (pal.arPalette = (pal.arPalette && pal.arPalette.abort(), new AbortController())).signal };
       pal.classList.add('ar-palette');
-      pal.innerHTML = `<p class="note ar-note">${o.note || NOTE()}</p><div class="ar-kinds">${o.kinds.map((k) =>
-        `<button type="button" class="ar-kind${k.cls ? ` ${k.cls}` : ''}" data-kind="${k.id}" aria-pressed="false"><span class="ar-swatch" aria-hidden="true">→</span> ${k.label}</button>`).join('')}` +
-        `<button type="button" class="ar-remove" disabled>${T('Remove arrow', 'Pfeil entfernen')}</button></div>`;
+      pal.innerHTML = paletteHtml(o);
       let suppress = false;
       pal.addEventListener('pointerdown', (evt) => {
         const btn = evt.target.closest('.ar-kind');
@@ -609,6 +669,8 @@
           else startPlacing(btn.dataset.kind);
           return;
         }
+        const oi = evt.target.closest('.ar-oi');
+        if (oi && !oi.disabled) { pressOutIn(oi.dataset.oi); return; }
         if (evt.target.closest('.ar-remove') && sel) remove(sel);
       }, on);
       pal.addEventListener('keydown', (evt) => { if (evt.key === 'Escape' && placing) stopPlacing(true); }, on);
@@ -637,7 +699,7 @@
     return api;
   }
 
-  const api = { create, judge, dirs, axes, nearest, turn, angleOf, vec, gap, size, room, fit, words, anchorAt };
+  const api = { create, judge, dirs, axes, nearest, turn, angleOf, vec, gap, size, room, fit, words, anchorAt, press, pressTarget, paletteHtml };
   root.Arrow = api;
   if (typeof module !== 'undefined') module.exports = api;
 })(typeof window !== 'undefined' ? window : globalThis);

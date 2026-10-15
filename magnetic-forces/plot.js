@@ -10,6 +10,9 @@
 //                    points: [{ at, name }],
 //                    links: [[i, j]] (a coil seen edge-on from item i to item j, turning about
 //                    its middle) }
+//   sceneAt(p, o)    where the point p = [x, y] of a scene lies in its svg (in practice the student
+//                    draws a vector there, app.js), and spots: the places of the ⊙ ⊗ the scene o
+//                    draws for its vectors out of or into the page
 //   linesFig(o)      the field lines of a wire, a loop, a solenoid or a bar magnet, right or with
 //                    a typical error (see there)
 (function (root) {
@@ -54,8 +57,22 @@
 
   // ---------------------------------------------------------------- a scene
   const NAME = { v: 'v', I: 'I', F: 'F', B: 'B' }, CLS = { v: 'v-vel', I: 'v-vel', F: 'v-force', B: 'v-field' };
+  const SC = { W: 340, H: 250, S: 62 };
+  // a point of the scene in the svg, and the ⊙ ⊗ of its vectors (as drawn below: beside their item,
+  // one slot further right for each, an unknown one taking a slot too)
+  function sceneAt(p, o = {}) {
+    const at = [SC.W / 2 + p[0] * SC.S, SC.H / 2 + 6 - p[1] * SC.S];
+    let slot = 0;
+    const spots = [];
+    (o.vecs || []).forEach((v) => {
+      if (v.kind === 'I') return;
+      if (v.unknown) { slot++; return; }
+      if (v.dir[2]) { const it = o.items[v.of]; spots.push([SC.W / 2 + it.at[0] * SC.S + 30 + 30 * slot, SC.H / 2 + 6 - it.at[1] * SC.S - 30]); slot++; }
+    });
+    return { at, spots, slot };
+  }
   function scene(o) {
-    const W = 340, H = 250, S = 62, cx = W / 2, cy = H / 2 + 6, X = (x) => cx + x * S, Y = (y) => cy - y * S;
+    const { W, H, S } = SC, cx = W / 2, cy = H / 2 + 6, X = (x) => cx + x * S, Y = (y) => cy - y * S;
     let s = '';
     const fd = o.field && o.field.dir;
     if (fd && fd[2]) {
@@ -294,7 +311,7 @@
     return svg(W, H, s, o.label || L('The coil in 3D between the poles of a magnet', 'Die Spule räumlich zwischen den Polen eines Magneten'), 'coil3d');
   }
 
-  const api = { icon, scene, linesFig, arrow, dotCross, coil3d };
+  const api = { icon, scene, sceneAt, linesFig, arrow, dotCross, coil3d };
   root.MagPlot = api;
   if (typeof module !== 'undefined') module.exports = api;
 })(typeof window !== 'undefined' ? window : globalThis);
