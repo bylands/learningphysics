@@ -16,7 +16,13 @@ cards in its order, shows their tags, and lets visitors filter by tag. This serv
                               {"action": "update", "id", ...} | {"action": "reset" | "delete", "id"}
     /admin/api/password  POST {"current", "new"}    a teacher's own new password
     /admin/api/account   POST {"user", "first", "last", "school"}  a teacher's own details
-    /admin/api/me        GET  the teacher logged in (the crossword generator and the quiz ask it, with the cookie)
+    /admin/api/me        GET  the teacher logged in (the crossword generator and the quiz ask it, with the cookie);
+                         ?probe=1: {"teacher": null} instead of 403 when nobody is (the hub page asks so)
+    /admin/api/exercise-audit  GET  the review of the TeXercises exercises (the superuser only; {"report":
+                         null} before one is uploaded), shown on the hub page to the superuser alone;
+                         POST the report as JSON (up to 8 MB; see normalize_audit), replacing it. Kept in
+                         hub-data/exercise-audit.json (not served): the repository is public, the report never
+                         goes into it
     /admin/api/all-in/…  the game All In on phones (AllInRooms): open, <code>/state, <code>/close and
                          GET <code>/host for the teacher's screen; GET <code>?token=, <code>/join and
                          <code>/bet for the phones, without login
@@ -176,6 +182,9 @@ RESERVED = {"absolute-zero", "admin", "all-in", "api", "apps", "crosswords", "el
             "lang", "millionaire", "objectives", "privacy", "set", "sets", "static", "wwtbap", "www"}
 MAX_UPLOAD = 64 * 1024 * 1024  # a TeXercises export
 MAX_REVIEW_RENDER = 40  # exercises the review renders at once
+MAX_AUDIT = 8 * 1024 * 1024  # the exercise review's report (nginx: /admin/api/exercise-audit)
+MAX_AUDIT_EXERCISES, MAX_AUDIT_ISSUES = 20000, 200  # in a report; issues per exercise
+AUDIT_SEVERITIES = ("error", "warning", "doubt")  # the most serious first
 # exercise sheets: their ids, the secret of a shared one's online version (in its address), limits
 SHEET_ID = re.compile(r"[0-9a-f]{12}")
 SHEET_TOKEN = re.compile(r"[A-Za-z0-9_-]{32}")
@@ -540,6 +549,7 @@ class Admin:
         self.sheets_lock = threading.Lock()
         self.own = own
         self.review = config.parent / "texercises-review"  # the TeXercises review (sheets/review.py)
+        self.audit_file = config.parent / "exercise-audit.json"  # the exercises' review, for the hub page (the superuser's)
         self.allin = AllInRooms()  # the rooms of the game All In (/all-in/), in memory
         self.zero = ZeroRooms()  # the rooms of the quiz Absolute Zero (/absolute-zero/), in memory
         self.seen_at: Dict[str, float] = {}  # teacher -> when their last visit was written (statistics)
@@ -966,6 +976,7 @@ class Admin:
                                    "updated": s.get("updated", 0), "shared": bool(s.get("token"))} for i, s in sheets.items()),
                                  key=lambda x: -x["updated"])
         state["apps"] = self.sheet_apps(sheetlib, have)
+        state["topics"] = sheetlib.coverage(sheetlib.load_pool(), state["apps"], have) if sheetlib else []
         figs = sheets_module("figures")
         state["figures"] = bool(figs and figs.available())
         state["own"] = self.own
@@ -1310,6 +1321,21 @@ class Admin:
             out[k] = got
         return {"exercises": out}
 
+    # ------------------------------------------------------------------ the exercises' review (the hub page)
+    def audit(self) -> Optional[Dict[str, object]]:
+        """The report stored (cleaned when it was uploaded), or None."""
+        got = read_config(self.audit_file)
+        return got if isinstance(got, dict) and isinstance(got.get("exercises"), list) else None
+
+    def store_audit(self, raw: object) -> Dict[str, object]:
+        """A new report replaces the one stored (ValueError: why it cannot be); what it holds."""
+        report = normalize_audit(raw)
+        report["uploaded"] = int(time.time())
+        write_config(self.audit_file, report, 0o600)  # (not served, and only this service reads it)
+        issues = [i for e in report["exercises"] for i in e["issues"]]
+        return {"reviewed": report["reviewed"], "exercises": len(report["exercises"]), "issues": len(issues),
+                **{s: sum(1 for i in issues if i["severity"] == s) for s in AUDIT_SEVERITIES}}
+
     def review_feedback(self, bid: str = "") -> Dict[str, object]:
         rv = sheets_module("review")
         items = rv.read_feedback(self.review) if rv else []
@@ -1424,6 +1450,61 @@ def normalize_sheet(raw: object, apps: List[Dict[str, object]], pool: Dict[str, 
 
 
 API = ("/api/config", "/api/sets")
+
+
+def audit_text(raw: object, limit: int) -> str:
+    """A text of the exercises' review: lines kept, control characters dropped, at most limit (the page
+    escapes it: it may hold LaTeX, < and > too)."""
+    if not isinstance(raw, str):
+        return ""
+    s = raw.replace("\r\n", "\n").replace("\r", "\n")
+    return re.sub(r"[\x00-\x08\x0b-\x1f\x7f]", "", s).strip()[:limit].strip()
+
+
+def normalize_audit(raw: object) -> Dict[str, object]:
+    """The report of a review of the TeXercises exercises (made elsewhere), as stored:
+
+        {"generated": "2026-10-15", "source": "...", "reviewed": 844, "exercises": [{"id": 12345,
+         "key": "e12345-slug", "title": "...", "lang": "ENG" | "GER", "url": "/exercise/slug/", "issues": [
+           {"severity": "error" | "warning" | "doubt", "category": "physics" | "solution" | ..., "where":
+            "text" | "solution" | "short" | "solver" | "title", "issue": "...", "fix": "..."}]}]}
+
+    An exercise needs a key or an id and its issues a severity of AUDIT_SEVERITIES and a text: anything
+    else is a ValueError. Texts are cut to their length, a url that is no TeXercises exercise's is
+    dropped, and the exercises without issues are left out (reviewed still counts them)."""
+    if not isinstance(raw, dict) or not isinstance(raw.get("exercises"), list):
+        raise ValueError('a report is an object with "exercises": [...]')
+    if len(raw["exercises"]) > MAX_AUDIT_EXERCISES:
+        raise ValueError(f"at most {MAX_AUDIT_EXERCISES} exercises")
+    out = []
+    for n, e in enumerate(raw["exercises"], 1):
+        if not isinstance(e, dict):
+            raise ValueError(f"exercise {n}: not an object")
+        eid = e.get("id") if isinstance(e.get("id"), int) and not isinstance(e.get("id"), bool) and e["id"] > 0 else None
+        key = audit_text(e.get("key"), 160)
+        if eid is None and not key:
+            raise ValueError(f"exercise {n}: neither an id nor a key")
+        issues = e.get("issues") if isinstance(e.get("issues"), list) else []
+        if len(issues) > MAX_AUDIT_ISSUES:
+            raise ValueError(f"exercise {key or eid}: at most {MAX_AUDIT_ISSUES} issues")
+        kept = []
+        for i in issues:
+            if not isinstance(i, dict) or i.get("severity") not in AUDIT_SEVERITIES:
+                raise ValueError(f"exercise {key or eid}: an issue's severity is {', '.join(AUDIT_SEVERITIES)}")
+            text = audit_text(i.get("issue"), 4000)
+            if not text:
+                raise ValueError(f"exercise {key or eid}: an issue without a text")
+            kept.append({"severity": i["severity"], "category": audit_text(i.get("category"), 40).lower(),
+                         "where": audit_text(i.get("where"), 40).lower(), "issue": text, "fix": audit_text(i.get("fix"), 4000)})
+        if not kept:
+            continue
+        url = e.get("url") if isinstance(e.get("url"), str) and re.fullmatch(r"/exercise/[A-Za-z0-9_-]+/?", e["url"]) else ""
+        out.append({"id": eid, "key": key, "title": audit_text(e.get("title"), 300).replace("\n", " ") or key or str(eid),
+                    "lang": e.get("lang") if e.get("lang") in ("ENG", "GER") else "", "url": url, "issues": kept})
+    reviewed = raw.get("reviewed")
+    reviewed = reviewed if isinstance(reviewed, int) and not isinstance(reviewed, bool) and reviewed >= 0 else len(raw["exercises"])
+    return {"generated": audit_text(raw.get("generated"), 40).replace("\n", " "), "source": audit_text(raw.get("source"), 300).replace("\n", " "),
+            "reviewed": max(reviewed, len(out)), "exercises": out}
 
 
 # ---------------------------------------------------------------------- All In (/all-in/)
@@ -2146,6 +2227,34 @@ def make_handler(admin: Admin):
             except OSError:
                 self.json(500, {"error": "could not store it"})
 
+        def audit_post(self) -> None:
+            """/api/exercise-audit (the superuser): the report of the exercises' review as JSON (up to
+            MAX_AUDIT; nginx lets that through here), replacing the one stored."""
+            if not self.is_super():
+                self.json(403, {"error": "the superuser only"})
+                return
+            if not (self.headers.get("Content-Type") or "").startswith("application/json"):
+                self.json(415, {"error": "JSON expected"})
+                return
+            try:
+                n = int(self.headers.get("Content-Length") or 0)
+            except ValueError:
+                n = -1
+            if n <= 0 or n > MAX_AUDIT:
+                self.json(413, {"error": "the report is too large (at most 8 MB)"})
+                return
+            try:
+                raw = json.loads(self.rfile.read(n).decode("utf-8"))
+            except (ValueError, UnicodeDecodeError):
+                self.json(400, {"error": "not JSON"})
+                return
+            try:
+                self.json(200, admin.store_audit(raw))
+            except ValueError as e:
+                self.json(400, {"error": str(e)})
+            except OSError:
+                self.json(500, {"error": "could not store the report"})
+
         # -------------------------------------------------------------- All In
         def allin_call(self, fn) -> None:
             try:
@@ -2287,13 +2396,20 @@ def make_handler(admin: Admin):
                     self.json(403, {"error": "login"})
                 else:
                     self.json(200, admin.teachers_state() if path == "/api/teachers" else admin.stats())
+            elif path == "/api/exercise-audit":
+                if not self.is_super():
+                    self.json(403, {"error": "the superuser only"})
+                else:
+                    self.json(200, {"report": admin.audit()})
             elif path.startswith("/api/all-in/"):
                 self.allin_get(path[len("/api/all-in/"):])
             elif path.startswith("/api/absolute-zero/"):
                 self.zero_get(path[len("/api/absolute-zero/"):])
             elif path == "/api/me":
                 teacher = self.teacher()
-                if not teacher:
+                if not teacher and "probe=1" in self.path.partition("?")[2].split("&"):
+                    self.json(200, {"teacher": None, "super": False})  # (the hub page: no error logged for every visitor)
+                elif not teacher:
                     self.json(403, {"error": "login"})
                 else:
                     self.json(200, admin.me(teacher))
@@ -2338,6 +2454,8 @@ def make_handler(admin: Admin):
                 self.account_post()
             elif path == "/api/plan" or path.startswith("/api/sheets/"):
                 self.sheets_post(path)
+            elif path == "/api/exercise-audit":
+                self.audit_post()
             elif path == "/api/images/fetch":
                 if not self.is_super():
                     self.json(403, {"error": "login"})
@@ -2594,6 +2712,7 @@ SUPER_SECTIONS = """
       <p id="no-tags" class="note" hidden>No tags yet: add one to an app above.</p>
     </section>
     <section id="view-sheets" hidden>
+      <details id="sheets-topics" class="card topics"><summary>Topics covered by the exercise pool <span class="note">Loading…</span></summary><div class="topicgrid"></div></details>
       <p class="lead">Exercise sheets from your TeXercises exercises: choose modules and their learning objectives, let the panel suggest a balanced sheet, replace or reorder its exercises, and preview them. Then download it as a PDF (with or without the solutions) or share an online version with your students: a secret link that works without logging in and shows no solutions.</p>
       <div id="sheets-state" class="sheetstate"><p class="note">Loading…</p></div>
       <div class="bar">
@@ -2682,6 +2801,8 @@ TX_CSS = r"""
 .tx u.tx-uu { text-decoration: underline double; }
 .tx .tx-claim .tx-mark { color: var(--muted); white-space: nowrap; }
 """
+# \setcounter{abc}{N} in an abc list: the next item is the N-th letter (sheets/preview.py, class tx-abc-N)
+TX_CSS += "".join(f".tx ol.tx-abc > li.tx-abc-{n} {{ counter-set: abc {n}; }}\n" for n in range(1, 27))
 
 ADMIN_CSS = """
 :root { --bg: #f6f5f1; --card: #fff; --ink: #1f2328; --muted: #646b73; --line: #d9d6ce; --accent: #2b59c3; --accent-ink: #fff; --ok: #1d7a3e; --bad: #b3261e; --chip: #eef2fb; color-scheme: light; }
@@ -2813,6 +2934,18 @@ h2.section { font-size: 1.15rem; margin: 28px 0 4px; }
 .outline-frame { position: absolute; left: -10000px; top: 0; width: 1024px; height: 768px; border: 0; visibility: hidden; }
 .empty { color: var(--muted); }
 .sheetstate { margin: 0 0 6px; }
+.topics { padding: 10px 16px; margin: 0 0 14px; }
+.topics > summary { cursor: pointer; font-weight: 600; }
+.topics > summary .note { font-weight: 400; margin-left: 6px; }
+.topicgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 12px 20px; margin-top: 10px; font-size: 0.9rem; }
+.topicmod .head { display: flex; gap: 8px; align-items: baseline; border-bottom: 1px solid var(--line); padding-bottom: 2px; margin-bottom: 4px; }
+.topicmod .head strong { flex: 1 1 auto; }
+.topicmod .n { color: var(--muted); font-size: 0.82rem; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.topicmod ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 1px; }
+.topicmod li { display: flex; gap: 8px; justify-content: space-between; line-height: 1.35; }
+.topicmod li.zero, .topicmod.zero .head { color: var(--muted); }
+.topicmod li.zero .n { color: var(--bad); font-weight: 600; }
+.topicmod .note { margin: 4px 0 0; font-size: 0.8rem; }
 .sheetstate .upload summary { cursor: pointer; color: var(--accent); font-size: 0.95rem; }
 .sheetstate .upload { margin: 0 0 10px; }
 .sheet h3 { margin: 22px 0 8px; font-size: 1.05rem; }
@@ -3172,7 +3305,8 @@ SHEETS_JS = r"""
 // pool for the chosen objectives (/admin/api/plan, which also gives every exercise's alternatives and
 // each objective's exercises), renders their preview (/admin/api/preview: HTML whose math, in .tx-m
 // and .tx-d, KaTeX sets here), makes the PDFs (/admin/sheet/<id>.pdf) and shares an online version
-// at a secret link (/admin/sheet/s/<secret>).
+// at a secret link (/admin/sheet/s/<secret>). First, folded, the topics the pool covers (st.topics):
+// per module its exercises and per learning objective how many practise it, those without any marked.
 (function () {
   'use strict';
   const $ = (s) => document.querySelector(s);
@@ -3260,6 +3394,20 @@ SHEETS_JS = r"""
       el('details', { class: 'upload' }, el('summary', {}, 'Upload a TeXercises export'),
         el('p', { class: 'note' }, `TeXercises: Settings → Export, the .zip. Only your own exercises (creator “${st.own}”) are kept; upload it again whenever your exercises change.`),
         el('div', { class: 'addapp' }, file, el('button', { type: 'button', onclick: send }, 'Upload'), msg)));
+  }
+  function renderTopics() {
+    const box = $('#sheets-topics'), mods = st.topics || [];
+    const n = mods.reduce((s, m) => s + m.exercises, 0), objs = mods.flatMap((m) => m.objectives), empty = objs.filter((o) => !o.exercises).length;
+    box.querySelector('summary .note').textContent = `${mods.filter((m) => m.exercises).length} of ${mods.length} modules · ${n} exercises · `
+      + (empty ? `${empty} of ${objs.length} learning objectives without an exercise` : `every one of the ${objs.length} learning objectives has exercises`);
+    box.querySelector('.topicgrid').replaceChildren(...mods.map((m) => el('div', { class: `topicmod${m.exercises ? '' : ' zero'}` },
+      el('div', { class: 'head' }, el('strong', {}, m.name),
+        el('span', { class: 'n', title: `${m.exercises} exercises in the pool, ${m.there} of them in the uploaded export or the drafts` },
+          `${m.exercises} ex.` + (m.there < m.exercises ? ` (${m.there} there)` : ''))),
+      m.objectives.length ? el('ul', {}, ...m.objectives.map((o) => el('li', { class: o.exercises ? '' : 'zero', title: `${o.exercises} exercises practise it, ${o.there} of them there` },
+        el('span', {}, o.en), el('span', { class: 'n' }, String(o.exercises))))) : el('p', { class: 'note' }, 'No learning objectives: its exercises count for the module as a whole.'),
+      m.general && m.objectives.length ? el('p', { class: 'note' }, `${m.general} for the module as a whole (no objective)`) : '')));
+    if (!mods.length) box.querySelector('.topicgrid').replaceChildren(el('p', { class: 'note' }, 'The pool (sheets/pool.json) is empty.'));
   }
   function renderList() {
     $('#sheet-list').replaceChildren(
@@ -3629,6 +3777,7 @@ SHEETS_JS = r"""
   async function load(keep) {
     st = await api('/admin/api/sheets');
     loaded = true;
+    renderTopics();
     renderState();
     if (!keep) render(); else renderList();
     if (keep && cur) render();
@@ -3637,6 +3786,10 @@ SHEETS_JS = r"""
   $('#sheet-save').addEventListener('click', save);
   window.addEventListener('beforeunload', (e) => { if (dirty) { e.preventDefault(); e.returnValue = ''; } });
   const show = (v) => { if (v === 'sheets' && !loaded) load().catch(() => status('Could not load the sheets.', 'bad')); };
+  // (the topics stay unfolded or folded, in this browser)
+  const topics = $('#sheets-topics');
+  try { topics.open = localStorage.getItem('sheets-topics') === '1'; } catch (e) { /* none */ }
+  topics.addEventListener('toggle', () => { try { localStorage.setItem('sheets-topics', topics.open ? '1' : '0'); } catch (e) { /* none */ } });
   window.addEventListener('admin-view', (e) => show(e.detail));
   show(location.hash.slice(1));
 })();
@@ -4234,6 +4387,13 @@ nav.tabs a.on { color: var(--ink); font-weight: 600; }
 .rv-upload { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
 .rv-upload input[type=file] { width: auto; flex: 1 1 260px; }
 .rv-search { max-width: 360px; }
+.rv-topics { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 0 0 12px; }
+.rv-topics .note { margin-right: 4px; }
+.rv-topics button { border-radius: 999px; padding: 2px 11px; font-size: 0.88rem; }
+.rv-topics button .n { color: var(--muted); font-size: 0.8rem; margin-left: 6px; }
+.rv-topics button[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); font-weight: 600; }
+.rv-topics button[aria-pressed="true"] .n { color: inherit; opacity: 0.85; }
+.rv-tp { font-size: 0.8rem; }
 table.rv-table { width: 100%; border-collapse: collapse; font-size: 0.93rem; }
 table.rv-table th, table.rv-table td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
 table.rv-table th { color: var(--muted); font-weight: 500; }
@@ -4275,7 +4435,9 @@ REVIEW_JS = r"""
 // and exercises (the server renders them: HTML whose math, in .tx-m and .tx-d, KaTeX sets here), an
 // exercise's standard difficulty (the superuser), feedback on an exercise (anyone logged in), and
 // the bundle with the changes to import into TeXercises. Views by the address: #b/<id>,
-// #b/<id>/all, #b/<id>/c/<collection>, #b/<id>/e/<exercise>, #feedback.
+// #b/<id>/all, #b/<id>/c/<collection>, #b/<id>/e/<exercise>, #feedback. The topics of the exercises
+// (their TeXercises subbranches) filter the collections, the list of all exercises (with the search)
+// and a collection's exercises; the topic chosen stays while the bundle does.
 (function () {
   'use strict';
   const root = document.querySelector('#review');
@@ -4286,6 +4448,8 @@ REVIEW_JS = r"""
   let bundle = null; // the bundle shown: its collections and exercises
   let feedback = []; // of that bundle (or all, on #feedback)
   let solutions = true, query = '', fbOpenOnly = true;
+  let topic = ''; // the topic chosen ('' all of them, NONE the exercises without one)
+  const NONE = '\u0000none';
   try { solutions = localStorage.getItem('rv-solutions') !== '0'; } catch (e) { /* none */ }
 
   function el(tag, attrs, ...kids) {
@@ -4363,7 +4527,7 @@ REVIEW_JS = r"""
   }
 
   async function loadBundle(id) {
-    if (!bundle || bundle.id !== id) bundle = await api(`bundles/${id}`);
+    if (!bundle || bundle.id !== id) { bundle = await api(`bundles/${id}`); topic = ''; }
     feedback = (await api(`feedback?bundle=${id}`)).feedback;
   }
   function downloads() {
@@ -4377,33 +4541,66 @@ REVIEW_JS = r"""
   const exOf = (k) => bundle.exercises.find((e) => e.key === k);
   const openFb = (k) => feedback.filter((f) => f.key === k && !f.done).length;
 
+  // ---------------------------------------------------------------- topics
+  const topicsOf = (e) => (e && Array.isArray(e.topics) ? e.topics : []);
+  const onTopic = (e) => !topic || (topic === NONE ? !topicsOf(e).length : topicsOf(e).includes(topic));
+  // the topics of these exercises as chips with their counts ("All" first, "No topic" last); a click
+  // chooses one and calls redraw; nothing when no exercise has a topic
+  function topicChips(exercises, redraw) {
+    const counts = new Map();
+    let none = 0;
+    exercises.forEach((e) => { if (!topicsOf(e).length) none += 1; topicsOf(e).forEach((t) => counts.set(t, (counts.get(t) || 0) + 1)); });
+    if (!counts.size) return '';
+    const list = [...counts].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
+    if (topic && topic !== NONE && !counts.has(topic)) list.push([topic, 0]); // (chosen elsewhere: still shown, to undo it)
+    const nav = el('nav', { class: 'rv-topics', 'aria-label': 'Filter by topic' });
+    const draw = () => nav.replaceChildren(el('span', { class: 'note' }, 'Topic'),
+      ...[['', exercises.length, 'All'], ...list.map(([t, n]) => [t, n, t]), ...(none ? [[NONE, none, 'No topic']] : [])].map(([t, n, label]) =>
+        el('button', { type: 'button', 'aria-pressed': String(topic === t), onclick: () => { topic = t; draw(); redraw(); } },
+          label, el('span', { class: 'n' }, String(n)))));
+    draw();
+    return nav;
+  }
+
   async function collections(id) {
     await loadBundle(id);
     const b = bundle;
-    const items = b.collections.map((c) => {
-      const keys = c.items.filter((i) => i.key).map((i) => i.key);
-      const fb = keys.reduce((n, k) => n + openFb(k), 0), ch = keys.filter((k) => exOf(k).changed).length;
-      return el('li', {},
-        el('div', { class: 'rv-row' },
-          el('h3', { class: 'grow' }, el('a', { href: `#b/${b.id}/c/${encodeURIComponent(c.key)}` }, c.title)),
-          c.kind ? el('span', { class: 'badge' }, c.kind) : '',
-          fb ? el('span', { class: 'badge warn' }, `${fb} feedback`) : '',
-          ch ? el('span', { class: 'badge' }, `${ch} changed`) : ''),
-        el('div', { class: 'note' }, `${c.items.length} exercise${c.items.length !== 1 ? 's' : ''}` + (c.id ? ` · id ${c.id}` : ' · new (no id)')));
-    });
-    show(el('h2', {}, b.name), tabs('colls'), downloads(),
-      items.length ? el('ul', { class: 'rv-list' }, items) : el('p', { class: 'lead' }, 'This upload has no collections: see All exercises.'));
+    const box = el('div');
+    // (with a topic chosen: the collections with exercises on it, and how many)
+    const fill = () => {
+      const items = b.collections.map((c) => {
+        const keys = c.items.filter((i) => i.key).map((i) => i.key);
+        const on = keys.filter((k) => onTopic(exOf(k))).length;
+        if (topic && !on) return null;
+        const fb = keys.reduce((n, k) => n + openFb(k), 0), ch = keys.filter((k) => exOf(k).changed).length;
+        return el('li', {},
+          el('div', { class: 'rv-row' },
+            el('h3', { class: 'grow' }, el('a', { href: `#b/${b.id}/c/${encodeURIComponent(c.key)}` }, c.title)),
+            c.kind ? el('span', { class: 'badge' }, c.kind) : '',
+            fb ? el('span', { class: 'badge warn' }, `${fb} feedback`) : '',
+            ch ? el('span', { class: 'badge' }, `${ch} changed`) : ''),
+          el('div', { class: 'note' }, (topic ? `${on} of ` : '') + `${c.items.length} exercise${c.items.length !== 1 ? 's' : ''}` + (topic ? ' on the topic' : '')
+            + (c.id ? ` · id ${c.id}` : ' · new (no id)')));
+      }).filter(Boolean);
+      box.replaceChildren(items.length ? el('ul', { class: 'rv-list' }, items)
+        : el('p', { class: 'lead' }, b.collections.length ? 'No collection has exercises on this topic.' : 'This upload has no collections: see All exercises.'));
+    };
+    fill();
+    show(el('h2', {}, b.name), tabs('colls'), downloads(), b.collections.length ? topicChips(b.exercises, fill) : '', box);
   }
 
   async function allExercises(id) {
     await loadBundle(id);
     const b = bundle;
     const body = el('tbody');
+    const count = el('span', { class: 'note' });
     const fill = () => {
       const q = query.trim().toLowerCase();
-      body.replaceChildren(...b.exercises.filter((e) => !q || e.title.toLowerCase().includes(q) || e.key.includes(q) || String(e.id || '') === q)
-        .slice(0, 500).map((e) => el('tr', {},
-          el('td', {}, el('a', { href: `#b/${b.id}/e/${encodeURIComponent(e.key)}` }, e.title)),
+      const found = b.exercises.filter((e) => onTopic(e) && (!q || e.title.toLowerCase().includes(q) || e.key.includes(q) || String(e.id || '') === q));
+      count.textContent = found.length === b.exercises.length ? `${found.length} exercises` : `${found.length} of ${b.exercises.length} exercises`;
+      body.replaceChildren(...found.slice(0, 500).map((e) => el('tr', {},
+          el('td', {}, el('a', { href: `#b/${b.id}/e/${encodeURIComponent(e.key)}` }, e.title),
+            topicsOf(e).length ? el('div', { class: 'note rv-tp' }, topicsOf(e).join(' · ')) : ''),
           el('td', { class: 'opt' }, e.id ? String(e.id) : 'new'),
           el('td', { title: `difficulty ${e.difficulty}` }, stars(e.difficulty), e.changed ? el('span', { class: 'badge rv-after' }, 'changed') : ''),
           el('td', {}, openFb(e.key) ? el('span', { class: 'badge warn' }, String(openFb(e.key))) : ''))));
@@ -4411,7 +4608,7 @@ REVIEW_JS = r"""
     const search = el('input', { type: 'search', class: 'rv-search', placeholder: 'Search title, key or id', value: query,
       oninput: (ev) => { query = ev.target.value; fill(); } });
     fill();
-    show(el('h2', {}, b.name), tabs('all'), downloads(), el('p', {}, search),
+    show(el('h2', {}, b.name), tabs('all'), downloads(), topicChips(b.exercises, fill), el('p', { class: 'rv-row' }, search, count),
       el('table', { class: 'rv-table' }, el('thead', {}, el('tr', {}, el('th', {}, 'Exercise'), el('th', { class: 'opt' }, 'Id'), el('th', {}, 'Difficulty'), el('th', {}, 'Feedback'))), body));
   }
 
@@ -4481,7 +4678,8 @@ REVIEW_JS = r"""
       el('header', {},
         el('h3', {}, nr ? el('span', { class: 'nr' }, String(nr)) : '', el('a', { href: `#b/${bundle.id}/e/${encodeURIComponent(e.key)}`, class: 'rv-plain' }, e.title)),
         difficulty(e)),
-      el('div', { class: 'meta' }, (e.id ? `id ${e.id}` : 'new (no id)') + ` · ${e.key}` + (e.creator ? ` · by ${e.creator}` : '') + ' ', link),
+      el('div', { class: 'meta' }, (e.id ? `id ${e.id}` : 'new (no id)') + ` · ${e.key}` + (e.creator ? ` · by ${e.creator}` : '')
+        + (topicsOf(e).length ? ` · ${topicsOf(e).join(', ')}` : '') + ' ', link),
       text, sol, feedbackBox(e.key, coll));
     c.fill = (got) => { text.replaceChildren(html(got.text)); fill(got); };
     if (r) c.fill(r);
@@ -4514,9 +4712,20 @@ REVIEW_JS = r"""
       cards[it.key] = card(e, i + 1, slug, null);
       return cards[it.key];
     });
+    // (a topic chosen: only its exercises; the numbers stay those of the collection)
+    const here = c.items.filter((it) => it.key).map((it) => exOf(it.key));
+    const off = el('p', { class: 'note' });
+    const filter = () => {
+      Object.entries(cards).forEach(([k, cd]) => { cd.hidden = !onTopic(exOf(k)); });
+      list.forEach((x) => { if (!Object.values(cards).includes(x)) x.hidden = !!topic; });
+      const n = here.filter(onTopic).length;
+      off.textContent = topic ? `${n} of ${c.items.length} exercises on the topic.` : '';
+      off.hidden = !topic;
+    };
+    filter();
     show(el('h2', {}, c.title), tabs('colls'),
       el('div', { class: 'rv-sticky rv-row' }, el('span', { class: 'grow note' }, `${bundle.name} · ${c.items.length} exercises` + (c.id ? ` · collection id ${c.id}` : '')), solutionsToggle(cards)),
-      c.description ? el('p', { class: 'lead' }, c.description) : '', downloads(), ...list);
+      c.description ? el('p', { class: 'lead' }, c.description) : '', downloads(), topicChips(here, filter), off, ...list);
     const keys = Object.keys(cards);
     for (let i = 0; i < keys.length; i += 20) await render(keys.slice(i, i + 20), cards, 0);
   }

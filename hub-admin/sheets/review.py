@@ -41,6 +41,7 @@ MAX_EXERCISES, MAX_COLLECTIONS, MAX_BUNDLES = 5000, 500, 40
 MAX_FEEDBACK, MAX_FEEDBACK_TEXT = 5000, 4000
 KINDS = {"bug": "Bug", "suggestion": "Suggestion", "question": "Question", "other": "Other"}
 DIFFICULTIES = range(1, 7)  # TeXercises' default_difficulty
+MAX_TOPICS = 20  # subbranches per exercise
 
 _lock = threading.Lock()
 
@@ -191,8 +192,20 @@ def _difficulty(meta: Dict[str, object]) -> int:
     return v if isinstance(v, int) and v in DIFFICULTIES else 1
 
 
+def _topics(meta: Dict[str, object]) -> List[str]:
+    """An exercise's topics: its TeXercises subbranches ("Thermal Expansion", ...), each once."""
+    got = meta.get("subbranches") if isinstance(meta.get("subbranches"), list) else []
+    out: List[str] = []
+    for t in got:
+        t = clean_text(t, 80).replace("\n", " ") if isinstance(t, str) else ""
+        if t and t not in out:
+            out.append(t)
+    return out[:MAX_TOPICS]
+
+
 def bundle_view(root: Path, bid: str, feedback_counts: Optional[Dict[str, int]] = None) -> Dict[str, object]:
-    """A bundle's collections (with their exercises in order) and all its exercises."""
+    """A bundle's collections (with their exercises in order), all its exercises (each with its topics:
+    the subbranches) and the topics there are, with how many exercises each, the most frequent first."""
     d = bundle_dir(root, bid)
     meta = _read_json(d / "bundle.json", {})
     changes = _changes(d)
@@ -207,7 +220,7 @@ def bundle_view(root: Path, bid: str, feedback_counts: Optional[Dict[str, int]] 
                              "lang": "de" if m.get("language") == "GER" else "en",
                              "difficulty": changes.get(e.name, _difficulty(m)), "original": _difficulty(m),
                              "changed": e.name in changes, "url": str(info.get("url") or ""),
-                             "creator": str(info.get("creator") or ""), "collections": [],
+                             "creator": str(info.get("creator") or ""), "topics": _topics(m), "collections": [],
                              "feedback": counts.get(e.name, 0)}
     collections = []
     for slug, c in _collections(d).items():
@@ -224,8 +237,13 @@ def bundle_view(root: Path, bid: str, feedback_counts: Optional[Dict[str, int]] 
         collections.append({"key": slug, "title": str(c.get("title") or slug), "id": c.get("id"),
                             "kind": str(c.get("kind") or ""), "description": str(c.get("description") or ""),
                             "items": items})
+    topics: Dict[str, int] = {}
+    for e in exercises.values():
+        for t in e["topics"]:
+            topics[t] = topics.get(t, 0) + 1
     return {"id": bid, **meta, "changed": len(changes), "collections": collections,
-            "exercises": sorted(exercises.values(), key=lambda x: x["title"].lower())}
+            "exercises": sorted(exercises.values(), key=lambda x: x["title"].lower()),
+            "topics": [{"name": t, "exercises": n} for t, n in sorted(topics.items(), key=lambda x: (-x[1], x[0].lower()))]}
 
 
 def exercise_folder(root: Path, bid: str, key: str) -> Path:
