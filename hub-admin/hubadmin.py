@@ -188,7 +188,8 @@ AUDIT_SEVERITIES = ("error", "warning", "doubt")  # the most serious first
 # exercise sheets: their ids, the secret of a shared one's online version (in its address), limits
 SHEET_ID = re.compile(r"[0-9a-f]{12}")
 SHEET_TOKEN = re.compile(r"[A-Za-z0-9_-]{32}")
-MAX_SHEETS, MAX_MODULES, MAX_SHEET_EXERCISES = 200, 40, 40
+MAX_SHEETS, MAX_MODULES, MAX_SHEET_EXERCISES, MAX_SHEET_TOPICS = 200, 40, 40, 60
+SHEET_BALANCE = {"concept": 30, "easy": 30, "medium": 50, "hard": 20}  # in % (sheets.BALANCE)
 FETCH_RETRY = 600  # s: a gallery image TeXercises did not give is asked for again after this
 FETCH_FAILED = ".fetch-failed.json"  # in the images' folder: the fetches that failed
 FETCH_TRIES = 3  # times: then it is not asked for by itself any more (the exercise is marked)
@@ -986,45 +987,61 @@ class Admin:
         return state
 
     def plan(self, sheet: Dict[str, object], suggest: bool = False, count: Optional[int] = None) -> Dict[str, object]:
-        """What the editor shows of a sheet: its exercises (suggested anew, if asked), what is known of
-        them, their alternatives, and per chosen objective the exercises there (to add one)."""
-        sheetlib, pool, have, _ = self.sheet_context()
-        modules, lang = sheet["modules"], sheet["lang"]
-        exercises = sheetlib.suggest(modules, lang, pool, have, count) if suggest else list(sheet["exercises"])
-        apps = [m["id"] for m in modules]
-        targets = []  # per chosen objective (or module as a whole, if the pool has no objectives for it)
-        for m in modules:
-            objs = pool.get(m["id"], {}).get("objectives", {})
-            for ob in (m["objectives"] if any(objs.values()) else [None]):
-                targets.append({"app": m["id"], "objective": ob, "keys": sheetlib.candidates((m["id"], ob), pool, have)})
-        alts = {k: sheetlib.alternatives(k, exercises, modules, lang, pool, have) for k in exercises}
-        tg = sheetlib.targets(modules, pool)
-        keys = set(exercises) | {k for v in alts.values() for k in v} | {k for t in targets for k in t["keys"]}
+        """What the editor shows of a sheet: per module the learning objectives the pool links to exercises
+        on its topics (step 2: their exercises, to tick them and to add one), those on its topics without
+        objective (loose), its exercises (suggested anew, if asked, for count or by default), what is known
+        of them, their alternatives, what the sheet aims for (count: asked, else as many as it has, else by
+        default) and what its topics and objectives cannot give (notes)."""
+        sheetlib, pool, have, apps = self.sheet_context()
+        cat = sheetlib.catalog(have)
+        topics, lang, balance = sheet["topics"], sheet["lang"], sheet["balance"]
+        bks = sheetlib.buckets(sheet["modules"], sheet["loose"], apps, pool, cat, topics)
+        exercises = sheetlib.suggest(bks, cat, lang, balance, count) if suggest else list(sheet["exercises"])
+        size = count or len(exercises) or sheetlib.default_count(bks)
+        alts = {k: sheetlib.alternatives(k, exercises, bks, cat, lang) for k in exercises}
+        ticked = {(m["id"], o) for m in sheet["modules"] for o in m["objectives"]}
+        objectives = [{"app": m["app"], "objectives": [o for o in m["objectives"] if o["keys"] or (m["app"], o["id"]) in ticked]}
+                      for m in sheetlib.objective_keys(apps, pool, cat, topics)]
+        objectives = [m for m in objectives if m["objectives"]]
+        loose = sheetlib.loose_keys(apps, pool, cat, topics)
+        tied: Dict[str, List[List[str]]] = {}  # key -> [[app, objective]] of every objective the pool links it to
+        for a in apps:
+            objs = pool.get(a["id"], {}).get("objectives", {}) if isinstance(pool.get(a["id"]), dict) else {}
+            for o in a["objectives"]:
+                for k in objs.get(o["id"], []):
+                    tied.setdefault(k, []).append([a["id"], o["id"]])
+        keys = set(exercises) | {k for v in alts.values() for k in v} | {k for m in objectives for o in m["objectives"] for k in o["keys"]} | set(loose)
+        mods = [m["id"] for m in sheet["modules"]]
         details = {}
         for k in keys:
-            found = sheetlib.info(pool, k, apps)
-            if not found:
+            found = sheetlib.info(pool, k, mods)
+            e = cat.get(k) or (found[1] if found else None)
+            if e is None:
                 continue
-            app, e = found
+            url = e.get("url")
             details[k] = {"title": str(e.get("title") or k), "lang": e.get("lang"), "difficulty": e.get("difficulty"),
-                          "images": bool(e.get("images")), "app": app, "available": k in have,
-                          "topics": sheetlib.exercise_topics(have[k]) if k in have else [],
-                          "objectives": [ob for a, ob in sheetlib.covers(k, tg, pool) if ob],
-                          "url": TEXERCISES + e["url"] if isinstance(e.get("url"), str) and re.fullmatch(r"/exercise/[A-Za-z0-9_-]+/?", e["url"]) else None}
-        return {"exercises": exercises, "details": details, "alternatives": alts, "targets": targets,
-                "default_count": sheetlib.default_count(modules, pool, have), "max": MAX_SHEET_EXERCISES}
+                          "band": sheetlib.band(e.get("difficulty")), "kind": e.get("kind") or sheetlib.kind(None),
+                          "images": bool(e.get("images")), "app": found[0] if found else None, "available": k in have,
+                          "topics": e.get("topics") or [], "objectives": tied.get(k, []),
+                          "url": TEXERCISES + url if isinstance(url, str) and re.fullmatch(r"/exercise/[A-Za-z0-9_-]+/?", url) else None}
+        on = list(dict.fromkeys(k for _, ks in bks for k in ks))
+        available = {x: sum(cat[k]["kind"] == x for k in on) for x in (sheetlib.CONCEPT, sheetlib.BOTH, sheetlib.PROBLEM)}
+        available.update({name: sum(cat[k]["band"] == b for k in on) for b, name in sheetlib.BANDS.items()})
+        return {"exercises": exercises, "details": details, "alternatives": alts, "objectives": objectives, "loose": loose,
+                "available": {"exercises": len(on), **available}, "count": size, "notes": sheetlib.notes(bks, cat, balance, size),
+                "default_count": sheetlib.default_count(bks), "max": MAX_SHEET_EXERCISES}
 
     def draft(self, raw: object) -> Dict[str, object]:
         """A sheet as the editor sends it, cleaned (ValueError: why it cannot be)."""
-        sheetlib, pool, _, apps = self.sheet_context()
-        return normalize_sheet(raw, apps, pool)
+        sheetlib, pool, have, apps = self.sheet_context()
+        return normalize_sheet(raw, apps, pool, have=have)
 
     def sheet_full(self, sid: str) -> Optional[Dict[str, object]]:
         s = self.read_sheets().get(sid)
         if s is None:
             return None
-        _, pool, _, apps = self.sheet_context()
-        s = {**s, **normalize_sheet(s, apps, pool, strict=False)}
+        sheetlib, pool, have, apps = self.sheet_context()
+        s = {**s, **normalize_sheet(migrate_sheet(s, sheetlib.catalog(have)), apps, pool, strict=False, have=have)}
         return {"id": sid, **{k: v for k, v in s.items() if k != "token"}, "token": s.get("token"), "plan": self.plan(s)}
 
     def change_sheets(self, change) -> object:
@@ -1089,13 +1106,12 @@ class Admin:
         return None
 
     def preview(self, keys: List[str]) -> Dict[str, object]:
-        """The exercises as HTML (text and solution), for the editor's preview; only those of the pool
-        that are there."""
+        """The exercises as HTML (text and solution), for the editor's preview; only those there."""
         sheetlib, pool, have, _ = self.sheet_context()
         out = {}
         media = SheetMedia(self, "/admin/sheet/")
         for k in keys[:MAX_SHEET_EXERCISES]:
-            if k in have and sheetlib.info(pool, k):
+            if k in have:
                 out[k] = render_exercise(have[k], media=media)
         return {"exercises": out}
 
@@ -1244,13 +1260,19 @@ class Admin:
         sheetlib = sheets_module()
         return sheetlib.kept_file(self.sheet_images, filename) if sheetlib else None
 
-    def sheet_chosen(self, s: Dict[str, object], sheetlib, pool) -> List[Tuple[str, str]]:
+    def sheet_chosen(self, s: Dict[str, object], sheetlib, pool, have) -> List[Tuple[str, str]]:
+        """(section, key) of a sheet's exercises: the section is the module (app) the pool has it in (of
+        the sheet's first), else the exercise's first TeXercises topic (or "Exercises"); those neither in
+        the pool nor there are left out."""
         apps = [m.get("id") for m in s.get("modules", []) if isinstance(m, dict)]
         out = []
         for k in s.get("exercises", []):
             found = sheetlib.info(pool, k, apps) if isinstance(k, str) else None
             if found:
                 out.append((found[0], k))
+            elif isinstance(k, str) and k in have:
+                topics = sheetlib.exercise_meta(have[k])["topics"]
+                out.append((topics[0] if topics else ("Aufgaben" if s.get("lang") == "de" else "Exercises"), k))
         return out
 
     def sheet_opts(self, s: Dict[str, object], sheetlib) -> Dict[str, str]:
@@ -1268,7 +1290,7 @@ class Admin:
             return "error", "exercise sheets are not installed"
         pool = sheetlib.load_pool()
         title = str(s.get("title") or "")
-        return sheetlib.request_pdf(title, self.sheet_chosen(s, sheetlib, pool), self.app_names(), self.texercises,
+        return sheetlib.request_pdf(title, self.sheet_chosen(s, sheetlib, pool, sheetlib.available(self.texercises)), self.app_names(), self.texercises,
                                     self.sheet_cache, "both" if solutions else "exercises", self.sheet_opts(s, sheetlib),
                                     self.sheet_images)
 
@@ -1283,13 +1305,12 @@ class Admin:
         names = self.app_names()
         media = SheetMedia(self, f"/admin/sheet/s/{token}/")
         exercises = []
-        for app, key in self.sheet_chosen(s, sheetlib, pool):
+        for app, key in self.sheet_chosen(s, sheetlib, pool, have):
             if key not in have:
                 continue
             ex = render_exercise(have[key], solution=False, media=media)
-            entry = (sheetlib.info(pool, key, [app]) or (app, {}))[1]
             exercises.append({"module": names.get(app, app), "title": ex["title"], "html": ex["text"],
-                              "difficulty": sheetlib.level(entry.get("difficulty")) if entry.get("difficulty") else 0,
+                              "difficulty": sheetlib.exercise_meta(have[key])["band"],
                               "pending": "pending" in ex.get("fallbacks", [])})
         return online_page(s, exercises, self.sheet_opts(s, sheetlib))
 
@@ -1455,16 +1476,67 @@ def render_exercise(folder: Path, solution: bool = True, media: Optional[SheetMe
     return out
 
 
-def normalize_sheet(raw: object, apps: List[Dict[str, object]], pool: Dict[str, object], strict: bool = True) -> Dict[str, object]:
-    """A sheet as stored: {"title", "lang": "en" | "de", "modules": [{"id", "objectives": [ids]}],
-    "exercises": [keys]}. Modules are the hub's apps (each once, in the order of apps: the standard one), their objectives
-    those the app has (in its order; none given: all of them); the exercises keys of the pool, each once,
+def normalize_balance(raw: object, strict: bool = True) -> Dict[str, int]:
+    """A sheet's balance: {"concept": % of concept questions, "easy", "medium", "hard": % of each, together
+    100 (else made so, by largest remainders)}, whole numbers; SHEET_BALANCE for what is missing (strict:
+    a ValueError for what is not a number from 0 to 100)."""
+    raw = raw if isinstance(raw, dict) else {}
+    num = lambda v: isinstance(v, (int, float)) and not isinstance(v, bool) and 0 <= v <= 100
+    for k in SHEET_BALANCE:
+        if strict and k in raw and not num(raw[k]):
+            raise ValueError(f"balance: {k} is a number from 0 to 100")
+    concept = round(raw["concept"]) if num(raw.get("concept")) else SHEET_BALANCE["concept"]
+    names = ("easy", "medium", "hard")
+    got = [raw[k] if num(raw.get(k)) else None for k in names]
+    if None in got or not sum(got):
+        got = [SHEET_BALANCE[k] for k in names]
+    total = sum(got)
+    exact = [100 * v / total for v in got]
+    out = [int(v) for v in exact]
+    for i in sorted(range(3), key=lambda i: (-(exact[i] - out[i]), i))[:100 - sum(out)]:
+        out[i] += 1
+    return {"concept": concept, **dict(zip(names, out))}
+
+
+def migrate_sheet(s: Dict[str, object], cat: Dict[str, Dict[str, object]]) -> Dict[str, object]:
+    """A sheet saved before it had topics (made of modules): the TeXercises topics of its exercises there
+    (the most frequent first; "" if one has none), its objectives as saved, the default balance."""
+    if isinstance(s.get("topics"), list):
+        return s
+    counts: Dict[str, int] = {}
+    for k in s.get("exercises", []) if isinstance(s.get("exercises"), list) else []:
+        e = cat.get(k) if isinstance(k, str) else None
+        for t in (e["topics"] or [""]) if e else []:
+            counts[t] = counts.get(t, 0) + 1
+    return {**s, "topics": sorted(counts, key=lambda t: (t == "", -counts[t], t.lower())), "loose": False}
+
+
+def normalize_sheet(raw: object, apps: List[Dict[str, object]], pool: Dict[str, object], strict: bool = True,
+                    have=None) -> Dict[str, object]:
+    """A sheet as stored: {"title", "lang": "en" | "de", "topics": [TeXercises topics, "" for exercises
+    without], "modules": [{"id", "objectives": [ids]}] (the learning objectives ticked), "loose": also
+    exercises without objective, "balance": normalize_balance, "exercises": [keys]}. Modules are the hub's
+    apps (each once, in the order of apps: the standard one), their objectives those the app has (in its
+    order; none given: all of them); the exercises keys of the pool or of those there (have), each once,
     at most MAX_SHEET_EXERCISES. strict: anything else is a ValueError, else it is dropped."""
     raw = raw if isinstance(raw, dict) else {}
     by_id = {a["id"]: a for a in apps}
     title = raw.get("title")
     title = re.sub(r"\s+", " ", re.sub(r"[\x00-\x1f\x7f<>]", "", title)).strip()[:MAX_TITLE].strip() if isinstance(title, str) else ""
     lang = raw.get("lang") if raw.get("lang") in ("en", "de") else "en"
+    topics: List[str] = []
+    for t in raw.get("topics") if isinstance(raw.get("topics"), list) else []:
+        if not isinstance(t, str):
+            if strict:
+                raise ValueError("topics: strings")
+            continue
+        t = re.sub(r"\s+", " ", re.sub(r"[\x00-\x1f\x7f]", " ", t)).strip()[:80]
+        if t not in topics:
+            topics.append(t)
+    if len(topics) > MAX_SHEET_TOPICS:
+        if strict:
+            raise ValueError(f"at most {MAX_SHEET_TOPICS} topics")
+        topics = topics[:MAX_SHEET_TOPICS]
     modules: List[Dict[str, object]] = []
     for m in raw.get("modules") if isinstance(raw.get("modules"), list) else []:
         mid = m.get("id") if isinstance(m, dict) else None
@@ -1480,12 +1552,12 @@ def normalize_sheet(raw: object, apps: List[Dict[str, object]], pool: Dict[str, 
     modules.sort(key=lambda m: order.index(m["id"]))  # the hub's standard order
     if len(modules) > MAX_MODULES:
         raise ValueError(f"at most {MAX_MODULES} modules")
-    keys = {k for e in pool.values() if isinstance(e, dict) for k in e.get("exercises", {})}
+    keys = {k for e in pool.values() if isinstance(e, dict) for k in e.get("exercises", {})} | set(have or ())
     exercises: List[str] = []
     for k in raw.get("exercises") if isinstance(raw.get("exercises"), list) else []:
         if not isinstance(k, str) or k not in keys:
             if strict:
-                raise ValueError(f"not an exercise of the pool: {str(k)[:60]!r}")
+                raise ValueError(f"not an exercise of the pool or the export: {str(k)[:60]!r}")
             continue
         if k not in exercises:
             exercises.append(k)
@@ -1493,7 +1565,8 @@ def normalize_sheet(raw: object, apps: List[Dict[str, object]], pool: Dict[str, 
         if strict:
             raise ValueError(f"at most {MAX_SHEET_EXERCISES} exercises")
         exercises = exercises[:MAX_SHEET_EXERCISES]
-    return {"title": title, "lang": lang, "modules": modules, "exercises": exercises}
+    return {"title": title, "lang": lang, "topics": topics, "modules": modules, "loose": raw.get("loose") is True,
+            "balance": normalize_balance(raw.get("balance"), strict), "exercises": exercises}
 
 
 API = ("/api/config", "/api/sets")
@@ -2988,15 +3061,12 @@ h2.section { font-size: 1.15rem; margin: 28px 0 4px; }
 .topicmod li.zero, .topicmod.zero .head { color: var(--muted); }
 .topicmod li.zero .n { color: var(--bad); font-weight: 600; }
 .topicmod .note { margin: 4px 0 0; font-size: 0.8rem; }
-.edtopics { border: 1px solid var(--line); border-radius: 8px; padding: 8px 12px; margin: 14px 0 4px; }
 .tpchips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
 .tpchips button { border-radius: 999px; padding: 2px 11px; font-size: 0.88rem; }
 .tpchips button .n { color: var(--muted); font-size: 0.8rem; margin-left: 6px; font-variant-numeric: tabular-nums; }
 .tpchips button[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); font-weight: 600; }
 .tpchips button[aria-pressed="true"] .n { color: inherit; opacity: 0.85; }
 .chip.topic { background: transparent; border: 1px dashed var(--line); color: var(--muted); }
-.chip.topic.on { background: var(--accent); border: 1px solid var(--accent); color: var(--accent-ink); }
-.exrow.tp-on, .alts li.tp-on { box-shadow: inset 4px 0 0 var(--accent); }
 /* the exercises' review (#sheets-audit): its severities by colour and by name (s-error, not error: .error is red text) */
 .audit { --sev-error: var(--bad); --sev-warning: #a35a00; --sev-doubt: #6a4bb0; padding: 10px 16px; margin: 0 0 14px; }
 @media (prefers-color-scheme: dark) { .audit { --sev-warning: #ffb74d; --sev-doubt: #c2a8ff; } }
@@ -3062,14 +3132,35 @@ h2.section { font-size: 1.15rem; margin: 28px 0 4px; }
 .sheet input.count { width: 5.5em; }
 .sheet label.inline { display: inline-flex; gap: 6px; align-items: center; }
 .sheet label.inline input[type=checkbox] { width: auto; accent-color: var(--accent); }
-.modpick { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 2px 14px; margin: 0 0 10px; font-size: 0.95rem; }
-.modpick label { display: flex; gap: 6px; align-items: center; cursor: pointer; }
-.modpick input { width: auto; accent-color: var(--accent); }
-.modpick .n { color: var(--muted); font-size: 0.8rem; margin-left: auto; }
-.modpick label.none { color: var(--muted); }
-.modobjs { border-left: 3px solid var(--line); padding: 2px 0 2px 12px; margin: 6px 0; }
-.modobjs > summary { cursor: pointer; font-weight: 600; }
-.modobjs .tree { margin-top: 6px; }
+.sheet h3 .step { display: inline-grid; place-items: center; width: 1.5em; height: 1.5em; margin-right: 8px; border-radius: 50%; background: var(--accent); color: var(--accent-ink); font-size: 0.85rem; }
+.topicstep .tpchips { margin: 0 0 6px; }
+.objstep { display: grid; gap: 6px; }
+.modobjs { border-left: 3px solid var(--line); padding: 2px 0 2px 12px; margin: 2px 0; }
+.modobjs .head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 10px; }
+.modobjs .all { display: inline-flex; gap: 6px; margin-left: auto; }
+.modobjs .all button { padding: 1px 9px; font-size: 0.85rem; }
+.modobjs .tree { margin-top: 4px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 250px), 1fr)); gap: 2px 14px; }
+.modobjs .tree li { margin: 0; }
+.modobjs .tree li.zero { color: var(--muted); }
+.objstep .n { color: var(--muted); font-size: 0.8rem; margin-left: 6px; font-variant-numeric: tabular-nums; }
+.objstep .loose { display: inline-flex; gap: 6px; align-items: flex-start; cursor: pointer; margin: 4px 0 0 15px; font-weight: 600; }
+.objstep .loose input { width: auto; margin-top: 5px; accent-color: var(--accent); }
+.balance { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 8px 28px; margin-bottom: 8px; }
+.balance .slider { display: block; margin: 0 0 6px; }
+.balance .slider .lab { display: flex; justify-content: space-between; gap: 8px; font-size: 0.92rem; }
+.balance .slider output { color: var(--muted); font-variant-numeric: tabular-nums; }
+.balance input[type=range] { width: 100%; padding: 0; border: 0; background: none; accent-color: var(--accent); }
+.bcounts { border-collapse: collapse; font-size: 0.9rem; margin: 10px 0 4px; font-variant-numeric: tabular-nums; }
+.bcounts th, .bcounts td { padding: 2px 12px; text-align: right; border-bottom: 1px solid var(--line); }
+.bcounts th { font-weight: 600; color: var(--muted); }
+.bcounts th:first-child, .bcounts td:first-child { text-align: left; padding-left: 0; }
+.bcounts td.off { color: var(--bad); font-weight: 600; }
+.bcounts tr.total td { border-bottom: 0; font-weight: 600; }
+.bnotes { margin: 6px 0 0; padding-left: 20px; font-size: 0.9rem; color: var(--bad); }
+.chip.kind-concept { background: #e3f1e6; color: #1d5a32; }
+.chip.kind-both { background: #e9e4f6; color: #45307a; }
+@media (prefers-color-scheme: dark) { .chip.kind-concept { background: #1f3a28; color: #b9e6c6; } .chip.kind-both { background: #2f2848; color: #d4c8f5; } }
+@media (max-width: 640px) { .balance { grid-template-columns: minmax(0, 1fr); } }
 .exlist { list-style: none; margin: 10px 0; padding: 0; display: grid; gap: 8px; }
 .exrow { display: grid; grid-template-columns: auto 1fr; gap: 6px 12px; background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; }
 .exrow .move button { padding: 1px 8px; }
@@ -3409,13 +3500,15 @@ ADMIN_JS = r"""
 
 SHEETS_JS = r"""
 // The exercise sheets (#sheets): the state (LaTeX on the server, the uploaded TeXercises export, and
-// its upload), the list of sheets, and the editor of one. A sheet is { title, lang, modules: [{ id,
-// objectives: [ids] }], exercises: [keys] }, saved on Save; the server suggests its exercises from the
-// pool for the chosen objectives (/admin/api/plan, which also gives every exercise's alternatives and
-// each objective's exercises), renders their preview (/admin/api/preview: HTML whose math, in .tx-m
-// and .tx-d, KaTeX sets here), makes the PDFs (/admin/sheet/<id>.pdf) and shares an online version
-// at a secret link (/admin/sheet/s/<secret>). First, folded, the topics the pool covers (st.topics):
-// per module its exercises and per learning objective how many practise it, those without any marked.
+// its upload), the list of sheets, and the editor of one. A sheet is { title, lang, topics: [TeXercises
+// topics], modules: [{ id, objectives: [ids ticked] }], loose: also exercises without objective,
+// balance: { concept, easy, medium, hard } (%), exercises: [keys] }, saved on Save. The editor goes in
+// three steps (topics, learning objectives, balance); the server lists the objectives on the topics and
+// suggests the exercises (/admin/api/plan, which also gives every exercise's alternatives and kind),
+// renders their preview (/admin/api/preview: HTML whose math, in .tx-m and .tx-d, KaTeX sets here),
+// makes the PDFs (/admin/sheet/<id>.pdf) and shares an online version at a secret link
+// (/admin/sheet/s/<secret>). Also, folded, the topics the pool covers (st.topics): per module its
+// exercises and per learning objective how many practise it, those without any marked.
 (function () {
   'use strict';
   const $ = (s) => document.querySelector(s);
@@ -3440,7 +3533,7 @@ SHEETS_JS = r"""
     dirty = true;
     $('#sheet-save').disabled = false;
     status('Unsaved changes');
-    if (replan) { clearTimeout(planTimer); planTimer = setTimeout(() => replanNow(false), 300); }
+    if (replan) replanSoon();
   }
   async function api(url, body) {
     const r = await fetch(url, body === undefined ? { credentials: 'same-origin' }
@@ -3468,21 +3561,26 @@ SHEETS_JS = r"""
   const appName = (a) => (cur && cur.lang === 'de' && a.de) || a.name; // in the sheet's language, as its objectives
   const obName = (app, ob) => { const o = appOf(app).objectives.find((x) => x.id === ob); return o ? o[cur.lang] || o.en : ob; };
   const det = (k) => (plan && plan.details[k]) || { title: k, available: false };
+  const KINDS = { concept: 'concept', both: 'concept or problem', problem: 'problem' };
+  const KIND_TIPS = { concept: 'Concept question (TeXercises type Descriptive or True/false)',
+    both: 'TeXercises type Both: counts as a concept question or a textbook problem, whichever the sheet lacks',
+    problem: 'Textbook problem (TeXercises type Calculative, Algebraic, Show or Proof)' };
   let refused = new Set(); // exercises with an image TeXercises refused FETCH_TRIES times (from the image list)
   function chips(k) {
     const d = det(k);
     return el('span', { class: 'chips' },
       d.lang ? el('span', { class: 'chip' }, d.lang === 'de' ? 'DE' : 'EN') : '',
-      d.difficulty ? el('span', { class: 'chip', title: `difficulty ${d.difficulty}` }, '★'.repeat(Math.min(d.difficulty, 5))) : '',
+      d.kind ? el('span', { class: `chip kind-${d.kind}`, title: KIND_TIPS[d.kind] }, KINDS[d.kind]) : '',
+      d.band ? el('span', { class: 'chip', title: d.difficulty ? `difficulty ${d.difficulty} on TeXercises` : 'no difficulty on TeXercises: counts as medium' },
+        `${'★'.repeat(Math.min(d.difficulty || 0, 5))} ${BANDS[d.band]}`.trim()) : '',
       refused.has(k) ? el('span', { class: 'chip bad', title: 'TeXercises refused its image three times: download it there and upload it under Images' }, 'image refused')
         : d.images ? el('span', { class: 'chip warn', title: 'Has an image: TeXercises does not export it; upload or fetch it under Images' }, 'image') : '',
       d.available === false ? el('span', { class: 'chip bad', title: 'Not in the uploaded export: left out of the PDF and the online version' }, 'missing') : '',
-      d.app ? el('span', { class: 'chip quiet' }, appName(appOf(d.app))) : '',
-      ...(d.topics || []).map((t) => el('span', { class: `chip topic${t === topicOn ? ' on' : ''}`, title: 'Its topic on TeXercises' }, t)));
+      ...(d.topics || []).map((t) => el('span', { class: 'chip topic', title: 'Its topic on TeXercises' }, t)));
   }
   const objectiveLine = (k) => {
     const d = det(k);
-    return d.objectives && d.objectives.length ? el('div', { class: 'note obs' }, d.objectives.map((o) => obName(d.app, o)).join(' · ')) : '';
+    return d.objectives && d.objectives.length ? el('div', { class: 'note obs' }, d.objectives.map(([app, o]) => `${appName(appOf(app))}: ${obName(app, o)}`).join(' · ')) : '';
   };
 
   // ---------------------------------------------------------------- the state and the list
@@ -3547,84 +3645,176 @@ SHEETS_JS = r"""
       cur.id ? el('div', { class: 'setactions' },
         el('button', { type: 'button', onclick: () => act('duplicate') }, 'Duplicate'),
         el('button', { type: 'button', class: 'danger', onclick: () => act('delete') }, 'Delete sheet')) : '',
-      editorTopics(),
-      el('h3', {}, 'Modules and learning objectives'), modules(),
+      el('h3', {}, el('span', { class: 'step' }, '1'), 'Topics'), topicsStep(),
+      el('h3', {}, el('span', { class: 'step' }, '2'), 'Learning objectives'), objectivesStep(),
+      el('h3', {}, el('span', { class: 'step' }, '3'), 'Balance'), balanceStep(),
       el('h3', {}, 'Exercises'), exercises(),
       el('h3', {}, 'Images'), imagesBox(),
       el('h3', {}, 'Preview'), preview(),
       el('h3', {}, 'PDF and online version'), output()));
   }
 
-  // the TeXercises topics of the imported exercises (their subbranches), at the top of the editor, with
-  // how many exercises are there of each; a click marks the exercises of that topic in the sheet and
-  // their alternatives, and limits "Add an exercise of" to them (again: all)
-  let edTopicsOpen = true, topicOn = ''; // topicOn: a topic, NO_TOPIC, or '' none chosen
-  const NO_TOPIC = '\u0000none';
-  try { edTopicsOpen = localStorage.getItem('sheet-edit-topics') !== '0'; } catch (e) { /* none */ }
-  const onTopic = (k) => !!topicOn && (topicOn === NO_TOPIC ? det(k).available !== false && !(det(k).topics || []).length : (det(k).topics || []).includes(topicOn));
-  function editorTopics() {
-    const list = st.subjects || [];
-    const total = st.exercises;
-    const d = el('details', { class: 'topics edtopics', open: edTopicsOpen },
-      el('summary', {}, 'Topics of the imported exercises',
-        el('span', { class: 'note' }, list.length ? `TeXercises topics of the ${total} exercises there · click one to mark its exercises below` : 'none: upload a TeXercises export')),
-      list.length ? el('div', { class: 'tpchips', role: 'group', 'aria-label': 'TeXercises topics' }, ...list.map((t) => {
-        const key = t.name || NO_TOPIC;
-        return el('button', { type: 'button', 'aria-pressed': String(topicOn === key), title: topicOn === key ? 'Marked below: click again to clear' : 'Mark its exercises below',
-          onclick: () => { topicOn = topicOn === key ? '' : key; render(); } }, t.name || 'No topic', el('span', { class: 'n' }, String(t.exercises)));
-      })) : '');
-    d.addEventListener('toggle', () => { edTopicsOpen = d.open; try { localStorage.setItem('sheet-edit-topics', d.open ? '1' : '0'); } catch (e) { /* none */ } });
-    return d;
+  // step 1: the TeXercises topics of the imported exercises (their subbranches), the most frequent first,
+  // with how many exercises are there of each (and concept questions, in the title); a sheet has one or
+  // several. A topic chosen anew ticks the learning objectives it brings (autoTick).
+  let autoTick = false;
+  const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`;
+  function topicsStep() {
+    const list = (st.subjects || []).slice();
+    cur.topics.filter((t) => !list.some((x) => x.name === t)).forEach((t) => list.push({ name: t, exercises: 0, concept: 0, both: 0 })); // (no longer there)
+    if (!list.length) return el('p', { class: 'note' }, 'No exercises there yet: upload a TeXercises export (at the bottom of this tab).');
+    const on = new Set(cur.topics);
+    const toggleTopic = (name) => {
+      cur.topics = on.has(name) ? cur.topics.filter((t) => t !== name) : cur.topics.concat([name]);
+      autoTick = true;
+      changed(true);
+      render();
+    };
+    const tip = (t) => `${plural(t.exercises, 'exercise', 'exercises')}: ${plural(t.concept, 'concept question', 'concept questions')}${t.both ? `, ${t.both} of the type Both` : ''}`;
+    const mine = list.filter((t) => on.has(t.name));
+    const sum = (f) => mine.reduce((s, t) => s + t[f], 0);
+    return el('div', { class: 'topicstep' },
+      el('div', { class: 'tpchips', role: 'group', 'aria-label': 'Topics' }, ...list.map((t) => el('button', {
+        type: 'button', 'aria-pressed': String(on.has(t.name)), title: tip(t), onclick: () => toggleTopic(t.name) },
+      t.name || 'No topic', el('span', { class: 'n' }, String(t.exercises))))),
+      el('p', { class: 'note' }, mine.length
+        ? `${mine.length === 1 ? 'One topic' : `${mine.length} topics`}: ${plural(sum('exercises'), 'exercise', 'exercises')}, ${plural(sum('concept'), 'concept question', 'concept questions')}${sum('both') ? `, ${sum('both')} of the type Both (concept question or problem)` : ''}${mine.length > 1 ? ' (an exercise on two counts twice here)' : ''}.`
+        : 'Choose one or several topics of your TeXercises exercises (the most frequent first; the number: exercises there).'));
   }
 
-  function modules() {
-    const chosen = new Set(cur.modules.map((m) => m.id));
-    const pick = el('div', { class: 'modpick', role: 'group', 'aria-label': 'Modules' }, ...st.apps.map((a) => {
-      const box = el('input', { type: 'checkbox', checked: chosen.has(a.id) });
-      box.addEventListener('change', () => {
-        if (box.checked) cur.modules.push({ id: a.id, objectives: a.objectives.map((o) => o.id) });
-        else cur.modules = cur.modules.filter((m) => m.id !== a.id);
-        const order = st.apps.map((x) => x.id); // the hub's standard order
-        cur.modules.sort((x, y) => order.indexOf(x.id) - order.indexOf(y.id));
-        changed(true);
-        render();
-      });
-      return el('label', { class: a.exercises ? '' : 'none', title: `${a.exercises} exercises in the pool` }, box, appName(a), el('span', { class: 'n' }, String(a.exercises)));
-    }));
-    const objs = cur.modules.map((m) => {
-      const app = appOf(m.id);
-      const d = el('details', { class: 'modobjs', open: true },
-        el('summary', {}, `${appName(app)}: ${m.objectives.length === app.objectives.length ? 'all' : m.objectives.length + ' of'} ${app.objectives.length} learning objectives`));
-      if (!app.objectives.length) { d.append(el('p', { class: 'note' }, 'This module has no learning objectives: its exercises count as one.')); return d; }
-      const targets = plan ? plan.targets.filter((t) => t.app === m.id) : [];
-      d.append(el('ul', { class: 'tree' }, ...app.objectives.map((o) => {
-        const on = m.objectives.includes(o.id);
-        const box = el('input', { type: 'checkbox', checked: on, disabled: on && m.objectives.length === 1 });
-        box.addEventListener('change', () => {
-          m.objectives = app.objectives.filter((x) => (x.id === o.id ? box.checked : m.objectives.includes(x.id))).map((x) => x.id);
-          changed(true);
-          render();
-        });
-        const t = targets.find((x) => x.objective === o.id);
-        const n = t ? t.keys.length : null;
-        return el('li', {}, el('label', {}, box, o[cur.lang] || o.en), on && n === 0 ? el('div', { class: 'where' }, 'no exercise of the pool is there for it') : '');
-      })));
-      return d;
+  // step 2: per module the learning objectives that the pool links to exercises on the topics (with how
+  // many), ticked or not, all or none of a module at once; and the exercises on the topics without one
+  const ticked = (app, ob) => { const m = cur.modules.find((x) => x.id === app); return !!m && m.objectives.includes(ob); };
+  function tick(app, obs, on) {
+    let m = cur.modules.find((x) => x.id === app);
+    if (!m) {
+      m = { id: app, objectives: [] };
+      cur.modules.push(m);
+      const order = st.apps.map((x) => x.id); // the hub's standard order
+      cur.modules.sort((x, y) => order.indexOf(x.id) - order.indexOf(y.id));
+    }
+    m.objectives = appOf(app).objectives.map((o) => o.id).filter((id) => (obs.includes(id) ? on : m.objectives.includes(id)));
+  }
+  function objectivesStep() {
+    if (!cur.topics.length) return el('p', { class: 'note' }, 'Choose topics first.');
+    if (!plan) return el('p', { class: 'note' }, 'Loading…');
+    const parts = plan.objectives.map((g) => {
+      const ids = g.objectives.map((o) => o.id);
+      const n = ids.filter((id) => ticked(g.app, id)).length;
+      const set = (on) => { tick(g.app, ids, on); changed(true); render(); };
+      return el('div', { class: 'modobjs' },
+        el('div', { class: 'head' }, el('strong', {}, appName(appOf(g.app))), el('span', { class: 'note' }, `${n} of ${ids.length}`),
+          el('span', { class: 'all' },
+            el('button', { type: 'button', disabled: n === ids.length, onclick: () => set(true) }, 'Select all'),
+            el('button', { type: 'button', disabled: !n, onclick: () => set(false) }, 'None'))),
+        el('ul', { class: 'tree' }, ...g.objectives.map((o) => {
+          const box = el('input', { type: 'checkbox', checked: ticked(g.app, o.id) });
+          box.addEventListener('change', () => { tick(g.app, [o.id], box.checked); changed(true); render(); });
+          return el('li', { class: o.keys.length ? '' : 'zero' }, el('label', { title: `${plural(o.keys.length, 'exercise', 'exercises')} on the topics practise it` }, box,
+            el('span', {}, obName(g.app, o.id), el('span', { class: 'n' }, String(o.keys.length)))));
+        })));
     });
-    return el('div', {}, pick, ...objs, cur.modules.length ? '' : el('p', { class: 'note' }, 'Tick the modules the sheet is about.'));
+    const loose = el('input', { type: 'checkbox', checked: cur.loose });
+    loose.addEventListener('change', () => { cur.loose = loose.checked; changed(true); render(); });
+    return el('div', { class: 'objstep' },
+      plan.objectives.length ? '' : el('p', { class: 'note' }, 'The pool links no learning objective to exercises on these topics.'),
+      ...parts,
+      el('label', { class: 'loose', title: 'Exercises on the topics that the pool links to no learning objective' }, loose,
+        el('span', {}, 'Exercises without a learning objective', el('span', { class: 'n' }, String(plan.loose.length)))));
+  }
+
+  // step 3: the share of concept questions (the rest textbook problems) and of easy, medium and hard
+  // exercises (three linked sliders, together 100 %), the number of exercises; what the sheet has of each
+  // next to what it aims for, and what the topics and objectives cannot give (plan.notes)
+  const BALANCE = { concept: 30, easy: 30, medium: 50, hard: 20 };
+  const BANDS = { 1: 'easy', 2: 'medium', 3: 'hard' };
+  function shares(total, weights) { // as sheets.shares: largest remainders, on a tie the first
+    const s = weights.reduce((a, [, w]) => a + Math.max(w, 0), 0), out = {};
+    weights.forEach(([k, w]) => { out[k] = s ? Math.floor(total * Math.max(w, 0) / s) : 0; });
+    if (!s) return out;
+    const left = total - Object.values(out).reduce((a, v) => a + v, 0);
+    weights.map(([k, w], i) => [k, total * Math.max(w, 0) / s - out[k], i]).sort((x, y) => y[1] - x[1] || x[2] - y[2])
+      .slice(0, left).forEach(([k]) => { out[k] += 1; });
+    return out;
+  }
+  const size = () => Number(count) || cur.exercises.length || (plan ? plan.default_count : 0);
+  function aims(n) {
+    const b = cur.balance;
+    return { ...shares(n, [['concept', b.concept], ['problem', 100 - b.concept]]), ...shares(n, [['easy', b.easy], ['medium', b.medium], ['hard', b.hard]]) };
+  }
+  function tally(keys, want) { // as sheets.tally: an exercise of the type Both is a concept question while the sheet lacks them
+    const got = { concept: 0, problem: 0, easy: 0, medium: 0, hard: 0 };
+    let both = 0;
+    keys.forEach((k) => { const d = det(k); if (!d.kind) return; got[BANDS[d.band] || 'medium'] += 1; if (d.kind === 'both') both += 1; else got[d.kind] += 1; });
+    const extra = Math.min(both, Math.max(want.concept - got.concept, 0));
+    got.concept += extra;
+    got.problem += both - extra;
+    return got;
+  }
+  let countsBox = null;
+  function drawCounts() {
+    if (!countsBox || !plan) return;
+    const n = size(), want = aims(n), got = tally(cur.exercises, want), av = plan.available || {};
+    const rows = [['concept', 'Concept questions', (av.concept || 0) + (av.both || 0)], ['problem', 'Textbook problems', (av.problem || 0) + (av.both || 0)],
+      ['easy', 'Easy', av.easy || 0], ['medium', 'Medium', av.medium || 0], ['hard', 'Hard', av.hard || 0]];
+    countsBox.replaceChildren(
+      el('table', { class: 'bcounts' },
+        el('thead', {}, el('tr', {}, el('th', {}, ''), el('th', { title: `Of ${n} exercises` }, 'Aim'), el('th', {}, 'On the sheet'), el('th', { title: 'On the topics and ticked learning objectives (an exercise of the type Both counts on both lines)' }, 'There'))),
+        el('tbody', {}, ...rows.map(([k, label, there]) => el('tr', {},
+          el('td', {}, label), el('td', {}, String(want[k])),
+          el('td', { class: cur.exercises.length && got[k] !== want[k] ? 'off' : '' }, cur.exercises.length ? String(got[k]) : '–'),
+          el('td', { class: there < want[k] ? 'off' : '' }, String(there)))),
+        el('tr', { class: 'total' }, el('td', {}, 'Exercises'), el('td', {}, String(n)),
+          el('td', { class: cur.exercises.length && cur.exercises.length !== n ? 'off' : '' }, String(cur.exercises.length)), el('td', {}, String(av.exercises || 0))))),
+      plan.notes.length ? el('ul', { class: 'bnotes' }, ...plan.notes.map((t) => el('li', {}, t[0].toUpperCase() + t.slice(1) + '.'))) : '');
+  }
+  function slider(label, value, tip, oninput, onchange) {
+    const out = el('output', {}, `${value} %`);
+    const r = el('input', { type: 'range', min: '0', max: '100', step: '5', value: String(value), 'aria-label': label, title: tip });
+    r.addEventListener('input', () => oninput(Number(r.value)));
+    r.addEventListener('change', onchange);
+    return { r, out, box: el('label', { class: 'slider' }, el('span', { class: 'lab' }, el('span', {}, label), out), r) };
+  }
+  function balanceStep() {
+    const b = cur.balance;
+    const done = () => changed(true);
+    const cs = slider('Concept questions', b.concept, 'The rest are textbook problems', (v) => {
+      b.concept = v; cs.out.textContent = `${v} % · problems ${100 - v} %`; drawCounts();
+    }, done);
+    cs.out.textContent = `${b.concept} % · problems ${100 - b.concept} %`;
+    const names = ['easy', 'medium', 'hard'];
+    const ds = {};
+    const setBand = (name, v) => { // the other two share the rest as they did (equally if both are 0)
+      const others = names.filter((x) => x !== name), rest = 100 - v, had = b[others[0]] + b[others[1]];
+      const first = had ? Math.round(rest * b[others[0]] / had / 5) * 5 : Math.round(rest / 10) * 5;
+      b[name] = v; b[others[0]] = Math.min(first, rest); b[others[1]] = rest - b[others[0]];
+      names.forEach((x) => { ds[x].r.value = String(b[x]); ds[x].out.textContent = `${b[x]} %`; });
+      drawCounts();
+    };
+    names.forEach((x) => { ds[x] = slider(x[0].toUpperCase() + x.slice(1), b[x], `Share of ${x} exercises (the three together 100 %)`, (v) => setBand(x, v), done); });
+    const n = el('input', { type: 'number', min: '1', max: String(st.max), class: 'count', value: count, placeholder: plan ? String(size()) : '', 'aria-label': 'Number of exercises' });
+    n.addEventListener('input', () => { count = n.value; drawCounts(); });
+    n.addEventListener('change', () => replanSoon());
+    const ready = plan && plan.available && plan.available.exercises;
+    const sug = el('button', { type: 'button', class: 'primary', disabled: !ready || busy, onclick: () => {
+      if (cur.exercises.length && !confirm('Replace the exercises of the sheet by a new suggestion?')) return;
+      replanNow(true);
+    } }, 'Suggest a sheet');
+    countsBox = el('div', { class: 'counts', 'aria-live': 'polite' });
+    drawCounts();
+    return el('div', {},
+      el('div', { class: 'balance' },
+        el('div', { class: 'kindbal' }, cs.box),
+        el('div', { class: 'diffbal' }, ...names.map((x) => ds[x].box))),
+      el('div', { class: 'addapp' }, el('label', { class: 'inline' }, 'Exercises: ', n), sug,
+        el('span', { class: 'note' }, plan ? `default ${plan.default_count}: two per learning objective, at most 24` : '')),
+      cur.topics.length ? countsBox : el('p', { class: 'note' }, 'Choose topics and learning objectives first.'));
   }
 
   function exercises() {
-    const n = el('input', { type: 'number', min: '1', max: String(st.max), class: 'count', value: count, placeholder: plan ? String(plan.default_count) : '', 'aria-label': 'Number of exercises' });
-    n.addEventListener('input', () => { count = n.value; });
-    const sug = el('button', { type: 'button', class: 'primary', disabled: !cur.modules.length || busy, onclick: () => {
-      if (cur.exercises.length && !confirm('Replace the exercises of the sheet by a new suggestion?')) return;
-      replanNow(true, Number(n.value) || undefined);
-    } }, 'Suggest a sheet');
-    const parts = [el('div', { class: 'addapp' }, el('label', { class: 'inline' }, 'Exercises: ', n), sug,
-      el('span', { class: 'note' }, `default ${plan ? plan.default_count : '…'}: two per objective, at most 24; about 30 % easy, 50 % average, 20 % hard`))];
+    const parts = [];
     if (!cur.exercises.length) {
-      parts.push(el('p', { class: 'empty' }, cur.modules.length ? 'No exercises yet: Suggest a sheet, or add some below.' : 'Choose modules first.'));
+      parts.push(el('p', { class: 'empty' }, cur.topics.length ? 'No exercises yet: Suggest a sheet (above), or add some below.' : 'Choose topics first.'));
     } else {
       parts.push(el('ol', { class: 'exlist' }, ...cur.exercises.map((k, i) => exRow(k, i))));
     }
@@ -3635,7 +3825,7 @@ SHEETS_JS = r"""
   function exRow(k, i) {
     const d = det(k), alts = (plan && plan.alternatives[k]) || [];
     const move = (dd) => { const j = i + dd; [cur.exercises[i], cur.exercises[j]] = [cur.exercises[j], cur.exercises[i]]; changed(true); render(); };
-    const li = el('li', { class: `exrow${onTopic(k) ? ' tp-on' : ''}` },
+    const li = el('li', { class: 'exrow' },
       el('div', { class: 'move' },
         el('button', { type: 'button', 'aria-label': `Move ${d.title} up`, disabled: i === 0, onclick: () => move(-1) }, '↑'),
         el('button', { type: 'button', 'aria-label': `Move ${d.title} down`, disabled: i === cur.exercises.length - 1, onclick: () => move(1) }, '↓')),
@@ -3647,7 +3837,7 @@ SHEETS_JS = r"""
             el('button', { type: 'button', class: 'remove', 'aria-label': `Remove ${d.title}`, onclick: () => { cur.exercises.splice(i, 1); changed(true); render(); } }, '×'))),
         objectiveLine(k),
         openPrev.has(k) ? previewOf(k, true) : '',
-        openAlts.has(k) ? el('ul', { class: 'alts' }, ...alts.map((a) => el('li', { class: onTopic(a) ? 'tp-on' : '' },
+        openAlts.has(k) ? el('ul', { class: 'alts' }, ...alts.map((a) => el('li', {},
           el('div', { class: 'head' }, el('span', {}, det(a).title), chips(a),
             el('span', { class: 'tools' },
               el('button', { type: 'button', 'aria-expanded': String(openPrev.has(a)), onclick: () => { toggle(openPrev, a); render(); } }, 'Preview'),
@@ -3658,25 +3848,27 @@ SHEETS_JS = r"""
   }
   const toggle = (set, k) => { if (set.has(k)) set.delete(k); else set.add(k); };
 
-  // an exercise of an objective (or of a module as a whole) to add
+  // an exercise on the sheet's topics to add: of a learning objective listed in step 2 (the ticked ones
+  // first), or of those without one
   function adder() {
-    if (!plan || !plan.targets.length) return '';
-    const label = (t) => `${appName(appOf(t.app))}${t.objective ? ' · ' + obName(t.app, t.objective) : ''}`;
-    const left = (t) => t.keys.filter((k) => !cur.exercises.includes(k) && (!topicOn || onTopic(k))); // (of the topic marked above, if one is)
-    const tsel = el('select', { 'aria-label': 'Objective' }, ...plan.targets.map((t, i) => el('option', { value: String(i) }, `${label(t).slice(0, 90)} (${left(t).length})`)));
-    if (topicOn) { const i = plan.targets.findIndex((t) => left(t).length); if (i > 0) tsel.value = String(i); }
+    if (!plan || !cur.topics.length) return '';
+    const left = (keys) => keys.filter((k) => !cur.exercises.includes(k));
+    const groups = [];
+    plan.objectives.forEach((g) => g.objectives.forEach((o) => groups.push({ label: `${appName(appOf(g.app))} · ${obName(g.app, o.id)}`, keys: o.keys, on: ticked(g.app, o.id) })));
+    groups.push({ label: 'Without a learning objective', keys: plan.loose, on: cur.loose });
+    const list = groups.filter((t) => t.keys.length).sort((x, y) => y.on - x.on);
+    if (!list.length) return '';
+    const tsel = el('select', { 'aria-label': 'Learning objective' }, ...list.map((t, i) => el('option', { value: String(i) }, `${t.label.slice(0, 90)} (${left(t.keys).length})`)));
     const ksel = el('select', { 'aria-label': 'Exercise to add' });
     const fill = () => {
-      const t = plan.targets[Number(tsel.value)];
-      const keys = left(t);
-      ksel.replaceChildren(...(keys.length ? keys.map((k) => { const d = det(k); return el('option', { value: k }, `${d.title} (${(d.lang || '').toUpperCase()}, ${'★'.repeat(d.difficulty || 1)}${d.images ? ', image' : ''})`); }) : [el('option', { value: '' }, 'none left')]));
+      const keys = left(list[Number(tsel.value)].keys);
+      ksel.replaceChildren(...(keys.length ? keys.map((k) => { const d = det(k); return el('option', { value: k }, `${d.title} (${(d.lang || '').toUpperCase()}, ${KINDS[d.kind] || ''}, ${BANDS[d.band] || ''}${d.images ? ', image' : ''})`); }) : [el('option', { value: '' }, 'none left')]));
       add.disabled = !keys.length || cur.exercises.length >= st.max;
     };
     const add = el('button', { type: 'button', onclick: () => { if (ksel.value) { cur.exercises.push(ksel.value); changed(true); render(); } } }, 'Add');
     tsel.addEventListener('change', fill);
     fill();
-    return el('div', { class: 'addapp adder' }, el('span', { class: 'note' }, 'Add an exercise of'), tsel, ksel, add,
-      topicOn ? el('span', { class: 'note' }, `(only ${topicOn === NO_TOPIC ? 'those without a topic' : `“${topicOn}”`})`) : '');
+    return el('div', { class: 'addapp adder' }, el('span', { class: 'note' }, 'Add an exercise on the topics of'), tsel, ksel, add);
   }
 
   // ---------------------------------------------------------------- the preview
@@ -3852,22 +4044,44 @@ SHEETS_JS = r"""
   }
 
   // ---------------------------------------------------------------- loading and saving
-  const body = () => ({ title: cur.title.trim(), lang: cur.lang, modules: cur.modules, exercises: cur.exercises });
+  const body = () => ({ title: cur.title.trim(), lang: cur.lang, topics: cur.topics, modules: cur.modules, loose: cur.loose, balance: cur.balance, exercises: cur.exercises });
   function apply(full) {
-    cur = { id: full.id, title: full.title || '', lang: full.lang || 'en', modules: full.modules || [], exercises: full.exercises || [], token: full.token || null };
+    cur = { id: full.id, title: full.title || '', lang: full.lang || 'en', topics: full.topics || [], modules: full.modules || [], loose: !!full.loose,
+      balance: { ...BALANCE, ...(full.balance || {}) }, exercises: full.exercises || [], token: full.token || null };
+    count = '';
     plan = full.plan;
     dirty = false;
     $('#sheet-save').disabled = true;
   }
-  async function replanNow(suggest, count) {
+  // the plan anew (suggest: and new exercises); after a topic was chosen (autoTick), the learning
+  // objectives it brings are ticked, and the plan made again for them; an answer overtaken by a later
+  // request is dropped
+  let planSeq = 0;
+  const listed = (p) => new Set(p ? p.objectives.flatMap((g) => g.objectives.map((o) => `${g.app}/${o.id}`)) : []);
+  function replanSoon() { clearTimeout(planTimer); planTimer = setTimeout(() => replanNow(false), 300); }
+  async function replanNow(suggest) {
     if (!cur) return;
+    clearTimeout(planTimer);
+    const seq = ++planSeq, before = listed(plan), ticking = autoTick;
+    autoTick = false;
     busy = suggest;
     if (suggest) { status('Suggesting…'); render(); }
     try {
-      const p = await api('/admin/api/plan', { sheet: body(), suggest, count });
+      const p = await api('/admin/api/plan', { sheet: body(), suggest, count: Number(count) || undefined });
+      if (seq !== planSeq) return;
       plan = p;
-      if (suggest) { cur.exercises = p.exercises; openAlts.clear(); changed(); status(p.exercises.length ? `Suggested ${p.exercises.length} exercises: Save to keep them.` : 'No exercises are there for these objectives.', p.exercises.length ? '' : 'bad'); }
-    } catch (e) { status(`Error: ${e.message}`, 'bad'); }
+      if (suggest) {
+        cur.exercises = p.exercises; openAlts.clear(); changed();
+        status(p.exercises.length ? `Suggested ${p.exercises.length} exercises: Save to keep them.` : 'No exercises on these topics and learning objectives.', p.exercises.length ? '' : 'bad');
+      }
+      if (ticking) {
+        let more = false;
+        p.objectives.forEach((g) => g.objectives.forEach((o) => {
+          if (o.keys.length && !before.has(`${g.app}/${o.id}`) && !ticked(g.app, o.id)) { tick(g.app, [o.id], true); more = true; }
+        }));
+        if (more) replanSoon();
+      }
+    } catch (e) { if (seq === planSeq) status(`Error: ${e.message}`, 'bad'); }
     busy = false;
     render();
   }
@@ -3879,8 +4093,9 @@ SHEETS_JS = r"""
   }
   function fresh() {
     if (!leave()) return;
-    cur = { id: null, title: '', lang: 'en', modules: [], exercises: [], token: null };
+    cur = { id: null, title: '', lang: 'en', topics: [], modules: [], loose: false, balance: { ...BALANCE }, exercises: [], token: null };
     plan = null;
+    count = '';
     showPreview = false;
     changed();
     render();

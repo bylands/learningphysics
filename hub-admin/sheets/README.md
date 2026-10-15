@@ -1,29 +1,53 @@
 # Exercise sheets
 
 In the admin panel's **Sheets** tab (logged in), the teacher makes exercise sheets from their TeXercises
-exercises. The tab begins with the sheets (**+ New sheet**) and the editor of the one chosen; at the top
-of the editor, the **topics of the imported exercises**: their TeXercises topics (the `subbranches`
-of exercise.json, `topic_counts` in `sheets.py`), each with how many of the exercises there (in the
-uploaded export or the drafts) have it, the most frequent first. A click on one marks its exercises in
-the sheet and among the alternatives (a bar at the left, the topic as a chip) and limits "Add an
-exercise of" to them; a second click clears it. Each exercise shows its topics as chips. Below the sheets, folded, the **topics covered by the exercise pool** (`pool.json`,
-`coverage` in `sheets.py`): per module (the hub's apps, in their order) its exercises, how many of them
-are there, and per learning objective the exercises that practise it; an objective without any shows a
-red 0, and a module's exercises tied to none of its objectives are counted as the module as a whole.
-Then, folded too, the **exercise review** (below), and last the state of the server and the upload of
-a TeXercises export. A sheet is independent of the sets: a title, a language (English or German), modules (the
-hub's apps) with the learning objectives it practises (all of a module's by default), and its exercises
-in order, kept in `hub-data/exercise-sheets.json` (not served).
+exercises. The tab begins with the sheets (**+ New sheet**) and the editor of the one chosen. Below the
+sheets, folded, the **topics covered by the exercise pool** (`pool.json`, `coverage` in `sheets.py`): per
+module (the hub's apps, in their order) its exercises, how many of them are there, and per learning
+objective the exercises that practise it; an objective without any shows a red 0, and a module's
+exercises tied to none of its objectives are counted as the module as a whole. Then, folded too, the
+**exercise review** (below), and last the state of the server and the upload of a TeXercises export.
 
-- **Suggest** fills the sheet from `pool.json` (`sheets.py`): round by round over the chosen objectives,
-  so every objective has one exercise before any has two; per objective an exercise in the sheet's
-  language first, then one without image, then the difficulty the sheet lacks most for a mix of about
-  30 % easy (1), 50 % average (2), 20 % hard (3 and more), then the pool's order. By default two per
-  objective, at most 24; another number can be asked for (up to 40). The exercises come by module,
-  from easy to hard.
-- Each exercise lists up to five **alternatives** (same objectives, not on the sheet; the sheet's
-  language first, then a similar difficulty): one click puts one in its place. Exercises can be
-  removed, moved up and down, and added from any chosen objective's list.
+A sheet is independent of the sets: a title, a language (English or German), its topics, learning
+objectives and balance, and its exercises in order, kept in `hub-data/exercise-sheets.json` (not
+served). The editor makes it in three steps (`sheets.py` on the server):
+
+1. **Topics**: the TeXercises topics of the imported exercises (the `subbranches` of exercise.json,
+   `topic_counts`), each with how many of the exercises there (in the uploaded export or the drafts)
+   have it, the most frequent first (the title says how many are concept questions); one or several
+   are chosen. "No topic" stands for the exercises without one.
+2. **Learning objectives**: per module, the objectives that `pool.json` links to at least one exercise
+   on these topics, with how many (`objective_keys`); those a new topic brings are ticked, each can be
+   unticked, and **Select all** / **None** do a whole module. **Exercises without a learning
+   objective** (on the topics, in none of the pool's objectives: `loose_keys`) is a choice of its own,
+   off by default.
+3. **Balance**: the share of **concept questions** (TeXercises type 0 Descriptive/Quality and 3
+   True/false; type 2 Both counts as a concept question or a problem, whichever the sheet lacks; the
+   others, 1 Calculative, 7 Algebraic, 5 Show, 6 Proof, are textbook problems), 30 % by default, and of
+   **easy, medium and hard** exercises (`default_difficulty` 1, 2, 3 and more; none: medium), three
+   linked sliders, 30/50/20 % by default; and the number of exercises. A table shows, for each, what
+   the sheet aims for, what it has (live, also after a change by hand) and how many there are on the
+   topics and ticked objectives; what these cannot give is said below it ("only 2 concept questions
+   on these topics and objectives").
+
+- **Suggest a sheet** fills the sheet (`suggest`): round by round over the ticked objectives (in the
+  modules' order, those without objective last), so every objective has one exercise before any has
+  two; per objective an exercise in the sheet's language first, then the one that brings the sheet
+  nearest to its concept and difficulty shares, then one without image, then the pool's order. Once
+  every objective has one (or from the start, if the sheet has fewer exercises than objectives), the
+  slots left that are all needed for concept questions, problems or a difficulty go only to objectives
+  that have one. Where a share cannot be met it takes the closest. By default two per objective, at
+  most 24; another number can be asked for (up to 40). The exercises come by module, from easy to hard.
+  The suggestion depends only on the sheet and the exercises: the same every time.
+- Each exercise shows its language, kind (concept, problem, or "concept or problem" for Both),
+  difficulty, image, TeXercises topics and objectives, and lists up to five **alternatives** (same
+  objectives, not on the sheet; the sheet's language first, then the same kind, then a similar
+  difficulty): one click puts one in its place. Exercises can be removed, moved up and down, and added
+  from the exercises on the sheet's topics, per objective or without one.
+- A sheet saved before the topics (modules and objectives only) opens as one with the topics of its
+  exercises, its objectives as saved and the default balance (`migrate_sheet` in hubadmin.py); it is
+  saved in the new form. In the PDF and the online version, an exercise the pool does not know comes
+  under its first TeXercises topic.
 - The **preview** shows the exercises (and, ticked, their solutions) in the browser: `preview.py`
   turns the TeXercises LaTeX into HTML. It evaluates the solver part (`\NewQty`, `\SolQty`,
   `\ConvTo`; the xfp arithmetic by a small parser of its own, never `eval`), prints the quantities
@@ -101,7 +125,9 @@ used and can be deleted.
       python3 hub-admin/sheets/build_pool.py ../texercises-by-2026-10-10 --fails run-final.txt [--data <folder>]
 
   It overwrites `pool.json`: to change the sheets for good, change the mapping and build again.
-- `sheets.py` (used by `../hubadmin.py`) suggests the exercises and their alternatives and runs
+- `sheets.py` (used by `../hubadmin.py`) reads what a sheet needs of the exercises (`exercise_meta`:
+  language, type, difficulty, topics, image; kept while the files are unchanged), suggests the exercises
+  and their alternatives and runs
   `build_sheet.py` (the exercises as a LaTeX document, a section per module) and LuaLaTeX with
   `texercises-lp.sty` (the TeXercises macros) and `lp-minion.sty` in its modern look (Erewhon, Fira Sans:
   free fonts). `preview.py` makes the HTML of the preview and the online version.

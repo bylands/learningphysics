@@ -1,19 +1,25 @@
 """Exercise sheets (used by ../hubadmin.py): which exercises a sheet suggests, their alternatives,
 and the PDF made from them with build_sheet.py and LuaLaTeX.
 
-A sheet names modules (apps of the hub) and, per module, the learning objectives it practises.
-pool.json (build_pool.py, reviewed by hand) lists for every app and objective the TeXercises
-exercises that practise it, best first, with their language, difficulty (1 easy, 2 average, 3 and
-more hard) and whether they have an image. suggest() fills a sheet from it: round by round over the
-chosen objectives (in the modules' order), each objective that has fewer exercises than the round's
-number gets one more, so every objective has one before any has two; of an objective's exercises it
-takes one in the sheet's language first, then one without image, then the difficulty the sheet
-lacks most for a mix of about MIX (30 % easy, 50 % average, 20 % hard), then the pool's order. A
-module without objectives in the pool counts as one objective with all its exercises. By default
-PER_OBJECTIVE per objective, at most DEFAULT_MAX; the teacher may ask for another number (up to
-MAX_EXERCISES). The suggestion depends only on the sheet and the pool, so it is the same every time.
-alternatives() lists, for an exercise of a sheet, others of the same objectives not on the sheet:
-the sheet's language first, then a similar difficulty.
+A sheet is made in three steps. 1. Topics: TeXercises topics (the subbranches of the exercises'
+exercise.json, exercise_topics). 2. Learning objectives: pool.json (build_pool.py, reviewed by hand) lists
+for every app (module of the hub) and objective the TeXercises exercises that practise it, best first;
+of those on the topics, the teacher ticks objectives (objective_keys), and maybe the exercises on the
+topics that the pool links to none (loose_keys). 3. Balance: the share of concept questions (TeXercises
+types descriptive and true/false; "Both" counts for whichever the sheet lacks; the others are textbook
+problems, kind) and of easy, medium and hard exercises (default_difficulty 1, 2 or none, 3 and more:
+band), by default BALANCE. suggest() fills a sheet from that: round by round over the ticked objectives
+(buckets, in the modules' order, the loose ones last), each that has fewer exercises than the round's
+number gets one more, so every objective has one before any has two (after the first round, or from the
+start if the sheet has fewer exercises than objectives, the slots left that are all needed for concept
+questions, problems or a difficulty go only to objectives that have one);
+of an objective's exercises it takes one in the sheet's language first, then the one that brings the sheet nearest to its aims (aims:
+the concept questions and the difficulty it lacks most), then one without image, then the pool's order.
+What the topics and objectives cannot give is said (notes: "only 2 concept questions on these topics and objectives").
+By default PER_OBJECTIVE per objective, at most DEFAULT_MAX; the teacher may ask for another number (up
+to MAX_EXERCISES). The suggestion depends only on the sheet and the exercises, so it is the same every
+time. alternatives() lists, for an exercise of a sheet, others of the same objectives not on the sheet:
+the sheet's language first, then the same kind, then a similar difficulty.
 
 The exercises themselves come from the TeXercises export uploaded in the admin panel (only the
 teacher's own, see store_export) and from the drafts that deploy.sh puts next to this file
@@ -48,7 +54,6 @@ from typing import Dict, List, Optional, Tuple
 
 HERE = Path(__file__).resolve().parent
 PER_OBJECTIVE, DEFAULT_MAX, MAX_EXERCISES = 2, 24, 40
-MIX = {1: 0.3, 2: 0.5, 3: 0.2}  # easy, average, hard (3 and more)
 AUTHOR, SCHOOL = "ByS", "MNG Rämibühl"  # the PDF's footer and the online version's
 ENGINE = ("texercises-lp.sty", "lp-minion.sty", "build_sheet.py")
 KEY = re.compile(r"[A-Za-z0-9][A-Za-z0-9_-]{0,120}")
@@ -95,6 +100,23 @@ def available(export: Path) -> Dict[str, Path]:
 
 
 MAX_TOPICS = 20  # TeXercises topics (subbranches) of an exercise
+CONCEPT, PROBLEM, BOTH = "concept", "problem", "both"
+CONCEPT_TYPES, BOTH_TYPES = (0, 3), (2,)  # TeXercises types: 0 descriptive, 3 true/false; 2 both (the others problems)
+BALANCE = {"concept": 30, "easy": 30, "medium": 50, "hard": 20}  # in %: concept questions, and of the difficulties
+BANDS = {1: "easy", 2: "medium", 3: "hard"}
+
+_metas: Dict[str, Tuple[Tuple[int, int], Dict[str, object]]] = {}
+_metas_guard = threading.Lock()
+
+
+def clean_topics(got: object) -> List[str]:
+    """TeXercises topics (or those of a sheet): the strings, cleaned, each once, at most MAX_TOPICS."""
+    out: List[str] = []
+    for t in got if isinstance(got, list) else []:
+        t = re.sub(r"\s+", " ", re.sub(r"[\x00-\x1f\x7f]", " ", t)).strip()[:80] if isinstance(t, str) else ""
+        if t and t not in out:
+            out.append(t)
+    return out[:MAX_TOPICS]
 
 
 def exercise_topics(folder: Path) -> List[str]:
@@ -104,33 +126,83 @@ def exercise_topics(folder: Path) -> List[str]:
         meta = json.loads((folder / "exercise.json").read_text(encoding="utf-8"))
     except (OSError, ValueError):
         return []
-    got = meta.get("subbranches") if isinstance(meta, dict) and isinstance(meta.get("subbranches"), list) else []
-    out: List[str] = []
-    for t in got:
-        t = re.sub(r"\s+", " ", re.sub(r"[\x00-\x1f\x7f]", " ", t)).strip()[:80] if isinstance(t, str) else ""
-        if t and t not in out:
-            out.append(t)
-    return out[:MAX_TOPICS]
+    return clean_topics(meta.get("subbranches") if isinstance(meta, dict) else None)
+
+
+def kind(kind_of: object) -> str:
+    """What an exercise of a TeXercises type is: a concept question (descriptive, true/false), both (the
+    type "Both": it counts for whichever the sheet lacks) or a textbook problem (calculative, algebraic,
+    show, proof, and any other)."""
+    t = kind_of if isinstance(kind_of, int) and not isinstance(kind_of, bool) else None
+    return CONCEPT if t in CONCEPT_TYPES else BOTH if t in BOTH_TYPES else PROBLEM
+
+
+def band(difficulty: object) -> int:
+    """1 easy (difficulty 1 or less), 2 medium (2, or none given), 3 hard (3 and more)."""
+    d = difficulty if isinstance(difficulty, int) and not isinstance(difficulty, bool) else 2
+    return min(max(d, 1), 3)
+
+
+def exercise_meta(folder: Path) -> Dict[str, object]:
+    """What a sheet needs of an exercise: {title, lang (en, de), difficulty (None if not given), type,
+    kind, band, topics, images, url}, read from its exercise.json (and text.tex: does it use a gallery
+    image?), kept while the files are unchanged."""
+    try:
+        stamp = ((folder / "exercise.json").stat().st_mtime_ns,
+                 (folder / "text.tex").stat().st_mtime_ns if (folder / "text.tex").is_file() else 0)
+    except OSError:
+        stamp = (0, 0)
+    with _metas_guard:
+        hit = _metas.get(str(folder))
+    if hit and hit[0] == stamp and stamp != (0, 0):
+        return hit[1]
+    try:
+        meta = json.loads((folder / "exercise.json").read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        meta = {}
+    meta = meta if isinstance(meta, dict) else {}
+    try:
+        text = (folder / "text.tex").read_text(encoding="utf-8", errors="replace")
+    except OSError:
+        text = ""
+    diff = meta.get("default_difficulty")
+    diff = diff if isinstance(diff, int) and not isinstance(diff, bool) else None
+    url = (meta.get("info") or {}).get("url") if isinstance(meta.get("info"), dict) else None
+    title = meta.get("title")
+    out = {"title": re.sub(r"\s+", " ", title).strip()[:200] if isinstance(title, str) and title.strip() else folder.name,
+           "lang": "de" if meta.get("language") == "GER" else "en", "difficulty": diff,
+           "type": meta.get("type") if isinstance(meta.get("type"), int) and not isinstance(meta.get("type"), bool) else None,
+           "kind": kind(meta.get("type")), "band": band(diff), "topics": clean_topics(meta.get("subbranches")),
+           "images": "#image_path:" in text, "url": url if isinstance(url, str) and re.fullmatch(r"/exercise/[A-Za-z0-9_-]+/?", url) else None}
+    with _metas_guard:
+        _metas[str(folder)] = (stamp, out)
+    return out
+
+
+def catalog(have: Dict[str, Path]) -> Dict[str, Dict[str, object]]:
+    """exercise_meta of every exercise there (have: key -> folder)."""
+    return {k: exercise_meta(folder) for k, folder in have.items()}
 
 
 def topic_counts(have: Dict[str, Path]) -> List[Dict[str, object]]:
-    """The TeXercises topics of the exercises there (have), each with how many of them, the most frequent
-    first (then by name); "" for those without one, if any, last."""
-    counts: Dict[str, int] = {}
-    none = 0
-    for folder in have.values():
-        ts = exercise_topics(folder)
-        none += not ts
-        for t in ts:
-            counts[t] = counts.get(t, 0) + 1
-    out = [{"name": t, "exercises": n} for t, n in sorted(counts.items(), key=lambda x: (-x[1], x[0].lower()))]
-    return out + ([{"name": "", "exercises": none}] if none and counts else [])
+    """The TeXercises topics of the exercises there (have), each with how many of them (and how many of
+    them are concept questions, and of the type "Both"), the most frequent first (then by name); "" for
+    those without one, if any, last."""
+    counts: Dict[str, Dict[str, int]] = {}
+    none = {"exercises": 0, CONCEPT: 0, BOTH: 0}
+    for e in catalog(have).values():
+        for c in ([counts.setdefault(t, {"exercises": 0, CONCEPT: 0, BOTH: 0}) for t in e["topics"]] or [none]):
+            c["exercises"] += 1
+            if e["kind"] != PROBLEM:
+                c[e["kind"]] += 1
+    out = [{"name": t, **n} for t, n in sorted(counts.items(), key=lambda x: (-x[1]["exercises"], x[0].lower()))]
+    return out + ([{"name": "", **none}] if none["exercises"] and counts else [])
 
 
-def level(difficulty: object) -> int:
-    """1 easy, 2 average, 3 hard (difficulty 3 and more)."""
-    d = difficulty if isinstance(difficulty, int) and not isinstance(difficulty, bool) else 1
-    return min(max(d, 1), 3)
+def on_topics(entry: Dict[str, object], topics: List[str]) -> bool:
+    """Is an exercise (its exercise_meta) on one of the topics ("": without a topic)?"""
+    mine = entry.get("topics") or []
+    return any(t in topics for t in mine) or ("" in topics and not mine)
 
 
 def info(pool: Dict[str, object], key: str, apps: Optional[List[str]] = None) -> Optional[Tuple[str, Dict[str, object]]]:
@@ -144,39 +216,198 @@ def info(pool: Dict[str, object], key: str, apps: Optional[List[str]] = None) ->
     return None
 
 
-def targets(modules: List[Dict[str, object]], pool: Dict[str, object]) -> List[Tuple[str, Optional[str]]]:
-    """What a sheet practises: (app, objective) for the chosen objectives of each module that the pool
-    has exercises for, in the modules' order; (app, None), the app as a whole, for a module without."""
-    out: List[Tuple[str, Optional[str]]] = []
-    for m in modules:
-        entry = pool.get(m.get("id")) if isinstance(m, dict) else None
-        if not isinstance(entry, dict):
-            continue
-        objs = entry.get("objectives", {})
-        wanted = [o for o in m.get("objectives", []) if objs.get(o)]
-        if wanted:
-            out += [(m["id"], o) for o in wanted]
-        elif not any(objs.values()) and entry.get("exercises"):
-            out.append((m["id"], None))
-    return out
-
-
-def candidates(target: Tuple[str, Optional[str]], pool: Dict[str, object], have) -> List[str]:
-    """The exercises of a target that are there (have: their keys), best first (the pool's order)."""
-    app, ob = target
-    entry = pool.get(app, {})
-    keys = entry.get("objectives", {}).get(ob, []) if ob else list(entry.get("exercises", {}))
-    return [k for k in keys if k in have]
-
-
-def covers(key: str, tgts: List[Tuple[str, Optional[str]]], pool: Dict[str, object]) -> List[Tuple[str, Optional[str]]]:
-    """The targets an exercise practises."""
+def objective_keys(apps: List[Dict[str, object]], pool: Dict[str, object], cat: Dict[str, Dict[str, object]],
+                   topics: List[str]) -> List[Dict[str, object]]:
+    """Step 2 of a sheet: per module (apps: the hub's, {id, objectives: [{id}]}, in their order) and per
+    learning objective of it, the exercises the pool links to it that are there (cat) and on the topics,
+    best first (the pool's order): [{"app", "objectives": [{"id", "keys"}]}]."""
     out = []
-    for app, ob in tgts:
-        entry = pool.get(app, {})
-        if (ob and key in entry.get("objectives", {}).get(ob, [])) or (ob is None and key in entry.get("exercises", {})):
-            out.append((app, ob))
+    for a in apps:
+        objs = (pool.get(a["id"]) or {}).get("objectives", {}) if isinstance(pool.get(a["id"]), dict) else {}
+        rows = [{"id": o["id"], "keys": [k for k in objs.get(o["id"], []) if k in cat and on_topics(cat[k], topics)]}
+                for o in a.get("objectives", []) if isinstance(o, dict)]
+        out.append({"app": a["id"], "objectives": rows})
     return out
+
+
+def loose_keys(apps: List[Dict[str, object]], pool: Dict[str, object], cat: Dict[str, Dict[str, object]],
+               topics: List[str]) -> List[str]:
+    """The exercises there on the topics that the pool links to no learning objective (of the apps), by key."""
+    tied = set()
+    for a in apps:
+        objs = (pool.get(a["id"]) or {}).get("objectives", {}) if isinstance(pool.get(a["id"]), dict) else {}
+        for o in a.get("objectives", []):
+            tied.update(objs.get(o.get("id"), []) if isinstance(o, dict) else [])
+    return sorted(k for k, e in cat.items() if k not in tied and on_topics(e, topics))
+
+
+def buckets(modules: List[Dict[str, object]], loose: bool, apps: List[Dict[str, object]], pool: Dict[str, object],
+            cat: Dict[str, Dict[str, object]], topics: List[str]) -> List[Tuple[Tuple[Optional[str], Optional[str]], List[str]]]:
+    """What a sheet chooses from: ((app, objective), its exercises: objective_keys) for every ticked
+    objective (modules: [{id, objectives}]) in the apps' order, then ((None, None), loose_keys) if loose."""
+    ticked = {(m.get("id"), o) for m in modules if isinstance(m, dict) for o in m.get("objectives", [])}
+    out: List[Tuple[Tuple[Optional[str], Optional[str]], List[str]]] = []
+    for m in objective_keys(apps, pool, cat, topics):
+        out += [((m["app"], o["id"]), o["keys"]) for o in m["objectives"] if (m["app"], o["id"]) in ticked]
+    if loose:
+        out.append(((None, None), loose_keys(apps, pool, cat, topics)))
+    return out
+
+
+def shares(total: int, weights: List[Tuple[object, float]]) -> Dict[object, int]:
+    """total split by the weights (largest remainders; on a tie the first); all 0 if they are."""
+    s = sum(max(w, 0) for _, w in weights)
+    if not s:
+        return {k: 0 for k, _ in weights}
+    raw = {k: total * max(w, 0) / s for k, w in weights}
+    out = {k: int(v) for k, v in raw.items()}
+    order = [k for k, _ in weights]
+    for k in sorted(order, key=lambda k: (-(raw[k] - out[k]), order.index(k)))[:total - sum(out.values())]:
+        out[k] += 1
+    return out
+
+
+def aims(count: int, balance: Dict[str, int]) -> Dict[object, int]:
+    """How many concept questions and textbook problems, and easy (1), medium (2), hard (3) exercises a
+    sheet of count aims for."""
+    out: Dict[object, int] = dict(shares(count, [(CONCEPT, balance["concept"]), (PROBLEM, 100 - balance["concept"])]))
+    out.update(shares(count, [(1, balance["easy"]), (2, balance["medium"]), (3, balance["hard"])]))
+    return out
+
+
+def tally(keys: List[str], cat: Dict[str, Dict[str, object]], count: int, balance: Dict[str, int]) -> Dict[object, int]:
+    """The concept questions, textbook problems and difficulties of a sheet (keys); an exercise of the
+    type "Both" counts as a concept question as long as the sheet (count) lacks them, then as a problem."""
+    want = aims(count, balance)
+    got: Dict[object, int] = {CONCEPT: 0, PROBLEM: 0, 1: 0, 2: 0, 3: 0}
+    both = 0
+    for k in keys:
+        e = cat.get(k)
+        if not e:
+            continue
+        got[e["band"]] += 1
+        if e["kind"] == BOTH:
+            both += 1
+        else:
+            got[e["kind"]] += 1
+    extra = min(both, max(want[CONCEPT] - got[CONCEPT], 0))
+    got[CONCEPT] += extra
+    got[PROBLEM] += both - extra
+    return got
+
+
+def default_count(bks: List[Tuple[object, List[str]]]) -> int:
+    n = sum(1 for _, keys in bks if keys)
+    return max(1, min(DEFAULT_MAX, PER_OBJECTIVE * n))
+
+
+def suggest(bks: List[Tuple[Tuple[Optional[str], Optional[str]], List[str]]], cat: Dict[str, Dict[str, object]], lang: str,
+            balance: Dict[str, int], count: Optional[int] = None) -> List[str]:
+    """A balanced sheet (the exercises' keys, in the sheet's order): see the module's description."""
+    count = default_count(bks) if count is None else max(1, min(int(count), MAX_EXERCISES))
+    want = aims(count, balance)
+    got: Dict[object, int] = {CONCEPT: 0, PROBLEM: 0, 1: 0, 2: 0, 3: 0}
+    members = [set(keys) for _, keys in bks]
+    covered = [0] * len(bks)
+    chosen: List[str] = []
+    taken = set()
+    origin: Dict[str, int] = {}
+
+    def need(k: str) -> int:
+        e = cat[k]
+        side = max(want[CONCEPT] - got[CONCEPT], want[PROBLEM] - got[PROBLEM]) if e["kind"] == BOTH else want[e["kind"]] - got[e["kind"]]
+        return side + want[e["band"]] - got[e["band"]]
+    def musts() -> List:
+        """What the next exercise must be for the sheet to reach its aims (each slot left needed for a
+        kind, or a difficulty): tests that some exercise not taken yet passes, the kind's first."""
+        left = count - len(chosen)
+        tests = []
+        if want[CONCEPT] - got[CONCEPT] >= left:
+            tests.append(lambda k: cat[k]["kind"] != PROBLEM)
+        elif want[PROBLEM] - got[PROBLEM] >= left:
+            tests.append(lambda k: cat[k]["kind"] != CONCEPT)
+        tests += [lambda k, b=b: cat[k]["band"] == b for b in BANDS if want[b] - got[b] >= left]
+        free = [k for keys in members for k in keys if k not in taken]
+        kept: List = []
+        for t in tests:  # each as long as some exercise passes it and those kept
+            if any(t(k) and all(x(k) for x in kept) for k in free):
+                kept.append(t)
+        return kept
+    rounds = 0
+    room = sum(1 for _, keys in bks if keys) <= count  # for one of every objective
+    while len(chosen) < count:
+        for i, (_, keys) in enumerate(bks):
+            if len(chosen) >= count:
+                break
+            tests = [] if room and rounds == 0 else musts()
+            free = [k for k in keys if k not in taken and all(t(k) for t in tests)]
+            if covered[i] > rounds or not free:
+                continue
+            k = min(free, key=lambda k: (cat[k]["lang"] != lang, -need(k), bool(cat[k]["images"]), keys.index(k)))
+            e = cat[k]
+            side = e["kind"]
+            if side == BOTH:  # for whichever the sheet lacks more (concept questions on a tie)
+                side = CONCEPT if want[CONCEPT] - got[CONCEPT] >= want[PROBLEM] - got[PROBLEM] else PROBLEM
+            got[side] += 1
+            got[e["band"]] += 1
+            chosen.append(k)
+            taken.add(k)
+            origin[k] = i
+            for j, m in enumerate(members):
+                covered[j] += k in m
+        rounds += 1
+        if all(k in taken for keys in members for k in keys) or rounds > MAX_EXERCISES + 1:
+            break
+    mods: List[Optional[str]] = []
+    for (app, _), _keys in bks:
+        if app not in mods:
+            mods.append(app)
+    first = {k: n for n, k in enumerate(chosen)}
+    return sorted(chosen, key=lambda k: (mods.index(bks[origin[k]][0][0]), cat[k]["band"], first[k]))
+
+
+def notes(bks: List[Tuple[object, List[str]]], cat: Dict[str, Dict[str, object]], balance: Dict[str, int], count: int) -> List[str]:
+    """What the exercises to choose from (bks) cannot give a sheet of count with the balance: each a
+    short sentence ("only 2 concept questions on these topics and objectives"); none if they can."""
+    keys = list(dict.fromkeys(k for _, ks in bks for k in ks if k in cat))
+    want = aims(count, balance)
+    kinds = {x: sum(cat[k]["kind"] == x for k in keys) for x in (CONCEPT, BOTH, PROBLEM)}
+    bands = {b: sum(cat[k]["band"] == b for k in keys) for b in BANDS}
+    plural = lambda n, one, many: f"{n} {one if n == 1 else many}"
+    out = []
+    if len(keys) < count:
+        out.append(f"only {plural(len(keys), 'exercise', 'exercises')} on these topics and objectives")
+    if kinds[CONCEPT] + kinds[BOTH] < want[CONCEPT]:
+        out.append(f"only {plural(kinds[CONCEPT] + kinds[BOTH], 'concept question', 'concept questions')} on these topics and objectives"
+                   + (f" ({kinds[BOTH]} of the type Both)" if kinds[BOTH] else ""))
+    if kinds[PROBLEM] + kinds[BOTH] < want[PROBLEM]:
+        out.append(f"only {plural(kinds[PROBLEM] + kinds[BOTH], 'textbook problem', 'textbook problems')} on these topics and objectives")
+    for b, name in BANDS.items():
+        if bands[b] < want[b]:
+            out.append(f"only {plural(bands[b], name + ' exercise', name + ' exercises')} on these topics and objectives")
+    return out
+
+
+def alternatives(key: str, sheet: List[str], bks: List[Tuple[object, List[str]]], cat: Dict[str, Dict[str, object]],
+                 lang: str, limit: int = 5) -> List[str]:
+    """Up to limit exercises to take instead of key: of the same objectives of the sheet (bks; of all of
+    them, if it practises none), not on the sheet; the sheet's language first, then the same kind
+    (concept question or problem; "Both" is either), then how near their difficulty is, without image
+    first, those that share more objectives, the order of the objectives."""
+    mine = [keys for _, keys in bks if key in keys] or [keys for _, keys in bks]
+    e = cat.get(key) or {"kind": PROBLEM, "band": 2}
+    order: Dict[str, Tuple[int, int]] = {}
+    for keys in mine:
+        for n, k in enumerate(keys):
+            if k != key and k not in sheet and k in cat:
+                shared, first = order.get(k, (0, n))
+                order[k] = (shared + 1, min(first, n))
+
+    def rank(k: str):
+        c = cat[k]
+        same = c["kind"] == e["kind"] or BOTH in (c["kind"], e["kind"])
+        return (c["lang"] != lang, not same, abs(c["band"] - e["band"]), bool(c["images"]), -order[k][0], order[k][1], k)
+    return sorted(order, key=rank)[:limit]
 
 
 def coverage(pool: Dict[str, object], apps: List[Dict[str, object]], have) -> List[Dict[str, object]]:
@@ -205,93 +436,6 @@ def coverage(pool: Dict[str, object], apps: List[Dict[str, object]], have) -> Li
                     "exercises": len(exs), "there": len([k for k in exs if k in have]),
                     "general": len([k for k in exs if k not in tied]), "objectives": rows})
     return out
-
-
-def default_count(modules: List[Dict[str, object]], pool: Dict[str, object], have) -> int:
-    n = sum(1 for t in targets(modules, pool) if candidates(t, pool, have))
-    return max(1, min(DEFAULT_MAX, PER_OBJECTIVE * n))
-
-
-def mix(count: int) -> Dict[int, int]:
-    """How many easy, average and hard exercises a sheet of count aims for (largest remainders)."""
-    raw = {d: count * f for d, f in MIX.items()}
-    out = {d: int(v) for d, v in raw.items()}
-    for d in sorted(raw, key=lambda d: raw[d] - out[d], reverse=True)[:count - sum(out.values())]:
-        out[d] += 1
-    return out
-
-
-def suggest(modules: List[Dict[str, object]], lang: str, pool: Dict[str, object], have,
-            count: Optional[int] = None) -> List[str]:
-    """A balanced sheet (the exercises' keys, in the sheet's order): see the module's description. The
-    exercises come by module, from easy to hard."""
-    tgts = targets(modules, pool)
-    count = default_count(modules, pool, have) if count is None else max(1, min(int(count), MAX_EXERCISES))
-    want = mix(count)
-    lists = {t: candidates(t, pool, have) for t in tgts}
-    chosen: List[str] = []
-    meta: Dict[str, Dict[str, object]] = {}
-    for t, keys in lists.items():
-        for k in keys:
-            meta.setdefault(k, pool[t[0]]["exercises"].get(k, {}))
-    got = {d: 0 for d in want}
-    covered = {t: 0 for t in tgts}
-    rounds = 0
-    while len(chosen) < count:
-        added = False
-        for t in tgts:
-            if len(chosen) >= count:
-                break
-            if covered[t] > rounds:
-                continue
-            free = [k for k in lists[t] if k not in chosen]
-            if not free:
-                continue
-            k = min(free, key=lambda k: (meta[k].get("lang") != lang, bool(meta[k].get("images")),
-                                         -(want[level(meta[k].get("difficulty"))] - got[level(meta[k].get("difficulty"))]),
-                                         lists[t].index(k)))
-            chosen.append(k)
-            got[level(meta[k].get("difficulty"))] += 1
-            for c in covers(k, tgts, pool):
-                covered[c] += 1
-            added = True
-        if not added:
-            if all(not [k for k in lists[t] if k not in chosen] for t in tgts):
-                break
-        rounds += 1
-        if rounds > MAX_EXERCISES + 1:
-            break
-    apps = [m["id"] for m in modules]
-    first = {k: n for n, k in enumerate(chosen)}
-
-    def where(k: str) -> int:
-        found = info(pool, k, apps)
-        return apps.index(found[0]) if found and found[0] in apps else len(apps)
-    return sorted(chosen, key=lambda k: (where(k), level(meta[k].get("difficulty")), first[k]))
-
-
-def alternatives(key: str, sheet: List[str], modules: List[Dict[str, object]], lang: str, pool: Dict[str, object],
-                 have, limit: int = 5) -> List[str]:
-    """Up to limit exercises to take instead of key: of the same objectives of the sheet (of its module, if
-    it practises none of them), not on the sheet, those there; the sheet's language first, then by how
-    near their difficulty is, without image first, those that share more objectives, the pool's order."""
-    tgts = targets(modules, pool)
-    mine = covers(key, tgts, pool)
-    if not mine:
-        found = info(pool, key, [m["id"] for m in modules])
-        mine = [(found[0], None)] if found else []
-    d = level((info(pool, key) or ("", {}))[1].get("difficulty"))
-    order: Dict[str, Tuple[int, int]] = {}
-    for t in mine:
-        for n, k in enumerate(candidates(t, pool, have)):
-            if k != key and k not in sheet:
-                shared, first = order.get(k, (0, n))
-                order[k] = (shared + 1, min(first, n))
-
-    def rank(k: str):
-        e = (info(pool, k) or ("", {}))[1]
-        return (e.get("lang") != lang, abs(level(e.get("difficulty")) - d), bool(e.get("images")), -order[k][0], order[k][1], k)
-    return sorted(order, key=rank)[:limit]
 
 
 def collection(title: str, chosen: List[Tuple[str, str]], names: Dict[str, str]) -> Dict[str, object]:

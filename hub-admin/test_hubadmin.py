@@ -4,8 +4,11 @@ Checks the reading of the hub page, the cleaning of a configuration and of sets 
 objectives, and those saved before there were objectives), the names a set
 may have (and that no app or set clashes with a service nginx passes on), the atomic write, the password (in the crossword app's format) and sessions, and the
 service end to end: login, rate limit, the API with and without a session, and that saves reach
-apps.json and sets.json. The exercise sheets: what a sheet suggests (every objective covered, the
-language, exercises without image, the difficulty mix) and the alternatives of an exercise, the .tex
+apps.json and sets.json. The exercise sheets: the kind (concept question or problem) and difficulty
+of an exercise from its TeXercises type and default difficulty, the learning objectives on a sheet's
+topics and the exercises in none, what a sheet suggests (every objective covered, the language,
+exercises without image, the balance of concept questions and of difficulties, and what cannot be
+said), sheets saved before the topics, and the alternatives of an exercise, the .tex
 of an ordered list of exercises (without LaTeX), the PDFs where LaTeX is missing, the upload of a
 TeXercises export (only the teacher's exercises kept, nothing written outside its folder), the
 preview (sheets/preview.py: the arithmetic of the solver part, numbers and units, text to HTML,
@@ -240,35 +243,156 @@ def ex(lang="en", difficulty=1, images=False, title=""):
     return {"lang": lang, "difficulty": difficulty, "images": images, "title": title}
 
 
+def meta(lang="en", type_=1, difficulty=2, topics=("Electrostatics",), images=False):
+    """An exercise as sheets.exercise_meta has it."""
+    return {"title": "", "lang": lang, "difficulty": difficulty, "type": type_, "kind": S.kind(type_), "band": S.band(difficulty),
+            "topics": list(topics), "images": images, "url": None}
+
+
 class Sheets(unittest.TestCase):
-    # two modules: coulomb with three objectives, photons without objectives in the pool
+    # two modules: coulomb with two objectives, magnet with one; x1 on the same topic in none, x2 without topic
     POOL = {
-        "coulomb": {"objectives": {"factor": ["f1", "f2", "f3", "f4", "f5"], "vector": ["v1", "v2", "f2"], "field": ["d1", "d2"]},
-                    "exercises": {"f1": ex("de", 1), "f2": ex("en", 2), "f3": ex("en", 1, True), "f4": ex("en", 3), "f5": ex("en", 1),
-                                  "v1": ex("en", 3), "v2": ex("en", 2), "d1": ex("en", 2), "d2": ex("de", 1)}},
-        "photons": {"objectives": {"wave": []}, "exercises": {"p1": ex("en", 1), "p2": ex("en", 2), "p3": ex("en", 3)}},
+        "coulomb": {"objectives": {"factor": ["f1", "f2", "f3", "f4", "f5"], "field": ["d1", "d2"]},
+                    "exercises": {k: ex() for k in ("f1", "f2", "f3", "f4", "f5", "d1", "d2")}},
+        "magnet": {"objectives": {"wire": ["w1", "w2"]}, "exercises": {"w1": ex(), "w2": ex()}},
     }
-    ALL = {"factor", "vector", "field"}
+    APPS = [{"id": "coulomb", "objectives": [{"id": "factor"}, {"id": "field"}]}, {"id": "magnet", "objectives": [{"id": "wire"}]}]
+    CAT = {"f1": meta("en", 1, 1), "f2": meta("en", 1, 2), "f3": meta("de", 0, 2), "f4": meta("en", 0, 3, images=True),
+           "f5": meta("en", 2, None), "d1": meta("en", 1, 3), "d2": meta("en", 3, 1),
+           "w1": meta("en", 1, 2, ("Magnetism",)), "w2": meta("en", 0, 1, ("Magnetism",)),
+           "x1": meta("en", 0, 2), "x2": meta("en", 1, 2, ())}
+    ALL = [{"id": "coulomb", "objectives": ["factor", "field"]}, {"id": "magnet", "objectives": ["wire"]}]
+    TOPICS = ["Electrostatics", "Magnetism"]
 
-    def have(self, *missing):
-        return {k for a in self.POOL.values() for k in a["exercises"]} - set(missing)
+    def bks(self, modules=None, loose=False, topics=None):
+        return S.buckets(self.ALL if modules is None else modules, loose, self.APPS, self.POOL, self.CAT, self.TOPICS if topics is None else topics)
 
-    def mods(self, objectives=("factor", "vector", "field"), photons=True):
-        return [{"id": "coulomb", "objectives": list(objectives)}] + ([{"id": "photons", "objectives": ["wave"]}] if photons else [])
+    def test_kind_and_band(self):
+        # the TeXercises type: 0 descriptive and 3 true/false concept questions, 2 both, the others problems
+        self.assertEqual([S.kind(t) for t in (0, 3, 2, 1, 5, 6, 7, None, True, "0")],
+                         ["concept", "concept", "both", "problem", "problem", "problem", "problem", "problem", "problem", "problem"])
+        # default_difficulty: 1 easy, 2 medium, 3 and more hard, none medium
+        self.assertEqual([S.band(d) for d in (1, 2, 3, 5, 0, None, True, "1")], [1, 2, 3, 3, 1, 2, 2, 2])
+        self.assertEqual(S.shares(12, [(1, 20), (2, 50), (3, 30)]), {1: 2, 2: 6, 3: 4})
+        self.assertEqual(S.shares(4, [("a", 50), ("b", 50)]), {"a": 2, "b": 2})
+        self.assertEqual(S.shares(3, [("a", 50), ("b", 50)]), {"a": 2, "b": 1})  # a tie: the first
+        self.assertEqual(S.shares(5, [("a", 0), ("b", 0)]), {"a": 0, "b": 0})
+        self.assertEqual(S.aims(10, S.BALANCE), {"concept": 3, "problem": 7, 1: 3, 2: 5, 3: 2})
+        # an exercise of the type Both counts as a concept question while the sheet lacks them
+        bal = {"concept": 50, "easy": 30, "medium": 50, "hard": 20}
+        self.assertEqual(S.tally(["f5", "f1", "x1"], self.CAT, 4, bal), {"concept": 2, "problem": 1, 1: 1, 2: 2, 3: 0})
+        self.assertEqual(S.tally(["f5", "d2", "x1"], self.CAT, 4, bal), {"concept": 2, "problem": 1, 1: 1, 2: 2, 3: 0})
 
-    def test_targets(self):
-        self.assertEqual(S.targets(self.mods(), self.POOL), [("coulomb", "factor"), ("coulomb", "vector"), ("coulomb", "field"), ("photons", None)])
-        self.assertEqual(S.targets([{"id": "coulomb", "objectives": ["field", "nope"]}, {"id": "nope", "objectives": []}], self.POOL), [("coulomb", "field")])
-        self.assertEqual(S.candidates(("coulomb", "vector"), self.POOL, self.have("v1")), ["v2", "f2"])
-        self.assertEqual(S.covers("f2", S.targets(self.mods(), self.POOL), self.POOL), [("coulomb", "factor"), ("coulomb", "vector")])
+    def test_exercise_meta(self):
+        with tempfile.TemporaryDirectory() as d:
+            f = Path(d) / "e1"
+            f.mkdir()
+            (f / "exercise.json").write_text(json.dumps({"title": " Two  charges ", "language": "GER", "type": 2, "subbranches": ["Electrostatics", 3],
+                                                         "info": {"url": "/exercise/two-charges/"}}))
+            (f / "text.tex").write_text("\\includegraphics{#image_path:coil-1#}")
+            m = S.exercise_meta(f)
+            self.assertEqual(m, {"title": "Two charges", "lang": "de", "difficulty": None, "type": 2, "kind": "both", "band": 2,
+                                 "topics": ["Electrostatics"], "images": True, "url": "/exercise/two-charges/"})
+            (f / "exercise.json").write_text(json.dumps({"language": "ENG", "type": 0, "default_difficulty": 4, "info": {"url": "javascript:x"}}))
+            os.utime(f / "exercise.json", ns=(1, 2))  # changed: read again
+            m = S.exercise_meta(f)
+            self.assertEqual((m["title"], m["lang"], m["kind"], m["band"], m["topics"], m["url"]), ("e1", "en", "concept", 3, [], None))
+            self.assertEqual(S.catalog({"e1": f})["e1"], m)
+            self.assertEqual(S.topic_counts({"e1": f}), [])  # no topic, and no other: none listed
+
+    def test_objectives_and_loose(self):
+        # step 2: per module the objectives the pool links to exercises on the topics (there), in the apps' order
+        got = S.objective_keys(self.APPS, self.POOL, self.CAT, ["Electrostatics"])
+        self.assertEqual(got, [{"app": "coulomb", "objectives": [{"id": "factor", "keys": ["f1", "f2", "f3", "f4", "f5"]}, {"id": "field", "keys": ["d1", "d2"]}]},
+                               {"app": "magnet", "objectives": [{"id": "wire", "keys": []}]}])
+        cat = {k: v for k, v in self.CAT.items() if k != "f2"}  # not there
+        self.assertEqual(S.objective_keys(self.APPS, self.POOL, cat, ["Magnetism"])[0]["objectives"][0]["keys"], [])
+        self.assertEqual(S.objective_keys(self.APPS, self.POOL, cat, ["Electrostatics"])[0]["objectives"][0]["keys"], ["f1", "f3", "f4", "f5"])
+        # the exercises on the topics in no objective; "" is those without topic
+        self.assertEqual(S.loose_keys(self.APPS, self.POOL, self.CAT, ["Electrostatics"]), ["x1"])
+        self.assertEqual(S.loose_keys(self.APPS, self.POOL, self.CAT, ["Electrostatics", ""]), ["x1", "x2"])
+        self.assertEqual(S.loose_keys(self.APPS, self.POOL, self.CAT, []), [])
+        # the buckets: the ticked objectives in the apps' order, then the loose ones
+        self.assertEqual(self.bks([{"id": "magnet", "objectives": ["wire"]}, {"id": "coulomb", "objectives": ["field"]}], True),
+                         [(("coulomb", "field"), ["d1", "d2"]), (("magnet", "wire"), ["w1", "w2"]), ((None, None), ["x1"])])
+        self.assertEqual(S.default_count(self.bks()), 6)
+
+    def test_suggest_balance(self):
+        # four exercises, half concept questions, 30/50/20 % (1 easy, 2 medium, 1 hard): round by round over
+        # factor, field, wire, each the one the sheet lacks most (f2 before f5: the pool's order; d2, w1),
+        # then the last slot must be a hard concept question: f4 (with image; f3 is German)
+        bal = {"concept": 50, "easy": 30, "medium": 50, "hard": 20}
+        keys = S.suggest(self.bks(), self.CAT, "en", bal, 4)
+        self.assertEqual(keys, ["d2", "f2", "f4", "w1"])  # by module, from easy to hard
+        self.assertEqual(S.tally(keys, self.CAT, 4, bal), {"concept": 2, "problem": 2, 1: 1, 2: 2, 3: 1})
+        self.assertEqual(keys, S.suggest(self.bks(), self.CAT, "en", bal, 4))  # the same every time
+        # the sheet's language first: German, f3 of factor
+        self.assertIn("f3", S.suggest(self.bks(), self.CAT, "de", bal, 4))
+        # a larger pool: the aims met exactly
+        cat = {f"e{t}{d}{i}": meta("en", t, d) for t in (0, 1, 2) for d in (1, 2, 3) for i in range(4)}
+        pool = {"a": {"objectives": {"o": sorted(cat)}, "exercises": {k: ex() for k in cat}}}
+        bks = S.buckets([{"id": "a", "objectives": ["o"]}], False, [{"id": "a", "objectives": [{"id": "o"}]}], pool, cat, ["Electrostatics"])
+        for bal, n in (({"concept": 50, "easy": 20, "medium": 50, "hard": 30}, 12), ({"concept": 0, "easy": 100, "medium": 0, "hard": 0}, 5),
+                       ({"concept": 100, "easy": 0, "medium": 0, "hard": 100}, 8), (S.BALANCE, 10)):
+            keys = S.suggest(bks, cat, "en", bal, n)
+            self.assertEqual(len(set(keys)), n)
+            self.assertEqual(S.tally(keys, cat, n, bal), S.aims(n, bal), bal)
+            self.assertEqual(S.notes(bks, cat, bal, n), [])
+        # never more than there are, nor than asked; nothing to choose from: nothing
+        self.assertEqual(len(S.suggest(self.bks(), self.CAT, "en", bal, 99)), 9)
+        self.assertEqual(len(S.suggest(self.bks(), self.CAT, "en", bal)), 6)  # by default two per objective
+        self.assertEqual(S.suggest([], self.CAT, "en", bal, 5), [])
+        self.assertEqual(S.suggest(self.bks(topics=["Optics"]), self.CAT, "en", bal, 5), [])
+
+    def test_suggest_round_robin_and_aims(self):
+        # every objective has one before any has two
+        keys = S.suggest(self.bks(), self.CAT, "en", S.BALANCE, 3)
+        self.assertEqual({o for k in keys for (a, o), ks in self.bks() if k in ks}, {"factor", "field", "wire"})
+        # fewer exercises than objectives: the aims first (one concept question, and one exercise of each difficulty)
+        keys = S.suggest(self.bks() + [(("magnet", "more"), ["w1"])], self.CAT, "en", S.BALANCE, 3)
+        self.assertEqual(S.tally(keys, self.CAT, 3, S.BALANCE), S.aims(3, S.BALANCE))
+        # unless the slots left are all needed for the aims: three of four concept questions, the objective
+        # of problems only takes its turn once
+        cat = {"p1": meta(), "p2": meta(), "p3": meta(), "c1": meta(type_=0), "c2": meta(type_=0), "c3": meta(type_=0)}
+        bks = [(("a", "o"), ["p1", "p2", "p3"]), ((None, None), ["c1", "c2", "c3"])]
+        bal = {"concept": 75, "easy": 0, "medium": 100, "hard": 0}
+        self.assertEqual(S.suggest(bks, cat, "en", bal, 4), ["p1", "c1", "c2", "c3"])
+        # without image first
+        cat = {"i1": meta(images=True), "i2": meta()}
+        self.assertEqual(S.suggest([(("a", "o"), ["i1", "i2"])], cat, "en", bal, 1), ["i2"])
+
+    def test_suggest_short(self):
+        # what the topics and objectives cannot give: the closest, and a note
+        bal = {"concept": 100, "easy": 30, "medium": 50, "hard": 20}
+        bks = self.bks([{"id": "coulomb", "objectives": ["field"]}], loose=True, topics=["Electrostatics"])  # d1 a problem; d2, x1 concept questions
+        self.assertEqual(sorted(S.suggest(bks, self.CAT, "en", bal, 3)), ["d1", "d2", "x1"])
+        self.assertEqual(S.notes(bks, self.CAT, bal, 3), ["only 2 concept questions on these topics and objectives"])
+        self.assertEqual(S.notes(bks, self.CAT, bal, 5)[0], "only 3 exercises on these topics and objectives")
+        self.assertEqual(S.notes([(("a", "o"), ["f5", "f1"])], self.CAT, bal, 2), ["only 1 concept question on these topics and objectives (1 of the type Both)"])
+        self.assertIn("only 0 textbook problems on these topics and objectives", S.notes([(("a", "o"), ["x1"])], self.CAT, {**bal, "concept": 0}, 1))
+        self.assertIn("only 0 hard exercises on these topics and objectives", S.notes([(("a", "o"), ["x1"])], self.CAT, {**bal, "easy": 0, "medium": 0, "hard": 100}, 1))
+
+    def test_alternatives(self):
+        # of the same objectives, not on the sheet: the sheet's language first, then the same kind (Both is
+        # either), then a near difficulty
+        bks = self.bks()
+        self.assertEqual(S.alternatives("f2", ["f2", "f1"], bks, self.CAT, "en"), ["f5", "f4", "f3"])
+        self.assertEqual(S.alternatives("f2", ["f2"], bks, self.CAT, "en"), ["f5", "f1", "f4", "f3"])
+        self.assertEqual(S.alternatives("f2", ["f2"], bks, self.CAT, "en", 2), ["f5", "f1"])
+        self.assertEqual(S.alternatives("d2", ["d2"], bks, self.CAT, "en"), ["d1"])
+        # an exercise of none of the objectives: of all of them
+        self.assertEqual(set(S.alternatives("x1", ["x1"], bks, self.CAT, "en", 10)), {"f1", "f2", "f3", "f4", "f5", "d1", "d2", "w1", "w2"})
 
     def test_coverage(self):
+        POOL = {"coulomb": {"objectives": {"factor": ["f1", "f2", "f3", "f4", "f5"], "vector": ["v1", "v2", "f2"], "field": ["d1", "d2"]},
+                            "exercises": {k: ex() for k in ("f1", "f2", "f3", "f4", "f5", "v1", "v2", "d1", "d2")}},
+                "photons": {"objectives": {"wave": []}, "exercises": {"p1": ex(), "p2": ex(), "p3": ex()}}}
         # the topics of the pool, per module in the hub's order (then the pool's other apps), objectives
         # without exercises with 0, those of the pool that the hub does not name after the others
         apps = [{"id": "photons", "name": "Photoelectric Effect", "de": "Photoeffekt", "objectives": [{"id": "wave", "en": "Wave model", "de": "Wellenmodell"}]},
                 {"id": "torque", "name": "Torque", "objectives": [{"id": "arm", "en": "Lever arm", "de": "Hebelarm"}]},
                 {"id": "coulomb", "name": "Point Charges", "objectives": [{"id": "vector", "en": "Vector sum", "de": "Vektorsumme"}]}]
-        got = S.coverage(self.POOL, apps, self.have("f1", "p3"))
+        got = S.coverage(POOL, apps, {k for a in POOL.values() for k in a["exercises"]} - {"f1", "p3"})
         self.assertEqual([m["id"] for m in got], ["photons", "torque", "coulomb"])
         photons, torque, coulomb = got
         self.assertEqual((photons["name"], photons["de"], photons["exercises"], photons["there"], photons["general"]), ("Photoelectric Effect", "Photoeffekt", 3, 2, 3))
@@ -277,7 +401,7 @@ class Sheets(unittest.TestCase):
         self.assertEqual([(o["id"], o["en"], o["exercises"], o["there"]) for o in coulomb["objectives"]],
                          [("vector", "Vector sum", 3, 3), ("factor", "factor", 5, 4), ("field", "field", 2, 2)])
         self.assertEqual((coulomb["exercises"], coulomb["there"], coulomb["general"]), (9, 8, 0))
-        self.assertEqual([m["id"] for m in S.coverage(self.POOL, apps[:1], set())], ["photons", "coulomb"])  # (not on the hub: after)
+        self.assertEqual([m["id"] for m in S.coverage(POOL, apps[:1], set())], ["photons", "coulomb"])  # (not on the hub: after)
 
     def test_exercise_topics(self):
         # the TeXercises topics (subbranches) of the exercises there: cleaned, each once, counted, the most
@@ -294,70 +418,11 @@ class Sheets(unittest.TestCase):
             (Path(d) / "e" / "exercise.json").write_text("{not json")
             have["e"] = Path(d) / "e"
             self.assertEqual([S.exercise_topics(have[k]) for k in "abcde"], [["Optics", "Waves", "Wa ves"], ["Waves"], [], [], []])
-            self.assertEqual(S.topic_counts(have), [{"name": "Waves", "exercises": 2}, {"name": "Optics", "exercises": 1},
-                                                    {"name": "Wa ves", "exercises": 1}, {"name": "", "exercises": 3}])
+            (Path(d) / "b" / "exercise.json").write_text(json.dumps({"subbranches": ["Waves"], "type": 0}))
+            os.utime(Path(d) / "b" / "exercise.json", ns=(1, 2))
+            self.assertEqual(S.topic_counts(have), [{"name": "Waves", "exercises": 2, "concept": 1, "both": 0}, {"name": "Optics", "exercises": 1, "concept": 0, "both": 0},
+                                                    {"name": "Wa ves", "exercises": 1, "concept": 0, "both": 0}, {"name": "", "exercises": 3, "concept": 0, "both": 0}])
             self.assertEqual(S.topic_counts({"c": have["c"]}), [])
-
-    def test_suggest_covers_every_objective(self):
-        keys = S.suggest(self.mods(), "en", self.POOL, self.have(), 4)
-        self.assertEqual(len(keys), 4)
-        tgts = S.targets(self.mods(), self.POOL)
-        covered = {t for k in keys for t in S.covers(k, tgts, self.POOL)}
-        self.assertEqual(covered, set(tgts))  # one each before any has two
-        self.assertEqual(len(set(keys)), len(keys))
-        # by default two per objective (here 4 objectives: 8), at most DEFAULT_MAX
-        keys = S.suggest(self.mods(), "en", self.POOL, self.have())
-        self.assertEqual(len(keys), 8)
-        self.assertEqual(S.default_count(self.mods(), self.POOL, self.have()), 8)
-        per = {t: sum(t in S.covers(k, tgts, self.POOL) for k in keys) for t in tgts}
-        self.assertTrue(all(n >= 2 for n in per.values()), per)
-        # by module, then from easy to hard
-        apps = [S.info(self.POOL, k)[0] for k in keys]
-        self.assertEqual(apps, sorted(apps, key=["coulomb", "photons"].index))
-        levels = [S.level(S.info(self.POOL, k)[1]["difficulty"]) for k in keys if S.info(self.POOL, k)[0] == "coulomb"]
-        self.assertEqual(levels, sorted(levels))
-        # the same every time; never more than there are, nor more than asked
-        self.assertEqual(keys, S.suggest(self.mods(), "en", self.POOL, self.have()))
-        self.assertEqual(len(S.suggest(self.mods(), "en", self.POOL, self.have(), 99)), 12)
-        self.assertEqual(S.suggest(self.mods(), "en", self.POOL, set()), [])
-
-    def test_suggest_prefers(self):
-        # the sheet's language first: one exercise of field, German sheet: d2 (de), English: d1
-        one = [{"id": "coulomb", "objectives": ["field"]}]
-        self.assertEqual(S.suggest(one, "de", self.POOL, self.have(), 1), ["d2"])
-        self.assertEqual(S.suggest(one, "en", self.POOL, self.have(), 1), ["d1"])
-        # without image first: of factor (f1 de, f2 average, f3 easy with image, f4 hard, f5 easy), English; one
-        # exercise: an average one; two: an easy one too, without image (f5, not f3); easy first
-        fac = [{"id": "coulomb", "objectives": ["factor"]}]
-        self.assertEqual(S.suggest(fac, "en", self.POOL, self.have(), 1), ["f2"])
-        self.assertEqual(S.suggest(fac, "en", self.POOL, self.have(), 2), ["f5", "f2"])
-        self.assertNotIn("f3", S.suggest(fac, "en", self.POOL, self.have(), 3))
-        # the difficulty mix: of 10, 3 easy, 5 average, 2 hard
-        self.assertEqual(S.mix(10), {1: 3, 2: 5, 3: 2})
-        self.assertEqual(sum(S.mix(7).values()), 7)
-        pool = {"a": {"objectives": {"o": [f"e{d}{i}" for i in range(10) for d in (1, 2, 3)]},
-                      "exercises": {f"e{d}{i}": ex("en", d) for i in range(10) for d in (1, 2, 3)}}}
-        keys = S.suggest([{"id": "a", "objectives": ["o"]}], "en", pool, set(pool["a"]["exercises"]), 10)
-        got = {d: sum(pool["a"]["exercises"][k]["difficulty"] == d for k in keys) for d in (1, 2, 3)}
-        self.assertEqual(got, {1: 3, 2: 5, 3: 2})
-        # only exercises that are there
-        self.assertNotIn("d1", S.suggest(one, "en", self.POOL, self.have("d1"), 2))
-
-    def test_alternatives(self):
-        sheet = ["f2", "v1"]
-        alts = S.alternatives("f2", sheet, self.mods(), "en", self.POOL, self.have())
-        # of factor and vector, not on the sheet; English first, then near difficulty 2 (f5/f3 easy,
-        # f4 hard, v2 average), without image first
-        self.assertEqual(alts[0], "v2")
-        self.assertNotIn("f2", alts)
-        self.assertNotIn("v1", alts)
-        self.assertEqual(alts[-1], "f1")  # German
-        self.assertEqual(set(alts), {"f1", "f3", "f4", "f5", "v2"})
-        self.assertLess(alts.index("f5"), alts.index("f3"))  # without image first
-        self.assertEqual(len(S.alternatives("f2", sheet, self.mods(), "en", self.POOL, self.have(), 2)), 2)
-        self.assertEqual(S.alternatives("p1", ["p1"], self.mods(), "en", self.POOL, self.have("p3")), ["p2"])
-        # an exercise of none of the sheet's objectives: its module's
-        self.assertEqual(S.alternatives("d1", ["d1"], self.mods(("factor",)), "en", self.POOL, {"d1", "d2", "f1"}), ["f1", "d2"])
 
     def test_collection(self):
         coll = S.collection("3a", [("coulomb", "f2"), ("coulomb", "f1"), ("photons", "p1"), ("coulomb", "d1")], {"coulomb": "Point Charges"})
@@ -511,20 +576,42 @@ class Sheets(unittest.TestCase):
                 self.assertIsInstance(e["images"], bool, k)
 
     def test_normalize_sheet(self):
-        apps = [{"id": "coulomb", "objectives": [{"id": "factor"}, {"id": "vector"}, {"id": "field"}]}, {"id": "photons", "objectives": []}]
-        out = H.normalize_sheet({"title": " Blatt <b>1</b>\n", "lang": "de", "modules": [
-            {"id": "photons"}, {"id": "coulomb", "objectives": ["field", "nope", "factor"]}, {"id": "photons"}],
-            "exercises": ["f2", "p1", "f2"]}, apps, self.POOL)
-        self.assertEqual(out, {"title": "Blatt b1/b", "lang": "de", "modules": [{"id": "coulomb", "objectives": ["factor", "field"]},
-                               {"id": "photons", "objectives": []}], "exercises": ["f2", "p1"]})  # in the apps' order
-        # all objectives when none are given; English unless German
-        self.assertEqual(H.normalize_sheet({"modules": [{"id": "coulomb"}], "lang": "fr"}, apps, self.POOL),
-                         {"title": "", "lang": "en", "modules": [{"id": "coulomb", "objectives": ["factor", "vector", "field"]}], "exercises": []})
-        for bad in ({"modules": [{"id": "../x"}]}, {"exercises": ["../../etc/passwd"]}, {"exercises": [3]},
-                    {"exercises": [f"f{i}" for i in range(H.MAX_SHEET_EXERCISES + 1)]}):
-            with self.assertRaises(ValueError):
+        apps = [{"id": "coulomb", "objectives": [{"id": "factor"}, {"id": "field"}]}, {"id": "magnet", "objectives": [{"id": "wire"}]}]
+        out = H.normalize_sheet({"title": " Blatt <b>1</b>\n", "lang": "de", "topics": ["Magnetism", " Electro\nstatics ", "Magnetism", ""], "modules": [
+            {"id": "magnet"}, {"id": "coulomb", "objectives": ["field", "nope", "factor"]}, {"id": "magnet"}], "loose": True,
+            "balance": {"concept": 45, "easy": 1, "medium": 1, "hard": 1}, "exercises": ["f2", "w1", "f2", "x1"]}, apps, self.POOL, have={"x1": None})
+        self.assertEqual(out, {"title": "Blatt b1/b", "lang": "de", "topics": ["Magnetism", "Electro statics", ""],
+                               "modules": [{"id": "coulomb", "objectives": ["factor", "field"]}, {"id": "magnet", "objectives": ["wire"]}],  # in the apps' order
+                               "loose": True, "balance": {"concept": 45, "easy": 34, "medium": 33, "hard": 33}, "exercises": ["f2", "w1", "x1"]})
+        # all objectives when none are given; English unless German; the default balance
+        self.assertEqual(H.normalize_sheet({"modules": [{"id": "coulomb"}], "lang": "fr", "loose": 1}, apps, self.POOL),
+                         {"title": "", "lang": "en", "topics": [], "modules": [{"id": "coulomb", "objectives": ["factor", "field"]}], "loose": False,
+                          "balance": {"concept": 30, "easy": 30, "medium": 50, "hard": 20}, "exercises": []})
+        self.assertEqual(H.normalize_balance({"concept": 12.6, "easy": 0, "medium": 0, "hard": 0}), {"concept": 13, "easy": 30, "medium": 50, "hard": 20})
+        self.assertEqual(H.normalize_balance({"easy": 20, "medium": 50, "hard": 30}), {"concept": 30, "easy": 20, "medium": 50, "hard": 30})
+        for bad in ({"modules": [{"id": "../x"}]}, {"exercises": ["../../etc/passwd"]}, {"exercises": [3]}, {"exercises": ["x1"]},
+                    {"exercises": [f"f{i}" for i in range(H.MAX_SHEET_EXERCISES + 1)]}, {"topics": [3]}, {"topics": [str(i) for i in range(H.MAX_SHEET_TOPICS + 1)]},
+                    {"balance": {"concept": 101}}, {"balance": {"easy": -1}}, {"balance": {"hard": "20"}}, {"balance": {"medium": True}}):
+            with self.assertRaises(ValueError, msg=bad):
                 H.normalize_sheet(bad, apps, self.POOL)
-        self.assertEqual(H.normalize_sheet({"exercises": ["f1", "zz"], "modules": [{"id": "x"}]}, apps, self.POOL, strict=False)["exercises"], ["f1"])
+        loose = H.normalize_sheet({"exercises": ["f1", "zz"], "modules": [{"id": "x"}], "topics": [3, "A"], "balance": {"concept": 300}}, apps, self.POOL, strict=False)
+        self.assertEqual((loose["exercises"], loose["topics"], loose["balance"]["concept"]), (["f1"], ["A"], 30))
+
+    def test_old_sheets(self):
+        # a sheet saved before it had topics (made of modules): the topics of its exercises there (the most
+        # frequent first, "" for those without), its objectives as saved, the default balance
+        old = {"title": "Alt", "lang": "en", "modules": [{"id": "coulomb", "objectives": ["field"]}], "exercises": ["d1", "w1", "x2", "f1", "gone"], "token": "t"}
+        got = H.migrate_sheet(old, self.CAT)
+        self.assertEqual((got["topics"], got["loose"], got["modules"], got["exercises"], got["token"]),
+                         (["Electrostatics", "Magnetism", ""], False, old["modules"], old["exercises"], "t"))
+        self.assertIs(H.migrate_sheet({**old, "topics": ["Optics"]}, self.CAT)["topics"][0], "Optics")  # a new one: as it is
+        self.assertEqual(H.migrate_sheet({"exercises": ["gone"]}, self.CAT)["topics"], [])
+        apps = [{"id": "coulomb", "objectives": [{"id": "factor"}, {"id": "field"}]}, {"id": "magnet", "objectives": [{"id": "wire"}]}]
+        clean = H.normalize_sheet(got, apps, self.POOL, strict=False, have=self.CAT)
+        self.assertEqual((clean["modules"], clean["balance"], clean["exercises"]), (old["modules"], dict(S.BALANCE), ["d1", "w1", "x2", "f1"]))
+        # and it suggests as a new one: its objective (field), on its topics
+        keys = S.suggest(S.buckets(clean["modules"], clean["loose"], apps, self.POOL, self.CAT, clean["topics"]), self.CAT, "en", clean["balance"], 2)
+        self.assertEqual(sorted(keys), ["d1", "d2"])
 
 
 class Preview(unittest.TestCase):
@@ -1130,17 +1217,19 @@ class Service(unittest.TestCase):
             {"id": "electric-field", "modes": ["tutor", "practice", "check"], "objectives": ["sketch", "read"]},
             {"id": "photons", "modes": ["check"]}])
 
-    def drafts_zip(self, *keys):
-        """A TeXercises export of drafts of this repository, as the teacher's."""
+    def drafts_zip(self, *keys, extra=None):
+        """A TeXercises export of drafts of this repository, as the teacher's; extra: {new key: (a draft's
+        key, changes of its exercise.json)}, exercises the pool does not know."""
         buf = io.BytesIO()
         with zipfile.ZipFile(buf, "w") as z:
-            for k in keys:
-                d = next(ROOT.glob(f"texercises-drafts*/exercises/{k}"))
+            for k, src, change in [(k, k, {}) for k in keys] + [(k, src, change) for k, (src, change) in (extra or {}).items()]:
+                d = next(ROOT.glob(f"texercises-drafts*/exercises/{src}"))
                 for f in d.iterdir():
                     data = f.read_bytes()
                     if f.name == "exercise.json":
                         meta = json.loads(data)
                         meta["info"] = {"creator": "by", "url": f"/exercise/{k}/"}
+                        meta.update(change)
                         data = json.dumps(meta).encode()
                     z.writestr(f"x/exercises/{k}/{f.name}", data)
         return buf.getvalue()
@@ -1161,22 +1250,40 @@ class Service(unittest.TestCase):
         self.assertEqual(self.req("/api/texercises", self.drafts_zip(drafts[0]), "application/zip")[0], 403)
         st, headers, _ = self.login()
         cookie = headers["Set-Cookie"].split(";")[0]
-        st, _, body = self.req("/api/texercises", self.drafts_zip(*drafts), "application/zip", cookie)
-        self.assertEqual((st, json.loads(body)), (200, {"exercises": len(drafts), "skipped": 0}))
+        extra = {"zz-loose-concept": (drafts[0], {"type": 0, "title": "A concept question", "subbranches": ["Electrostatics"]})}  # in no objective
+        st, _, body = self.req("/api/texercises", self.drafts_zip(*drafts, extra=extra), "application/zip", cookie)
+        self.assertEqual((st, json.loads(body)), (200, {"exercises": len(drafts) + 1, "skipped": 0}))
         state = json.loads(self.req("/api/sheets", cookie=cookie)[2])
-        self.assertEqual((state["sheets"], state["exercises"], state["latex"]), ([], len(drafts), bool(S.lualatex())))
+        self.assertEqual((state["sheets"], state["exercises"], state["latex"]), ([], len(drafts) + 1, bool(S.lualatex())))
         coulomb = next(a for a in state["apps"] if a["id"] == "coulomb")
         self.assertEqual([o["id"] for o in coulomb["objectives"]], ["direction", "factor", "vector", "field"])
         self.assertTrue(coulomb["objectives"][0]["de"])
         # the TeXercises topics of the exercises there (for the editor), and of each exercise in a plan
-        topics = {t for k in drafts for t in S.exercise_topics(next(ROOT.glob(f"texercises-drafts*/exercises/{k}")))}
+        meta = lambda k: S.exercise_meta(next(ROOT.glob(f"texercises-drafts*/exercises/{k}")))
+        topics = {t for k in drafts for t in meta(k)["topics"]}
         self.assertIn("Electrostatics", topics)
         self.assertEqual({t["name"] for t in state["subjects"]} - {""}, topics)
-        self.assertEqual(sum(t["exercises"] for t in state["subjects"] if t["name"] == "Electrostatics"),
-                         sum("Electrostatics" in S.exercise_topics(next(ROOT.glob(f"texercises-drafts*/exercises/{k}"))) for k in drafts))
-        # a suggestion for two modules (JSON only)
-        draft = {"title": "Kräfte <3", "lang": "en", "modules": [{"id": "photons"}, {"id": "coulomb", "objectives": ["direction", "vector"]}]}
-        self.assertEqual(self.req("/api/plan", j({"sheet": draft, "suggest": True}), "text/plain", cookie)[0], 415)
+        electro = next(t for t in state["subjects"] if t["name"] == "Electrostatics")
+        self.assertEqual(electro["exercises"], sum("Electrostatics" in meta(k)["topics"] for k in drafts) + 1)
+        self.assertEqual(electro["concept"], sum("Electrostatics" in meta(k)["topics"] and meta(k)["kind"] == "concept" for k in drafts) + 1)
+        # step 2: the learning objectives on the topics, and the exercises on them without one
+        draft = {"title": "Kräfte <3", "lang": "en", "topics": ["Electrostatics", "quantum physics"],
+                 "modules": [{"id": "photons"}, {"id": "coulomb", "objectives": ["direction", "vector"]}]}
+        self.assertEqual(self.req("/api/plan", j({"sheet": draft}), "text/plain", cookie)[0], 415)
+        st, _, body = self.req("/api/plan", j({"sheet": draft}), "application/json", cookie)
+        self.assertEqual(st, 200)
+        plan = json.loads(body)
+        listed = {(m["app"], o["id"]): o["keys"] for m in plan["objectives"] for o in m["objectives"]}
+        self.assertTrue(listed[("coulomb", "vector")])
+        self.assertTrue(set(listed[("coulomb", "factor")]) <= set(pool["coulomb"]["objectives"]["factor"]))  # also those not ticked
+        self.assertTrue(all("Electrostatics" in plan["details"][k]["topics"] or "quantum physics" in plan["details"][k]["topics"] for ks in listed.values() for k in ks))
+        self.assertNotIn("magnetic-forces", {a for a, _ in listed})  # nothing on the topics
+        self.assertIn("zz-loose-concept", plan["loose"])
+        self.assertEqual(plan["details"]["zz-loose-concept"]["kind"], "concept")
+        self.assertIsNone(plan["details"]["zz-loose-concept"]["app"])
+        self.assertEqual("only 0 easy exercises on these topics and objectives" in plan["notes"], plan["available"]["easy"] == 0)  # (the drafts: none)
+        # step 3: the suggestion, by the balance (JSON only)
+        draft["balance"] = {"concept": 0, "easy": 0, "medium": 100, "hard": 0}
         st, _, body = self.req("/api/plan", j({"sheet": draft, "suggest": True}), "application/json", cookie)
         self.assertEqual(st, 200)
         plan = json.loads(body)
@@ -1185,16 +1292,29 @@ class Service(unittest.TestCase):
         self.assertEqual(len(keys), len(set(keys)))
         self.assertTrue(all(k in drafts for k in keys))
         self.assertEqual(plan["default_count"], len(keys))
-        self.assertEqual({k: plan["details"][k]["topics"] for k in keys},
-                         {k: S.exercise_topics(next(ROOT.glob(f"texercises-drafts*/exercises/{k}"))) for k in keys})
-        self.assertEqual({(t["app"], t["objective"]) for t in plan["targets"]},
-                         {("coulomb", "direction"), ("coulomb", "vector"), ("photons", "wave"), ("photons", "einstein"), ("photons", "threshold"), ("photons", "rate")})
-        covered = {(plan["details"][k]["app"], o) for k in keys for o in plan["details"][k]["objectives"]}
-        self.assertLessEqual({(t["app"], t["objective"]) for t in plan["targets"] if t["keys"]}, covered)
+        self.assertEqual(plan["count"], len(keys))
+        self.assertEqual({k: plan["details"][k]["topics"] for k in keys}, {k: meta(k)["topics"] for k in keys})
+        self.assertEqual({k: (plan["details"][k]["kind"], plan["details"][k]["band"]) for k in keys}, {k: (meta(k)["kind"], meta(k)["band"]) for k in keys})
+        covered = {tuple(o) for k in keys for o in plan["details"][k]["objectives"]}
+        ticked = {("coulomb", "direction"), ("coulomb", "vector"), ("photons", "wave"), ("photons", "einstein"), ("photons", "threshold"), ("photons", "rate")}
+        self.assertLessEqual({t for t in ticked if listed.get(t)}, covered)
         self.assertEqual([plan["details"][k]["app"] for k in keys], sorted((plan["details"][k]["app"] for k in keys), key=["coulomb", "photons"].index))
+        got = S.tally(keys, {k: meta(k) for k in keys}, len(keys), draft["balance"])
+        self.assertEqual((got["problem"], got[2]), tuple(min(len(keys), plan["available"][x] + plan["available"]["both"] * (x == "problem")) for x in ("problem", "medium")))
+        # twelve, half of them concept questions: the one without objective too; what cannot be is said
+        draft.update(loose=True, balance={"concept": 50, "easy": 20, "medium": 50, "hard": 30})
+        plan = json.loads(self.req("/api/plan", j({"sheet": draft, "suggest": True, "count": 12}), "application/json", cookie)[2])
+        avail = plan["available"]
+        self.assertEqual(len(plan["exercises"]), min(12, avail["exercises"]))
+        self.assertEqual(f"only {avail['exercises']} exercises on these topics and objectives" in plan["notes"], avail["exercises"] < 12)
+        self.assertIn("zz-loose-concept", plan["exercises"])
+        want = S.aims(12, draft["balance"])
+        notes = [n for n in plan["notes"] if "concept" in n]
+        self.assertEqual(bool(notes), avail["concept"] + avail["both"] < want["concept"])
         self.assertEqual(len(json.loads(self.req("/api/plan", j({"sheet": draft, "suggest": True, "count": 3}), "application/json", cookie)[2])["exercises"]), 3)
-        for bad in ({"modules": [{"id": "../../etc"}]}, {"exercises": ["../x"]}, {"exercises": ["nope"]}):
+        for bad in ({"modules": [{"id": "../../etc"}]}, {"exercises": ["../x"]}, {"exercises": ["nope"]}, {"topics": [{}]}, {"balance": {"concept": -5}}):
             self.assertEqual(self.req("/api/plan", j({"sheet": bad}), "application/json", cookie)[0], 400)
+        draft["balance"] = {"concept": 0, "easy": 0, "medium": 100, "hard": 0}
         # create it
         st, _, body = self.req("/api/sheets/new", j({"sheet": {**draft, "exercises": keys}}), "application/json", cookie)
         self.assertEqual(st, 200)
@@ -1202,6 +1322,7 @@ class Service(unittest.TestCase):
         sid = sheet["id"]
         self.assertRegex(sid, r"^[0-9a-f]{12}$")
         self.assertEqual((sheet["title"], sheet["exercises"], sheet["token"]), ("Kräfte 3", keys, None))
+        self.assertEqual((sheet["topics"], sheet["loose"], sheet["balance"]), (draft["topics"], True, draft["balance"]))
         self.assertEqual([m["id"] for m in sheet["modules"]], ["coulomb", "photons"])  # the hub's order
         saved = json.loads((Path(self.dir.name) / "data" / "exercise-sheets.json").read_text())
         self.assertEqual(list(saved["sheets"]), [sid])
@@ -1211,9 +1332,9 @@ class Service(unittest.TestCase):
         k0 = next(k for k in keys if alts[k])
         alt = alts[k0][0]
         self.assertNotIn(alt, keys)
-        self.assertTrue(set(plan["details"][k0]["objectives"]) & set(sheet["plan"]["details"][alt]["objectives"]) or
-                        sheet["plan"]["details"][alt]["app"] == plan["details"][k0]["app"])
-        new = [alt if k == k0 else k for k in keys][1:][::-1]
+        tied = lambda k: {tuple(o) for o in sheet["plan"]["details"][k]["objectives"]} & ticked
+        self.assertTrue(tied(k0) & tied(alt) or not tied(k0))  # of the same objective of the sheet
+        new = [alt if k == k0 else k for k in keys][1:][::-1] + ["zz-loose-concept"]  # and one in no objective
         st, _, body = self.req(f"/api/sheets/{sid}", j({"action": "save", "sheet": {**draft, "exercises": new}}), "application/json", cookie)
         self.assertEqual((st, json.loads(body)["exercises"]), (200, new))
         self.assertEqual(json.loads(self.req(f"/api/sheets/{sid}", cookie=cookie)[2])["exercises"], new)
@@ -1246,12 +1367,13 @@ class Service(unittest.TestCase):
         self.assertIn("<title>Kräfte 3</title>", page_)
         self.assertIn("/katex/katex.min.js", page_)
         self.assertIn("font-src 'self'", headers["Content-Security-Policy"])
+        self.assertIn("Electrostatics", page_)  # the section of the one in no objective: its topic
         for k in new:
-            folder = next(ROOT.glob(f"texercises-drafts*/exercises/{k}"))
+            folder = next(ROOT.glob(f"texercises-drafts*/exercises/{extra[k][0] if k in extra else k}"))
             r = P.render(folder)
             self.assertIn(r["text"], page_)
             self.assertNotIn(r["solution"], page_)
-            self.assertIn(escape(json.loads((folder / "exercise.json").read_text())["title"]), page_)
+            self.assertIn(escape(extra[k][1]["title"] if k in extra else json.loads((folder / "exercise.json").read_text())["title"]), page_)
         self.assertNotIn("tx-sol", page_)
         self.assertNotIn("\\underline{\\underline", page_)  # the results of the solutions
         self.assertIn("Exercises Kräfte 3", page_)  # the footer, as on the PDF
@@ -1280,6 +1402,34 @@ class Service(unittest.TestCase):
         self.assertIn(b"/katex/katex.min.js", body)
         self.assertEqual(self.req("/static/sheets.js")[0], 200)
         self.assertEqual(self.req("/static/online.js")[0], 200)
+
+    def test_old_sheet(self):
+        # a sheet saved before the topics (modules and objectives only) opens, suggests and is shared as before
+        (Path(self.dir.name) / "objectives.json").write_text((ROOT / "hub" / "objectives.json").read_text())
+        pool = S.load_pool()
+        drafts = [k for k in pool["coulomb"]["exercises"] if k.startswith("coulomb-")]
+        j = lambda o: json.dumps(o).encode()
+        cookie = self.login()[1]["Set-Cookie"].split(";")[0]
+        self.assertEqual(self.req("/api/texercises", self.drafts_zip(*drafts), "application/zip", cookie)[0], 200)
+        old = {"title": "Old", "lang": "en", "modules": [{"id": "coulomb", "objectives": ["vector"]}], "exercises": drafts[:3],
+               "created": 1, "updated": 1, "token": "o" * 32}
+        H.write_config(Path(self.dir.name) / "data" / "exercise-sheets.json", {"sheets": {"0123456789ab": old}}, 0o600)
+        st, _, body = self.req("/api/sheets/0123456789ab", cookie=cookie)
+        self.assertEqual(st, 200)
+        full = json.loads(body)
+        topics = []
+        for k in drafts[:3]:
+            topics += [t for t in S.exercise_meta(next(ROOT.glob(f"texercises-drafts*/exercises/{k}")))["topics"] if t not in topics]
+        self.assertEqual(sorted(full["topics"]), sorted(topics))
+        self.assertEqual((full["modules"], full["exercises"], full["loose"], full["balance"]), (old["modules"], drafts[:3], False, H.SHEET_BALANCE))
+        self.assertIn(("coulomb", "vector"), {(m["app"], o["id"]) for m in full["plan"]["objectives"] for o in m["objectives"]})
+        # its online version and a new suggestion, then saved in the new form
+        self.assertEqual(self.req("/sheet/s/" + "o" * 32)[0], 200)
+        plan = json.loads(self.req("/api/plan", j({"sheet": full, "suggest": True, "count": 2}), "application/json", cookie)[2])
+        self.assertTrue(set(plan["exercises"]) <= set(pool["coulomb"]["objectives"]["vector"]))
+        self.assertEqual(self.req("/api/sheets/0123456789ab", j({"action": "save", "sheet": full}), "application/json", cookie)[0], 200)
+        saved = json.loads((Path(self.dir.name) / "data" / "exercise-sheets.json").read_text())["sheets"]["0123456789ab"]
+        self.assertEqual((saved["topics"], saved["balance"], saved["token"], saved["created"]), (full["topics"], H.SHEET_BALANCE, "o" * 32, 1))
 
     def test_sheet_images_and_figures(self):
         pool = S.load_pool()
