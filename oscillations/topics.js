@@ -87,14 +87,17 @@
     // The steps of a topic, in the current variant: stages with fewer than MIN different exercises
     // (counted in SAMPLES of them) merged with the next, then the step with all of them.
     const MIN = 3, SAMPLES = 24, plans = new Map();
-    function count(types) {
+    // whether the types make at least MIN different exercises: stops as soon as they do, as making
+    // an exercise can be slow (figures to compute)
+    function enough(types) {
       const keys = new Set();
       for (let k = 1; k <= SAMPLES; k++) {
         const kk = keyOf(o.make(types[k % types.length], 7919 * k));
-        if (kk == null) return Infinity;
+        if (kk == null) return true;
         keys.add(kk);
+        if (keys.size >= MIN) return true;
       }
-      return keys.size;
+      return false;
     }
     function stagesOf(t) {
       if (t < 0) return [];
@@ -104,7 +107,7 @@
       let open = null;
       raw.forEach((st) => {
         open = { names: [...(open ? open.names : []), st.name || null], types: [...(open ? open.types : []), ...st.types] };
-        if (count(open.types) >= MIN) { groups.push(open); open = null; }
+        if (enough(open.types)) { groups.push(open); open = null; }
       });
       if (open && groups.length) { const g = groups.pop(); groups.push({ names: [...g.names, ...open.names], types: [...g.types, ...open.types] }); } else if (open) groups.push(open);
       const steps = groups.map((g) => ({ name: () => g.names.map((n) => (n ? n() : tx().like)).join(', '), types: [...new Set(g.types)] }));
