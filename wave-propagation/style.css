@@ -41,15 +41,13 @@ svg .vlabel { fill: var(--ink); font: 13px system-ui, sans-serif; }
 svg .dot { fill: var(--accent); stroke: var(--card); stroke-width: 1.5; }
 svg .dlabel { fill: var(--ink); font: 600 14px var(--serif); }
 svg .col { stroke: var(--grid-major); stroke-width: 6; opacity: 0; }
-/* the drawing: points dragged up and down (no scrolling while touching it); its grid lines match
+/* the drawing: points dragged up and down (sketch.js, sketch.css); its grid lines match
    the given diagram above, which is as wide and centred the same way */
-svg.drawing { cursor: ns-resize; touch-action: none; user-select: none; -webkit-user-select: none; }
+svg.drawing { cursor: ns-resize; }
 svg.drawing .col { opacity: 0.25; }
 svg .handle { fill: var(--wv-drawn); stroke: var(--card); stroke-width: 1.5; }
 svg .handle.set { stroke-width: 2; }
 svg .handle.active { fill: var(--wv-drawn); stroke: var(--wv-drawn); stroke-opacity: 0.35; stroke-width: 6; }
-svg .handle:focus { outline: none; }
-svg .handle:focus-visible { stroke: var(--accent); stroke-opacity: 1; stroke-width: 3; }
 svg .wrongcol { fill: var(--bad); opacity: 0.18; pointer-events: none; }
 #draw-area .fig svg.wave { margin: 0 auto; }
 #draw-area .draw-how { flex: 1 1 100%; max-width: 640px; margin: 0 auto -8px; }

@@ -1,4 +1,5 @@
-// SVG diagrams for the motion graphs: the given graph, and the graph being drawn with its handles.
+// SVG diagrams for the motion graphs: the given graph, and the graph being drawn (its handles are
+// sketch.js's, R_HANDLE their size).
 // A graph is a list of pieces {y0, ym, y1}; each piece is drawn as a quadratic Bézier curve
 // through its three points (a parabola, or a straight line when ym is on the chord).
 // Every quantity has its colour (class qc-s, qc-v, qc-a): s red, v blue, a green. Right and
@@ -192,27 +193,9 @@
     },
   };
 
-  // Handles of the drawing, in the order the arrow keys go through them: the breakpoints n1 … n5
-  // (n0 is given) and the middles m0 … m4, which bend the pieces.
-  function handles(ex, vals) {
-    const s = scales(ex.axes.target), out = [];
-    ex.pieces.forEach((p, i) => {
-      const v = vals[i];
-      out.push({ id: `m${i}`, kind: 'm', i, x: s.x((p.t0 + p.t1) / 2), y: s.y(v.ym), value: v.ym, t: (p.t0 + p.t1) / 2 });
-      out.push({ id: `n${i + 1}`, kind: 'n', i: i + 1, x: s.x(p.t1), y: s.y(v.y1), value: v.y1, t: p.t1 });
-    });
-    return out;
-  }
-
-  function handleShape(h, cls) {
-    const r = R_HANDLE;
-    if (h.kind === 'm') return `<path class="${cls} mid" d="M${h.x},${f1(h.y - r)} L${f1(h.x + r)},${h.y} L${h.x},${f1(h.y + r)} L${f1(h.x - r)},${h.y} Z"/>`;
-    return `<circle class="${cls}" cx="${h.x}" cy="${h.y}" r="${r}"/>`;
-  }
-
-  // The drawing: opts.marks (per piece 'ok' | 'bad'), opts.solution (show the correct graph),
-  // opts.active (id of the selected or dragged handle), opts.locked (no handles),
-  // opts.hover (grid point under the pointer).
+  // The drawing under its handles (sketch.js draws them): opts.marks (per piece 'ok' | 'bad'),
+  // opts.solution (show the correct graph), opts.active (the selected or dragged handle { t, v }:
+  // its value is written next to it), opts.hover (grid point under the pointer).
   function targetGraph(ex, vals, opts) {
     const q = ex.to, o = opts || {};
     const { s, svg: grid } = frame(ex, ex.axes.target, q, o.marks);
@@ -221,20 +204,16 @@
     if (o.solution) body += curve(ex, ex.answer, s, ' solution');
     body += hoverMark(ex.axes.target, q, o.hover);
     body += `<circle class="fixed" cx="${s.x(0)}" cy="${s.y(vals[0].y0)}" r="${R_HANDLE - 1}"/>`;
-    if (!o.locked) {
-      const hs = handles(ex, vals);
-      for (const h of hs) body += handleShape(h, `handle${h.id === o.active ? ' active' : ''}`);
-      const h = hs.find((x) => x.id === o.active);
-      if (h) {
-        const text = `${q}(${num(h.t)} s) = ${num(Math.round(h.value * 100) / 100)} ${UNIT[q]}`;
-        const right = h.x < W - 150, above = h.y > TOP + 26;
-        body += `<text class="val" x="${f1(h.x + (right ? 12 : -12))}" y="${f1(h.y + (above ? -12 : 22))}" text-anchor="${right ? 'start' : 'end'}">${text}</text>`;
-      }
+    const h = o.active;
+    if (h) {
+      const text = `${q}(${num(h.t)} s) = ${num(Math.round(h.v * 100) / 100)} ${UNIT[q]}`;
+      const x = s.x(h.t), y = s.y(h.v), right = x < W - 150, above = y > TOP + 26;
+      body += `<text class="val" x="${f1(x + (right ? 12 : -12))}" y="${f1(y + (above ? -12 : 22))}" text-anchor="${right ? 'start' : 'end'}">${text}</text>`;
     }
     return `<g class="qc-${q}">${body}</g>`;
   }
 
-  const api = { get W() { return W; }, get H() { return H; }, get TOP() { return TOP; }, B, setNarrow, UNIT, scales, dec, sourceGraph, targetGraph, answerGraph, Tut, handles, svg, num, svgPoint, hoverPoint, hoverMark };
+  const api = { get W() { return W; }, get H() { return H; }, get TOP() { return TOP; }, B, setNarrow, UNIT, scales, dec, sourceGraph, targetGraph, answerGraph, Tut, get R_HANDLE() { return R_HANDLE; }, svg, num, svgPoint, hoverPoint, hoverMark };
   root.Plot = api;
   if (typeof module !== 'undefined') module.exports = api;
 })(typeof window !== 'undefined' ? window : globalThis);

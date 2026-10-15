@@ -135,14 +135,14 @@
         : L(`So <span class="result">${regName(v.ans)}</span> has ${byText(p)}: the ${p.hi ? 'shortest' : 'longest'} wave of the four.`, `Also hat <span class="result">${regName(v.ans)}</span> ${byText(p)}: die ${p.hi ? 'kürzeste' : 'längste'} Welle der vier.`)), ['mark']),
     ],
     figure: (p, v, view) => (view.task ? '' : Fg().spectrum(view.show.has('mark') ? centre(v.ans) : null, { trend: true })),
-    // In practice the student puts all four in order by drag and drop (questions.js), the end asked
+    // In practice the student puts all four in order by drag and drop (dnd.js), the end asked
     // for at the top; the check and the tutor keep the choice above.
     drag: {
       text: (p) => L(`Put these kinds of electromagnetic radiation in order: the one with ${byText(p)} at the top, the one with ${BY[p.by]()[p.hi ? 1 : 0]} at the bottom.`,
         `Ordne diese Strahlungsarten: oben die Strahlung, die ${byText(p)} hat, unten die, die ${BY[p.by]()[p.hi ? 1 : 0]} hat.`),
       fields: (p, v) => {
         const ends = [byText(p), BY[p.by]()[p.hi ? 1 : 0]].map(cap);
-        // the feedback on an order (ranks, as read by questions.js): a nudge while it is wrong (which
+        // the feedback on an order (ranks, as read by dnd.js): a nudge while it is wrong (which
         // pair, or how f and E depend on λ), the whole explanation once it is right; bad: the
         // items to mark
         const judge = (ranks) => {

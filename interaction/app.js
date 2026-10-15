@@ -403,7 +403,7 @@
     $('#answers').addEventListener('submit', check);
     // A new answer clears the marks on that part of the question.
     $('#fields').addEventListener('change', (evt) => Q.clearAt(evt.target));
-    Q.attach($('#fields'));
+    window.Dnd.attach($('#fields'));
     $('#hint').addEventListener('click', hint);
     $('#reveal').addEventListener('click', reveal);
     $('#reset-profile').addEventListener('click', () => { store('ia-mis', {}); store('ia-types', {}); showProfile(); });

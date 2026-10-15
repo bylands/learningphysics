@@ -150,11 +150,12 @@
   }
 
   // ---------------------------------------------------------------- drawing
-  // A point at each grid line (ex.xs), dragged up and down to a height (whole cm; a click sets it
-  // too), or moved with the keys (← → another point, ↑ ↓ its height); Check marks the lines still
-  // wrong. The given diagram above has the same scales (both from x = 0 to ex.draw.hi, both as high
-  // as ex.draw.Y, the same size), so their grid lines line up; pointing at either shows a guide
-  // through both at the nearest grid line, with the displacement read off the diagram above.
+  // A point at each grid line (ex.xs), dragged up and down to a height (whole cm; a press sets it
+  // too), or moved with the keys (← → another point, ↑ ↓ its height): the shared sketcher
+  // (sketch.js), its columns. Check marks the lines still wrong. The given diagram above has the
+  // same scales (both from x = 0 to ex.draw.hi, both as high as ex.draw.Y, the same size), so their
+  // grid lines line up; pointing at either shows a guide through both at the nearest grid line,
+  // with the displacement read off the diagram above.
   const drawSpec = () => ({ ...W.snap(() => 0, { hi: ex.draw.hi, Y: ex.draw.Y, end: ex.draw.end, label: ex.draw.label }), curves: [] });
   const fmtY = (v) => W.num(Math.round(v * 10) / 10 || 0).replace('-', '−');
   // the readout of the given diagram: the rope, or each crest shown, at x
@@ -163,37 +164,46 @@
     vals.forEach((v, k) => out.push({ text: `${k ? ' · ' : ''}${v.cls === 'main' ? 'y = ' : ''}${fmtY(v.y)} cm`, cls: v.cls }));
     return out;
   }
-  let gi = null, dragging = null, givenAnim = null; // the grid line of the guide, the pointer dragging a point, the given diagram
+  let gi = null, sk = null, givenAnim = null; // the grid line of the guide, the sketcher, the given diagram
   const locked = () => st.solved || st.revealed;
-  const drawOpts = () => ({ values: st.values, xs: ex.xs, active: gi, focus: st.focus || 0, guide: gi == null ? null : { x: ex.xs[gi], parts: [{ text: `y = ${fmtY(st.values[gi])} cm`, cls: 'drawn' }], low: true }, label: L('Your drawing of the rope', 'Deine Zeichnung des Seils') });
-  const drawSvg = () => $('#draw-area svg.drawing');
+  const drawOpts = () => ({ values: st.values, xs: ex.xs, wrong: st.wrong, guide: gi == null ? null : { x: ex.xs[gi], parts: [{ text: `y = ${fmtY(st.values[gi])} cm`, cls: 'drawn' }], low: true } });
   function drawEditor() {
-    const spec = drawSpec(), s = P.scales(spec);
-    let html = P.graph(spec, drawOpts());
-    if (st.wrong) html = html.replace('<path class="c-drawn"', st.wrong.map((i) => `<rect class="wrongcol" data-i="${i}" x="${(s.x(ex.xs[i]) - 5).toFixed(1)}" y="${s.MT}" width="10" height="${s.PH}"/>`).join('') + '<path class="c-drawn"');
-    $('#draw-area').innerHTML = `<p class="note draw-how">${ui().drawHow}</p><div class="fig">${html}</div><button type="button" id="draw-clear" class="linklike">${ui().clear}</button>`;
+    const spec = drawSpec(), s = P.scales(spec), Y = Math.floor(ex.draw.Y);
+    $('#draw-area').innerHTML = `<p class="note draw-how">${ui().drawHow}</p><div class="fig"><svg class="wave drawing" viewBox="0 0 ${s.W} ${s.H}" aria-label="${L('Your drawing of the rope', 'Deine Zeichnung des Seils')}"></svg></div><button type="button" id="draw-clear" class="linklike">${ui().clear}</button>`;
+    sk = Sketch.create($('#draw-area svg.drawing'), {
+      model: 'columns', xs: ex.xs, x: s.x, y: s.y, lo: -Y, hi: Y, step: 1,
+      area: { x0: s.ML - 14, x1: s.ML + s.PW + 14, y0: s.MT - 14, y1: s.MT + s.PH + 14 },
+      init: ex.xs.map(() => 0), state: st.values, locked, selected: `c${st.focus || 0}`,
+      plot: () => P.body(spec, drawOpts()),
+      // the point at the guide large, the points moved from 0 a little larger
+      radius: (h) => (h.i === gi ? 7 : h.v ? 5.5 : 4.5),
+      classes: (h) => `${h.v ? 'set' : ''}${h.i === gi ? ' active' : ''}`,
+      describe: (h) => ({ label: `x = ${W.num(h.t)} m`, text: `${String(h.v).replace('-', '−')} cm` }),
+      onEdit(k, h) {
+        st.values = k.state();
+        if (st.wrong) {
+          st.wrong = h ? st.wrong.filter((i) => i !== h.i) : [];
+          if (!st.wrong.length) st.wrong = null;
+        }
+        // the answer read again as the student changes it: the readout follows
+        if (givenAnim && h && gi === h.i) givenAnim.guide(ex.xs[h.i]);
+      },
+      onSelect(h) {
+        if (h) { st.focus = h.i; setGuide(h.i); } else if (!sk.dragging()) setGuide(null);
+      },
+      hover(pt, evt, hit) {
+        if (!pt) { leave(); return; }
+        if (evt.pointerType === 'touch') return;
+        setGuide(hit ? hit.h.i : sk.focused() ? st.focus : null);
+      },
+    });
   }
-  const redrawPoints = () => { const svg = drawSvg(); if (svg) P.updateDrawing(svg, drawSpec(), drawOpts()); };
   // the guide at grid line i (null: none), in both diagrams
   function setGuide(i) {
     if (i === gi) return;
     gi = i;
     if (givenAnim) givenAnim.guide(i == null ? null : ex.xs[i]);
-    redrawPoints();
-  }
-  function setValue(i, v) {
-    const Y = Math.floor(ex.draw.Y), val = Math.max(-Y, Math.min(Y, Math.round(v)));
-    if (val === st.values[i]) return;
-    st.values[i] = val;
-    if (st.wrong) {
-      st.wrong = st.wrong.filter((k) => k !== i);
-      const r = $(`#draw-area rect.wrongcol[data-i="${i}"]`);
-      if (r) r.remove();
-      if (!st.wrong.length) st.wrong = null;
-    }
-    // the answer read again as the student changes it: the readout follows
-    if (givenAnim && gi === i) givenAnim.guide(ex.xs[i]);
-    redrawPoints();
+    if (sk) sk.render();
   }
   const svgPoint = (svg, evt) => { const pt = svg.createSVGPoint(); pt.x = evt.clientX; pt.y = evt.clientY; return pt.matrixTransform(svg.getScreenCTM().inverse()); };
   const nearest = (x) => ex.xs.reduce((b, v, k) => (Math.abs(v - x) < Math.abs(ex.xs[b] - x) ? k : b), 0);
@@ -202,56 +212,15 @@
     const q = svgPoint(svg, evt), v = P.valueAt(drawSpec(), q.x, q.y);
     return v.inside ? { i: nearest(v.x), y: v.y } : null;
   }
-  const focusPoint = (i) => { st.focus = i; redrawPoints(); const c = $(`#draw-area circle.handle[data-i="${i}"]`); if (c) c.focus({ preventScroll: true }); };
-  const pointFocused = () => document.activeElement && document.activeElement.matches && document.activeElement.matches('#draw-area circle.handle');
+  const leave = () => { if (!sk || (!sk.dragging() && !sk.focused())) setGuide(null); };
   function wireDrawing() {
-    const area = $('#draw-area'), fig = $('#figure');
-    area.addEventListener('pointerdown', (evt) => {
-      const svg = evt.target.closest('svg.drawing');
-      if (!svg || !ex || ex.kind !== 'draw' || (evt.pointerType === 'mouse' && evt.button !== 0)) return;
-      const at = lineAt(svg, evt);
-      if (!at) return;
-      evt.preventDefault();
-      focusPoint(at.i);
-      setGuide(at.i);
-      if (locked()) return;
-      dragging = { id: evt.pointerId, i: at.i };
-      try { svg.setPointerCapture(evt.pointerId); } catch (e) { /* no capture */ }
-      setValue(at.i, at.y);
-    });
-    area.addEventListener('pointermove', (evt) => {
-      const svg = evt.target.closest('svg.drawing') || (dragging && drawSvg());
-      if (!svg || !ex || ex.kind !== 'draw') return;
-      if (dragging && evt.pointerId === dragging.id) {
-        const q = svgPoint(svg, evt);
-        setValue(dragging.i, P.valueAt(drawSpec(), q.x, q.y).y); // up and down only: the point stays on its grid line
-        return;
-      }
-      if (evt.pointerType === 'touch') return;
-      const at = lineAt(svg, evt);
-      setGuide(at ? at.i : pointFocused() ? st.focus : null);
-    });
-    const release = (evt) => { if (dragging && evt.pointerId === dragging.id) dragging = null; };
-    area.addEventListener('pointerup', release);
-    area.addEventListener('pointercancel', release);
-    const leave = () => { if (!dragging && !pointFocused()) setGuide(null); };
-    area.addEventListener('pointerleave', leave);
-    area.addEventListener('keydown', (evt) => {
-      const c = evt.target.closest('circle.handle');
-      if (!c || !ex || ex.kind !== 'draw') return;
-      const i = Number(c.dataset.i), n = ex.xs.length;
-      const step = { ArrowUp: 1, ArrowDown: -1, PageUp: 5, PageDown: -5 }[evt.key], to = { ArrowLeft: i - 1, ArrowRight: i + 1, Home: 0, End: n - 1 }[evt.key];
-      if (step != null) { if (!locked()) setValue(i, st.values[i] + step); } else if (to != null) { const k = Math.max(0, Math.min(n - 1, to)); focusPoint(k); setGuide(k); } else return;
-      evt.preventDefault();
-    });
-    area.addEventListener('focusin', (evt) => { const c = evt.target.closest('circle.handle'); if (c) { st.focus = Number(c.dataset.i); setGuide(st.focus); } });
-    area.addEventListener('focusout', () => setTimeout(() => { if (!dragging && !pointFocused()) setGuide(null); }, 0));
     // the given diagram above: pointing at it (or touching it) shows the guide and the displacement
+    const fig = $('#figure');
     const over = (evt) => {
       if (!ex || ex.kind !== 'draw') return;
       const svg = evt.target.closest && evt.target.closest('.frames svg.wave');
       const at = svg ? lineAt(svg, evt) : null;
-      setGuide(at ? at.i : pointFocused() ? st.focus : null);
+      setGuide(at ? at.i : sk && sk.focused() ? st.focus : null);
     };
     fig.addEventListener('pointermove', over);
     fig.addEventListener('pointerdown', over);
@@ -286,7 +255,7 @@
     $('#figure').innerHTML = ex.fig ? given(ex) : '';
     $('#anim-note').hidden = !ex.anim;
     $('#anim-note').textContent = ex.kind === 'medium' ? ui().animLead : ex.kind === 'draw' ? ui().animNoteDraw : ui().animNote;
-    gi = null; dragging = null;
+    gi = null; sk = null;
     mountAnims($('#figure'));
     givenAnim = ex.kind === 'draw' ? running.find((r) => $('#figure').contains(r.el)) || null : null;
     $('#figure').classList.toggle('to-draw', ex.kind === 'draw');
@@ -614,7 +583,7 @@
       if (evt.target.closest('.cand')) { document.querySelectorAll('.cand').forEach((el) => el.classList.remove('ok', 'bad')); document.querySelectorAll('.qfb').forEach((el) => { el.textContent = ''; }); }
     });
     $('#draw-area').addEventListener('click', (evt) => {
-      if (evt.target.id === 'draw-clear' && !locked()) { st.values = ex.xs.map(() => 0); st.wrong = null; drawEditor(); }
+      if (evt.target.id === 'draw-clear' && !locked()) { st.wrong = null; sk.reset(); }
     });
     wireDrawing();
     $('#hint').addEventListener('click', hint);

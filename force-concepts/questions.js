@@ -2,16 +2,16 @@
 //   choice  one option (radio buttons)          two   a prediction and a reason
 //   tf      true/false for each statement        rank  items dragged into boxes, largest first;
 //   match   items dragged onto the choices             equal ones share a box
-// Dragging works with mouse, pen and touch; an item can also be tapped (or selected with the
-// keyboard) and then its box tapped. Rankings are read as ranks (1, 2, 2, 4), matchings as the
-// index of the chosen choice, as before.
+// The dragging, by mouse, pen, touch or keyboard, is the shared widget dnd.js (Dnd); this file
+// draws the question around it and checks it. Rankings are read as ranks (1, 2, 2, 4), matchings
+// as the index of the chosen choice, as before.
 // state(q) reads the answer from the page, evaluate(q, state) checks it: { complete, ok, marks,
 // misses } — marks say what to colour and explain where, misses the misconceptions behind wrong
 // parts ({ id, code }, id unique within the question).
 (function (root) {
   'use strict';
 
-  const FC = root.FC, T = FC.T;
+  const FC = root.FC, T = FC.T, Dnd = root.Dnd;
   const LETTERS = 'ABCDEF';
   const $q = (q) => document.querySelector(`.field[data-key="${q.key}"]`);
   const tag = (code) => (FC.MIS[code] ? ` <span class="tag" title="${T('Wrong idea', 'Falsche Vorstellung')}: ${FC.mis(code).text}">${FC.misLabel(code)}</span>` : '');
@@ -22,10 +22,7 @@
     <div class="opts ${pics ? 'pics' : 'list'}" role="radiogroup">${opts.map((x, i) => `
       <label><input type="radio" name="${name}" value="${i}"${ro ? ' disabled' : ''}><span><b class="letter">${LETTERS[i]}</b>${pics ? `<span class="pic">${x.label}</span>` : `<span>${x.label}</span>`}</span></label>`).join('')}
     </div>`;
-  const cards = (q, ro) => q.items.map((x, i) => `<button type="button" class="chip" data-i="${i}"${ro ? ' disabled' : ''}>${x.label}</button>`).join('');
-  const pool = (q, ro) => `<div class="zone pool" data-zone="pool"><div class="drop">${cards(q, ro)}</div></div>`;
-  const zone = (cls, id, inner, ro, cap) => `<div class="zone ${cls}" data-zone="${id}"${cap ? ` data-cap="${cap}"` : ''} tabindex="${ro ? -1 : 0}" role="button">${inner}<div class="drop"></div></div>`;
-  const tapNote = () => T('(Or tap an item, then its box.)', '(Oder tippe ein Element an und dann sein Feld.)');
+  const labels = (q) => q.items.map((x) => x.label);
   const itemFb = (q) => `<ul class="item-fb">${q.items.map((x, i) => `<li data-fb="${i}" hidden><b>${x.name}</b>: <span class="fb"></span></li>`).join('')}</ul>`;
 
   // The question as HTML; ro: read-only (for the tutor).
@@ -47,18 +44,11 @@
             </span><p class="fb"></p></li>`).join('')}</ol></div>`;
       case 'rank':
         return `<div class="field rank dnd${ro ? ' ro' : ''}" data-key="${q.key}">${head}
-          <p class="note dnd-note">${T('Drag the items into the boxes, the largest at the top and the smallest at the bottom. Equal ones go into the same box.', 'Ziehe die Elemente in die Felder, das grösste nach oben und das kleinste nach unten. Gleiche kommen ins selbe Feld.')} ${tapNote()}</p>
-          ${pool(q, ro)}
-          <p class="end">▲ ${T('largest', 'am grössten')}</p>
-          <div class="buckets">${q.items.map((x, b) => zone('bucket', b, '', ro)).join('')}</div>
-          <p class="end">▼ ${T('smallest', 'am kleinsten')}</p>
+          ${Dnd.html({ kind: 'rank', items: labels(q), ro })}
           <p class="fb qfb"></p></div>`;
       case 'match':
         return `<div class="field match dnd${ro ? ' ro' : ''}" data-key="${q.key}">${head}
-          <p class="note dnd-note">${T('Drag each item onto the answer that fits. An answer can take several items, or none.', 'Ziehe jedes Element auf die passende Antwort. Eine Antwort kann mehrere Elemente aufnehmen oder keines.')} ${tapNote()}</p>
-          ${pool(q, ro)}
-          <div class="targets${q.pics ? ' pics' : ''}">${q.choices.map((c, j) => zone('target', j,
-            `<div class="target-head">${q.pics ? `<b class="letter">${c.name}</b><span class="pic">${c.label}</span>` : `<span>${c.label}</span>`}</div>`, ro)).join('')}</div>
+          ${Dnd.html({ kind: 'match', items: labels(q), ro, pics: q.pics, heads: q.choices.map((c) => (q.pics ? `<b class="letter">${c.name}</b><span class="pic">${c.label}</span>` : `<span>${c.label}</span>`)) })}
           ${itemFb(q)}</div>`;
       default:
         return `<div class="field choice" data-key="${q.key}">${head}<div class="grp" data-grp="pred">${optionsHtml(q.options, `opt-${q.key}`, q.pics, ro)}<p class="fb"></p></div></div>`;
@@ -67,36 +57,22 @@
 
   // ---------------------------------------------------------------- reading and setting answers
   const radio = (name) => { const el = document.querySelector(`input[name="${name}"]:checked`); return el ? Number(el.value) : null; };
-  // Where each card lies: 'pool' or the id of its box.
-  const zones = (q) => { const f = $q(q); return q.items.map((x, i) => { const z = f.querySelector(`.chip[data-i="${i}"]`).closest('.zone'); return z ? z.dataset.zone : 'pool'; }); };
   function state(q) {
     switch (q.type) {
       case 'two': return [radio(`pred-${q.key}`), radio(`reason-${q.key}`)];
       case 'tf': return q.items.map((x, i) => { const v = radio(`tf-${q.key}-${i}`); return v == null ? null : v === 1; });
-      case 'rank': {
-        // ranks from the boxes in order, skipping empty ones: [A, C | B | D] → 1, 3, 1, 4
-        const zs = zones(q), used = [...new Set(zs.filter((z) => z !== 'pool').map(Number))].sort((a, b) => a - b);
-        return zs.map((z) => (z === 'pool' ? null : 1 + zs.filter((w) => w !== 'pool' && used.indexOf(Number(w)) < used.indexOf(Number(z))).length));
-      }
-      case 'match': return zones(q).map((z) => (z === 'pool' ? null : Number(z)));
+      case 'rank': return Dnd.ranks($q(q));
+      case 'match': return Dnd.choices($q(q));
       default: return radio(`opt-${q.key}`);
     }
-  }
-  function place(q, i, z) {
-    const f = $q(q), card = f.querySelector(`.chip[data-i="${i}"]`);
-    f.querySelector(`.zone[data-zone="${z}"] .drop`).appendChild(card);
   }
   function setState(q, s) {
     const check = (name, v) => { if (v != null) { const el = document.querySelector(`input[name="${name}"][value="${v}"]`); if (el) el.checked = true; } };
     switch (q.type) {
       case 'two': check(`pred-${q.key}`, s[0]); check(`reason-${q.key}`, s[1]); break;
       case 'tf': s.forEach((v, i) => check(`tf-${q.key}-${i}`, v == null ? null : v ? 1 : 0)); break;
-      case 'rank': {
-        const distinct = [...new Set(s.filter((v) => v != null))].sort((a, b) => a - b);
-        s.forEach((v, i) => place(q, i, v == null ? 'pool' : distinct.indexOf(v)));
-        break;
-      }
-      case 'match': s.forEach((v, i) => place(q, i, v == null ? 'pool' : v)); break;
+      case 'rank': Dnd.setRanks($q(q), s); break;
+      case 'match': Dnd.setChoices($q(q), s); break;
       default: check(`opt-${q.key}`, s);
     }
   }
@@ -183,95 +159,5 @@
     }
   }
 
-  // ---------------------------------------------------------------- drag and drop
-  // Delegated on the container of the questions. A moved card fires 'change' (bubbling), like an
-  // input, so the page clears the marks as for the other formats.
-  function attach(box) {
-    let drag = null, selected = null, suppressClick = false;
-    const zoneAt = (x, y, f) => { const el = document.elementFromPoint(x, y); const z = el && el.closest('.zone'); return z && z.closest('.field') === f ? z : null; };
-    const select = (card) => {
-      const next = card && card !== selected ? card : null;
-      if (selected) selected.classList.remove('selected');
-      selected = next;
-      if (selected) selected.classList.add('selected');
-      box.querySelectorAll('.field.dnd').forEach((f) => f.classList.toggle('placing', !!selected && selected.closest('.field') === f));
-    };
-    function move(card, z) {
-      z.querySelector('.drop').appendChild(card);
-      card.dispatchEvent(new Event('change', { bubbles: true }));
-    }
-
-    box.addEventListener('pointerdown', (e) => {
-      const card = e.target.closest('.chip');
-      if (!card || card.disabled || e.button > 0) return;
-      const r = card.getBoundingClientRect();
-      drag = { card, id: e.pointerId, x0: e.clientX, y0: e.clientY, dx: e.clientX - r.left, dy: e.clientY - r.top, w: r.width, started: false, ghost: null, over: null };
-    });
-    box.addEventListener('pointermove', (e) => {
-      if (!drag || e.pointerId !== drag.id) return;
-      if (!drag.started) {
-        if (Math.hypot(e.clientX - drag.x0, e.clientY - drag.y0) < 6) return;
-        drag.started = true;
-        select(null);
-        drag.ghost = drag.card.cloneNode(true);
-        drag.ghost.classList.add('ghost');
-        drag.ghost.style.width = `${drag.w}px`;
-        document.body.appendChild(drag.ghost);
-        drag.card.classList.add('dragging');
-        try { drag.card.setPointerCapture(e.pointerId); } catch (err) { /* capture is optional */ }
-        drag.raf = requestAnimationFrame(autoscroll);
-      }
-      e.preventDefault();
-      drag.x = e.clientX;
-      drag.y = e.clientY;
-      drag.ghost.style.left = `${e.clientX - drag.dx}px`;
-      drag.ghost.style.top = `${e.clientY - drag.dy}px`;
-      hover();
-    });
-    // The box under the pointer, highlighted.
-    function hover() {
-      const z = zoneAt(drag.x, drag.y, drag.card.closest('.field'));
-      if (z !== drag.over) { if (drag.over) drag.over.classList.remove('over'); drag.over = z; if (z) z.classList.add('over'); }
-    }
-    // Near the top or bottom edge of the window the page scrolls, faster the closer to the edge,
-    // so that boxes out of view (on a phone) can be reached.
-    function autoscroll() {
-      if (!drag || !drag.started) return;
-      const edge = 60, h = window.innerHeight;
-      const dy = drag.y < edge ? -Math.ceil((edge - drag.y) / 3) : drag.y > h - edge ? Math.ceil((drag.y - (h - edge)) / 3) : 0;
-      if (dy) { window.scrollBy(0, dy); hover(); }
-      drag.raf = requestAnimationFrame(autoscroll);
-    }
-    const end = (e, drop) => {
-      if (!drag || e.pointerId !== drag.id) return;
-      if (drag.started) {
-        cancelAnimationFrame(drag.raf);
-        if (drop && drag.over) move(drag.card, drag.over);
-        if (drag.over) drag.over.classList.remove('over');
-        drag.ghost.remove();
-        drag.card.classList.remove('dragging');
-        suppressClick = true; // the click that follows the drag
-        setTimeout(() => { suppressClick = false; }, 0);
-      }
-      drag = null;
-    };
-    box.addEventListener('pointerup', (e) => end(e, true));
-    box.addEventListener('pointercancel', (e) => end(e, false));
-
-    // Tap (or Enter) on a card selects it; then a tap (or Enter) on a box puts it there.
-    box.addEventListener('click', (e) => {
-      if (suppressClick) return;
-      const card = e.target.closest('.chip');
-      if (card && !card.disabled) { select(card); return; }
-      const z = e.target.closest('.zone');
-      if (z && selected && z.closest('.field') === selected.closest('.field')) { move(selected, z); select(null); }
-    });
-    box.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') select(null);
-      const z = e.target.closest('.zone');
-      if (z && e.target === z && (e.key === 'Enter' || e.key === ' ') && selected) { e.preventDefault(); move(selected, z); select(null); }
-    });
-  }
-
-  root.Questions = { html, state, setState, evaluate, clear, clearAt, paint, tag, attach };
+  root.Questions = { html, state, setState, evaluate, clear, clearAt, paint, tag };
 })(window);

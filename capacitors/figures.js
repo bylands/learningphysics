@@ -12,11 +12,11 @@
 //                     o.tStep, o.yStep, o.tUnit; without (o.bare): only the levels named;
 //                     o.levels [{ y, label }] (dashed), o.marks [{ t, label }] (dashed),
 //                     o.dots [[t, y]], o.lines [[[t, y], [t, y]]] (e.g. a tangent), o.label (aria)
-//                     o.read { m, U0, tau, charge }: the graph follows the pointer (see readers)
+//                     o.read { m, U0, tau, charge }: the graph follows the pointer (see below)
 //   Uq()              the letter of a voltage, as SVG: ΔV in English, U in German
 //
-// Reading a graph: one listener for the page shows, while the pointer is over a graph with
-// o.read, the coordinates of the nearest point of the curve with lines to the axes (m 'xy'), or the tangent to the
+// Reading a graph (reader.js, from the attributes of a graph with o.read): the coordinates of the
+// point of the curve nearest the pointer with lines to the axes (m 'xy'), or the tangent to the
 // curve U₀·e^(−t/τ) or U₀·(1 − e^(−t/τ)) at that time (m 'tan'), drawn to the level it heads
 // for, which it reaches one τ later.
 (function (root) {
@@ -141,56 +141,29 @@
     }
     for (const [[t0, v0], [t1, v1]] of o.lines || []) s += `<line class="tan" x1="${x(t0)}" y1="${y(v0)}" x2="${x(t1)}" y2="${y(v1)}"/>`;
     for (const [t, v] of o.dots || []) s += `<circle class="tdot" cx="${x(t)}" cy="${y(v)}" r="4"/>`;
-    const read = o.read ? ` data-read="${JSON.stringify({ ...o.read, T, Y, ts: o.tStep, tu: o.tUnit || '', i: i || '' }).replace(/"/g, '&quot;')}"` : '';
-    if (o.read) s += '<g class="rd"></g>';
+    const read = o.read ? readAttrs(o.read, T, Y, o.tStep, o.tUnit || '', i || '') : '';
     return `<svg class="tgraph${o.bare ? ' bare' : ''}" viewBox="0 0 ${W} ${H}" role="img"${read} aria-label="${o.label || L('A graph against time', 'Ein Graph gegen die Zeit')}">${s}</svg>`;
   }
   const Uq = () => L('Δ<tspan class="it">V</tspan>', '<tspan class="it">U</tspan>');
 
   // ---------------------------------------------------------------- reading a graph
-  function readAt(svg, evt) {
-    const d = JSON.parse(svg.getAttribute('data-read')), g = svg.querySelector('.rd'), ctm = svg.getScreenCTM();
-    if (!g || !ctm) return;
-    const pt = svg.createSVGPoint();
-    pt.x = evt.clientX; pt.y = evt.clientY;
-    const { x: sx, y: sy } = pt.matrixTransform(ctm.inverse());
-    const PW = W - ML - MR, PH = H - MT - MB, t = ((sx - ML) / PW) * d.T, v = ((MT + PH - sy) / PH) * d.Y;
-    const x = (tt) => f1(ML + (tt / d.T) * PW), y = (vv) => f1(MT + PH - (vv / d.Y) * PH);
-    if (t < 0 || t > d.T || v < 0 || v > 1.08 * d.Y) { g.innerHTML = ''; return; }
-    const f = (tt) => (d.charge ? d.U0 * (1 - Math.exp(-tt / d.tau)) : d.U0 * Math.exp(-tt / d.tau));
-    if (d.m === 'xy') {
-      // the point of the curve nearest the pointer, on the grid of the readout (a tenth of a step)
-      const st = d.ts / 10, px = ML + (t / d.T) * PW, py = MT + PH - (v / d.Y) * PH;
-      let tr = 0, best = Infinity;
-      for (let k = 0; k * st <= d.T + 1e-9; k++) {
-        const dx = x(k * st) - px, dy = y(f(k * st)) - py, dd = dx * dx + dy * dy;
-        if (dd < best) { best = dd; tr = k * st; }
-      }
-      const vr = Math.round(f(tr) * 10) / 10;
-      g.innerHTML = `<line class="rdl" x1="${x(tr)}" y1="${y(0)}" x2="${x(tr)}" y2="${y(f(tr))}"/><line class="rdl" x1="${x(0)}" y1="${y(f(tr))}" x2="${x(tr)}" y2="${y(f(tr))}"/>` +
-        `<circle class="rdp" cx="${x(tr)}" cy="${y(f(tr))}" r="3.5"/>` +
-        `<text class="rdt" x="${W - MR}" y="${MT + 6}" text-anchor="end"><tspan class="it">t</tspan> = ${num(tr)} ${d.tu}, ${Uq()}<tspan class="sub" dy="4">${d.i}</tspan><tspan dy="-4"> = ${num(vr)} V</tspan></text>`;
-      return;
-    }
-    // the tangent at t: it reaches the level the curve heads for (U₀ or 0) at t + τ
-    const y0 = f(t), goal = d.charge ? d.U0 : 0, slope = (goal - y0) / d.tau, ta = Math.max(0, t - 0.4 * d.tau), tb = Math.min(d.T, t + 1.3 * d.tau);
-    const at = (tt) => (tt <= t + d.tau ? y0 + slope * (tt - t) : goal);
-    g.innerHTML = `<polyline class="rdl tanl" points="${x(ta)},${y(at(ta))} ${x(Math.min(tb, t + d.tau))},${y(at(Math.min(tb, t + d.tau)))}"/>` +
-      (t + d.tau <= d.T ? `<circle class="rdp" cx="${x(t + d.tau)}" cy="${y(goal)}" r="3.5"/>` : '') +
-      `<circle class="rdp" cx="${x(t)}" cy="${y(y0)}" r="4"/>`;
-  }
-  // one listener for the page: the graph under the pointer, and the one shown before cleared
-  if (typeof document !== 'undefined' && !root.__capReaders) {
-    root.__capReaders = true;
-    let last = null;
-    const move = (evt) => {
-      const svg = evt.target && evt.target.closest ? evt.target.closest('svg[data-read]') : null;
-      if (last && last !== svg) { const g = last.querySelector('.rd'); if (g) g.innerHTML = ''; }
-      last = svg;
-      if (svg) readAt(svg, evt);
-    };
-    document.addEventListener('pointermove', move);
-    document.addEventListener('pointerdown', move);
+  // The curve of a reading for reader.js: U₀·(1 − e^(−t/τ)) while charging, else U₀·e^(−t/τ),
+  // and its slope.
+  const rcCurve = ({ U0, tau, charge }) => ({
+    f: (t) => (charge ? U0 * (1 - Math.exp(-t / tau)) : U0 * Math.exp(-t / tau)),
+    d: (t) => ((charge ? 1 : -1) * U0 * Math.exp(-t / tau)) / tau,
+  });
+  if (root.Reader) root.Reader.curve('rc', rcCurve);
+  // The attributes of a graph to read: the plot area and its values; t on the grid of a tenth of
+  // a step and the voltage to 0.1 V, in one line at the top right ('xy'); or the tangent from
+  // 0.4 τ before the point to the level it heads for ('tan'). The arrow keys move the point too.
+  function readAttrs(r, T, Y, tStep, tUnit, i) {
+    const PW = W - ML - MR, PH = H - MT - MB, goal = r.charge ? r.U0 : 0;
+    const name = L('Δ*V*', '*U*') + (i ? `_${i}` : '');
+    const args = JSON.stringify({ U0: r.U0, tau: r.tau, charge: !!r.charge }).replace(/"/g, '&quot;');
+    const mode = r.m === 'tan' ? ` data-read-mode="tan" data-read-tan="${0.4 * r.tau} ${1.3 * r.tau} ${goal}" data-read-label="none"` : ' data-read-mode="near" data-read-label="corner"';
+    return ` data-read="${ML} ${ML + PW} ${MT + PH} ${MT}" data-val="0 ${T} 0 ${Y}" data-xn="*t*" data-xu="${tUnit}" data-xp="${tStep / 10}"` +
+      ` data-yn="${name}" data-yu="V" data-yp="0.1" data-read-num="trim" data-read-curve="rc" data-read-args="${args}"${mode} tabindex="0"`;
   }
 
   const api = { network, rc, graph, label, Uq };

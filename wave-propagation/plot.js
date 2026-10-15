@@ -4,13 +4,13 @@
 //                    one, a dashed line with a ring for a free one), the region behind the end
 //                    (mirror crests), arrows for the speed, marked places and points; spec.end0
 //                    an end at the left too (a standing wave between two ends).
-//                    o: { small, values (the student's heights, for drawing), xs, active, focus,
-//                    label }
+//                    o: { small, values (the student's heights, for drawing), xs, wrong (the
+//                    grid lines marked wrong), label }
 //                    o.guide: { x, dots, parts, low } a vertical guide line with a readout (low:
 //                    at the bottom, clear of the label)
-//   pointAt(spec, px, py)  the grid line and height (whole cm) nearest to a point of a drawing
+//   body(spec, o)    the same without the <svg> around it: the drawing under the points, which the
+//                    shared sketcher (sketch.js) draws and moves
 //   valueAt(spec, px, py)  the values on the axes at a point (svg coordinates)
-//   updateDrawing(svg, spec, o)  a drawing changed in place (its points, the guide)
 //   Anim.mount(el, a)      an animation in el: the rope from a.t0 to a.t1 (a = { sc, t0, t1,
 //                    show: ['sum'], ['parts'] and/or ['in'], mark, trace (a y(t) graph at that place
 //                    growing alongside), dots, virtual (the mirror crests behind the end) }),
@@ -42,6 +42,11 @@
   // spec.u (optional, for the problems): { x, y (units), dx, xl (grid steps and labels across),
   // dy, yl (up) }; by default m or s, cm, a grid of 0.5 and 1, labels every 1 and 5
   function graph(spec, o = {}) {
+    const s = scales(spec), isT = spec.axis === 't';
+    const cls = `wave${o.small ? ' small' : ''}${o.values ? ' drawing' : ''}`;
+    return `<svg class="${cls}" viewBox="0 0 ${s.W} ${s.H}" role="img" aria-label="${o.label || (isT ? L('Displacement against time', 'Auslenkung gegen die Zeit') : L('The rope: displacement against position', 'Das Seil: Auslenkung gegen den Ort'))}">${body(spec, o)}</svg>`;
+  }
+  function body(spec, o = {}) {
     const s = scales(spec), id = `cl${++uid}`, isT = spec.axis === 't';
     const u = { x: isT ? 's' : 'm', y: 'cm', dx: 0.5, xl: 1, dy: 1, yl: 5, ...(spec.u || {}) };
     const on = (v, k) => Math.abs(v / k - Math.round(v / k)) < 1e-6;
@@ -90,16 +95,17 @@
     for (const d of spec.dots || []) out += `<circle class="dot" cx="${f1(s.x(d.x))}" cy="${f1(s.y(d.y))}" r="4.5"/><text class="dlabel" x="${f1(s.x(d.x))}" y="${f1(s.y(d.y) + (d.y >= 0 ? -10 : 20))}" text-anchor="middle">${d.label}</text>`;
     // a guide: a vertical line at o.guide.x, the values of the curves there (dots) and a readout
     // (o.guide.parts: [{ text, cls }], cls colouring a part as its curve)
-    out += guideSvg(spec, o.guide);
-    // the student's drawing: a point at each grid line (o.xs) at the height o.values, joined; the
-    // points can be dragged up and down, or moved with the keys (app.js); o.active: the point at the guide
+    if (!o.values) out += guideSvg(spec, o.guide);
+    // the student's drawing: a point at each grid line (o.xs) at the height o.values, joined (the
+    // points are the sketcher's, dragged up and down or moved with the keys); the lines still wrong
+    // (o.wrong) shaded
     if (o.values) {
       out += o.xs.map((x) => `<line class="col" x1="${f1(s.x(x))}" y1="${s.MT}" x2="${f1(s.x(x))}" y2="${s.MT + s.PH}"/>`).join('');
-      out += `<path class="c-drawn" d="${drawnPath(spec, o.xs, o.values)}"/>` + o.xs.map((x, i) => `<circle class="${handleClass(o, i)}" data-i="${i}" cx="${f1(s.x(x))}" cy="${f1(s.y(o.values[i]))}" r="${handleR(o, i)}" tabindex="${i === (o.focus || 0) ? 0 : -1}" role="slider" aria-orientation="vertical" aria-label="x = ${W.num(x)} m" aria-valuemin="${-Math.floor(spec.Y)}" aria-valuemax="${Math.floor(spec.Y)}" aria-valuenow="${o.values[i]}" aria-valuetext="${valText(o.values[i])}"/>`).join('');
+      out += (o.wrong || []).map((i) => `<rect class="wrongcol" x="${(s.x(o.xs[i]) - 5).toFixed(1)}" y="${s.MT}" width="10" height="${s.PH}"/>`).join('');
+      out += guideSvg(spec, o.guide); // over the grid lines, under the drawing
+      out += `<path class="c-drawn" d="M${o.xs.map((x, i) => `${f1(s.x(x))},${f1(s.y(o.values[i]))}`).join(' L')}"/>`;
     }
-    const cls = `wave${o.small ? ' small' : ''}${o.values ? ' drawing' : ''}`;
-    return `<svg class="${cls}" viewBox="0 0 ${s.W} ${s.H}" role="img" aria-label="${o.label || (isT ? L('Displacement against time', 'Auslenkung gegen die Zeit') : L('The rope: displacement against position', 'Das Seil: Auslenkung gegen den Ort'))}">` +
-      `<defs><clipPath id="${id}"><rect x="${s.ML}" y="${s.MT - 4}" width="${s.PW}" height="${s.PH + 8}"/></clipPath></defs>${out}</svg>`;
+    return `<defs><clipPath id="${id}"><rect x="${s.ML}" y="${s.MT - 4}" width="${s.PW}" height="${s.PH + 8}"/></clipPath></defs>${out}`;
   }
 
   function guideSvg(spec, g) {
@@ -110,44 +116,10 @@
     if (g.parts && g.parts.length) out += `<text class="gread" x="${f1(gx + (left ? -8 : 8))}" y="${g.low ? s.MT + s.PH - 7 : s.MT + 14}" text-anchor="${left ? 'end' : 'start'}">${g.parts.map((q) => `<tspan class="r-${q.cls || 'plain'}">${q.text}</tspan>`).join('')}</text>`;
     return out;
   }
-  const valText = (v) => `${String(v).replace('-', '−')} cm`;
-  const handleClass = (o, i) => `handle${o.values[i] ? ' set' : ''}${i === o.active ? ' active' : ''}`;
-  const handleR = (o, i) => (i === o.active ? 7 : o.values[i] ? 5.5 : 4.5);
-  function drawnPath(spec, xs, values) {
-    const s = scales(spec);
-    return `M${xs.map((x, i) => `${f1(s.x(x))},${f1(s.y(values[i]))}`).join(' L')}`;
-  }
-  // a drawing changed in place (while a point is dragged, so that the svg stays the same element)
-  function updateDrawing(svg, spec, o) {
-    const s = scales(spec);
-    svg.querySelector('path.c-drawn').setAttribute('d', drawnPath(spec, o.xs, o.values));
-    svg.querySelectorAll('circle.handle').forEach((c) => {
-      const i = Number(c.dataset.i);
-      c.setAttribute('cy', f1(s.y(o.values[i])));
-      c.setAttribute('r', handleR(o, i));
-      c.setAttribute('class', handleClass(o, i));
-      c.setAttribute('aria-valuenow', o.values[i]);
-      c.setAttribute('aria-valuetext', valText(o.values[i]));
-      c.setAttribute('tabindex', i === (o.focus || 0) ? 0 : -1);
-    });
-    svg.querySelectorAll('.guide, .gdot, .gread').forEach((el) => el.remove());
-    if (o.guide && o.guide.x != null) svg.querySelector('path.c-drawn').insertAdjacentHTML('beforebegin', guideSvg(spec, o.guide));
-  }
   // svg coordinates → the value on the axes (and whether inside the plot, with a margin)
   function valueAt(spec, px, py) {
     const s = scales(spec);
     return { x: spec.lo + ((px - s.ML) / s.PW) * (spec.hi - spec.lo), y: ((s.MT + s.PH / 2 - py) / (s.PH / 2)) * spec.Y, inside: px >= s.ML - 14 && px <= s.ML + s.PW + 14 && py >= s.MT - 14 && py <= s.MT + s.PH + 14 };
-  }
-
-  // the grid line and the height nearest to a point of a drawing (svg coordinates)
-  function pointAt(spec, xs, px, py) {
-    const s = scales(spec);
-    if (px < s.ML - 10 || px > s.ML + s.PW + 10 || py < s.MT - 6 || py > s.MT + s.PH + 6) return null;
-    const v = spec.lo + ((px - s.ML) / s.PW) * (spec.hi - spec.lo);
-    let i = 0;
-    xs.forEach((x, k) => { if (Math.abs(x - v) < Math.abs(xs[i] - v)) i = k; });
-    const yv = Math.round(((s.MT + s.PH / 2 - py) / (s.PH / 2)) * spec.Y);
-    return { i, y: Math.max(-Math.floor(spec.Y), Math.min(Math.floor(spec.Y), yv)) };
   }
 
   // ---------------------------------------------------------------- animations
@@ -233,7 +205,7 @@
   };
 
 
-  const api = { SIZE, scales, graph, pointAt, valueAt, updateDrawing, frame, Anim };
+  const api = { SIZE, scales, graph, body, valueAt, frame, Anim };
   root.WavePlot = api;
   if (typeof module !== 'undefined') module.exports = api;
 })(typeof window !== 'undefined' ? window : globalThis);

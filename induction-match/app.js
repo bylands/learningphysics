@@ -177,24 +177,25 @@
   }
 
   // ---------------------------------------------------------------- drawing
+  // A handle at each time of ex.draw.at, dragged up and down to a whole value, set by a press
+  // anywhere on the plot (the handle nearest to it), or moved with the keys (← → another handle,
+  // ↑ ↓ its value): the shared sketcher (sketch.js), its columns. A change clears the marks of the
+  // last check.
+  let sk = null;
   const drawSpec = () => ({ ...ex.draw, values: st.values, wrong: st.wrong, label: ui().yours });
   function drawEditor() {
     const h = ex.draw.kind === 'flux' ? `<h3 class="qc-flux">${ui().fluxH} ${PHI}</h3>` : `<h3 class="qc-volt">${ui().voltH} ${Vi()}</h3>`;
     $('#draw-area').innerHTML = `<div class="given">${h}${P.drawGraph(drawSpec())}</div><button type="button" id="draw-clear" class="linklike">${ui().clear}</button>`;
+    const sc = P.drawScales(ex.draw.kind), unit = ex.draw.kind === 'flux' ? 'mWb' : 'mV';
+    sk = Sketch.create($('#draw-area svg.drawing'), {
+      model: 'columns', xs: ex.draw.at, x: sc.x, y: sc.y, lo: sc.lo, hi: sc.hi, step: 1, area: sc.area,
+      init: ex.draw.init, state: st.values, locked: () => st.solved || st.revealed,
+      plot: () => P.drawBody(drawSpec()),
+      radius: () => 5.5,
+      describe: (k) => ({ label: `t = ${P.dec(k.t)} s`, text: `${String(k.v).replace('-', '−')} ${unit}` }),
+      onEdit(k) { st.values = k.state(); st.wrong = null; $('#draw-fb').textContent = ''; },
+    });
     paintCursor();
-  }
-  function onDrawClick(evt) {
-    if (!ex || ex.kind !== 'draw' || st.solved || st.revealed) return;
-    const svg = evt.target.closest('svg.drawing');
-    if (!svg) return;
-    const pt = svg.createSVGPoint();
-    pt.x = evt.clientX; pt.y = evt.clientY;
-    const q = pt.matrixTransform(svg.getScreenCTM().inverse()), hit = P.pointAt(ex.draw, q.x, q.y);
-    if (!hit) return;
-    st.values[hit.i] = hit.y;
-    st.wrong = null;
-    $('#draw-fb').textContent = '';
-    drawEditor();
   }
   function drawFeedback() {
     const wrong = ex.draw.at.map((x, i) => i).filter((i) => Math.abs(st.values[i] - ex.draw.target[i]) > 1e-9);
@@ -652,8 +653,7 @@
       if (li) { li.className = ''; li.querySelector('.fb').textContent = ''; }
     });
     $('#draw-area').addEventListener('click', (evt) => {
-      if (evt.target.id === 'draw-clear') { if (st.solved || st.revealed) return; st.values = [...ex.draw.init]; st.wrong = null; $('#draw-fb').textContent = ''; drawEditor(); return; }
-      onDrawClick(evt);
+      if (evt.target.id === 'draw-clear' && !st.solved && !st.revealed) sk.reset();
     });
     $('#prompt').addEventListener('click', (evt) => {
       const b = evt.target.closest('.worked-ex');

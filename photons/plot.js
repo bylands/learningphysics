@@ -46,8 +46,8 @@
     if (!o.noYTicks) for (let k = 0; k <= Math.round((y1 - y0) / ys); k++) { const y = y0 + k * ys; s += `<text class="tick" x="${X(x0) - 6}" y="${Y(y) + 4}" text-anchor="end">${dec(y)}</text>`; }
     s += `<text class="lbl" x="${w - 4}" y="${h - 4}" text-anchor="end">${o.xl}</text>`;
     s += `<text class="lbl" x="${X(ax) + 10}" y="14" text-anchor="start">${o.yl}</text>`;
-    // o.read = { x: [name, unit, step], y: [...] }: the svg carries its axis mapping, and app.js shows
-    // the coordinates under the pointer (hover, tap and drag, arrow keys), rounded to the steps
+    // o.read = { x: [name, unit, step], y: [...] }: the svg carries its axis mapping, and reader.js
+    // shows the coordinates under the pointer (hover, tap and drag, arrow keys), rounded to the steps
     const rd = o.read, rdAttr = (k, [n, u, p]) => ` data-${k}n="${n}" data-${k}u="${u}" data-${k}p="${p}"`;
     const read = rd ? ` data-read="${X(x0)} ${X(x1)} ${Y(y0)} ${Y(y1)}" data-val="${x0} ${x1} ${y0} ${y1}"${rdAttr('x', rd.x)}${rdAttr('y', rd.y)}${o.small ? '' : ' tabindex="0"'}` : '';
     const svg = (body, label, cls = '') => `<svg class="ph graph ${cls}" viewBox="0 0 ${w} ${h}" width="${w}" role="img" aria-label="${label}"${read}>${s}${body}</svg>`;
