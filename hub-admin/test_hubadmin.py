@@ -816,6 +816,59 @@ class AllInUnit(unittest.TestCase):
                 H.allin_state(bad)
 
 
+class ZeroUnit(unittest.TestCase):
+    """The rooms of the quiz Absolute Zero: joining, answers and the timer."""
+
+    def setUp(self):
+        self.now = [1000.0]
+        self.rooms = H.ZeroRooms(clock=lambda: self.now[0])
+
+    def test_game(self):
+        code = self.rooms.open("bys")
+        self.rooms.set_state("bys", code, {"phase": "lobby", "rounds": 8})
+        with self.assertRaises(ValueError):
+            self.rooms.join(code, "  ")
+        anna = self.rooms.join(code, " Anna ")
+        ben = self.rooms.join(code, "Ben")
+        self.assertEqual((anna["id"], ben["id"]), ("p1", "p2"))
+        self.assertEqual(self.rooms.join(code, "Anna B", anna["token"]), {"token": anna["token"], "id": "p1"})  # a new name, the same player
+        self.assertEqual(self.rooms.view(code, anna["token"])["players"], ["Anna B", "Ben"])
+        with self.assertRaises(ValueError):
+            self.rooms.answer(code, anna["token"], 0, "Mars")  # not yet
+        self.rooms.set_state("bys", code, {"phase": "answer", "i": 0, "q": "planets", "rounds": 8, "left": 30})
+        with self.assertRaises(PermissionError):
+            self.rooms.answer(code, "nope", 0, "Mars")
+        with self.assertRaises(ValueError):
+            self.rooms.answer(code, anna["token"], 1, "Mars")  # another question
+        with self.assertRaises(ValueError):
+            self.rooms.answer(code, anna["token"], 0, "   ")
+        self.rooms.answer(code, anna["token"], 0, "Mars")
+        self.assertEqual(self.rooms.answer(code, anna["token"], 0, "Ceres " + "x" * 80)["answer"], "Ceres " + "x" * 54)  # changed, cut
+        self.now[0] += 31  # within the grace
+        self.rooms.answer(code, ben["token"], 0, "Pluto")
+        self.now[0] += 2
+        with self.assertRaises(ValueError):
+            self.rooms.answer(code, ben["token"], 0, "Eris")
+        host = self.rooms.host_view("bys", code)
+        self.assertEqual(host["answers"], {"p1": "Ceres " + "x" * 54, "p2": "Pluto"})
+        self.assertEqual(host["players"], [{"id": "p1", "name": "Anna B"}, {"id": "p2", "name": "Ben"}])
+        view = self.rooms.view(code, ben["token"])
+        self.assertEqual((view["me"], view["answer"], view["left"]), ({"id": "p2", "name": "Ben"}, "Pluto", 0.0))
+        # the reveal keeps the answers, the next question clears them
+        self.rooms.set_state("bys", code, {"phase": "reveal", "i": 0, "q": "planets", "result": {"s": {"p1": [0, 0, 1]}}})
+        self.assertEqual(self.rooms.view(code, ben["token"])["state"]["result"], {"s": {"p1": [0, 0, 1]}})
+        self.assertEqual(len(self.rooms.host_view("bys", code)["answers"]), 2)
+        self.rooms.set_state("bys", code, {"phase": "answer", "i": 1, "q": "lenses", "left": 30})
+        self.assertEqual(self.rooms.host_view("bys", code)["answers"], {})
+
+    def test_state(self):
+        st = H.zero_state({"phase": "answer", "i": -1, "q": "<b>x</b>", "left": 9999, "result": {"s": "x" * 9000}})
+        self.assertEqual(st, {"phase": "answer", "i": 0, "rounds": 0, "q": "bxb", "left": 600.0})
+        for bad in (None, {"phase": "bet"}, []):
+            with self.assertRaises(ValueError):
+                H.zero_state(bad)
+
+
 class Service(unittest.TestCase):
     def setUp(self):
         self.dir = tempfile.TemporaryDirectory()
@@ -885,6 +938,31 @@ class Service(unittest.TestCase):
         self.assertEqual(json.loads(body)["bets"]["1"]["bet"]["chips"], [0, 20, 0])
         self.assertEqual(post(f"/api/all-in/{code}/close", {}, cookie)[0], 200)
         self.assertEqual(self.req(f"/api/all-in/{code}")[0], 404)
+
+    def test_absolute_zero(self):
+        st, headers, _ = self.login()
+        cookie = headers["Set-Cookie"].split(";")[0]
+        js = "application/json"
+        post = lambda path, obj, c=None: self.req(path, json.dumps(obj).encode(), js, c)
+        self.assertEqual(post("/api/absolute-zero/open", {})[0], 403)
+        st, _, body = post("/api/absolute-zero/open", {}, cookie)
+        self.assertEqual(st, 200)
+        code = json.loads(body)["code"]
+        self.assertEqual(post(f"/api/absolute-zero/{code}/state", {"state": {"phase": "lobby"}})[0], 403)
+        self.assertEqual(post(f"/api/absolute-zero/{code}/state", {"state": {"phase": "lobby"}}, cookie)[0], 200)
+        st, _, body = post(f"/api/absolute-zero/{code}/join", {"name": "Anna"})
+        token = json.loads(body)["token"]
+        post(f"/api/absolute-zero/{code}/state", {"state": {"phase": "answer", "i": 0, "q": "planets", "left": 30}}, cookie)
+        self.assertEqual(post(f"/api/absolute-zero/{code}/answer", {"token": token, "i": 0, "text": "Ceres"})[0], 200)
+        self.assertEqual(post(f"/api/absolute-zero/{code}/answer", {"token": "x", "i": 0, "text": "Ceres"})[0], 403)
+        st, _, body = self.req(f"/api/absolute-zero/{code}?token={token}")
+        self.assertEqual(json.loads(body)["answer"], "Ceres")
+        self.assertEqual(self.req(f"/api/absolute-zero/{code}/host")[0], 403)
+        st, _, body = self.req(f"/api/absolute-zero/{code}/host", cookie=cookie)
+        self.assertEqual(json.loads(body)["answers"], {"p1": "Ceres"})
+        self.assertEqual(self.req(f"/api/all-in/{code}")[0], 404)  # the games have rooms of their own
+        self.assertEqual(post(f"/api/absolute-zero/{code}/close", {}, cookie)[0], 200)
+        self.assertEqual(self.req(f"/api/absolute-zero/{code}")[0], 404)
 
     def test_flow(self):
         st, _, body = self.req("/")
