@@ -978,6 +978,7 @@ class Admin:
                                  key=lambda x: -x["updated"])
         state["apps"] = self.sheet_apps(sheetlib, have)
         state["topics"] = sheetlib.coverage(sheetlib.load_pool(), state["apps"], have) if sheetlib else []
+        state["subjects"] = sheetlib.topic_counts(have) if sheetlib else []  # the TeXercises topics of the exercises there
         figs = sheets_module("figures")
         state["figures"] = bool(figs and figs.available())
         state["own"] = self.own
@@ -1007,6 +1008,7 @@ class Admin:
             app, e = found
             details[k] = {"title": str(e.get("title") or k), "lang": e.get("lang"), "difficulty": e.get("difficulty"),
                           "images": bool(e.get("images")), "app": app, "available": k in have,
+                          "topics": sheetlib.exercise_topics(have[k]) if k in have else [],
                           "objectives": [ob for a, ob in sheetlib.covers(k, tg, pool) if ob],
                           "url": TEXERCISES + e["url"] if isinstance(e.get("url"), str) and re.fullmatch(r"/exercise/[A-Za-z0-9_-]+/?", e["url"]) else None}
         return {"exercises": exercises, "details": details, "alternatives": alts, "targets": targets,
@@ -2987,12 +2989,14 @@ h2.section { font-size: 1.15rem; margin: 28px 0 4px; }
 .topicmod li.zero .n { color: var(--bad); font-weight: 600; }
 .topicmod .note { margin: 4px 0 0; font-size: 0.8rem; }
 .edtopics { border: 1px solid var(--line); border-radius: 8px; padding: 8px 12px; margin: 14px 0 4px; }
-.edtopics .topicgrid { max-height: 420px; overflow-y: auto; }
-.topicmod button.pickname { all: unset; cursor: pointer; text-align: left; flex: 1 1 auto; border-radius: 4px; }
-.topicmod button.pickname:hover { color: var(--accent); text-decoration: underline; }
-.topicmod button.pickname:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
-.topicmod button.pickname.on { color: var(--accent); font-weight: 600; }
-.topicmod .head button.pickname { font-weight: 600; }
+.tpchips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.tpchips button { border-radius: 999px; padding: 2px 11px; font-size: 0.88rem; }
+.tpchips button .n { color: var(--muted); font-size: 0.8rem; margin-left: 6px; font-variant-numeric: tabular-nums; }
+.tpchips button[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); font-weight: 600; }
+.tpchips button[aria-pressed="true"] .n { color: inherit; opacity: 0.85; }
+.chip.topic { background: transparent; border: 1px dashed var(--line); color: var(--muted); }
+.chip.topic.on { background: var(--accent); border: 1px solid var(--accent); color: var(--accent-ink); }
+.exrow.tp-on, .alts li.tp-on { box-shadow: inset 4px 0 0 var(--accent); }
 /* the exercises' review (#sheets-audit): its severities by colour and by name (s-error, not error: .error is red text) */
 .audit { --sev-error: var(--bad); --sev-warning: #a35a00; --sev-doubt: #6a4bb0; padding: 10px 16px; margin: 0 0 14px; }
 @media (prefers-color-scheme: dark) { .audit { --sev-warning: #ffb74d; --sev-doubt: #c2a8ff; } }
@@ -3473,7 +3477,8 @@ SHEETS_JS = r"""
       refused.has(k) ? el('span', { class: 'chip bad', title: 'TeXercises refused its image three times: download it there and upload it under Images' }, 'image refused')
         : d.images ? el('span', { class: 'chip warn', title: 'Has an image: TeXercises does not export it; upload or fetch it under Images' }, 'image') : '',
       d.available === false ? el('span', { class: 'chip bad', title: 'Not in the uploaded export: left out of the PDF and the online version' }, 'missing') : '',
-      d.app ? el('span', { class: 'chip quiet' }, appName(appOf(d.app))) : '');
+      d.app ? el('span', { class: 'chip quiet' }, appName(appOf(d.app))) : '',
+      ...(d.topics || []).map((t) => el('span', { class: `chip topic${t === topicOn ? ' on' : ''}`, title: 'Its topic on TeXercises' }, t)));
   }
   const objectiveLine = (k) => {
     const d = det(k);
@@ -3550,39 +3555,24 @@ SHEETS_JS = r"""
       el('h3', {}, 'PDF and online version'), output()));
   }
 
-  // the topics of the imported exercises, at the top of the editor: per module and learning objective
-  // the exercises there (uploaded or drafts) for it; a click chooses the module or the objective below
-  let edTopicsOpen = true;
+  // the TeXercises topics of the imported exercises (their subbranches), at the top of the editor, with
+  // how many exercises are there of each; a click marks the exercises of that topic in the sheet and
+  // their alternatives, and limits "Add an exercise of" to them (again: all)
+  let edTopicsOpen = true, topicOn = ''; // topicOn: a topic, NO_TOPIC, or '' none chosen
+  const NO_TOPIC = '\u0000none';
   try { edTopicsOpen = localStorage.getItem('sheet-edit-topics') !== '0'; } catch (e) { /* none */ }
-  function choose(appId, ob) {
-    const app = appOf(appId);
-    let m = cur.modules.find((x) => x.id === appId);
-    if (!m) {
-      m = { id: appId, objectives: ob ? [] : app.objectives.map((o) => o.id) };
-      cur.modules.push(m);
-      const order = st.apps.map((x) => x.id);
-      cur.modules.sort((x, y) => order.indexOf(x.id) - order.indexOf(y.id));
-    }
-    if (ob && app.objectives.some((o) => o.id === ob) && !m.objectives.includes(ob)) {
-      m.objectives = app.objectives.filter((o) => o.id === ob || m.objectives.includes(o.id)).map((o) => o.id);
-    }
-    changed(true);
-    render();
-  }
+  const onTopic = (k) => !!topicOn && (topicOn === NO_TOPIC ? det(k).available !== false && !(det(k).topics || []).length : (det(k).topics || []).includes(topicOn));
   function editorTopics() {
-    const mods = (st.topics || []).filter((m) => st.apps.some((a) => a.id === m.id));
-    const chosen = (id, ob) => { const m = cur.modules.find((x) => x.id === id); return !!m && (!ob || m.objectives.includes(ob)); };
-    const there = mods.reduce((n, m) => n + m.there, 0);
+    const list = st.subjects || [];
+    const total = st.exercises;
     const d = el('details', { class: 'topics edtopics', open: edTopicsOpen },
-      el('summary', {}, 'Topics of the imported exercises', el('span', { class: 'note' }, `${there} exercises there · click a module or an objective to choose it`)),
-      el('div', { class: 'topicgrid' }, ...mods.map((m) => el('div', { class: `topicmod${m.there ? '' : ' zero'}` },
-        el('div', { class: 'head' },
-          el('button', { type: 'button', class: `pickname${chosen(m.id) ? ' on' : ''}`, title: chosen(m.id) ? 'On the sheet' : 'Choose this module', onclick: () => choose(m.id, null) }, appName(m)),
-          el('span', { class: 'n', title: `${m.there} of the module's ${m.exercises} exercises in the pool are there` }, `${m.there} ex.`)),
-        m.objectives.length ? el('ul', {}, ...m.objectives.map((o) => el('li', { class: o.there ? '' : 'zero' },
-          el('button', { type: 'button', class: `pickname${chosen(m.id, o.id) ? ' on' : ''}`, title: chosen(m.id, o.id) ? 'On the sheet' : 'Choose this objective', onclick: () => choose(m.id, o.id) },
-            cur.lang === 'de' ? o.de || o.en : o.en),
-          el('span', { class: 'n', title: `${o.there} of its ${o.exercises} exercises in the pool are there` }, String(o.there))))) : ''))));
+      el('summary', {}, 'Topics of the imported exercises',
+        el('span', { class: 'note' }, list.length ? `TeXercises topics of the ${total} exercises there · click one to mark its exercises below` : 'none: upload a TeXercises export')),
+      list.length ? el('div', { class: 'tpchips', role: 'group', 'aria-label': 'TeXercises topics' }, ...list.map((t) => {
+        const key = t.name || NO_TOPIC;
+        return el('button', { type: 'button', 'aria-pressed': String(topicOn === key), title: topicOn === key ? 'Marked below: click again to clear' : 'Mark its exercises below',
+          onclick: () => { topicOn = topicOn === key ? '' : key; render(); } }, t.name || 'No topic', el('span', { class: 'n' }, String(t.exercises)));
+      })) : '');
     d.addEventListener('toggle', () => { edTopicsOpen = d.open; try { localStorage.setItem('sheet-edit-topics', d.open ? '1' : '0'); } catch (e) { /* none */ } });
     return d;
   }
@@ -3645,7 +3635,7 @@ SHEETS_JS = r"""
   function exRow(k, i) {
     const d = det(k), alts = (plan && plan.alternatives[k]) || [];
     const move = (dd) => { const j = i + dd; [cur.exercises[i], cur.exercises[j]] = [cur.exercises[j], cur.exercises[i]]; changed(true); render(); };
-    const li = el('li', { class: 'exrow' },
+    const li = el('li', { class: `exrow${onTopic(k) ? ' tp-on' : ''}` },
       el('div', { class: 'move' },
         el('button', { type: 'button', 'aria-label': `Move ${d.title} up`, disabled: i === 0, onclick: () => move(-1) }, '↑'),
         el('button', { type: 'button', 'aria-label': `Move ${d.title} down`, disabled: i === cur.exercises.length - 1, onclick: () => move(1) }, '↓')),
@@ -3657,7 +3647,7 @@ SHEETS_JS = r"""
             el('button', { type: 'button', class: 'remove', 'aria-label': `Remove ${d.title}`, onclick: () => { cur.exercises.splice(i, 1); changed(true); render(); } }, '×'))),
         objectiveLine(k),
         openPrev.has(k) ? previewOf(k, true) : '',
-        openAlts.has(k) ? el('ul', { class: 'alts' }, ...alts.map((a) => el('li', {},
+        openAlts.has(k) ? el('ul', { class: 'alts' }, ...alts.map((a) => el('li', { class: onTopic(a) ? 'tp-on' : '' },
           el('div', { class: 'head' }, el('span', {}, det(a).title), chips(a),
             el('span', { class: 'tools' },
               el('button', { type: 'button', 'aria-expanded': String(openPrev.has(a)), onclick: () => { toggle(openPrev, a); render(); } }, 'Preview'),
@@ -3672,18 +3662,21 @@ SHEETS_JS = r"""
   function adder() {
     if (!plan || !plan.targets.length) return '';
     const label = (t) => `${appName(appOf(t.app))}${t.objective ? ' · ' + obName(t.app, t.objective) : ''}`;
-    const tsel = el('select', { 'aria-label': 'Objective' }, ...plan.targets.map((t, i) => el('option', { value: String(i) }, `${label(t).slice(0, 90)} (${t.keys.filter((k) => !cur.exercises.includes(k)).length})`)));
+    const left = (t) => t.keys.filter((k) => !cur.exercises.includes(k) && (!topicOn || onTopic(k))); // (of the topic marked above, if one is)
+    const tsel = el('select', { 'aria-label': 'Objective' }, ...plan.targets.map((t, i) => el('option', { value: String(i) }, `${label(t).slice(0, 90)} (${left(t).length})`)));
+    if (topicOn) { const i = plan.targets.findIndex((t) => left(t).length); if (i > 0) tsel.value = String(i); }
     const ksel = el('select', { 'aria-label': 'Exercise to add' });
     const fill = () => {
       const t = plan.targets[Number(tsel.value)];
-      const keys = t.keys.filter((k) => !cur.exercises.includes(k));
+      const keys = left(t);
       ksel.replaceChildren(...(keys.length ? keys.map((k) => { const d = det(k); return el('option', { value: k }, `${d.title} (${(d.lang || '').toUpperCase()}, ${'★'.repeat(d.difficulty || 1)}${d.images ? ', image' : ''})`); }) : [el('option', { value: '' }, 'none left')]));
       add.disabled = !keys.length || cur.exercises.length >= st.max;
     };
     const add = el('button', { type: 'button', onclick: () => { if (ksel.value) { cur.exercises.push(ksel.value); changed(true); render(); } } }, 'Add');
     tsel.addEventListener('change', fill);
     fill();
-    return el('div', { class: 'addapp adder' }, el('span', { class: 'note' }, 'Add an exercise of'), tsel, ksel, add);
+    return el('div', { class: 'addapp adder' }, el('span', { class: 'note' }, 'Add an exercise of'), tsel, ksel, add,
+      topicOn ? el('span', { class: 'note' }, `(only ${topicOn === NO_TOPIC ? 'those without a topic' : `“${topicOn}”`})`) : '');
   }
 
   // ---------------------------------------------------------------- the preview
