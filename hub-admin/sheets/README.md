@@ -5,7 +5,13 @@ exercises. The tab begins, folded, with the **topics covered by the exercise poo
 `sheets.py`): per module (the hub's apps, in their order) its exercises, how many of them are there (in
 the uploaded export or the drafts), and per learning objective the exercises that practise it; an
 objective without any shows a red 0, and a module's exercises tied to none of its objectives are counted
-as the module as a whole. A sheet is independent of the sets: a title, a language (English or German), modules (the
+as the module as a whole. Then, folded too, the **exercise review**: the report of a review of all
+TeXercises exercises (made elsewhere, uploaded or replaced here as JSON, kept in
+`hub-data/exercise-audit.json`, never in this public repository; `/admin/api/exercise-audit`,
+`normalize_audit` in `../hubadmin.py`): the exercises reviewed, those with issues and the issues by
+severity (error, warning, doubt), then the exercises with issues, the most serious first, each issue
+with its category, where it is (text, solution, short solution, solver, title) and a suggested fix,
+filtered by severity, category and a search; the titles link to the exercises on TeXercises. A sheet is independent of the sets: a title, a language (English or German), modules (the
 hub's apps) with the learning objectives it practises (all of a module's by default), and its exercises
 in order, kept in `hub-data/exercise-sheets.json` (not served).
 

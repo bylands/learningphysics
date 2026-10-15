@@ -14,8 +14,8 @@ shared, duplicated and deleted, everything only when logged in except a shared s
 version, which shows no solutions; the figures (the LaTeX of an exercise's TikZ pictures, their
 hash and cache) and the gallery images (uploaded, as a .zip, fetched from TeXercises, served only
 to the panel and a shared sheet, never outside their folder), and both in the preview's HTML. The
-topics the pool covers, a review bundle's topics (subbranches), and the exercises' review for the hub
-page (the superuser alone reads and uploads it, the report checked and cleaned).
+topics the pool covers, a review bundle's topics (subbranches), and the exercises' review in the Sheets
+tab (the superuser alone reads and uploads it, the report checked and cleaned).
 """
 import io
 import zipfile
@@ -1467,18 +1467,14 @@ class Service(unittest.TestCase):
         return st, json.loads(out or b"{}")
 
     def test_exercise_audit(self):
-        """The exercises' review for the hub page: the superuser alone reads and uploads it (nobody
+        """The exercises' review in the Sheets tab: the superuser alone reads and uploads it (nobody
         else, logged in or not); a report is checked, cleaned and replaces the one stored, which is
         not under a served name."""
         boss = self.cookie_of("samuel.byland", "teacher pw")
         pw = self.teachers({"action": "create", "id": "abc", "user": "anna"}, boss)[1]["password"]
         anna = self.cookie_of("anna", pw)
-        # who asks: /api/me, and with ?probe=1 an answer without an error for the hub page's visitors
-        self.assertEqual(self.req("/api/me")[0], 403)
-        st, _, body = self.req("/api/me?probe=1")
-        self.assertEqual((st, json.loads(body)), (200, {"teacher": None, "super": False}))
-        self.assertIs(json.loads(self.req("/api/me?probe=1", cookie=anna)[2])["super"], False)
-        self.assertIs(json.loads(self.req("/api/me?probe=1", cookie=boss)[2])["super"], True)
+        self.assertIn(b'id="sheets-audit"', self.req("/", cookie=boss)[2])  # its section, in the Sheets tab
+        self.assertNotIn(b'id="sheets-audit"', self.req("/", cookie=anna)[2])
         self.assertEqual(self.req("/api/exercise-audit")[0], 403)
         self.assertEqual(self.req("/api/exercise-audit", cookie=anna)[0], 403)
         st, _, body = self.req("/api/exercise-audit", cookie=boss)
