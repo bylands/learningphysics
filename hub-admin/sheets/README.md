@@ -12,17 +12,23 @@ A sheet is independent of the sets: a title, a language (English or German), its
 objectives and balance, and its exercises in order, kept in `hub-data/exercise-sheets.json` (not
 served). The editor makes it in three steps (`sheets.py` on the server):
 
-1. **Topics**: the TeXercises topics of the imported exercises (the `subbranches` of exercise.json,
-   `topic_counts`), each with how many of the exercises there (in the uploaded export or the drafts)
-   have it, the most frequent first (the title says how many are concept questions); one or several
-   are chosen. "No topic" stands for the exercises without one.
+1. **Topics**: the topic tree of `categories.json` (Claude's reading of all exercises of the export:
+   6 areas, 29 topics, 133 subtopics; `load_categories`, `topic_tree`), folded by area and topic, each
+   node with how many of the exercises there (in the uploaded export or the drafts) have it as their
+   main subtopic (the title says how many are concept questions); only nodes with exercises are shown.
+   One or several subtopics are chosen; ticking an area or a topic ticks all its subtopics. **Not yet
+   categorised** stands for the exercises `categories.json` does not know (uploaded since). A sheet
+   saved before the tree keeps its TeXercises topics (the `subbranches` of exercise.json): they still
+   match (`on_topics`) and are listed below the tree, to drop them.
 2. **Learning objectives**: per module, the objectives that `pool.json` links to at least one exercise
    on these topics, with how many (`objective_keys`); those a new topic brings are ticked, each can be
    unticked, and **Select all** / **None** do a whole module. **Exercises without a learning
    objective** (on the topics, in none of the pool's objectives: `loose_keys`) is a choice of its own,
    off by default.
-3. **Balance**: the share of **concept questions** (TeXercises type 0 Descriptive/Quality and 3
-   True/false; type 2 Both counts as a concept question or a problem, whichever the sheet lacks; the
+3. **Balance**: the share of **concept questions** (by the task kind of `categories.json`: concept and
+   explain; graph counts as a concept question or a problem, whichever the sheet lacks; calculate,
+   derive, show, estimate and data are textbook problems; for an exercise it does not know, by the
+   TeXercises type: 0 Descriptive/Quality and 3 True/false; type 2 Both like graph; the
    others, 1 Calculative, 7 Algebraic, 5 Show, 6 Proof, are textbook problems), 30 % by default, and of
    **easy, medium and hard** exercises (`default_difficulty` 1, 2, 3 and more; none: medium), three
    linked sliders, 30/50/20 % by default; and the number of exercises. A table shows, for each, what
@@ -33,16 +39,24 @@ served). The editor makes it in three steps (`sheets.py` on the server):
 - **Suggest a sheet** fills the sheet (`suggest`): round by round over the ticked objectives (in the
   modules' order, those without objective last), so every objective has one exercise before any has
   two; per objective an exercise in the sheet's language first, then the one that brings the sheet
-  nearest to its concept and difficulty shares, then one without image, then the pool's order. Once
+  nearest to its concept and difficulty shares, then one not too similar (0.9) to those already on
+  the sheet, then one without image, then the pool's order. Never two **near-duplicates** on one sheet
+  (one flagged `dup:<id>` of the other in `categories.json`; similarity alone only orders), nor an
+  exercise flagged `broken`. Once
   every objective has one (or from the start, if the sheet has fewer exercises than objectives), the
   slots left that are all needed for concept questions, problems or a difficulty go only to objectives
   that have one. Where a share cannot be met it takes the closest. By default two per objective, at
   most 24; another number can be asked for (up to 40). The exercises come by module, from easy to hard.
   The suggestion depends only on the sheet and the exercises: the same every time.
 - Each exercise shows its language, kind (concept, problem, or "concept or problem" for Both),
-  difficulty, image, TeXercises topics and objectives, and lists up to five **alternatives** (same
-  objectives, not on the sheet; the sheet's language first, then the same kind, then a similar
-  difficulty): one click puts one in its place. Exercises can be removed, moved up and down, and added
+  difficulty, image, subtopic (or, not yet categorised, its TeXercises topics) and objectives, and
+  lists up to five **alternatives** (same objectives, not on the sheet, no near-duplicate of another
+  exercise on it; the sheet's language first, then the most similar, then the same kind, then a
+  similar difficulty) and the five **most similar** of all the exercises there, with their
+  similarity: one click puts one in its place. **Similarity** (`similarity`, as
+  `similarity.md` of the categories): a weighted sum of the subtopics (0.35), the laws used
+  (0.20, rare ones weighing more), the task kind (0.15), the difficulty (0.10), the mathematics (0.07),
+  the steps (0.05), the representations (0.04) and the context (0.04); the language does not count. Exercises can be removed, moved up and down, and added
   from the exercises on the sheet's topics, per objective or without one.
 - A sheet saved before the topics (modules and objectives only) opens as one with the topics of its
   exercises, its objectives as saved and the default balance (`migrate_sheet` in hubadmin.py); it is
@@ -94,7 +108,8 @@ here as JSON (`/admin/api/exercise-audit`, `normalize_audit` in `../hubadmin.py`
   the exercises with issues, the most serious first, each issue with its category, where it is (text,
   solution, short solution, solver, title) and a suggested fix; the titles link to the exercises on
   TeXercises. Filtered by severity, category, collection (the titles of the collections an exercise is
-  in, the report's `"collections"`, if it has them; also "No collection"), marked or not (below) and a
+  in, the report's `"collections"`, if it has them; also "No collection"), area or topic (of
+  `categories.json`, by the exercise's id; also "Not categorised"), marked or not (below) and a
   search.
 - **Feedback**: per issue **Accept fix**, per exercise a comment (saved as it is typed), in
   `hub-data/exercise-audit-feedback.json` (`/admin/api/exercise-audit/feedback`). It is kept by the
