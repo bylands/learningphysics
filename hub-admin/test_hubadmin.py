@@ -22,7 +22,8 @@ hash and cache) and the gallery images (uploaded, as a .zip, fetched from TeXerc
 to the panel and a shared sheet, never outside their folder), and both in the preview's HTML. The
 topics the pool covers, and the exercises' review in the Sheets tab (the superuser alone reads and
 uploads it, the report checked and cleaned; the feedback on it kept by exercise id and fingerprint of
-the issue, and its export); the TeXercises review page that was at /texercises/ gone. The exercises
+the issue, and its export; an image replaced by TikZ: drawn, LaTeX's error, Claude's draft from a fake
+API, saved, checked and exported); the TeXercises review page that was at /texercises/ gone. The exercises
 uploaded since categories.json: provisional labels of the nearest exercise, the overlay merged (the
 teacher's labels never overwritten), Claude's labels from a fake API (checked, refusals and errors
 handled), what is said without the anthropic package or key, and the endpoints the superuser's only.
@@ -948,6 +949,77 @@ class Preview(unittest.TestCase):
             with mock.patch.object(F, "available", return_value=False):
                 self.assertEqual(F.figure(cache, "q", "en", src), {})  # no LaTeX: a placeholder
 
+    def test_figure_errors(self):
+        # why LaTeX could not draw a figure: its first error, the line counted in the figure, short
+        from sheets import figures as F
+        log = ("This is LuaHBTeX\n(./fig.tex\n! Undefined control sequence.\n<argument> \\foo\n\nl.31 \\draw (0,0) -- (1,\\foo)\n"
+               "                      ;\nThe control sequence at the end of the top line\n! Emergency stop.\n")
+        self.assertEqual(F.latex_error(log, 29), "Undefined control sequence.\nline 3 of the figure: \\draw (0,0) -- (1,\\foo)")
+        self.assertEqual(F.latex_error(log, 40), "Undefined control sequence.\nin the solver part: \\draw (0,0) -- (1,\\foo)")
+        self.assertEqual(F.latex_error("all fine\n", 1), "")
+        self.assertLessEqual(len(F.latex_error("! " + "x" * 5000, 1)), F.MAX_WHY)
+        # kept for a figure drawn on its own (failure), forgotten when it is queued again
+        src, k = "\\begin{tikzpicture}\\oops\\end{tikzpicture}", None
+        k = F.key("", "en", src)
+        self.assertEqual(F.failure("", "en", src), "")
+        with mock.patch.dict(F._failed, {k: time.time()}), mock.patch.dict(F._why, {}):
+            self.assertEqual(F.failure("", "en", src), "LaTeX could not draw it")
+            F._explain([(k, src)], "Undefined control sequence.")
+            F._explain([(k, src), ("x", "y")], "another")  # (in a batch: not this one's fault)
+            self.assertEqual(F.failure("", "en", src), "Undefined control sequence.")
+
+    def test_tikz_draft(self):
+        # the review's TikZ: what may be kept and drawn, the request to Claude, its answer checked
+        from sheets import tikzdraft as T
+        fig = "\\begin{tikzpicture}\n\\draw (0,0) -- (1,1) node {\\FO};\n\\end{tikzpicture}"
+        self.assertEqual(T.check("  " + fig.replace("\n", "\r\n") + "\n"), fig)
+        self.assertEqual(T.check("\\begin{circuitikz}\\draw (0,0) to[R] (2,0);\\end{circuitikz}")[:18], "\\begin{circuitikz}")
+        for bad, why in (("", "empty"), ("\\draw (0,0);", "one environment"), ("\\begin{tikzpicture}x\\end{circuitikz}", "one environment"),
+                         ("\\begin{tikzpicture}\\directlua{os.exit()}\\end{tikzpicture}", "\\directlua"),
+                         ("\\begin{tikzpicture}\\input{/etc/passwd}\\end{tikzpicture}", "\\input"),
+                         ("\\begin{tikzpicture}\\usetikzlibrary{x}\\end{tikzpicture}", "\\usetikzlibrary"),
+                         ("\\begin{tikzpicture}\\immediate\\write18{ls}\\end{tikzpicture}", "\\immediate"),
+                         ("\\begin{tikzpicture}" + "x" * (20 * 1024) + "\\end{tikzpicture}", "20 KB")):
+            with self.assertRaises(ValueError) as cm:
+                T.check(bad)
+            self.assertIn(why, str(cm.exception), bad[:40])
+        self.assertEqual(T.check("\\begin{tikzpicture}\\node {\\inputvoltage};% \\input{x}\n\\end{tikzpicture}")[-17:], "\\end{tikzpicture}")
+        with tempfile.TemporaryDirectory() as tmp:
+            png, svg, pdf, bmp = (Path(tmp) / n for n in ("a.png", "b.svg", "b.pdf", "c.bmp"))
+            png.write_bytes(b"\x89PNG\r\n\x1a\nxx")
+            svg.write_text("<svg/>")
+            pdf.write_bytes(b"%PDF-1.4 x")
+            bmp.write_bytes(b"BM")
+            self.assertEqual(T.image_block(png), {"type": "image", "source": {"type": "base64", "media_type": "image/png",
+                                                                          "data": __import__("base64").b64encode(png.read_bytes()).decode()}})
+            self.assertEqual(T.image_block(svg, pdf)["source"]["media_type"], "application/pdf")
+            self.assertEqual(T.image_block(svg, pdf)["type"], "document")
+            with self.assertRaises(ValueError):
+                T.image_block(bmp)
+            with mock.patch.object(T, "MAX_IMAGE", 3), self.assertRaises(ValueError):
+                T.image_block(png)
+            parts = {"meta": {"title": "Kraft", "language": "GER"}, "preamble": "\\NewQty{F}{12}[\\newton]",
+                     "text": "Eine Kraft \\FO.\n\\includegraphics[width=5cm]{#image_path:kraft-1#}", "solution": "s", "short": "k"}
+            kw = T.request(parts, "kraft-1", T.image_block(png), "\\begin{tikzpicture}\\end{tikzpicture}")
+        self.assertEqual((kw["model"], kw["betas"], kw["fallbacks"]), ("claude-opus-5-5", ["server-side-fallback-2026-07-01"], "default"))
+        self.assertEqual(kw["output_config"]["format"]["schema"]["required"], ["code", "notes"])
+        block, text = kw["messages"][0]["content"]
+        self.assertEqual(block["type"], "image")
+        self.assertIn("\\includegraphics[width=5cm]{#image_path:kraft-1#}", text["text"])
+        self.assertIn('"solver": "\\\\NewQty{F}{12}[\\\\newton]"', text["text"])
+        self.assertIn('"lang": "de"', text["text"])
+        self.assertIn("<draft>\n\\begin{tikzpicture}", text["text"])
+        self.assertIn("arrows.meta", kw["system"][0]["text"])
+        self.assertIn("\\XO", kw["system"][0]["text"])
+        # the answer
+        resp = lambda text, stop="end_turn": FakeAPI.response(text=text, stop=stop)
+        self.assertEqual(T.answer(resp(json.dumps({"code": "```latex\n" + fig + "\n```", "notes": "the angle is guessed"}))), (fig, "the angle is guessed"))
+        for r, why in ((resp("", "refusal"), "declined"), (resp("{", "max_tokens"), "too long"), (resp("{oops"), "not JSON"),
+                       (resp(json.dumps({"notes": "x"})), "no code"), (resp(json.dumps({"code": "\\draw;", "notes": ""})), "one environment")):
+            with self.assertRaises(ValueError) as cm:
+                T.answer(r)
+            self.assertIn(why, str(cm.exception))
+
     def test_table_and_macros(self):
         e = self.ex("\\newcommand{\\twice}[1]{2#1}\\def\\half{\\frac12}")
         h = e.html("\\begin{tabular}{lc}\n a & $Q$ \\\\ \\hline\n \\multicolumn{2}{c}{both}\n\\end{tabular} $\\twice{x} \\half$")
@@ -1224,6 +1296,16 @@ class AutoCategories(unittest.TestCase):
             self.assertFalse(self.cz.start())
             self.assertEqual(self.cz.status()["message"], H.NO_KEY)
         self.assertIn("ANTHROPIC_API_KEY to /etc/hub-admin/anthropic.env", H.NO_KEY)
+
+    def test_workspace_header(self):
+        made = []
+        fake = type(sys)("anthropic")
+        fake.Anthropic = lambda **kw: made.append(kw) or object()
+        for ws, want in (("", {}), ("wrkspc_1", {"default_headers": {"anthropic-workspace-id": "wrkspc_1"}})):
+            env = {**os.environ, "ANTHROPIC_API_KEY": "k", "ANTHROPIC_WORKSPACE_ID": ws}
+            with mock.patch.dict(sys.modules, {"anthropic": fake}), mock.patch.dict(os.environ, env, clear=True):
+                self.assertEqual(self.cz.connect()[2], "")
+            self.assertEqual(made.pop(), want)
 
 
 class AllInUnit(unittest.TestCase):
@@ -1952,7 +2034,9 @@ class Service(unittest.TestCase):
         self.assertEqual(self.req("/api/exercise-audit")[0], 403)
         self.assertEqual(self.req("/api/exercise-audit", cookie=anna)[0], 403)
         st, _, body = self.req("/api/exercise-audit", cookie=boss)
-        self.assertEqual((st, json.loads(body)), (200, {"report": None, "feedback": {}, "topics": {"areas": [], "of": {}}}))  # none yet
+        got = json.loads(body)
+        self.assertEqual((st, {k: got[k] for k in ("report", "feedback", "topics", "images")}),
+                         (200, {"report": None, "feedback": {}, "topics": {"areas": [], "of": {}}, "images": {}}))  # none yet
         report = {"generated": "2026-10-15", "source": "review of the export", "reviewed": 844, "exercises": [
             {"id": 12345, "key": "e12345-slug", "title": "Ein <b>Titel</b>", "lang": "GER", "url": "/exercise/slug/",
              "collections": ["Kinematik 1", 7, "", "Kinematik 1", "Dynamik\n2", None, "x" * 300] + [f"c{i}" for i in range(60)], "issues": [
@@ -2076,6 +2160,142 @@ class Service(unittest.TestCase):
         self.audit(report, boss)
         self.assertEqual(json.loads(self.req("/api/exercise-audit/export", cookie=boss)[2])["exercises"], [])
         self.assertIn("11", json.loads(self.req("/api/exercise-audit/feedback", cookie=boss)[2])["feedback"])
+
+    def test_exercise_audit_tikz(self):
+        """An image of a reviewed exercise replaced by TikZ: the exercise's images listed (by key, else by
+        id), the figure drawn (the renderer mocked: drawn, pending, LaTeX's error), Claude's draft (a fake
+        API, in the background; the image and the exercise sent), saved, checked, removed and exported, the
+        superuser only; without the package or key, said why."""
+        key = next(k for k in S.load_pool()["coulomb"]["exercises"] if k.startswith("coulomb-"))
+        png = b"\x89PNG\r\n\x1a\n" + b"\0" * 40
+        buf = io.BytesIO()
+        with zipfile.ZipFile(io.BytesIO(self.drafts_zip(extra={key: (key, {"id": 4242})}))) as src, zipfile.ZipFile(buf, "w") as z:
+            for n in src.namelist():
+                data = src.read(n)
+                z.writestr(n, data + b"\n\\includegraphics[width=4cm]{#image_path:coil-1#}\n" if n.endswith("/text.tex") else data)
+        boss = self.cookie_of("samuel.byland", "teacher pw")
+        pw = self.teachers({"action": "create", "id": "abc", "user": "anna"}, boss)[1]["password"]
+        anna = self.cookie_of("anna", pw)
+        self.assertEqual(self.req("/api/texercises", buf.getvalue(), "application/zip", boss)[0], 200)
+        issue = [{"severity": "warning", "category": "figure", "where": "text", "issue": "the image is blurred"}]
+        self.assertEqual(self.audit({"exercises": [{"id": 4242, "key": "renamed-on-texercises", "title": "H", "issues": issue},
+                                                   {"key": "elsewhere", "title": "X", "issues": issue}]}, boss)[0], 200)
+        got = json.loads(self.req("/api/exercise-audit", cookie=boss)[2])
+        self.assertEqual(got["images"], {"4242": [{"name": "coil-1", "url": None, "pdf": False}]})  # (found by its id; not uploaded yet)
+        self.assertIsInstance(got["claude"], str)
+        self.assertIsInstance(got["figures"], bool)
+        self.assertEqual(self.req(f"/api/texercises?image=coil.png&keys={key}&gallery=coil-1", png, "application/octet-stream", boss)[0], 200)
+        url = json.loads(self.req("/api/exercise-audit", cookie=boss)[2])["images"]["4242"][0]["url"]
+        self.assertRegex(url, r"^/admin/sheet/img/.+\.png$")
+        self.assertEqual(self.req(url[len("/admin"):], cookie=boss)[2], png)
+        post = lambda path, body, who=boss: self.req(path, json.dumps(body).encode(), "application/json", who)
+        fig = "\\begin{tikzpicture}\n\\draw (0,0) circle (1) node {\\rHO};\n\\end{tikzpicture}"
+        # the superuser only
+        for path, body in (("/api/exercise-audit/tikz/preview", {"exercise": "4242", "code": fig}),
+                           ("/api/exercise-audit/tikz/draft", {"exercise": "4242", "image": "coil-1"}),
+                           ("/api/exercise-audit/feedback", {"exercise": "4242", "tikz": {"image": "coil-1", "code": fig}})):
+            for who in (None, anna):
+                self.assertEqual(post(path, body, who)[0], 403, path)
+        for who in (None, anna):
+            self.assertEqual(self.req("/api/exercise-audit/tikz/draft?exercise=4242&image=coil-1", cookie=who)[0], 403)
+        # the preview: drawn with the exercise's solver part and language (the renderer mocked)
+        figs = H.sheets_module("figures")
+        asked = []
+        def figure(cache, preamble, lang, source):
+            asked.append((preamble, lang, source))
+            return state
+        with mock.patch.object(figs, "available", return_value=True), mock.patch.object(figs, "figure", side_effect=figure), \
+                mock.patch.object(figs, "failure", return_value="Undefined control sequence.\nline 2 of the figure: \\rHO"):
+            state = {"svg": "a" * 32 + ".svg", "width": 80.0, "height": 40.0}
+            st, _, body = post("/api/exercise-audit/tikz/preview", {"exercise": "4242", "code": fig})
+            self.assertEqual((st, json.loads(body)), (200, {"url": f"/admin/sheet/fig/{'a' * 32}.svg", "width": 80.0, "height": 40.0}))
+            self.assertIn("\\NewQty{rH}{5.3e-11}[\\meter]", asked[0][0])
+            self.assertEqual(asked[0][1:], ("en", fig))
+            state = {"pending": True}
+            self.assertEqual(json.loads(post("/api/exercise-audit/tikz/preview", {"exercise": "4242", "code": fig})[2]), {"pending": True})
+            state = {}
+            self.assertEqual(json.loads(post("/api/exercise-audit/tikz/preview", {"exercise": "4242", "code": fig})[2]),
+                             {"error": "Undefined control sequence.\nline 2 of the figure: \\rHO"})
+            for bad in ({"exercise": "4242", "code": "\\draw;"}, {"exercise": "999", "code": fig}, {"exercise": "../x", "code": fig},
+                        {"exercise": "4242", "code": "\\begin{tikzpicture}\\directlua{x}\\end{tikzpicture}"}):
+                self.assertEqual(post("/api/exercise-audit/tikz/preview", bad)[0], 400, bad)
+            self.assertEqual(len(asked), 3)
+            # an exercise not in the export: drawn without a solver part
+            asked.clear()
+            state = {"pending": True}
+            post("/api/exercise-audit/tikz/preview", {"exercise": "key:elsewhere", "code": fig})
+            self.assertEqual(asked, [("", "en", fig)])
+        with mock.patch.object(figs, "available", return_value=False):
+            self.assertIn("cannot draw", json.loads(post("/api/exercise-audit/tikz/preview", {"exercise": "4242", "code": fig})[2])["error"])
+        # Claude's draft: in the background, asked for until it is there
+        cz = self.admin.categoriser
+        sent, gate = [], threading.Event()
+        def call(kwargs):
+            sent.append(kwargs)
+            gate.wait(5)
+            return FakeAPI.response(text=json.dumps({"code": fig, "notes": "the radius is a guess"}))
+        poll = lambda: json.loads(self.req("/api/exercise-audit/tikz/draft?exercise=4242&image=coil-1", cookie=boss)[2])
+        self.assertEqual(poll(), {})  # none asked for
+        with mock.patch.object(cz, "connect", return_value=(call, FakeAPI, "")):
+            st, _, body = post("/api/exercise-audit/tikz/draft", {"exercise": "4242", "image": "coil-1", "code": "\\begin{tikzpicture}\\end{tikzpicture}"})
+            self.assertEqual((st, json.loads(body)), (200, {"pending": True}))
+            self.assertEqual(json.loads(post("/api/exercise-audit/tikz/draft", {"exercise": "4242", "image": "coil-1"})[2]), {"pending": True})  # (once)
+            self.assertEqual(poll(), {"pending": True})
+            gate.set()
+            for _ in range(100):
+                d = poll()
+                if not d.get("pending"):
+                    break
+                time.sleep(0.02)
+            self.assertEqual((d["code"], d["notes"], d["model"], d["usage"]["output"]), (fig, "the radius is a guess", "claude-opus-5-5", 200))
+            self.assertEqual(len(sent), 1)
+            image, text = sent[0]["messages"][0]["content"]
+            self.assertEqual(image["source"], {"type": "base64", "media_type": "image/png", "data": __import__("base64").b64encode(png).decode()})
+            self.assertIn("#image_path:coil-1#", text["text"])
+            self.assertIn("<draft>", text["text"])
+            # refused: not an image of the exercise, not an exercise of the review, an error of the API
+            for bad in ({"exercise": "4242", "image": "coil-2"}, {"exercise": "4242", "image": "../x"}, {"exercise": "key:elsewhere", "image": "coil-1"},
+                        {"exercise": "777", "image": "coil-1"}):
+                self.assertEqual(post("/api/exercise-audit/tikz/draft", bad)[0], 400, bad)
+        def refusing(kwargs):
+            raise FakeAPI.AuthenticationError("invalid x-api-key", 401)
+        with mock.patch.object(cz, "connect", return_value=(refusing, FakeAPI, "")):
+            post("/api/exercise-audit/tikz/draft", {"exercise": "4242", "image": "coil-1"})
+            for _ in range(100):
+                d = poll()
+                if not d.get("pending"):
+                    break
+                time.sleep(0.02)
+            self.assertIn("the API key was not accepted", d["error"])
+        # without the package or the key: said why, nothing started
+        with mock.patch.object(cz, "connect", return_value=(None, None, H.NO_KEY)):
+            st, _, body = post("/api/exercise-audit/tikz/draft", {"exercise": "4242", "image": "coil-1"})
+            self.assertEqual((st, json.loads(body)["error"]), (400, H.NO_KEY))
+        with mock.patch("importlib.util.find_spec", return_value=None):
+            self.assertEqual(json.loads(self.req("/api/exercise-audit", cookie=boss)[2])["claude"], H.NO_PACKAGE)
+        with mock.patch.dict(sys.modules, {"anthropic": None}):
+            st, _, body = post("/api/exercise-audit/tikz/draft", {"exercise": "4242", "image": "coil-1"})
+            self.assertEqual((st, json.loads(body)["error"]), (400, H.NO_PACKAGE))
+        # saved in the feedback, checked, exported (an exercise with only a figure too), removed
+        feedback = lambda body: post("/api/exercise-audit/feedback", {"exercise": "4242", **body})
+        for bad in ({"tikz": {"image": "coil-1", "code": "\\draw;"}}, {"tikz": {"image": "../x", "code": fig}}, {"tikz": "x"},
+                    {"tikz": {"image": "coil-1", "code": 5}}, {"tikz": {"image": "coil-1", "code": "\\begin{tikzpicture}" + "x" * H.MAX_AUDIT_TIKZ + "\\end{tikzpicture}"}}):
+            self.assertEqual(feedback(bad)[0], 400, bad)
+        st, _, body = feedback({"tikz": {"image": "coil-1", "code": fig + "\r\n"}})
+        d = json.loads(body)
+        self.assertEqual((st, d["comment"], d["accepted"], d["tikz"]["coil-1"]["code"]), (200, "", [], fig))
+        self.assertEqual(json.loads(self.req("/api/exercise-audit/feedback", cookie=boss)[2])["feedback"]["4242"]["tikz"]["coil-1"]["code"], fig)
+        out = json.loads(self.req("/api/exercise-audit/export", cookie=boss)[2])["exercises"]
+        self.assertEqual([(e["id"], e["accepted"], e["comment"], e["tikz"]) for e in out], [(4242, [], "", [{"image": "coil-1", "code": fig}])])
+        with mock.patch.object(H, "MAX_AUDIT_TIKZ_IMAGES", 1):
+            self.assertEqual(feedback({"tikz": {"image": "coil-2", "code": fig}})[0], 400)
+        feedback({"comment": "see the figure"})
+        self.assertEqual(json.loads(self.req("/api/exercise-audit/export", cookie=boss)[2])["exercises"][0]["tikz"][0]["image"], "coil-1")
+        self.assertEqual(json.loads(feedback({"tikz": {"image": "coil-1", "code": ""}})[2])["tikz"], {})
+        out = json.loads(self.req("/api/exercise-audit/export", cookie=boss)[2])["exercises"]
+        self.assertEqual([(e["comment"], e["tikz"]) for e in out], [("see the figure", [])])
+        feedback({"comment": ""})
+        self.assertEqual(json.loads(self.req("/api/exercise-audit/feedback", cookie=boss)[2])["feedback"], {})  # nothing left of it
 
     def test_new_exercises_endpoints(self):
         """The new exercises (categories-extra): the superuser alone reads them and asks for them to be

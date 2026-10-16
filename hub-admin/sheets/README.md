@@ -121,6 +121,19 @@ here as JSON (`/admin/api/exercise-audit`, `normalize_audit` in `../hubadmin.py`
   `exercise-review-feedback-YYYY-MM-DD.json`: the report's date and source, and every exercise with an
   accepted fix or a comment (id, key, title, language, address, collections), its accepted issues, the
   others (`not_accepted`) and the comment, for Claude to work on.
+- **Replace with TikZ**: an exercise of the report that is in the uploaded export and uses gallery
+  images lists them; each can be redrawn as TikZ in an editor: the original image (if it is on the
+  server), the code (one `tikzpicture` or `circuitikz`, at most 20 KB; no files, Lua, packages or
+  libraries beyond those of `texercises-lp.sty`: `tikzdraft.check`) and its drawing, made by
+  `figures.py` with the exercise's solver part, as its own figures
+  (`/admin/api/exercise-audit/tikz/preview`; LaTeX's first error, its line counted in the figure, if it
+  fails). **Draft with Claude** (`tikzdraft.py`, through the same API key as the new exercises;
+  disabled, with the reason, without the anthropic package or key) sends the image (a PNG, JPEG, GIF or
+  WebP; an SVG's PDF copy as a PDF) and the exercise's LaTeX and asks for a faithful TikZ figure with the
+  given quantities' macros (`\XO`) in the labels; it runs in the background
+  (`/admin/api/exercise-audit/tikz/draft`, asked for until it is there). **Save** keeps the figure in
+  the feedback (`"tikz"`, per image; **Remove** drops it); the export has it per exercise as
+  `"tikz": [{"image", "code"}]`, an exercise with only a figure too.
 
 ## New exercises (Sheets tab, the superuser's)
 
@@ -158,15 +171,25 @@ topic filter use it at once.
 
 On the server, once (optional; without it new exercises stay provisional):
 
-    sudo pip3 install --break-system-packages anthropic      # or the distro's python3-anthropic, if there is one
+    sudo apt install -y python3-pip                            # if pip3 is missing
+    sudo pip3 install --break-system-packages --target /opt/hub-admin-pylib anthropic
     sudo install -d -m 755 /etc/hub-admin
     sudo install -m 600 -o root -g root /dev/null /etc/hub-admin/anthropic.env
-    sudoedit /etc/hub-admin/anthropic.env                      # one line: ANTHROPIC_API_KEY=<the key>
-    sudo cp hub-admin/hub-admin.service /etc/systemd/system/   # (it reads that file: EnvironmentFile)
+    sudoedit /etc/hub-admin/anthropic.env                      # ANTHROPIC_API_KEY=<the key>
+                                                               # PYTHONPATH=/opt/hub-admin-pylib
+                                                               # ANTHROPIC_WORKSPACE_ID=wrkspc_…  (only for a key
+                                                               #   not scoped to a workspace)
+    sudo mkdir -p /etc/systemd/system/hub-admin.service.d      # let the running service read that file
+    printf '[Service]\nEnvironmentFile=-/etc/hub-admin/anthropic.env\n' | sudo tee /etc/systemd/system/hub-admin.service.d/anthropic.conf
     sudo systemctl daemon-reload && sudo systemctl restart hub-admin
 
+(The unit file is not deployed to the server, so the drop-in adds the `EnvironmentFile` line that
+`hub-admin.service` in this repository already has; installing that unit fresh needs no drop-in.)
+
 The service must reach `https://api.anthropic.com` (nothing to change unless outbound traffic is
-restricted). The key never goes into this repository or `hub-data/`.
+restricted). The key never goes into this repository or `hub-data/`. The package goes into its own
+folder (`--target`) because a plain `pip3 install` on Debian fails trying to replace Debian's own
+`typing_extensions`; `PYTHONPATH` in the env file lets only hub-admin see that folder.
 
 The TeXercises review page that was at learningphysics.ch/texercises/ is gone: nginx sends its old
 addresses to the admin panel. What it kept on the server (`hub-data/texercises-review/`) is no longer
