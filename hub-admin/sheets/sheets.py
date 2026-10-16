@@ -1,25 +1,34 @@
 """Exercise sheets (used by ../hubadmin.py): which exercises a sheet suggests, their alternatives,
 and the PDF made from them with build_sheet.py and LuaLaTeX.
 
-A sheet is made in three steps. 1. Topics: TeXercises topics (the subbranches of the exercises'
-exercise.json, exercise_topics). 2. Learning objectives: pool.json (build_pool.py, reviewed by hand) lists
+A sheet is made in three steps. 1. Topics: the subtopics of categories.json (Claude's reading of every
+exercise of the export: area -> topic -> subtopic, the exercise's main subtopic, its task kind, the laws
+and mathematics it needs, near-duplicates; load_categories, topic_tree), and "not yet categorised"
+(NEW) for the exercises it does not know; a sheet saved before may name TeXercises topics (the
+subbranches of exercise.json, exercise_topics), which still match (on_topics). 2. Learning objectives: pool.json (build_pool.py, reviewed by hand) lists
 for every app (module of the hub) and objective the TeXercises exercises that practise it, best first;
 of those on the topics, the teacher ticks objectives (objective_keys), and maybe the exercises on the
-topics that the pool links to none (loose_keys). 3. Balance: the share of concept questions (TeXercises
-types descriptive and true/false; "Both" counts for whichever the sheet lacks; the others are textbook
-problems, kind) and of easy, medium and hard exercises (default_difficulty 1, 2 or none, 3 and more:
+topics that the pool links to none (loose_keys). 3. Balance: the share of concept questions (the task
+kind of categories.json: concept and explain; graph is "Both", it counts for whichever the sheet lacks;
+the others are textbook problems; without a category, by the TeXercises type: descriptive and
+true/false, "Both", the others; kind, task_kind) and of easy, medium and hard exercises (default_difficulty 1, 2 or none, 3 and more:
 band), by default BALANCE. suggest() fills a sheet from that: round by round over the ticked objectives
 (buckets, in the modules' order, the loose ones last), each that has fewer exercises than the round's
 number gets one more, so every objective has one before any has two (after the first round, or from the
 start if the sheet has fewer exercises than objectives, the slots left that are all needed for concept
 questions, problems or a difficulty go only to objectives that have one);
 of an objective's exercises it takes one in the sheet's language first, then the one that brings the sheet nearest to its aims (aims:
-the concept questions and the difficulty it lacks most), then one without image, then the pool's order.
+the concept questions and the difficulty it lacks most), then one not too similar (TOO_SIMILAR) to those already
+chosen, then one without image, then the pool's order; never one that is a near-duplicate (near_dup: flagged
+so in categories.json, or a similarity of NEAR_DUP or more) of one chosen, nor one flagged broken.
 What the topics and objectives cannot give is said (notes: "only 2 concept questions on these topics and objectives").
 By default PER_OBJECTIVE per objective, at most DEFAULT_MAX; the teacher may ask for another number (up
 to MAX_EXERCISES). The suggestion depends only on the sheet and the exercises, so it is the same every
-time. alternatives() lists, for an exercise of a sheet, others of the same objectives not on the sheet:
-the sheet's language first, then the same kind, then a similar difficulty.
+time. alternatives() lists, for an exercise of a sheet, others of the same objectives not on the sheet
+and no near-duplicate of the others on it: the sheet's language first, then the most similar
+(similarity, as categories.json's similarity.md: topic, laws, task kind, difficulty, mathematics, steps,
+representations, context), then the same kind, then a similar difficulty; similar() the most similar
+exercises of all those there.
 
 The exercises themselves come from the TeXercises export uploaded in the admin panel (only the
 teacher's own, see store_export) and from the drafts that deploy.sh puts next to this file
@@ -37,6 +46,7 @@ from __future__ import annotations
 import hashlib
 import io
 import json
+import math
 import os
 import re
 import shutil
@@ -143,18 +153,109 @@ def band(difficulty: object) -> int:
     return min(max(d, 1), 3)
 
 
+# ---------------------------------------------------------------------- categories.json
+CATEGORIES = HERE / "categories.json"
+NEW = "_new"  # a sheet's topic: the exercises categories.json does not know (uploaded since)
+CONCEPT_TASKS, BOTH_TASKS = ("concept", "explain"), ("graph",)  # task kinds: concept questions, "Both" (the others problems)
+TASKS = ("concept", "explain", "calculate", "derive", "show", "graph", "estimate", "data")
+TASK_GROUP = {"concept": "qual", "explain": "qual", "calculate": "quant", "derive": "quant", "show": "quant",
+              "estimate": "quant", "graph": "repr", "data": "repr"}
+WEIGHTS = {"topic": 0.35, "laws": 0.20, "kind": 0.15, "difficulty": 0.10, "math": 0.07, "steps": 0.05, "repr": 0.04, "context": 0.04}
+NEAR_DUP = 0.9  # a similarity from which two exercises never go on one sheet
+TOO_SIMILAR = 0.75  # one as similar to one chosen comes after another that fits as well
+_cats: Dict[str, object] = {}
+
+
+def _strs(v: object, limit: int = 40) -> List[str]:
+    return [x for x in v if isinstance(x, str)][:limit] if isinstance(v, list) else []
+
+
+def load_categories(path: Optional[Path] = None) -> Dict[str, object]:
+    """categories.json, read once (again when it changes): {"stamp", "tree": [(area, [(topic,
+    [(subtopic id, label)])])] in its order, "flat": subtopic id -> (area, topic, label), "exercises":
+    TeXercises id (a string) -> its entry (sub, sub2, kind, kinds, steps, laws, math, repr, context,
+    flag), "idf": law -> log(N / exercises that use it)}; all empty if it is missing or unreadable."""
+    path = path or CATEGORIES
+    try:
+        st = path.stat()
+        stamp = (str(path), st.st_mtime_ns, st.st_size)
+    except OSError:
+        stamp = (str(path), 0, 0)
+    with _metas_guard:
+        if _cats.get("stamp") == stamp:
+            return _cats
+    try:
+        raw = json.loads(path.read_text(encoding="utf-8")) if stamp[1] else {}
+    except (OSError, ValueError):
+        raw = {}
+    raw = raw if isinstance(raw, dict) else {}
+    tree, flat = [], {}
+    for area, topics in (raw.get("tree") or {}).items() if isinstance(raw.get("tree"), dict) else []:
+        rows = []
+        for topic, subs in topics.items() if isinstance(topics, dict) else []:
+            subs = [(i, str(label)) for i, label in subs.items() if isinstance(i, str) and i not in flat] if isinstance(subs, dict) else []
+            for i, label in subs:
+                flat[i] = (str(area), str(topic), label)
+            rows.append((str(topic), subs))
+        tree.append((str(area), rows))
+    exs = {}
+    for eid, e in (raw.get("exercises") or {}).items() if isinstance(raw.get("exercises"), dict) else []:
+        if not isinstance(e, dict) or e.get("sub") not in flat:
+            continue
+        task = e.get("kind") if e.get("kind") in TASKS else "calculate"
+        steps = e.get("steps") if isinstance(e.get("steps"), int) and not isinstance(e.get("steps"), bool) else 1
+        exs[str(eid)] = {"sub": e["sub"], "sub2": [x for x in _strs(e.get("sub2")) if x in flat and x != e["sub"]], "kind": task,
+                         "kinds": [x for x in _strs(e.get("kinds")) if x in TASKS] or [task], "steps": min(max(steps, 1), 3),
+                         "laws": _strs(e.get("laws")), "math": _strs(e.get("math")), "repr": _strs(e.get("repr")),
+                         "context": e.get("context") if isinstance(e.get("context"), str) else "",
+                         "flag": e.get("flag") if isinstance(e.get("flag"), str) and e.get("flag") else None}
+    df: Dict[str, int] = {}
+    for e in exs.values():
+        for law in set(e["laws"]):
+            df[law] = df.get(law, 0) + 1
+    out = {"stamp": stamp, "tree": tree, "flat": flat, "exercises": exs, "idf": {law: math.log(len(exs) / n) for law, n in df.items()}}
+    with _metas_guard:
+        _cats.clear()
+        _cats.update(out)
+    return out
+
+
+def task_kind(task: object) -> str:
+    """What an exercise of a task kind of categories.json is: concept and explain concept questions,
+    graph "Both" (it counts for whichever the sheet lacks), the others textbook problems."""
+    return CONCEPT if task in CONCEPT_TASKS else BOTH if task in BOTH_TASKS else PROBLEM
+
+
+def _category(eid: Optional[int], difficulty: Optional[int], cats: Dict[str, object]) -> Dict[str, object]:
+    """What exercise_meta adds for an exercise categories.json knows (else nothing)."""
+    c = cats["exercises"].get(str(eid)) if eid is not None else None
+    if not c:
+        return {}
+    area, topic, label = cats["flat"][c["sub"]]
+    idf = cats["idf"]
+    feats = {"sub": c["sub"], "sub2": frozenset(c["sub2"]), "area": area, "topic": (area, topic), "laws": frozenset(c["laws"]),
+             "norm": math.sqrt(sum(idf.get(x, 0.0) ** 2 for x in set(c["laws"]))), "task": c["kind"], "kinds": frozenset(c["kinds"]),
+             "math": frozenset(c["math"]), "steps": c["steps"], "repr": frozenset(c["repr"]), "context": c["context"],
+             "difficulty": min(max(difficulty if difficulty is not None else 2, 1), 5)}
+    return {"area": area, "topic": topic, "subtopic": {"id": c["sub"], "label": label}, "secondary": list(c["sub2"]),
+            "task": c["kind"], "flag": c["flag"], "features": feats}
+
+
 def exercise_meta(folder: Path) -> Dict[str, object]:
-    """What a sheet needs of an exercise: {title, lang (en, de), difficulty (None if not given), type,
-    kind, band, topics, images, url}, read from its exercise.json (and text.tex: does it use a gallery
-    image?), kept while the files are unchanged."""
+    """What a sheet needs of an exercise: {title, id (TeXercises', or None), lang (en, de), difficulty
+    (None if not given), type, kind, band, topics (TeXercises'), images, url}, and, if categories.json
+    knows it, {area, topic, subtopic: {id, label}, secondary: [subtopic ids], task (its task kind), flag
+    ("dup:<id>", "broken" or None), features (for similarity)}; the kind then by its task kind. Read from
+    its exercise.json (and text.tex: does it use a gallery image?), kept while the files are unchanged."""
+    cats = load_categories()
     try:
         stamp = ((folder / "exercise.json").stat().st_mtime_ns,
-                 (folder / "text.tex").stat().st_mtime_ns if (folder / "text.tex").is_file() else 0)
+                 (folder / "text.tex").stat().st_mtime_ns if (folder / "text.tex").is_file() else 0, cats["stamp"])
     except OSError:
-        stamp = (0, 0)
+        stamp = (0, 0, None)
     with _metas_guard:
         hit = _metas.get(str(folder))
-    if hit and hit[0] == stamp and stamp != (0, 0):
+    if hit and hit[0] == stamp and stamp[:2] != (0, 0):
         return hit[1]
     try:
         meta = json.loads((folder / "exercise.json").read_text(encoding="utf-8"))
@@ -174,6 +275,12 @@ def exercise_meta(folder: Path) -> Dict[str, object]:
            "type": meta.get("type") if isinstance(meta.get("type"), int) and not isinstance(meta.get("type"), bool) else None,
            "kind": kind(meta.get("type")), "band": band(diff), "topics": clean_topics(meta.get("subbranches")),
            "images": "#image_path:" in text, "url": url if isinstance(url, str) and re.fullmatch(r"/exercise/[A-Za-z0-9_-]+/?", url) else None}
+    eid = meta.get("id") if isinstance(meta.get("id"), int) and not isinstance(meta.get("id"), bool) else None
+    out = {"title": out["title"], "id": eid, **{k: v for k, v in out.items() if k != "title"}}
+    more = _category(eid, diff, cats)
+    if more:
+        out.update(more)
+        out["kind"] = task_kind(more["task"])
     with _metas_guard:
         _metas[str(folder)] = (stamp, out)
     return out
@@ -199,10 +306,117 @@ def topic_counts(have: Dict[str, Path]) -> List[Dict[str, object]]:
     return out + ([{"name": "", **none}] if none["exercises"] and counts else [])
 
 
+def topic_tree(have: Dict[str, Path]) -> Dict[str, object]:
+    """Step 1 of a sheet: categories.json's tree of the exercises there (have), by their main subtopic, each
+    node with how many of them (and of them concept questions and of the kind "Both"): {"areas": [{"name",
+    "exercises", "concept", "both", "topics": [{"name", ..., "subtopics": [{"id", "label", ...}]}]}], "new":
+    the same numbers of those it does not know (id NEW)}; only nodes with exercises, in its order."""
+    cats = load_categories()
+    zero = lambda: {"exercises": 0, CONCEPT: 0, BOTH: 0}
+    subs: Dict[str, Dict[str, int]] = {}
+    new = zero()
+    for e in catalog(have).values():
+        sub = (e.get("subtopic") or {}).get("id")
+        c = subs.setdefault(sub, zero()) if sub else new
+        c["exercises"] += 1
+        if e["kind"] != PROBLEM:
+            c[e["kind"]] += 1
+    add = lambda total, part: {k: total[k] + part[k] for k in total}
+    areas = []
+    for area, topics in cats["tree"]:
+        rows = []
+        for topic, items in topics:
+            leaves = [{"id": i, "label": label, **subs[i]} for i, label in items if i in subs]
+            if leaves:
+                n = zero()
+                for x in leaves:
+                    n = add(n, {k: x[k] for k in n})
+                rows.append({"name": topic, **n, "subtopics": leaves})
+        if rows:
+            n = zero()
+            for x in rows:
+                n = add(n, {k: x[k] for k in n})
+            areas.append({"name": area, **n, "topics": rows})
+    return {"areas": areas, "new": {"id": NEW, **new}}
+
+
 def on_topics(entry: Dict[str, object], topics: List[str]) -> bool:
-    """Is an exercise (its exercise_meta) on one of the topics ("": without a topic)?"""
+    """Is an exercise (its exercise_meta) on one of the topics: its main subtopic (categories.json), NEW
+    for one categories.json does not know, or (a sheet saved before) one of its TeXercises topics ("":
+    without one)?"""
+    sub = (entry.get("subtopic") or {}).get("id")
+    if (sub in topics) if sub else (NEW in topics):
+        return True
     mine = entry.get("topics") or []
     return any(t in topics for t in mine) or ("" in topics and not mine)
+
+
+def similarity(a: Dict[str, object], b: Dict[str, object], cats: Optional[Dict[str, object]] = None) -> float:
+    """How similar two exercises (their exercise_meta) are, 0 to 1 (0 if categories.json does not know
+    one): the weighted sum (WEIGHTS) of the similarity of their subtopics (1 the same, 0.7 one's main is
+    the other's secondary, 0.5 the same topic, 0.4 a secondary in common, 0.15 the same area), laws (the
+    cosine of their sets, each law weighted by its idf), task kinds (0.7 x (1 the same, 0.5 the same
+    group) + 0.3 x the overlap of all their kinds), difficulty (1 - difference / 4), mathematics, steps
+    (1 - difference / 2), representations and context (the same or not). The language does not count."""
+    x, y = a.get("features"), b.get("features")
+    if not x or not y:
+        return 0.0
+    idf = (cats or load_categories())["idf"]
+    jacc = lambda p, q: 1.0 if not p and not q else len(p & q) / len(p | q)
+    if x["sub"] == y["sub"]:
+        topic = 1.0
+    elif x["sub"] in y["sub2"] or y["sub"] in x["sub2"]:
+        topic = 0.7
+    elif x["topic"] == y["topic"]:
+        topic = 0.5
+    elif x["sub2"] & y["sub2"]:
+        topic = 0.4
+    else:
+        topic = 0.15 if x["area"] == y["area"] else 0.0
+    shared = x["laws"] & y["laws"]
+    laws = sum(idf.get(law, 0.0) ** 2 for law in shared) / (x["norm"] * y["norm"]) if shared and x["norm"] and y["norm"] else 0.0
+    same = 1.0 if x["task"] == y["task"] else 0.5 if TASK_GROUP.get(x["task"]) == TASK_GROUP.get(y["task"]) else 0.0
+    w = WEIGHTS
+    return (w["topic"] * topic + w["laws"] * laws + w["kind"] * (0.7 * same + 0.3 * jacc(x["kinds"], y["kinds"]))
+            + w["difficulty"] * (1 - abs(x["difficulty"] - y["difficulty"]) / 4) + w["math"] * jacc(x["math"], y["math"])
+            + w["steps"] * (1 - abs(x["steps"] - y["steps"]) / 2) + w["repr"] * jacc(x["repr"], y["repr"])
+            + w["context"] * (x["context"] == y["context"]))
+
+
+def near_dup(a: Dict[str, object], b: Dict[str, object], cats: Optional[Dict[str, object]] = None) -> bool:
+    """Never on one sheet: one flagged a duplicate of the other in categories.json (or both of the same
+    third), or a similarity of NEAR_DUP or more."""
+    return flagged_dup(a, b) or similarity(a, b, cats) >= NEAR_DUP - 1e-9
+
+
+def flagged_dup(a: Dict[str, object], b: Dict[str, object]) -> bool:
+    """Is one flagged a duplicate of the other in categories.json (or both of the same third)?"""
+    fa, fb = a.get("flag") or "", b.get("flag") or ""
+    return (a.get("id") is not None and fb == f"dup:{a['id']}") or (b.get("id") is not None and fa == f"dup:{b['id']}") \
+        or (fa.startswith("dup:") and fa == fb)
+
+
+_neighbours: Dict[Tuple[object, str], List[Tuple[str, float]]] = {}
+
+
+def similar(key: str, cat: Dict[str, Dict[str, object]], limit: int = 5, skip=()) -> List[Tuple[str, float]]:
+    """The exercises there (cat) most similar to key, [(key, similarity rounded to 2 places)], the most
+    similar first, without those in skip; none if categories.json does not know it."""
+    e = cat.get(key)
+    if not e or not e.get("features"):
+        return []
+    cats = load_categories()
+    token = (cats["stamp"], len(cat), hash(frozenset(cat)))
+    with _metas_guard:
+        near = _neighbours.get((token, key))
+    if near is None:
+        scored = [(k, similarity(e, c, cats)) for k, c in cat.items() if k != key and c.get("features")]
+        near = [(k, round(v, 3)) for k, v in sorted(scored, key=lambda x: (-x[1], x[0]))[:40]]
+        with _metas_guard:
+            if len(_neighbours) > 4000:
+                _neighbours.clear()
+            _neighbours[(token, key)] = near
+    return [(k, round(v, 2)) for k, v in near if k not in skip][:limit]
 
 
 def info(pool: Dict[str, object], key: str, apps: Optional[List[str]] = None) -> Optional[Tuple[str, Dict[str, object]]]:
@@ -312,6 +526,22 @@ def suggest(bks: List[Tuple[Tuple[Optional[str], Optional[str]], List[str]]], ca
     chosen: List[str] = []
     taken = set()
     origin: Dict[str, int] = {}
+    cats = load_categories()
+    sims: Dict[Tuple[str, str], float] = {}
+
+    def sim(a: str, b: str) -> float:
+        if (a, b) not in sims:
+            sims[(a, b)] = sims[(b, a)] = similarity(cat[a], cat[b], cats)
+        return sims[(a, b)]
+    for keys in members:  # flagged broken: never suggested
+        taken.update(k for k in keys if cat[k].get("flag") == "broken")
+
+    def clash(k: str) -> bool:
+        """A near-duplicate of one chosen."""
+        return any(sim(k, c) >= NEAR_DUP - 1e-9 or flagged_dup(cat[k], cat[c]) for c in chosen)
+    def crowded(k: str) -> bool:
+        """Too similar to one chosen (another as fitting comes first)."""
+        return any(sim(k, c) >= TOO_SIMILAR for c in chosen)
 
     def need(k: str) -> int:
         e = cat[k]
@@ -327,7 +557,7 @@ def suggest(bks: List[Tuple[Tuple[Optional[str], Optional[str]], List[str]]], ca
         elif want[PROBLEM] - got[PROBLEM] >= left:
             tests.append(lambda k: cat[k]["kind"] != CONCEPT)
         tests += [lambda k, b=b: cat[k]["band"] == b for b in BANDS if want[b] - got[b] >= left]
-        free = [k for keys in members for k in keys if k not in taken]
+        free = [k for keys in members for k in keys if k not in taken and not clash(k)]
         kept: List = []
         for t in tests:  # each as long as some exercise passes it and those kept
             if any(t(k) and all(x(k) for x in kept) for k in free):
@@ -340,10 +570,12 @@ def suggest(bks: List[Tuple[Tuple[Optional[str], Optional[str]], List[str]]], ca
             if len(chosen) >= count:
                 break
             tests = [] if room and rounds == 0 else musts()
-            free = [k for k in keys if k not in taken and all(t(k) for t in tests)]
-            if covered[i] > rounds or not free:
+            if covered[i] > rounds:
                 continue
-            k = min(free, key=lambda k: (cat[k]["lang"] != lang, -need(k), bool(cat[k]["images"]), keys.index(k)))
+            free = [k for k in keys if k not in taken and all(t(k) for t in tests) and not clash(k)]
+            if not free:
+                continue
+            k = min(free, key=lambda k: (cat[k]["lang"] != lang, -need(k), crowded(k), bool(cat[k]["images"]), keys.index(k)))
             e = cat[k]
             side = e["kind"]
             if side == BOTH:  # for whichever the sheet lacks more (concept questions on a tie)
@@ -396,17 +628,24 @@ def alternatives(key: str, sheet: List[str], bks: List[Tuple[object, List[str]]]
     first, those that share more objectives, the order of the objectives."""
     mine = [keys for _, keys in bks if key in keys] or [keys for _, keys in bks]
     e = cat.get(key) or {"kind": PROBLEM, "band": 2}
+    cats = load_categories()
+    others = [cat[k] for k in sheet if k != key and k in cat]
     order: Dict[str, Tuple[int, int]] = {}
     for keys in mine:
         for n, k in enumerate(keys):
-            if k != key and k not in sheet and k in cat:
-                shared, first = order.get(k, (0, n))
+            if k != key and k not in sheet and k in cat and k not in order:
+                if any(near_dup(cat[k], o, cats) for o in others):
+                    continue
+                order[k] = (0, n)
+            if k in order:
+                shared, first = order[k]
                 order[k] = (shared + 1, min(first, n))
+    sims = {k: round(similarity(e, cat[k], cats), 3) for k in order}
 
     def rank(k: str):
         c = cat[k]
         same = c["kind"] == e["kind"] or BOTH in (c["kind"], e["kind"])
-        return (c["lang"] != lang, not same, abs(c["band"] - e["band"]), bool(c["images"]), -order[k][0], order[k][1], k)
+        return (c["lang"] != lang, -sims[k], not same, abs(c["band"] - e["band"]), bool(c["images"]), -order[k][0], order[k][1], k)
     return sorted(order, key=rank)[:limit]
 
 

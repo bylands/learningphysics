@@ -62,9 +62,10 @@ cards in its order, shows their tags, and lets visitors filter by tag. This serv
     /admin/static/...    the panel's scripts and styles
 
 Exercise sheets (Sheets; sheets/sheets.py, sheets/preview.py): a sheet is the teacher's own,
-independent of the sets: a title, a language, modules (the hub's apps) and per module learning
-objectives, and its exercises in order, all kept in hub-data/exercise-sheets.json (not served). The
-panel suggests a balanced sheet from sheets/pool.json and alternatives for each exercise, and shows
+independent of the sets: a title, a language, its topics (subtopics of sheets/categories.json), modules
+(the hub's apps) and per module learning objectives, and its exercises in order, all kept in
+hub-data/exercise-sheets.json (not served). The panel suggests a balanced sheet from sheets/pool.json
+(no near-duplicates on one sheet), alternatives and the most similar exercises for each one, and shows
 the exercises with KaTeX; build_sheet.py and LuaLaTeX make the PDFs (they need LaTeX on the server,
 see sheets/README.md; without it the panel says so), cached in hub-data/sheets/. TikZ figures are
 drawn as SVG for the browser (sheets/figures.py, hub-data/sheet-figures/); the TeXercises gallery
@@ -188,7 +189,7 @@ AUDIT_SEVERITIES = ("error", "warning", "doubt")  # the most serious first
 # exercise sheets: their ids, the secret of a shared one's online version (in its address), limits
 SHEET_ID = re.compile(r"[0-9a-f]{12}")
 SHEET_TOKEN = re.compile(r"[A-Za-z0-9_-]{32}")
-MAX_SHEETS, MAX_MODULES, MAX_SHEET_EXERCISES, MAX_SHEET_TOPICS = 200, 40, 40, 60
+MAX_SHEETS, MAX_MODULES, MAX_SHEET_EXERCISES, MAX_SHEET_TOPICS = 200, 40, 40, 160  # (topics: all subtopics of categories.json can be ticked)
 SHEET_BALANCE = {"concept": 30, "easy": 30, "medium": 50, "hard": 20}  # in % (sheets.BALANCE)
 FETCH_RETRY = 600  # s: a gallery image TeXercises did not give is asked for again after this
 FETCH_FAILED = ".fetch-failed.json"  # in the images' folder: the fetches that failed
@@ -979,7 +980,8 @@ class Admin:
                                  key=lambda x: -x["updated"])
         state["apps"] = self.sheet_apps(sheetlib, have)
         state["topics"] = sheetlib.coverage(sheetlib.load_pool(), state["apps"], have) if sheetlib else []
-        state["subjects"] = sheetlib.topic_counts(have) if sheetlib else []  # the TeXercises topics of the exercises there
+        state["subjects"] = sheetlib.topic_counts(have) if sheetlib else []  # the TeXercises topics of the exercises there (sheets saved before)
+        state["tree"] = sheetlib.topic_tree(have) if sheetlib else {"areas": [], "new": {"id": "_new", "exercises": 0, "concept": 0, "both": 0}}
         figs = sheets_module("figures")
         state["figures"] = bool(figs and figs.available())
         state["own"] = self.own
@@ -999,6 +1001,12 @@ class Admin:
         exercises = sheetlib.suggest(bks, cat, lang, balance, count) if suggest else list(sheet["exercises"])
         size = count or len(exercises) or sheetlib.default_count(bks)
         alts = {k: sheetlib.alternatives(k, exercises, bks, cat, lang) for k in exercises}
+        similar = {}  # key -> [[key, similarity]]: the most similar of all those there, not on the sheet nor near-duplicates of the others on it
+        for k in exercises:
+            others = [cat[x] for x in exercises if x != k and x in cat]
+            near = [[x, v] for x, v in sheetlib.similar(k, cat, 40, set(exercises))
+                    if not any(sheetlib.near_dup(cat[x], o) for o in others)]
+            similar[k] = near[:5]
         ticked = {(m["id"], o) for m in sheet["modules"] for o in m["objectives"]}
         objectives = [{"app": m["app"], "objectives": [o for o in m["objectives"] if o["keys"] or (m["app"], o["id"]) in ticked]}
                       for m in sheetlib.objective_keys(apps, pool, cat, topics)]
@@ -1010,7 +1018,8 @@ class Admin:
             for o in a["objectives"]:
                 for k in objs.get(o["id"], []):
                     tied.setdefault(k, []).append([a["id"], o["id"]])
-        keys = set(exercises) | {k for v in alts.values() for k in v} | {k for m in objectives for o in m["objectives"] for k in o["keys"]} | set(loose)
+        keys = set(exercises) | {k for v in alts.values() for k in v} | {k for m in objectives for o in m["objectives"] for k in o["keys"]} | set(loose) \
+            | {x for v in similar.values() for x, _ in v}
         mods = [m["id"] for m in sheet["modules"]]
         details = {}
         for k in keys:
@@ -1023,12 +1032,16 @@ class Admin:
                           "band": sheetlib.band(e.get("difficulty")), "kind": e.get("kind") or sheetlib.kind(None),
                           "images": bool(e.get("images")), "app": found[0] if found else None, "available": k in have,
                           "topics": e.get("topics") or [], "objectives": tied.get(k, []),
+                          "subtopic": e.get("subtopic"), "area": e.get("area"), "topic": e.get("topic"), "task": e.get("task"), "flag": e.get("flag"),
                           "url": TEXERCISES + url if isinstance(url, str) and re.fullmatch(r"/exercise/[A-Za-z0-9_-]+/?", url) else None}
         on = list(dict.fromkeys(k for _, ks in bks for k in ks))
         available = {x: sum(cat[k]["kind"] == x for k in on) for x in (sheetlib.CONCEPT, sheetlib.BOTH, sheetlib.PROBLEM)}
         available.update({name: sum(cat[k]["band"] == b for k in on) for b, name in sheetlib.BANDS.items()})
-        return {"exercises": exercises, "details": details, "alternatives": alts, "objectives": objectives, "loose": loose,
-                "available": {"exercises": len(on), **available}, "count": size, "notes": sheetlib.notes(bks, cat, balance, size),
+        notes = sheetlib.notes(bks, cat, balance, size)
+        if suggest and len(exercises) < size <= len(on):
+            notes.append(f"only {len(exercises)} exercises that are no near-duplicates of each other on these topics and objectives")
+        return {"exercises": exercises, "details": details, "alternatives": alts, "similar": similar, "objectives": objectives, "loose": loose,
+                "available": {"exercises": len(on), **available}, "count": size, "notes": notes,
                 "default_count": sheetlib.default_count(bks), "max": MAX_SHEET_EXERCISES}
 
     def draft(self, raw: object) -> Dict[str, object]:
@@ -1400,6 +1413,24 @@ class Admin:
         return {"generated": report.get("generated", ""), "source": report.get("source", ""),
                 "exported": time.strftime("%Y-%m-%d"), "exercises": out}
 
+    def audit_topics(self, report: Optional[Dict[str, object]]) -> Dict[str, object]:
+        """For the review's filter by area and topic: {"areas": [[area, [topics]]] (categories.json's order,
+        those of the report's exercises only), "of": {ref: [area, topic]}} of the report's exercises that
+        categories.json knows (by their TeXercises id)."""
+        sheetlib = sheets_module()
+        if sheetlib is None or not report:
+            return {"areas": [], "of": {}}
+        cats = sheetlib.load_categories()
+        of = {}
+        for e in report.get("exercises", []):
+            c = cats["exercises"].get(str(e.get("id"))) if e.get("id") is not None else None
+            if c:
+                area, topic, _ = cats["flat"][c["sub"]]
+                of[e["ref"]] = [area, topic]
+        used = {tuple(v) for v in of.values()}
+        areas = [[a, [t for t, _ in topics if (a, t) in used]] for a, topics in cats["tree"]]
+        return {"areas": [x for x in areas if x[1]], "of": of}
+
     def store_audit(self, raw: object) -> Dict[str, object]:
         """A new report replaces the one stored (ValueError: why it cannot be); what it holds."""
         report = normalize_audit(raw)
@@ -1499,14 +1530,16 @@ def normalize_balance(raw: object, strict: bool = True) -> Dict[str, int]:
 
 
 def migrate_sheet(s: Dict[str, object], cat: Dict[str, Dict[str, object]]) -> Dict[str, object]:
-    """A sheet saved before it had topics (made of modules): the TeXercises topics of its exercises there
-    (the most frequent first; "" if one has none), its objectives as saved, the default balance."""
+    """A sheet saved before it had topics (made of modules): the topics of its exercises there (their
+    subtopic of categories.json, else their TeXercises topics, "" if one has none; the most frequent
+    first), its objectives as saved, the default balance."""
     if isinstance(s.get("topics"), list):
         return s
     counts: Dict[str, int] = {}
     for k in s.get("exercises", []) if isinstance(s.get("exercises"), list) else []:
         e = cat.get(k) if isinstance(k, str) else None
-        for t in (e["topics"] or [""]) if e else []:
+        mine = ([e["subtopic"]["id"]] if e.get("subtopic") else e["topics"] or [""]) if e else []
+        for t in mine:
             counts[t] = counts.get(t, 0) + 1
     return {**s, "topics": sorted(counts, key=lambda t: (t == "", -counts[t], t.lower())), "loose": False}
 
@@ -2419,7 +2452,8 @@ def make_handler(admin: Admin):
                 if not self.is_super():
                     self.json(403, {"error": "the superuser only"})
                 elif path == "/api/exercise-audit":
-                    self.json(200, {"report": admin.audit(), "feedback": admin.audit_feedback()})
+                    report = admin.audit()
+                    self.json(200, {"report": report, "feedback": admin.audit_feedback(), "topics": admin.audit_topics(report)})
                 elif path.endswith("/feedback"):
                     self.json(200, {"feedback": admin.audit_feedback()})
                 else:
@@ -3134,6 +3168,19 @@ h2.section { font-size: 1.15rem; margin: 28px 0 4px; }
 .sheet label.inline input[type=checkbox] { width: auto; accent-color: var(--accent); }
 .sheet h3 .step { display: inline-grid; place-items: center; width: 1.5em; height: 1.5em; margin-right: 8px; border-radius: 50%; background: var(--accent); color: var(--accent-ink); font-size: 0.85rem; }
 .topicstep .tpchips { margin: 0 0 6px; }
+/* step 1: the topic tree (areas → topics → subtopics as chips), folded */
+.tptree { display: grid; gap: 2px; margin: 0 0 6px; }
+.tptree summary { cursor: pointer; padding: 2px 0; }
+.tptree summary input, .tpnew input { width: auto; margin: 0 6px 0 4px; vertical-align: -1px; accent-color: var(--accent); }
+.tptree .n, .tpnew .n { color: var(--muted); font-size: 0.8rem; margin-left: 6px; font-variant-numeric: tabular-nums; }
+.tptree .picked { color: var(--accent); font-size: 0.8rem; margin-left: 8px; }
+.tparea { border-left: 3px solid var(--line); padding: 0 0 0 10px; }
+.tparea[open] { border-left-color: var(--accent); padding-bottom: 4px; }
+.tptopic { margin-left: 20px; font-size: 0.95rem; }
+.tptopic .tpchips { margin: 2px 0 6px 24px; }
+.tpnew { display: inline-flex; align-items: baseline; gap: 2px; cursor: pointer; margin: 4px 0 0 13px; font-weight: 600; }
+.tpold { margin: 6px 0 0; }
+.tpold .note { margin: 0; }
 .objstep { display: grid; gap: 6px; }
 .modobjs { border-left: 3px solid var(--line); padding: 2px 0 2px 12px; margin: 2px 0; }
 .modobjs .head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 10px; }
@@ -3185,6 +3232,9 @@ h2.section { font-size: 1.15rem; margin: 28px 0 4px; }
 .visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 .obs { margin: 2px 0 0; font-size: 0.82rem; }
 .alts { list-style: none; margin: 8px 0 2px; padding: 6px 0 0 12px; border-left: 3px solid var(--accent); display: grid; gap: 6px; font-size: 0.95rem; }
+.alts.sims { border-left-style: dashed; }
+.alts .score { color: var(--muted); font-size: 0.82rem; font-variant-numeric: tabular-nums; }
+.subtopic { color: var(--muted); font-size: 0.8rem; align-self: center; }
 .prev { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 6px 12px; margin: 8px 0 4px; }
 .prev .sol > summary { cursor: pointer; color: var(--accent); }
 .adder { margin-top: 6px; }
@@ -3500,8 +3550,9 @@ ADMIN_JS = r"""
 
 SHEETS_JS = r"""
 // The exercise sheets (#sheets): the state (LaTeX on the server, the uploaded TeXercises export, and
-// its upload), the list of sheets, and the editor of one. A sheet is { title, lang, topics: [TeXercises
-// topics], modules: [{ id, objectives: [ids ticked] }], loose: also exercises without objective,
+// its upload), the list of sheets, and the editor of one. A sheet is { title, lang, topics: [subtopic
+// ids of categories.json, '_new' for the exercises it does not know; or TeXercises topics, of a sheet
+// saved before], modules: [{ id, objectives: [ids ticked] }], loose: also exercises without objective,
 // balance: { concept, easy, medium, hard } (%), exercises: [keys] }, saved on Save. The editor goes in
 // three steps (topics, learning objectives, balance); the server lists the objectives on the topics and
 // suggests the exercises (/admin/api/plan, which also gives every exercise's alternatives and kind),
@@ -3516,7 +3567,7 @@ SHEETS_JS = r"""
   const LANGS = { en: 'English', de: 'German' };
   let st = null, cur = null, plan = null, dirty = false, loaded = false, busy = false;
   const previews = {}; // key → { title, text, solution, fallbacks }
-  const openAlts = new Set(), openPrev = new Set();
+  const openAlts = new Set(), openSims = new Set(), openPrev = new Set();
   let showPreview = false, withSolutions = false, planTimer = 0, count = '';
 
   function el(tag, attrs, ...kids) {
@@ -3565,18 +3616,28 @@ SHEETS_JS = r"""
   const KIND_TIPS = { concept: 'Concept question (TeXercises type Descriptive or True/false)',
     both: 'TeXercises type Both: counts as a concept question or a textbook problem, whichever the sheet lacks',
     problem: 'Textbook problem (TeXercises type Calculative, Algebraic, Show or Proof)' };
+  const TASK_TIPS = { concept: 'Concept question (task: qualitative reasoning)', explain: 'Concept question (task: explain in words)',
+    graph: 'Task: sketch or read a graph: counts as a concept question or a textbook problem, whichever the sheet lacks',
+    calculate: 'Textbook problem (task: a numerical result)', derive: 'Textbook problem (task: a symbolic result)', show: 'Textbook problem (task: show or prove)',
+    estimate: 'Textbook problem (task: estimate with own assumptions)', data: 'Textbook problem (task: evaluate measurements)' };
+  const kindTip = (d) => (d.task && TASK_TIPS[d.task]) || KIND_TIPS[d.kind];
+  // an exercise's subtopic (small, muted; the area and topic in the title), or its TeXercises topics if categories.json does not know it
+  const where = (d) => (d.subtopic ? [el('span', { class: 'subtopic', title: `${d.area} › ${d.topic}` }, d.subtopic.label)]
+    : (d.topics || []).map((t) => el('span', { class: 'chip topic', title: 'Its topic on TeXercises (not yet categorised)' }, t)));
   let refused = new Set(); // exercises with an image TeXercises refused FETCH_TRIES times (from the image list)
   function chips(k) {
     const d = det(k);
     return el('span', { class: 'chips' },
       d.lang ? el('span', { class: 'chip' }, d.lang === 'de' ? 'DE' : 'EN') : '',
-      d.kind ? el('span', { class: `chip kind-${d.kind}`, title: KIND_TIPS[d.kind] }, KINDS[d.kind]) : '',
+      d.kind ? el('span', { class: `chip kind-${d.kind}`, title: kindTip(d) }, KINDS[d.kind]) : '',
       d.band ? el('span', { class: 'chip', title: d.difficulty ? `difficulty ${d.difficulty} on TeXercises` : 'no difficulty on TeXercises: counts as medium' },
         `${'★'.repeat(Math.min(d.difficulty || 0, 5))} ${BANDS[d.band]}`.trim()) : '',
       refused.has(k) ? el('span', { class: 'chip bad', title: 'TeXercises refused its image three times: download it there and upload it under Images' }, 'image refused')
         : d.images ? el('span', { class: 'chip warn', title: 'Has an image: TeXercises does not export it; upload or fetch it under Images' }, 'image') : '',
       d.available === false ? el('span', { class: 'chip bad', title: 'Not in the uploaded export: left out of the PDF and the online version' }, 'missing') : '',
-      ...(d.topics || []).map((t) => el('span', { class: 'chip topic', title: 'Its topic on TeXercises' }, t)));
+      d.flag === 'broken' ? el('span', { class: 'chip bad', title: 'Marked broken when it was categorised: never suggested' }, 'broken')
+        : d.flag && d.flag.startsWith('dup:') ? el('span', { class: 'chip quiet', title: `Nearly the same as TeXercises exercise ${d.flag.slice(4)} (often the other language): never on one sheet with it` }, 'duplicate') : '',
+      ...where(d));
   }
   const objectiveLine = (k) => {
     const d = det(k);
@@ -3654,32 +3715,76 @@ SHEETS_JS = r"""
       el('h3', {}, 'PDF and online version'), output()));
   }
 
-  // step 1: the TeXercises topics of the imported exercises (their subbranches), the most frequent first,
-  // with how many exercises are there of each (and concept questions, in the title); a sheet has one or
-  // several. A topic chosen anew ticks the learning objectives it brings (autoTick).
+  // step 1: the topic tree of categories.json (st.tree: areas → topics → subtopics, only those with
+  // exercises there, each with how many, the concept questions in the title), folded by area and topic
+  // (unfolded where the sheet has subtopics); a sheet has one or several subtopics: ticking an area or a
+  // topic ticks all of its subtopics. "Not yet categorised" stands for the exercises categories.json does
+  // not know (uploaded since). A sheet saved before may have TeXercises topics (subbranches): they still
+  // count, and are listed below the tree to drop them. A topic chosen anew ticks the learning objectives
+  // it brings (autoTick).
   let autoTick = false;
   const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`;
+  const openTree = new Set(); // the areas and topics unfolded ('a:' + area, 't:' + area + '/' + topic)
+  let treeFor = null; // the sheet openTree was made for
   function topicsStep() {
-    const list = (st.subjects || []).slice();
-    cur.topics.filter((t) => !list.some((x) => x.name === t)).forEach((t) => list.push({ name: t, exercises: 0, concept: 0, both: 0 })); // (no longer there)
-    if (!list.length) return el('p', { class: 'note' }, 'No exercises there yet: upload a TeXercises export (at the bottom of this tab).');
-    const on = new Set(cur.topics);
-    const toggleTopic = (name) => {
-      cur.topics = on.has(name) ? cur.topics.filter((t) => t !== name) : cur.topics.concat([name]);
+    const tree = st.tree || { areas: [], new: { id: '_new', exercises: 0, concept: 0, both: 0 } };
+    const on = new Set(cur.topics), known = new Set([tree.new.id]);
+    tree.areas.forEach((a) => a.topics.forEach((t) => t.subtopics.forEach((x) => known.add(x.id))));
+    const old = cur.topics.filter((t) => !known.has(t)); // TeXercises topics, of a sheet saved before
+    if (!tree.areas.length && !tree.new.exercises && !old.length) return el('p', { class: 'note' }, 'No exercises there yet: upload a TeXercises export (at the bottom of this tab).');
+    if (treeFor !== cur) { // a sheet opened: its subtopics unfolded
+      treeFor = cur;
+      openTree.clear();
+      tree.areas.forEach((a) => a.topics.forEach((t) => { if (t.subtopics.some((x) => on.has(x.id))) { openTree.add(`a:${a.name}`); openTree.add(`t:${a.name}/${t.name}`); } }));
+    }
+    const set = (ids, value) => {
+      const rest = cur.topics.filter((t) => !ids.includes(t));
+      cur.topics = value ? rest.concat(ids) : rest;
       autoTick = true;
       changed(true);
       render();
     };
-    const tip = (t) => `${plural(t.exercises, 'exercise', 'exercises')}: ${plural(t.concept, 'concept question', 'concept questions')}${t.both ? `, ${t.both} of the type Both` : ''}`;
-    const mine = list.filter((t) => on.has(t.name));
-    const sum = (f) => mine.reduce((s, t) => s + t[f], 0);
+    const tip = (t) => `${plural(t.exercises, 'exercise', 'exercises')}: ${plural(t.concept, 'concept question', 'concept questions')}${t.both ? `, ${t.both} of the kind Both (graphs)` : ''}`;
+    const box = (ids, label) => {
+      const n = ids.filter((i) => on.has(i)).length;
+      const b = el('input', { type: 'checkbox', checked: n > 0 && n === ids.length, 'aria-label': `${label}: all of it` });
+      b.indeterminate = n > 0 && n < ids.length;
+      b.addEventListener('change', () => set(ids, b.checked));
+      return b;
+    };
+    const num = (x) => el('span', { class: 'n', title: tip(x) }, String(x.exercises));
+    const picked = (ids) => { const n = ids.filter((i) => on.has(i)).length; return n && n < ids.length ? el('span', { class: 'picked' }, `${n} of ${ids.length} chosen`) : ''; };
+    const fold = (key, cls, head, kids) => {
+      const d = el('details', { class: cls, open: openTree.has(key) }, el('summary', {}, ...head), ...kids);
+      d.addEventListener('toggle', () => { if (d.open) openTree.add(key); else openTree.delete(key); });
+      return d;
+    };
+    const areas = tree.areas.map((a) => {
+      const ids = a.topics.flatMap((t) => t.subtopics.map((x) => x.id));
+      return fold(`a:${a.name}`, 'tparea', [box(ids, a.name), el('strong', {}, a.name), num(a), picked(ids)], a.topics.map((t) => {
+        const tids = t.subtopics.map((x) => x.id);
+        return fold(`t:${a.name}/${t.name}`, 'tptopic', [box(tids, t.name), el('span', {}, t.name), num(t), picked(tids)], [
+          el('div', { class: 'tpchips', role: 'group', 'aria-label': t.name }, ...t.subtopics.map((x) => el('button', {
+            type: 'button', 'aria-pressed': String(on.has(x.id)), title: tip(x), onclick: () => set([x.id], !on.has(x.id)) },
+          x.label, el('span', { class: 'n' }, String(x.exercises)))))]);
+      }));
+    });
+    const fresh = tree.new.exercises || on.has(tree.new.id)
+      ? el('label', { class: 'tpnew', title: `${tip(tree.new)}: uploaded since the topic tree was made` }, box([tree.new.id], 'Not yet categorised'),
+        el('span', {}, 'Not yet categorised', el('span', { class: 'n' }, String(tree.new.exercises)))) : '';
+    const subjects = st.subjects || [];
+    const oldOf = (t) => subjects.find((y) => y.name === t) || { name: t, exercises: 0, concept: 0, both: 0 };
+    const oldRow = old.length ? el('div', { class: 'tpold' },
+      el('p', { class: 'note' }, 'TeXercises topics of this sheet (saved before the topic tree): they still count; click one to drop it.'),
+      el('div', { class: 'tpchips', role: 'group', 'aria-label': 'TeXercises topics' }, ...old.map((t) => el('button', {
+        type: 'button', 'aria-pressed': 'true', title: tip(oldOf(t)), onclick: () => set([t], false) }, t || 'No topic', el('span', { class: 'n' }, String(oldOf(t).exercises)))))) : '';
+    const leaves = tree.areas.flatMap((a) => a.topics.flatMap((t) => t.subtopics)).concat([tree.new]).filter((x) => on.has(x.id)).concat(old.map(oldOf));
+    const sum = (f) => leaves.reduce((s, t) => s + t[f], 0);
     return el('div', { class: 'topicstep' },
-      el('div', { class: 'tpchips', role: 'group', 'aria-label': 'Topics' }, ...list.map((t) => el('button', {
-        type: 'button', 'aria-pressed': String(on.has(t.name)), title: tip(t), onclick: () => toggleTopic(t.name) },
-      t.name || 'No topic', el('span', { class: 'n' }, String(t.exercises))))),
-      el('p', { class: 'note' }, mine.length
-        ? `${mine.length === 1 ? 'One topic' : `${mine.length} topics`}: ${plural(sum('exercises'), 'exercise', 'exercises')}, ${plural(sum('concept'), 'concept question', 'concept questions')}${sum('both') ? `, ${sum('both')} of the type Both (concept question or problem)` : ''}${mine.length > 1 ? ' (an exercise on two counts twice here)' : ''}.`
-        : 'Choose one or several topics of your TeXercises exercises (the most frequent first; the number: exercises there).'));
+      el('div', { class: 'tptree' }, ...areas, fresh), oldRow,
+      el('p', { class: 'note' }, leaves.length
+        ? `${leaves.length === 1 ? 'One topic' : `${leaves.length} topics`}: ${plural(sum('exercises'), 'exercise', 'exercises')}, ${plural(sum('concept'), 'concept question', 'concept questions')}${sum('both') ? `, ${sum('both')} of the kind Both (concept question or problem)` : ''}${old.length ? ' (an exercise on two counts twice here)' : ''}.`
+        : 'Choose one or several subtopics (or a whole topic or area) of your exercises; the number: exercises there.'));
   }
 
   // step 2: per module the learning objectives that the pool links to exercises on the topics (with how
@@ -3823,7 +3928,7 @@ SHEETS_JS = r"""
   }
 
   function exRow(k, i) {
-    const d = det(k), alts = (plan && plan.alternatives[k]) || [];
+    const d = det(k), alts = (plan && plan.alternatives[k]) || [], sims = (plan && plan.similar && plan.similar[k]) || [];
     const move = (dd) => { const j = i + dd; [cur.exercises[i], cur.exercises[j]] = [cur.exercises[j], cur.exercises[i]]; changed(true); render(); };
     const li = el('li', { class: 'exrow' },
       el('div', { class: 'move' },
@@ -3833,7 +3938,8 @@ SHEETS_JS = r"""
         el('div', { class: 'head' }, el('span', { class: 'num' }, `${i + 1}.`), el('strong', {}, d.title), chips(k),
           el('span', { class: 'tools' },
             el('button', { type: 'button', 'aria-expanded': String(openPrev.has(k)), onclick: () => { toggle(openPrev, k); render(); } }, 'Preview'),
-            el('button', { type: 'button', 'aria-expanded': String(openAlts.has(k)), disabled: !alts.length, onclick: () => { toggle(openAlts, k); render(); } }, `Alternatives (${alts.length})`),
+            el('button', { type: 'button', 'aria-expanded': String(openAlts.has(k)), disabled: !alts.length, title: 'Of the same learning objectives, the most similar first', onclick: () => { toggle(openAlts, k); render(); } }, `Alternatives (${alts.length})`),
+            el('button', { type: 'button', 'aria-expanded': String(openSims.has(k)), disabled: !sims.length, title: 'The most similar of all your exercises (by topic, laws, task, difficulty, mathematics)', onclick: () => { toggle(openSims, k); render(); } }, `Similar (${sims.length})`),
             el('button', { type: 'button', class: 'remove', 'aria-label': `Remove ${d.title}`, onclick: () => { cur.exercises.splice(i, 1); changed(true); render(); } }, '×'))),
         objectiveLine(k),
         openPrev.has(k) ? previewOf(k, true) : '',
@@ -3842,6 +3948,13 @@ SHEETS_JS = r"""
             el('span', { class: 'tools' },
               el('button', { type: 'button', 'aria-expanded': String(openPrev.has(a)), onclick: () => { toggle(openPrev, a); render(); } }, 'Preview'),
               el('button', { type: 'button', onclick: () => { cur.exercises[i] = a; openAlts.delete(k); changed(true); render(); } }, 'Use instead'))),
+          objectiveLine(a),
+          openPrev.has(a) ? previewOf(a, false) : ''))) : '',
+        openSims.has(k) ? el('ul', { class: 'alts sims' }, ...sims.map(([a, score]) => el('li', {},
+          el('div', { class: 'head' }, el('span', { class: 'score', title: 'Similarity, 0 to 1' }, score.toFixed(2)), el('span', {}, det(a).title), chips(a),
+            el('span', { class: 'tools' },
+              el('button', { type: 'button', 'aria-expanded': String(openPrev.has(a)), onclick: () => { toggle(openPrev, a); render(); } }, 'Preview'),
+              el('button', { type: 'button', onclick: () => { cur.exercises[i] = a; openSims.delete(k); changed(true); render(); } }, 'Use instead'))),
           objectiveLine(a),
           openPrev.has(a) ? previewOf(a, false) : ''))) : ''));
     return li;
@@ -4071,7 +4184,7 @@ SHEETS_JS = r"""
       if (seq !== planSeq) return;
       plan = p;
       if (suggest) {
-        cur.exercises = p.exercises; openAlts.clear(); changed();
+        cur.exercises = p.exercises; openAlts.clear(); openSims.clear(); changed();
         status(p.exercises.length ? `Suggested ${p.exercises.length} exercises: Save to keep them.` : 'No exercises on these topics and learning objectives.', p.exercises.length ? '' : 'bad');
       }
       if (ticking) {
@@ -4153,7 +4266,8 @@ SHEETS_JS = r"""
 // exercises with issues, the most serious first (PAGE at a time), each issue with its severity,
 // category, where it is and a suggested fix, filtered by severity, category and a search. The texts
 // are the report's: put in as text, never as HTML. A report whose exercises name their collections
-// (titles) also filters by collection (a select; the search finds them too).
+// (titles) also filters by collection (a select; the search finds them too), and the exercises
+// categories.json knows by area and topic (a select; the server's d.topics: {areas, of: ref → [area, topic]}).
 // The superuser's feedback on it (/admin/api/exercise-audit/feedback, kept by exercise id and issue
 // fingerprint, so a regenerated report keeps it): per issue "Accept fix", per exercise a comment (saved
 // as it is typed); the exercises marked so (or not yet) are a filter, and "Export for Claude" downloads
@@ -4166,7 +4280,8 @@ SHEETS_JS = r"""
   const WHERE = { text: 'exercise text', solution: 'solution', short: 'short solution', solver: 'solver', title: 'title', compile: 'LaTeX compile' };
   const PAGE = 60;
   const body = box.querySelector('.audit-body'), line = box.querySelector('summary .note');
-  let report = null, sevOn = '', catOn = '', collOn = '', markOn = '', query = '', shown = PAGE, loaded = false;
+  let report = null, sevOn = '', catOn = '', collOn = '', topOn = '', markOn = '', query = '', shown = PAGE, loaded = false;
+  let topics = { areas: [], of: {} }; // categories.json: the areas and topics of the report's exercises
   let feedback = {}; // ref → { comment, accepted: [fp] }
   let counted = () => {}; // (draw's: the numbers of the marked exercises, after a change)
   const NONE = '\u0000none'; // collOn: the exercises in no collection
@@ -4293,6 +4408,24 @@ SHEETS_JS = r"""
       loose ? el('option', { value: NONE }, `No collection (${loose})`) : '',
       [...colls].sort((a, b) => a[0].localeCompare(b[0])).map(([c, k]) => el('option', { value: c }, `${c} (${k})`)));
     collSel.value = collOn;
+    // the areas and topics (categories.json), each with its exercises with issues; "a:" an area, "t:" one of its topics
+    const topOf = (e) => topics.of[e.ref];
+    const topNum = (f) => all.filter((e) => topOf(e) && f(topOf(e))).length;
+    const unknown = all.filter((e) => !topOf(e)).length;
+    const topKeys = new Set(topics.areas.flatMap(([a, ts]) => [`a:${a}`, ...ts.map((t) => `t:${a}/${t}`)]));
+    if (topOn && topOn !== NONE && !topKeys.has(topOn)) topOn = '';
+    const topSel = el('select', { 'aria-label': 'Filter by area and topic', onchange: () => { topOn = topSel.value; shown = PAGE; fill(); } },
+      el('option', { value: '' }, `All areas and topics (${all.length})`),
+      topics.areas.flatMap(([a, ts]) => [el('option', { value: `a:${a}` }, `${a} (${topNum((x) => x[0] === a)})`),
+        ...ts.map((t) => el('option', { value: `t:${a}/${t}` }, `\u00a0\u00a0\u00a0${t} (${topNum((x) => x[0] === a && x[1] === t)})`))]),
+      unknown ? el('option', { value: NONE }, `Not categorised (${unknown})`) : '');
+    topSel.value = topOn;
+    const onTopic = (e) => {
+      if (!topOn) return true;
+      const x = topOf(e);
+      if (topOn === NONE) return !x;
+      return !!x && (topOn.startsWith('a:') ? x[0] === topOn.slice(2) : `${x[0]}/${x[1]}` === topOn.slice(2));
+    };
     if (colls.size) search.placeholder = 'Search title, id, key, collection or issue';
     const more = el('button', { type: 'button', onclick: () => { shown += PAGE; fill(); } });
     const pick = (f) => () => { f(); shown = PAGE; fill(); };
@@ -4307,13 +4440,14 @@ SHEETS_JS = r"""
       all.forEach((e) => {
         if (collOn && (collOn === NONE ? collsOf(e).length : !collsOf(e).includes(collOn))) return;
         if (markOn && marked(e) !== (markOn === 'yes')) return;
+        if (!onTopic(e)) return;
         const head = fold([e.title, e.id, e.key, e.lang, ...collsOf(e)].join(' '));
         const kept = e.issues.filter((i) => (!sevOn || i.severity === sevOn) && (!catOn || i.category === catOn)
           && words.every((w) => head.includes(w) || fold([i.issue, i.fix, i.category, i.where].join(' ')).includes(w)))
           .sort((a, b) => RANK[a.severity] - RANK[b.severity]);
         if (kept.length) rows.push([e, kept]);
       });
-      info.textContent = !sevOn && !catOn && !collOn && !markOn && !words.length ? `${all.length} exercises with issues, the most serious first.`
+      info.textContent = !sevOn && !catOn && !collOn && !topOn && !markOn && !words.length ? `${all.length} exercises with issues, the most serious first.`
         : `${rows.length} of ${all.length} exercises with issues match.`;
       list.replaceChildren(...rows.slice(0, shown).map(([e, kept]) => exercise(e, kept)));
       more.hidden = rows.length <= shown;
@@ -4327,6 +4461,7 @@ SHEETS_JS = r"""
         stat(n('error'), 'errors', 's-error'), stat(n('warning'), 'warnings', 's-warning'), stat(n('doubt'), 'doubts', 's-doubt')),
       el('div', { class: 'filters' }, sevRow, cats.length ? catRow : '',
         colls.size ? el('div', { class: 'row' }, el('span', { class: 'what' }, 'Collection'), collSel) : '',
+        topics.areas.length ? el('div', { class: 'row' }, el('span', { class: 'what' }, 'Topic'), topSel) : '',
         markRow, el('div', { class: 'row' }, el('span', { class: 'what' }, 'Search'), search)),
       el('div', { class: 'rv-line' }, info, exportLink), list, el('div', { class: 'tools-line' }, more),
       el('details', { class: 'replace' }, el('summary', {}, 'Replace report'), upload('Replace report')));
@@ -4339,6 +4474,7 @@ SHEETS_JS = r"""
     const d = await r.json();
     report = d.report && Array.isArray(d.report.exercises) ? d.report : null;
     feedback = d.feedback && typeof d.feedback === 'object' ? d.feedback : {};
+    topics = d.topics && Array.isArray(d.topics.areas) && d.topics.of ? d.topics : { areas: [], of: {} };
     loaded = true;
     draw();
   }

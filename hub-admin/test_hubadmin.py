@@ -8,7 +8,10 @@ apps.json and sets.json. The exercise sheets: the kind (concept question or prob
 of an exercise from its TeXercises type and default difficulty, the learning objectives on a sheet's
 topics and the exercises in none, what a sheet suggests (every objective covered, the language,
 exercises without image, the balance of concept questions and of difficulties, and what cannot be
-said), sheets saved before the topics, and the alternatives of an exercise, the .tex
+said), the topic tree of categories.json (counts, the exercises not yet categorised, the kind by the
+task kind, TeXercises topics of sheets saved before still matching), the similarity of exercises (its
+flagged duplicates similar, no near-duplicates on a suggested sheet), sheets saved before the topics,
+and the alternatives of an exercise (the most similar first), the .tex
 of an ordered list of exercises (without LaTeX), the PDFs where LaTeX is missing, the upload of a
 TeXercises export (only the teacher's exercises kept, nothing written outside its folder), the
 preview (sheets/preview.py: the arithmetic of the solver part, numbers and units, text to HTML,
@@ -291,7 +294,7 @@ class Sheets(unittest.TestCase):
                                                          "info": {"url": "/exercise/two-charges/"}}))
             (f / "text.tex").write_text("\\includegraphics{#image_path:coil-1#}")
             m = S.exercise_meta(f)
-            self.assertEqual(m, {"title": "Two charges", "lang": "de", "difficulty": None, "type": 2, "kind": "both", "band": 2,
+            self.assertEqual(m, {"title": "Two charges", "id": None, "lang": "de", "difficulty": None, "type": 2, "kind": "both", "band": 2,
                                  "topics": ["Electrostatics"], "images": True, "url": "/exercise/two-charges/"})
             (f / "exercise.json").write_text(json.dumps({"language": "ENG", "type": 0, "default_difficulty": 4, "info": {"url": "javascript:x"}}))
             os.utime(f / "exercise.json", ns=(1, 2))  # changed: read again
@@ -402,6 +405,115 @@ class Sheets(unittest.TestCase):
                          [("vector", "Vector sum", 3, 3), ("factor", "factor", 5, 4), ("field", "field", 2, 2)])
         self.assertEqual((coulomb["exercises"], coulomb["there"], coulomb["general"]), (9, 8, 0))
         self.assertEqual([m["id"] for m in S.coverage(POOL, apps[:1], set())], ["photons", "coulomb"])  # (not on the hub: after)
+
+    # categories.json in small: two areas (Optics without exercises there), x2 a near-duplicate of x1 (flagged)
+    CATS = {"tree": {"Mechanics": {"Kinematics": {"kin.a": "Uniform motion", "kin.b": "Free fall"}, "Forces": {"dyn.a": "Newton's laws"}},
+                     "Optics": {"Light": {"opt.a": "Refraction"}}},
+            "exercises": {
+                "1": {"sub": "kin.a", "sub2": [], "kind": "calculate", "kinds": ["calculate"], "steps": 1, "laws": ["uniform_motion"], "math": ["arith"], "repr": [], "context": "traffic"},
+                "2": {"sub": "kin.a", "sub2": [], "kind": "calculate", "kinds": ["calculate"], "steps": 1, "laws": ["uniform_motion"], "math": ["arith"], "repr": [], "context": "traffic", "flag": "dup:1"},
+                "3": {"sub": "kin.b", "sub2": [], "kind": "concept", "kinds": ["concept"], "steps": 1, "laws": ["free_fall"], "math": [], "repr": [], "context": "abstract"},
+                "4": {"sub": "dyn.a", "sub2": ["kin.b"], "kind": "graph", "kinds": ["graph", "calculate"], "steps": 3, "laws": ["newton2", "friction"], "math": ["algebra", "vectors"], "repr": ["graph_sketch"], "context": "sport"},
+                "5": {"sub": "opt.a", "sub2": [], "kind": "calculate", "kinds": ["calculate"], "steps": 2, "laws": ["snell"], "math": ["trig"], "repr": [], "context": "lab"},
+                "6": {"sub": "kin.b", "sub2": ["kin.a"], "kind": "explain", "kinds": ["explain"], "steps": 2, "laws": ["free_fall", "uniform_motion"], "math": [], "repr": [], "context": "nature"},
+                "8": {"sub": "kin.a", "sub2": [], "kind": "derive", "kinds": ["derive"], "steps": 2, "laws": ["uniform_motion"], "math": ["algebra"], "repr": [], "context": "abstract", "flag": "broken"}}}
+    # the export: x1..x6 categorised (x5 is not there), x7 uploaded since (not categorised, a TeXercises Descriptive)
+    EXPORT = {"x1": (1, 1, 2, "en"), "x2": (2, 1, 2, "de"), "x3": (3, 1, 1, "en"), "x4": (4, 1, 3, "en"), "x6": (6, 1, 2, "en"),
+              "x7": (7, 0, 2, "en"), "x8": (8, 1, 2, "en")}  # key: (id, TeXercises type, difficulty, language)
+
+    def categorised(self, d):
+        """The export and categories.json above in folder d: (have, cat), with sheets.py reading that categories.json."""
+        (Path(d) / "categories.json").write_text(json.dumps(self.CATS))
+        have = {}
+        for k, (eid, type_, diff, lang) in self.EXPORT.items():
+            (Path(d) / k).mkdir()
+            (Path(d) / k / "exercise.json").write_text(json.dumps({"id": eid, "title": k.upper(), "type": type_, "default_difficulty": diff,
+                                                                   "language": "GER" if lang == "de" else "ENG", "subbranches": ["Kinematics"]}))
+            have[k] = Path(d) / k
+        patch = mock.patch.object(S, "CATEGORIES", Path(d) / "categories.json")
+        patch.start()
+        self.addCleanup(patch.stop)
+        return have, S.catalog(have)
+
+    def test_categories(self):
+        with tempfile.TemporaryDirectory() as d:
+            have, cat = self.categorised(d)
+            # what an exercise has of categories.json; the kind by its task kind (concept and explain concept
+            # questions, graph Both, the others problems), else by its TeXercises type
+            x1, x2, x4, x7 = cat["x1"], cat["x2"], cat["x4"], cat["x7"]
+            self.assertEqual((x1["id"], x1["area"], x1["topic"], x1["subtopic"], x1["secondary"], x1["task"], x1["flag"]),
+                             (1, "Mechanics", "Kinematics", {"id": "kin.a", "label": "Uniform motion"}, [], "calculate", None))
+            self.assertEqual((x2["flag"], x4["secondary"], x4["task"]), ("dup:1", ["kin.b"], "graph"))
+            self.assertEqual({k: e["kind"] for k, e in cat.items()},
+                             {"x1": "problem", "x2": "problem", "x3": "concept", "x4": "both", "x6": "concept", "x7": "concept", "x8": "problem"})
+            self.assertEqual(cat["x3"]["type"], 1)  # (TeXercises' type stays: calculative, but a concept question by its task)
+            self.assertEqual((x7["id"], "subtopic" in x7, x7["topics"]), (7, False, ["Kinematics"]))
+            self.assertEqual([S.task_kind(t) for t in S.TASKS], ["concept", "concept", "problem", "problem", "problem", "both", "problem", "problem"])
+            # step 1: the tree of the exercises there, by their main subtopic, with how many (and concept
+            # questions, Both); Optics has none there: not shown; the one categories.json does not know apart
+            tree = S.topic_tree(have)
+            self.assertEqual(tree["new"], {"id": S.NEW, "exercises": 1, "concept": 1, "both": 0})
+            self.assertEqual([(a["name"], a["exercises"], a["concept"], a["both"]) for a in tree["areas"]], [("Mechanics", 6, 2, 1)])
+            kin, forces = tree["areas"][0]["topics"]
+            self.assertEqual((kin["name"], kin["exercises"], kin["concept"], forces["name"], forces["exercises"], forces["both"]),
+                             ("Kinematics", 5, 2, "Forces", 1, 1))
+            self.assertEqual(kin["subtopics"], [{"id": "kin.a", "label": "Uniform motion", "exercises": 3, "concept": 0, "both": 0},
+                                                {"id": "kin.b", "label": "Free fall", "exercises": 2, "concept": 2, "both": 0}])
+            # a sheet's topics: subtopics, NEW for those not categorised, and (saved before) TeXercises topics
+            on = lambda topics: sorted(k for k, e in cat.items() if S.on_topics(e, topics))
+            self.assertEqual(on(["kin.a"]), ["x1", "x2", "x8"])
+            self.assertEqual(on(["kin.b", "dyn.a"]), ["x3", "x4", "x6"])
+            self.assertEqual(on([S.NEW]), ["x7"])
+            self.assertEqual(on(["Kinematics"]), sorted(cat))  # a sheet saved before: its TeXercises topic still matches
+            self.assertEqual(on(["Optics", ""]), [])
+            self.assertEqual(H.migrate_sheet({"exercises": ["x1", "x7", "x2"]}, cat)["topics"], ["kin.a", "Kinematics"])
+            # similarity: the duplicate pair the same, unrelated ones low; near-duplicates by flag or by similarity
+            self.assertAlmostEqual(S.similarity(x1, x2), 1.0)
+            self.assertLess(S.similarity(x1, x4), 0.3)
+            self.assertEqual(S.similarity(x1, x7), 0.0)  # not categorised
+            self.assertTrue(S.near_dup(x1, x2) and S.near_dup(x2, x1))
+            self.assertFalse(S.near_dup(x1, x4) or S.near_dup(cat["x3"], cat["x6"]))
+            self.assertTrue(S.flagged_dup({**x4, "flag": "dup:1"}, x1))
+            self.assertEqual([k for k, _ in S.similar("x1", cat)], ["x2", "x8", "x6", "x3", "x4"])
+            self.assertEqual(S.similar("x1", cat, 2, {"x2"})[0][0], "x8")
+            self.assertEqual(S.similar("x7", cat), [])
+
+    def test_real_categories(self):
+        # categories.json of the repository: the tree as described, and its flagged duplicates similar
+        cats = S.load_categories()
+        self.assertEqual((len(cats["tree"]), sum(len(t) for _, t in cats["tree"]), len(cats["flat"])), (6, 29, 133))
+        self.assertGreater(len(cats["exercises"]), 1500)
+        m = lambda i: {"id": int(i), "flag": cats["exercises"][i]["flag"], **S._category(int(i), None, cats)}
+        pairs = [(i, e["flag"][4:]) for i, e in cats["exercises"].items() if (e["flag"] or "").startswith("dup:") and e["flag"][4:] in cats["exercises"]]
+        self.assertGreater(len(pairs), 90)
+        sims = sorted(S.similarity(m(a), m(b), cats) for a, b in pairs)
+        self.assertGreater(sims[len(sims) // 2], 0.95)
+        self.assertTrue(all(S.near_dup(m(a), m(b), cats) for a, b in pairs))
+        self.assertLess(S.similarity(m("10675"), m("19059"), cats), 0.3)  # uniform motion and an LC oscillator
+
+    def test_suggest_without_near_duplicates(self):
+        with tempfile.TemporaryDirectory() as d:
+            have, cat = self.categorised(d)
+            bks = [(("a", "o"), ["x1", "x2", "x3", "x4", "x6", "x7", "x8"])]
+            bal = {"concept": 0, "easy": 0, "medium": 100, "hard": 0}
+            for lang in ("en", "de"):
+                for n in range(1, 8):
+                    keys = S.suggest(bks, cat, lang, bal, n)
+                    self.assertFalse({"x1", "x2"} <= set(keys), (lang, n, keys))
+                    self.assertNotIn("x8", keys)  # broken
+                    self.assertFalse([(a, b) for a in keys for b in keys if a < b and S.near_dup(cat[a], cat[b])])
+            self.assertEqual(len(S.suggest(bks, cat, "en", bal, 7)), 5)  # of 7: x8 broken, x1 or x2
+            # two twins in a bucket: the second goes to another bucket's turn; among those that fit as well,
+            # one not too similar to those chosen first
+            twins = {f"t{i}": {**cat["x1"], "id": 100 + i, "flag": None} for i in range(3)}
+            cat2 = {**cat, **twins}
+            keys = S.suggest([(("a", "o"), ["t0", "t1", "t2", "x3", "x6"])], cat2, "en", {"concept": 50, "easy": 0, "medium": 100, "hard": 0}, 3)
+            self.assertEqual(sum(k.startswith("t") for k in keys), 1)
+            # alternatives: the most similar first, no near-duplicate of another exercise on the sheet
+            bks = [(("a", "o"), ["x1", "x2", "x3", "x4", "x6", "x7"])]
+            self.assertEqual(S.alternatives("x6", ["x6"], bks, cat, "en"), ["x3", "x1", "x4", "x7", "x2"])  # x2: German
+            self.assertEqual(S.alternatives("x6", ["x6", "x1"], bks, cat, "en"), ["x3", "x4", "x7"])  # (x2 a near-duplicate of x1)
+            self.assertEqual(S.alternatives("x3", ["x3", "x1"], bks, cat, "de"), ["x6", "x4", "x7"])
 
     def test_exercise_topics(self):
         # the TeXercises topics (subbranches) of the exercises there: cleaned, each once, counted, the most
@@ -1293,6 +1405,12 @@ class Service(unittest.TestCase):
         self.assertTrue(all(k in drafts for k in keys))
         self.assertEqual(plan["default_count"], len(keys))
         self.assertEqual(plan["count"], len(keys))
+        # step 1's tree (categories.json; the drafts it does not know: not yet categorised), and the most
+        # similar exercises of each one on the sheet, none on it
+        tree = state["tree"]
+        self.assertEqual(sum(a["exercises"] for a in tree["areas"]) + tree["new"]["exercises"], len(drafts) + 1)
+        self.assertEqual(set(plan["similar"]), set(keys))
+        self.assertTrue(all(x not in keys and x in plan["details"] and 0 < v <= 1 for v2 in plan["similar"].values() for x, v in v2))
         self.assertEqual({k: plan["details"][k]["topics"] for k in keys}, {k: meta(k)["topics"] for k in keys})
         self.assertEqual({k: (plan["details"][k]["kind"], plan["details"][k]["band"]) for k in keys}, {k: (meta(k)["kind"], meta(k)["band"]) for k in keys})
         covered = {tuple(o) for k in keys for o in plan["details"][k]["objectives"]}
@@ -1569,7 +1687,7 @@ class Service(unittest.TestCase):
         self.assertEqual(self.req("/api/exercise-audit")[0], 403)
         self.assertEqual(self.req("/api/exercise-audit", cookie=anna)[0], 403)
         st, _, body = self.req("/api/exercise-audit", cookie=boss)
-        self.assertEqual((st, json.loads(body)), (200, {"report": None, "feedback": {}}))  # none yet
+        self.assertEqual((st, json.loads(body)), (200, {"report": None, "feedback": {}, "topics": {"areas": [], "of": {}}}))  # none yet
         report = {"generated": "2026-10-15", "source": "review of the export", "reviewed": 844, "exercises": [
             {"id": 12345, "key": "e12345-slug", "title": "Ein <b>Titel</b>", "lang": "GER", "url": "/exercise/slug/",
              "collections": ["Kinematik 1", 7, "", "Kinematik 1", "Dynamik\n2", None, "x" * 300] + [f"c{i}" for i in range(60)], "issues": [
@@ -1608,6 +1726,12 @@ class Service(unittest.TestCase):
         self.assertEqual(self.admin.audit_file.parent, self.config.parent)  # hub-data/, which nginx does not serve
         self.assertEqual(self.admin.audit_file.stat().st_mode & 0o777, 0o600)
         self.assertEqual(self.req("/api/exercise-audit", cookie=anna)[0], 403)
+        # the area and topic (categories.json) of each exercise it knows, for the filter
+        self.assertEqual(json.loads(self.req("/api/exercise-audit", cookie=boss)[2])["topics"], {"areas": [], "of": {}})  # (12345: not categorised)
+        issue = [{"severity": "doubt", "issue": "?"}]
+        self.audit({"exercises": [{"id": 10675, "issues": issue}, {"id": 10677, "issues": issue}, {"key": "draft-x", "issues": issue}]}, boss)
+        self.assertEqual(json.loads(self.req("/api/exercise-audit", cookie=boss)[2])["topics"],
+                         {"areas": [["Mechanics", ["Kinematics in 1D", "Gravitation"]]], "of": {"10675": ["Mechanics", "Kinematics in 1D"], "10677": ["Mechanics", "Gravitation"]}})
         # replaced by the next one
         self.assertEqual(self.audit({"exercises": []}, boss)[1], {"reviewed": 0, "exercises": 0, "issues": 0, "error": 0, "warning": 0, "doubt": 0})
         self.assertEqual(json.loads(self.req("/api/exercise-audit", cookie=boss)[2])["report"]["exercises"], [])
