@@ -4,7 +4,8 @@ and the PDF made from them with build_sheet.py and LuaLaTeX.
 A sheet is made in three steps. 1. Topics: the subtopics of categories.json (Claude's reading of every
 exercise of the export: area -> topic -> subtopic, the exercise's main subtopic, its task kind, the laws
 and mathematics it needs, near-duplicates; load_categories, topic_tree), and "not yet categorised"
-(NEW) for the exercises it does not know; a sheet saved before may name TeXercises topics (the
+(NEW) for the exercises it does not know (those uploaded since are categorised by autocat.py, kept in
+hub-data/categories-extra.json, merged over it: OVERLAY); a sheet saved before may name TeXercises topics (the
 subbranches of exercise.json, exercise_topics), which still match (on_topics). 2. Learning objectives: pool.json (build_pool.py, reviewed by hand) lists
 for every app (module of the hub) and objective the TeXercises exercises that practise it, best first;
 of those on the topics, the teacher ticks objectives (objective_keys), and maybe the exercises on the
@@ -170,25 +171,44 @@ def _strs(v: object, limit: int = 40) -> List[str]:
     return [x for x in v if isinstance(x, str)][:limit] if isinstance(v, list) else []
 
 
-def load_categories(path: Optional[Path] = None) -> Dict[str, object]:
+OVERLAY: Optional[Path] = None  # hub-data/categories-extra.json (set by hubadmin.py): the exercises uploaded since
+
+
+def _stamp(path: Optional[Path]) -> Tuple[str, int, int]:
+    if path is None:
+        return ("", 0, 0)
+    try:
+        st = path.stat()
+        return (str(path), st.st_mtime_ns, st.st_size)
+    except OSError:
+        return (str(path), 0, 0)
+
+
+def _read_json(path: Optional[Path], stamp: Tuple[str, int, int]) -> Dict[str, object]:
+    try:
+        raw = json.loads(path.read_text(encoding="utf-8")) if path is not None and stamp[1] else {}
+    except (OSError, ValueError):
+        raw = {}
+    return raw if isinstance(raw, dict) else {}
+
+
+def load_categories(path: Optional[Path] = None, overlay: Optional[Path] = None) -> Dict[str, object]:
     """categories.json, read once (again when it changes): {"stamp", "tree": [(area, [(topic,
     [(subtopic id, label)])])] in its order, "flat": subtopic id -> (area, topic, label), "exercises":
     TeXercises id (a string) -> its entry (sub, sub2, kind, kinds, steps, laws, math, repr, context,
-    flag), "idf": law -> log(N / exercises that use it)}; all empty if it is missing or unreadable."""
+    flag, source: None, or of the overlay "provisional", "claude" or "teacher"), "idf": law -> log(N /
+    exercises that use it)}; all empty if it is missing or unreadable. The overlay (OVERLAY without
+    path and overlay: hub-data/categories-extra.json, see autocat.py) adds the exercises categorised
+    since, and wins over categories.json; its records of no known subtopic are left out."""
+    if path is None and overlay is None:
+        overlay = OVERLAY
     path = path or CATEGORIES
-    try:
-        st = path.stat()
-        stamp = (str(path), st.st_mtime_ns, st.st_size)
-    except OSError:
-        stamp = (str(path), 0, 0)
+    stamp = (_stamp(path), _stamp(overlay))
     with _metas_guard:
         if _cats.get("stamp") == stamp:
             return _cats
-    try:
-        raw = json.loads(path.read_text(encoding="utf-8")) if stamp[1] else {}
-    except (OSError, ValueError):
-        raw = {}
-    raw = raw if isinstance(raw, dict) else {}
+    raw = _read_json(path, stamp[0])
+    extra = _read_json(overlay, stamp[1]).get("exercises")
     tree, flat = [], {}
     for area, topics in (raw.get("tree") or {}).items() if isinstance(raw.get("tree"), dict) else []:
         rows = []
@@ -199,7 +219,9 @@ def load_categories(path: Optional[Path] = None) -> Dict[str, object]:
             rows.append((str(topic), subs))
         tree.append((str(area), rows))
     exs = {}
-    for eid, e in (raw.get("exercises") or {}).items() if isinstance(raw.get("exercises"), dict) else []:
+    entries = list((raw.get("exercises") or {}).items()) if isinstance(raw.get("exercises"), dict) else []
+    entries += [(eid, e) for eid, e in extra.items() if isinstance(e, dict) and e.get("sub") in flat] if isinstance(extra, dict) else []
+    for eid, e in entries:
         if not isinstance(e, dict) or e.get("sub") not in flat:
             continue
         task = e.get("kind") if e.get("kind") in TASKS else "calculate"
@@ -208,7 +230,8 @@ def load_categories(path: Optional[Path] = None) -> Dict[str, object]:
                          "kinds": [x for x in _strs(e.get("kinds")) if x in TASKS] or [task], "steps": min(max(steps, 1), 3),
                          "laws": _strs(e.get("laws")), "math": _strs(e.get("math")), "repr": _strs(e.get("repr")),
                          "context": e.get("context") if isinstance(e.get("context"), str) else "",
-                         "flag": e.get("flag") if isinstance(e.get("flag"), str) and e.get("flag") else None}
+                         "flag": e.get("flag") if isinstance(e.get("flag"), str) and e.get("flag") else None,
+                         "source": e.get("source") if e.get("source") in ("provisional", "claude", "teacher") else None}
     df: Dict[str, int] = {}
     for e in exs.values():
         for law in set(e["laws"]):

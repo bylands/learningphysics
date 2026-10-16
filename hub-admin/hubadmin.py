@@ -27,6 +27,12 @@ cards in its order, shows their tags, and lets visitors filter by tag. This serv
                          {"fp", "on"}} (hub-data/exercise-audit-feedback.json, kept by exercise id and issue
                          fingerprint, so a new report keeps it); /export: the exercises with an accepted fix
                          or a comment, as JSON to download, for Claude to work on
+    /admin/api/categories-extra  GET  the exercises uploaded since categories.json and their categories (the
+                         superuser only; Categoriser, sheets/autocat.py; hub-data/categories-extra.json): the
+                         status (provisional, by Claude, by the teacher, pending, failed, tokens used), the
+                         exercises, the subtopic tree and the task kinds; POST …/run: categorise now
+                         (provisional labels, then Claude's if the anthropic package and ANTHROPIC_API_KEY are
+                         there); POST …/label {"id", "sub", "kind"}: the teacher's labels, never overwritten
     /admin/api/all-in/…  the game All In on phones (AllInRooms): open, <code>/state, <code>/close and
                          GET <code>/host for the teacher's screen; GET <code>?token=, <code>/join and
                          <code>/bet for the phones, without login
@@ -69,7 +75,10 @@ hub-data/exercise-sheets.json (not served). The panel suggests a balanced sheet 
 the exercises with KaTeX; build_sheet.py and LuaLaTeX make the PDFs (they need LaTeX on the server,
 see sheets/README.md; without it the panel says so), cached in hub-data/sheets/. TikZ figures are
 drawn as SVG for the browser (sheets/figures.py, hub-data/sheet-figures/); the TeXercises gallery
-images, which an export lacks, are uploaded or fetched (hub-data/sheet-images/).
+images, which an export lacks, are uploaded or fetched (hub-data/sheet-images/). Exercises uploaded
+since categories.json are categorised by themselves (Categoriser, sheets/autocat.py): provisionally at
+once, then by Claude in the background if the anthropic package and ANTHROPIC_API_KEY are there
+(EnvironmentFile /etc/hub-admin/anthropic.env), the teacher's choice kept (hub-data/categories-extra.json).
 
 Teachers: every teacher has an account with a user name (to log in), a three-letter identifier (xyz)
 and their own sets. The superuser (--super, default bys; user name --super-user, default
@@ -108,7 +117,7 @@ so a new app needs no change here. Every password is a teacher's own, in teacher
 shared teacher password. The superuser's first one is the hash in --password-file (the old shared
 teacher password, written by crosswords-web set-password), taken over once if they have none: they
 change it under Account. The crossword generator and the quiz log teachers in through this panel
-(/api/me). Standard library only.
+(/api/me). Standard library only (the anthropic package, optional, for Claude's categories).
 
     python3 hubadmin.py --port 8040 --password-file /opt/crosswords/teacher-password \
         --hub /var/www/teachingphysics/index.html --config /var/www/teachingphysics/hub-data/apps.json \
@@ -162,7 +171,12 @@ def sheets_module(name: str = "sheets"):
             known["mod"], known["mtime"] = (importlib.reload(mod) if known["mod"] else mod), mtime
         except Exception:  # broken or missing: no sheets
             known["mod"], known["mtime"] = None, mtime
+    if name == "sheets" and known["mod"] is not None:
+        known["mod"].OVERLAY = CATEGORIES_EXTRA[0]  # (again after a reload)
     return known["mod"]
+
+
+CATEGORIES_EXTRA: List[Optional[Path]] = [None]  # hub-data/categories-extra.json, set by Admin (Categoriser)
 
 COOKIE = "hub_admin"
 OWN_CREATOR = "by"  # the teacher's creator code on TeXercises: only their exercises go on sheets
@@ -556,6 +570,7 @@ class Admin:
         self.allin = AllInRooms()  # the rooms of the game All In (/all-in/), in memory
         self.zero = ZeroRooms()  # the rooms of the quiz Absolute Zero (/absolute-zero/), in memory
         self.seen_at: Dict[str, float] = {}  # teacher -> when their last visit was written (statistics)
+        self.categoriser = Categoriser(self)  # the exercises uploaded since categories.json, categorised
 
     def stored_hash(self, teacher: Optional[str] = None) -> str:
         """The password hash of a teacher (the superuser's without one), from teachers.json. Read on
@@ -1334,7 +1349,9 @@ class Admin:
         sheetlib = sheets_module()
         if sheetlib is None:
             raise ValueError("exercise sheets are not installed")
-        return sheetlib.store_export(data, self.texercises, self.own)
+        got = sheetlib.store_export(data, self.texercises, self.own)
+        self.categoriser.after_upload()
+        return got
 
     # ------------------------------------------------------------------ the exercises' review (Sheets tab)
     def audit(self) -> Optional[Dict[str, object]]:
@@ -1440,6 +1457,353 @@ class Admin:
         return {"reviewed": report["reviewed"], "exercises": len(report["exercises"]), "issues": len(issues),
                 **{s: sum(1 for i in issues if i["severity"] == s) for s in AUDIT_SEVERITIES}}
 
+
+
+# ---------------------------------------------------------------------- new exercises categorised
+ANTHROPIC_ENV = "/etc/hub-admin/anthropic.env"
+NO_PACKAGE = "the anthropic package is not installed on the server (sudo pip3 install --break-system-packages anthropic, then restart hub-admin)"
+NO_KEY = f"API key missing: add ANTHROPIC_API_KEY to {ANTHROPIC_ENV} and restart"
+MAX_EXTRA_LIST = 500  # new exercises listed in the panel
+
+
+class Categoriser:
+    """The exercises uploaded since categories.json (sheets/autocat.py), kept in hub-data/
+    categories-extra.json (the overlay; sheets.load_categories merges it, the overlay winning):
+    provisional labels (those of the most similar exercise) at once after an upload, without network;
+    then Claude's, batch by batch in one background thread (never in a request), when the anthropic
+    package and ANTHROPIC_API_KEY (EnvironmentFile /etc/hub-admin/anthropic.env) are there; the teacher's
+    choice (source "teacher") is never overwritten. connect is the one place that reaches the network
+    (tests replace it)."""
+
+    BACKOFF = (30, 120, 600)  # s: waits after a rate limit, an overloaded or unreachable API; then it stops
+
+    def __init__(self, admin: "Admin") -> None:
+        self.admin = admin
+        self.file = admin.config.parent / "categories-extra.json"
+        CATEGORIES_EXTRA[0] = self.file
+        self.lock = threading.Lock()  # the overlay file: read, changed and written together
+        self.state = threading.Lock()  # what follows
+        self.running = False  # Claude's worker
+        self.labelling = False  # the provisional labels
+        self.want_claude = False  # Claude's worker to start after them
+        self.thread: Optional[threading.Thread] = None
+        self.message = ""  # what the worker last said (why it stopped, why it cannot run)
+        self.last_error = ""
+        self.done = 0  # exercises Claude labelled in this run
+        self.backoff = self.BACKOFF
+        self.batch = 0  # exercises per request (0: autocat.BATCH)
+        self.wake = threading.Event()  # (set to end a wait early)
+
+    # ------------------------------------------------------------------ the overlay
+    def read(self) -> Dict[str, object]:
+        lib = sheets_module("autocat")
+        return lib.read_overlay(self.file) if lib else {"exercises": {}, "usage": {}}
+
+    def change(self, fn) -> object:
+        """fn(overlay) under the lock, then the overlay written (atomically); fn's result."""
+        with self.lock:
+            over = self.read()
+            got = fn(over)
+            write_config(self.file, over, 0o644)  # (load_categories reads it again by its stamp; the caches follow)
+        return got
+
+    # ------------------------------------------------------------------ Claude's availability
+    def available(self) -> str:
+        """"" if Claude can be asked, else why not (without importing the package)."""
+        import importlib.util
+        if importlib.util.find_spec("anthropic") is None:
+            return NO_PACKAGE
+        if not os.environ.get("ANTHROPIC_API_KEY"):
+            return NO_KEY
+        return ""
+
+    def connect(self):
+        """(call, errors, "") with call(kwargs) -> the API's response and errors the anthropic module
+        (its exception classes), or (None, None, why not)."""
+        try:
+            import anthropic  # (lazily: the panel works without it)
+        except ImportError:
+            return None, None, NO_PACKAGE
+        if not os.environ.get("ANTHROPIC_API_KEY"):
+            return None, None, NO_KEY
+        lib = sheets_module("autocat")
+        if lib is None:
+            return None, None, "sheets/autocat.py is missing"
+        client = anthropic.Anthropic()  # (the key from the environment, as the SDK finds it)
+        return (lambda kwargs: lib.call_claude(client, kwargs)), anthropic, ""
+
+    # ------------------------------------------------------------------ 1. provisional labels
+    def exercises(self) -> Dict[str, Tuple[str, Path]]:
+        """The exercises there with a TeXercises id: id (a string) -> (key, folder)."""
+        sheetlib = sheets_module()
+        if sheetlib is None:
+            return {}
+        out: Dict[str, Tuple[str, Path]] = {}
+        for key, folder in sheetlib.available(self.admin.texercises).items():
+            eid = sheetlib.exercise_meta(folder).get("id")
+            if eid is not None:
+                out.setdefault(str(eid), (key, folder))
+        return out
+
+    def label_provisional(self) -> int:
+        """Every exercise there in neither categories.json nor the overlay gets the labels of the most
+        similar one categorised (source "provisional"); how many."""
+        sheetlib, lib = sheets_module(), sheets_module("autocat")
+        if sheetlib is None or lib is None:
+            return 0
+        try:
+            base = json.loads(sheetlib.CATEGORIES.read_text(encoding="utf-8")).get("exercises") or {}
+        except (OSError, ValueError, AttributeError):
+            base = {}
+        base = {str(k): v for k, v in base.items() if isinstance(v, dict)} if isinstance(base, dict) else {}
+        extra = self.read()["exercises"]
+        there = self.exercises()
+        todo = [k for k in there if k not in base and k not in extra]
+        if not todo:
+            return 0
+        labels = {**base, **{k: v for k, v in extra.items() if v.get("source") in ("claude", "teacher")}}
+        docs = {k: lib.exercise_doc(folder) for k, (_, folder) in there.items() if k in labels or k in todo}
+        docs = {k: d for k, d in docs.items() if d}
+        got = lib.provisional({k: docs[k] for k in todo if k in docs}, {k: d for k, d in docs.items() if k in labels}, labels)
+
+        def put(over):
+            n = 0
+            for k, rec in got.items():
+                if k not in over["exercises"]:  # (meanwhile labelled otherwise: kept)
+                    over["exercises"][k] = rec
+                    n += 1
+            return n
+        return self.change(put) if got else 0
+
+    def in_background(self, claude: bool, retry: bool = False) -> None:
+        """The provisional labels, then (claude) Claude's, in a thread of their own; retry: the
+        exercises Claude could not label are tried again."""
+        if retry:
+            self.change(lambda over: [r.pop("error", None) for r in over["exercises"].values() if r.get("source") == "provisional"])
+        with self.state:
+            self.want_claude = self.want_claude or claude
+            if self.labelling:  # (the job running asks Claude after it, if wanted)
+                return
+            self.labelling = True
+
+        def work() -> None:
+            try:
+                self.label_provisional()
+            except Exception as e:  # noqa: BLE001 - a background job must not die silently
+                self.last_error = f"provisional labels: {e.__class__.__name__}: {e}"
+            finally:
+                with self.state:
+                    self.labelling, claude_too, self.want_claude = False, self.want_claude, False
+            if claude_too:
+                self.start()
+        threading.Thread(target=work, daemon=True).start()
+
+    def after_upload(self) -> None:
+        """After an export is uploaded (and at start): provisional labels, then Claude's if it can be asked."""
+        self.in_background(claude=not self.available())
+
+    def categorise_now(self) -> Dict[str, object]:
+        why = self.available()
+        if why:
+            self.message = why
+        self.in_background(claude=True, retry=True)
+        return self.status()
+
+    # ------------------------------------------------------------------ 2. Claude's labels
+    def start(self) -> bool:
+        """Claude's worker, unless it runs already or cannot (the status says why)."""
+        with self.state:
+            if self.running:
+                return True
+            call, errors, why = self.connect()
+            if why:
+                self.message = why
+                return False
+            self.running, self.message, self.last_error = True, "", ""
+        self.thread = threading.Thread(target=self.work, args=(call, errors), daemon=True)
+        self.thread.start()
+        return True
+
+    def pending(self, over: Dict[str, object]) -> List[str]:
+        """The exercises waiting for Claude: provisional, not failed, there; by id."""
+        there = self.exercises()
+        return sorted((k for k, r in over["exercises"].items() if r.get("source") == "provisional" and not r.get("error") and k in there),
+                      key=lambda k: (len(k), k))
+
+    def work(self, call, errors) -> None:
+        try:
+            self.message = self.run(call, errors)
+        except Exception as e:  # noqa: BLE001 - never kill the service; the status says what happened
+            self.last_error = self.message = f"stopped: {e.__class__.__name__}: {e}"
+        finally:
+            with self.state:
+                self.running = False
+
+    def failed(self, ids: List[str], why: str, usage: Optional[Dict[str, int]] = None) -> None:
+        """These exercises keep their provisional labels, marked as failed (why)."""
+        def mark(over):
+            for k in ids:
+                r = over["exercises"].get(k)
+                if r and r.get("source") == "provisional":
+                    r["error"] = why
+            self.add_usage(over, usage)
+        self.change(mark)
+
+    @staticmethod
+    def add_usage(over: Dict[str, object], usage: Optional[Dict[str, int]]) -> None:
+        if usage:
+            total = over.setdefault("usage", {})
+            for k, v in list(usage.items()) + [("requests", 1)]:
+                total[k] = int(total.get(k, 0)) + int(v)
+
+    def run(self, call, errors) -> str:
+        """Batch after batch until none is pending; what to say at the end."""
+        sheetlib, lib = sheets_module(), sheets_module("autocat")
+        if sheetlib is None or lib is None:
+            return "exercise sheets are not installed"
+        size, tries, self.done = self.batch or lib.BATCH, 0, 0
+        while True:
+            todo = self.pending(self.read())
+            if not todo:
+                return f"done: {self.done} labelled by Claude" if self.done else "nothing to do"
+            batch = todo[:size]
+            there = self.exercises()
+            docs = [d for d in (lib.exercise_doc(there[k][1]) for k in batch) if d]
+            if not docs:
+                self.failed(batch, "could not be read")
+                continue
+            cats = sheetlib.load_categories()
+            kwargs = lib.request(cats, docs)
+            try:
+                response = call(kwargs)
+            except errors.AuthenticationError as e:
+                self.last_error = f"the API key was not accepted ({getattr(e, 'message', e)}): check {ANTHROPIC_ENV}"
+                return "stopped: " + self.last_error
+            except errors.BadRequestError as e:
+                self.last_error = f"the API refused the request: {getattr(e, 'message', e)}"
+                return "stopped: " + self.last_error
+            except (errors.RateLimitError, errors.APIConnectionError, errors.APIStatusError) as e:
+                status = getattr(e, "status_code", None)
+                if isinstance(e, errors.APIStatusError) and not isinstance(e, errors.RateLimitError) and (status or 0) < 500:
+                    self.last_error = f"the API answered {status}: {getattr(e, 'message', e)}"
+                    return "stopped: " + self.last_error
+                tries += 1
+                self.last_error = f"{e.__class__.__name__}" + (f" ({status})" if status else "") + f", try {tries}"
+                if tries > len(self.backoff):
+                    return "stopped: the Claude API is busy or unreachable; try again later"
+                self.message = f"waiting {self.backoff[tries - 1]} s: {self.last_error}"
+                self.wake.wait(self.backoff[tries - 1])
+                continue
+            tries = 0
+            usage = lib.usage_of(response)
+            reason = getattr(response, "stop_reason", None)
+            if reason == "refusal":
+                self.failed(batch, "Claude declined to label it", usage)
+                continue
+            if reason == "max_tokens":
+                if len(batch) > 1:
+                    size = max(1, len(batch) // 2)
+                    self.change(lambda over: self.add_usage(over, usage))
+                else:
+                    self.failed(batch, "Claude's answer was too long", usage)
+                continue
+            try:
+                payload = json.loads(lib.answer_text(response) or "")
+            except ValueError:
+                self.failed(batch, "Claude's answer was not JSON", usage)
+                continue
+            good, bad = lib.validate(payload, batch, cats, cats["exercises"].keys())
+            model = str(getattr(response, "model", "") or lib.MODEL)
+
+            def keep(over):
+                n = 0
+                for k, rec in good.items():
+                    cur = over["exercises"].get(k) or {}
+                    if cur.get("source") == "teacher":
+                        continue
+                    over["exercises"][k] = {**rec, "source": "claude", "model": model, "at": lib.today()}
+                    n += 1
+                for k, why in bad.items():
+                    cur = over["exercises"].get(k)
+                    if cur and cur.get("source") == "provisional":
+                        cur["error"] = why
+                self.add_usage(over, usage)
+                return n
+            self.done += self.change(keep)
+            if bad:
+                self.last_error = "; ".join(f"{k}: {why}" for k, why in list(bad.items())[:3])
+
+    # ------------------------------------------------------------------ 3. the teacher's choice
+    def confirm(self, raw: object) -> Dict[str, object]:
+        """{"id", "sub", "kind"}: the teacher's labels of a new exercise (source "teacher", kept for
+        good); ValueError: why not."""
+        sheetlib = sheets_module()
+        raw = raw if isinstance(raw, dict) else {}
+        eid, sub, kind = str(raw.get("id") or ""), raw.get("sub"), raw.get("kind")
+        cats = sheetlib.load_categories() if sheetlib else {"flat": {}}
+        if sub not in cats["flat"]:
+            raise ValueError("sub: a subtopic of the tree")
+        if kind not in (sheetlib.TASKS if sheetlib else ()):
+            raise ValueError("kind: a task kind")
+        lib = sheets_module("autocat")
+
+        def put(over):
+            cur = over["exercises"].get(eid)
+            if cur is None:
+                raise ValueError("not a new exercise")
+            kinds = [kind] + [k for k in cur.get("kinds") or [] if k != kind]
+            rec = {f: cur[f] for f in lib.FIELDS if f in cur}
+            rec.update({"sub": sub, "sub2": [x for x in cur.get("sub2") or [] if x != sub], "kind": kind, "kinds": kinds,
+                        "source": "teacher", "at": lib.today()})
+            if cur.get("source") in ("claude", "provisional"):
+                rec["was"] = cur.get("source")
+            over["exercises"][eid] = rec
+            return rec
+        with self.lock:  # (as change, but nothing written when it fails)
+            over = self.read()
+            rec = put(over)
+            write_config(self.file, over, 0o644)
+        return {"id": eid, **rec}
+
+    # ------------------------------------------------------------------ what the panel shows
+    def status(self) -> Dict[str, object]:
+        over = self.read()
+        recs = over["exercises"]
+        n = lambda f: sum(1 for r in recs.values() if f(r))
+        sheetlib = sheets_module()
+        missing = 0
+        if sheetlib is not None:
+            known = sheetlib.load_categories()["exercises"]
+            missing = sum(1 for k in self.exercises() if k not in known)
+        with self.state:
+            running, labelling = self.running, self.labelling
+        return {"running": running, "labelling": labelling, "available": self.available(), "message": self.message,
+                "last_error": self.last_error, "done": self.done, "total": len(recs), "missing": missing,
+                "pending": len(self.pending(over)), "failed": n(lambda r: r.get("source") == "provisional" and r.get("error")),
+                **{s: n(lambda r, s=s: r.get("source") == s) for s in ("provisional", "claude", "teacher")},
+                "usage": over.get("usage", {})}
+
+    def listing(self) -> Dict[str, object]:
+        """The status, the overlay's exercises (newest first; title, key, language, source, labels,
+        failed: why) and the subtopic tree and task kinds to choose from."""
+        sheetlib = sheets_module()
+        over = self.read()
+        there = self.exercises()
+        cats = sheetlib.load_categories() if sheetlib else {"tree": [], "flat": {}}
+        rows = []
+        for k, r in over["exercises"].items():
+            key, folder = there.get(k, (None, None))
+            m = sheetlib.exercise_meta(folder) if folder is not None and sheetlib else {}
+            like = there.get(str(r.get("like") or ""))
+            rows.append({"id": k, "key": key, "title": m.get("title") or (f"exercise {k}"), "lang": m.get("lang"), "url": m.get("url"),
+                         "there": folder is not None, "source": r.get("source"), "model": r.get("model"), "at": r.get("at") or "",
+                         "sub": r.get("sub"), "kind": r.get("kind"), "error": r.get("error") or "",
+                         "like": sheetlib.exercise_meta(like[1])["title"] if like and sheetlib else None})
+        rows.sort(key=lambda x: (x["at"], int(x["id"])), reverse=True)
+        rows.sort(key=lambda x: bool(x["error"]) is False)  # the failed first, then the newest
+        tree = [[a, [[t, [[i, label] for i, label in subs]] for t, subs in topics]] for a, topics in cats["tree"]]
+        return {"status": self.status(), "exercises": rows[:MAX_EXTRA_LIST], "tree": tree,
+                "kinds": list(sheetlib.TASKS) if sheetlib else []}
 
 
 class SheetMedia:
@@ -2459,6 +2823,11 @@ def make_handler(admin: Admin):
                 else:
                     self.send(200, json.dumps(admin.audit_export(), ensure_ascii=False, indent=1), "application/json; charset=utf-8",
                               {"Content-Disposition": f'attachment; filename="exercise-review-feedback-{time.strftime("%Y-%m-%d")}.json"'})
+            elif path == "/api/categories-extra":
+                if not self.is_super():
+                    self.json(403, {"error": "the superuser only"})
+                else:
+                    self.json(200, admin.categoriser.listing())
             elif path.startswith("/api/all-in/"):
                 self.allin_get(path[len("/api/all-in/"):])
             elif path.startswith("/api/absolute-zero/"):
@@ -2525,6 +2894,19 @@ def make_handler(admin: Admin):
                     self.json(400, {"error": str(e)})
                 except OSError:
                     self.json(500, {"error": "could not store the feedback"})
+            elif path in ("/api/categories-extra/run", "/api/categories-extra/label"):
+                if not self.is_super():
+                    self.json(403, {"error": "the superuser only"})
+                    return
+                body = self.json_body()
+                if body is None:
+                    return
+                try:
+                    self.json(200, admin.categoriser.categorise_now() if path.endswith("/run") else admin.categoriser.confirm(body))
+                except ValueError as e:
+                    self.json(400, {"error": str(e)})
+                except OSError:
+                    self.json(500, {"error": "could not store the categories"})
             elif path == "/api/images/fetch":
                 if not self.is_super():
                     self.json(403, {"error": "login"})
@@ -2786,6 +3168,7 @@ SUPER_SECTIONS = """
       <div id="sheet-list" class="setlist"></div>
       <div id="sheet-edit"></div>
       <details id="sheets-topics" class="card topics"><summary>Topics covered by the exercise pool <span class="note">Loading…</span></summary><div class="topicgrid"></div></details>
+      <details id="sheets-new" class="card audit newex"><summary>New exercises <span class="only">only you see this</span> <span class="note">Loading…</span></summary><div class="newex-body"></div></details>
       <details id="sheets-audit" class="card audit"><summary>Exercise review <span class="only">only you see this</span> <span class="note">Loading…</span></summary><div class="audit-body"></div></details>
       <p class="lead">Exercise sheets from your TeXercises exercises: choose modules and their learning objectives, let the panel suggest a balanced sheet, replace or reorder its exercises, and preview them. Then download it as a PDF (with or without the solutions) or share an online version with your students: a secret link that works without logging in and shows no solutions.</p>
       <div id="sheets-state" class="sheetstate"><p class="note">Loading…</p></div>
@@ -3157,6 +3540,23 @@ h2.section { font-size: 1.15rem; margin: 28px 0 4px; }
 .audit .saved { font-size: 0.78rem; color: var(--muted); min-height: 1.1em; }
 .audit .saved.ok { color: var(--ok); }
 .audit .saved.bad { color: var(--bad); }
+/* the new exercises (#sheets-new): who labelled each (provisional, Claude, the teacher) and the teacher's choice */
+.newex .nx-sum { margin: 8px 0 2px; font-size: 0.92rem; }
+.newex .nx-state { margin: 0 0 4px; font-size: 0.92rem; }
+.newex .nx-state.warn { color: var(--sev-warning); }
+.newex .nx-state.bad { color: var(--bad); }
+.newex .src { display: inline-block; border: 1px solid currentColor; border-radius: 999px; padding: 0 8px; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.03em; margin-left: 8px; vertical-align: 2px; }
+.newex .src-provisional { color: var(--muted); border-style: dashed; }
+.newex .src-claude { color: var(--accent); background: color-mix(in srgb, var(--accent) 10%, var(--card)); }
+.newex .src-teacher { color: var(--ok); background: color-mix(in srgb, var(--ok) 10%, var(--card)); }
+.newex .ex.failed { border-left-color: var(--sev-warning); }
+.newex .like { color: var(--muted); font-size: 0.85rem; margin: 2px 0 0; overflow-wrap: anywhere; }
+.newex .why { color: var(--sev-warning); font-size: 0.88rem; margin: 2px 0 0; }
+.newex .pick { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; margin-top: 8px; }
+.newex .pick select { font: inherit; font-size: 0.9rem; color: inherit; background: var(--card); border: 1px solid var(--line); border-radius: 6px; padding: 4px 8px; max-width: 100%; min-width: 0; flex: 0 1 auto; }
+.newex ol.exs { grid-template-columns: minmax(0, 1fr); }  /* (a long subtopic: not wider than the page) */
+.newex .pick select.sub { flex: 1 1 16rem; width: 16rem; }
+.newex .pick button { padding: 3px 12px; }
 .audit .replace > summary { cursor: pointer; color: var(--accent); font-size: 0.9rem; margin-top: 12px; }
 @media (max-width: 560px) { .audit .stat { flex: 1 1 5.5rem; padding: 3px 8px; } .audit .filters .what { width: auto; flex-basis: 100%; } }
 .sheetstate .upload summary { cursor: pointer; color: var(--accent); font-size: 0.95rem; }
@@ -4485,6 +4885,115 @@ SHEETS_JS = r"""
   window.addEventListener('admin-view', (e) => show(e.detail));
   show(location.hash.slice(1));
 })();
+
+// The new exercises (#sheets-new, in the Sheets tab, the superuser's): those uploaded since
+// categories.json, categorised by themselves (/admin/api/categories-extra; hub-data/categories-extra.json):
+// first provisionally (the labels of the most similar exercise), then by Claude in the background,
+// if the server has the anthropic package and an API key. A status line (how many, by whom, the
+// tokens used, or why Claude cannot be asked), "Categorise now", and per exercise (failed ones first,
+// then the newest) its title, who labelled it, its subtopic and task kind to change, and "Confirm":
+// the teacher's labels, kept for good. Polled while the server works on them.
+(function () {
+  'use strict';
+  const box = document.querySelector('#sheets-new');
+  if (!box) return;
+  const body = box.querySelector('.newex-body'), line = box.querySelector('summary .note');
+  const SRC = { provisional: 'provisional', claude: 'Claude', teacher: 'you' };
+  let data = null, loaded = false, timer = 0;
+
+  function el(tag, attrs, ...kids) {
+    const e = document.createElement(tag);
+    Object.entries(attrs || {}).forEach(([k, v]) => {
+      if (v === false || v == null) return;
+      if (k === 'class') e.className = v; else if (k.startsWith('on')) e.addEventListener(k.slice(2), v); else e.setAttribute(k, v === true ? '' : v);
+    });
+    kids.flat().forEach((k) => { if (k !== '' && k != null && k !== false) e.append(k); });
+    return e;
+  }
+  const kilo = (n) => (n >= 10000 ? `${Math.round(n / 1000)}k` : n >= 1000 ? `${(n / 1000).toFixed(1)}k` : String(n || 0));
+  function summary(st) {
+    if (!st.total) return st.missing ? `${st.missing} not yet categorised` : 'none';
+    const by = [st.claude && `${st.claude} by Claude`, st.teacher && `${st.teacher} by you`, st.provisional && `${st.provisional} provisional`].filter(Boolean);
+    const u = st.usage || {};
+    const tokens = u.input || u.output ? ` · tokens used ${kilo((u.input || 0) + (u.cache_read || 0) + (u.cache_write || 0))} in / ${kilo(u.output)} out` : '';
+    return `${st.total} new exercise${st.total === 1 ? '' : 's'}: ${by.join(' · ')}${st.failed ? ` · ${st.failed} failed` : ''}${tokens}`;
+  }
+  function state(st) {
+    if (st.running) return [`Claude is labelling them: ${st.pending} waiting${st.done ? `, ${st.done} done` : ''}…${st.message ? ` (${st.message})` : ''}`, ''];
+    if (st.labelling) return ['Finding provisional labels (those of the most similar exercise)…', ''];
+    if (st.available) return [st.pending ? `${st.pending} waiting for Claude. ${st.available}` : st.available, 'warn'];
+    if (st.message && st.message.startsWith('stopped')) return [st.message, 'bad'];
+    return [st.message ? `Claude: ${st.message}` : (st.pending ? `${st.pending} waiting for Claude.` : ''), ''];
+  }
+
+  function subSelect(cur) {
+    const sel = el('select', { class: 'sub', 'aria-label': 'Subtopic' },
+      data.tree.flatMap(([area, topics]) => topics.map(([topic, subs]) => el('optgroup', { label: `${area} / ${topic}` },
+        subs.map(([id, label]) => el('option', { value: id }, label))))));
+    sel.value = cur || '';
+    return sel;
+  }
+  function row(x) {
+    const title = x.url ? el('a', { href: `https://texercises.com${x.url}`, target: '_blank', rel: 'noopener' }, `${x.title} ↗`) : x.title;
+    const sub = subSelect(x.sub);
+    const kind = el('select', { 'aria-label': 'Task kind' }, data.kinds.map((k) => el('option', { value: k }, k)));
+    kind.value = x.kind || '';
+    const said = el('span', { class: 'saved', 'aria-live': 'polite' });
+    const confirm = el('button', { type: 'button' }, x.source === 'teacher' ? 'Save' : 'Confirm');
+    confirm.addEventListener('click', async () => {
+      said.textContent = 'Saving…'; said.className = 'saved';
+      try {
+        const r = await fetch('/admin/api/categories-extra/label', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: x.id, sub: sub.value, kind: kind.value }) });
+        const d = await r.json().catch(() => ({}));
+        if (!r.ok) throw new Error(d.error || r.statusText);
+        await load();
+      } catch (e) { said.textContent = `Not saved: ${e.message}`; said.className = 'saved bad'; }
+    });
+    const when = x.at ? x.at.slice(0, 10) : '';
+    const by = x.source === 'claude' && x.model ? `by ${x.model}` : '';
+    return el('li', { class: `ex${x.error ? ' failed' : ''}` },
+      el('h3', {}, title, el('span', { class: `src src-${x.source}`, title: by || null }, SRC[x.source] || x.source)),
+      el('div', { class: 'id' }, [`id ${x.id}`, x.key, x.lang, when, by, x.there ? '' : 'no longer in the export'].filter(Boolean).join(' · ')),
+      x.source === 'provisional' && x.like ? el('p', { class: 'like' }, `As the most similar exercise: ${x.like}`) : '',
+      x.error ? el('p', { class: 'why' }, `Claude could not label it: ${x.error}`) : '',
+      el('div', { class: 'pick' }, sub, kind, confirm, said));
+  }
+  function draw() {
+    const st = data.status;
+    line.textContent = summary(st);
+    const [text, cls] = state(st);
+    const busy = st.running || st.labelling;
+    const now = el('button', { type: 'button', disabled: busy }, 'Categorise now');
+    now.addEventListener('click', async () => {
+      now.disabled = true;
+      const r = await fetch('/admin/api/categories-extra/run', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: '{}' });
+      if (r.status === 403) { location.reload(); return; }
+      setTimeout(() => load().catch(() => {}), 600);
+    });
+    body.replaceChildren(
+      el('p', { class: 'note' }, 'Exercises uploaded since the topic tree was made get categories by themselves: at once those of the most similar exercise (provisional), then Claude\'s. Change the subtopic or task kind of any of them and confirm: yours are kept for good. Sheets use them at once.'),
+      el('p', { class: 'nx-sum' }, el('b', {}, summary(st))),
+      text ? el('p', { class: `nx-state ${cls}`, 'aria-live': 'polite' }, text) : '',
+      st.last_error && !st.running ? el('p', { class: 'why' }, `Last error: ${st.last_error}`) : '',
+      el('div', { class: 'tools-line' }, now),
+      data.exercises.length ? el('ol', { class: 'exs' }, data.exercises.map(row)) : el('p', { class: 'note' }, 'No new exercises.'));
+    clearTimeout(timer);
+    if (busy) timer = setTimeout(() => load().catch(() => {}), 3000);
+  }
+  async function load() {
+    const r = await fetch('/admin/api/categories-extra', { credentials: 'same-origin', cache: 'no-store' });
+    if (r.status === 403) { location.reload(); return; }
+    data = await r.json();
+    loaded = true;
+    draw();
+  }
+  try { box.open = localStorage.getItem('sheets-new') === '1'; } catch (e) { /* none */ }
+  box.addEventListener('toggle', () => { try { localStorage.setItem('sheets-new', box.open ? '1' : '0'); } catch (e) { /* none */ } });
+  const show = (v) => { if (v === 'sheets' && !loaded) load().catch(() => { line.textContent = 'could not be loaded'; }); };
+  window.addEventListener('admin-view', (e) => show(e.detail));
+  show(location.hash.slice(1));
+})();
 """
 
 ONLINE_JS = r"""
@@ -5134,6 +5643,7 @@ def main(argv: Optional[List[str]] = None) -> int:
     admin = Admin(args.password_file, args.hub, args.config, args.sets, superuser=args.super, super_user=args.super_user,
                   crosswords_url=args.crosswords_url)
     admin.migrate_sets()
+    admin.categoriser.after_upload()  # (exercises uploaded before: provisional labels, Claude's if it can)
     server = ThreadingHTTPServer((args.host, args.port), make_handler(admin))
     print(f"hub admin on http://{args.host}:{args.port}/", file=sys.stderr)
     try:
