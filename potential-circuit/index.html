@@ -9,6 +9,7 @@
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
   <link rel="stylesheet" href="/katex/katex.min.css">
   <link rel="stylesheet" href="ui.css">
+  <link rel="stylesheet" href="sketch.css">
   <link rel="stylesheet" href="style.css">
   <script defer src="/katex/katex.min.js"></script>
   <script defer src="/katex/contrib/auto-render.min.js"></script>
@@ -18,6 +19,7 @@
   <script defer src="sign.js"></script>
   <script defer src="circuit.js"></script>
   <script defer src="loop.js"></script>
+  <script defer src="sketch.js"></script>
   <script defer src="tutor.js"></script>
   <script defer src="check.js"></script>
   <script defer src="practice.js"></script>
@@ -73,6 +75,7 @@
       <div id="figure" class="figs"></div>
 
       <form id="answers" novalidate>
+        <div id="sketch-area" hidden></div>
         <div id="fields" class="fields"></div>
         <div class="actions">
           <button type="submit" id="check" class="primary">Check</button>

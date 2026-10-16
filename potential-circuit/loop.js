@@ -23,6 +23,9 @@
 //                      voltage across the parallel lamps (loop rule)
 //   volt-1, volt-2     voltages between points (the potentials given; from the circuit)
 //   error-1, error-2   a student's sketch of the potential with one wrong step: which, and why
+//   sketch-1, sketch-2 the potential around the loop sketched by the student (one battery; two
+//                      batteries), and sketch-eq (identical lamps, no numbers): no fields but
+//                      sketch, the sketch's spec (see sketchSpec), judged by judgeSketch
 // question(kind, seed) gives the check's questions (OBJECTIVES), EXAMPLES the tutor's examples.
 (function (root) {
   'use strict';
@@ -157,7 +160,8 @@
   // ---------------------------------------------------------------- figures
   // The circuit. o: known (how many points, from A, show their potential; true: all), mark (the
   // point just found, marked), ask (the point asked for), hide (Set of 'U2', 'I3', …: values shown
-  // as ?), cur (draw the current arrow I), noValues (no voltages at the elements).
+  // as ?), cur (draw the current arrow I), noValues (no voltages at the lamps), bat (the label of
+  // the batteries instead of their voltage).
   function draw(c, o = {}) {
     const sk = new Circuit.Sketch();
     sk.autoDots = true;
@@ -168,7 +172,7 @@
     c.slots.forEach((el, i) => {
       const p = NODES[i], q = NODES[(i + 1) % 6], side = OUT[i];
       if (!el) sk.wire(p, q);
-      else if (el.t === 'bat') sk.bat(el.up ? p : q, el.up ? q : p, { l: `${el.V} V`, ls: side });
+      else if (el.t === 'bat') sk.bat(el.up ? p : q, el.up ? q : p, { l: o.bat || `${el.V} V`, ls: side });
       else if (el.t === 'lamp') sk.lamp(p, q, { l: lampLabel(el.n, el.V), ls: side });
       else {
         sk.wire([W - dx, H], [W + dx, H]).wire([W - dx, 0], [W + dx, 0]);
@@ -395,11 +399,187 @@
     throw new Error('no error exercise');
   }
 
-  const TYPES = ['pot-1', 'pot-2', 'loop-1', 'loop-2', 'junction', 'volt-1', 'volt-2', 'error-1', 'error-2'];
+  // 6 sketch the potential around the loop. The student drags a handle at every point after A up
+  // and down (app.js mounts the shared sketcher, sketch.js, its columns, there); A is 0 V, at both
+  // ends of the axis. The line goes from point to point as in plot(): along a wire straight (level,
+  // or sloped where the two ends differ), across an element level up to its middle, where it
+  // steps. Values in volts, on a grid of 1 V; with identical lamps and no numbers (eq), in sixths
+  // of the battery voltage (that circuit is made with a 6 V battery, so its volts are the sixths).
+  //   sketchSpec(c, eq)     { eq, xs (the places of the points after A: their nodes), lo, hi (the
+  //                         axis), target (the right potentials at those points) }
+  //   sketchScale(spec)     x(u), y(v), inv(py), area (where a press sets a point), W, H (svg units)
+  //   sketchFig(spec, label)  the empty <svg> the sketcher fills
+  //   sketchBody(c, spec, vals, view)   the drawing under the handles: grid, axes, the line through
+  //                         vals (the potentials at the points after A); view: marks (steps drawn
+  //                         as wrong), right (the right line, dashed, laid over the sketch), active
+  //                         (the handle selected: its value beside it)
+  //   judgeSketch(c, spec, vals)   null (nothing drawn yet), or the problems in the order of the
+  //                         loop, [{ code, steps, nudge, why }] (none: right); see below
+  const U0 = () => L('\\Delta V_0', 'U_0'); // TeX
+  const gcd = (a, b) => (b ? gcd(b, a % b) : a);
+  // k sixths of the battery voltage, in TeX, on the axis and in the readout
+  function sixth(k) {
+    if (k === 0) return '0';
+    const g = gcd(Math.abs(k), 6), a = Math.abs(k) / g, b = 6 / g, s = k < 0 ? '-' : '';
+    return b === 1 ? `${s}${a === 1 ? '' : a}${U0()}` : `${s}\\tfrac{${a}}{${b}}\\,${U0()}`;
+  }
+  const GLYPH = ['0', '⅙', '⅓', '½', '⅔', '⅚', '1'];
+  function sixthTick(k) {
+    const g = gcd(Math.abs(k), 6) || 6, a = Math.abs(k) / g, b = 6 / g;
+    return (k < 0 ? '−' : '') + (Math.abs(k) <= 6 ? GLYPH[Math.abs(k)] : `${a}/${b}`);
+  }
+  const sketchValue = (spec, v) => (spec.eq ? (v === 0 ? '0' : `${v === 6 ? '' : v === -6 ? '−' : sixthTick(v) + ' '}${L('ΔV₀', 'U₀')}`) : `${num(v)} V`);
+  const amount = (spec, x) => (spec.eq ? `$${sixth(x)}$` : `${num(x)} V`);
+
+  function sketchSpec(c, eq) {
+    const target = c.points.slice(1).map((p) => p.phi);
+    return { eq, xs: c.points.slice(1).map((p) => p.node), target,
+      lo: Math.min(eq ? -2 : -3, Math.min(...target) - 2), hi: rises(c).reduce((a, b) => a + b, 0) + 2 };
+  }
+  function sketchScale(spec) {
+    const sy = Math.min(24, 240 / (spec.hi - spec.lo)), y0 = 30 + (spec.hi - spec.lo) * sy;
+    const x = (u) => Math.round((46 + u * 46) * 10) / 10, y = (v) => Math.round((y0 - (v - spec.lo) * sy) * 10) / 10;
+    return { x, y, inv: (py) => spec.lo + (y0 - py) / sy, area: { x0: x(0.4), x1: x(6) + 10, y0: y(spec.hi) - 14, y1: y0 + 14 }, W: x(6) + 18, H: Math.round(y0 + 26) };
+  }
+  function sketchFig(spec, label) {
+    const g = sketchScale(spec);
+    return `<div class="fig"><svg class="plot sketch-plot" viewBox="0 0 ${g.W} ${g.H}" width="${Math.round(g.W * 1.25)}" style="width:${Math.round(g.W * 1.25)}px;max-width:100%;height:auto" role="group" aria-label="${label}"></svg></div>`;
+  }
+  // the line through the potentials phis (of every point, A first), as [place, value] vertices
+  function trace(c, phis) {
+    const v = [[0, phis[0]]];
+    c.steps.forEach((s) => {
+      const a = phis[s.from], b = phis[s.to], i = s.slots[0];
+      if (s.el) v.push([i + 0.3, a], [i + 0.7, b], [i + 1, b]);
+      else v.push([s.slots[s.slots.length - 1] + 1, b]);
+    });
+    return v;
+  }
+  const stepSpan = (c, s) => [c.points[s.from].node, s.to ? c.points[s.to].node : 6];
+  function sketchBody(c, spec, vals, view = {}) {
+    const g = sketchScale(spec), out = [], f = (x) => x.toFixed(1);
+    const line = (pts, cls) => `<polyline class="${cls}" points="${pts.map(([u, v]) => `${f(g.x(u))},${f(g.y(v))}`).join(' ')}"/>`;
+    const every = spec.eq || spec.hi - spec.lo <= 14 ? 1 : 2;
+    (view.marks || []).forEach((k) => {
+      const [a, b] = stepSpan(c, c.steps[k]);
+      out.push(`<rect class="wrongband" x="${g.x(a)}" y="${g.y(spec.hi)}" width="${f(g.x(b) - g.x(a))}" height="${f(g.y(spec.lo) - g.y(spec.hi))}"/>`);
+    });
+    for (let v = spec.lo; v <= spec.hi; v++) {
+      out.push(`<line class="grid${v === 0 ? ' zero' : ''}" x1="${g.x(0)}" y1="${g.y(v)}" x2="${g.x(6)}" y2="${g.y(v)}"/>`);
+      if (v % every === 0) out.push(`<text class="tick" x="${g.x(0) - 6}" y="${g.y(v)}" dy="0.35em" text-anchor="end">${spec.eq ? sixthTick(v) : num(v)}</text>`);
+    }
+    spec.xs.forEach((u) => out.push(`<line class="col" x1="${g.x(u)}" y1="${g.y(spec.hi)}" x2="${g.x(u)}" y2="${g.y(spec.lo)}"/>`));
+    [...c.points, { node: 6, name: 'A' }].forEach((pt) => out.push(`<text class="ptl" x="${g.x(pt.node)}" y="${f(g.y(spec.lo) + 17)}" text-anchor="middle">${pt.name}</text>`));
+    out.push(`<path class="axis" d="M${g.x(0)} ${g.y(spec.lo)}H${g.x(6) + 8}M${g.x(0)} ${g.y(spec.lo)}V${g.y(spec.hi) - 12}"/>`);
+    out.push(`<text class="axl" x="6" y="14">${spec.eq ? L('<tspan class="it">V</tspan> in Δ<tspan class="it">V</tspan>₀', '<tspan class="it">φ</tspan> in <tspan class="it">U</tspan>₀') : L('<tspan class="it">V</tspan> in V', '<tspan class="it">φ</tspan> in V')}</text>`);
+    const mine = trace(c, [0, ...vals]);
+    out.push(line(mine, 'phi'));
+    (view.marks || []).forEach((k) => {
+      const [a, b] = stepSpan(c, c.steps[k]);
+      out.push(line(mine.filter(([u]) => u >= a - 1e-9 && u <= b + 1e-9), 'phi bad'));
+    });
+    if (view.right) out.push(line(trace(c, c.points.map((p) => p.phi)), 'phi right'));
+    out.push(`<circle class="fixed" cx="${g.x(0)}" cy="${g.y(0)}" r="4.5"/><circle class="fixed" cx="${g.x(6)}" cy="${g.y(0)}" r="4.5"/>`);
+    const h = view.active;
+    if (h) {
+      const left = h.t >= 4;
+      out.push(`<text class="readout" x="${f(h.x + (left ? -11 : 11))}" y="${f(h.y - 10)}" text-anchor="${left ? 'end' : 'start'}">${c.points[h.i + 1].name}: ${sketchValue(spec, h.v)}</text>`);
+    }
+    return out.join('');
+  }
+
+  // The sketch, judged leniently, step by step: along a wire it must stay level; across an
+  // element it must go the right way (up across a battery from − to +, down across a lamp and
+  // across a battery the current flows through from + to −), by about the right amount (within a
+  // grid step or a fifth of the jump); then, of the elements right so far, two with the same
+  // voltage need steps of about the same size (within a grid step), and of two different ones the
+  // larger must not get the smaller step. A problem: { code (wire, dir, size, equal, order),
+  // steps (their indices), nudge (where to look, while the exercise is open), why (all of it) }.
+  const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
+  function judgeSketch(c, spec, vals) {
+    if (vals.every((v) => v === 0)) return null;
+    const phis = [0, ...vals], eq = spec.eq, amt = (x) => amount(spec, Math.abs(x)), out = [];
+    const d = c.steps.map((s) => (s.to ? phis[s.to] : 0) - phis[s.from]), D = c.steps.map((s) => (s.el ? jump(s.el) : 0));
+    const E = (el) => (el.t !== 'bat' ? lampTex(el.n) : eq ? L('the battery', 'die Batterie') : L(`the ${el.V} V battery`, `die ${el.V}-V-Batterie`));
+    const went = (x) => (x === 0 ? L('stays level', 'bleibt gleich') : x > 0 ? L('rises', 'steigt') : L('drops', 'sinkt'));
+    const ok = c.steps.map(() => true);
+    c.steps.forEach((s, k) => {
+      const nm = stepName(c, s), a = nameOf(c, s.from), b = nameOf(c, s.to), x = d[k], X = D[k], el = s.el;
+      const add = (code, nudge, why) => { ok[k] = false; out.push({ code, steps: [k], nudge, why }); };
+      if (!el) {
+        if (x !== 0) add('wire', L(`${nm}: along a wire the potential does not change, so ${a} and ${b} lie at the same height.`, `${nm}: Entlang eines Drahts ändert sich das Potential nicht, also liegen ${a} und ${b} auf gleicher Höhe.`),
+          L(`${nm} is a wire: the potential stays the same; your sketch ${went(x)} by ${amt(x)} there.`, `${nm} ist ein Draht: Das Potential bleibt gleich; deine Skizze ${went(x)} dort um ${amt(x)}.`));
+        return;
+      }
+      const why = L(`${nm}: across ${E(el)} the potential ${went(X)} by ${amt(X)}`, `${nm}: Über ${E(el)} ${went(X)} das Potential um ${amt(X)}`);
+      if (Math.sign(x) !== Math.sign(X)) {
+        const nudge = el.t !== 'bat' ? L(`${nm}: across ${E(el)}, in the direction of the current, the potential drops.`, `${nm}: Über ${E(el)} sinkt das Potential in Stromrichtung.`)
+          : el.up ? L(`${nm}: across ${E(el)}, from − to +, the potential rises.`, `${nm}: Über ${E(el)} steigt das Potential von − nach +.`)
+            : L(`${nm}: the current flows through ${E(el)} from + to −, so the potential drops there.`, `${nm}: Der Strom fliesst von + nach − durch ${E(el)}, also sinkt das Potential dort.`);
+        const reason = el.t !== 'bat' ? L(' in the direction of the current', ' in Stromrichtung') : el.up ? L(' from − to +', ' von − nach +') : L(' (the current flows through it from + to −)', ' (der Strom fliesst von + nach − hindurch)');
+        add('dir', nudge, `${why}${reason}; ${L('your sketch', 'deine Skizze')} ${x === 0 ? L('stays level there', 'bleibt dort gleich') : `${went(x)} ${L('there', 'dort')}`}.`);
+        return;
+      }
+      if (Math.abs(x - X) > Math.max(1, 0.2 * Math.abs(X))) {
+        const big = Math.abs(x) > Math.abs(X);
+        const rule = el.t === 'bat' ? L(`the potential changes by the voltage of ${E(el)}`, `das Potential ändert sich um die Spannung ${eq ? 'der Batterie' : `der ${el.V}-V-Batterie`}`)
+          : eq ? L('the identical lamps share the battery voltage equally', 'die gleichen Lampen teilen sich die Batteriespannung gleichmässig')
+            : L(`the potential changes by the voltage across ${E(el)}`, `das Potential ändert sich um die Spannung an ${E(el)}`);
+        add('size', L(`${nm}: the step across ${E(el)} is too ${big ? 'large' : 'small'}: ${rule}.`, `${nm}: Der Schritt über ${E(el)} ist zu ${big ? 'gross' : 'klein'}: ${cap(rule)}.`),
+          `${why}; ${L('your sketch by', 'deine Skizze um')} ${amt(x)}.`);
+      }
+    });
+    const els = c.steps.map((s, k) => k).filter((k) => c.steps[k].el && ok[k]);
+    els.forEach((i) => els.forEach((j) => {
+      if (j <= i) return;
+      const A = Math.abs(D[i]), B = Math.abs(D[j]), x = Math.abs(d[i]), y = Math.abs(d[j]), ei = E(c.steps[i].el), ej = E(c.steps[j].el);
+      const yours = L(`your sketch has ${amt(x)} and ${amt(y)}`, `deine Skizze hat ${amt(x)} und ${amt(y)}`);
+      if (A === B && Math.abs(x - y) > 1) {
+        out.push({ code: 'equal', steps: [i, j], nudge: L(`${cap(ei)} and ${ej} have the same voltage${eq ? ' (identical lamps)' : ''}: their steps should be the same size.`, `${cap(ei)} und ${ej} haben dieselbe Spannung${eq ? ' (gleiche Lampen)' : ''}: Ihre Schritte sollten gleich gross sein.`),
+          why: L(`Across ${ei} and ${ej} the potential changes by ${amt(A)} each; ${yours}.`, `Über ${ei} und ${ej} ändert sich das Potential um je ${amt(A)}; ${yours}.`) });
+      } else if ((A > B && x < y) || (A < B && x > y)) {
+        const [big, small] = A > B ? [ei, ej] : [ej, ei];
+        out.push({ code: 'order', steps: [i, j], nudge: L(`${cap(big)} has a larger voltage than ${small}, so its step should be the larger one.`, `${cap(big)} hat eine grössere Spannung als ${small}, also sollte ihr Schritt der grössere sein.`),
+          why: L(`Across ${ei} the potential changes by ${amt(A)}, across ${ej} by ${amt(B)}; ${yours}.`, `Über ${ei} ändert sich das Potential um ${amt(A)}, über ${ej} um ${amt(B)}; ${yours}.`) });
+      }
+    }));
+    return out;
+  }
+
+  // a step with its result in sixths of the battery voltage (eq), like stepLine
+  function stepLineEq(c, s) {
+    const a = c.points[s.from], b = c.points[s.to], n = lampsOf(c).length;
+    const how2 = !s.el ? L('along a wire: the potential stays the same', 'entlang eines Drahts: Das Potential bleibt gleich')
+      : s.el.t === 'bat' ? L(`across the battery from − to +: up by $${U0()}$`, `über die Batterie von − nach +: um $${U0()}$ hinauf`)
+        : L(`across ${lampTex(s.el.n)} with the current: down by $${sixth(6 / n)}$ (the ${n} identical lamps share $${U0()}$ equally)`, `über ${lampTex(s.el.n)} mit dem Strom: um $${sixth(6 / n)}$ hinunter (die ${n} gleichen Lampen teilen sich $${U0()}$ gleichmässig)`);
+    const eqn = !s.el ? `${phi(b.name)} = ${phi(a.name)} = ${sixth(b.phi)}` : `${phi(b.name)} = ${sixth(b.phi)}`;
+    return `${stepName(c, s)}, ${how2}: $${eqn}$`;
+  }
+  function sketchEx(r, how2) {
+    const eq = how2 === 'eq', n = r.pick([2, 3]);
+    const c = eq ? make(place(r, [6, ...Array.from({ length: n }, () => lamp(6 / n))])) : how2 === '2' ? twoBatteries(r, r.next() < 0.6) : oneBattery(r, r.pick([2, 3]));
+    const spec = sketchSpec(c, eq), pts = c.points.slice(1);
+    const intro = eq ? L(`The battery has the voltage $${U0()}$, and the ${n} lamps are identical. The potential at A, the − terminal of the battery, is 0.`, `Die Batterie hat die Spannung $${U0()}$, und die ${n} Lampen sind gleich. Das Potential in A, dem Minuspol der Batterie, ist 0.`) : ZERO(c);
+    return {
+      kind: 'sketch', c, sketch: spec, difficulty: how2 === '2' ? 3 : 2,
+      text: `<p>${intro} ${L('Sketch the potential around the loop, from A in the direction of the current back to A.', 'Skizziere das Potential im Kreis herum, von A in Stromrichtung zurück nach A.')}</p>`,
+      fields: [],
+      hints: [currentNote(c), RULES(), eq ? L(`The battery raises the potential by $${U0()}$; the ${n} identical lamps share it equally, so across each one it drops by $${sixth(6 / n)}$.`, `Die Batterie erhöht das Potential um $${U0()}$; die ${n} gleichen Lampen teilen sich das gleichmässig, also sinkt es über jeder um $${sixth(6 / n)}$.`)
+        : `${L('The first step', 'Der erste Schritt')}: ${stepLine(c, c.steps[0])}.`],
+      solution: [currentNote(c), ...(eq ? c.steps.map((s) => `${stepLineEq(c, s)}.`) : walk(c).map((x) => `${x}.`)),
+        eq ? L(`Back at A: 0, as it must be (loop rule: the drops, ${n} × $${sixth(6 / n)}$, add up to the rise $${U0()}$).`, `Zurück in A: 0, wie es sein muss (Maschenregel: Die Abfälle, ${n} × $${sixth(6 / n)}$, ergeben zusammen den Anstieg $${U0()}$).`) : back(c),
+        L('The right graph is laid over your sketch, dashed.', 'Der richtige Graph liegt gestrichelt über deiner Skizze.')],
+      results: pts.map((p) => `$${phi(p.name)} = ${eq ? sixth(p.phi) : tv(p.phi)}$`).join(', '),
+      figure: (sol) => draw(c, { known: sol && !eq ? true : 1, cur: true, noValues: eq, bat: eq ? L('$ΔV_0$', '$U_0$') : null }),
+      p: { slots: c.slots, how: how2 },
+    };
+  }
+
+  const TYPES = ['pot-1', 'pot-2', 'loop-1', 'loop-2', 'junction', 'volt-1', 'volt-2', 'error-1', 'error-2', 'sketch-1', 'sketch-2', 'sketch-eq'];
   function generate(type, seed) {
     const r = rng(seed), [kind, lv] = type.split('-'), two = lv === '2';
     const e = kind === 'pot' ? pot(r, two) : kind === 'loop' ? loop(r, two) : kind === 'junction' ? junction(r)
-      : kind === 'volt' ? volt(r, lv === '1') : error(r, two);
+      : kind === 'volt' ? volt(r, lv === '1') : kind === 'sketch' ? sketchEx(r, lv) : error(r, two);
     e.p = JSON.stringify({ type, ...e.p });
     return { ...e, type, seed };
   }
@@ -545,8 +725,9 @@
   }
 
   // ---------------------------------------------------------------- worked examples
-  // Each { topic, name(), idea(), frames() }, frames [{ text, figure }]: the circuit with the
-  // potentials found so far, and the potential plotted around the loop.
+  // Each { topic, name(), idea(), frames(), sketch() (optional: its circuit, for Your turn) },
+  // frames [{ text, figure }]: the circuit with the potentials found so far, and the potential
+  // plotted around the loop.
   const frame = (title, text, figure) => ({ text: `<div class="step-rule">${title}</div>${text}`, figure });
   const P = (...xs) => xs.map((x) => `<p>${x}</p>`).join('');
   // a simple loop: 12 V, wire, L1 5 V, L2 4 V, wire, L3 3 V
@@ -567,9 +748,15 @@
     return out;
   }
 
+  // Your turn: the student sketches the potential of the example's circuit before the walk round
+  // it (app.js mounts the sketcher in the empty <svg>, and Check in .t-draw), or simply goes on
+  const yourTurn = (c) => frame(L('Your turn', 'Du bist dran'),
+    P(L('Before we go round step by step: sketch the potential yourself, from A round the loop back to A, and check your sketch. Or simply go on.', 'Bevor wir Schritt für Schritt herumgehen: Skizziere das Potential selbst, von A im Kreis herum zurück nach A, und prüfe deine Skizze. Oder geh einfach weiter.')) + '<div class="t-draw"></div>',
+    draw(c, { known: 1, cur: true }) + sketchFig(sketchSpec(c, false), L('Your sketch of the potential around the loop', 'Deine Skizze des Potentials im Kreis herum')));
+
   const EXAMPLES = [
     {
-      topic: 0, name: () => L('Round the loop', 'Im Kreis herum'),
+      topic: 0, name: () => L('Round the loop', 'Im Kreis herum'), sketch: SIMPLE,
       idea: () => L('Set 0 V at the − terminal of the battery and go round with the current: up across the battery, down across each lamp, flat along the wires.', 'Setze 0 V an den Minuspol der Batterie und geh mit dem Strom im Kreis herum: hinauf über die Batterie, hinunter über jede Lampe, flach entlang der Drähte.'),
       frames: () => {
         const c = SIMPLE();
@@ -577,6 +764,7 @@
           frame(L('The task', 'Die Aufgabe'), P(L('Find the potential at the points B to F.', 'Bestimme das Potential in den Punkten B bis F.'),
             L('Only differences of the potential are fixed, so we may choose where it is 0 V: at A, the − terminal of the battery, the lowest point of the circuit.', 'Festgelegt sind nur Differenzen des Potentials; wo es 0 V ist, dürfen wir wählen: in A, dem Minuspol der Batterie, dem tiefsten Punkt der Schaltung.'),
             currentNote(c)), draw(c, { known: 1, cur: true }) + plot(c, { upTo: 0 })),
+          yourTurn(c),
           ...walkFrames(c, {
             0: L('The battery lifts the charges to a higher potential: it gives them energy, 12 J per coulomb.', 'Die Batterie hebt die Ladungen auf ein höheres Potential: Sie gibt ihnen Energie, 12 J pro Coulomb.'),
             1: L('A wire is taken as a perfect conductor: no voltage across it, the potential does not change. B and C are at the same potential.', 'Ein Draht gilt als idealer Leiter: keine Spannung darüber, das Potential ändert sich nicht. B und C liegen auf demselben Potential.'),
@@ -591,13 +779,14 @@
       },
     },
     {
-      topic: 0, name: () => L('Two batteries', 'Zwei Batterien'),
+      topic: 0, name: () => L('Two batteries', 'Zwei Batterien'), sketch: AGAINST,
       idea: () => L('A battery raises the potential only from − to +. If the current flows through it from + to −, the potential drops there.', 'Eine Batterie erhöht das Potential nur von − nach +. Fliesst der Strom von + nach − durch sie, sinkt das Potential dort.'),
       frames: () => {
         const c = AGAINST();
         return [
           frame(L('The task', 'Die Aufgabe'), P(L('Two batteries with opposite polarities and two lamps in series. Find the potential at B to F, with 0 V at A.', 'Zwei Batterien mit entgegengesetzter Polung und zwei Lampen in Serie. Bestimme das Potential in B bis F, mit 0 V in A.'),
             currentNote(c)), draw(c, { known: 1, cur: true }) + plot(c, { upTo: 0 })),
+          yourTurn(c),
           ...walkFrames(c, {
             3: L('Here the current flows into the + terminal: the battery is charged, the charges give it energy. So the potential drops, just as across a lamp.', 'Hier fliesst der Strom in den Pluspol: Die Batterie wird geladen, die Ladungen geben ihr Energie ab. Also sinkt das Potential, gleich wie über einer Lampe.'),
           }),
@@ -666,7 +855,7 @@
     },
   ];
 
-  const api = { rng, W, H, NODES, make, jump, split, oneBattery, twoBatteries, branched, draw, plot, vertices, rightJumps, generate, TYPES, OBJECTIVES, CONCEPT, concepts, question, EXAMPLES, phiWrong };
+  const api = { rng, W, H, NODES, make, jump, split, oneBattery, twoBatteries, branched, draw, plot, vertices, rightJumps, generate, TYPES, sketchSpec, sketchScale, sketchFig, sketchBody, sketchValue, judgeSketch, OBJECTIVES, CONCEPT, concepts, question, EXAMPLES, phiWrong };
   root.Loop = api;
   if (typeof module !== 'undefined') module.exports = api;
 })(typeof window !== 'undefined' ? window : globalThis);
