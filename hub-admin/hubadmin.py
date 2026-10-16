@@ -25,8 +25,20 @@ cards in its order, shows their tags, and lets visitors filter by tag. This serv
     /admin/api/exercise-audit/feedback  GET  the superuser's feedback on it: {ref: {"comment", "accepted":
                          [fingerprints]}}; POST {"exercise": ref, "comment"} | {"exercise": ref, "accept":
                          {"fp", "on"}} (hub-data/exercise-audit-feedback.json, kept by exercise id and issue
-                         fingerprint, so a new report keeps it); /export: the exercises with an accepted fix
-                         or a comment, as JSON to download, for Claude to work on
+                         fingerprint, so a new report keeps it); /export: the exercises with an accepted fix,
+                         a comment or a TikZ figure, as JSON to download, for Claude to work on. The GET of
+                         /admin/api/exercise-audit also gives "images" ({ref: [{"name", "url", "pdf"}]}: the
+                         gallery images of the report's exercises in the export), "figures" (LaTeX draws) and
+                         "claude" ("" or why Claude cannot be asked). An image replaced by TikZ: POST
+                         {"exercise": ref, "tikz": {"image", "code"}} to /feedback ("" removes it; one
+                         tikzpicture or circuitikz, at most 20 KB, sheets/tikzdraft.py check), exported as
+                         "tikz": [{"image", "code"}]
+    /admin/api/exercise-audit/tikz/preview  POST {"exercise": ref, "code"}: the figure drawn with the
+                         exercise's solver part (figures.py): {"url", "width", "height"} | {"pending": true}
+                         (ask again) | {"error": LaTeX's, short}
+    /admin/api/exercise-audit/tikz/draft  POST {"exercise": ref, "image", "code"?}: Claude redraws the image
+                         as TikZ (sheets/tikzdraft.py; in the background): {"pending": true}; GET
+                         ?exercise=&image=: {"pending"} | {"code", "notes", "model", "usage"} | {"error"} | {}
     /admin/api/categories-extra  GET  the exercises uploaded since categories.json and their categories (the
                          superuser only; Categoriser, sheets/autocat.py; hub-data/categories-extra.json): the
                          status (provisional, by Claude, by the teacher, pending, failed, tokens used), the
@@ -200,6 +212,10 @@ MAX_AUDIT_COMMENT, MAX_AUDIT_FEEDBACK = 4000, 20000  # characters of a comment; 
 AUDIT_REF = re.compile(r"[0-9]{1,12}|key:[A-Za-z0-9_-]{1,160}")  # an exercise in the feedback (audit_ref)
 AUDIT_FP = re.compile(r"[0-9a-f]{16}")  # an issue in it (audit_fingerprint)
 AUDIT_SEVERITIES = ("error", "warning", "doubt")  # the most serious first
+# a gallery image of a reviewed exercise redrawn as TikZ (the review's TikZ editor; sheets/tikzdraft.py)
+MAX_AUDIT_TIKZ, MAX_AUDIT_TIKZ_IMAGES = 20 * 1024, 20  # bytes of a figure (= tikzdraft.MAX_CODE); figures per exercise
+AUDIT_IMAGE = re.compile(r"[A-Za-z0-9][A-Za-z0-9._-]{0,150}")  # its gallery name (preview.image_name)
+DRAFT_KEEP = 3600  # s: Claude's draft of a figure is kept this long for the editor to fetch it
 # exercise sheets: their ids, the secret of a shared one's online version (in its address), limits
 SHEET_ID = re.compile(r"[0-9a-f]{12}")
 SHEET_TOKEN = re.compile(r"[A-Za-z0-9_-]{32}")
@@ -567,6 +583,8 @@ class Admin:
         self.audit_file = config.parent / "exercise-audit.json"  # the exercises' review, in the Sheets tab (the superuser's)
         self.audit_feedback_file = config.parent / "exercise-audit-feedback.json"  # what the superuser accepted and wrote on it
         self.audit_lock = threading.Lock()
+        self.drafts: Dict[Tuple[str, str], Dict[str, object]] = {}  # (ref, image) -> Claude's TikZ draft, in memory
+        self.drafts_lock = threading.Lock()
         self.allin = AllInRooms()  # the rooms of the game All In (/all-in/), in memory
         self.zero = ZeroRooms()  # the rooms of the quiz Absolute Zero (/absolute-zero/), in memory
         self.seen_at: Dict[str, float] = {}  # teacher -> when their last visit was written (statistics)
@@ -1367,16 +1385,19 @@ class Admin:
         return got
 
     def audit_feedback(self) -> Dict[str, Dict[str, object]]:
-        """{ref: {"comment", "accepted": [fp], "updated"}}: the feedback on the review, also on exercises
-        and issues no longer in the report (kept, but not shown or exported)."""
+        """{ref: {"comment", "accepted": [fp], "tikz": {image: {"code", "updated"}}, "updated"}}: the
+        feedback on the review, also on exercises and issues no longer in the report (kept, but not shown
+        or exported); "tikz": the gallery images redrawn as TikZ, to replace them."""
         got = read_config(self.audit_feedback_file)
         got = got.get("exercises") if isinstance(got, dict) else None
         return {r: f for r, f in got.items() if AUDIT_REF.fullmatch(r) and isinstance(f, dict)} if isinstance(got, dict) else {}
 
     def change_audit_feedback(self, raw: object) -> Dict[str, object]:
-        """{"exercise": ref, "comment": text} and/or {"exercise": ref, "accept": {"fp": fp, "on": bool}}:
-        an exercise's comment, or an issue's suggested fix accepted or not (ValueError: why it cannot be);
-        the exercise's feedback now. An exercise without comment and accepted fix has none."""
+        """{"exercise": ref, "comment": text} and/or {"exercise": ref, "accept": {"fp": fp, "on": bool}}
+        and/or {"exercise": ref, "tikz": {"image": name, "code": TikZ | ""}}: an exercise's comment, an
+        issue's suggested fix accepted or not, an image's TikZ replacement saved (checked: tikzdraft.check)
+        or, "" or null, removed (ValueError: why it cannot be); the exercise's feedback now. An exercise
+        without comment, accepted fix and TikZ has none."""
         raw = raw if isinstance(raw, dict) else {}
         ref = raw.get("exercise")
         if not isinstance(ref, str) or not AUDIT_REF.fullmatch(ref):
@@ -1389,8 +1410,18 @@ class Admin:
             raise ValueError("comment: a text")
         if len(raw.get("comment") or "") > MAX_AUDIT_COMMENT:
             raise ValueError(f"a comment has at most {MAX_AUDIT_COMMENT} characters")
-        if accept is None and "comment" not in raw:
-            raise ValueError("nothing to change: comment or accept")
+        tikz = raw.get("tikz")
+        if tikz is not None:
+            if not isinstance(tikz, dict) or not isinstance(tikz.get("image"), str) or not AUDIT_IMAGE.fullmatch(tikz["image"]) \
+                    or ".." in tikz["image"] or not isinstance(tikz.get("code"), (str, type(None))):
+                raise ValueError('tikz: {"image": the gallery image\'s name, "code": the TikZ, or "" to remove it}')
+            if tikz.get("code"):
+                lib = sheets_module("tikzdraft")
+                if lib is None:
+                    raise ValueError("sheets/tikzdraft.py is missing")
+                tikz = {"image": tikz["image"], "code": lib.check(tikz["code"])}
+        if accept is None and "comment" not in raw and tikz is None:
+            raise ValueError("nothing to change: comment, accept or tikz")
         with self.audit_lock:
             every = self.audit_feedback()
             entry = dict(every.get(ref) or {})
@@ -1400,8 +1431,16 @@ class Admin:
                 if len(accepted) > MAX_AUDIT_ISSUES:
                     raise ValueError(f"at most {MAX_AUDIT_ISSUES} accepted fixes per exercise")
             comment = audit_text(raw["comment"], MAX_AUDIT_COMMENT) if "comment" in raw else str(entry.get("comment") or "")
-            entry = {"comment": comment, "accepted": accepted, "updated": int(time.time())}
-            if comment or accepted:
+            figs = {n: f for n, f in (entry.get("tikz") or {}).items() if isinstance(f, dict) and isinstance(f.get("code"), str)} \
+                if isinstance(entry.get("tikz"), dict) else {}
+            if tikz is not None:
+                figs.pop(tikz["image"], None)
+                if tikz.get("code"):
+                    figs[tikz["image"]] = {"code": tikz["code"], "updated": int(time.time())}
+                if len(figs) > MAX_AUDIT_TIKZ_IMAGES:
+                    raise ValueError(f"at most {MAX_AUDIT_TIKZ_IMAGES} TikZ figures per exercise")
+            entry = {"comment": comment, "accepted": accepted, "tikz": figs, "updated": int(time.time())}
+            if comment or accepted or figs:
                 if ref not in every and len(every) >= MAX_AUDIT_FEEDBACK:
                     raise ValueError(f"feedback on at most {MAX_AUDIT_FEEDBACK} exercises")
                 every[ref] = entry
@@ -1411,8 +1450,9 @@ class Admin:
         return {"exercise": ref, **entry}
 
     def audit_export(self) -> Dict[str, object]:
-        """The review's feedback for Claude to work on: every exercise of the report with an accepted fix
-        or a comment, its accepted issues, the others, and the comment."""
+        """The review's feedback for Claude to work on: every exercise of the report with an accepted fix,
+        a comment or a TikZ replacement of an image, its accepted issues, the others, the comment and the
+        TikZ ("tikz": [{"image", "code"}])."""
         report = self.audit() or {"exercises": []}
         feedback = self.audit_feedback()
         out = []
@@ -1421,14 +1461,155 @@ class Admin:
             on = set(f.get("accepted") or [])
             fields = ("severity", "category", "where", "issue", "fix")
             accepted = [{k: i.get(k, "") for k in fields} for i in e.get("issues", []) if i["fp"] in on]
-            if not accepted and not f.get("comment"):
+            tikz = [{"image": n, "code": t["code"]} for n, t in (f.get("tikz") or {}).items() if isinstance(t, dict) and t.get("code")]
+            if not accepted and not f.get("comment") and not tikz:
                 continue
             out.append({"id": e.get("id"), "key": e.get("key", ""), "title": e.get("title", ""), "lang": e.get("lang", ""),
                         "url": TEXERCISES + e["url"] if e.get("url") else "", "collections": e.get("collections", []),
                         "accepted": accepted, "not_accepted": [{k: i.get(k, "") for k in fields} for i in e.get("issues", []) if i["fp"] not in on],
-                        "comment": f.get("comment", "")})
+                        "comment": f.get("comment", ""), "tikz": tikz})
         return {"generated": report.get("generated", ""), "source": report.get("source", ""),
                 "exported": time.strftime("%Y-%m-%d"), "exercises": out}
+
+    # ------------------------------------------------------------------ the review's TikZ editor
+    def audit_folders(self, report: Optional[Dict[str, object]]) -> Dict[str, Path]:
+        """{ref: folder} of the report's exercises there (in the uploaded export): by key, else by id."""
+        sheetlib = sheets_module()
+        if sheetlib is None or not report:
+            return {}
+        have = sheetlib.available(self.texercises)
+        by_id: Optional[Dict[int, Path]] = None
+        out = {}
+        for e in report.get("exercises", []):
+            f = have.get(e.get("key") or "")
+            if f is None and isinstance(e.get("id"), int):
+                if by_id is None:  # (exercise_meta is kept while the files are unchanged)
+                    by_id = {}
+                    for folder in have.values():
+                        by_id.setdefault(sheetlib.exercise_meta(folder).get("id"), folder)
+                f = by_id.get(e["id"])
+            if f is not None:
+                out[e["ref"]] = f
+        return out
+
+    def audit_images(self, report: Optional[Dict[str, object]]) -> Dict[str, List[Dict[str, object]]]:
+        """{ref: [{"name", "url": the image as the panel shows it, or None, "pdf": a PDF copy is there}]}:
+        the gallery images the report's exercises there use (text and solution), for "Replace with TikZ"."""
+        lib = sheets_module("preview")
+        if lib is None:
+            return {}
+        media = SheetMedia(self, "/admin/sheet/")
+        out = {}
+        for ref, folder in self.audit_folders(report).items():
+            parts = lib.read_exercise(folder)
+            names = lib.images_used(str(parts.get("text") or "") + "\n" + str(parts.get("solution") or ""))
+            if names:
+                out[ref] = [{"name": n, "url": media.image(n), "pdf": bool(self.image_file_latex(n))} for n in names]
+        return out
+
+    def image_file_latex(self, name: str) -> Optional[Path]:
+        sheetlib = sheets_module()
+        return sheetlib.find_image(self.sheet_images, name, latex=True) if sheetlib else None
+
+    def audit_exercise(self, ref: object) -> Tuple[str, Optional[Path]]:
+        """(ref, its folder or None) of an exercise of the report (ValueError: not one of it)."""
+        if not isinstance(ref, str) or not AUDIT_REF.fullmatch(ref):
+            raise ValueError("exercise: its id (or key:<key> for one without)")
+        report = self.audit()
+        if not report or not any(e["ref"] == ref for e in report["exercises"]):
+            raise ValueError("not an exercise of the review")
+        mine = {**report, "exercises": [e for e in report["exercises"] if e["ref"] == ref]}
+        return ref, self.audit_folders(mine).get(ref)
+
+    def tikz_preview(self, raw: object) -> Dict[str, object]:
+        """{"exercise": ref, "code": TikZ}: the figure drawn with the exercise's solver part and language
+        (figures.py, as the exercises' own figures): {"url", "width", "height"} (pt) when it is drawn,
+        {"pending": True} while it is being drawn (asked again), {"error": LaTeX's, short} if it cannot be
+        (ValueError: the request is wrong)."""
+        raw = raw if isinstance(raw, dict) else {}
+        _, folder = self.audit_exercise(raw.get("exercise"))
+        lib, figs, prev = sheets_module("tikzdraft"), sheets_module("figures"), sheets_module("preview")
+        if lib is None or prev is None:
+            raise ValueError("exercise sheets are not installed")
+        code = lib.check(raw.get("code") if isinstance(raw.get("code"), str) else "")
+        if figs is None or not figs.available():
+            return {"error": "the server cannot draw figures (it needs LuaLaTeX and pdftocairo; see sheets/README.md)"}
+        parts = prev.read_exercise(folder) if folder else {"meta": {}, "preamble": ""}
+        lang = "de" if (parts.get("meta") or {}).get("language") == "GER" else "en"
+        preamble = str(parts.get("preamble") or "")
+        got = figs.figure(self.sheet_figures, preamble, lang, code)
+        if got.get("svg"):
+            return {"url": f"/admin/sheet/fig/{got['svg']}", "width": got.get("width", 0), "height": got.get("height", 0)}
+        if got.get("pending"):
+            return {"pending": True}
+        return {"error": figs.failure(preamble, lang, code) or "LaTeX could not draw it"}
+
+    def start_tikz_draft(self, raw: object) -> Dict[str, object]:
+        """{"exercise": ref, "image": name, "code": the teacher's draft so far (optional)}: Claude is asked,
+        in a background thread (a request can take a minute, longer than a proxy waits), to redraw the image
+        as TikZ; {"pending": True} (ValueError: why it cannot be: no image file, no package or key, ...).
+        tikz_draft then gives the answer."""
+        raw = raw if isinstance(raw, dict) else {}
+        ref, folder = self.audit_exercise(raw.get("exercise"))
+        name = raw.get("image")
+        if not isinstance(name, str) or not AUDIT_IMAGE.fullmatch(name) or ".." in name:
+            raise ValueError("image: the gallery image's name")
+        current = raw.get("code") if isinstance(raw.get("code"), str) else ""
+        lib, prev = sheets_module("tikzdraft"), sheets_module("preview")
+        if lib is None or prev is None:
+            raise ValueError("exercise sheets are not installed")
+        if folder is None:
+            raise ValueError("the exercise is not in the uploaded export")
+        parts = prev.read_exercise(folder)
+        if name not in prev.images_used(str(parts.get("text") or "") + "\n" + str(parts.get("solution") or "")):
+            raise ValueError("the exercise does not use this image")
+        web, latex = self.image_file(name), self.image_file_latex(name)
+        if web is None and latex is None:
+            raise ValueError("the image is not on the server yet (upload or fetch it in a sheet's images)")
+        block = lib.image_block(web, latex)  # (ValueError: too large, a kind Claude cannot read)
+        kwargs = lib.request(parts, name, block, current[:MAX_AUDIT_TIKZ])
+        with self.drafts_lock:
+            now = time.time()
+            for k in [k for k, d in self.drafts.items() if now - float(d.get("at", 0)) > DRAFT_KEEP]:
+                del self.drafts[k]
+            if (self.drafts.get((ref, name)) or {}).get("pending"):
+                return {"pending": True}
+            call, errors, why = self.categoriser.connect()
+            if call is None:
+                raise ValueError(why)
+            self.drafts[(ref, name)] = {"pending": True, "at": now}
+        threading.Thread(target=self.draw_tikz_draft, args=((ref, name), call, errors, kwargs, lib), daemon=True).start()
+        return {"pending": True}
+
+    def draw_tikz_draft(self, job: Tuple[str, str], call, errors, kwargs: Dict[str, object], lib) -> None:
+        """The background request of start_tikz_draft: the answer (checked) or why there is none, kept."""
+        try:
+            response = call(kwargs)
+            code, notes = lib.answer(response)
+            auto = sheets_module("autocat")
+            got = {"code": code, "notes": notes, "model": str(getattr(response, "model", "") or lib.MODEL),
+                   "usage": auto.usage_of(response) if auto else {}}
+        except ValueError as e:
+            got = {"error": str(e)}
+        except errors.AuthenticationError as e:
+            got = {"error": f"the API key was not accepted ({getattr(e, 'message', e)}): check {ANTHROPIC_ENV}"}
+        except errors.BadRequestError as e:
+            got = {"error": f"the API refused the request: {getattr(e, 'message', e)}"}
+        except (errors.RateLimitError, errors.APIConnectionError, errors.APIStatusError) as e:
+            status = getattr(e, "status_code", None)
+            got = {"error": f"the Claude API is busy or unreachable ({e.__class__.__name__}{f', {status}' if status else ''}); try again later"}
+        except Exception as e:  # (never the thread's end without an answer)
+            got = {"error": f"asking Claude failed ({e.__class__.__name__})"}
+        with self.drafts_lock:
+            self.drafts[job] = {**got, "at": time.time()}
+
+    def tikz_draft(self, ref: str, name: str) -> Dict[str, object]:
+        """Claude's draft for (ref, name): {"pending": True}, {"code", "notes", "model", "usage"},
+        {"error"}, or {} if none was asked for (lately)."""
+        with self.drafts_lock:
+            d = dict(self.drafts.get((ref, name)) or {})
+        d.pop("at", None)
+        return d
 
     def audit_topics(self, report: Optional[Dict[str, object]]) -> Dict[str, object]:
         """For the review's filter by area and topic: {"areas": [[area, [topics]]] (categories.json's order,
@@ -2814,12 +2995,18 @@ def make_handler(admin: Admin):
                     self.json(403, {"error": "login"})
                 else:
                     self.json(200, admin.teachers_state() if path == "/api/teachers" else admin.stats())
-            elif path in ("/api/exercise-audit", "/api/exercise-audit/feedback", "/api/exercise-audit/export"):
+            elif path in ("/api/exercise-audit", "/api/exercise-audit/feedback", "/api/exercise-audit/export", "/api/exercise-audit/tikz/draft"):
                 if not self.is_super():
                     self.json(403, {"error": "the superuser only"})
                 elif path == "/api/exercise-audit":
                     report = admin.audit()
-                    self.json(200, {"report": report, "feedback": admin.audit_feedback(), "topics": admin.audit_topics(report)})
+                    figs = sheets_module("figures")
+                    self.json(200, {"report": report, "feedback": admin.audit_feedback(), "topics": admin.audit_topics(report),
+                                    "images": admin.audit_images(report), "figures": bool(figs and figs.available()),
+                                    "claude": admin.categoriser.available()})
+                elif path.endswith("/draft"):
+                    q = parse_qs(self.path.split("?", 1)[1] if "?" in self.path else "")
+                    self.json(200, admin.tikz_draft((q.get("exercise") or [""])[0], (q.get("image") or [""])[0]))
                 elif path.endswith("/feedback"):
                     self.json(200, {"feedback": admin.audit_feedback()})
                 else:
@@ -2883,15 +3070,17 @@ def make_handler(admin: Admin):
                 self.sheets_post(path)
             elif path == "/api/exercise-audit":
                 self.audit_post()
-            elif path == "/api/exercise-audit/feedback":
+            elif path in ("/api/exercise-audit/feedback", "/api/exercise-audit/tikz/preview", "/api/exercise-audit/tikz/draft"):
                 if not self.is_super():
                     self.json(403, {"error": "the superuser only"})
                     return
                 body = self.json_body()
                 if body is None:
                     return
+                fn = {"/api/exercise-audit/feedback": admin.change_audit_feedback, "/api/exercise-audit/tikz/preview": admin.tikz_preview,
+                      "/api/exercise-audit/tikz/draft": admin.start_tikz_draft}[path]
                 try:
-                    self.json(200, admin.change_audit_feedback(body))
+                    self.json(200, fn(body))
                 except ValueError as e:
                     self.json(400, {"error": str(e)})
                 except OSError:
@@ -3560,6 +3749,34 @@ h2.section { font-size: 1.15rem; margin: 28px 0 4px; }
 .newex .pick select.sub { flex: 1 1 16rem; width: 16rem; }
 .newex .pick button { padding: 3px 12px; }
 .audit .replace > summary { cursor: pointer; color: var(--accent); font-size: 0.9rem; margin-top: 12px; }
+/* an exercise's gallery images, each to be replaced by TikZ: a row per image, the editor under it (the
+   original and the drawing side by side, to compare them, the code below; stacked on a phone), the
+   saved figure folded */
+.audit .figs { border-top: 1px solid var(--line); margin-top: 8px; padding-top: 6px; display: grid; gap: 6px; }
+.audit .fig-row { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; font-size: 0.9rem; }
+.audit .fig-row .name { font-family: ui-monospace, monospace; font-size: 0.85rem; overflow-wrap: anywhere; }
+.audit .fig-row .tag { font-size: 0.75rem; border-radius: 999px; padding: 0 8px; border: 1px solid var(--line); color: var(--muted); }
+.audit .fig-row .tag.ok { color: var(--ok); border-color: currentColor; }
+.audit .fig-row button { padding: 2px 10px; font-size: 0.86rem; }
+.audit .fig-row .grow { flex: 1; }
+.audit .tikz-ed { border: 1px solid var(--line); border-radius: 8px; background: var(--card); padding: 10px; display: grid; gap: 8px; }
+.audit .tikz-ed .panes { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); grid-template-areas: "orig drawn" "code code"; gap: 10px; }
+.audit .tikz-ed .pane.orig { grid-area: orig; } .audit .tikz-ed .pane.drawn { grid-area: drawn; } .audit .tikz-ed .pane.code { grid-area: code; }
+@media (max-width: 560px) { .audit .tikz-ed .panes { grid-template-columns: minmax(0, 1fr); grid-template-areas: "orig" "drawn" "code"; } }
+.audit .tikz-ed .pane { display: grid; grid-template-rows: auto 1fr; gap: 4px; min-width: 0; }
+.audit .tikz-ed .pane > span { color: var(--muted); font-size: 0.8rem; }
+.audit .pic { background: #fff; border: 1px solid var(--line); border-radius: 6px; min-height: 140px; display: flex; align-items: center; justify-content: center; padding: 8px; overflow: auto; }
+.audit .pic img { max-width: 100%; height: auto; }
+.audit .pic .note { color: #646b73; font-size: 0.85rem; text-align: center; margin: 0; }
+.audit .pic pre.err { color: #b3261e; font-size: 0.8rem; white-space: pre-wrap; overflow-wrap: anywhere; margin: 0; align-self: flex-start; width: 100%; }
+.audit .tikz-ed textarea { font-family: ui-monospace, monospace; font-size: 0.82rem; line-height: 1.35; color: inherit; background: var(--bg); border: 1px solid var(--line); border-radius: 6px;
+  padding: 6px 8px; width: 100%; min-height: 260px; resize: vertical; tab-size: 2; white-space: pre; overflow-wrap: normal; overflow-x: auto; }
+.audit .tikz-ed textarea:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+.audit .tikz-ed .actions { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; }
+.audit .tikz-ed .actions button { padding: 4px 12px; font-size: 0.88rem; }
+.audit .tikz-ed .notes { margin: 0; font-size: 0.85rem; color: var(--muted); white-space: pre-wrap; }
+.audit .fig-saved > summary { cursor: pointer; color: var(--accent); font-size: 0.85rem; }
+.audit .fig-saved .pic { margin-top: 6px; max-width: 520px; }
 @media (max-width: 560px) { .audit .stat { flex: 1 1 5.5rem; padding: 3px 8px; } .audit .filters .what { width: auto; flex-basis: 100%; } }
 .sheetstate .upload summary { cursor: pointer; color: var(--accent); font-size: 0.95rem; }
 .sheetstate .upload { margin: 0 0 10px; }
@@ -4676,6 +4893,13 @@ SHEETS_JS = r"""
 // fingerprint, so a regenerated report keeps it): per issue "Accept fix", per exercise a comment (saved
 // as it is typed); the exercises marked so (or not yet) are a filter, and "Export for Claude" downloads
 // them (/admin/api/exercise-audit/export) with their accepted and other issues and the comment.
+// An exercise that uses gallery images (the server's d.images: ref → [{name, url, pdf}], of the uploaded
+// export) lists them, each with "Replace with TikZ": an editor with the original, the TikZ code and its
+// drawing (…/tikz/preview: drawn by LaTeX on the server with the exercise's solver part, asked again
+// while pending; LaTeX's error, short, if it fails), "Draft with Claude" (…/tikz/draft: started, then
+// asked for until Claude's answer is there; disabled, with the server's reason d.claude, without the
+// anthropic package or key) and "Save": kept in the feedback (tikz: {image: {code}}), folded under the
+// image, removable; such an exercise is marked and exported too.
 (function () {
   'use strict';
   const box = document.querySelector('#sheets-audit');
@@ -4686,7 +4910,8 @@ SHEETS_JS = r"""
   const body = box.querySelector('.audit-body'), line = box.querySelector('summary .note');
   let report = null, sevOn = '', catOn = '', collOn = '', topOn = '', markOn = '', query = '', shown = PAGE, loaded = false;
   let topics = { areas: [], of: {} }; // categories.json: the areas and topics of the report's exercises
-  let feedback = {}; // ref → { comment, accepted: [fp] }
+  let feedback = {}; // ref → { comment, accepted: [fp], tikz: { image: { code } } }
+  let images = {}, noClaude = '', canDraw = false; // the exercises' gallery images; why Claude cannot draft; LaTeX draws figures
   let counted = () => {}; // (draw's: the numbers of the marked exercises, after a change)
   const NONE = '\u0000none'; // collOn: the exercises in no collection
   const collsOf = (e) => (Array.isArray(e.collections) ? e.collections : []);
@@ -4725,16 +4950,135 @@ SHEETS_JS = r"""
 
   // the feedback: an exercise is marked with a comment or an accepted fix of one of its issues (of
   // this report: those of issues no longer in it are kept, but do not count)
-  const fbOf = (e) => feedback[e.ref] || { comment: '', accepted: [] };
+  const fbOf = (e) => feedback[e.ref] || { comment: '', accepted: [], tikz: {} };
+  const tikzOf = (e) => fbOf(e).tikz || {};
   const acceptedIn = (e) => e.issues.filter((i) => fbOf(e).accepted.includes(i.fp));
-  const marked = (e) => !!(fbOf(e).comment || acceptedIn(e).length);
+  const marked = (e) => !!(fbOf(e).comment || acceptedIn(e).length || Object.keys(tikzOf(e)).length);
   async function send(e, change) {
     const r = await fetch('/admin/api/exercise-audit/feedback', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ exercise: e.ref, ...change }) });
     const d = await r.json().catch(() => ({}));
     if (!r.ok) throw new Error(d.error || r.statusText);
-    feedback[e.ref] = { comment: d.comment, accepted: d.accepted };
+    feedback[e.ref] = { comment: d.comment, accepted: d.accepted, tikz: d.tikz || {} };
     counted();
+  }
+  async function call(path, data) {
+    const r = await fetch(path, data === undefined ? { credentials: 'same-origin', cache: 'no-store' }
+      : { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+    if (r.status === 403) { location.reload(); throw new Error('logged out'); }
+    const d = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(d.error || r.statusText);
+    return d;
+  }
+  const sleep = (ms) => new Promise((ok) => setTimeout(ok, ms));
+
+  // a figure drawn into pic (a box with a white page, in dark mode too): asked again while LaTeX runs;
+  // an older drawing asked for in the same box is dropped (pic.dataset.run)
+  async function drawInto(pic, ref, code) {
+    const run = String((Number(pic.dataset.run) || 0) + 1);
+    pic.dataset.run = run;
+    pic.replaceChildren(el('p', { class: 'note' }, 'Drawing… (LaTeX on the server: some seconds, the first time up to a minute)'));
+    for (let t = 0; t < 150; t += 1) {
+      let d;
+      try { d = await call('/admin/api/exercise-audit/tikz/preview', { exercise: ref, code }); } catch (err) { d = { error: err.message }; }
+      if (pic.dataset.run !== run) return;
+      if (d.url) { pic.replaceChildren(el('img', { src: d.url, alt: 'the TikZ figure', width: d.width ? String(Math.round(d.width * 1.6)) : false })); return; }
+      if (!d.pending) { pic.replaceChildren(el('pre', { class: 'err' }, `Not drawn: ${d.error || 'LaTeX could not draw it'}`)); return; }
+      await sleep(t < 10 ? 1500 : 3000);
+    }
+    if (pic.dataset.run === run) pic.replaceChildren(el('p', { class: 'note' }, 'Still being drawn: press Preview again in a while.'));
+  }
+
+  // the gallery images of an exercise (and those it has TikZ for), each a row: its name, "Replace with
+  // TikZ" (or "Edit TikZ" and "Remove" once saved), the saved figure folded, the editor when open
+  function figures(e) {
+    const known = images[e.ref] || [];
+    const names = [...new Set([...known.map((x) => x.name), ...Object.keys(tikzOf(e))])];
+    if (!names.length) return '';
+    const box = el('div', { class: 'figs' });
+    names.forEach((name) => {
+      const info = known.find((x) => x.name === name) || null;
+      const wrap = el('div', {});
+      let ed = null;
+      const paint = () => {
+        const saved = tikzOf(e)[name];
+        const msg = el('span', { class: 'saved', 'aria-live': 'polite' });
+        const remove = async () => {
+          if (!confirm(`Remove the TikZ figure for ${name}?`)) return;
+          try { await send(e, { tikz: { image: name, code: '' } }); paint(); } catch (err) { msg.textContent = `Not removed: ${err.message}`; msg.className = 'saved bad'; }
+        };
+        const row = el('div', { class: 'fig-row' }, el('span', {}, 'Image'), el('span', { class: 'name' }, name),
+          saved ? el('span', { class: 'tag ok' }, 'TikZ saved') : '',
+          !info ? el('span', { class: 'tag' }, 'no longer in the exercise') : !info.url && !info.pdf ? el('span', { class: 'tag' }, 'not on the server') : '',
+          el('span', { class: 'grow' }),
+          ed ? '' : el('button', { type: 'button', onclick: () => { ed = editor(e, name, info, () => { ed = null; paint(); }); paint(); } }, saved ? 'Edit TikZ' : 'Replace with TikZ'),
+          saved ? el('button', { type: 'button', onclick: remove }, 'Remove') : '', msg);
+        let folded = '';
+        if (saved && !ed) {
+          const pic = el('div', { class: 'pic' });
+          folded = el('details', { class: 'fig-saved' }, el('summary', {}, 'Show the saved TikZ figure'), pic);
+          folded.addEventListener('toggle', () => { if (folded.open && !pic.dataset.run) drawInto(pic, e.ref, saved.code); });
+        }
+        wrap.replaceChildren(row, folded, ed || '');
+      };
+      paint();
+      box.append(wrap);
+    });
+    return box;
+  }
+
+  // the editor of one image's TikZ: the original | its drawing, the code below; Preview (also Ctrl+Enter),
+  // Draft with Claude, Save, Close (done: the row painted again)
+  function editor(e, name, info, done) {
+    const saved = tikzOf(e)[name];
+    const orig = el('div', { class: 'pic' }, info && info.url ? el('img', { src: info.url, alt: `the image ${name}` })
+      : el('p', { class: 'note' }, info && info.pdf ? 'Only a PDF of the image is on the server (Claude reads it; not shown here).'
+        : 'The image is not on the server: upload or fetch it in a sheet\'s images.'));
+    const code = el('textarea', { spellcheck: 'false', autocapitalize: 'off', 'aria-label': `TikZ code replacing ${name}`,
+      placeholder: '\\begin{tikzpicture}\n  \\draw[->] (0,0) -- (2,0) node[right] {$x$};\n\\end{tikzpicture}' });
+    code.value = saved ? saved.code : '';
+    const pic = el('div', { class: 'pic' }, el('p', { class: 'note' }, canDraw ? 'Preview: the drawing appears here.' : 'The server cannot draw figures (no LuaLaTeX or pdftocairo).'));
+    const msg = el('span', { class: 'saved', 'aria-live': 'polite' });
+    const said = (text, cls) => { msg.textContent = text; msg.className = `saved ${cls || ''}`; };
+    const notes = el('p', { class: 'notes', hidden: true });
+    const preview = () => { if (code.value.trim()) drawInto(pic, e.ref, code.value); else said('Write the TikZ first (or draft it with Claude).', 'bad'); };
+    const why = noClaude || (!info || (!info.url && !info.pdf) ? 'the image is not on the server' : '');
+    const claude = el('button', { type: 'button', disabled: !!why, title: why || 'Claude draws the TikZ from the image and the exercise (your code so far, if any, as a start)' }, 'Draft with Claude');
+    claude.addEventListener('click', async () => {
+      claude.disabled = true;
+      said('Claude is drawing it… (a minute or two)');
+      try {
+        let d = await call('/admin/api/exercise-audit/tikz/draft', { exercise: e.ref, image: name, code: code.value });
+        const q = `/admin/api/exercise-audit/tikz/draft?exercise=${encodeURIComponent(e.ref)}&image=${encodeURIComponent(name)}`;
+        for (let t = 0; d.pending && t < 150 && ed.isConnected; t += 1) { await sleep(3000); d = await call(q); }
+        if (d.pending) throw new Error('no answer yet: ask again in a while');
+        if (d.error || !d.code) throw new Error(d.error || 'no answer');
+        code.value = d.code;
+        notes.textContent = d.notes ? `Claude: ${d.notes}` : '';
+        notes.hidden = !d.notes;
+        const u = d.usage || {};
+        said(`Drafted by Claude${u.output ? ` (${(u.input || 0) + (u.output || 0)} tokens)` : ''}: compare it with the original, edit, then Save.`, 'ok');
+        if (canDraw) drawInto(pic, e.ref, code.value);
+      } catch (err) { said(`No draft: ${err.message}`, 'bad'); }
+      claude.disabled = false;
+    });
+    const save = el('button', { type: 'button', class: 'primary' }, 'Save');
+    save.addEventListener('click', async () => {
+      if (!code.value.trim()) { said('Nothing to save (Remove deletes a saved figure).', 'bad'); return; }
+      said('Saving…');
+      try { await send(e, { tikz: { image: name, code: code.value } }); said('Saved: it is exported with the exercise.', 'ok'); } catch (err) { said(`Not saved: ${err.message}`, 'bad'); }
+    });
+    code.addEventListener('keydown', (ev) => { if (ev.key === 'Enter' && (ev.ctrlKey || ev.metaKey)) { ev.preventDefault(); preview(); } });
+    const ed = el('div', { class: 'tikz-ed' },
+      el('div', { class: 'panes' }, el('div', { class: 'pane orig' }, el('span', {}, 'Original'), orig),
+        el('div', { class: 'pane drawn' }, el('span', {}, 'TikZ drawn (as in the PDF)'), pic),
+        el('div', { class: 'pane code' }, el('span', {}, 'TikZ: one tikzpicture or circuitikz; given quantities as \\XO (Ctrl+Enter: Preview)'), code)),
+      notes,
+      el('div', { class: 'actions' }, el('button', { type: 'button', disabled: !canDraw, onclick: preview, title: 'Draw it (Ctrl+Enter)' }, 'Preview'),
+        claude, save, el('button', { type: 'button', onclick: done }, 'Close'), msg),
+      why && noClaude ? el('p', { class: 'notes' }, `Draft with Claude is off: ${noClaude}`) : '');
+    if (saved && canDraw) drawInto(pic, e.ref, saved.code);
+    return ed;
   }
 
   function exercise(e, issues) {
@@ -4772,6 +5116,7 @@ SHEETS_JS = r"""
           el('span', { class: 'where' }, [i.category, WHERE[i.where] || i.where].filter(Boolean).join(' · ')), accept(i)),
         el('p', { class: 'issue' }, i.issue),
         i.fix ? el('p', { class: 'fix' }, el('b', {}, 'Fix: '), i.fix) : ''))),
+      figures(e),
       el('div', { class: 'comment' }, comment, state));
   }
 
@@ -4793,13 +5138,13 @@ SHEETS_JS = r"""
     const search = el('input', { type: 'search', placeholder: 'Search title, id, key or issue', 'aria-label': 'Search the exercises and their issues', value: query });
     const sevRow = el('div', { class: 'row' }), catRow = el('div', { class: 'row' }), markRow = el('div', { class: 'row' });
     const exportLink = el('a', { class: 'export', href: '/admin/api/exercise-audit/export', download: '' });
-    const MARK = { yes: 'Accepted or commented', no: 'Not yet' };
+    const MARK = { yes: 'Accepted, commented or TikZ', no: 'Not yet' };
     counted = () => {
       const k = all.filter(marked).length;
       markRow.replaceChildren(el('span', { class: 'what' }, 'Marked'), chip('All', all.length, !markOn, pick(() => { markOn = ''; })),
         ...Object.entries(MARK).map(([m, label]) => chip(label, m === 'yes' ? k : all.length - k, markOn === m, pick(() => { markOn = markOn === m ? '' : m; }))));
       exportLink.textContent = `Export for Claude (${k})`;
-      exportLink.title = k ? `The ${k} exercises with an accepted fix or a comment, as JSON` : 'Accept a fix or write a comment first';
+      exportLink.title = k ? `The ${k} exercises with an accepted fix, a comment or TikZ, as JSON` : 'Accept a fix, write a comment or save a TikZ figure first';
       exportLink.classList.toggle('off', !k);
     };
     // the collections, by name, each with its exercises with issues (as the chips: of the whole report)
@@ -4879,6 +5224,9 @@ SHEETS_JS = r"""
     report = d.report && Array.isArray(d.report.exercises) ? d.report : null;
     feedback = d.feedback && typeof d.feedback === 'object' ? d.feedback : {};
     topics = d.topics && Array.isArray(d.topics.areas) && d.topics.of ? d.topics : { areas: [], of: {} };
+    images = d.images && typeof d.images === 'object' ? d.images : {};
+    noClaude = typeof d.claude === 'string' ? d.claude : 'unknown';
+    canDraw = !!d.figures;
     loaded = true;
     draw();
   }

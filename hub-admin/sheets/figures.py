@@ -7,7 +7,8 @@ quantities a figure prints, its language, the figure's source and this engine), 
 <cache>/<hash>.svg. figure() answers at once: the SVG if it is there, else it puts the figure in a
 queue that one background thread draws, an exercise at a time (all its figures in one LaTeX run),
 and says it is pending; the page asks again later. A figure LaTeX cannot draw is remembered for a
-while and stays a placeholder.
+while and stays a placeholder; failure() says why (LaTeX's error, its line counted in the figure),
+for the review's TikZ editor in the panel.
 """
 from __future__ import annotations
 
@@ -54,6 +55,8 @@ DOC_START = r"""\documentclass[border=2bp,multi=lpfig]{standalone}
 _lock = threading.Lock()
 _queue: Dict[str, Tuple[str, str, str]] = {}  # hash -> (preamble, lang, source), waiting to be drawn
 _failed: Dict[str, float] = {}  # hash -> when it failed
+_why: Dict[str, str] = {}  # hash -> LaTeX's error, of a figure drawn on its own (failure())
+MAX_WHY = 900  # characters of it
 _worker: Optional[threading.Thread] = None
 _engine_hash: Optional[bytes] = None
 
@@ -113,6 +116,7 @@ def figure(cache: Path, preamble: str, lang: str, source: str) -> Dict[str, obje
         if failed and time.time() - failed < RETRY_AFTER:
             return {}
         _failed.pop(k, None)
+        _why.pop(k, None)
         _queue.setdefault(k, (preamble, lang, source))
         _start(cache)
     return {"pending": True}
@@ -157,6 +161,38 @@ def _work(cache: Path) -> None:
                 _queue.pop(k, None)
                 if k not in done:
                     _failed[k] = time.time()
+                    while len(_why) > 200:  # (only the latest are asked for)
+                        _why.pop(next(iter(_why)))
+
+
+def failure(preamble: str, lang: str, source: str) -> str:
+    """Why LaTeX could not draw this figure ("" if it did not fail, or not lately): its error, short."""
+    k = key(preamble, lang, source)
+    with _lock:
+        if k not in _failed:
+            return ""
+        return _why.get(k) or "LaTeX could not draw it"
+
+
+def latex_error(log: str, first: int) -> str:
+    """The first error of a LaTeX log, short: its message and the line it stopped at, counted in the
+    figure (first: the document's line where the figure begins), "" if the log has none."""
+    lines = log.splitlines()
+    start = next((i for i, x in enumerate(lines) if x.startswith("! ")), None)
+    if start is None:
+        return ""
+    out = [lines[start][2:].strip()]
+    for x in lines[start + 1:start + 12]:
+        m = re.match(r"l\.(\d+) ?(.*)", x)
+        if m:
+            n = int(m.group(1)) - first + 1
+            where = f"line {n} of the figure" if n >= 1 else "in the solver part"
+            out.append(f"{where}: {m.group(2).strip()}" if m.group(2).strip() else where)
+            break
+        if x.strip() and x.strip() != "..." and not x.startswith(("<", "Type ", "See ", "The control sequence", "You", "(")):
+            out.append(x.strip())
+    text = "\n".join(dict.fromkeys(o for o in out if o))
+    return text[:MAX_WHY]
 
 
 def document(preamble: str, lang: str, sources: List[str]) -> str:
@@ -180,10 +216,14 @@ def draw(cache: Path, preamble: str, lang: str, batch: List[Tuple[str, str]]) ->
             subprocess.run([tex, "-interaction=nonstopmode", "-halt-on-error", "fig.tex"], cwd=work, env=env,
                            capture_output=True, timeout=LATEX_TIMEOUT)
         except subprocess.TimeoutExpired:
+            _explain(batch, f"LaTeX took too long (more than {LATEX_TIMEOUT} s)")
             return set()
         log = (work / "fig.log").read_text(encoding="utf-8", errors="replace") if (work / "fig.log").is_file() else ""
         pdf = work / "fig.pdf"
         if not pdf.is_file() or log.count("lpfig-done") != len(batch) or re.search(r"^! ", log, re.M):
+            doc = (work / "fig.tex").read_text(encoding="utf-8")
+            first = doc[:doc.index("\\begin{lpfig}")].count("\n") + 1
+            _explain(batch, latex_error(log, first) or "LaTeX failed (its log says no more)")
             return set()
         done = set()
         for n, (k, _) in enumerate(batch, 1):
@@ -200,6 +240,13 @@ def draw(cache: Path, preamble: str, lang: str, batch: List[Tuple[str, str]]) ->
                 os.replace(tmp_target, cache / f"{k}.svg")
                 done.add(k)
         return done
+
+
+def _explain(batch: List[Tuple[str, str]], why: str) -> None:
+    """Keeps why a figure drawn on its own failed (in a batch, any one could be to blame)."""
+    if len(batch) == 1:
+        with _lock:
+            _why[batch[0][0]] = why
 
 
 def pending() -> int:

@@ -121,6 +121,19 @@ here as JSON (`/admin/api/exercise-audit`, `normalize_audit` in `../hubadmin.py`
   `exercise-review-feedback-YYYY-MM-DD.json`: the report's date and source, and every exercise with an
   accepted fix or a comment (id, key, title, language, address, collections), its accepted issues, the
   others (`not_accepted`) and the comment, for Claude to work on.
+- **Replace with TikZ**: an exercise of the report that is in the uploaded export and uses gallery
+  images lists them; each can be redrawn as TikZ in an editor: the original image (if it is on the
+  server), the code (one `tikzpicture` or `circuitikz`, at most 20 KB; no files, Lua, packages or
+  libraries beyond those of `texercises-lp.sty`: `tikzdraft.check`) and its drawing, made by
+  `figures.py` with the exercise's solver part, as its own figures
+  (`/admin/api/exercise-audit/tikz/preview`; LaTeX's first error, its line counted in the figure, if it
+  fails). **Draft with Claude** (`tikzdraft.py`, through the same API key as the new exercises;
+  disabled, with the reason, without the anthropic package or key) sends the image (a PNG, JPEG, GIF or
+  WebP; an SVG's PDF copy as a PDF) and the exercise's LaTeX and asks for a faithful TikZ figure with the
+  given quantities' macros (`\XO`) in the labels; it runs in the background
+  (`/admin/api/exercise-audit/tikz/draft`, asked for until it is there). **Save** keeps the figure in
+  the feedback (`"tikz"`, per image; **Remove** drops it); the export has it per exercise as
+  `"tikz": [{"image", "code"}]`, an exercise with only a figure too.
 
 ## New exercises (Sheets tab, the superuser's)
 
