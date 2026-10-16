@@ -39,9 +39,9 @@ served). The editor makes it in three steps (`sheets.py` on the server):
 - **Suggest a sheet** fills the sheet (`suggest`): round by round over the ticked objectives (in the
   modules' order, those without objective last), so every objective has one exercise before any has
   two; per objective an exercise in the sheet's language first, then the one that brings the sheet
-  nearest to its concept and difficulty shares, then one not too similar (0.75) to those already on
+  nearest to its concept and difficulty shares, then one not too similar (0.9) to those already on
   the sheet, then one without image, then the pool's order. Never two **near-duplicates** on one sheet
-  (one flagged `dup:<id>` of the other in `categories.json`, or a similarity of 0.9 or more), nor an
+  (one flagged `dup:<id>` of the other in `categories.json`; similarity alone only orders), nor an
   exercise flagged `broken`. Once
   every objective has one (or from the start, if the sheet has fewer exercises than objectives), the
   slots left that are all needed for concept questions, problems or a difficulty go only to objectives

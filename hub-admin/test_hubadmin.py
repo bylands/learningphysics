@@ -467,7 +467,7 @@ class Sheets(unittest.TestCase):
             self.assertEqual(on(["Kinematics"]), sorted(cat))  # a sheet saved before: its TeXercises topic still matches
             self.assertEqual(on(["Optics", ""]), [])
             self.assertEqual(H.migrate_sheet({"exercises": ["x1", "x7", "x2"]}, cat)["topics"], ["kin.a", "Kinematics"])
-            # similarity: the duplicate pair the same, unrelated ones low; near-duplicates by flag or by similarity
+            # similarity: the duplicate pair the same, unrelated ones low; near-duplicates by flag only
             self.assertAlmostEqual(S.similarity(x1, x2), 1.0)
             self.assertLess(S.similarity(x1, x4), 0.3)
             self.assertEqual(S.similarity(x1, x7), 0.0)  # not categorised

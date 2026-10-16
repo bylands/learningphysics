@@ -20,7 +20,8 @@ questions, problems or a difficulty go only to objectives that have one);
 of an objective's exercises it takes one in the sheet's language first, then the one that brings the sheet nearest to its aims (aims:
 the concept questions and the difficulty it lacks most), then one not too similar (TOO_SIMILAR) to those already
 chosen, then one without image, then the pool's order; never one that is a near-duplicate (near_dup: flagged
-so in categories.json, or a similarity of NEAR_DUP or more) of one chosen, nor one flagged broken.
+so in categories.json) of one chosen, nor one flagged broken. Similarity alone never excludes an exercise:
+many exercises of the same type score 0.9 to 1 (for example simple uniform-motion problems), so it only orders.
 What the topics and objectives cannot give is said (notes: "only 2 concept questions on these topics and objectives").
 By default PER_OBJECTIVE per objective, at most DEFAULT_MAX; the teacher may ask for another number (up
 to MAX_EXERCISES). The suggestion depends only on the sheet and the exercises, so it is the same every
@@ -161,8 +162,7 @@ TASKS = ("concept", "explain", "calculate", "derive", "show", "graph", "estimate
 TASK_GROUP = {"concept": "qual", "explain": "qual", "calculate": "quant", "derive": "quant", "show": "quant",
               "estimate": "quant", "graph": "repr", "data": "repr"}
 WEIGHTS = {"topic": 0.35, "laws": 0.20, "kind": 0.15, "difficulty": 0.10, "math": 0.07, "steps": 0.05, "repr": 0.04, "context": 0.04}
-NEAR_DUP = 0.9  # a similarity from which two exercises never go on one sheet
-TOO_SIMILAR = 0.75  # one as similar to one chosen comes after another that fits as well
+TOO_SIMILAR = 0.9  # one as similar to one chosen comes after another that fits as well
 _cats: Dict[str, object] = {}
 
 
@@ -385,8 +385,8 @@ def similarity(a: Dict[str, object], b: Dict[str, object], cats: Optional[Dict[s
 
 def near_dup(a: Dict[str, object], b: Dict[str, object], cats: Optional[Dict[str, object]] = None) -> bool:
     """Never on one sheet: one flagged a duplicate of the other in categories.json (or both of the same
-    third), or a similarity of NEAR_DUP or more."""
-    return flagged_dup(a, b) or similarity(a, b, cats) >= NEAR_DUP - 1e-9
+    third). cats is accepted for the callers' sake; the similarity does not decide this."""
+    return flagged_dup(a, b)
 
 
 def flagged_dup(a: Dict[str, object], b: Dict[str, object]) -> bool:
@@ -538,7 +538,7 @@ def suggest(bks: List[Tuple[Tuple[Optional[str], Optional[str]], List[str]]], ca
 
     def clash(k: str) -> bool:
         """A near-duplicate of one chosen."""
-        return any(sim(k, c) >= NEAR_DUP - 1e-9 or flagged_dup(cat[k], cat[c]) for c in chosen)
+        return any(flagged_dup(cat[k], cat[c]) for c in chosen)
     def crowded(k: str) -> bool:
         """Too similar to one chosen (another as fitting comes first)."""
         return any(sim(k, c) >= TOO_SIMILAR for c in chosen)
