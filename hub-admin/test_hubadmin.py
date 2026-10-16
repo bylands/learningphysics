@@ -1225,6 +1225,16 @@ class AutoCategories(unittest.TestCase):
             self.assertEqual(self.cz.status()["message"], H.NO_KEY)
         self.assertIn("ANTHROPIC_API_KEY to /etc/hub-admin/anthropic.env", H.NO_KEY)
 
+    def test_workspace_header(self):
+        made = []
+        fake = type(sys)("anthropic")
+        fake.Anthropic = lambda **kw: made.append(kw) or object()
+        for ws, want in (("", {}), ("wrkspc_1", {"default_headers": {"anthropic-workspace-id": "wrkspc_1"}})):
+            env = {**os.environ, "ANTHROPIC_API_KEY": "k", "ANTHROPIC_WORKSPACE_ID": ws}
+            with mock.patch.dict(sys.modules, {"anthropic": fake}), mock.patch.dict(os.environ, env, clear=True):
+                self.assertEqual(self.cz.connect()[2], "")
+            self.assertEqual(made.pop(), want)
+
 
 class AllInUnit(unittest.TestCase):
     """The rooms of the game All In: opening, the state, joining, bets and the timer."""

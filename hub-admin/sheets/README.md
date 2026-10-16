@@ -164,6 +164,8 @@ On the server, once (optional; without it new exercises stay provisional):
     sudo install -m 600 -o root -g root /dev/null /etc/hub-admin/anthropic.env
     sudoedit /etc/hub-admin/anthropic.env                      # ANTHROPIC_API_KEY=<the key>
                                                                # PYTHONPATH=/opt/hub-admin-pylib
+                                                               # ANTHROPIC_WORKSPACE_ID=wrkspc_…  (only for a key
+                                                               #   not scoped to a workspace)
     sudo mkdir -p /etc/systemd/system/hub-admin.service.d      # let the running service read that file
     printf '[Service]\nEnvironmentFile=-/etc/hub-admin/anthropic.env\n' | sudo tee /etc/systemd/system/hub-admin.service.d/anthropic.conf
     sudo systemctl daemon-reload && sudo systemctl restart hub-admin

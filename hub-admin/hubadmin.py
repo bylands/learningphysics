@@ -1529,7 +1529,9 @@ class Categoriser:
         lib = sheets_module("autocat")
         if lib is None:
             return None, None, "sheets/autocat.py is missing"
-        client = anthropic.Anthropic()  # (the key from the environment, as the SDK finds it)
+        # (the key from the environment, as the SDK finds it; a key not scoped to a workspace needs its id)
+        workspace = os.environ.get("ANTHROPIC_WORKSPACE_ID", "").strip()
+        client = anthropic.Anthropic(default_headers={"anthropic-workspace-id": workspace}) if workspace else anthropic.Anthropic()
         return (lambda kwargs: lib.call_claude(client, kwargs)), anthropic, ""
 
     # ------------------------------------------------------------------ 1. provisional labels
