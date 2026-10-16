@@ -16,8 +16,9 @@ served). The editor makes it in three steps (`sheets.py` on the server):
    6 areas, 29 topics, 133 subtopics; `load_categories`, `topic_tree`), folded by area and topic, each
    node with how many of the exercises there (in the uploaded export or the drafts) have it as their
    main subtopic (the title says how many are concept questions); only nodes with exercises are shown.
-   One or several subtopics are chosen; ticking an area or a topic ticks all its subtopics. **Not yet
-   categorised** stands for the exercises `categories.json` does not know (uploaded since). A sheet
+   One or several subtopics are chosen; ticking an area or a topic ticks all its subtopics. Exercises
+   uploaded since get their categories by themselves (**New exercises**, below), merged over
+   `categories.json`; **Not yet categorised** stands for those that have none yet. A sheet
    saved before the tree keeps its TeXercises topics (the `subbranches` of exercise.json): they still
    match (`on_topics`) and are listed below the tree, to drop them.
 2. **Learning objectives**: per module, the objectives that `pool.json` links to at least one exercise
@@ -120,6 +121,52 @@ here as JSON (`/admin/api/exercise-audit`, `normalize_audit` in `../hubadmin.py`
   `exercise-review-feedback-YYYY-MM-DD.json`: the report's date and source, and every exercise with an
   accepted fix or a comment (id, key, title, language, address, collections), its accepted issues, the
   others (`not_accepted`) and the comment, for Claude to work on.
+
+## New exercises (Sheets tab, the superuser's)
+
+`categories.json` is Claude's reading of the export of 2026-10-15. An exercise uploaded since (a
+TeXercises id it does not know) is categorised by the admin service itself (`autocat.py`, `Categoriser`
+in `../hubadmin.py`), kept in `hub-data/categories-extra.json`: per exercise id the same fields as
+`categories.json` (sub, sub2, kind, kinds, parts, steps, laws, math, repr, context, flag) and
+`source` (`provisional`, `claude` or `teacher`), `model` (Claude's), `at` (when). `load_categories`
+merges it over `categories.json` (it wins), so sheets, step 1's counts, similarity and the review's
+topic filter use it at once.
+
+1. **Provisional**, at once after each upload (in the background) and without network: the labels of
+   the most similar exercise already categorised (TF-IDF cosine of their words: title weighted 3,
+   TeXercises tags and topics 2, text and short solution 1; LaTeX commands left out). Tried on 300
+   exercises of the export against the others: the same subtopic for 74 %, the same topic for 92 %.
+2. **Claude**, then, in one background thread (never in a request), if the server has the `anthropic`
+   package and `ANTHROPIC_API_KEY`: batches of 10 exercises (as for `categories.json`: title, tags,
+   the first 1100 characters of the text, 700 of the solution, the short solution) to `claude-opus-5-5`
+   (effort low, server-side fallback, JSON output of a fixed schema, the instructions and the subtopic
+   list cached). Every record is checked (a subtopic of the tree, the known task kinds, mathematics,
+   representations and contexts, an id of the batch); one that fails, a refusal or an answer that is no
+   JSON leaves the exercise provisional, marked failed; an answer cut off by its length is asked again
+   with half the batch. A rate limit, an overloaded or unreachable API: it waits (30 s, 2 min, 10 min),
+   then stops; a key not accepted or a request refused: it stops and says why. Estimated from the
+   prompt's size (13,400 characters of instructions and subtopics, 11,800 per batch of exercises):
+   about 8,000 input tokens per batch, 4,000 of them the cached instructions, and 1,000 to 3,000 output
+   tokens: some US$ 0.20 to 0.40 per 50 exercises at US$ 4/M input, 20/M output, 0.20/M cache reads.
+3. **The teacher**: the **New exercises** section (folded, above the review) lists them, failed ones first,
+   then the newest: title, who labelled it (provisional, Claude, you), the subtopic (grouped by area and
+   topic) and task kind to change, and **Confirm**: kept as the teacher's, never overwritten. Its line
+   says how many and by whom, the tokens used, or what is missing ("API key missing: add
+   ANTHROPIC_API_KEY to /etc/hub-admin/anthropic.env and restart"). **Categorise now** labels those not
+   yet labelled and asks Claude again for the provisional and failed ones.
+   (`/admin/api/categories-extra`, `…/run`, `…/label`.)
+
+On the server, once (optional; without it new exercises stay provisional):
+
+    sudo pip3 install --break-system-packages anthropic      # or the distro's python3-anthropic, if there is one
+    sudo install -d -m 755 /etc/hub-admin
+    sudo install -m 600 -o root -g root /dev/null /etc/hub-admin/anthropic.env
+    sudoedit /etc/hub-admin/anthropic.env                      # one line: ANTHROPIC_API_KEY=<the key>
+    sudo cp hub-admin/hub-admin.service /etc/systemd/system/   # (it reads that file: EnvironmentFile)
+    sudo systemctl daemon-reload && sudo systemctl restart hub-admin
+
+The service must reach `https://api.anthropic.com` (nothing to change unless outbound traffic is
+restricted). The key never goes into this repository or `hub-data/`.
 
 The TeXercises review page that was at learningphysics.ch/texercises/ is gone: nginx sends its old
 addresses to the admin panel. What it kept on the server (`hub-data/texercises-review/`) is no longer

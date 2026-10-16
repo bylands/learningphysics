@@ -22,7 +22,10 @@ hash and cache) and the gallery images (uploaded, as a .zip, fetched from TeXerc
 to the panel and a shared sheet, never outside their folder), and both in the preview's HTML. The
 topics the pool covers, and the exercises' review in the Sheets tab (the superuser alone reads and
 uploads it, the report checked and cleaned; the feedback on it kept by exercise id and fingerprint of
-the issue, and its export); the TeXercises review page that was at /texercises/ gone.
+the issue, and its export); the TeXercises review page that was at /texercises/ gone. The exercises
+uploaded since categories.json: provisional labels of the nearest exercise, the overlay merged (the
+teacher's labels never overwritten), Claude's labels from a fake API (checked, refusals and errors
+handled), what is said without the anthropic package or key, and the endpoints the superuser's only.
 """
 import io
 import zipfile
@@ -961,6 +964,268 @@ class Preview(unittest.TestCase):
             self.assertTrue(r["text"] and r["solution"], f.name)
 
 
+class FakeAPI:
+    """The anthropic module's exceptions (as the worker catches them), and a response."""
+    class APIError(Exception):
+        def __init__(self, message="", status_code=None):
+            super().__init__(message)
+            self.message, self.status_code = message, status_code
+
+    class APIStatusError(APIError):
+        pass
+
+    class AuthenticationError(APIStatusError):
+        pass
+
+    class BadRequestError(APIStatusError):
+        pass
+
+    class RateLimitError(APIStatusError):
+        pass
+
+    class APIConnectionError(APIError):
+        pass
+
+    @staticmethod
+    def response(records=None, stop="end_turn", text=None):
+        from types import SimpleNamespace as NS
+        return NS(stop_reason=stop, model="claude-opus-5-5", usage=NS(input_tokens=1000, output_tokens=200, cache_read_input_tokens=3000, cache_creation_input_tokens=0),
+                  content=[NS(type="thinking", thinking=""), NS(type="text", text=text if text is not None else json.dumps({"exercises": records or []}))])
+
+
+def label(eid, sub="kin.a", **kw):
+    """A record as Claude answers it."""
+    return {"id": str(eid), "sub": sub, "sub2": [], "kind": "calculate", "kinds": ["calculate"], "parts": 1, "steps": 1,
+            "laws": ["uniform_motion"], "math": ["arith"], "repr": [], "context": "traffic", "flag": "", **kw}
+
+
+class AutoCategories(unittest.TestCase):
+    """The exercises uploaded since categories.json (sheets/autocat.py, hubadmin.Categoriser): their
+    provisional labels (of the most similar exercise), the overlay merged over categories.json (the
+    teacher's labels winning over everything), Claude's labels from a fake API (checked, refusals and
+    errors handled, the request as specified), and why Claude cannot be asked. No network."""
+    TREE = {"Mechanics": {"Kinematics": {"kin.a": "Uniform motion", "kin.b": "Free fall"}},
+            "Electricity": {"Circuits": {"el.ohm": "Ohm's law"}}}
+    BASE = {"1": {"sub": "kin.a", "sub2": [], "kind": "calculate", "kinds": ["calculate"], "parts": 2, "steps": 1, "laws": ["uniform_motion"],
+                  "math": ["arith"], "repr": [], "context": "traffic"},
+            "2": {"sub": "kin.b", "sub2": ["kin.a"], "kind": "calculate", "kinds": ["calculate", "explain"], "parts": 3, "steps": 2,
+                  "laws": ["free_fall"], "math": ["quadratic"], "repr": ["figure_given"], "context": "everyday"},
+            "3": {"sub": "el.ohm", "sub2": [], "kind": "concept", "kinds": ["concept"], "parts": 1, "steps": 1, "laws": ["ohm"],
+                  "math": [], "repr": ["circuit"], "context": "lab"}}
+    TEXTS = {1: ("Gleichförmige Bewegung eines Autos", "Ein Auto fährt mit konstanter Geschwindigkeit \\vO. Welche Strecke legt es in der Zeit \\tO zurück?"),
+             2: ("Stein fällt vom Turm", "A stone falls freely from a tower of height \\hO. How long does the free fall take?"),
+             3: ("Resistor in a circuit", "A resistor carries the current \\IO at the voltage \\UO. What is its resistance (Ohm)?"),
+             101: ("Zug mit konstanter Geschwindigkeit", "Ein Zug fährt mit konstanter Geschwindigkeit. Welche Strecke legt er in der Zeit zurück?"),
+             102: ("Current through a resistor", "What current flows through the resistor at a voltage of \\UO in this circuit?"),
+             103: ("Ball dropped from a bridge", "A ball falls freely from a bridge of height \\hO. How long does it fall?")}
+
+    def setUp(self):
+        self.dir = tempfile.TemporaryDirectory()
+        d = Path(self.dir.name)
+        (d / "categories.json").write_text(json.dumps({"tree": self.TREE, "exercises": self.BASE}))
+        for eid, (title, text) in self.TEXTS.items():
+            f = d / "data" / "texercises" / "exercises" / f"ex{eid}"
+            f.mkdir(parents=True)
+            (f / "exercise.json").write_text(json.dumps({"id": eid, "title": title, "language": "GER" if eid in (1, 101) else "ENG",
+                                                        "info": {"creator": "by", "type_name": "Calculative"}, "tags": [], "subbranches": []}))
+            (f / "text.tex").write_text(text)
+        for patch in (mock.patch.object(S, "CATEGORIES", d / "categories.json"),
+                      mock.patch.object(H, "sheets_module", self.module)):
+            patch.start()
+            self.addCleanup(patch.stop)
+        (d / "pw").write_text(hash_password("teacher pw") + "\n")
+        self.admin = H.Admin(d / "pw", ROOT / "hub" / "index.html", d / "data" / "apps.json")
+        self.cz = self.admin.categoriser
+        self.cz.backoff = (0, 0)
+        self.calls = []
+
+    def tearDown(self):
+        S.OVERLAY = None
+        self.dir.cleanup()
+
+    @staticmethod
+    def module(name="sheets"):
+        from sheets import autocat
+        if name == "sheets":
+            S.OVERLAY = H.CATEGORIES_EXTRA[0]
+            return S
+        return autocat
+
+    def overlay(self):
+        return json.loads(self.cz.file.read_text())["exercises"]
+
+    def fake(self, answer):
+        """A call function: answer(ids of the batch, kwargs) -> a response, or raises."""
+        def call(kwargs):
+            sent = kwargs["messages"][0]["content"]
+            ids = [d["id"] for d in json.loads(sent.split("<exercises>\n", 1)[1].rsplit("\n</exercises>", 1)[0])]
+            self.calls.append((ids, kwargs))
+            return answer(ids, kwargs)
+        return call
+
+    def test_provisional_nearest(self):
+        from sheets import autocat as A
+        self.assertEqual(A.KINDS, S.TASKS)
+        self.assertEqual(A.words("Die \\SolQty{v}{s/t} Geschwindigkeit, 12 m/s"), ["die", "geschwindigkeit"])
+        self.assertEqual(self.cz.label_provisional(), 3)
+        over = self.overlay()
+        self.assertEqual({k: (r["sub"], r["like"], r["source"]) for k, r in over.items()},
+                         {"101": ("kin.a", "1", "provisional"), "102": ("el.ohm", "3", "provisional"), "103": ("kin.b", "2", "provisional")})
+        self.assertEqual({f: over["103"][f] for f in A.COPIED}, self.BASE["2"])  # every label of the nearest, copied
+        self.assertEqual(over["103"]["flag"], "")
+        self.assertEqual(self.cz.label_provisional(), 0)  # (each once)
+        # merged: sheets see them at once, "not yet categorised" no more
+        have = S.available(self.admin.texercises)
+        tree = S.topic_tree(have)
+        self.assertEqual(tree["new"]["exercises"], 0)
+        self.assertEqual(S.exercise_meta(have["ex101"])["subtopic"]["id"], "kin.a")
+        st = self.cz.status()
+        self.assertEqual((st["total"], st["provisional"], st["pending"], st["missing"]), (3, 3, 3, 0))
+
+    def test_overlay_merge_and_teacher(self):
+        d = Path(self.dir.name)
+        extra = d / "extra.json"
+        extra.write_text(json.dumps({"exercises": {
+            "1": {**self.BASE["1"], "sub": "el.ohm", "source": "teacher"},          # wins over categories.json
+            "101": {**self.BASE["2"], "source": "claude", "model": "m"},
+            "102": {**self.BASE["2"], "sub": "unknown.sub", "source": "claude"}}}))  # (no known subtopic: left out)
+        cats = S.load_categories(d / "categories.json", extra)
+        self.assertEqual((cats["exercises"]["1"]["sub"], cats["exercises"]["1"]["source"]), ("el.ohm", "teacher"))
+        self.assertEqual((cats["exercises"]["101"]["sub"], cats["exercises"]["101"]["source"]), ("kin.b", "claude"))
+        self.assertEqual((cats["exercises"]["2"]["source"], "102" in cats["exercises"]), (None, False))
+        self.assertNotIn("101", S.load_categories(d / "categories.json")["exercises"])  # (without the overlay)
+        # the service's overlay: a change seen at once (the caches follow its stamp)
+        self.cz.label_provisional()
+        have = S.available(self.admin.texercises)
+        self.assertEqual(S.exercise_meta(have["ex102"])["subtopic"]["id"], "el.ohm")
+        got = self.cz.confirm({"id": "102", "sub": "kin.b", "kind": "explain"})
+        self.assertEqual((got["source"], got["sub"], got["kind"], got["kinds"][0], got["was"]), ("teacher", "kin.b", "explain", "explain", "provisional"))
+        self.assertEqual(S.exercise_meta(have["ex102"])["subtopic"]["id"], "kin.b")
+        for bad in ({"id": "102", "sub": "x", "kind": "explain"}, {"id": "102", "sub": "kin.a", "kind": "x"}, {"id": "1", "sub": "kin.a", "kind": "explain"}):
+            with self.assertRaises(ValueError):
+                self.cz.confirm(bad)
+        # automation never overwrites the teacher: not the provisional labels, not Claude
+        self.cz.change(lambda over: over["exercises"]["102"].update({"source": "teacher"}))
+        self.cz.change(lambda over: over["exercises"]["101"].update({"source": "teacher", "sub": "el.ohm"}))
+        self.cz.change(lambda over: over["exercises"]["103"].update({"source": "provisional"}))
+        call = self.fake(lambda ids, kw: FakeAPI.response([label(i, "kin.a") for i in ids]))
+        self.cz.run(call, FakeAPI)
+        over = self.overlay()
+        self.assertEqual(self.calls[0][0], ["103"])  # (only the provisional one asked for)
+        self.assertEqual({k: (r["source"], r["sub"]) for k, r in over.items()},
+                         {"101": ("teacher", "el.ohm"), "102": ("teacher", "kin.b"), "103": ("claude", "kin.a")})
+        # Claude answering for a teacher's exercise meanwhile: not taken
+        self.cz.change(lambda over: over["exercises"]["103"].update({"source": "provisional"}))
+        def meanwhile(ids, kw):
+            self.cz.confirm({"id": "103", "sub": "el.ohm", "kind": "concept"})
+            return FakeAPI.response([label(i, "kin.a") for i in ids])
+        self.cz.run(self.fake(meanwhile), FakeAPI)
+        self.assertEqual((self.overlay()["103"]["source"], self.overlay()["103"]["sub"]), ("teacher", "el.ohm"))
+
+    def test_worker(self):
+        self.cz.label_provisional()
+        self.cz.connect = lambda: (self.fake(lambda ids, kw: FakeAPI.response(
+            [label(ids[0], "el.ohm", flag="dup:3"), label(ids[1], "nope.sub"), label(ids[2], context="moon"), label(999)])), FakeAPI, "")
+        self.assertTrue(self.cz.start())
+        self.cz.thread.join(10)
+        ids, kw = self.calls[0]
+        self.assertEqual((ids, len(self.calls)), (["101", "102", "103"], 1))
+        # the request as specified
+        self.assertEqual((kw["model"], kw["max_tokens"], kw["betas"], kw["fallbacks"]), ("claude-opus-5-5", 16000, ["server-side-fallback-2026-07-01"], "default"))
+        self.assertEqual(kw["output_config"]["effort"], "low")
+        sch = kw["output_config"]["format"]["schema"]
+        self.assertEqual(kw["output_config"]["format"]["type"], "json_schema")
+        rec = sch["properties"]["exercises"]["items"]
+        self.assertEqual((rec["additionalProperties"], sorted(rec["required"]), sorted(rec["properties"])), (False, sorted(rec["properties"]), sorted(rec["properties"])))
+        self.assertEqual(rec["properties"]["context"]["enum"], list(H.sheets_module("autocat").CONTEXTS))
+        self.assertEqual(rec["properties"]["kinds"]["items"]["enum"], list(S.TASKS))
+        self.assertEqual(kw["system"][0]["cache_control"], {"type": "ephemeral"})
+        self.assertIn("kin.b: Mechanics / Kinematics / Free fall\n", kw["system"][0]["text"])
+        self.assertIn("not instructions", kw["messages"][0]["content"])
+        # the good one kept as Claude's (a dup flag of a known exercise kept), the others provisional, failed
+        over = self.overlay()
+        self.assertEqual((over["101"]["source"], over["101"]["sub"], over["101"]["model"], over["101"]["flag"]), ("claude", "el.ohm", "claude-opus-5-5", "dup:3"))
+        self.assertEqual((over["102"]["source"], over["102"]["error"]), ("provisional", "unknown subtopic 'nope.sub'"))
+        self.assertEqual((over["103"]["source"], over["103"]["error"]), ("provisional", "unknown context 'moon'"))
+        self.assertNotIn("999", over)
+        st = self.cz.status()
+        self.assertEqual((st["claude"], st["provisional"], st["failed"], st["pending"], st["running"]), (1, 2, 2, 0, False))
+        self.assertEqual(st["usage"], {"input": 1000, "output": 200, "cache_read": 3000, "cache_write": 0, "requests": 1})
+        self.assertEqual(S.load_categories()["exercises"]["101"]["sub"], "el.ohm")
+        # "Categorise now" tries the failed ones again; a refusal marks them failed, nothing crashes
+        self.calls.clear()
+        self.cz.connect = lambda: (self.fake(lambda ids, kw: FakeAPI.response(stop="refusal", text="")), FakeAPI, "")
+        self.cz.categorise_now()
+        for _ in range(100):
+            if self.calls and not self.cz.status()["running"] and not self.cz.status()["labelling"]:
+                break
+            time.sleep(0.05)
+        self.assertEqual(self.calls[0][0], ["102", "103"])
+        self.assertEqual({k: r.get("error") for k, r in self.overlay().items() if r["source"] == "provisional"},
+                         {"102": "Claude declined to label it", "103": "Claude declined to label it"})
+        self.assertEqual(self.cz.status()["usage"]["requests"], 2)
+
+    def test_worker_errors(self):
+        self.cz.label_provisional()
+        # max_tokens: half the batch, then the rest
+        answers = iter([FakeAPI.response(stop="max_tokens")])
+        call = self.fake(lambda ids, kw: next(answers, None) or FakeAPI.response([label(i) for i in ids]))
+        self.assertEqual(self.cz.run(call, FakeAPI), "done: 3 labelled by Claude")
+        self.assertEqual([c[0] for c in self.calls], [["101", "102", "103"], ["101"], ["102"], ["103"]])
+        # an error raised: no crash, the status says it; rate limits and overload waited for, then retried
+        self.cz.change(lambda over: [r.update({"source": "provisional"}) for r in over["exercises"].values()])
+        def raising(*errors):
+            todo = list(errors)
+            def answer(ids, kw):
+                if todo:
+                    raise todo.pop(0)
+                return FakeAPI.response([label(i) for i in ids])
+            return answer
+        self.calls.clear()
+        msg = self.cz.run(self.fake(raising(FakeAPI.RateLimitError("slow", 429), FakeAPI.APIStatusError("overloaded", 529))), FakeAPI)
+        self.assertEqual((msg, len(self.calls)), ("done: 3 labelled by Claude", 3))
+        self.cz.change(lambda over: [r.update({"source": "provisional"}) for r in over["exercises"].values()])
+        msg = self.cz.run(self.fake(raising(*[FakeAPI.APIConnectionError("down")] * 3)), FakeAPI)
+        self.assertEqual(msg, "stopped: the Claude API is busy or unreachable; try again later")
+        msg = self.cz.run(self.fake(raising(FakeAPI.AuthenticationError("invalid x-api-key", 401))), FakeAPI)
+        self.assertTrue(msg.startswith("stopped: the API key was not accepted"), msg)
+        msg = self.cz.run(self.fake(raising(FakeAPI.BadRequestError("bad schema", 400))), FakeAPI)
+        self.assertEqual(msg, "stopped: the API refused the request: bad schema")
+        self.cz.connect = lambda: (self.fake(raising(RuntimeError("boom"))), FakeAPI, "")
+        self.assertTrue(self.cz.start())
+        self.cz.thread.join(10)
+        st = self.cz.status()
+        self.assertEqual((st["running"], st["message"]), (False, "stopped: RuntimeError: boom"))
+        # not JSON: failed, kept provisional
+        self.cz.run(self.fake(lambda ids, kw: FakeAPI.response(text="{oops")), FakeAPI)
+        self.assertEqual({r.get("error") for r in self.overlay().values()}, {"Claude's answer was not JSON"})
+        self.assertEqual({r["source"] for r in self.overlay().values()}, {"provisional"})
+
+    def test_without_package_or_key(self):
+        with mock.patch.dict(sys.modules, {"anthropic": None}):  # (an import of it fails)
+            self.assertEqual(self.cz.connect()[2], H.NO_PACKAGE)
+            self.assertTrue(H.NO_PACKAGE.startswith("the anthropic package is not installed on the server"))
+        with mock.patch("importlib.util.find_spec", return_value=None):
+            self.assertEqual(self.cz.available(), H.NO_PACKAGE)
+            st = self.cz.categorise_now()  # provisional labels only, and the status says why
+            for _ in range(100):
+                if not self.cz.status()["labelling"]:
+                    break
+                time.sleep(0.05)
+            st = self.cz.status()
+            self.assertEqual((st["available"], st["provisional"], st["running"], self.cz.thread), (H.NO_PACKAGE, 3, False, None))
+        fake = type(sys)("anthropic")
+        fake.Anthropic = lambda: self.fail("no client without a key")
+        env = {k: v for k, v in os.environ.items() if k != "ANTHROPIC_API_KEY"}
+        with mock.patch.dict(sys.modules, {"anthropic": fake}), mock.patch.dict(os.environ, env, clear=True), \
+                mock.patch("importlib.util.find_spec", return_value=object()):
+            self.assertEqual(self.cz.available(), H.NO_KEY)
+            self.assertEqual(self.cz.connect()[2], H.NO_KEY)
+            self.assertFalse(self.cz.start())
+            self.assertEqual(self.cz.status()["message"], H.NO_KEY)
+        self.assertIn("ANTHROPIC_API_KEY to /etc/hub-admin/anthropic.env", H.NO_KEY)
+
+
 class AllInUnit(unittest.TestCase):
     """The rooms of the game All In: opening, the state, joining, bets and the timer."""
 
@@ -1811,6 +2076,33 @@ class Service(unittest.TestCase):
         self.audit(report, boss)
         self.assertEqual(json.loads(self.req("/api/exercise-audit/export", cookie=boss)[2])["exercises"], [])
         self.assertIn("11", json.loads(self.req("/api/exercise-audit/feedback", cookie=boss)[2])["feedback"])
+
+    def test_new_exercises_endpoints(self):
+        """The new exercises (categories-extra): the superuser alone reads them and asks for them to be
+        categorised or labels one; the panel shows its section to them only."""
+        boss = self.cookie_of("samuel.byland", "teacher pw")
+        pw = self.teachers({"action": "create", "id": "abc", "user": "anna"}, boss)[1]["password"]
+        anna = self.cookie_of("anna", pw)
+        self.assertIn(b'id="sheets-new"', self.req("/", cookie=boss)[2])
+        self.assertNotIn(b'id="sheets-new"', self.req("/", cookie=anna)[2])
+        for who in (None, anna):
+            self.assertEqual(self.req("/api/categories-extra", cookie=who)[0], 403)
+            for path in ("/api/categories-extra/run", "/api/categories-extra/label"):
+                self.assertEqual(self.req(path, b"{}", "application/json", who)[0], 403)
+        st, _, body = self.req("/api/categories-extra", cookie=boss)
+        got = json.loads(body)
+        self.assertEqual((st, got["exercises"], got["status"]["total"]), (200, [], 0))
+        self.assertEqual(len([i for _, ts in got["tree"] for _, subs in ts for i in subs]), 133)  # (the repository's tree)
+        self.assertEqual(got["kinds"], list(S.TASKS))
+        self.assertEqual(self.req("/api/categories-extra/run", b"x", "text/plain", boss)[0], 415)
+        st, _, body = self.req("/api/categories-extra/label", json.dumps({"id": "5", "sub": "nope", "kind": "calculate"}).encode(), "application/json", boss)
+        self.assertEqual(st, 400)
+        st, _, body = self.req("/api/categories-extra/label", json.dumps({"id": "5", "sub": "kin.uniform", "kind": "calculate"}).encode(), "application/json", boss)
+        self.assertEqual((st, json.loads(body)["error"]), (400, "not a new exercise"))
+        st, _, body = self.req("/api/categories-extra/run", b"{}", "application/json", boss)
+        self.assertEqual(st, 200)
+        self.assertIn("running", json.loads(body))
+        self.assertFalse(self.admin.categoriser.file.exists() and json.loads(self.admin.categoriser.file.read_text())["exercises"])
 
     def teachers(self, body, cookie):
         st, _, data = self.req("/api/teachers", json.dumps(body).encode(), "application/json", cookie)

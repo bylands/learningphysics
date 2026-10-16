@@ -8,6 +8,15 @@
 #   sudo cp hub-admin.service hub-admin-reload.path hub-admin-reload.service /etc/systemd/system/
 #   sudo systemctl daemon-reload && sudo systemctl enable --now hub-admin hub-admin-reload.path
 # A change to this file (or to the two reload units) still needs that cp and daemon-reload.
+# New exercises categorised by Claude (optional; sheets/README.md, "New exercises"), once:
+#   sudo pip3 install --break-system-packages anthropic        # (or the distro's python3-anthropic, if there is one)
+#   sudo install -d -m 755 /etc/hub-admin
+#   sudo install -m 600 -o root -g root /dev/null /etc/hub-admin/anthropic.env
+#   sudoedit /etc/hub-admin/anthropic.env                        # one line: ANTHROPIC_API_KEY=sk-ant-...
+#   sudo cp hub-admin.service /etc/systemd/system/ && sudo systemctl daemon-reload && sudo systemctl restart hub-admin
+# The service then needs to reach https://api.anthropic.com (no change here unless outbound traffic is
+# restricted). Without the package or the key, new exercises get provisional categories only, and the
+# admin panel says what is missing.
 [Unit]
 Description=Learning Physics hub admin (tags and order of the apps, sets for classes)
 After=network.target
@@ -15,6 +24,9 @@ After=network.target
 [Service]
 User=hubadmin
 Group=hubadmin
+# Optional ("-": the service starts without it): one line ANTHROPIC_API_KEY=..., chmod 600, owned by
+# root (systemd reads it before dropping to hubadmin, so the service user cannot read the file itself)
+EnvironmentFile=-/etc/hub-admin/anthropic.env
 SupplementaryGroups=crosswords
 ExecStart=/usr/bin/python3 /var/www/teachingphysics/hub-admin/hubadmin.py --port 8040 --password-file /opt/crosswords/teacher-password --hub /var/www/teachingphysics/index.html --config /var/www/teachingphysics/hub-data/apps.json --sets /var/www/teachingphysics/hub-data/sets.json
 Restart=on-failure
