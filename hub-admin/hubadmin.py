@@ -3776,7 +3776,7 @@ h2.section { font-size: 1.15rem; margin: 28px 0 4px; }
 .audit .fig-use button { border-radius: 999px; padding: 2px 11px; font-size: 0.86rem; }
 .audit .fig-use button[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); font-weight: 600; cursor: default; }
 .audit .fig-two { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 10px; }
-.audit .fig-two > div { display: grid; gap: 4px; min-width: 0; }
+.audit .fig-two > div { display: grid; grid-template-rows: auto 1fr; gap: 4px; min-width: 0; }
 .audit .fig-two > div > span { color: var(--muted); font-size: 0.8rem; }
 @media (max-width: 560px) { .audit .fig-two { grid-template-columns: minmax(0, 1fr); } }
 .audit .tikz-ed { border: 1px solid var(--line); border-radius: 8px; background: var(--card); padding: 10px; display: grid; gap: 8px; }
@@ -5053,7 +5053,7 @@ SHEETS_JS = r"""
         let use = '';
         if (saved) {
           const pickUse = (u) => async () => {
-            try { await send(e, { tikz: { image: name, use: u } }); paint(); } catch (err) { msg.textContent = `Not changed: ${err.message}`; msg.className = 'saved bad'; }
+            try { await send(e, { tikz: { image: name, use: u } }); show = !!(folded && folded.open); paint(); } catch (err) { msg.textContent = `Not changed: ${err.message}`; msg.className = 'saved bad'; }
           };
           const now = saved.use || 'tikz';
           use = el('div', { class: 'fig-use', role: 'group', 'aria-label': `Which to include for ${name}` }, el('span', {}, 'Include in the exercise'),
