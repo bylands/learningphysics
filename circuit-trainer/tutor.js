@@ -103,7 +103,7 @@
       const el = evt.target;
       if ($('#tutor').hidden || evt.altKey || evt.ctrlKey || evt.metaKey) return;
       if (/^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName) && el.type !== 'radio') return;
-      if (el.closest && el.closest('svg[tabindex], svg.arrows')) return; // a graph or a drawing (arrow.js) that uses the arrow keys itself
+      if (el.closest && el.closest('svg[tabindex], svg.arrows, svg.sketch')) return; // a graph or a drawing (arrow.js, sketch.js) that uses the arrow keys itself
       if (evt.key === 'ArrowRight') next();
       else if (evt.key === 'ArrowLeft') prev();
       else return;

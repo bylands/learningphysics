@@ -1,6 +1,6 @@
 // Shared by the learningphysics.ch apps (canonical copy in shared/, copied by sync.sh into the apps
 // whose index.html loads it: Slopes of Motion Graphs, Areas under Motion Graphs, Wave Propagation,
-// Induction, Potential in a Circuit; its look is in sketch.css). A graph the student sketches in an
+// Induction, Potential in a Circuit, Electric Potential; its look is in sketch.css). A graph the student sketches in an
 // <svg>: handles dragged up and down with mouse, pen or touch, or moved with the keys, their values
 // snapped to a grid and kept on the axis. The app draws everything else (grid, axes, the line
 // through the handles, a readout under the pointer, the marks of a check) and judges the sketch.

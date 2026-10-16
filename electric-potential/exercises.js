@@ -386,9 +386,341 @@
     }
   }
 
+  // ---------------------------------------------------------------- sketching the potential
+  // The student sketches the potential (app.js mounts the shared sketcher, sketch.js, on the
+  // drawing made here); no questions, but ex.sketch, the sketch's spec:
+  //   sk-plates  thick metal plates at given potentials (two, or three), or the middle one of three
+  //              uncharged and isolated: level in the metal, straight in the gaps. The pieces
+  //              model, a breakpoint at each face of the metal.
+  //   sk-e2v     V(x) from a graph E(x) and V(0): the pieces model, a breakpoint at each break of
+  //              E, the first one given.
+  //   sk-point   a point charge, the size of its potential at one distance given: V at r … 6r, the
+  //              columns model (a value at each distance, the line through them).
+  // A spec: { kind, model, ts (pieces: the breakpoints) or xs (columns), fixed (pieces: the
+  // breakpoints given), x0, x1 (the horizontal axis: mm, or r), lo, hi, step (the values, in V),
+  // init (the state to start from: nothing drawn), target (the right values at the handles), and
+  // per kind: plates { how, metal: [{ k (its piece), name, V, iso }] }; e2v { sl (the slopes, in
+  // V/mm: E = −sl), v0 }; point { s (the sign of Q), Vr (the size of V at r), ref (where it is given) } }.
+  //   sketchScale(spec)          x(u), y(v), inv(py), area (where a press sets a column), W, H
+  //   sketchFig(spec, label)     the empty <svg> the sketcher fills
+  //   sketchBody(spec, st, view) the drawing under the handles (st: the sketcher's state): grid,
+  //                              axes, the metal or the charge, the sketched line; view: marks (the
+  //                              pieces or columns drawn as wrong), right (the right graph laid
+  //                              over, dashed), active (the handle selected: its value beside it),
+  //                              solid (only the right graph, as a line: for a worked example)
+  //   sketchHandle(spec, h)      a handle's { label, text } for screen readers
+  //   judgeSketch(spec, st)      null (nothing drawn yet), or the problems from left to right,
+  //                              [{ code, at (pieces or columns), nudge, why }] (none: right); the
+  //                              judging is lenient, see each kind
+  const LR = (en, de) => E.L(en, de); // a label of a drawing (C.txt sets its indices)
+  const vals = (spec, st) => (spec.model === 'pieces' ? st.nodes : st);
+  const mm = (x) => `${nice(x)} mm`;
+  const went = (x) => (x === 0 ? L('stays level', 'bleibt gleich') : x > 0 ? L(`rises by ${num(x)} V`, `steigt um ${num(x)} V`) : L(`falls by ${num(-x)} V`, `fällt um ${num(-x)} V`));
+  const SAME = () => L('The right graph is laid over your sketch, dashed.', 'Der richtige Graph liegt gestrichelt über deiner Skizze.');
+  // the state of the right sketch
+  const rightState = (spec) => (spec.model === 'pieces' ? { nodes: [...spec.target], bends: spec.target.slice(1).map(() => 0) } : [...spec.target]);
+
+  // metal plates: [0, a] plate A, [b, 8] the last one, between them a gap or a plate of thickness t
+  // (B, given or isolated) with gaps on either side
+  function platesSpec(r, how) {
+    for (;;) {
+      const a = r.pick([1, 2]), b = 8 - r.pick([1, 2]), t = r.pick([1, 2]);
+      let ts, metal;
+      if (how === 'two') {
+        const VA = r.int(0, 8), VB = r.int(0, 8);
+        if (Math.abs(VA - VB) < 3) continue;
+        ts = [0, a, b, 8];
+        metal = [{ k: 0, name: 'A', V: VA }, { k: 2, name: 'B', V: VB }];
+      } else {
+        const g = b - a - t, g1 = r.int(1, g - 1), VA = r.int(0, 8);
+        let VB, VC;
+        if (how === 'iso') {
+          // the field the same in both gaps: V_C − V_A a multiple of the gaps together, at least 1 V/mm
+          const U = r.pick([-2, -1, 1, 2]) * g;
+          if (Math.abs(U) > 8) continue;
+          VC = VA + U; VB = VA + (U * g1) / g;
+        } else {
+          VB = r.int(0, 8); VC = r.int(0, 8);
+          // B not between A and C on a line (then it would look like the isolated plate), and the
+          // potential not level in both gaps
+          if ((VB - VA) * (VC - VB) > 0 && Math.abs((VB - VA) / g1 - (VC - VB) / (g - g1)) < 0.5) continue;
+          if (VB === VA && VB === VC) continue;
+          if (Math.abs(VB - VA) + Math.abs(VC - VB) < 4) continue;
+        }
+        if (VC < 0 || VC > 8) continue;
+        ts = [0, a, a + g1, a + g1 + t, b, 8];
+        metal = [{ k: 0, name: 'A', V: VA }, { k: 2, name: 'B', V: VB, ...(how === 'iso' ? { iso: true } : {}) }, { k: 4, name: 'C', V: VC }];
+      }
+      const target = ts.map((x, i) => metal.find((m) => i === m.k || i === m.k + 1).V);
+      return { kind: 'plates', how, model: 'pieces', ts, metal, x0: 0, x1: 8, lo: -1, hi: 9, step: 1, init: { nodes: ts.map(() => 0), bends: ts.slice(1).map(() => 0) }, target };
+    }
+  }
+  // V(x) from E(x) (as in v2e): the breakpoints at the breaks, the first one given
+  function e2vSpec(br, sl, v0) {
+    const target = [v0];
+    sl.forEach((s, i) => target.push(target[i] + s * (br[i + 1] - br[i])));
+    return { kind: 'e2v', model: 'pieces', ts: br, fixed: [0], sl, v0, x0: 0, x1: 8, lo: -2, hi: 10, step: 1, init: { nodes: br.map(() => v0), bends: br.slice(1).map(() => 0) }, target };
+  }
+  // a point charge of sign s; V is Vr in size at r, given at ref·r (Vr/ref)
+  const POINT_XS = [1, 1.5, 2, 3, 4, 6];
+  function pointSpec(s, Vr, ref) {
+    const step = Vr / 12, hi = s > 0 ? Vr + 2 * step : Vr / 3, lo = s > 0 ? -Vr / 3 : -Vr - 2 * step;
+    return { kind: 'point', model: 'columns', xs: POINT_XS, s, Vr, ref, x0: 0, x1: 6.4, lo, hi, step, init: POINT_XS.map(() => 0), target: POINT_XS.map((x) => (s * Vr) / x) };
+  }
+
+  // the drawing: the axes of lineGraph (x in mm, 36 units left, 34 right), taller
+  function sketchScale(spec) {
+    const W = 320, L0 = 36, R = 34, T = 28, P = 220, B = 26, sy = P / (spec.hi - spec.lo);
+    const x = (u) => Math.round((L0 + ((u - spec.x0) / (spec.x1 - spec.x0)) * (W - L0 - R)) * 10) / 10;
+    const y = (v) => Math.round((T + (spec.hi - v) * sy) * 10) / 10;
+    return { x, y, inv: (py) => spec.hi - (py - T) / sy, area: { x0: x(0.6), x1: x(spec.x1) + 10, y0: T - 14, y1: T + P + 14 }, W, H: T + P + B };
+  }
+  function sketchFig(spec, label) {
+    const g = sketchScale(spec);
+    return `<div class="fig"><svg class="ef sketch-plot" viewBox="0 0 ${g.W} ${g.H}" role="group" aria-label="${label}"></svg></div>`;
+  }
+  const xName = (spec, u) => (spec.kind === 'point' ? `${u === 1 ? '' : nice(u)}r` : LR(`x = ${nice(u)} mm`, `x = ${nice(u)} mm`));
+  const sketchHandle = (spec, h) => ({ label: LR(`V at ${xName(spec, h.t)}`, `Φ bei ${xName(spec, h.t)}`), text: `${num(Math.round(h.v * 100) / 100)} V` });
+  // the span of a piece or a column (between the middles to its neighbours)
+  function spanOf(spec, k) {
+    if (spec.model === 'pieces') return [spec.ts[k], spec.ts[k + 1]];
+    const xs = spec.xs;
+    return [k ? (xs[k - 1] + xs[k]) / 2 : xs[0] - 0.25, k < xs.length - 1 ? (xs[k] + xs[k + 1]) / 2 : xs[k] + 0.4];
+  }
+  function sketchBody(spec, st, view = {}) {
+    const g = sketchScale(spec), out = [], f = (x) => x.toFixed(1), v = vals(spec, st);
+    const X = g.x, Y = g.y, top = Y(spec.hi), bot = Y(spec.lo), point = spec.kind === 'point';
+    const line = (pts, cls) => `<polyline class="${cls}" points="${pts.map(([u, w]) => `${f(X(u))},${f(Y(w))}`).join(' ')}"/>`;
+    out.push(`<rect class="bg" x="0" y="0" width="${g.W}" height="${g.H}"/>`);
+    // the metal: grey bands, each plate's name above
+    for (const m of spec.metal || []) {
+      const [a, b] = [spec.ts[m.k], spec.ts[m.k + 1]];
+      out.push(`<rect class="metalband" x="${X(a)}" y="${top}" width="${f(X(b) - X(a))}" height="${f(bot - top)}"/>`);
+      out.push(C.txt((X(a) + X(b)) / 2, top + 15, m.name, 'lbl name'));
+    }
+    for (const k of view.marks || []) {
+      const [a, b] = spanOf(spec, k);
+      out.push(`<rect class="wrongband" x="${X(a)}" y="${top}" width="${f(X(b) - X(a))}" height="${f(bot - top)}"/>`);
+    }
+    // the grid: whole mm (or r), and the values: every step, labelled at most 7 times
+    for (let u = Math.floor(spec.x0) + 1; u <= spec.x1; u++) out.push(`<line class="grid" x1="${X(u)}" y1="${top}" x2="${X(u)}" y2="${bot}"/>`);
+    const every = [1, 2, 4, 5, 10].map((k) => k * spec.step).find((k) => (spec.hi - spec.lo) / k <= 7);
+    for (let w = Math.ceil(spec.lo / spec.step) * spec.step; w <= spec.hi + 1e-9; w += spec.step) {
+      if (Math.abs(w) > 1e-9) out.push(`<line class="grid" x1="${X(spec.x0)}" y1="${Y(w)}" x2="${X(spec.x1)}" y2="${Y(w)}"/>`);
+      // (not 0 beside the point charge, which sits there)
+      if (Math.abs(w / every - Math.round(w / every)) < 1e-9 && !(point && Math.abs(w) < 1e-9)) out.push(C.txt(X(spec.x0) - 5, Y(w) + 4, num(Math.round(w * 100) / 100), 'tick', 'end'));
+    }
+    out.push(`<line class="axisline" x1="${X(spec.x0)}" y1="${bot}" x2="${X(spec.x0)}" y2="${top - 6}"/><line class="axisline" x1="${X(spec.x0)}" y1="${Y(0)}" x2="${X(spec.x1) + 6}" y2="${Y(0)}"/>`);
+    if (point) {
+      for (let u = 1; u <= 6; u++) out.push(C.txt(X(u), bot + 17, `${u === 1 ? '' : u}r`, 'tick'));
+    } else {
+      for (let u = 0; u <= 6; u += 2) out.push(C.txt(X(u), bot + 17, String(u), 'tick'));
+      out.push(C.txt(g.W - 2, bot + 17, '<tspan class="it">x</tspan> in mm', 'tick', 'end'));
+    }
+    out.push(C.txt(X(spec.x0) + 6, 13, LR('<tspan class="it">V</tspan> in V', '<tspan class="it">Φ</tspan> in V'), 'lbl small skname', 'start'));
+    // the sketched line, the parts marked wrong, the right graph
+    const ux = spec.model === 'pieces' ? spec.ts : spec.xs, mine = ux.map((u, i) => [u, v[i]]);
+    if (!view.solid) out.push(line(mine, 'skline'));
+    for (const k of view.marks || []) {
+      out.push(spec.model === 'pieces' ? line(mine.slice(k, k + 2), 'skline bad') : `<circle class="skbad" cx="${X(mine[k][0])}" cy="${Y(mine[k][1])}" r="11"/>`);
+    }
+    if (view.right || view.solid) {
+      // a point charge: the curve 1/r, from the top of the axis on
+      const u0 = point ? spec.Vr / (spec.s > 0 ? spec.hi : -spec.lo) : 0;
+      const right = point ? Array.from({ length: 81 }, (_, i) => u0 + ((6.2 - u0) * i) / 80).map((u) => [u, (spec.s * spec.Vr) / u]) : ux.map((u, i) => [u, spec.target[i]]);
+      out.push(line(right, view.solid ? 'skline' : 'skline right'));
+    }
+    // the charge at r = 0, on the axis; the breakpoints given
+    if (point) out.push(C.charge(X(0), Y(0), spec.s));
+    for (const i of spec.fixed || []) out.push(`<circle class="pt" cx="${X(spec.ts[i])}" cy="${Y(spec.target[i])}" r="4.5"/>`);
+    const h = view.active;
+    if (h) {
+      const left = h.t > (spec.x0 + spec.x1) / 2;
+      out.push(C.txt(h.x + (left ? -11 : 11), h.y - 10, `${xName(spec, h.t)}: ${num(Math.round(h.v * 100) / 100)} V`, 'lbl small readout', left ? 'end' : 'start'));
+    }
+    return out.join('');
+  }
+
+  const signed = (x) => `${num(x)} V`;
+  // Plates, judged leniently, from left to right: in the metal the line must be level; a plate
+  // whose potential is given must lie within 1 V of it; the isolated plate (iso) within 1 V of where
+  // the field is the same in both gaps. The gaps are straight anyway (one piece each).
+  function judgePlates(spec, v) {
+    const out = [];
+    for (const m of spec.metal) {
+      const k = m.k, a = spec.ts[k], b = spec.ts[k + 1], d = v[k + 1] - v[k], at = v[k];
+      if (d !== 0) {
+        out.push({ code: 'metal', at: [k], nudge: L(`Inside plate ${m.name} (${a}–${b} mm) there is no field: the potential is the same all through the metal.`, `In der Platte ${m.name} (${a}–${b} mm) gibt es kein Feld: Das Potential ist im ganzen Metall gleich.`),
+          why: L(`Plate ${m.name} is a conductor: there is no field in it, so the potential stays at ${signed(m.V)} all through it; your sketch ${went(d)} there.`, `Die Platte ${m.name} ist ein Leiter: In ihr gibt es kein Feld, also bleibt das Potential überall bei ${signed(m.V)}; deine Skizze ${went(d)} dort.`) });
+      } else if (Math.abs(at - m.V) > 1 && !m.iso) {
+        out.push({ code: 'value', at: [k], nudge: L(`Plate ${m.name} is at ${signed(m.V)}: its piece lies at that height.`, `Die Platte ${m.name} liegt auf ${signed(m.V)}: Ihr Stück liegt auf dieser Höhe.`),
+          why: L(`Plate ${m.name} is at ${signed(m.V)}; your sketch has it at ${signed(at)}.`, `Die Platte ${m.name} liegt auf ${signed(m.V)}; deine Skizze hat sie auf ${signed(at)}.`) });
+      } else if (Math.abs(at - m.V) > 1) {
+        const g1 = spec.ts[k] - spec.ts[k - 1], g2 = spec.ts[k + 2] - spec.ts[k + 1];
+        out.push({ code: 'iso', at: [k - 1, k, k + 1], nudge: L(`Plate ${m.name} is uncharged: the field is the same on both sides of it, so the potential changes just as steeply in both gaps.`, `Die Platte ${m.name} ist ungeladen: Das Feld ist auf beiden Seiten gleich, also ändert sich das Potential in beiden Lücken gleich steil.`),
+          why: L(`Plate ${m.name} is uncharged: the field is the same in both gaps (${mm(g1)} and ${mm(g2)}), so plate ${m.name} is at ${signed(m.V)}; your sketch has it at ${signed(at)}.`, `Die Platte ${m.name} ist ungeladen: Das Feld ist in beiden Lücken (${mm(g1)} und ${mm(g2)}) gleich, also liegt die Platte ${m.name} auf ${signed(m.V)}; deine Skizze hat sie auf ${signed(at)}.`) });
+      }
+    }
+    return out;
+  }
+  // E → V, judged leniently, piece by piece: where E = 0 the line must be level; elsewhere it must
+  // fall where E > 0 and rise where E < 0, by about −E·Δx (within 1 V or a quarter); then, of the
+  // pieces right so far, where |E| is larger the line must not be less steep; and last, with all
+  // that right, no breakpoint more than 2 V off (the small errors adding up).
+  function judgeE2V(spec, v) {
+    const out = [], ts = spec.ts, ok = [];
+    spec.sl.forEach((s, k) => {
+      const a = ts[k], b = ts[k + 1], len = b - a, D = s * len, d = v[k + 1] - v[k], Ef = -s, part = `${a}–${b} mm`;
+      const add = (code, nudge, why) => out.push({ code, at: [k], nudge, why });
+      const rule = L(`${part}: E = ${sgn(Ef)} kV/m, so V changes by −E·Δx = ${sgn(D)} V`, `${part}: E = ${sgn(Ef)} kV/m, also ändert sich Φ um −E·Δx = ${sgn(D)} V`);
+      const yours = L(`your sketch ${went(d)} there`, `deine Skizze ${went(d)} dort`);
+      if (Ef === 0) {
+        if (d !== 0) add('level', L(`From ${a} to ${b} mm, E = 0: there the potential does not change.`, `Von ${a} bis ${b} mm ist E = 0: Dort ändert sich das Potential nicht.`), `${rule}; ${yours}.`);
+      } else if (Math.sign(d) !== Math.sign(D)) {
+        add('dir', Ef > 0 ? L(`From ${a} to ${b} mm, E is positive (it points along +x): the potential falls in the direction of the field.`, `Von ${a} bis ${b} mm ist E positiv (es zeigt in +x-Richtung): Das Potential fällt in Feldrichtung.`)
+          : L(`From ${a} to ${b} mm, E is negative (it points along −x): going along +x, against the field, the potential rises.`, `Von ${a} bis ${b} mm ist E negativ (es zeigt in −x-Richtung): In +x-Richtung, gegen das Feld, steigt das Potential.`), `${rule}; ${yours}.`);
+      } else if (Math.abs(d - D) > Math.max(1, 0.25 * Math.abs(D))) {
+        const big = Math.abs(d) > Math.abs(D);
+        add('size', L(`From ${a} to ${b} mm your sketch changes by too ${big ? 'much' : 'little'}: V changes by −E·Δx (1 kV/m = 1 V/mm).`, `Von ${a} bis ${b} mm ändert sich deine Skizze um zu ${big ? 'viel' : 'wenig'}: Φ ändert sich um −E·Δx (1 kV/m = 1 V/mm).`), `${rule}; ${yours}.`);
+      } else ok.push(k);
+    });
+    const steep = (k) => Math.abs(v[k + 1] - v[k]) / (ts[k + 1] - ts[k]);
+    ok.forEach((i) => ok.forEach((j) => {
+      const A = Math.abs(spec.sl[i]), B = Math.abs(spec.sl[j]);
+      if (j <= i || A === B || !A || !B || (A > B ? steep(i) >= steep(j) : steep(j) >= steep(i))) return;
+      const [p, q] = A > B ? [i, j] : [j, i], P = `${ts[p]}–${ts[p + 1]} mm`, Q = `${ts[q]}–${ts[q + 1]} mm`;
+      out.push({ code: 'order', at: [i, j], nudge: L(`The field is stronger at ${P} than at ${Q}: there the potential must change more steeply.`, `Das Feld ist bei ${P} stärker als bei ${Q}: Dort muss sich das Potential steiler ändern.`),
+        why: L(`|E| is ${Math.max(A, B)} kV/m at ${P} but only ${Math.min(A, B)} kV/m at ${Q}, so the potential is steeper at ${P}; your sketch is steeper at ${Q}.`, `|E| ist ${Math.max(A, B)} kV/m bei ${P}, aber nur ${Math.min(A, B)} kV/m bei ${Q}, also ist das Potential bei ${P} steiler; deine Skizze ist bei ${Q} steiler.`) });
+    }));
+    if (!out.length) {
+      const k = v.findIndex((w, i) => Math.abs(w - spec.target[i]) > 2);
+      if (k > 0) out.push({ code: 'drift', at: [k - 1], nudge: L(`Each part is about right, but at x = ${mm(ts[k])} your sketch is ${num(Math.abs(v[k] - spec.target[k]))} V off: the small errors add up. Check each step, ΔV = −E·Δx.`, `Jeder Teil stimmt ungefähr, aber bei x = ${mm(ts[k])} liegt deine Skizze ${num(Math.abs(v[k] - spec.target[k]))} V daneben: Die kleinen Fehler summieren sich. Prüfe jeden Schritt, ΔΦ = −E·Δx.`),
+        why: L(`At x = ${mm(ts[k])} the potential is ${signed(spec.target[k])}; your sketch has ${signed(v[k])}.`, `Bei x = ${mm(ts[k])} ist das Potential ${signed(spec.target[k])}; deine Skizze hat ${signed(v[k])}.`) });
+    }
+    return out;
+  }
+  // A point charge, judged leniently: the sign everywhere that of Q, nowhere zero, falling in size
+  // with the distance; the given value within a grid step; and the shape 1/r: each value within a
+  // grid step or a quarter (so 1/r², a quarter at 2r, or a straight line down to zero are found).
+  function judgePoint(spec, v) {
+    const out = [], s = spec.s, xs = spec.xs, Q = s > 0 ? L('positive', 'positiv') : L('negative', 'negativ');
+    const at = (x) => xName(spec, x), cols = (ks) => ks.map((k) => at(xs[k])).join(', ');
+    const wrong = xs.map((x, k) => k).filter((k) => v[k] * s < 0), zero = xs.map((x, k) => k).filter((k) => v[k] === 0);
+    if (wrong.length) out.push({ code: 'sign', at: wrong, nudge: L(`Q is ${Q}: what sign does V = k·Q/r have?`, `Q ist ${Q}: Welches Vorzeichen hat Φ = k·Q/r?`),
+      why: L(`Q is ${Q}, so V = k·Q/r is ${Q} at every distance; your sketch has the other sign at ${cols(wrong)}.`, `Q ist ${Q}, also ist Φ = k·Q/r in jedem Abstand ${Q}; deine Skizze hat bei ${cols(wrong)} das andere Vorzeichen.`) });
+    if (zero.length) out.push({ code: 'zero', at: zero, nudge: L('Does the potential of a point charge reach zero at any distance?', 'Erreicht das Potential einer Punktladung in irgendeinem Abstand null?'),
+      why: L(`V = k·Q/r reaches zero only far away; at 6r it is still ${signed(spec.target[xs.length - 1])}; your sketch is zero at ${cols(zero)}.`, `Φ = k·Q/r wird erst weit weg null; bei 6r ist es noch ${signed(spec.target[xs.length - 1])}; deine Skizze ist bei ${cols(zero)} null.`) });
+    const k = xs.findIndex((x, i) => i && Math.abs(v[i]) > Math.abs(v[i - 1]));
+    if (k > 0) out.push({ code: 'grow', at: [k - 1, k], nudge: L('Further from the charge, is the potential larger or smaller in size?', 'Ist das Potential weiter weg von der Ladung dem Betrag nach grösser oder kleiner?'),
+      why: L(`V = k·Q/r gets smaller in size with the distance; your sketch is larger at ${at(xs[k])} than at ${at(xs[k - 1])}.`, `Φ = k·Q/r wird mit dem Abstand dem Betrag nach kleiner; deine Skizze ist bei ${at(xs[k])} grösser als bei ${at(xs[k - 1])}.`) });
+    if (out.length) return out;
+    const r = xs.indexOf(spec.ref), Vref = spec.target[r];
+    if (Math.abs(v[r] - Vref) > spec.step + 1e-9) {
+      return [{ code: 'ref', at: [r], nudge: L(`At ${at(spec.ref)} the potential is given: ${num(Math.abs(Vref))} V in size.`, `Bei ${at(spec.ref)} ist das Potential gegeben: Sein Betrag ist ${num(Math.abs(Vref))} V.`),
+        why: L(`At ${at(spec.ref)}, V = ${signed(Vref)} (given, with the sign of Q); your sketch has ${signed(v[r])}.`, `Bei ${at(spec.ref)} ist Φ = ${signed(Vref)} (gegeben, mit dem Vorzeichen von Q); deine Skizze hat ${signed(v[r])}.`) }];
+    }
+    const off = xs.map((x, i) => i).filter((i) => Math.abs(v[i] - spec.target[i]) > Math.max(spec.step, 0.25 * Math.abs(spec.target[i])) + 1e-9);
+    if (off.length) {
+      // further out than the given point too small, or nearer too large: it falls off too fast
+      const fast = (Math.abs(v[off[0]]) < Math.abs(spec.target[off[0]])) === (xs[off[0]] > spec.ref);
+      out.push({ code: 'shape', at: off, nudge: L(`Your potential falls off too ${fast ? 'fast' : 'slowly'} with the distance (at ${at(xs[off[0]])}): how does the potential of a point charge depend on r?`, `Dein Potential nimmt mit dem Abstand zu ${fast ? 'schnell' : 'langsam'} ab (bei ${at(xs[off[0]])}): Wie hängt das Potential einer Punktladung von r ab?`),
+        why: L(`V = k·Q/r falls with 1/r${fast ? ' (not 1/r², like the field)' : ''}: ${xs.map((x, i) => `${signed(spec.target[i])} at ${at(x)}`).join(', ')}; your sketch is off at ${cols(off)}.`, `Φ = k·Q/r nimmt mit 1/r ab${fast ? ' (nicht mit 1/r², wie das Feld)' : ''}: ${xs.map((x, i) => `${signed(spec.target[i])} bei ${at(x)}`).join(', ')}; deine Skizze liegt bei ${cols(off)} daneben.`) });
+    }
+    return out;
+  }
+  function judgeSketch(spec, st) {
+    const v = vals(spec, st), init = vals(spec, spec.init);
+    if (v.every((w, i) => w === init[i])) return null;
+    return spec.kind === 'plates' ? judgePlates(spec, v) : spec.kind === 'e2v' ? judgeE2V(spec, v) : judgePoint(spec, v);
+  }
+
+  // the exercises
+  const NO_FIELD = () => L('Inside a metal (a conductor, with no current flowing) there is no field: the potential is the same all through it.', 'In einem Metall (einem Leiter, in dem kein Strom fliesst) gibt es kein Feld: Das Potential ist überall darin gleich.');
+  function platesFig(spec) {
+    const g = sketchScale(spec), W = g.W, H = 104, X = g.x, y0 = 30, y1 = 82;
+    let s = `<rect class="bg" x="0" y="0" width="${W}" height="${H}"/>`;
+    for (const m of spec.metal) {
+      const a = X(spec.ts[m.k]), b = X(spec.ts[m.k + 1]);
+      s += `<rect class="metal" x="${a}" y="${y0}" width="${(b - a).toFixed(1)}" height="${y1 - y0}"/><rect class="metal-edge" fill="none" x="${a}" y="${y0}" width="${(b - a).toFixed(1)}" height="${y1 - y0}"/>`;
+      s += C.txt((a + b) / 2, y0 + 31, m.name, 'lbl name') + C.txt((a + b) / 2, 18, m.iso ? LR('uncharged', 'ungeladen') : `${num(m.V)} V`, 'lbl small');
+    }
+    s += `<line class="axisline" x1="${X(0)}" y1="${y1 + 6}" x2="${X(8) + 6}" y2="${y1 + 6}"/>`;
+    for (let u = 0; u <= 6; u += 2) s += C.txt(X(u), H - 2, String(u), 'tick');
+    s += C.txt(W - 2, H - 2, '<tspan class="it">x</tspan> in mm', 'tick', 'end');
+    return C.svg(W, H, s, LR('Metal plates and their potentials', 'Metallplatten und ihre Potentiale'));
+  }
+  function sketchPlates(seed) {
+    const r = rng(seed * 113 + 79), how = r.pick(['two', 'three', 'three', 'iso']), spec = platesSpec(r, how), [A, B, Cc] = spec.metal;
+    const ts = spec.ts, gaps = ts.slice(0, -1).map((a, k) => k).filter((k) => !spec.metal.some((m) => m.k === k));
+    const intro = how === 'two' ? L(`Two thick metal plates A and B face each other, A at ${signed(A.V)} and B at ${signed(B.V)}.`, `Zwei dicke Metallplatten A und B stehen einander gegenüber, A auf ${signed(A.V)} und B auf ${signed(B.V)}.`)
+      : how === 'iso' ? L(`Between the thick metal plates A (${signed(A.V)}) and C (${signed(Cc.V)}) stands the metal plate B, uncharged and isolated (connected to nothing).`, `Zwischen den dicken Metallplatten A (${signed(A.V)}) und C (${signed(Cc.V)}) steht die Metallplatte B, ungeladen und isoliert (mit nichts verbunden).`)
+        : L(`Three thick metal plates A, B and C are at ${signed(A.V)}, ${signed(B.V)} and ${signed(Cc.V)}.`, `Drei dicke Metallplatten A, B und C liegen auf ${signed(A.V)}, ${signed(B.V)} und ${signed(Cc.V)}.`);
+    const fieldOf = (k) => (spec.target[k] - spec.target[k + 1]) / (ts[k + 1] - ts[k]); // kV/m along +x
+    const gapLine = (k) => {
+      const a = ts[k], b = ts[k + 1], V1 = spec.target[k], V2 = spec.target[k + 1], Ef = fieldOf(k);
+      return V1 === V2 ? L(`${a}–${b} mm, the gap: both plates at ${signed(V1)}, so no field; the potential stays level.`, `${a}–${b} mm, die Lücke: beide Platten auf ${signed(V1)}, also kein Feld; das Potential bleibt gleich.`)
+        : L(`${a}–${b} mm, the gap: a uniform field, so a straight line from ${signed(V1)} to ${signed(V2)}; E = ${num(Math.abs(V1 - V2))} V / ${mm(b - a)} = ${nice(Math.abs(Ef))} kV/m, pointing ${Ef > 0 ? 'to the right' : 'to the left'} (towards lower potential).`,
+          `${a}–${b} mm, die Lücke: ein homogenes Feld, also eine Gerade von ${signed(V1)} bis ${signed(V2)}; E = ${num(Math.abs(V1 - V2))} V / ${mm(b - a)} = ${nice(Math.abs(Ef))} kV/m, ${Ef > 0 ? 'nach rechts' : 'nach links'} gerichtet (zu tieferem Potential).`);
+    };
+    const metalLine = (m) => L(`${ts[m.k]}–${ts[m.k + 1]} mm, in plate ${m.name}: no field in the metal, so V = ${signed(m.V)} throughout (level).`, `${ts[m.k]}–${ts[m.k + 1]} mm, in der Platte ${m.name}: kein Feld im Metall, also Φ = ${signed(m.V)} überall (waagrecht).`);
+    const sol = [];
+    if (how === 'iso') {
+      const g = gaps.reduce((t, k) => t + ts[k + 1] - ts[k], 0), g1 = ts[2] - ts[1], U = Cc.V - A.V;
+      sol.push(L(`Plate B is uncharged and isolated: the charges on its two faces are equal and opposite, so the field is the same in both gaps: E = ${num(Math.abs(U))} V / ${mm(g)} = ${nice(Math.abs(U) / g)} kV/m (the two gaps together, ${mm(g)}; none in the metal). Across the first gap, ${mm(g1)}, the potential changes by ${num(Math.abs(U) / g)} V/mm · ${mm(g1)} = ${num(Math.abs(B.V - A.V))} V: V_B = ${signed(B.V)}.`,
+        `Die Platte B ist ungeladen und isoliert: Die Ladungen auf ihren beiden Seiten sind entgegengesetzt gleich, also ist das Feld in beiden Lücken gleich: E = ${num(Math.abs(U))} V / ${mm(g)} = ${nice(Math.abs(U) / g)} kV/m (die beiden Lücken zusammen, ${mm(g)}; im Metall keines). Über die erste Lücke, ${mm(g1)}, ändert sich das Potential um ${num(Math.abs(U) / g)} V/mm · ${mm(g1)} = ${num(Math.abs(B.V - A.V))} V: Φ_B = ${signed(B.V)}.`));
+    }
+    ts.slice(0, -1).forEach((a, k) => { const m = spec.metal.find((x) => x.k === k); sol.push(m ? metalLine(m) : gapLine(k)); });
+    const fs = gaps.map((k) => Math.abs(fieldOf(k)));
+    if (fs.length > 1 && fs[0] !== fs[1] && fs[0] && fs[1]) sol.push(L(`The field is stronger in the ${fs[0] > fs[1] ? 'first' : 'second'} gap: there the line is steeper.`, `Das Feld ist in der ${fs[0] > fs[1] ? 'ersten' : 'zweiten'} Lücke stärker: Dort ist die Linie steiler.`));
+    sol.push(SAME());
+    return {
+      kind: 'sketch', title: L('Sketch the potential: metal plates', 'Das Potential skizzieren: Metallplatten'),
+      text: `<p>${intro} ${L('The plates are large; x is measured across them (in mm). Sketch the potential V(x) from x = 0 to 8 mm, through the metal and the gaps.', 'Die Platten sind gross; x wird quer zu ihnen gemessen (in mm). Skizziere das Potential Φ(x) von x = 0 bis 8 mm, durch das Metall und die Lücken.')}</p>`,
+      figs: fig(platesFig(spec)), questions: [], sketch: spec,
+      hints: [NO_FIELD(), L('Between two large plates the field is uniform: the potential changes evenly, along a straight line.', 'Zwischen zwei grossen Platten ist das Feld homogen: Das Potential ändert sich gleichmässig, entlang einer Geraden.'),
+        how === 'iso' ? L('The uncharged plate B has as much positive charge on one face as negative charge on the other: the field is the same on both sides of it.', 'Die ungeladene Platte B trägt auf einer Seite so viel positive Ladung wie negative auf der anderen: Das Feld ist auf beiden Seiten gleich.')
+          : L('Put each plate\'s piece level at its potential, then join them.', 'Lege das Stück jeder Platte waagrecht auf ihr Potential und verbinde sie dann.')],
+      solution: sol, p: { how, ts: ts.join(','), V: spec.metal.map((m) => m.V).join(',') },
+    };
+  }
+  function sketchE2V(seed) {
+    const r = rng(seed * 127 + 83), g = vPieces(r), spec = e2vSpec(g.br, g.sl, g.v0), br = g.br;
+    const lines = g.sl.map((s, i) => L(`${br[i]}–${br[i + 1]} mm: E = ${sgn(-s)} kV/m, so V ${s === 0 ? 'stays level' : `changes by −E·Δx = ${sgn(s * (br[i + 1] - br[i]))} V`}, to ${signed(spec.target[i + 1])}.`,
+      `${br[i]}–${br[i + 1]} mm: E = ${sgn(-s)} kV/m, also ${s === 0 ? 'bleibt Φ gleich' : `ändert sich Φ um −E·Δx = ${sgn(s * (br[i + 1] - br[i]))} V`}, auf ${signed(spec.target[i + 1])}.`));
+    return {
+      kind: 'sketch', title: L('Sketch V from E', 'Φ aus E skizzieren'),
+      text: L(`<p>The graph shows the field E along the x axis. At x = 0 the potential is ${signed(g.v0)}. Sketch the potential V(x) from x = 0 to 8 mm.</p>`, `<p>Der Graph zeigt das Feld E längs der x-Achse. Bei x = 0 ist das Potential ${signed(g.v0)}. Skizziere das Potential Φ(x) von x = 0 bis 8 mm.</p>`),
+      figs: fig(eGraph(g.E, br)), questions: [], sketch: spec,
+      hints: [L('E = −dV/dx: where E is positive, V falls; where E is negative, V rises; where E = 0, V stays level.', 'E = −dΦ/dx: Wo E positiv ist, fällt Φ; wo E negativ ist, steigt Φ; wo E = 0 ist, bleibt Φ gleich.'),
+        L('The stronger the field, the steeper the potential: V changes by −E·Δx (1 kV/m · 1 mm = 1 V).', 'Je stärker das Feld, desto steiler das Potential: Φ ändert sich um −E·Δx (1 kV/m · 1 mm = 1 V).'),
+        `${L('The first part', 'Der erste Teil')}: ${lines[0]}`],
+      solution: [L(`E = −dV/dx: the potential falls where E is positive, by E·Δx (1 kV/m · 1 mm = 1 V), starting from V(0) = ${signed(g.v0)}.`, `E = −dΦ/dx: Das Potential fällt, wo E positiv ist, um E·Δx (1 kV/m · 1 mm = 1 V), ausgehend von Φ(0) = ${signed(g.v0)}.`) + `<ul>${lines.map((x) => `<li>${x}</li>`).join('')}</ul>`, SAME()],
+      solFig: `<div class="figs">${fig(eGraph(g.E, br))}${fig(vGraph(g.V, br))}</div>`, p: { br: br.join(','), sl: g.sl.join(','), v0: g.v0 },
+    };
+  }
+  function sketchPoint(seed) {
+    const r = rng(seed * 131 + 89), s = r.pick([1, -1]), Vr = r.pick([12, 24]), ref = r.pick([1, 2, 3]), spec = pointSpec(s, Vr, ref);
+    const Q = s > 0 ? L('positive', 'positiv') : L('negative', 'negativ'), at = (x) => xName(spec, x), Vref = Vr / ref;
+    const list = POINT_XS.map((x, i) => `${at(x)}: ${signed(spec.target[i])}`).join(', ');
+    return {
+      kind: 'sketch', title: L('Sketch the potential of a point charge', 'Das Potential einer Punktladung skizzieren'),
+      text: L(`<p>A ${Q} point charge Q sits at r = 0. At the distance ${at(ref)} from it, the potential is ${num(Vref)} V in size (zero far away). Sketch the potential V along a line away from the charge, from r to 6r.</p>`,
+        `<p>Eine ${Q}e Punktladung Q sitzt bei r = 0. Im Abstand ${at(ref)} hat das Potential den Betrag ${num(Vref)} V (weit weg null). Skizziere das Potential Φ längs einer Linie weg von der Ladung, von r bis 6r.</p>`),
+      figs: '', questions: [], sketch: spec,
+      hints: [L(`V = k·Q/r, with the sign of Q: here it is ${Q} everywhere, and zero only far away.`, `Φ = k·Q/r, mit dem Vorzeichen von Q: Hier ist es überall ${Q} und erst weit weg null.`),
+        L('V falls with 1/r: at twice the distance half as much, at three times a third (not a quarter and a ninth: that is the field, 1/r²).', 'Φ nimmt mit 1/r ab: im doppelten Abstand halb so viel, im dreifachen ein Drittel (nicht ein Viertel und ein Neuntel: Das ist das Feld, 1/r²).'),
+        ref === 1 ? L(`From ${num(Vref)} V at r: what is it at 2r, 3r, 4r, 6r?`, `Von ${num(Vref)} V bei r aus: Wie gross ist es bei 2r, 3r, 4r, 6r?`) : L(`At ${at(ref)} it is ${num(Vref)} V in size; at r, ${ref} times nearer, it is ${ref} times as much.`, `Bei ${at(ref)} ist der Betrag ${num(Vref)} V; bei r, ${ref}-mal näher, ist er ${ref}-mal so gross.`)],
+      solution: [L(`Q is ${Q}: V = k·Q/r is ${Q} at every distance and reaches zero only far away.`, `Q ist ${Q}: Φ = k·Q/r ist in jedem Abstand ${Q} und wird erst weit weg null.`),
+        L(`V falls in size with 1/r (not with 1/r², like the field)${ref === 1 ? '' : `: at ${at(ref)} it is ${signed(s * Vref)}, so at r, ${ref} times nearer, ${signed(s * Vr)}`}. So ${list}.`, `Φ nimmt dem Betrag nach mit 1/r ab (nicht mit 1/r², wie das Feld)${ref === 1 ? '' : `: Bei ${at(ref)} ist es ${signed(s * Vref)}, also bei r, ${ref}-mal näher, ${signed(s * Vr)}`}. Also ${list}.`),
+        L('Near the charge the curve is steep (a strong field), further out flatter.', 'Nahe der Ladung ist die Kurve steil (ein starkes Feld), weiter weg flacher.'), SAME()],
+      p: { s, Vr, ref },
+    };
+  }
+
   const TYPES = {
     'which-qty': [1, whichQty], 'points-v': [2, pointsV], 'uniform-d': [2, uniformD], v2e: [2, (s) => v2e(s, false)], e2v: [3, (s) => v2e(s, true)],
     'point-v': [3, pointV], scalar: [3, scalar], 'which-way': [1, whichWay], 'gain-lose': [2, gainLose], stmts: [2, statements],
+    'sk-plates': [2, sketchPlates], 'sk-e2v': [3, sketchE2V], 'sk-point': [2, sketchPoint],
   };
   function make(type, seed) {
     const [difficulty, f] = TYPES[type];
@@ -426,7 +758,8 @@
       key: `${e.id}|${key}`,
     };
   }
-  const api = { TYPES: Object.keys(TYPES), make, OBJECTIVES, CONCEPT, question: checkQuestion, RULE, DOWNHILL, vGraph, eGraph, SC, sgn, frac, subs };
+  const api = { TYPES: Object.keys(TYPES), make, OBJECTIVES, CONCEPT, question: checkQuestion, RULE, DOWNHILL, vGraph, eGraph, SC, sgn, frac, subs,
+    platesSpec, e2vSpec, pointSpec, sketchScale, sketchFig, sketchBody, sketchHandle, judgeSketch, rightState };
   root.PotEx = api;
   if (typeof module !== 'undefined') module.exports = api;
 })(typeof window !== 'undefined' ? window : globalThis);

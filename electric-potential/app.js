@@ -21,6 +21,11 @@
       fill: 'Answer every question, then check.', okWell: 'All correct, well done!',
       notYet: (n) => `Not quite yet (attempt ${n}).`, tryAgain: ' Try again, or take a hint.', canReveal: ' You can take a hint or look at the solution.',
       correct: 'Correct', notThis: 'Not this one: check your reasoning, or take a hint.', notAll: 'Not all the answers that fit are chosen yet.', stmtsWrong: (n) => (n === 1 ? 'One statement is judged wrong.' : `${n} statements are judged wrong.`), missed: 'This one fits too:', shown: 'The right answers are marked.',
+      sketchPieces: 'Drag the points up or down, or the line between two of them (keyboard: Tab, then ← → choose a point, ↑ ↓ move it). The shape counts: level where it should be, rising or falling the right way, steeper where the field is stronger, about the right values.',
+      sketchColumns: 'Drag each point to its value, or press where it should go (keyboard: Tab, then ← → choose a point, ↑ ↓ move it). The shape counts: the sign, and how the potential falls off with the distance.',
+      sketchLabel: 'Your sketch of the potential', sketchFirst: 'Sketch the potential first: drag the points up or down, then check.', reset: 'Reset the sketch',
+      sketchOk: 'Your sketch has the right shape. The exact graph is laid over it, dashed.', sketchWrong: 'What is wrong in your sketch (marked):',
+      sketchTutorOk: 'Right! Your sketch has the right shape (the exact graph is dashed).', sketchShown: 'The right graph is laid over your sketch, dashed.',
     },
     de: {
       title: 'Elektrisches Potential', mode: 'Modus', difficulty: 'Schwierigkeit', example: 'Beispiel',
@@ -33,6 +38,11 @@
       fill: 'Beantworte jede Frage und prüfe dann.', okWell: 'Alles richtig, gut gemacht!',
       notYet: (n) => `Noch nicht ganz (Versuch ${n}).`, tryAgain: ' Versuche es nochmals, oder nimm einen Tipp.', canReveal: ' Du kannst einen Tipp nehmen oder die Lösung anschauen.',
       correct: 'Richtig', notThis: 'Das stimmt nicht: Überprüfe deine Überlegung, oder nimm einen Hinweis.', notAll: 'Noch sind nicht alle passenden Antworten gewählt.', stmtsWrong: (n) => (n === 1 ? 'Eine Aussage ist falsch beurteilt.' : `${n} Aussagen sind falsch beurteilt.`), missed: 'Auch diese passt:', shown: 'Die richtigen Antworten sind markiert.',
+      sketchPieces: 'Zieh die Punkte hinauf oder hinunter, oder die Linie zwischen zweien davon (Tastatur: Tab, dann wählt ← → einen Punkt, ↑ ↓ verschiebt ihn). Es zählt die Form: waagrecht, wo es gleich bleibt, steigend oder fallend in die richtige Richtung, steiler, wo das Feld stärker ist, ungefähr die richtigen Werte.',
+      sketchColumns: 'Zieh jeden Punkt auf seinen Wert, oder drück dorthin, wo er hingehört (Tastatur: Tab, dann wählt ← → einen Punkt, ↑ ↓ verschiebt ihn). Es zählt die Form: das Vorzeichen, und wie das Potential mit dem Abstand abnimmt.',
+      sketchLabel: 'Deine Skizze des Potentials', sketchFirst: 'Skizziere zuerst das Potential: Zieh die Punkte hinauf oder hinunter und prüfe dann.', reset: 'Skizze zurücksetzen',
+      sketchOk: 'Deine Skizze hat die richtige Form. Der genaue Graph liegt gestrichelt darüber.', sketchWrong: 'Was an deiner Skizze falsch ist (markiert):',
+      sketchTutorOk: 'Richtig! Deine Skizze hat die richtige Form (der genaue Graph ist gestrichelt).', sketchShown: 'Der richtige Graph liegt gestrichelt über deiner Skizze.',
     },
   };
   const ui = () => UI[Lang.get()];
@@ -45,7 +55,7 @@
 
   // ---------------------------------------------------------------- questions
   // tiles: directions or names (one, or all that fit); pick: drawings; choice: a row of options;
-  // multi: statements to tick.
+  // multi: statements to tick; or none, and a sketch of the potential (ex.sketch, see below).
   function questionHtml(q) {
     if (q.type === 'tiles') {
       return `<p class="ask">${q.label}</p><div class="tiles" role="${q.multi ? 'group' : 'radiogroup'}">${q.options.map((o, k) => `<label class="tile" data-k="${k}"><input type="${q.multi ? 'checkbox' : 'radio'}" name="q-${q.key}" value="${k}">${o.html}</label>`).join('')}</div><ul class="qfb" data-fb="${q.key}"></ul>`;
@@ -62,6 +72,12 @@
   // While the exercise is open, a wrong answer gets a nudge, not the solution: the steps of the
   // solution are taken out of its explanation, and single statements or missed tiles are not marked.
   function feedback() {
+    if (ex.sketch) {
+      const probs = X.judgeSketch(ex.sketch, st.values);
+      st.judged = probs !== null;
+      showSketch();
+      return probs === null ? null : !probs.length;
+    }
     let all = true, missing = false;
     const done = st && (st.solved || st.revealed);
     // n: the option's own nudge, where its reason would give the answer away
@@ -117,7 +133,7 @@
   function open(exercise) {
     finish();
     ex = exercise;
-    st = { tries: 0, hints: 0, solved: false, revealed: false, checked: false, status: null };
+    st = { tries: 0, hints: 0, solved: false, revealed: false, checked: false, status: null, values: ex.sketch ? JSON.parse(JSON.stringify(ex.sketch.init)) : null, judged: false };
     if (location.hash !== `#${ex.id}`) history.replaceState(null, '', `#${ex.id}`);
     render();
     topics.shown(ex);
@@ -130,6 +146,9 @@
     $('#prompt').innerHTML = ex.text;
     $('#figure').innerHTML = ex.figs || '';
     $('#fields').innerHTML = ex.questions.map(questionHtml).join('');
+    $('#sketch-area').hidden = !ex.sketch;
+    $('#sketch-area').innerHTML = '';
+    if (ex.sketch) mountSketch();
     $('#hint-list').innerHTML = '';
     $('#hints').hidden = true;
     $('#solution').hidden = true;
@@ -154,7 +173,7 @@
     const el = $('#status');
     if (st) st.status = kind;
     el.className = 'status' + (kind === 'ok' ? ' ok' : kind === 'bad' ? ' bad' : '');
-    el.textContent = !kind ? '' : kind === 'fill' ? ui().fill : kind === 'shown' ? ui().shown
+    el.textContent = !kind ? '' : kind === 'fill' ? (ex.sketch ? ui().sketchFirst : ui().fill) : kind === 'shown' ? (ex.sketch ? ui().sketchShown : ui().shown)
       : kind === 'ok' ? ui().okWell + (st.advance ? ` ${st.advance}` : '') : ui().notYet(st.tries) + (!canReveal() ? ui().tryAgain : ui().canReveal);
   }
   function check(evt) {
@@ -166,6 +185,7 @@
     if (r === null) { showStatus('fill'); return; }
     st.tries++;
     if (r) solved(); else showStatus('bad');
+    if (ex.sketch) showSketch();
     updateButtons();
   }
   function solved() {
@@ -196,6 +216,7 @@
   }
   // The right answers chosen and marked.
   function markRight() {
+    if (ex.sketch) { showSketch(); return; }
     for (const q of ex.questions) {
       if (q.type === 'multi') q.statements.forEach((s, k) => { document.querySelector(`.stmts li[data-k="${k}"] input`).checked = s.ok; });
       else q.options.forEach((o, k) => { document.querySelector(`input[name="q-${q.key}"][value="${k}"]`).checked = o.ok; });
@@ -214,6 +235,84 @@
     $('#solution').scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
+  // ---------------------------------------------------------------- sketching the potential
+  // A sketch exercise (ex.sketch, exercises.js) has handles dragged up and down, set by a press (the
+  // columns: the nearest one) or moved with the keys: the shared sketcher (sketch.js), on the
+  // drawing of exercises.js. Check judges it leniently (X.judgeSketch): while the exercise is open,
+  // the first problem gets a nudge and its part is marked; once it is solved or its solution shown,
+  // the right graph is laid over the sketch, dashed, and every problem is explained. A change clears
+  // the marks. The tutor's Your turn frames use the same sketcher.
+  // s: { values (the sketcher's state), judged (checked since the last change), done (solved or
+  // shown: locked, the right graph laid over) }; onEdit runs after a change.
+  function sketcher(svg, spec, s, onEdit) {
+    const g = X.sketchScale(spec);
+    const marks = () => {
+      const probs = s.judged ? X.judgeSketch(spec, s.values) : null;
+      if (!probs || !probs.length) return null;
+      return [...new Set((s.done ? probs : probs.slice(0, 1)).flatMap((p) => p.at))];
+    };
+    const k = Sketch.create(svg, {
+      model: spec.model, ts: spec.ts, xs: spec.xs, fixed: spec.fixed, dragPieces: spec.model === 'pieces', wrap: spec.model === 'pieces',
+      x: g.x, y: g.y, inv: g.inv, lo: spec.lo, hi: spec.hi, step: spec.step, area: g.area,
+      init: spec.init, state: s.values, locked: () => s.done,
+      plot: (sk) => X.sketchBody(spec, sk.state(), { marks: marks(), right: s.done, active: sk.active() }),
+      radius: (h, active) => (active ? 8 : 6.5),
+      describe: (h) => X.sketchHandle(spec, h),
+      onEdit(sk) { s.values = sk.state(); s.judged = false; onEdit(); },
+    });
+    k.show({ hidden: s.done });
+    return k;
+  }
+  // The feedback on the sketch: none (not checked since the last change), right, the first
+  // problem's nudge, or (done) every problem explained.
+  function sketchFb(el, spec, s, okText) {
+    const probs = s.judged ? X.judgeSketch(spec, s.values) : null;
+    el.className = `sketch-fb${probs ? (probs.length ? ' bad' : ' ok') : ''}`;
+    el.innerHTML = !probs ? '' : !probs.length ? okText : s.done
+      ? `<p>${ui().sketchWrong}</p><ul>${probs.map((p) => `<li>${p.why}</li>`).join('')}</ul>` : `<p>${probs[0].nudge}</p>`;
+  }
+
+  let sk = null;
+  function mountSketch() {
+    st.done = st.solved || st.revealed;
+    $('#sketch-area').innerHTML = `<p class="note sketch-how">${ex.sketch.model === 'pieces' ? ui().sketchPieces : ui().sketchColumns}</p>${X.sketchFig(ex.sketch, ui().sketchLabel)}` +
+      `<button type="button" id="sketch-reset" class="linklike">${ui().reset}</button><div id="sketch-fb" class="sketch-fb" aria-live="polite"></div>`;
+    sk = sketcher($('#sketch-area svg'), ex.sketch, st, () => { sketchFb($('#sketch-fb'), ex.sketch, st, ''); if (st.status === 'fill') showStatus(null); });
+    $('#sketch-reset').addEventListener('click', () => sk.reset());
+    showSketch();
+  }
+  function showSketch() {
+    st.done = st.solved || st.revealed;
+    // shown without having been checked: what is wrong in it, if anything is drawn
+    if (st.revealed && !st.judged) st.judged = X.judgeSketch(ex.sketch, st.values) !== null;
+    $('#sketch-reset').hidden = st.done;
+    sk.show({ hidden: st.done });
+    sketchFb($('#sketch-fb'), ex.sketch, st, ui().sketchOk);
+  }
+
+  // The tutor's Your turn (a frame with .t-draw): the example's sketch, checked with nudges until it
+  // is right; or the student simply goes on. Each example's sketch is kept.
+  const tutorSketch = {};
+  function mountTutorSketch() {
+    const box = $('#t-text .t-draw'), svg = $('#t-figure svg.sketch-plot');
+    if (!box || !svg) return;
+    const i = tutor.current(), spec = LESSONS[i].sketch();
+    const s = tutorSketch[i] || (tutorSketch[i] = { values: JSON.parse(JSON.stringify(spec.init)), judged: false, done: false });
+    box.innerHTML = `<div class="actions"><button type="button" id="t-scheck" class="primary">${ui().check}</button><button type="button" id="t-sreset" class="linklike">${ui().reset}</button></div><div id="t-sfb" class="sketch-fb" aria-live="polite"></div>`;
+    const fb = () => sketchFb($('#t-sfb'), spec, s, ui().sketchTutorOk);
+    const k = sketcher(svg, spec, s, fb);
+    const sync = () => { $('#t-scheck').disabled = s.done; $('#t-sreset').hidden = s.done; k.show({ hidden: s.done }); fb(); };
+    $('#t-scheck').addEventListener('click', () => {
+      const probs = X.judgeSketch(spec, s.values);
+      if (probs === null) { $('#t-sfb').className = 'sketch-fb'; $('#t-sfb').textContent = ui().sketchFirst; return; }
+      s.judged = true;
+      s.done = !probs.length;
+      sync();
+    });
+    $('#t-sreset').addEventListener('click', () => k.reset());
+    sync();
+  }
+
   // ---------------------------------------------------------------- tutor
   // Worked examples, one per learning objective: the steps in order, and the wrong idea each step
   // avoids. Blue: field lines, orange: equipotentials, red: force.
@@ -223,6 +322,12 @@
   // vertical equipotentials at 400 V … 0 V, the field to the right, with more (points, parts, vecs)
   const ladder = (o = {}) => C.fig({ kind: 'uniform', E: [1, 0] }, { box: [-3, 3, -1.6, 1.6], given: xs.map((x) => [[x, -3], [x, 3]]), equiLines: true, tops: xs.map((x, i) => ({ x, label: `${400 - 100 * i} V` })), ...o });
   const ONE = { kind: 'points', charges: [{ q: 1, x: 0, y: 0 }] }, NEG = { kind: 'points', charges: [{ q: -1, x: 0, y: 0 }] }, LV = [0.4, 0.6, 0.9, 1.4, 2.4];
+  // Your turn: the student sketches the potential (app.js mounts the sketcher in the empty <svg>,
+  // and Check in .t-draw), or simply goes on; the next frame shows the right graph
+  const yourTurn = (text, figure) => frame(L('Your turn', 'Du bist dran'), `<p>${text} ${L('Check your sketch, or simply go on.', 'Prüfe deine Skizze, oder geh einfach weiter.')}</p><div class="t-draw"></div>`, figure);
+  const sketchSvg = (spec) => X.sketchFig(spec, Lang.L('Your sketch of the potential', 'Deine Skizze des Potentials'));
+  const E2V = () => X.e2vSpec([0, 2, 5, 8], [2, 0, -1], 1), E2V_E = (x) => (x < 2 ? -2 : x < 5 ? 0 : 1);
+  const POINT = () => X.pointSpec(1, 12, 1);
   const signTable = () => `<table class="cmp"><thead><tr><th></th><th>${L('ΔV', 'ΔΦ')} > 0</th><th>${L('ΔV', 'ΔΦ')} < 0</th></tr></thead><tbody><tr><th>q > 0</th><td>${L('gains', 'gewinnt')}</td><td>${L('loses', 'verliert')}</td></tr><tr><th>q < 0</th><td>${L('loses', 'verliert')}</td><td>${L('gains', 'gewinnt')}</td></tr></tbody></table>`;
   const LESSONS = [
     { topic: 0, stage: 0, name: () => L('Potential, energy, voltage', 'Potential, Energie, Spannung'), idea: () => L('The potential belongs to a point, the potential energy to a charge at a point, the voltage to two points.', 'Das Potential gehört zu einem Punkt, die potentielle Energie zu einer Ladung in einem Punkt, die Spannung zu zwei Punkten.'),
@@ -236,7 +341,7 @@
         frame(L('(c) The potential difference: a difference of two potentials', '(c) Die Spannung: eine Differenz zweier Potentiale'), `<p>${L('The potential difference (the voltage) between two points A and B is V_AB = V_A − V_B, in the order of the indices. Here V_PQ = V_P − V_Q = 300 V − 100 V = 200 V (and V_QP = −200 V). Not 300 V: that is the potential at P alone. Moving the zero of the potential changes V_P and V_Q, but not their difference; and the potential difference does not depend on the charge either.', 'Die Spannung zwischen zwei Punkten A und B ist die Differenz ihrer Potentiale, U_AB = Φ_A − Φ_B, in der Reihenfolge der Indizes. Hier U_PQ = Φ_P − Φ_Q = 300 V − 100 V = 200 V (und U_QP = −200 V). Nicht 300 V: Das ist das Potential in P allein. Verschiebt man den Nullpunkt des Potentials, ändern sich Φ_P und Φ_Q, aber nicht ihre Differenz; und auch die Spannung hängt nicht von der Ladung ab.')}</p>`,
           fig(ladder({ points: [{ x: -1, y: 0.5, name: 'P' }, { x: 1, y: -0.6, name: 'Q' }] }))),
       ] },
-    { topic: 1, stage: 0, name: () => L('ΔV = E·d in a uniform field', 'U = E·d im homogenen Feld'), idea: () => L('In a uniform field the potential changes evenly along the field lines: |ΔV| = E·d, with d measured along the lines.', 'Im homogenen Feld ändert sich das Potential längs der Feldlinien gleichmässig: |U| = E·d, mit d längs der Linien gemessen.'),
+    { topic: 1, stage: 0, sketch: E2V, name: () => L('ΔV = E·d in a uniform field', 'U = E·d im homogenen Feld'), idea: () => L('In a uniform field the potential changes evenly along the field lines: |ΔV| = E·d, with d measured along the lines.', 'Im homogenen Feld ändert sich das Potential längs der Feldlinien gleichmässig: |U| = E·d, mit d längs der Linien gemessen.'),
       frames: () => [
         frame(L('The task', 'Die Aufgabe'), `<p>${L('A uniform field of 500 V/m points to the right; the grid spacing is 1 cm. Find the potential difference V_BA.', 'Ein homogenes Feld von 500 V/m zeigt nach rechts; der Gitterabstand ist 1 cm. Gesucht ist die Spannung U_BA.')}</p>`,
           fig(C.fig({ kind: 'uniform', E: [1, 0] }, { box: [-3, 3, -1.6, 1.6], lines: true, lineOpts: { gap: 1 }, grid: true, points: [{ x: -1, y: 1, name: 'A' }, { x: 1, y: -1, name: 'B' }] }))),
@@ -246,12 +351,19 @@
           fig(C.fig({ kind: 'uniform', E: [1, 0] }, { box: [-3, 3, -1.6, 1.6], lines: true, lineOpts: { gap: 1 }, grid: true, vlines: [-1, 1], points: [{ x: -1, y: 1, name: 'A' }, { x: 1, y: -1, name: 'B' }], tops: [{ x: -1, label: Lang.L('V_A', 'Φ_A') }, { x: 1, label: Lang.L('V_A − 10 V', 'Φ_A − 10 V') }] }))),
         frame(L('Backwards: E from the potential', 'Rückwärts: E aus dem Potential'), `<p>${L('E = ΔV/d works both ways. On a graph V(x), the field is the slope with the opposite sign, E = −ΔV/Δx: where V falls by 2 V per mm, E = +2 kV/m; where V is constant, E = 0; where V rises by 1 V per mm, E = −1 kV/m.', 'E = U/d gilt in beide Richtungen. Auf einem Graphen Φ(x) ist das Feld die Steigung mit umgekehrtem Vorzeichen, E = −ΔΦ/Δx: Wo Φ um 2 V pro mm fällt, ist E = +2 kV/m; wo Φ konstant ist, ist E = 0; wo Φ um 1 V pro mm steigt, ist E = −1 kV/m.')}</p>`,
           `<div class="fig">${X.vGraph((x) => (x < 2 ? 6 - 2 * x : x < 5 ? 2 : 2 + (x - 5)), [0, 2, 5, 8])}</div><div class="fig">${X.eGraph((x) => (x < 2 ? 2 : x < 5 ? 0 : -1), [0, 2, 5, 8])}</div>`),
+        yourTurn(L('Now the other way round. The graph shows the field E(x); at x = 0 the potential is 1 V. Sketch the potential V(x) from 0 to 8 mm.', 'Jetzt umgekehrt. Der Graph zeigt das Feld E(x); bei x = 0 ist das Potential 1 V. Skizziere das Potential Φ(x) von 0 bis 8 mm.'),
+          `<div class="fig">${X.eGraph(E2V_E, [0, 2, 5, 8])}</div>${sketchSvg(E2V())}`),
+        frame(L('From E back to V', 'Von E zurück zu Φ'), `<p>${L('V changes by −E·Δx. From 0 to 2 mm, E = −2 kV/m: V rises by 2 V per mm, from 1 V to 5 V. From 2 to 5 mm, E = 0: V stays at 5 V. From 5 to 8 mm, E = +1 kV/m: V falls by 1 V per mm, to 2 V. Where the field is stronger, the potential is steeper; where there is no field, it is level.', 'Φ ändert sich um −E·Δx. Von 0 bis 2 mm ist E = −2 kV/m: Φ steigt um 2 V pro mm, von 1 V auf 5 V. Von 2 bis 5 mm ist E = 0: Φ bleibt bei 5 V. Von 5 bis 8 mm ist E = +1 kV/m: Φ fällt um 1 V pro mm, auf 2 V. Wo das Feld stärker ist, ist das Potential steiler; wo kein Feld ist, bleibt es waagrecht.')}</p>`,
+          `<div class="fig">${X.eGraph(E2V_E, [0, 2, 5, 8])}</div><div class="fig">${X.vGraph((x) => (x < 2 ? 1 + 2 * x : x < 5 ? 5 : 5 - (x - 5)), [0, 2, 5, 8])}</div>`),
       ] },
-    { topic: 2, stage: 0, name: () => L('The potential of point charges', 'Das Potential von Punktladungen'), idea: () => L('V = k·Q/r: the sign of Q, and a size falling with 1/r; the potentials of several charges add as numbers.', 'Φ = k·Q/r: das Vorzeichen von Q, und ein Betrag, der mit 1/r abnimmt; die Potentiale mehrerer Ladungen addieren sich als Zahlen.'),
+    { topic: 2, stage: 0, sketch: POINT, name: () => L('The potential of point charges', 'Das Potential von Punktladungen'), idea: () => L('V = k·Q/r: the sign of Q, and a size falling with 1/r; the potentials of several charges add as numbers.', 'Φ = k·Q/r: das Vorzeichen von Q, und ein Betrag, der mit 1/r abnimmt; die Potentiale mehrerer Ladungen addieren sich als Zahlen.'),
       frames: () => [
         frame(L('The sign comes from Q', 'Das Vorzeichen kommt von Q'), `<p>${L('With the zero far away, V = k·Q/r. Around a positive charge the potential is positive everywhere and highest near the charge.', 'Mit dem Nullpunkt weit weg ist Φ = k·Q/r. Um eine positive Ladung ist das Potential überall positiv und nahe bei der Ladung am höchsten.')}</p>`, fig(C.fig(ONE, { box: BOX, equi: LV }))),
         frame(L('A negative charge', 'Eine negative Ladung'), `<p>${L('Q = −q; A is at the distance r, B at 3r. With V₀ = k·q/r: V_A = −V₀, V_B = −V₀/3 (a third: 1/r, not 1/r² as for the field). So V_BA = V_B − V_A = +2/3·V₀: moving away from a negative charge, the potential rises towards zero.', 'Q = −q; A liegt im Abstand r, B im Abstand 3r. Mit Φ₀ = k·q/r: Φ_A = −Φ₀, Φ_B = −Φ₀/3 (ein Drittel: 1/r, nicht 1/r² wie beim Feld). Also U_BA = Φ_B − Φ_A = +2/3·Φ₀: Weg von einer negativen Ladung steigt das Potential gegen null.')}</p>`,
           fig(C.fig(NEG, { box: BOX, equi: LV.map((v) => -v), points: [{ x: 0.7, y: 0, name: 'A' }, { x: 2.1, y: 0, name: 'B' }] }))),
+        yourTurn(L('A positive point charge; at the distance r from it the potential is 12 V. Sketch the potential V along a line away from the charge, from r to 6r.', 'Eine positive Punktladung; im Abstand r von ihr ist das Potential 12 V. Skizziere das Potential Φ längs einer Linie weg von der Ladung, von r bis 6r.'), sketchSvg(POINT())),
+        frame(L('The curve 1/r', 'Die Kurve 1/r'), `<p>${L('V = k·Q/r: 12 V at r, 6 V at 2r, 4 V at 3r, 3 V at 4r, 2 V at 6r: half at twice the distance. Not a quarter: that would be 1/r², how the field falls off. The curve is steep near the charge, where the field is strong, and flattens out further away, but it reaches zero only far away.', 'Φ = k·Q/r: 12 V bei r, 6 V bei 2r, 4 V bei 3r, 3 V bei 4r, 2 V bei 6r: im doppelten Abstand die Hälfte. Nicht ein Viertel: Das wäre 1/r², so nimmt das Feld ab. Die Kurve ist nahe der Ladung steil, wo das Feld stark ist, und wird weiter weg flacher, aber null wird sie erst weit weg.')}</p>`,
+          fig(C.svg(X.sketchScale(POINT()).W, X.sketchScale(POINT()).H, X.sketchBody(POINT(), POINT().init, { solid: true }), Lang.L('The potential of a positive point charge', 'Das Potential einer positiven Punktladung')))),
         frame(L('Numbers, not vectors', 'Zahlen, keine Vektoren'), `<p>${L('At the centre of four equal positive charges on a square, the four fields cancel (vectors), but the potentials add up: V = 4·k·q/r > 0. With +q, −q, +q, −q in turn, both the field and the potential are zero.', 'Im Mittelpunkt von vier gleichen positiven Ladungen auf einem Quadrat heben sich die vier Felder auf (Vektoren), aber die Potentiale addieren sich: Φ = 4·k·q/r > 0. Mit +q, −q, +q, −q abwechselnd sind Feld und Potential beide null.')}</p>`,
           fig(C.fig({ kind: 'points', charges: [[1, 1], [-1, 1], [-1, -1], [1, -1]].map(([x, y]) => ({ q: 1, x, y })) }, { box: BOX, equi: [1.5, 2, 2.5, 3, 4], points: [{ x: 0, y: 0, name: 'M' }] }))),
         frame(L('In units of V₀', 'In Einheiten von Φ₀'), `<p>${L('Without a calculator, count in units: with V₀ = k·q/r, a charge +q at the distance r gives +V₀, a charge −2q at the distance 2r gives −2/2·V₀ = −V₀. At P between them: V = +V₀ − V₀ = 0, although the field there is not zero.', 'Ohne Taschenrechner zählt man in Einheiten: Mit Φ₀ = k·q/r gibt eine Ladung +q im Abstand r den Beitrag +Φ₀, eine Ladung −2q im Abstand 2r den Beitrag −2/2·Φ₀ = −Φ₀. In P dazwischen: Φ = +Φ₀ − Φ₀ = 0, obwohl das Feld dort nicht null ist.')}</p>`,
@@ -271,8 +383,10 @@
   const stage = (name, types) => ({ name, types });
   const TOPICS = [
     { name: () => L('Potential and energy', 'Potential und Energie'), example: () => 0, stages: [stage(() => L('which quantity', 'welche Grösse'), ['which-qty']), stage(() => L('at points', 'in Punkten'), ['points-v'])] },
-    { name: () => L('The uniform field', 'Das homogene Feld'), example: () => 1, stages: [stage(() => L('along the field', 'längs des Feldes'), ['uniform-d']), stage(() => L('V → E', 'Φ → E'), ['v2e']), stage(() => L('E → V', 'E → Φ'), ['e2v'])] },
-    { name: () => L('Point charges', 'Punktladungen'), example: () => 2, stages: [stage(() => L('in units of V₀', 'in Einheiten von Φ₀'), ['point-v']), stage(() => L('scalar, not vector', 'Skalar, kein Vektor'), ['scalar'])] },
+    { name: () => L('The uniform field', 'Das homogene Feld'), example: () => 1, stages: [stage(() => L('along the field', 'längs des Feldes'), ['uniform-d']), stage(() => L('V → E', 'Φ → E'), ['v2e']), stage(() => L('E → V', 'E → Φ'), ['e2v']),
+      stage(() => L('sketch it: metal plates', 'skizzieren: Metallplatten'), ['sk-plates']), stage(() => L('sketch it: V from E', 'skizzieren: Φ aus E'), ['sk-e2v'])] },
+    { name: () => L('Point charges', 'Punktladungen'), example: () => 2, stages: [stage(() => L('in units of V₀', 'in Einheiten von Φ₀'), ['point-v']), stage(() => L('scalar, not vector', 'Skalar, kein Vektor'), ['scalar']),
+      stage(() => L('sketch it: V(r)', 'skizzieren: Φ(r)'), ['sk-point'])] },
     { name: () => L('Gain or lose', 'Gewinnen oder verlieren'), example: () => 3, stages: [stage(() => L('which way', 'welche Richtung'), ['which-way']), stage(() => L('potential energy', 'potentielle Energie'), ['gain-lose'])] },
     { name: () => L('True or false', 'Richtig oder falsch'), example: () => 0, stages: [stage(() => L('statements', 'Aussagen'), ['stmts'])] },
   ];
@@ -306,7 +420,7 @@
       render();
       st = keep;
       chosen.forEach(([n, v]) => { const x = document.querySelector(`input[name="${n}"][value="${v}"]`); if (x) x.checked = true; });
-      if (st.revealed) markRight(); else if (st.checked) feedback();
+      if (ex.sketch) showSketch(); else if (st.revealed) markRight(); else if (st.checked) feedback();
       if (st.solved) document.querySelectorAll('#fields input').forEach((x) => { x.disabled = true; });
       showStatus(status);
       showHints();
@@ -381,7 +495,7 @@
     $('#reveal').addEventListener('click', reveal);
     window.addEventListener('hashchange', fromHash);
     const practiseTopic = (t) => { topics.go(t); setMode('practice'); fresh(); };
-    tutor = window.createTutor(lessons(), { done: practise, practise: (i) => { topics.go(LESSONS[i].topic, LESSONS[i].stage); setMode('practice'); fresh(); } });
+    tutor = window.createTutor(lessons(), { after: mountTutorSketch, done: practise, practise: (i) => { topics.go(LESSONS[i].topic, LESSONS[i].stage); setMode('practice'); fresh(); } });
     checker = Check.create(checkSource, {
       math: () => {}, markScrollable: () => {}, stored, store,
       tutor: (i) => { setMode('tutor'); tutor.open(i); },
