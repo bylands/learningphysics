@@ -4602,8 +4602,10 @@ SHEETS_JS = r"""
   }
   function leave() { return !dirty || confirm('Discard the unsaved changes of this sheet?'); }
   async function open(id) {
-    if (cur && cur.id === id) return;
     if (!leave()) return;
+    if (cur && cur.id === id) {  // (its button again: the sheet closes)
+      cur = null; plan = null; dirty = false; $('#sheet-save').disabled = true; status(''); render(); return;
+    }
     try { apply(await api(`/admin/api/sheets/${id}`)); status(''); showPreview = false; render(); } catch (e) { status(`Could not open the sheet: ${e.message}`, 'bad'); }
   }
   function fresh() {
