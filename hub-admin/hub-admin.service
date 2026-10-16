@@ -9,10 +9,10 @@
 #   sudo systemctl daemon-reload && sudo systemctl enable --now hub-admin hub-admin-reload.path
 # A change to this file (or to the two reload units) still needs that cp and daemon-reload.
 # New exercises categorised by Claude (optional; sheets/README.md, "New exercises"), once:
-#   sudo pip3 install --break-system-packages anthropic        # (or the distro's python3-anthropic, if there is one)
+#   sudo pip3 install --break-system-packages --target /opt/hub-admin-pylib anthropic   # (apt install python3-pip first if needed)
 #   sudo install -d -m 755 /etc/hub-admin
 #   sudo install -m 600 -o root -g root /dev/null /etc/hub-admin/anthropic.env
-#   sudoedit /etc/hub-admin/anthropic.env                        # one line: ANTHROPIC_API_KEY=sk-ant-...
+#   sudoedit /etc/hub-admin/anthropic.env                        # ANTHROPIC_API_KEY=sk-ant-...  and  PYTHONPATH=/opt/hub-admin-pylib
 #   sudo cp hub-admin.service /etc/systemd/system/ && sudo systemctl daemon-reload && sudo systemctl restart hub-admin
 # The service then needs to reach https://api.anthropic.com (no change here unless outbound traffic is
 # restricted). Without the package or the key, new exercises get provisional categories only, and the

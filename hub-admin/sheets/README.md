@@ -158,15 +158,19 @@ topic filter use it at once.
 
 On the server, once (optional; without it new exercises stay provisional):
 
-    sudo pip3 install --break-system-packages anthropic      # or the distro's python3-anthropic, if there is one
+    sudo apt install -y python3-pip                            # if pip3 is missing
+    sudo pip3 install --break-system-packages --target /opt/hub-admin-pylib anthropic
     sudo install -d -m 755 /etc/hub-admin
     sudo install -m 600 -o root -g root /dev/null /etc/hub-admin/anthropic.env
-    sudoedit /etc/hub-admin/anthropic.env                      # one line: ANTHROPIC_API_KEY=<the key>
+    sudoedit /etc/hub-admin/anthropic.env                      # ANTHROPIC_API_KEY=<the key>
+                                                               # PYTHONPATH=/opt/hub-admin-pylib
     sudo cp hub-admin/hub-admin.service /etc/systemd/system/   # (it reads that file: EnvironmentFile)
     sudo systemctl daemon-reload && sudo systemctl restart hub-admin
 
 The service must reach `https://api.anthropic.com` (nothing to change unless outbound traffic is
-restricted). The key never goes into this repository or `hub-data/`.
+restricted). The key never goes into this repository or `hub-data/`. The package goes into its own
+folder (`--target`) because a plain `pip3 install` on Debian fails trying to replace Debian's own
+`typing_extensions`; `PYTHONPATH` in the env file lets only hub-admin see that folder.
 
 The TeXercises review page that was at learningphysics.ch/texercises/ is gone: nginx sends its old
 addresses to the admin panel. What it kept on the server (`hub-data/texercises-review/`) is no longer

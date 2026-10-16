@@ -1461,7 +1461,7 @@ class Admin:
 
 # ---------------------------------------------------------------------- new exercises categorised
 ANTHROPIC_ENV = "/etc/hub-admin/anthropic.env"
-NO_PACKAGE = "the anthropic package is not installed on the server (sudo pip3 install --break-system-packages anthropic, then restart hub-admin)"
+NO_PACKAGE = "the anthropic package is not installed on the server (sudo pip3 install --break-system-packages --target /opt/hub-admin-pylib anthropic, PYTHONPATH=/opt/hub-admin-pylib in /etc/hub-admin/anthropic.env, then restart hub-admin)"
 NO_KEY = f"API key missing: add ANTHROPIC_API_KEY to {ANTHROPIC_ENV} and restart"
 MAX_EXTRA_LIST = 500  # new exercises listed in the panel
 
