@@ -4908,7 +4908,7 @@ SHEETS_JS = r"""
   const WHERE = { text: 'exercise text', solution: 'solution', short: 'short solution', solver: 'solver', title: 'title', compile: 'LaTeX compile' };
   const PAGE = 60;
   const body = box.querySelector('.audit-body'), line = box.querySelector('summary .note');
-  let report = null, sevOn = '', catOn = '', collOn = '', topOn = '', markOn = '', query = '', shown = PAGE, loaded = false;
+  let report = null, sevOn = '', catOn = '', collOn = '', topOn = '', markOn = '', imgOn = '', query = '', shown = PAGE, loaded = false;
   let topics = { areas: [], of: {} }; // categories.json: the areas and topics of the report's exercises
   let feedback = {}; // ref → { comment, accepted: [fp], tikz: { image: { code } } }
   let images = {}, noClaude = '', canDraw = false; // the exercises' gallery images; why Claude cannot draft; LaTeX draws figures
@@ -5136,7 +5136,9 @@ SHEETS_JS = r"""
     const chip = (label, num, pressed, onclick) => el('button', { type: 'button', 'aria-pressed': String(pressed), onclick }, label, el('span', { class: 'n' }, String(num)));
     const list = el('ol', { class: 'exs' }), info = el('p', { class: 'shown' });
     const search = el('input', { type: 'search', placeholder: 'Search title, id, key or issue', 'aria-label': 'Search the exercises and their issues', value: query });
-    const sevRow = el('div', { class: 'row' }), catRow = el('div', { class: 'row' }), markRow = el('div', { class: 'row' });
+    const sevRow = el('div', { class: 'row' }), catRow = el('div', { class: 'row' }), markRow = el('div', { class: 'row' }), imgRow = el('div', { class: 'row' });
+    const hasImg = (e) => !!(images[e.ref] || []).length;  // (gallery images, as the export shows them)
+    const IMG = { yes: 'With images', no: 'Without' };
     const exportLink = el('a', { class: 'export', href: '/admin/api/exercise-audit/export', download: '' });
     const MARK = { yes: 'Accepted, commented or TikZ', no: 'Not yet' };
     counted = () => {
@@ -5184,11 +5186,15 @@ SHEETS_JS = r"""
       catRow.replaceChildren(el('span', { class: 'what' }, 'Category'), chip('All', issues.length, !catOn, pick(() => { catOn = ''; })),
         ...cats.map((c) => chip(c, issues.filter((i) => i.category === c).length, catOn === c, pick(() => { catOn = catOn === c ? '' : c; }))));
       counted();
+      const withImg = all.filter(hasImg).length;
+      imgRow.replaceChildren(el('span', { class: 'what' }, 'Images'), chip('All', all.length, !imgOn, pick(() => { imgOn = ''; })),
+        ...Object.entries(IMG).map(([m, label]) => chip(label, m === 'yes' ? withImg : all.length - withImg, imgOn === m, pick(() => { imgOn = imgOn === m ? '' : m; }))));
       const words = fold(query).split(/\s+/).filter(Boolean);
       const rows = [];
       all.forEach((e) => {
         if (collOn && (collOn === NONE ? collsOf(e).length : !collsOf(e).includes(collOn))) return;
         if (markOn && marked(e) !== (markOn === 'yes')) return;
+        if (imgOn && hasImg(e) !== (imgOn === 'yes')) return;
         if (!onTopic(e)) return;
         const head = fold([e.title, e.id, e.key, e.lang, ...collsOf(e)].join(' '));
         const kept = e.issues.filter((i) => (!sevOn || i.severity === sevOn) && (!catOn || i.category === catOn)
@@ -5196,7 +5202,7 @@ SHEETS_JS = r"""
           .sort((a, b) => RANK[a.severity] - RANK[b.severity]);
         if (kept.length) rows.push([e, kept]);
       });
-      info.textContent = !sevOn && !catOn && !collOn && !topOn && !markOn && !words.length ? `${all.length} exercises with issues, the most serious first.`
+      info.textContent = !sevOn && !catOn && !collOn && !topOn && !markOn && !imgOn && !words.length ? `${all.length} exercises with issues, the most serious first.`
         : `${rows.length} of ${all.length} exercises with issues match.`;
       list.replaceChildren(...rows.slice(0, shown).map(([e, kept]) => exercise(e, kept)));
       more.hidden = rows.length <= shown;
@@ -5211,7 +5217,7 @@ SHEETS_JS = r"""
       el('div', { class: 'filters' }, sevRow, cats.length ? catRow : '',
         colls.size ? el('div', { class: 'row' }, el('span', { class: 'what' }, 'Collection'), collSel) : '',
         topics.areas.length ? el('div', { class: 'row' }, el('span', { class: 'what' }, 'Topic'), topSel) : '',
-        markRow, el('div', { class: 'row' }, el('span', { class: 'what' }, 'Search'), search)),
+        markRow, imgRow, el('div', { class: 'row' }, el('span', { class: 'what' }, 'Search'), search)),
       el('div', { class: 'rv-line' }, info, exportLink), list, el('div', { class: 'tools-line' }, more),
       el('details', { class: 'replace' }, el('summary', {}, 'Replace report'), upload('Replace report')));
     fill();
