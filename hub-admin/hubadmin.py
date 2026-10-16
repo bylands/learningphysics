@@ -1493,8 +1493,9 @@ class Admin:
         return out
 
     def audit_images(self, report: Optional[Dict[str, object]]) -> Dict[str, List[Dict[str, object]]]:
-        """{ref: [{"name", "url": the image as the panel shows it, or None, "pdf": a PDF copy is there}]}:
-        the gallery images the report's exercises there use (text and solution), for "Replace with TikZ"."""
+        """{ref: [{"name", "url": the image as the panel shows it, or None, "pdf": a PDF copy is there, "key":
+        the exercise's folder (for /api/images/fetch)}]}: the gallery images the report's exercises there use
+        (text and solution), for "Replace with TikZ" and fetching a missing one."""
         lib = sheets_module("preview")
         if lib is None:
             return {}
@@ -1504,7 +1505,7 @@ class Admin:
             parts = lib.read_exercise(folder)
             names = lib.images_used(str(parts.get("text") or "") + "\n" + str(parts.get("solution") or ""))
             if names:
-                out[ref] = [{"name": n, "url": media.image(n), "pdf": bool(self.image_file_latex(n))} for n in names]
+                out[ref] = [{"name": n, "url": media.image(n), "pdf": bool(self.image_file_latex(n)), "key": folder.name} for n in names]
         return out
 
     def image_file_latex(self, name: str) -> Optional[Path]:
@@ -4989,6 +4990,21 @@ SHEETS_JS = r"""
     if (pic.dataset.run === run) pic.replaceChildren(el('p', { class: 'note' }, 'Still being drawn: press Preview again in a while.'));
   }
 
+  // a missing image fetched from TeXercises (/admin/api/images/fetch, as the sheet editor's), then shown
+  async function fetchImage(btn, info, msg, paint) {
+    btn.disabled = true;
+    msg.textContent = 'Fetching…'; msg.className = 'saved';
+    try {
+      const d = await call('/admin/api/images/fetch', { name: info.name, keys: [info.key] });
+      if (!d.ok) throw new Error(d.error || 'not fetched');
+      info.url = `/admin/sheet/img/${encodeURIComponent(d.name)}`;
+      paint();
+    } catch (err) {
+      btn.disabled = false;
+      msg.textContent = `Not fetched: ${err.message}. Upload it in an open sheet under Images instead.`; msg.className = 'saved bad';
+    }
+  }
+
   // the gallery images of an exercise (and those it has TikZ for), each a row: its name, "Replace with
   // TikZ" (or "Edit TikZ" and "Remove" once saved), the saved figure folded, the editor when open
   function figures(e) {
@@ -5011,6 +5027,7 @@ SHEETS_JS = r"""
           saved ? el('span', { class: 'tag ok' }, 'TikZ saved') : '',
           !info ? el('span', { class: 'tag' }, 'no longer in the exercise') : !info.url && !info.pdf ? el('span', { class: 'tag' }, 'not on the server') : '',
           el('span', { class: 'grow' }),
+          info && !info.url && info.key ? el('button', { type: 'button', onclick: (ev) => fetchImage(ev.currentTarget, info, msg, paint) }, 'Fetch from TeXercises') : '',
           ed ? '' : el('button', { type: 'button', onclick: () => { ed = editor(e, name, info, () => { ed = null; paint(); }); paint(); } }, saved ? 'Edit TikZ' : 'Replace with TikZ'),
           saved ? el('button', { type: 'button', onclick: remove }, 'Remove') : '', msg);
         let folded = '';
