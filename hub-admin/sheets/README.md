@@ -164,8 +164,12 @@ On the server, once (optional; without it new exercises stay provisional):
     sudo install -m 600 -o root -g root /dev/null /etc/hub-admin/anthropic.env
     sudoedit /etc/hub-admin/anthropic.env                      # ANTHROPIC_API_KEY=<the key>
                                                                # PYTHONPATH=/opt/hub-admin-pylib
-    sudo cp hub-admin/hub-admin.service /etc/systemd/system/   # (it reads that file: EnvironmentFile)
+    sudo mkdir -p /etc/systemd/system/hub-admin.service.d      # let the running service read that file
+    printf '[Service]\nEnvironmentFile=-/etc/hub-admin/anthropic.env\n' | sudo tee /etc/systemd/system/hub-admin.service.d/anthropic.conf
     sudo systemctl daemon-reload && sudo systemctl restart hub-admin
+
+(The unit file is not deployed to the server, so the drop-in adds the `EnvironmentFile` line that
+`hub-admin.service` in this repository already has; installing that unit fresh needs no drop-in.)
 
 The service must reach `https://api.anthropic.com` (nothing to change unless outbound traffic is
 restricted). The key never goes into this repository or `hub-data/`. The package goes into its own
