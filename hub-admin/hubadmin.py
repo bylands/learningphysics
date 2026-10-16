@@ -32,7 +32,8 @@ cards in its order, shows their tags, and lets visitors filter by tag. This serv
                          "claude" ("" or why Claude cannot be asked). An image replaced by TikZ: POST
                          {"exercise": ref, "tikz": {"image", "code"}} to /feedback ("" removes it; one
                          tikzpicture or circuitikz, at most 20 KB, sheets/tikzdraft.py check), exported as
-                         "tikz": [{"image", "code"}]
+                         "tikz": [{"image", "code", "use"}]; {"tikz": {"image", "use": "tikz" | "original"}}
+                         chooses which of the two the exercise keeps (a new figure: "tikz")
     /admin/api/exercise-audit/tikz/preview  POST {"exercise": ref, "code"}: the figure drawn with the
                          exercise's solver part (figures.py): {"url", "width", "height"} | {"pending": true}
                          (ask again) | {"error": LaTeX's, short}
@@ -213,6 +214,7 @@ AUDIT_REF = re.compile(r"[0-9]{1,12}|key:[A-Za-z0-9_-]{1,160}")  # an exercise i
 AUDIT_FP = re.compile(r"[0-9a-f]{16}")  # an issue in it (audit_fingerprint)
 AUDIT_SEVERITIES = ("error", "warning", "doubt")  # the most serious first
 # a gallery image of a reviewed exercise redrawn as TikZ (the review's TikZ editor; sheets/tikzdraft.py)
+AUDIT_TIKZ_USE = ("tikz", "original")  # which the exercise keeps: the TikZ figure or the original image
 MAX_AUDIT_TIKZ, MAX_AUDIT_TIKZ_IMAGES = 20 * 1024, 20  # bytes of a figure (= tikzdraft.MAX_CODE); figures per exercise
 AUDIT_IMAGE = re.compile(r"[A-Za-z0-9][A-Za-z0-9._-]{0,150}")  # its gallery name (preview.image_name)
 DRAFT_KEEP = 3600  # s: Claude's draft of a figure is kept this long for the editor to fetch it
@@ -1394,10 +1396,11 @@ class Admin:
 
     def change_audit_feedback(self, raw: object) -> Dict[str, object]:
         """{"exercise": ref, "comment": text} and/or {"exercise": ref, "accept": {"fp": fp, "on": bool}}
-        and/or {"exercise": ref, "tikz": {"image": name, "code": TikZ | ""}}: an exercise's comment, an
-        issue's suggested fix accepted or not, an image's TikZ replacement saved (checked: tikzdraft.check)
-        or, "" or null, removed (ValueError: why it cannot be); the exercise's feedback now. An exercise
-        without comment, accepted fix and TikZ has none."""
+        and/or {"exercise": ref, "tikz": {"image": name, "code": TikZ | "", "use": "tikz" | "original"}}: an
+        exercise's comment, an issue's suggested fix accepted or not, an image's TikZ replacement saved
+        (checked: tikzdraft.check) or, "" or null, removed, and which of the two the exercise is to keep
+        ("use"; alone: of the saved one; a new figure is used unless said; ValueError: why it cannot be);
+        the exercise's feedback now. An exercise without comment, accepted fix and TikZ has none."""
         raw = raw if isinstance(raw, dict) else {}
         ref = raw.get("exercise")
         if not isinstance(ref, str) or not AUDIT_REF.fullmatch(ref):
@@ -1413,13 +1416,17 @@ class Admin:
         tikz = raw.get("tikz")
         if tikz is not None:
             if not isinstance(tikz, dict) or not isinstance(tikz.get("image"), str) or not AUDIT_IMAGE.fullmatch(tikz["image"]) \
-                    or ".." in tikz["image"] or not isinstance(tikz.get("code"), (str, type(None))):
-                raise ValueError('tikz: {"image": the gallery image\'s name, "code": the TikZ, or "" to remove it}')
+                    or ".." in tikz["image"] or not isinstance(tikz.get("code"), (str, type(None))) \
+                    or tikz.get("use") not in (None, *AUDIT_TIKZ_USE):
+                raise ValueError('tikz: {"image": the gallery image\'s name, "code": the TikZ, or "" to remove it, '
+                                 '"use": "tikz" or "original"}')
+            if "code" not in tikz and tikz.get("use") is None:
+                raise ValueError('tikz: "code" or "use"')
             if tikz.get("code"):
                 lib = sheets_module("tikzdraft")
                 if lib is None:
                     raise ValueError("sheets/tikzdraft.py is missing")
-                tikz = {"image": tikz["image"], "code": lib.check(tikz["code"])}
+                tikz = {**tikz, "code": lib.check(tikz["code"])}
         if accept is None and "comment" not in raw and tikz is None:
             raise ValueError("nothing to change: comment, accept or tikz")
         with self.audit_lock:
@@ -1434,9 +1441,13 @@ class Admin:
             figs = {n: f for n, f in (entry.get("tikz") or {}).items() if isinstance(f, dict) and isinstance(f.get("code"), str)} \
                 if isinstance(entry.get("tikz"), dict) else {}
             if tikz is not None:
-                figs.pop(tikz["image"], None)
-                if tikz.get("code"):
-                    figs[tikz["image"]] = {"code": tikz["code"], "updated": int(time.time())}
+                was = figs.pop(tikz["image"], None) or {}
+                if "code" not in tikz:  # (only which to use: of the saved figure)
+                    if not was:
+                        raise ValueError("no TikZ figure saved for this image")
+                    figs[tikz["image"]] = {**was, "use": tikz["use"]}
+                elif tikz.get("code"):
+                    figs[tikz["image"]] = {"code": tikz["code"], "use": tikz.get("use") or was.get("use") or "tikz", "updated": int(time.time())}
                 if len(figs) > MAX_AUDIT_TIKZ_IMAGES:
                     raise ValueError(f"at most {MAX_AUDIT_TIKZ_IMAGES} TikZ figures per exercise")
             entry = {"comment": comment, "accepted": accepted, "tikz": figs, "updated": int(time.time())}
@@ -1452,7 +1463,7 @@ class Admin:
     def audit_export(self) -> Dict[str, object]:
         """The review's feedback for Claude to work on: every exercise of the report with an accepted fix,
         a comment or a TikZ replacement of an image, its accepted issues, the others, the comment and the
-        TikZ ("tikz": [{"image", "code"}])."""
+        TikZ ("tikz": [{"image", "code", "use": "tikz" (replace the image) or "original" (keep it)}])."""
         report = self.audit() or {"exercises": []}
         feedback = self.audit_feedback()
         out = []
@@ -1461,7 +1472,7 @@ class Admin:
             on = set(f.get("accepted") or [])
             fields = ("severity", "category", "where", "issue", "fix")
             accepted = [{k: i.get(k, "") for k in fields} for i in e.get("issues", []) if i["fp"] in on]
-            tikz = [{"image": n, "code": t["code"]} for n, t in (f.get("tikz") or {}).items() if isinstance(t, dict) and t.get("code")]
+            tikz = [{"image": n, "code": t["code"], "use": t.get("use") or "tikz"} for n, t in (f.get("tikz") or {}).items() if isinstance(t, dict) and t.get("code")]
             if not accepted and not f.get("comment") and not tikz:
                 continue
             out.append({"id": e.get("id"), "key": e.get("key", ""), "title": e.get("title", ""), "lang": e.get("lang", ""),
@@ -3760,6 +3771,14 @@ h2.section { font-size: 1.15rem; margin: 28px 0 4px; }
 .audit .fig-row .tag.ok { color: var(--ok); border-color: currentColor; }
 .audit .fig-row button { padding: 2px 10px; font-size: 0.86rem; }
 .audit .fig-row .grow { flex: 1; }
+.audit .fig-use { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; font-size: 0.86rem; }
+.audit .fig-use > span { color: var(--muted); margin-right: 4px; }
+.audit .fig-use button { border-radius: 999px; padding: 2px 11px; font-size: 0.86rem; }
+.audit .fig-use button[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); font-weight: 600; cursor: default; }
+.audit .fig-two { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 10px; }
+.audit .fig-two > div { display: grid; grid-template-rows: auto 1fr; gap: 4px; min-width: 0; }
+.audit .fig-two > div > span { color: var(--muted); font-size: 0.8rem; }
+@media (max-width: 560px) { .audit .fig-two { grid-template-columns: minmax(0, 1fr); } }
 .audit .tikz-ed { border: 1px solid var(--line); border-radius: 8px; background: var(--card); padding: 10px; display: grid; gap: 8px; }
 .audit .tikz-ed .panes { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); grid-template-areas: "orig drawn" "code code"; gap: 10px; }
 .audit .tikz-ed .pane.orig { grid-area: orig; } .audit .tikz-ed .pane.drawn { grid-area: drawn; } .audit .tikz-ed .pane.code { grid-area: code; }
@@ -5015,7 +5034,7 @@ SHEETS_JS = r"""
     names.forEach((name) => {
       const info = known.find((x) => x.name === name) || null;
       const wrap = el('div', {});
-      let ed = null;
+      let ed = null, show = false; // (show: the folded pictures open, as after fetching the image)
       const paint = () => {
         const saved = tikzOf(e)[name];
         const msg = el('span', { class: 'saved', 'aria-live': 'polite' });
@@ -5027,16 +5046,34 @@ SHEETS_JS = r"""
           saved ? el('span', { class: 'tag ok' }, 'TikZ saved') : '',
           !info ? el('span', { class: 'tag' }, 'no longer in the exercise') : !info.url && !info.pdf ? el('span', { class: 'tag' }, 'not on the server') : '',
           el('span', { class: 'grow' }),
-          info && !info.url && info.key ? el('button', { type: 'button', onclick: (ev) => fetchImage(ev.currentTarget, info, msg, paint) }, 'Fetch from TeXercises') : '',
+          info && !info.url && info.key ? el('button', { type: 'button', onclick: (ev) => fetchImage(ev.currentTarget, info, msg, () => { show = true; paint(); }) }, 'Fetch from TeXercises') : '',
           ed ? '' : el('button', { type: 'button', onclick: () => { ed = editor(e, name, info, () => { ed = null; paint(); }); paint(); } }, saved ? 'Edit TikZ' : 'Replace with TikZ'),
           saved ? el('button', { type: 'button', onclick: remove }, 'Remove') : '', msg);
-        let folded = '';
-        if (saved && !ed) {
-          const pic = el('div', { class: 'pic' });
-          folded = el('details', { class: 'fig-saved' }, el('summary', {}, 'Show the saved TikZ figure'), pic);
-          folded.addEventListener('toggle', () => { if (folded.open && !pic.dataset.run) drawInto(pic, e.ref, saved.code); });
+        // which of the two the exercise keeps (exported as "use"), once a figure is saved
+        let use = '';
+        if (saved) {
+          const pickUse = (u) => async () => {
+            try { await send(e, { tikz: { image: name, use: u } }); show = !!(folded && folded.open); paint(); } catch (err) { msg.textContent = `Not changed: ${err.message}`; msg.className = 'saved bad'; }
+          };
+          const now = saved.use || 'tikz';
+          use = el('div', { class: 'fig-use', role: 'group', 'aria-label': `Which to include for ${name}` }, el('span', {}, 'Include in the exercise'),
+            ...[['original', 'Original image'], ['tikz', 'TikZ figure']].map(([u, label]) =>
+              el('button', { type: 'button', 'aria-pressed': String(now === u), onclick: now === u ? null : pickUse(u) }, label)));
         }
-        wrap.replaceChildren(row, folded, ed || '');
+        // the original (and the saved TikZ next to it), folded; open at once after a fetch
+        let folded = '';
+        if (!ed && (saved || (info && info.url))) {
+          const orig = el('div', { class: 'pic' }, info && info.url ? el('img', { src: info.url, alt: `the image ${name}` })
+            : el('p', { class: 'note' }, info && info.pdf ? 'Only a PDF copy is on the server.' : 'Not on the server: fetch it first.'));
+          const pic = saved ? el('div', { class: 'pic' }) : null;
+          const panes = saved ? el('div', { class: 'fig-two' }, el('div', {}, el('span', {}, 'Original'), orig), el('div', {}, el('span', {}, 'TikZ'), pic)) : orig;
+          folded = el('details', { class: 'fig-saved', open: show }, el('summary', {}, saved ? 'Compare the original and the TikZ figure' : 'Show the image'), panes);
+          const draw = () => { if (folded.open && pic && !pic.dataset.run) drawInto(pic, e.ref, saved.code); };
+          folded.addEventListener('toggle', draw);
+          draw();
+        }
+        show = false;
+        wrap.replaceChildren(row, use, folded, ed || '');
       };
       paint();
       box.append(wrap);

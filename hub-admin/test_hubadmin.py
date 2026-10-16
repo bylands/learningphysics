@@ -2280,14 +2280,22 @@ class Service(unittest.TestCase):
         # saved in the feedback, checked, exported (an exercise with only a figure too), removed
         feedback = lambda body: post("/api/exercise-audit/feedback", {"exercise": "4242", **body})
         for bad in ({"tikz": {"image": "coil-1", "code": "\\draw;"}}, {"tikz": {"image": "../x", "code": fig}}, {"tikz": "x"},
-                    {"tikz": {"image": "coil-1", "code": 5}}, {"tikz": {"image": "coil-1", "code": "\\begin{tikzpicture}" + "x" * H.MAX_AUDIT_TIKZ + "\\end{tikzpicture}"}}):
+                    {"tikz": {"image": "coil-1", "code": 5}}, {"tikz": {"image": "coil-1", "code": "\\begin{tikzpicture}" + "x" * H.MAX_AUDIT_TIKZ + "\\end{tikzpicture}"}},
+                    {"tikz": {"image": "coil-1", "code": fig, "use": "both"}}, {"tikz": {"image": "coil-1"}},
+                    {"tikz": {"image": "coil-1", "use": "original"}}):  # (the last: no figure saved yet)
             self.assertEqual(feedback(bad)[0], 400, bad)
         st, _, body = feedback({"tikz": {"image": "coil-1", "code": fig + "\r\n"}})
         d = json.loads(body)
         self.assertEqual((st, d["comment"], d["accepted"], d["tikz"]["coil-1"]["code"]), (200, "", [], fig))
         self.assertEqual(json.loads(self.req("/api/exercise-audit/feedback", cookie=boss)[2])["feedback"]["4242"]["tikz"]["coil-1"]["code"], fig)
         out = json.loads(self.req("/api/exercise-audit/export", cookie=boss)[2])["exercises"]
-        self.assertEqual([(e["id"], e["accepted"], e["comment"], e["tikz"]) for e in out], [(4242, [], "", [{"image": "coil-1", "code": fig}])])
+        self.assertEqual([(e["id"], e["accepted"], e["comment"], e["tikz"]) for e in out], [(4242, [], "", [{"image": "coil-1", "code": fig, "use": "tikz"}])])
+        # which of the two to keep: the original chosen, kept when the figure is saved again
+        d = json.loads(feedback({"tikz": {"image": "coil-1", "use": "original"}})[2])
+        self.assertEqual((d["tikz"]["coil-1"]["use"], d["tikz"]["coil-1"]["code"]), ("original", fig))
+        self.assertEqual(json.loads(feedback({"tikz": {"image": "coil-1", "code": fig}})[2])["tikz"]["coil-1"]["use"], "original")
+        self.assertEqual(json.loads(self.req("/api/exercise-audit/export", cookie=boss)[2])["exercises"][0]["tikz"][0]["use"], "original")
+        self.assertEqual(json.loads(feedback({"tikz": {"image": "coil-1", "use": "tikz"}})[2])["tikz"]["coil-1"]["use"], "tikz")
         with mock.patch.object(H, "MAX_AUDIT_TIKZ_IMAGES", 1):
             self.assertEqual(feedback({"tikz": {"image": "coil-2", "code": fig}})[0], 400)
         feedback({"comment": "see the figure"})
