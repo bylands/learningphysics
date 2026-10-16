@@ -2181,7 +2181,8 @@ class Service(unittest.TestCase):
         self.assertEqual(self.audit({"exercises": [{"id": 4242, "key": "renamed-on-texercises", "title": "H", "issues": issue},
                                                    {"key": "elsewhere", "title": "X", "issues": issue}]}, boss)[0], 200)
         got = json.loads(self.req("/api/exercise-audit", cookie=boss)[2])
-        self.assertEqual(got["images"], {"4242": [{"name": "coil-1", "url": None, "pdf": False}]})  # (found by its id; not uploaded yet)
+        self.assertEqual(got["images"], {"4242": [{"name": "coil-1", "url": None, "pdf": False, "key": "coulomb-01-hydrogen-atom"}]})  # (found by its id; not uploaded yet)
+        self.assertIn("coil-1", self.admin.image_uses(["coulomb-01-hydrogen-atom"]))  # (the key fetches it: /api/images/fetch)
         self.assertIsInstance(got["claude"], str)
         self.assertIsInstance(got["figures"], bool)
         self.assertEqual(self.req(f"/api/texercises?image=coil.png&keys={key}&gallery=coil-1", png, "application/octet-stream", boss)[0], 200)
