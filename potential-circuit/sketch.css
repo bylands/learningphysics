@@ -1,0 +1,11 @@
+/* Shared by the learningphysics.ch apps (canonical copy in shared/, copied by sync.sh with
+   sketch.js): a graph sketched by dragging its handles. Only what the sketching needs; the colours
+   and sizes of the handles are the app's (style.css, class handle, active, mid). Load it after
+   ui.css and before the app's style.css. */
+/* no scrolling or selecting text while a handle is dragged */
+.sketch { touch-action: none; user-select: none; -webkit-user-select: none; }
+.sketch .handle:focus { outline: none; }
+.sketch .handle:focus-visible { stroke: var(--accent); stroke-opacity: 1; stroke-width: 3; }
+/* breakpoints and pieces are grabbed (columns are set wherever the pointer presses) */
+.sketch.sk-over { cursor: grab; }
+.sketch.sk-pieces.dragging { cursor: grabbing; }

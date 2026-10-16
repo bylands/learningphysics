@@ -1,9 +1,9 @@
 // Shared by the learningphysics.ch apps (canonical copy in shared/, copied by sync.sh into the apps
 // whose index.html loads it: Slopes of Motion Graphs, Areas under Motion Graphs, Wave Propagation,
-// Induction; its look is in sketch.css). A graph the student sketches in an <svg>: handles dragged
-// up and down with mouse, pen or touch, or moved with the keys, their values snapped to a grid and
-// kept on the axis. The app draws everything else (grid, axes, the line through the handles, a
-// readout under the pointer, the marks of a check) and judges the sketch.
+// Induction, Potential in a Circuit, Electric Potential; its look is in sketch.css). A graph the student sketches in an
+// <svg>: handles dragged up and down with mouse, pen or touch, or moved with the keys, their values
+// snapped to a grid and kept on the axis. The app draws everything else (grid, axes, the line
+// through the handles, a readout under the pointer, the marks of a check) and judges the sketch.
 //   Sketch.create(svg, o)  the sketcher in the <svg> element svg, whose viewBox, class and label the
 //                     app sets; it fills svg with two layers, the app's drawing (o.plot) and the
 //                     handles above it (anything the app adds to svg later goes on top). o:
@@ -53,7 +53,9 @@
 //     step of its own), and press and keys going along x for it (← → then also move it, Tab and
 //     the selection keys being the way between handles);
 //   a step graph (piecewise constant, E(x)): the columns model with a value per span, drawn by the
-//     app as steps (Induction's voltage of straight flux pieces already is), or, where the student
+//     app as steps (Induction's voltage of straight flux pieces already is; Potential in a Circuit
+//     has a column at each point of the loop, the line level or sloped between two points joined
+//     by a wire and stepping across the element between the others), or, where the student
 //     also places the steps, pieces whose two ends move together (one handle in the middle of each
 //     piece, as dragPieces moves them) with the jumps drawn by the app.
 // The pure parts (the models, snap) are checked in shared/test/check-sketch.js.

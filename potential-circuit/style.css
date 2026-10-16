@@ -45,6 +45,26 @@ svg .phi { fill: none; stroke: var(--phi); stroke-width: 2.6; stroke-linejoin: r
 svg .phi.right { stroke: var(--muted); stroke-width: 1.8; stroke-dasharray: 5 4; }
 svg .phi.bad { stroke: var(--bad); stroke-width: 3.4; }
 
+/* sketching the potential (sketch.js, sketch.css; the drawing is loop.js's sketchBody): a press
+   anywhere sets the nearest point */
+.fig svg.sketch-plot { max-width: 100%; cursor: crosshair; }
+svg .col { stroke: var(--phi); stroke-width: 1; stroke-dasharray: 2 4; opacity: 0.45; }
+svg .handle { fill: var(--phi); stroke: var(--card); stroke-width: 1.5; }
+svg .handle.active { stroke: var(--ink); stroke-width: 1.5; }
+svg .fixed { fill: var(--ink); }
+svg .wrongband { fill: var(--bad); opacity: 0.14; }
+svg .readout { fill: var(--phi); font: 600 12px system-ui, sans-serif; paint-order: stroke; stroke: var(--card); stroke-width: 3px; stroke-linejoin: round; }
+.sketch-how { margin: 4px 0 6px; }
+#sketch-area .linklike { display: block; margin: 2px 0 0; }
+.sketch-fb { margin: 6px 0 2px; font-size: 0.95rem; }
+.sketch-fb:empty { display: none; }
+.sketch-fb p { margin: 0; }
+.sketch-fb.ok { color: var(--ok); }
+.sketch-fb.bad > p { color: var(--bad); }
+.sketch-fb ul { margin: 4px 0 0; padding-left: 1.3em; }
+.sketch-fb li { margin: 2px 0; }
+.t-draw .actions { margin-top: 8px; align-items: center; }
+
 /* answers: a row of options (find the error) */
 .field.choice { display: grid; gap: 6px; grid-column: 1 / -1; margin-bottom: 8px; }
 .field.choice .what { font-weight: 600; color: var(--ink); font-size: 1rem; }

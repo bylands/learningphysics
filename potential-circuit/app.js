@@ -22,6 +22,10 @@
       ok: 'All correct.', okWell: 'All correct, well done! Compare your approach with the worked solution, or start a new exercise.',
       notYet: (n) => `Not quite yet (attempt ${n}).`, tryAgain: ' Try again, or take a hint.', canReveal: ' You can take a hint or look at the worked solution.',
       number: 'Enter a number', correct: 'Correct', sign: 'Wrong sign: check the direction', close: 'Close: check your arithmetic', wrong: 'Not correct', notThis: 'Not this one: check your reasoning, or take a hint.',
+      sketchHow: 'Drag each point to its potential, or press where it should go (keyboard: Tab, then ← → choose a point, ↑ ↓ move it). The shape counts: level where it should be, and each step the right way and about the right size.',
+      sketchLabel: 'Your sketch of the potential around the loop', sketchFirst: 'Sketch the potential first: drag the points up or down, then check.', reset: 'Reset the sketch',
+      sketchOk: 'Your sketch has the right shape. The exact graph is laid over it, dashed.', sketchWrong: 'What is wrong in your sketch (marked):',
+      sketchTutorOk: 'Right! Your sketch has the right shape (the exact graph is dashed). The next steps go round the loop one step at a time.',
     },
     de: {
       title: 'Potential im Stromkreis', mode: 'Modus', difficulty: 'Schwierigkeit', example: 'Beispiel',
@@ -37,16 +41,22 @@
       ok: 'Alles richtig.', okWell: 'Alles richtig, gut gemacht! Vergleiche deinen Lösungsweg mit der ausführlichen Lösung oder starte eine neue Aufgabe.',
       notYet: (n) => `Noch nicht ganz (Versuch ${n}).`, tryAgain: ' Versuche es nochmals, oder nimm einen Tipp.', canReveal: ' Du kannst einen Tipp nehmen oder die ausführliche Lösung anschauen.',
       number: 'Gib eine Zahl ein', correct: 'Richtig', sign: 'Falsches Vorzeichen: Prüfe die Richtung', close: 'Knapp daneben: Prüfe deine Rechnung', wrong: 'Nicht richtig', notThis: 'Das stimmt nicht: Überprüfe deine Überlegung, oder nimm einen Tipp.',
+      sketchHow: 'Zieh jeden Punkt auf sein Potential, oder drück dorthin, wo er hingehört (Tastatur: Tab, dann wählt ← → einen Punkt, ↑ ↓ verschiebt ihn). Es zählt die Form: gleich hoch, wo es gleich bleibt, und jeder Schritt in die richtige Richtung und etwa gleich gross.',
+      sketchLabel: 'Deine Skizze des Potentials im Kreis herum', sketchFirst: 'Skizziere zuerst das Potential: Zieh die Punkte hinauf oder hinunter und prüfe dann.', reset: 'Skizze zurücksetzen',
+      sketchOk: 'Deine Skizze hat die richtige Form. Der genaue Graph liegt gestrichelt darüber.', sketchWrong: 'Was an deiner Skizze falsch ist (markiert):',
+      sketchTutorOk: 'Richtig! Deine Skizze hat die richtige Form (der genaue Graph ist gestrichelt). Die nächsten Schritte gehen Schritt für Schritt im Kreis herum.',
     },
   };
   const ui = () => UI[Lang.get()];
   const TITLE = {
     pot: () => L('Potentials', 'Potentiale'), loop: () => L('The loop rule', 'Die Maschenregel'), junction: () => L('Junction and loop', 'Knoten und Masche'),
     volt: () => L('Voltages between points', 'Spannungen zwischen Punkten'), error: () => L('Find the error', 'Finde den Fehler'),
+    sketch: () => L('Sketch the potential', 'Das Potential skizzieren'),
   };
 
   // An exercise (loop.js) has fields { type: 'num', key, sym, unit, value } (a number to enter) or
-  // { type: 'choice', key, label, options: [{ label, ok, why }] } (one option to choose).
+  // { type: 'choice', key, label, options: [{ label, ok, why }] } (one option to choose), or none
+  // and a sketch of the potential (ex.sketch, see below).
   let ex = null, st = null, tutor = null, checker = null, topics = null;
 
   // ---------------------------------------------------------------- persistence
@@ -96,7 +106,7 @@
   function open(exercise) {
     finish(); // the student moves on
     ex = exercise;
-    st = { tries: 0, hints: 0, solved: false, revealed: false, checked: false, status: null };
+    st = { tries: 0, hints: 0, solved: false, revealed: false, checked: false, status: null, values: ex.sketch ? ex.sketch.xs.map(() => 0) : null, judged: false };
     if (location.hash !== `#${ex.id}`) history.replaceState(null, '', `#${ex.id}`);
     render();
     topics.shown(ex);
@@ -125,6 +135,9 @@
     $('#prompt').innerHTML = ex.text;
     $('#figure').innerHTML = ex.figure(false);
     $('#fields').innerHTML = ex.fields.map(fieldHtml).join('');
+    $('#sketch-area').hidden = !ex.sketch;
+    $('#sketch-area').innerHTML = '';
+    if (ex.sketch) mountSketch();
     $('#hint-list').innerHTML = '';
     $('#hints').hidden = true;
     $('#solution').hidden = true;
@@ -152,6 +165,12 @@
 
   // Marks every answer; true if all are right, null if some are missing.
   function feedback() {
+    if (ex.sketch) {
+      const probs = Lp.judgeSketch(ex.c, ex.sketch, st.values);
+      st.judged = probs !== null;
+      showSketch();
+      return probs === null ? null : !probs.length;
+    }
     let allOk = true, anyEmpty = false;
     const done = st.solved || st.revealed;
     for (const f of ex.fields) {
@@ -182,7 +201,7 @@
     const el = $('#status');
     if (st) st.status = kind;
     el.className = 'status' + (kind === 'ok' ? ' ok' : kind === 'bad' ? ' bad' : '');
-    el.textContent = !kind ? '' : kind === 'fill' ? ui().fill
+    el.textContent = !kind ? '' : kind === 'fill' ? (ex.sketch ? ui().sketchFirst : ui().fill)
       : kind === 'ok' ? (st.revealed ? ui().ok : ui().okWell) + (st.advance ? ` ${st.advance}` : '')
         : ui().notYet(st.tries) + (st.tries < MAX_TRIES && !canReveal() ? ui().tryAgain : ui().canReveal);
   }
@@ -208,6 +227,7 @@
       st.advance = topics.solved(st, ex);
       showStatus('ok');
     } else showStatus('bad');
+    if (ex.sketch) showSketch();
     updateButtons();
   }
 
@@ -238,16 +258,97 @@
     finish();
     showSolution();
     if (st.checked) feedback();
+    if (ex.sketch) showSketch();
     updateButtons();
     $('#solution').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  // ---------------------------------------------------------------- sketching the potential
+  // A sketch exercise (ex.sketch) has a handle at every point after A, dragged up and down, set by
+  // a press (the nearest point) or moved with the keys: the shared sketcher (sketch.js), its
+  // columns, on the drawing of loop.js. Check judges it leniently (Lp.judgeSketch): while the
+  // exercise is open, the first problem gets a nudge and its step is marked; once it is solved or
+  // its solution shown, the right graph is laid over the sketch, dashed, and every problem is
+  // explained. A change clears the marks. The tutor's Your turn frames use the same sketcher.
+  // s: { values, judged (checked since the last change), done (solved or shown: locked, the
+  // right graph laid over) }; onEdit runs after a change.
+  function sketcher(svg, c, spec, s, onEdit) {
+    const g = Lp.sketchScale(spec);
+    const marks = () => {
+      const probs = s.judged ? Lp.judgeSketch(c, spec, s.values) : null;
+      if (!probs || !probs.length) return null;
+      return [...new Set((s.done ? probs : probs.slice(0, 1)).flatMap((p) => p.steps))];
+    };
+    const k = Sketch.create(svg, {
+      model: 'columns', xs: spec.xs, x: g.x, y: g.y, inv: g.inv, lo: spec.lo, hi: spec.hi, step: 1, area: g.area,
+      state: s.values, locked: () => s.done,
+      plot: (sk) => Lp.sketchBody(c, spec, sk.state(), { marks: marks(), right: s.done, active: sk.active() }),
+      radius: (h, active) => (active ? 8 : 6.5),
+      describe: (h) => ({ label: L(`Potential at ${c.points[h.i + 1].name}`, `Potential in ${c.points[h.i + 1].name}`), text: Lp.sketchValue(spec, h.v) }),
+      onEdit(sk) { s.values = sk.state(); s.judged = false; onEdit(); },
+    });
+    k.show({ hidden: s.done });
+    return k;
+  }
+  // The feedback on the sketch: none (not checked since the last change), right, the first
+  // problem's nudge, or (done) every problem explained.
+  function sketchFb(el, c, spec, s, okText) {
+    const probs = s.judged ? Lp.judgeSketch(c, spec, s.values) : null;
+    el.className = `sketch-fb${probs ? (probs.length ? ' bad' : ' ok') : ''}`;
+    el.innerHTML = !probs ? '' : !probs.length ? okText : s.done
+      ? `<p>${ui().sketchWrong}</p><ul>${probs.map((p) => `<li>${p.why}</li>`).join('')}</ul>` : `<p>${probs[0].nudge}</p>`;
+    math(el);
+  }
+
+  let sk = null;
+  function mountSketch() {
+    st.done = st.solved || st.revealed;
+    $('#sketch-area').innerHTML = `<p class="note sketch-how">${ui().sketchHow}</p>${Lp.sketchFig(ex.sketch, ui().sketchLabel)}` +
+      `<button type="button" id="sketch-reset" class="linklike">${ui().reset}</button><div id="sketch-fb" class="sketch-fb" aria-live="polite"></div>`;
+    sk = sketcher($('#sketch-area svg'), ex.c, ex.sketch, st, () => { sketchFb($('#sketch-fb'), ex.c, ex.sketch, st, ''); if (st.status === 'fill') showStatus(null); });
+    $('#sketch-reset').addEventListener('click', () => sk.reset());
+    showSketch();
+  }
+  function showSketch() {
+    st.done = st.solved || st.revealed;
+    // shown without having been checked: what is wrong in it, if anything is drawn
+    if (st.revealed && !st.judged) st.judged = Lp.judgeSketch(ex.c, ex.sketch, st.values) !== null;
+    $('#sketch-reset').hidden = st.done;
+    sk.show({ hidden: st.done });
+    sketchFb($('#sketch-fb'), ex.c, ex.sketch, st, ui().sketchOk);
+  }
+
+  // The tutor's Your turn (a frame with .t-draw): the sketch of the example's circuit, checked with
+  // nudges until it is right; or the student simply goes on. Each example's sketch is kept.
+  const tutorSketch = {};
+  function mountTutorSketch() {
+    const box = $('#t-text .t-draw'), svg = $('#t-figure svg.sketch-plot');
+    if (!box || !svg) return;
+    const i = tutor.current(), c = Lp.EXAMPLES[i].sketch(), spec = Lp.sketchSpec(c, false);
+    const s = tutorSketch[i] || (tutorSketch[i] = { values: spec.xs.map(() => 0), judged: false, done: false });
+    box.innerHTML = `<div class="actions"><button type="button" id="t-scheck" class="primary">${ui().check}</button><button type="button" id="t-sreset" class="linklike">${ui().reset}</button></div><div id="t-sfb" class="sketch-fb" aria-live="polite"></div>`;
+    const fb = () => sketchFb($('#t-sfb'), c, spec, s, ui().sketchTutorOk);
+    const k = sketcher(svg, c, spec, s, fb);
+    const sync = () => { $('#t-scheck').disabled = s.done; $('#t-sreset').hidden = s.done; k.show({ hidden: s.done }); fb(); };
+    $('#t-scheck').addEventListener('click', () => {
+      const probs = Lp.judgeSketch(c, spec, s.values);
+      if (probs === null) { $('#t-sfb').className = 'sketch-fb'; $('#t-sfb').textContent = ui().sketchFirst; return; }
+      s.judged = true;
+      s.done = !probs.length;
+      sync();
+    });
+    $('#t-sreset').addEventListener('click', () => k.reset());
+    sync();
   }
 
   // ---------------------------------------------------------------- practice topics
   // Each with its worked example (the stage with two batteries has its own) and its stages.
   const ex0 = { i: 0, name: () => Lp.EXAMPLES[0].name() }, ex1 = { i: 1, name: () => Lp.EXAMPLES[1].name() };
   const TOPICS = [
-    { name: () => L('Potentials around the loop', 'Potentiale im Kreis herum'), example: (s) => (s ? ex1 : ex0),
-      stages: [{ name: () => L('one battery', 'eine Batterie'), types: ['pot-1'] }, { name: () => L('two batteries', 'zwei Batterien'), types: ['pot-2'] }] },
+    { name: () => L('Potentials around the loop', 'Potentiale im Kreis herum'), example: (s) => (s === 1 || s === 4 ? ex1 : ex0),
+      stages: [{ name: () => L('one battery', 'eine Batterie'), types: ['pot-1'] }, { name: () => L('two batteries', 'zwei Batterien'), types: ['pot-2'] },
+        { name: () => L('sketch it, one battery', 'skizzieren, eine Batterie'), types: ['sketch-1'] }, { name: () => L('sketch it, identical lamps', 'skizzieren, gleiche Lampen'), types: ['sketch-eq'] },
+        { name: () => L('sketch it, two batteries', 'skizzieren, zwei Batterien'), types: ['sketch-2'] }] },
     { name: () => L('Loop rule and junction rule', 'Maschenregel und Knotenregel'), example: { i: 2, name: () => Lp.EXAMPLES[2].name() },
       stages: [{ name: () => L('loop rule, one battery', 'Maschenregel, eine Batterie'), types: ['loop-1'] }, { name: () => L('loop rule, two batteries', 'Maschenregel, zwei Batterien'), types: ['loop-2'] }, { name: () => L('a junction', 'ein Knoten'), types: ['junction'] }] },
     { name: () => L('Voltage between two points', 'Spannung zwischen zwei Punkten'), example: { i: 3, name: () => Lp.EXAMPLES[3].name() },
@@ -290,6 +391,7 @@
       values.forEach(([id, v]) => { const x = document.getElementById(id); if (x) x.value = v; });
       chosen.forEach(([n, v]) => { const x = document.querySelector(`input[name="${n}"][value="${v}"]`); if (x) x.checked = true; });
       if (st.checked) feedback();
+      if (ex.sketch) showSketch();
       showStatus(st.status);
       showHints();
       if (st.revealed) showSolution();
@@ -364,7 +466,7 @@
     window.addEventListener('hashchange', fromHash);
     window.addEventListener('resize', markScrollable);
     tutor = window.createTutor(lessons(), {
-      after: () => { math($('#tutor')); markScrollable(); },
+      after: () => { mountTutorSketch(); math($('#tutor')); markScrollable(); },
       done: practise,
       practise: (i) => { topics.go(Lp.EXAMPLES[i].topic, i === 1 ? 1 : undefined); setMode('practice'); fresh(); },
     });
