@@ -183,8 +183,10 @@
           opts(r, [2, 0.5, 1, 4].map((x) => (x === k ? [ans(x), true] : [ans(x), false, ...whyOf(x)])), true)),
       ],
       hints: [
-        li.f14 ? L(`${E} = ${h}·${f} with ${h} = 4.14 · 10<sup>−15</sup> eV·s: the powers of ten nearly cancel.`, `${E} = ${h}·${f} mit ${h} = 4.14 · 10<sup>−15</sup> eV·s: Die Zehnerpotenzen heben sich fast auf.`) : L(`${E} = ${h}·${c}/${lam} = 1240 eV·nm / ${lam}.`, `${E} = ${h}·${c}/${lam} = 1240 eV·nm / ${lam}.`),
-        L('The energy of one photon depends only on the frequency (the colour) of the light; the brightness is how many photons arrive per second.', 'Die Energie eines Photons hängt nur von der Frequenz (der Farbe) des Lichts ab; die Helligkeit ist, wie viele Photonen pro Sekunde ankommen.'),
+        L(`The light is given by its ${li.f14 ? 'frequency' : 'wavelength'}, ${li.given}. In (b) it is replaced by ${CHANGE[ch].text()}: does that change the colour of the light, or only how many photons arrive per second?`, `Das Licht ist durch seine ${li.f14 ? 'Frequenz' : 'Wellenlänge'} gegeben, ${li.given}. In (b) wird es ersetzt durch ${CHANGE[ch].text()}: Ändert das die Farbe des Lichts oder nur, wie viele Photonen pro Sekunde ankommen?`),
+        li.f14 ? L(`(a) ${E} = ${h}·${f}, with ${h} in eV·s and ${f} in Hz: the energy comes out in eV. The powers of ten first: 10<sup>−15</sup> · 10<sup>14</sup> = 10<sup>−1</sup>.`, `(a) ${E} = ${h}·${f}, mit ${h} in eV·s und ${f} in Hz: Die Energie ergibt sich in eV. Zuerst die Zehnerpotenzen: 10<sup>−15</sup> · 10<sup>14</sup> = 10<sup>−1</sup>.`)
+          : L(`(a) ${E} = ${h}·${c}/${lam}, with ${h}·${c} = 1240 eV·nm and ${lam} in nm: the nm cancel, and the energy comes out in eV.`, `(a) ${E} = ${h}·${c}/${lam}, mit ${h}·${c} = 1240 eV·nm und ${lam} in nm: Die nm kürzen sich, und die Energie ergibt sich in eV.`),
+        L(`(b) ${E} = ${h}·${f} = ${h}·${c}/${lam}: the energy of one photon is proportional to ${f} and inversely proportional to ${lam}; the brightness does not appear in it. Which of these does ${CHANGE[ch].text()} change, and by what factor?`, `(b) ${E} = ${h}·${f} = ${h}·${c}/${lam}: Die Energie eines Photons ist proportional zu ${f} und umgekehrt proportional zu ${lam}; die Helligkeit kommt darin nicht vor. Was davon ändert ${CHANGE[ch].text().replace(/^Licht/, 'das Licht')}, und um welchen Faktor?`),
       ],
       solution: [
         L(`(a) ${li.calc.replace(/= ([\d.]+) eV$/, '= <b>$1 eV</b>')}.`, `(a) ${li.calc.replace(/= ([\d.]+) eV$/, '= <b>$1 eV</b>')}.`),
@@ -213,6 +215,7 @@
       if (iE === iN || new Set(Ns).size < 3 || new Set(srcs.map((s) => s.mW)).size < 3) continue;
       if (Ns.filter((n) => n > 0.8 * Ns[iN]).length > 1) continue; // a clear winner
       const tag = ['A', 'B', 'C'];
+      const iLow = Ns.indexOf(Math.min(...Ns)); // for the hint: the fewest photons per second, not an answer
       const table = `<table class="data"><tr><th></th><th>${L('source', 'Quelle')}</th><th>${lam}</th><th>${i('P')}</th></tr>${srcs.map((s, k) => `<tr><td><b>${tag[k]}</b></td><td>${nameOf(s)}</td><td>${s.nm} nm</td><td>${s.mW} mW</td></tr>`).join('')}</table>`;
       const qE = srcs.map((s, k) => [tag[k], k === iE, k === iP ? L('The power is the energy per second, not the energy of one photon. That depends only on the wavelength.', 'Die Leistung ist die Energie pro Sekunde, nicht die Energie eines Photons. Diese hängt nur von der Wellenlänge ab.') : WHY.inverse(), k === iP ? 'intensity' : 'inverse',
         k === iP ? L('Does the power tell you the energy of a single photon? On what does that depend?', 'Sagt die Leistung etwas über die Energie eines einzelnen Photons? Wovon hängt diese ab?') : NUDGE.inverse()]);
@@ -227,7 +230,11 @@
           choice('E', L('(a) Which source emits the photons with the most energy?', '(a) Welche Quelle sendet die Photonen mit der grössten Energie aus?'), opts(r, qE, true)),
           choice('N', L('(b) Which source emits the most photons per second?', '(b) Welche Quelle sendet die meisten Photonen pro Sekunde aus?'), opts(r, qN.concat([[L('all the same', 'alle gleich'), false, L('Photons per second = power / photon energy: compare P·λ.', 'Photonen pro Sekunde = Leistung / Photonenenergie: Vergleiche P·λ.'), 'other']]), true)),
         ],
-        hints: [L(`The energy of one photon: ${E} = ${h}·${c}/${lam}. It does not depend on the power.`, `Die Energie eines Photons: ${E} = ${h}·${c}/${lam}. Sie hängt nicht von der Leistung ab.`), L(`Photons per second: ${i('N')} = ${i('P')}/${E} = ${i('P')}·${lam}/(${h}·${c}), so compare ${i('P')}·${lam}.`, `Photonen pro Sekunde: ${i('N')} = ${i('P')}/${E} = ${i('P')}·${lam}/(${h}·${c}); vergleiche also ${i('P')}·${lam}.`)],
+        hints: [
+          L(`The table gives each source's wavelength and power: ${srcs.map((s, k) => `${tag[k]} ${s.nm} nm and ${s.mW} mW`).join(', ')}. Which column decides (a), and which (b)?`, `Die Tabelle gibt die Wellenlänge und die Leistung jeder Quelle: ${srcs.map((s, k) => `${tag[k]} ${s.nm} nm und ${s.mW} mW`).join(', ')}. Welche Spalte entscheidet (a), welche (b)?`),
+          L(`(a) The energy of one photon: ${E} = ${h}·${c}/${lam}; the power does not appear in it. (b) Photons per second: ${i('N')} = ${i('P')}/${E} = ${i('P')}·${lam}/(${h}·${c}), so compare ${i('P')}·${lam} for A, B and C.`, `(a) Die Energie eines Photons: ${E} = ${h}·${c}/${lam}; die Leistung kommt darin nicht vor. (b) Photonen pro Sekunde: ${i('N')} = ${i('P')}/${E} = ${i('P')}·${lam}/(${h}·${c}); vergleiche also ${i('P')}·${lam} für A, B und C.`),
+          L(`(b) A start: for ${tag[iLow]}, ${i('P')}·${lam} comes to ${srcs[iLow].mW * srcs[iLow].nm} mW·nm. Now the other two.`, `(b) Ein Anfang: Für ${tag[iLow]} ergibt ${i('P')}·${lam} ${srcs[iLow].mW * srcs[iLow].nm} mW·nm. Nun die beiden anderen.`),
+        ],
         solution: [
           L(`(a) The shorter the wavelength, the more energy each photon carries: <b>${tag[iE]}</b> (${srcs[iE].nm} nm, ${plain(Es[iE])} eV per photon). The power does not matter.`, `(a) Je kürzer die Wellenlänge, desto mehr Energie trägt jedes Photon: <b>${tag[iE]}</b> (${srcs[iE].nm} nm, ${plain(Es[iE])} eV pro Photon). Die Leistung spielt keine Rolle.`),
           L(`(b) ${i('N')} = ${i('P')}/${E} is proportional to ${i('P')}·${lam}: ${srcs.map((s, k) => `${tag[k]}: ${s.mW} · ${s.nm} = ${s.mW * s.nm}`).join(', ')}. The most photons per second: <b>${tag[iN]}</b>.`, `(b) ${i('N')} = ${i('P')}/${E} ist proportional zu ${i('P')}·${lam}: ${srcs.map((s, k) => `${tag[k]}: ${s.mW} · ${s.nm} = ${s.mW * s.nm}`).join(', ')}. Die meisten Photonen pro Sekunde: <b>${tag[iN]}</b>.`),
@@ -275,10 +282,10 @@
         figs: fig(G.cell({ nm: li.nm, counter: true })),
         questions: qs,
         hints: [
-          li.f14 ? L(`Energy of one photon: ${E} = ${h}·${f}.`, `Energie eines Photons: ${E} = ${h}·${f}.`) : L(`Energy of one photon: ${E} = ${h}·${c}/${lam} = 1240 eV·nm / ${lam}.`, `Energie eines Photons: ${E} = ${h}·${c}/${lam} = 1240 eV·nm / ${lam}.`),
-          L(`Einstein: ${h}·${f} = ${W} + ${EkMax}. The photon pays the work function first; if ${h}·${f} < ${W}, no electron gets out.`, `Einstein: ${h}·${f} = ${W} + ${EkMax}. Das Photon bezahlt zuerst die Austrittsarbeit; ist ${h}·${f} < ${W}, kommt kein Elektron heraus.`),
-          out ? L(`The stopping voltage just stops the fastest electrons: ${i('e')}·${U0} = ${EkMax}. An energy of 1 eV is stopped by 1 V.`, `Die Gegenspannung stoppt gerade die schnellsten Elektronen: ${i('e')}·${U0} = ${EkMax}. Eine Energie von 1 eV wird von 1 V gestoppt.`)
-            : L('Only the energy of one photon counts: what makes it larger?', 'Nur die Energie eines Photons zählt: Was macht sie grösser?'),
+          L(`The light has ${li.given}; the ${m.en} cathode has ${W} = ${m.W} eV. (a) Does one photon of this light bring at least ${m.W} eV?`, `Das Licht hat ${li.given}; die Kathode aus ${m.de} hat ${W} = ${m.W} eV. (a) Bringt ein Photon dieses Lichts mindestens ${m.W} eV mit?`),
+          L(`First the energy of one photon, ${li.f14 ? `${E} = ${h}·${f} with ${h} in eV·s` : `${E} = ${h}·${c}/${lam} with ${h}·${c} = 1240 eV·nm`}. Then Einstein: ${h}·${f} = ${W} + ${EkMax}: the photon pays the work function first, the rest is kinetic energy.`, `Zuerst die Energie eines Photons, ${li.f14 ? `${E} = ${h}·${f} mit ${h} in eV·s` : `${E} = ${h}·${c}/${lam} mit ${h}·${c} = 1240 eV·nm`}. Dann Einstein: ${h}·${f} = ${W} + ${EkMax}: Das Photon bezahlt zuerst die Austrittsarbeit, der Rest ist kinetische Energie.`),
+          L(`${li.f14 ? 'For the photon energy, the powers of ten first: 10<sup>−15</sup> · 10<sup>14</sup> = 10<sup>−1</sup>.' : `For the photon energy, 1240 eV·nm divided by ${li.nm} nm: the nm cancel, and it comes out in eV.`} ${out ? `(c) The stopping voltage just stops the fastest electrons, ${i('e')}·${U0} = ${EkMax}: an energy of 1 eV is stopped by 1 V.` : '(b) Only the energy of one photon counts: what makes it larger?'}`,
+            `${li.f14 ? 'Für die Photonenenergie zuerst die Zehnerpotenzen: 10<sup>−15</sup> · 10<sup>14</sup> = 10<sup>−1</sup>.' : `Für die Photonenenergie 1240 eV·nm geteilt durch ${li.nm} nm: Die nm kürzen sich, und sie ergibt sich in eV.`} ${out ? `(c) Die Gegenspannung stoppt gerade die schnellsten Elektronen, ${i('e')}·${U0} = ${EkMax}: Eine Energie von 1 eV wird von 1 V gestoppt.` : '(b) Nur die Energie eines Photons zählt: Was macht sie grösser?'}`),
         ],
         solution: [
           L(`Photon energy: ${li.calc}.`, `Photonenenergie: ${li.calc}.`),
@@ -346,9 +353,9 @@
         pick('new', L(`(c) ${text} Which graph shows the new current (solid) compared with the old one (dashed)?`, `(c) ${text} Welcher Graph zeigt den neuen Strom (ausgezogen) im Vergleich zum alten (gestrichelt)?`), options),
       ],
       hints: [
-        L(`The current stops where the counter-voltage is just strong enough to stop the fastest electrons: at ${V} = −${U0}.`, `Der Strom hört dort auf, wo die Gegenspannung gerade stark genug ist, um die schnellsten Elektronen zu stoppen: bei ${V} = −${U0}.`),
-        L(`${EkMax} = ${i('e')}·${U0} and ${h}·${f} = ${W} + ${EkMax}; the photon energy is 1240 eV·nm / ${lam}.`, `${EkMax} = ${i('e')}·${U0} und ${h}·${f} = ${W} + ${EkMax}; die Photonenenergie ist 1240 eV·nm / ${lam}.`),
-        L('The saturation current counts the electrons per second (the photons per second); the stopping voltage measures the energy of the fastest electrons (the energy of one photon).', 'Der Sättigungsstrom zählt die Elektronen pro Sekunde (die Photonen pro Sekunde); die Gegenspannung misst die Energie der schnellsten Elektronen (die Energie eines Photons).'),
+        L(`(a) Follow the curve to the left, into the counter-voltages: at which ${V} on the axis does the current drop to zero? There the counter-voltage just stops the fastest electrons, ${V} = −${U0}.`, `(a) Folge der Kurve nach links, zu den Gegenspannungen: Bei welchem ${V} auf der Achse fällt der Strom auf null? Dort stoppt die Gegenspannung gerade die schnellsten Elektronen, ${V} = −${U0}.`),
+        L(`(b) The light has ${nm} nm. Its photon energy is ${h}·${c}/${lam} (${h}·${c} = 1240 eV·nm); then ${EkMax} = ${i('e')}·${U0} and Einstein, ${h}·${f} = ${W} + ${EkMax}, give the work function.`, `(b) Das Licht hat ${nm} nm. Seine Photonenenergie ist ${h}·${c}/${lam} (${h}·${c} = 1240 eV·nm); dann ergeben ${EkMax} = ${i('e')}·${U0} und Einstein, ${h}·${f} = ${W} + ${EkMax}, die Austrittsarbeit.`),
+        L(`(c) ${text} Does that change the number of photons per second (the saturation current), the energy left for the fastest electrons (the stopping voltage), or both?`, `(c) ${text} Ändert das die Zahl der Photonen pro Sekunde (den Sättigungsstrom), die Energie, die den schnellsten Elektronen bleibt (die Gegenspannung), oder beides?`),
       ],
       solution: [
         L(`(a) The current drops to zero at ${V} = −${e2(U)} V: ${U0} = <b>${e2(U)} V</b>, so the fastest electrons have ${e2(U)} eV.`, `(a) Der Strom fällt bei ${V} = −${e2(U)} V auf null: ${U0} = <b>${e2(U)} V</b>; die schnellsten Elektronen haben also ${e2(U)} eV.`),
@@ -401,9 +408,9 @@
         ], true)), after: 'slope' },
       ],
       hints: [
-        L(`Einstein: ${i('e')}·${U0} = ${h}·${f} − ${W}, so ${U0} = (${h}/${i('e')})·${f} − ${W}/${i('e')}: a straight line.`, `Einstein: ${i('e')}·${U0} = ${h}·${f} − ${W}, also ${U0} = (${h}/${i('e')})·${f} − ${W}/${i('e')}: eine Gerade.`),
-        L(`Where the line meets the ${f}-axis (${U0} = 0), the electrons just get out: the threshold frequency. ${lG} = ${c}/${fG}.`, `Wo die Gerade die ${f}-Achse schneidet (${U0} = 0), kommen die Elektronen gerade noch heraus: die Grenzfrequenz. ${lG} = ${c}/${fG}.`),
-        L(`At ${f} = 0 the line is at −${W}/${i('e')}. Or ${W} = ${h}·${fG}.`, `Bei ${f} = 0 liegt die Gerade bei −${W}/${i('e')}. Oder ${W} = ${h}·${fG}.`),
+        L(`The four measurements lie on one straight line; its dashed extension reaches both axes. Read off where it meets the ${f}-axis and where it meets the ${U0}-axis.`, `Die vier Messungen liegen auf einer Geraden; ihre gestrichelte Verlängerung reicht bis zu beiden Achsen. Lies ab, wo sie die ${f}-Achse schneidet und wo die ${U0}-Achse.`),
+        L(`Einstein: ${i('e')}·${U0} = ${h}·${f} − ${W}, so ${U0} = (${h}/${i('e')})·${f} − ${W}/${i('e')}. (a) At ${U0} = 0 the electrons just get out: the threshold frequency. (c) At ${f} = 0 the line is at −${W}/${i('e')}. (d), (e) Which parts of this line depend on the metal?`, `Einstein: ${i('e')}·${U0} = ${h}·${f} − ${W}, also ${U0} = (${h}/${i('e')})·${f} − ${W}/${i('e')}. (a) Bei ${U0} = 0 kommen die Elektronen gerade noch heraus: die Grenzfrequenz. (c) Bei ${f} = 0 liegt die Gerade bei −${W}/${i('e')}. (d), (e) Welche Teile dieser Geraden hängen vom Metall ab?`),
+        L(`(b) ${lG} = ${c}/${fG} with ${c} = 3.00 · 10<sup>8</sup> m/s and ${fG} in Hz. The powers of ten first: 10<sup>8</sup> / 10<sup>14</sup> = 10<sup>−6</sup>, so the result comes out in 10<sup>−6</sup> m = 1000 nm.`, `(b) ${lG} = ${c}/${fG} mit ${c} = 3.00 · 10<sup>8</sup> m/s und ${fG} in Hz. Zuerst die Zehnerpotenzen: 10<sup>8</sup> / 10<sup>14</sup> = 10<sup>−6</sup>, das Ergebnis kommt also in 10<sup>−6</sup> m = 1000 nm heraus.`),
       ],
       solution: [
         L(`(a) The line meets the ${f}-axis at ${fG} = <b>${plain(fg, 2)} · 10<sup>14</sup> Hz</b>.`, `(a) Die Gerade schneidet die ${f}-Achse bei ${fG} = <b>${plain(fg, 2)} · 10<sup>14</sup> Hz</b>.`),
@@ -435,6 +442,25 @@
     [() => L('The wave model of light explains the threshold frequency.', 'Das Wellenmodell des Lichts erklärt die Grenzfrequenz.'), false, () => L('In the wave model, any light would release electrons after enough time; the threshold needs photons.', 'Im Wellenmodell würde jedes Licht nach genügend langer Zeit Elektronen auslösen; die Grenzfrequenz braucht Photonen.')],
     [() => L('Not all released electrons have the largest kinetic energy.', 'Nicht alle ausgelösten Elektronen haben die grösste kinetische Energie.'), true, () => L('Electrons from deeper in the metal lose energy on the way out; φ is the least energy needed.', 'Elektronen aus tieferen Schichten verlieren auf dem Weg nach aussen Energie; W ist die kleinste nötige Energie.')],
   ];
+  // the hints: one for each topic among the statements picked (BANK indices), naming them by their place from the top
+  const TOPICS = [
+    [[0, 1, 10, 11], () => L('the energy of one photon', 'die Energie eines Photons'), () => L(`${E} = ${h}·${f} = ${h}·${c}/${lam}: what about the brightness or the power?`, `${E} = ${h}·${f} = ${h}·${c}/${lam}: Was ist mit der Helligkeit oder der Leistung?`)],
+    [[2, 3, 12, 13], () => L('photons or a wave', 'Photonen oder eine Welle'), () => L('one electron takes the energy of one photon: what would a wave predict instead?', 'ein Elektron nimmt die Energie eines Photons auf: Was würde eine Welle stattdessen voraussagen?')],
+    [[4, 5], () => L('the brightness and the photocell', 'die Helligkeit und die Photozelle'), () => L('the saturation current counts the photons per second, the stopping voltage measures the energy of one photon.', 'der Sättigungsstrom zählt die Photonen pro Sekunde, die Gegenspannung misst die Energie eines Photons.')],
+    [[6, 7, 14], () => L('the fastest electrons', 'die schnellsten Elektronen'), () => L(`Einstein: ${h}·${f} = ${W} + ${EkMax}; is that a proportionality?`, `Einstein: ${h}·${f} = ${W} + ${EkMax}; ist das eine Proportionalität?`)],
+    [[8, 9], () => L(`the ${U0}(${f}) line`, `die ${U0}(${f})-Gerade`), () => L(`${U0} = (${h}/${i('e')})·${f} − ${W}/${i('e')}: which parts depend on the metal?`, `${U0} = (${h}/${i('e')})·${f} − ${W}/${i('e')}: Welche Teile hängen vom Metall ab?`)]];
+  function stmtHints(pk) {
+    const out = [];
+    for (const [idx, name, rule] of TOPICS) {
+      const ks = pk.map((s, k) => [BANK.indexOf(s), k + 1]).filter(([n]) => idx.includes(n)).map(([, k]) => k);
+      if (!ks.length) continue;
+      const list = ks.length === 1 ? String(ks[0]) : `${ks.slice(0, -1).join(', ')}${L(' and ', ' und ')}${ks[ks.length - 1]}`;
+      const r0 = rule();
+      out.push(L(`${ks.length === 1 ? 'Statement' : 'Statements'} ${list} (from the top): ${name()}. ${r0.charAt(0).toUpperCase() + r0.slice(1)}`, `${ks.length === 1 ? 'Aussage' : 'Aussagen'} ${list} (von oben): ${name()}. ${r0.charAt(0).toUpperCase() + r0.slice(1)}`));
+    }
+    if (out.length < 2) out.push(L('Take the statements one by one: which quantity does each one change, and does that quantity appear in the formula at all?', 'Nimm die Aussagen einzeln: Welche Grösse ändert jede, und kommt diese Grösse in der Formel überhaupt vor?'));
+    return out;
+  }
   function photoStmts(seed) {
     const r = rng(seed * 61 + 29);
     for (;;) {
@@ -444,7 +470,7 @@
         title: L('Which statements are correct?', 'Welche Aussagen sind richtig?'),
         text: L('<p>Tick all the statements that are correct.</p>', '<p>Kreuze alle richtigen Aussagen an.</p>'), figs: '',
         questions: [multi('s', pk.map(([t, ok, why]) => ({ html: t(), ok, why: why() })))],
-        hints: [L('Photon energy: E = h·f. Brightness: the number of photons per second.', 'Photonenenergie: E = h·f. Helligkeit: die Zahl der Photonen pro Sekunde.'), L('Einstein: h·f = φ + E<sub>k,max</sub>.', 'Einstein: h·f = W + E_kin,max.')],
+        hints: stmtHints(pk),
         solution: pk.map(([t, ok, why]) => `${ok ? '✓' : '✗'} ${t()} ${why()}`),
         p: { s: pk.map((s) => BANK.indexOf(s)) },
       };

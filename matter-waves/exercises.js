@@ -95,10 +95,15 @@
         ])),
       ],
       hints: [
-        L(`${lam} = ${h}/${p}, and the electron gains ${Ek} = ${i('e')}·${U}, so ${p} = √(2·${m}·${i('e')}·${U}).`, `${lam} = ${h}/${p}, und das Elektron gewinnt ${Ek} = ${i('e')}·${U}, also ${p} = √(2·${m}·${i('e')}·${U}).`),
-        rev ? L(`So ${lam} ∝ 1/√${U}, and ${U} ∝ 1/${lam}². By what factor has the wavelength changed? Square it.`, `Also ${lam} ∝ 1/√${U} und ${U} ∝ 1/${lam}². Um welchen Faktor hat sich die Wellenlänge geändert? Quadriere ihn.`)
-          : L(`So ${lam} ∝ 1/√${U}. By what factor has the voltage changed? Take its square root.`, `Also ${lam} ∝ 1/√${U}. Um welchen Faktor hat sich die Spannung geändert? Zieh die Wurzel daraus.`),
-        L(`A photon has ${p} = ${i('E')}/${i('c')}; a particle with mass does not.`, `Ein Photon hat ${p} = ${i('E')}/${i('c')}; ein Teilchen mit Masse nicht.`),
+        rev ? L(`The first electron: 150 V and 100 pm. The second has ${lam} = ${String(l1)} pm: how many times ${up ? 'shorter' : 'longer'} is that than 100 pm, and so does it need a larger or a smaller voltage?`, `Das erste Elektron: 150 V und 100 pm. Das zweite hat ${lam} = ${String(l1)} pm: Wie viel Mal ${up ? 'kürzer' : 'länger'} ist das als 100 pm, und braucht es dafür eine grössere oder eine kleinere Spannung?`)
+          : L(`The first electron: 150 V and 100 pm. The second is accelerated through ${Vt} V: by what factor is that voltage ${up ? 'larger' : 'smaller'} than 150 V?`, `Das erste Elektron: 150 V und 100 pm. Das zweite wird mit ${Vt} V beschleunigt: Um welchen Faktor ist diese Spannung ${up ? 'grösser' : 'kleiner'} als 150 V?`),
+        L(`(a) ${lam} = ${h}/${p}, and from rest the electron gains ${Ek} = ${i('e')}·${U}, so ${p} = √(2·${m}·${i('e')}·${U}). (c) The photon with the same energy, ${Vt} eV, has no mass: its momentum is ${p} = ${i('E')}/${i('c')}.`, `(a) ${lam} = ${h}/${p}, und aus der Ruhe gewinnt das Elektron ${Ek} = ${i('e')}·${U}, also ${p} = √(2·${m}·${i('e')}·${U}). (c) Das Photon mit derselben Energie, ${Vt} eV, hat keine Masse: Sein Impuls ist ${p} = ${i('E')}/${i('c')}.`),
+        rev ? (up
+          ? L(`The wavelength is ${k} times shorter than 100 pm, so by ${lam} = ${h}/${p} the momentum is ${k} times as large. How does ${U} depend on ${p}?`, `Die Wellenlänge ist ${k}-mal kürzer als 100 pm, also ist wegen ${lam} = ${h}/${p} der Impuls ${k}-mal so gross. Wie hängt ${U} von ${p} ab?`)
+          : L(`The wavelength is ${K} times as long as 100 pm, so by ${lam} = ${h}/${p} the momentum is only 1/${K} as large. How does ${U} depend on ${p}?`, `Die Wellenlänge ist ${K}-mal so lang wie 100 pm, also ist wegen ${lam} = ${h}/${p} der Impuls nur 1/${K} so gross. Wie hängt ${U} von ${p} ab?`))
+          : up
+            ? L(`The voltage is ${kk} times as large as 150 V, and so is the kinetic energy ${Ek} = ${i('e')}·${U}. With which power of ${Ek} does ${p} grow?`, `Die Spannung ist ${kk}-mal so gross wie 150 V, und ebenso die kinetische Energie ${Ek} = ${i('e')}·${U}. Mit welcher Potenz von ${Ek} wächst ${p}?`)
+            : L(`The voltage is only 1/${KK} of 150 V, and so is the kinetic energy ${Ek} = ${i('e')}·${U}. With which power of ${Ek} does ${p} grow?`, `Die Spannung ist nur 1/${KK} von 150 V, und ebenso die kinetische Energie ${Ek} = ${i('e')}·${U}. Mit welcher Potenz von ${Ek} wächst ${p}?`),
       ],
       solution: [
         rev ? (up
@@ -126,6 +131,7 @@
     const voltNudge = ask === 'short' ? L('Which of the three gains the largest momentum from the same voltage? Think of mass and charge.', 'Welches der drei bekommt bei gleicher Spannung den grössten Impuls? Denk an Masse und Ladung.') : L('Which of the three gains the smallest momentum from the same voltage? Think of mass and charge.', 'Welches der drei bekommt bei gleicher Spannung den kleinsten Impuls? Denk an Masse und Ladung.');
     const names = [L('the electron', 'das Elektron'), L('the proton', 'das Proton'), L('the alpha particle', 'das Alphateilchen')];
     const allSame = L('all the same', 'alle gleich');
+    const atSame = { v: L('at the same speed', 'bei gleicher Geschwindigkeit'), E: L('at the same kinetic energy', 'bei gleicher kinetischer Energie'), p: L('with the same momentum', 'bei gleichem Impuls') };
     const qa = same === 'p' ? [
       [allSame, true],
       [names[0], false, samePWhy, 'mass', samePNudge],
@@ -174,9 +180,9 @@
         choice('c', ratio === 'p' ? L('(c) An electron and a proton have the same momentum. Compared with the proton’s, the wavelength of the electron is', '(c) Ein Elektron und ein Proton haben denselben Impuls. Verglichen mit der des Protons ist die Wellenlänge des Elektrons') : ratio === 'v' ? L('(c) An electron and a proton have the same speed. Compared with the proton’s, the wavelength of the electron is', '(c) Ein Elektron und ein Proton haben dieselbe Geschwindigkeit. Verglichen mit der des Protons ist die Wellenlänge des Elektrons') : L('(c) An electron and a proton have the same kinetic energy. Compared with the proton’s, the wavelength of the electron is', '(c) Ein Elektron und ein Proton haben dieselbe kinetische Energie. Verglichen mit der des Protons ist die Wellenlänge des Elektrons'), opts(r, qc)),
       ],
       hints: [
-        L(`${lam} = ${h}/${p}: the larger the momentum, the shorter the wavelength.`, `${lam} = ${h}/${p}: Je grösser der Impuls, desto kürzer die Wellenlänge.`),
-        L(`Same speed: ${p} = ${m}·${v}. Same kinetic energy: ${p} = √(2·${m}·${Ek}). Same momentum: compare ${p} directly.`, `Gleiche Geschwindigkeit: ${p} = ${m}·${v}. Gleiche kinetische Energie: ${p} = √(2·${m}·${Ek}). Gleicher Impuls: ${p} direkt vergleichen.`),
-        L(`Through a voltage ${U}, a particle of charge ${i('q')} gains ${Ek} = ${i('q')}·${U}, so ${p} = √(2·${m}·${i('q')}·${U}).`, `Mit einer Spannung ${U} gewinnt ein Teilchen der Ladung ${i('q')} die Energie ${Ek} = ${i('q')}·${U}, also ${p} = √(2·${m}·${i('q')}·${U}).`),
+        L(`(a) compares all three ${atSame[same]}, (b) after the same voltage, (c) the electron and the proton ${atSame[ratio]}. What differs between them: the mass, the charge, or both? (The proton is about 1840 times as heavy as the electron, the alpha particle about four times as heavy as the proton, with twice its charge.)`, `(a) vergleicht alle drei ${atSame[same]}, (b) nach derselben Spannung, (c) das Elektron und das Proton ${atSame[ratio]}. Was unterscheidet sie: die Masse, die Ladung oder beides? (Das Proton ist etwa 1840-mal so schwer wie das Elektron, das Alphateilchen etwa viermal so schwer wie das Proton, mit doppelter Ladung.)`),
+        L(`In every part ${lam} = ${h}/${p}: the larger the momentum, the shorter the wavelength. Write ${p} with what is the same: ${same === 'v' ? `in (a) ${p} = ${m}·${v} with the same ${v}` : same === 'E' ? `in (a) ${p} = √(2·${m}·${Ek}) with the same ${Ek}` : 'in (a) compare the momenta directly'}; in (b) ${p} = √(2·${m}·${i('q')}·${U}).`, `In jedem Teil ist ${lam} = ${h}/${p}: Je grösser der Impuls, desto kürzer die Wellenlänge. Schreibe ${p} mit dem, was gleich ist: ${same === 'v' ? `in (a) ${p} = ${m}·${v} mit gleichem ${v}` : same === 'E' ? `in (a) ${p} = √(2·${m}·${Ek}) mit gleichem ${Ek}` : 'in (a) die Impulse direkt vergleichen'}; in (b) ${p} = √(2·${m}·${i('q')}·${U}).`),
+        L(`(b) The voltage gives each the energy ${Ek} = ${i('q')}·${U}: the alpha particle gains twice as much as the proton or the electron. (c) Write ${lam}${sb('e')}/${lam}${sb('p')} = ${p}${sb('p')}/${p}${sb('e')}${ratio === 'p' ? ': what does the text say about the two momenta?' : `, and express both momenta ${atSame[ratio]}.`}`, `(b) Die Spannung gibt jedem die Energie ${Ek} = ${i('q')}·${U}: Das Alphateilchen gewinnt doppelt so viel wie das Proton oder das Elektron. (c) Schreibe ${lam}${sb('e')}/${lam}${sb('p')} = ${p}${sb('p')}/${p}${sb('e')}${ratio === 'p' ? ': Was sagt der Text über die beiden Impulse?' : ` und drücke beide Impulse ${atSame[ratio]} aus.`}`),
       ],
       solution: [
         same === 'p' ? L(`(a) ${lam} = ${h}/${p} contains only the momentum: the same momentum gives the same wavelength, <b>all the same</b>. The masses differ, so the speeds do: ${v} = ${p}/${m}.`, `(a) ${lam} = ${h}/${p} enthält nur den Impuls: Derselbe Impuls ergibt dieselbe Wellenlänge, <b>alle gleich</b>. Die Massen sind verschieden, also die Geschwindigkeiten: ${v} = ${p}/${m}.`) : L(`(a) ${same === 'v' ? `${p} = ${m}·${v}` : `${p} = √(2·${m}·${Ek})`}: the lightest particle has the least momentum and the longest wavelength, <b>the electron</b>.`, `(a) ${same === 'v' ? `${p} = ${m}·${v}` : `${p} = √(2·${m}·${Ek})`}: Das leichteste Teilchen hat den kleinsten Impuls und die grösste Wellenlänge, <b>das Elektron</b>.`),
@@ -225,8 +231,10 @@
         ])),
       ],
       hints: [
-        L(`The ring radius ${i('r')} is proportional to the wavelength: ${i('r')} ≈ ${Lb}·${lam}/${i('d')}.`, `Der Ringradius ${i('r')} ist proportional zur Wellenlänge: ${i('r')} ≈ ${Lb}·${lam}/${i('d')}.`),
-        L(`${lam} = ${h}/√(2·${m}·${i('e')}·${U}) ∝ 1/√${U}.`, `${lam} = ${h}/√(2·${m}·${i('e')}·${U}) ∝ 1/√${U}.`),
+        L(`The voltage goes from ${Utxt(U0)} to ${Utxt(U1)}: are the electrons now faster or slower, and are they diffracted more or less?`, `Die Spannung geht von ${Utxt(U0)} auf ${Utxt(U1)}: Sind die Elektronen jetzt schneller oder langsamer, und werden sie stärker oder schwächer gebeugt?`),
+        L(`The ring radius is ${i('r')} ≈ ${Lb}·${lam}/${i('d')}: the distance ${Lb} from the foil to the screen and the spacings ${i('d')} of the planes stay the same, only ${lam} = ${h}/${p} changes, with ${p} = √(2·${m}·${i('e')}·${U}).`, `Der Ringradius ist ${i('r')} ≈ ${Lb}·${lam}/${i('d')}: Der Abstand ${Lb} von der Folie zum Schirm und die Abstände ${i('d')} der Netzebenen bleiben gleich, nur ${lam} = ${h}/${p} ändert sich, mit ${p} = √(2·${m}·${i('e')}·${U}).`),
+        up ? L(`The voltage is ${q4 ? '4' : '9/4'} times as large as before, and so is the kinetic energy of the electrons. By what factor does the momentum change, then?`, `Die Spannung ist ${q4 ? '4' : '9/4'}-mal so gross wie vorher, und ebenso die kinetische Energie der Elektronen. Um welchen Faktor ändert sich also der Impuls?`)
+          : L(`The voltage is only ${q4 ? '1/4' : '4/9'} of what it was, and so is the kinetic energy of the electrons. By what factor does the momentum change, then?`, `Die Spannung ist nur noch ${q4 ? '1/4' : '4/9'} des vorherigen Werts, und ebenso die kinetische Energie der Elektronen. Um welchen Faktor ändert sich also der Impuls?`),
       ],
       solution: [
         q4 ? L(`(a) ${i('r')} ∝ ${lam} ∝ 1/√${U}: ${up ? 'four times the voltage, <b>half the radius</b>' : 'a quarter of the voltage, <b>twice the radius</b>'}.`, `(a) ${i('r')} ∝ ${lam} ∝ 1/√${U}: ${up ? 'vierfache Spannung, <b>halber Radius</b>' : 'ein Viertel der Spannung, <b>doppelter Radius</b>'}.`)
@@ -273,9 +281,10 @@
         choice('lam', L('(b) The wavelength of this state is', '(b) Die Wellenlänge dieses Zustands ist'), opts(r, [[`${lam} = ${ofL(2, nn)}`, true], ...lw])),
       ],
       hints: [
-        L(`The walls are infinitely high: the particle is never at or beyond them, so ${i('ψ')} = 0 there. Only standing waves fit, like on a string fixed at both ends.`, `Die Wände sind unendlich hoch: Das Teilchen ist nie an oder hinter ihnen, also ist ${i('ψ')} = 0 dort. Nur stehende Wellen passen, wie auf einer Saite, die an beiden Enden eingespannt ist.`),
-        L(`The state ${n} has ${n} half waves between the walls: ${Lb} = ${n}·${lam}/2.`, `Der Zustand ${n} hat ${n} halbe Wellen zwischen den Wänden: ${Lb} = ${n}·${lam}/2.`),
-        L(`${psi2} is the square of ${i('ψ')}: never negative, zero where ${i('ψ')} is zero.`, `${psi2} ist das Quadrat von ${i('ψ')}: nie negativ, null, wo ${i('ψ')} null ist.`),
+        sq ? L(`The drawings show ${psi2} for the state ${n} = ${nn}, between infinitely high walls. In which of them is ${psi2} zero at both walls and outside, and never negative?`, `Die Zeichnungen zeigen ${psi2} für den Zustand ${n} = ${nn}, zwischen unendlich hohen Wänden. In welchen ist ${psi2} an beiden Wänden und ausserhalb null und nie negativ?`)
+          : L(`The drawings show ${i('ψ')} for the state ${n} = ${nn}, between infinitely high walls. In which of them is ${i('ψ')} zero at both walls and outside?`, `Die Zeichnungen zeigen ${i('ψ')} für den Zustand ${n} = ${nn}, zwischen unendlich hohen Wänden. In welchen ist ${i('ψ')} an beiden Wänden und ausserhalb null?`),
+        L(`Only standing waves fit, as on a string fixed at both ends: the state ${n} has ${n} half waves between the walls, each ${lam}/2 long, so ${Lb} = ${n}·${lam}/2.`, `Nur stehende Wellen passen, wie auf einer Saite, die an beiden Enden eingespannt ist: Der Zustand ${n} hat ${n} halbe Wellen zwischen den Wänden, jede ${lam}/2 lang, also ${Lb} = ${n}·${lam}/2.`),
+        L(`(a) For ${n} = ${nn}: how many ${sq ? `humps above the axis (${psi2} folds the negative half waves up)` : 'half waves'} must the drawing show, and how many nodes inside? (b) Solve ${Lb} = ${n}·${lam}/2 for ${lam}.`, `(a) Für ${n} = ${nn}: Wie viele ${sq ? `Buckel über der Achse (${psi2} klappt die negativen halben Wellen nach oben)` : 'halbe Wellen'} muss die Zeichnung zeigen, und wie viele Knoten innen? (b) Löse ${Lb} = ${n}·${lam}/2 nach ${lam} auf.`),
       ],
       solution: [
         L(`(a) ${nn} half wave${nn > 1 ? 's' : ''} between the walls, zero at both walls and ${nn - 1 === 0 ? 'no node' : nn - 1 === 1 ? 'one node' : `${nn - 1} nodes`} inside${sq ? `; squared, every half wave becomes a hump above the axis: ${nn} hump${nn > 1 ? 's' : ''}` : ''}.`, `(a) ${nn} halbe Welle${nn > 1 ? 'n' : ''} zwischen den Wänden, null an beiden Wänden und ${nn - 1 === 0 ? 'kein Knoten' : nn - 1 === 1 ? 'ein Knoten' : `${nn - 1} Knoten`} innen${sq ? `; quadriert wird jede halbe Welle zu einem Buckel über der Achse: ${nn} Buckel` : ''}.`),
@@ -312,8 +321,9 @@
         ])),
       ],
       hints: [
+        L(`The ground state has ${E1} = ${ev(e1)}. (a) asks for the state ${n} = ${k} in the same box; in (b), ${ch === 'proton' ? 'a proton takes the place of the electron' : 'the width of the box changes'}. Which of ${n}, ${Lb} and ${m} changes in each part?`, `Der Grundzustand hat ${E1} = ${ev(e1)}. (a) fragt nach dem Zustand ${n} = ${k} im selben Kasten; in (b) ${ch === 'proton' ? 'tritt ein Proton an die Stelle des Elektrons' : 'ändert sich die Breite des Kastens'}. Welche der Grössen ${n}, ${Lb} und ${m} ändert sich in jedem Teil?`),
         L(`${lam}${sb('n')} = 2${Lb}/${n}, so ${p}${sb('n')} = ${h}/${lam}${sb('n')} = ${n}·${h}/(2${Lb}) and ${i('E')}${sb('n')} = ${p}²/(2${m}) = ${n}²·${h}²/(8${m}${Lb}²) = ${n}²·${E1}.`, `${lam}${sb('n')} = 2${Lb}/${n}, also ${p}${sb('n')} = ${h}/${lam}${sb('n')} = ${n}·${h}/(2${Lb}) und ${i('E')}${sb('n')} = ${p}²/(2${m}) = ${n}²·${h}²/(8${m}${Lb}²) = ${n}²·${E1}.`),
-        L(`${i('E')} ∝ ${n}²/(${m}·${Lb}²): find the factor of each change and multiply.`, `${i('E')} ∝ ${n}²/(${m}·${Lb}²): Bestimme den Faktor jeder Änderung und multipliziere.`),
+        L(`(a) ${n} goes from 1 to ${k}: which power of that factor multiplies ${E1}? (b) ${ch === 'proton' ? `The box stays the same: what about the wavelengths 2${Lb}/${n} and the momenta? Then only ${m} in ${i('E')} = ${p}²/(2${m}) changes, by about 1840.` : `${Lb} is multiplied by ${ch === 'narrow2' ? '1/2' : ch === 'wide2' ? '2' : '3'}: in ${i('E')} ∝ 1/${Lb}², which power of that factor, and up or down?`}`, `(a) ${n} geht von 1 auf ${k}: Welche Potenz dieses Faktors multipliziert ${E1}? (b) ${ch === 'proton' ? `Der Kasten bleibt derselbe: Was ist mit den Wellenlängen 2${Lb}/${n} und den Impulsen? Dann ändert sich nur ${m} in ${i('E')} = ${p}²/(2${m}), um etwa 1840.` : `${Lb} wird mit ${ch === 'narrow2' ? '1/2' : ch === 'wide2' ? '2' : '3'} multipliziert: In ${i('E')} ∝ 1/${Lb}² welche Potenz dieses Faktors, und grösser oder kleiner?`}`),
       ],
       solution: [
         L(`(a) ${i('E')}${sb(k)} = ${k}²·${E1} = ${k * k} · ${ev(e1)} = <b>${ev(k * k * e1)}</b>.`, `(a) ${i('E')}${sb(k)} = ${k}²·${E1} = ${k * k} · ${ev(e1)} = <b>${ev(k * k * e1)}</b>.`),
@@ -360,8 +370,10 @@
           meaning,
         ],
         hints: [
-          L(`${psi2} tells where the particle is likely to be found; the area under it is 1. Its width is the uncertainty ${dx}.`, `${psi2} sagt, wo man das Teilchen wahrscheinlich findet; die Fläche darunter ist 1. Seine Breite ist die Unschärfe ${dx}.`),
-          L(`Heisenberg: ${dx}·${dp} ≥ ${h}/(4π). A small ${dx} forces a large ${dp}.`, `Heisenberg: ${dx}·${dp} ≥ ${h}/(4π). Ein kleines ${dx} erzwingt ein grosses ${dp}.`),
+          L(`The four curves lie at different places and have different heights and widths. (a) asks for the ${v === 'wide' ? `largest ${dx}` : `surely largest ${dp}`}: which of these features of a curve ${v === 'wide' ? 'gives' : 'first gives'} ${dx}: its place, its height or its width?`, `Die vier Kurven liegen an verschiedenen Orten und sind verschieden hoch und breit. (a) fragt nach dem ${v === 'wide' ? `grössten ${dx}` : `sicher grössten ${dp}`}: Welches dieser Merkmale einer Kurve ${v === 'wide' ? 'gibt' : 'gibt zuerst'} ${dx}: ihr Ort, ihre Höhe oder ihre Breite?`),
+          v === 'wide' ? L(`${psi2} tells where the particle is likely to be found, and the area under each curve is 1: a narrow curve must be high. ${dx} is the spread of the positions found.`, `${psi2} sagt, wo man das Teilchen wahrscheinlich findet, und die Fläche unter jeder Kurve ist 1: Eine schmale Kurve muss hoch sein. ${dx} ist die Streuung der gefundenen Orte.`)
+            : L(`Heisenberg: ${dx}·${dp} ≥ ${h}/(4π), with ${dx} the spread of the positions in ${psi2}. Which ${dx} forces the largest ${dp}?`, `Heisenberg: ${dx}·${dp} ≥ ${h}/(4π), mit ${dx} der Streuung der Orte in ${psi2}. Welches ${dx} erzwingt das grösste ${dp}?`),
+          L(`(b) Imagine measuring the position of many particles in this same state with a perfect instrument: would the results still scatter, as ${psi2} says?`, `(b) Stell dir vor, du misst den Ort vieler Teilchen in diesem selben Zustand mit einem perfekten Instrument: Würden die Ergebnisse immer noch streuen, so wie ${psi2} es sagt?`),
         ],
         solution: [
           v === 'wide' ? L(`(a) ${dx} is the width of ${psi2}: <b>the widest curve</b>, which is also the lowest, since the area is always 1.`, `(a) ${dx} ist die Breite von ${psi2}: <b>die breiteste Kurve</b>, die auch die niedrigste ist, weil die Fläche immer 1 ist.`)
@@ -389,8 +401,10 @@
       figs: fig(G.box({ n: 2, sq: true, ticks: true })),
       questions: [qa, meaning],
       hints: [
-        L(`${psi2} is high where the particle is likely to be found, zero where it is never found.`, `${psi2} ist hoch, wo man das Teilchen wahrscheinlich findet, null, wo man es nie findet.`),
-        L(`The expectation value ${xm} is the mean of many measurements. It need not be a place where the particle is ever found.`, `Der Erwartungswert ${xm} ist der Mittelwert vieler Messungen. Er muss kein Ort sein, an dem man das Teilchen je findet.`),
+        L(`The drawing shows ${psi2} of the state ${n} = 2, with ticks along the box from 0 to ${Lb}. Read off where the curve is high, where it is zero, and whether it is symmetric.`, `Die Zeichnung zeigt ${psi2} des Zustands ${n} = 2, mit Marken entlang des Kastens von 0 bis ${Lb}. Lies ab, wo die Kurve hoch ist, wo sie null ist und ob sie symmetrisch ist.`),
+        v === 'mean' ? L(`The expectation value ${xm} is the mean of many measurements of the position, each place weighted by ${psi2}. It need not be a place where the particle is ever found: the mean of 1 and 3 is 2.`, `Der Erwartungswert ${xm} ist der Mittelwert vieler Messungen des Orts, jeder Ort gewichtet mit ${psi2}. Er muss kein Ort sein, an dem man das Teilchen je findet: Der Mittelwert von 1 und 3 ist 2.`)
+          : L(`${psi2} is high where the particle is likely to be found and zero where it is never found. The most likely place need not be the mean ${xm} of the places.`, `${psi2} ist hoch, wo man das Teilchen wahrscheinlich findet, und null, wo man es nie findet. Der wahrscheinlichste Ort muss nicht der Mittelwert ${xm} der Orte sein.`),
+        L(`(b) Imagine measuring the position of many particles in this same state with a perfect instrument: would the results still scatter, as ${psi2} says?`, `(b) Stell dir vor, du misst den Ort vieler Teilchen in diesem selben Zustand mit einem perfekten Instrument: Würden die Ergebnisse immer noch streuen, so wie ${psi2} es sagt?`),
       ],
       solution: [
         v === 'mean' ? L(`(a) ${psi2} is symmetric about the middle: as many results left as right, so <b>${xm} = ${ofL(1, 2)}</b>, although the particle is never found exactly there.`, `(a) ${psi2} ist symmetrisch zur Mitte: gleich viele Ergebnisse links wie rechts, also <b>${xm} = ${ofL(1, 2)}</b>, obwohl man das Teilchen genau dort nie findet.`)
@@ -423,13 +437,34 @@
       return { pk, idx: pk.map((s) => bank.indexOf(s)) };
     }
   }
+  // the hints: one for each topic among the statements picked (BANK_U indices), naming them by their place from the top
+  const TOPICS_U = [
+    [[0, 10], () => L('the instruments', 'die Instrumente'), () => L('is the limit set by the instruments, or by the particle itself? Would a perfect instrument get round it?', 'ist die Grenze durch die Instrumente gegeben oder durch das Teilchen selbst? Käme ein perfektes Instrument darum herum?')],
+    [[1, 5, 9], () => L('an exact position and an exact momentum', 'ein genauer Ort und ein genauer Impuls'), () => L(`in ${dx}·${dp} ≥ ${h}/(4π), can both factors be zero at once? What would an exact path need?`, `kann in ${dx}·${dp} ≥ ${h}/(4π) beides zugleich null sein? Was bräuchte eine genaue Bahn?`)],
+    [[2, 6], () => L(`${dx} against ${dp}`, `${dx} gegen ${dp}`), () => L(`if ${dx} gets smaller, what must ${dp} do? A slit fixes ${dx} sideways.`, `wenn ${dx} kleiner wird, was muss ${dp} tun? Ein Spalt legt ${dx} seitwärts fest.`)],
+    [[4, 8], () => L('a particle confined', 'ein eingesperrtes Teilchen'), () => L(`a box or a tiny region limits ${dx}: what does that mean for ${dp}, and so for the momentum itself?`, `ein Kasten oder ein winziger Bereich begrenzt ${dx}: Was heisst das für ${dp} und damit für den Impuls selbst?`)],
+    [[3, 11], () => L('heavy and light bodies', 'schwere und leichte Körper'), () => L(`${dp} = ${m}·Δ${v}: what does a large or a small mass make of the same ${dp}? And how small is ${h}?`, `${dp} = ${m}·Δ${v}: Was macht eine grosse oder eine kleine Masse aus demselben ${dp}? Und wie klein ist ${h}?`)],
+    [[7], () => L('the directions', 'die Richtungen'), () => L(`a slit limits ${dx} sideways: in which direction does the momentum spread?`, `ein Spalt begrenzt ${dx} seitwärts: In welcher Richtung streut der Impuls?`)],
+  ];
+  function uncertHints(idx) {
+    const out = [];
+    for (const [set, name, rule] of TOPICS_U) {
+      const ks = idx.map((b, k) => [b, k + 1]).filter(([b]) => set.includes(b)).map(([, k]) => k);
+      if (!ks.length) continue;
+      const list = ks.length === 1 ? String(ks[0]) : `${ks.slice(0, -1).join(', ')}${L(' and ', ' und ')}${ks[ks.length - 1]}`;
+      const r0 = rule();
+      out.push(L(`${ks.length === 1 ? 'Statement' : 'Statements'} ${list} (from the top): ${name()}. ${r0.charAt(0).toUpperCase() + r0.slice(1)}`, `${ks.length === 1 ? 'Aussage' : 'Aussagen'} ${list} (von oben): ${name()}. ${r0.charAt(0).toUpperCase() + r0.slice(1)}`));
+    }
+    if (out.length < 2) out.push(L('Take the statements one by one: is each about the particle itself or about the measurement?', 'Nimm die Aussagen einzeln: Handelt jede vom Teilchen selbst oder von der Messung?'));
+    return out;
+  }
   function uncertStmts(seed) {
     const { pk, idx } = stmts(BANK_U, seed, 37);
     return {
       title: L('The uncertainty relation: which statements are correct?', 'Die Unschärferelation: Welche Aussagen sind richtig?'),
       text: L('<p>Heisenberg: Δx·Δp ≥ h/(4π). Tick all the statements that are correct.</p>', '<p>Heisenberg: Δx·Δp ≥ h/(4π). Kreuze alle richtigen Aussagen an.</p>'), figs: '',
       questions: [multi('s', pk.map(([t, ok, why]) => ({ html: t(), ok, why: why() })))],
-      hints: [L('The relation is about the particle, not about the instruments.', 'Die Beziehung handelt vom Teilchen, nicht von den Instrumenten.'), L('A small Δx forces a large Δp, and the other way round.', 'Ein kleines Δx erzwingt ein grosses Δp, und umgekehrt.')],
+      hints: uncertHints(idx),
       solution: pk.map(([t, ok, why]) => `${ok ? '✓' : '✗'} ${t()} ${why()}`),
       p: { s: idx },
     };

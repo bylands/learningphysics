@@ -146,11 +146,13 @@
       figure: fig(),
       questions: qs,
       hints: [
-        L('In every short time, the body moves v · Δt: the area of a narrow strip under the v(t) graph. So the change of position is the area under the graph.', 'In jeder kurzen Zeit bewegt sich der Körper um v · Δt: die Fläche eines schmalen Streifens unter dem v(t)-Graphen. Die Ortsänderung ist also die Fläche unter dem Graphen.'),
-        L(`Split the area between ${num(a)} s and ${num(b)} s into rectangles, triangles and trapezoids.`, `Teile die Fläche zwischen ${num(a)} s und ${num(b)} s in Rechtecke, Dreiecke und Trapeze.`),
-        d === 4 ? L('Below the t axis, the body moves backwards: that area counts negative for the displacement, but positive for the distance.', 'Unter der t-Achse bewegt sich der Körper rückwärts: Diese Fläche zählt für die Ortsänderung negativ, für den Weg aber positiv.')
-          : L('A trapezoid under a sloped piece: (v at the start + v at the end) / 2 · Δt.', 'Ein Trapez unter einem schrägen Stück: (v am Anfang + v am Ende) / 2 · Δt.'),
-        L(`Piece by piece: ${clipped.map(([t0, v0, t1, v1]) => sval((v0 + v1) / 2 * (t1 - t0), 'm')).join(', ')}.`, `Stück für Stück: ${clipped.map(([t0, v0, t1, v1]) => sval((v0 + v1) / 2 * (t1 - t0), 'm')).join(', ')}.`),
+        L(`Look at the graph between the marks at ${num(a)} s and ${num(b)} s: it falls into ${clipped.length} pieces, ${clipped.map(([t0, , t1]) => interval(t0, t1)).join(', ')}.${d === 4 ? ' In which of them does it lie below the t axis?' : ' Which of them are horizontal, which sloped?'}`,
+          `Schau dir den Graphen zwischen den Marken bei ${num(a)} s und ${num(b)} s an: Er zerfällt in ${clipped.length} Stücke, ${clipped.map(([t0, , t1]) => interval(t0, t1)).join(', ')}.${d === 4 ? ' In welchen liegt er unter der t-Achse?' : ' Welche davon sind waagrecht, welche schräg?'}`),
+        L(`In every short time the body moves v · Δt, a narrow strip under the graph: the displacement is the area between v(t) and the t axis — a rectangle v · Δt, a triangle ½ · v · Δt or a trapezoid (v at the start + v at the end) / 2 · Δt. Below the t axis the body moves backwards: that area counts negative${d === 4 ? ' for the displacement, but positive for the distance' : ''}.`,
+          `In jeder kurzen Zeit bewegt sich der Körper um v · Δt, ein schmaler Streifen unter dem Graphen: Die Ortsänderung ist die Fläche zwischen v(t) und der t-Achse — ein Rechteck v · Δt, ein Dreieck ½ · v · Δt oder ein Trapez (v am Anfang + v am Ende) / 2 · Δt. Unter der t-Achse bewegt sich der Körper rückwärts: Diese Fläche zählt negativ${d === 4 ? ' für die Ortsänderung, für den Weg aber positiv' : ''}.`),
+        L(`Start with ${interval(clipped[0][0], clipped[0][2])}: there v goes from ${sval(clipped[0][1], 'm/s')} to ${sval(clipped[0][3], 'm/s')}, over Δt = ${num(clipped[0][2] - clipped[0][0])} s. Which shape is that area, and is it above or below the axis?`,
+          `Beginne mit ${interval(clipped[0][0], clipped[0][2])}: Dort geht v in Δt = ${num(clipped[0][2] - clipped[0][0])} s von ${sval(clipped[0][1], 'm/s')} auf ${sval(clipped[0][3], 'm/s')}. Welche Form hat diese Fläche, und liegt sie über oder unter der Achse?`),
+        L(`Then the other pieces in the same way, and add up the areas of all ${clipped.length} pieces with their signs${d === 4 ? '; for the distance, add up their sizes' : ''}.`, `Dann die übrigen Stücke ebenso, und zähle die Flächen aller ${clipped.length} Stücke mit ihren Vorzeichen zusammen${d === 4 ? '; für den Weg zählst du ihre Beträge zusammen' : ''}.`),
       ],
       steps: [
         step(L('The area', 'Die Fläche'), L(`The change of position between ${num(a)} s and ${num(b)} s is the area between the graph and the t axis (shaded; below the axis negative).`, `Die Ortsänderung zwischen ${num(a)} s und ${num(b)} s ist die Fläche zwischen dem Graphen und der t-Achse (schattiert; unter der Achse negativ).`), fig({ areas: clipped })),
@@ -200,10 +202,12 @@
       figure: two(),
       questions: [q1, q2],
       hints: [
-        L('How far a body is from its start is its displacement: the area under its v(t) graph from t = 0, below the axis negative.', 'Wie weit ein Körper von seinem Start entfernt ist, ist seine Ortsänderung: die Fläche unter seinem v(t)-Graphen ab t = 0, unter der Achse negativ.'),
-        L(`The velocity at ${num(tq)} s only says how fast each moves right then, not how far it has come.`, `Die Geschwindigkeit bei ${num(tq)} s sagt nur, wie schnell sich jeder gerade dann bewegt, nicht wie weit er schon gekommen ist.`),
-        L(`Add up the areas up to ${num(tq)} s for A and for B, piece by piece.`, `Zähle die Flächen bis ${num(tq)} s für A und für B Stück für Stück zusammen.`),
-        L(`Δs_A = ${sval(sA, 'm')}, Δs_B = ${sval(sB, 'm')}.`, `Δs_A = ${sval(sA, 'm')}, Δs_B = ${sval(sB, 'm')}.`),
+        L(`Both start at the same point. Follow A and B from t = 0 to the mark at ${num(tq)} s: where does each graph lie above, where below the t axis? The height at ${num(tq)} s only says who is faster right then, not how far each has come.`,
+          `Beide starten am selben Punkt. Verfolge A und B von t = 0 bis zur Marke bei ${num(tq)} s: Wo liegt jeder Graph über, wo unter der t-Achse? Die Höhe bei ${num(tq)} s sagt nur, wer gerade dann schneller ist, nicht wie weit jeder schon gekommen ist.`),
+        L(`How far a body is from its start is its displacement Δs: the area under its v(t) graph from t = 0 to ${num(tq)} s, below the axis negative. Farther from the start means the larger |Δs|.`,
+          `Wie weit ein Körper von seinem Start entfernt ist, ist seine Ortsänderung Δs: die Fläche unter seinem v(t)-Graphen von t = 0 bis ${num(tq)} s, unter der Achse negativ. Weiter vom Start heisst grösseres |Δs|.`),
+        L(`For A the areas up to ${num(tq)} s add up to Δs_A = ${sval(sA, 'm')}. Now do the same for B, piece by piece, with the signs.`, `Bei A ergeben die Flächen bis ${num(tq)} s zusammen Δs_A = ${sval(sA, 'm')}. Mach dasselbe nun für B, Stück für Stück, mit den Vorzeichen.`),
+        L('Then compare |Δs_A| and |Δs_B|: the sign only tells on which side of the start each one is.', 'Vergleiche dann |Δs_A| und |Δs_B|: Das Vorzeichen sagt nur, auf welcher Seite des Starts jeder ist.'),
       ],
       steps: [
         step(L('The areas', 'Die Flächen'), L(`Up to ${num(tq)} s, A has moved ${sval(sA, 'm')} and B ${sval(sB, 'm')} (the areas with their signs).`, `Bis ${num(tq)} s hat sich A um ${sval(sA, 'm')} und B um ${sval(sB, 'm')} bewegt (die Flächen mit ihren Vorzeichen).`), two({ areas: true })),
@@ -265,10 +269,13 @@
       figure: fig(),
       questions: [q1, q2],
       hints: [
-        L('The mean velocity is the displacement divided by the time it takes: v̄ = Δs/Δt.', 'Die mittlere Geschwindigkeit ist die Ortsänderung geteilt durch die Zeit, die sie dauert: v̄ = Δs/Δt.'),
-        L(`The displacement is the area under the v(t) graph between ${num(a)} s and ${num(b)} s${d === 4 ? ', below the t axis negative' : ''}.`, `Die Ortsänderung ist die Fläche unter dem v(t)-Graphen zwischen ${num(a)} s und ${num(b)} s${d === 4 ? ', unter der t-Achse negativ' : ''}.`),
-        L(`v(t) bends in between, so the mean of the velocities at ${num(a)} s and ${num(b)} s is not the mean velocity.`, `v(t) knickt dazwischen, also ist der Mittelwert der Geschwindigkeiten bei ${num(a)} s und ${num(b)} s nicht die mittlere Geschwindigkeit.`),
-        L(`Piece by piece: ${pieceText}.`, `Stück für Stück: ${pieceText}.`),
+        L(`Between ${num(a)} s and ${num(b)} s the graph has ${clipped.length} straight pieces: ${clipped.map(([t0, , t1]) => interval(t0, t1)).join(', ')}. It bends in between, so the mean of the velocities at ${num(a)} s and ${num(b)} s is not the mean velocity.${d === 4 ? ' Where does it lie below the t axis?' : ''}`,
+          `Zwischen ${num(a)} s und ${num(b)} s hat der Graph ${clipped.length} gerade Stücke: ${clipped.map(([t0, , t1]) => interval(t0, t1)).join(', ')}. Er knickt dazwischen, also ist der Mittelwert der Geschwindigkeiten bei ${num(a)} s und ${num(b)} s nicht die mittlere Geschwindigkeit.${d === 4 ? ' Wo liegt er unter der t-Achse?' : ''}`),
+        L(`The mean velocity is v̄ = Δs/Δt: the displacement Δs, the area under v(t) from ${num(a)} s to ${num(b)} s${d === 4 ? ' (below the t axis negative)' : ''}, divided by the whole time Δt.`,
+          `Die mittlere Geschwindigkeit ist v̄ = Δs/Δt: die Ortsänderung Δs, die Fläche unter v(t) von ${num(a)} s bis ${num(b)} s${d === 4 ? ' (unter der t-Achse negativ)' : ''}, geteilt durch die ganze Zeit Δt.`),
+        L(`Start with ${interval(clipped[0][0], clipped[0][2])}: there v goes from ${sval(clipped[0][1], 'm/s')} to ${sval(clipped[0][3], 'm/s')}, over ${num(clipped[0][2] - clipped[0][0])} s. Which shape is that area?`,
+          `Beginne mit ${interval(clipped[0][0], clipped[0][2])}: Dort geht v in ${num(clipped[0][2] - clipped[0][0])} s von ${sval(clipped[0][1], 'm/s')} auf ${sval(clipped[0][3], 'm/s')}. Welche Form hat diese Fläche?`),
+        L(`Then add the areas of all ${clipped.length} pieces${d === 4 ? ' with their signs' : ''} to get Δs, and divide by the time from ${num(a)} s to ${num(b)} s.`, `Zähle dann die Flächen aller ${clipped.length} Stücke${d === 4 ? ' mit ihren Vorzeichen' : ''} zu Δs zusammen und teile durch die Zeit von ${num(a)} s bis ${num(b)} s.`),
       ],
       steps: [
         step(L('The displacement', 'Die Ortsänderung'), L(`The area between the graph and the t axis from ${num(a)} s to ${num(b)} s, piece by piece: ${pieceText}. Together Δs = ${sval(ds, 'm')}.`,

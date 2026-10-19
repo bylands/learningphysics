@@ -70,9 +70,9 @@
       figure: figure(),
       questions: [two(r, 'force', T('How does the force of A on B compare with the force of B on A?', 'Wie gross ist die Kraft von A auf B im Vergleich zur Kraft von B auf A?'), T('Why?', 'Warum?'), preds, reasons), accQ],
       hints: [
-        T('Which force does A exert on B, and which does B exert on A? Do they belong together?', 'Welche Kraft übt A auf B aus, und welche B auf A? Gehören sie zusammen?'),
-        T('Plan: the two forces form an interaction pair — use the third law. For the accelerations, use the second law for each cart.', 'Plan: Die beiden Kräfte bilden ein Wechselwirkungspaar — wende das dritte Newtonsche Gesetz an. Für die Beschleunigungen wende das zweite Gesetz auf jeden Wagen an.'),
-        T('Recall the third law: how do F(A on B) and F(B on A) compare in size and direction? Second law: a = F/m.', 'Erinnere dich an das dritte Gesetz: Wie verhalten sich F(A→B) und F(B→A) in Grösse und Richtung? Zweites Gesetz: a = F/m.'),
+        T(`Cart A carries a strong magnet, cart B ${iron ? 'a block of iron' : 'a much weaker magnet'}. Which force does A exert on B, and which does B exert on A? Do they belong to the same interaction?`, `Wagen A trägt einen starken Magneten, Wagen B ${iron ? 'einen Eisenklotz' : 'einen viel schwächeren Magneten'}. Welche Kraft übt A auf B aus, und welche B auf A? Gehören sie zur selben Wechselwirkung?`),
+        T('Plan: compare the two forces with the third law first; only then use the second law for each cart on its own, with its own mass.', 'Plan: Vergleiche zuerst die beiden Kräfte mit dem dritten Newtonschen Gesetz; wende erst dann das zweite Gesetz auf jeden Wagen einzeln an, mit seiner eigenen Masse.'),
+        T(`Recall the third law: how do F(A on B) and F(B on A) compare in size and direction — does it matter that ${iron ? 'only A carries a magnet' : 'the magnet on A is much stronger'}? Second law: a = F/m.`, `Erinnere dich an das dritte Gesetz: Wie verhalten sich F(A→B) und F(B→A) in Grösse und Richtung — spielt es eine Rolle, dass ${iron ? 'nur A einen Magneten trägt' : 'der Magnet auf A viel stärker ist'}? Zweites Gesetz: a = F/m.`),
         T(`Here ${A} has ${qty(mA, 'kg')} and ${B} ${qty(mB, 'kg')}. Once you know how the two forces compare, apply a = F/m to each cart.`, `Hier hat ${A} ${qty(mA, 'kg')} und ${B} ${qty(mB, 'kg')}. Wenn du weisst, wie sich die beiden Kräfte verhalten, wende a = F/m auf jeden Wagen an.`),
       ],
       steps: [

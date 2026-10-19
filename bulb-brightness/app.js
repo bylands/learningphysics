@@ -188,15 +188,16 @@
         `Alle Zweige sind direkt mit den Batterien verbunden, also bekommt jeder Zweig die vollen ${volts(ex.E)} (parallele Teile haben dieselbe Spannung).`));
     } else {
       const step = ex.bulbs.map((b) => b.steps[0]).find((s) => s && s.kind === 'series' && s.why !== 'some');
-      const shares = live.map((k) => L(`${name(k)} gets ${gets(k.iv)}`, `${name(k)} bekommt ${gets(k.iv)}`));
-      out.push(L(`Voltage divider for the whole circuit (the parts in series share ${volts(ex.E)}): ${step ? stepText(step) + '. ' : ''}So ${and(shares)}.`,
-        `Spannungsteiler für die ganze Schaltung (die Teile in Serie teilen sich ${volts(ex.E)}): ${step ? cap(stepText(step)) + '. ' : ''}Also: ${and(shares)}.`));
+      // the first step of the divider, not the shares of the parts (for a single bulb its answer)
+      out.push(L(`Voltage divider for the whole circuit (the parts in series share ${volts(ex.E)}): ${step ? stepText(step) + '. ' : ''}${live.length > 1 ? `How much do ${names(live)} each get` : `How much does ${names(live)} get`}, compared with ${V0()}?`,
+        `Spannungsteiler für die ganze Schaltung (die Teile in Serie teilen sich ${volts(ex.E)}): ${step ? cap(stepText(step)) + '. ' : ''}Wie viel ${live.length > 1 ? `bekommen ${names(live)} jeweils` : `bekommt ${names(live)}`}, verglichen mit ${V0()}?`));
     }
 
     const deep = ex.bulbs.filter((b) => !b.shorted).sort((x, y) => y.steps.length - x.steps.length)[0];
     if (deep && deep.steps.length >= 2) {
-      out.push(L(`For ${it(deep.name)}: ${deep.steps.map(stepText).join('; ')}. So ${relation(Vof(deep.name), deep.iv)}. Is that more or less than ${V0()}?`,
-        `Für ${it(deep.name)}: ${cap(deep.steps.map(stepText).join('; '))}. Somit gilt ${relation(Vof(deep.name), deep.iv)}. Ist das mehr oder weniger als ${V0()}?`));
+      // the reasoning up to the last step: the bound of its voltage, compared with V0, is left out
+      out.push(L(`For ${it(deep.name)}: ${deep.steps.map(stepText).join('; ')}. What does that give for ${Vof(deep.name)}: more or less than ${V0()}?`,
+        `Für ${it(deep.name)}: ${cap(deep.steps.map(stepText).join('; '))}. Was ergibt das für ${Vof(deep.name)}: mehr oder weniger als ${V0()}?`));
     }
     return out;
   }
@@ -334,12 +335,32 @@
       steps.map((t) => `<p>${t}</p>`).join('') +
       `<ul>${e.bulbs.filter((b) => !b.gone).map((b) => `<li>${it(b.name)}: ${bulbWhy(e, b)}.</li>`).join('')}</ul>`;
   }
+  // The hints of a change: where it acts, what it does to its group, and the first share from the
+  // batteries inwards, as questions; what each bulb does (the answers) is left to the student.
   function changeHints(e) {
-    return [
-      L('The batteries keep their voltage. Find the part of the circuit the change affects directly: at the same voltage, does it now let more or less current through?', 'Die Batterien behalten ihre Spannung. Finde den Teil der Schaltung, den die Änderung direkt betrifft: Lässt er bei gleicher Spannung jetzt mehr oder weniger Strom durch?'),
-      firstText(e),
-      ...(e.story.length > 1 ? [`${L('From the batteries inwards', 'Von den Batterien nach innen')}: ${levelText(e, e.story[1], 1)}`] : []),
-    ];
+    const f = e.story[0], part = pname(f.part), group = pname(f.group);
+    const where = L(`${changeText(e)} It acts on ${part}, in ${group}. The batteries keep their voltage, ${volts(e.E)}.`,
+      `${changeText(e)} Das betrifft ${part}, in ${pname(f.group, 'dat')}. Die Batterien behalten ihre Spannung, ${volts(e.E)}.`);
+    const first = {
+      open: L(`Where ${switchOf(e)} was closed${e.x.t === 'L' ? ' (screwed in)' : ''}, there is now a gap: can current still flow through the branch of ${part}, and through what is in series with the gap? ${cap(group)} has one branch less: at the same voltage, does it let more or less current through?`,
+        `Wo ${switchOf(e)} ${e.x.t === 'L' ? 'eingeschraubt' : 'geschlossen'} war, ist jetzt eine Lücke: Kann noch Strom durch den Zweig von ${pname(f.part, 'dat')} fliessen, und durch das, was mit der Lücke in Serie ist? ${cap(group)} hat einen Zweig weniger: Lässt sie bei gleicher Spannung mehr oder weniger Strom durch?`),
+      close: L(`The closed switch S connects the branch of ${part}, which carried no current before. ${cap(group)} has one branch more: at the same voltage, does it let more or less current through?`,
+        `Der geschlossene Schalter S verbindet den Zweig von ${pname(f.part, 'dat')}, der vorher keinen Strom führte. ${cap(group)} hat einen Zweig mehr: Lässt sie bei gleicher Spannung mehr oder weniger Strom durch?`),
+      bridge: L(`The closed switch S puts a wire across ${part}. Which way does the current take, and what voltage is left across ${part}?`,
+        `Der geschlossene Schalter S legt einen Draht parallel zu ${part}. Welchen Weg nimmt der Strom, und welche Spannung bleibt an ${part}?`),
+      unbridge: L(`Opening S removes the wire across ${part}: the current has to pass through ${part} now. Does this part of the circuit now need more or less voltage for its current than the wire did?`,
+        `Das Öffnen von S entfernt den Draht parallel zu ${part}: Der Strom muss jetzt durch ${part}. Braucht dieser Teil der Schaltung für seinen Strom jetzt mehr oder weniger Spannung als der Draht?`),
+    }[f.kind];
+    const out = [where, first];
+    const s1 = e.story[1];
+    if (s1) {
+      const sp = pname(s1.part), others = pnames(s1.others);
+      out.push(s1.kind === 'parallel'
+        ? L(`From the batteries inwards: ${sp} is in parallel with ${others}, so they have the same voltage, the voltage of the batteries. Does it change?`, `Von den Batterien nach innen: ${cap(sp)} ist parallel zu ${pnames(s1.others, 'dat')}, sie haben also dieselbe Spannung, die Spannung der Batterien. Ändert sie sich?`)
+        : L(`From the batteries inwards: ${sp} is in series with ${others}, and the same current flows through all of them. Its share of the ${volts(e.E)} goes with how much voltage it needs for that current (voltage divider): does its share grow or shrink, and so what is left for ${others}?`,
+          `Von den Batterien nach innen: ${cap(sp)} ist in Serie mit ${pnames(s1.others, 'dat')}, und durch alle fliesst derselbe Strom. Ihr Anteil an den ${volts(e.E)} hängt davon ab, wie viel Spannung sie für diesen Strom braucht (Spannungsteiler): Wird ihr Anteil grösser oder kleiner, und was bleibt also für ${others}?`));
+    }
+    return out;
   }
   // What a wrong prediction suggests (diagnoseChange); a nudge while the exercise is open.
   function whyChange(code, b, nudge = !!st && !st.solved && !st.revealed) {

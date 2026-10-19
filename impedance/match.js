@@ -346,50 +346,72 @@
       `Kurve ${name(k)} ${DOES[key][f[key]]()}, aber die Kurve dieser Schaltung ${DOES[key][t[key]]()}.`);
   }
 
+  // The circuit in words, for the hints.
+  const DESC = {
+    R: () => L('a resistor alone', 'ein Widerstand allein'),
+    L: () => L('a coil alone', 'eine Spule allein'),
+    C: () => L('a capacitor alone', 'ein Kondensator allein'),
+    'RL-series': () => L('<i>R</i> and <i>L</i> in series', '<i>R</i> und <i>L</i> in Serie'),
+    'RC-series': () => L('<i>R</i> and <i>C</i> in series', '<i>R</i> und <i>C</i> in Serie'),
+    'RL-parallel': () => L('<i>R</i> and <i>L</i> in parallel', '<i>R</i> und <i>L</i> parallel'),
+    'RC-parallel': () => L('<i>R</i> and <i>C</i> in parallel', '<i>R</i> und <i>C</i> parallel'),
+    'RLC-series': () => L('<i>R</i>, <i>L</i> and <i>C</i> all in series', '<i>R</i>, <i>L</i> und <i>C</i> alle in Serie'),
+    'RLC-parallel': () => L('<i>R</i>, <i>L</i> and <i>C</i> all in parallel', '<i>R</i>, <i>L</i> und <i>C</i> alle parallel'),
+    'LC-series': () => L('<i>L</i> and <i>C</i> in series, without a resistor', '<i>L</i> und <i>C</i> in Serie, ohne Widerstand'),
+    'LC-parallel': () => L('<i>L</i> and <i>C</i> in parallel, without a resistor', '<i>L</i> und <i>C</i> parallel, ohne Widerstand'),
+    'RLC-series-parallel': () => L('<i>R</i> in series with the pair <i>L</i> ∥ <i>C</i> (coil and capacitor parallel to each other)', '<i>R</i> in Serie mit dem Paar <i>L</i> ∥ <i>C</i> (Spule und Kondensator parallel zueinander)'),
+    'RLC-parallel-series': () => L('<i>R</i> in parallel with the pair <i>L</i> + <i>C</i> (coil and capacitor in series with each other)', '<i>R</i> parallel zum Paar <i>L</i> + <i>C</i> (Spule und Kondensator in Serie zueinander)'),
+  };
+  // The hints: this circuit (or this curve) first, then the behaviour of its own parts at the
+  // ends of the ω axis, the rule for series and parallel, and where to start. They do not say
+  // what Z does at an end or at ω₀ (the questions of identify.js) nor which curve or circuit fits.
   function hints(ex) {
-    const id = ex.net, f = features(id);
+    const id = ex.net, f = features(id), res = resonant(id);
+    const parts = (x) => [has(x, 'L') && L('Coil: its reactance <i>ωL</i> is small for small <i>ω</i> (a wire) and large for large <i>ω</i> (a gap).', 'Spule: Ihr Blindwiderstand <i>ωL</i> ist für kleines <i>ω</i> klein (ein Draht) und für grosses <i>ω</i> gross (ein Unterbruch).'),
+      has(x, 'C') && L('Capacitor: its reactance 1/(<i>ωC</i>) is large for small <i>ω</i> (a gap) and small for large <i>ω</i> (a wire).', 'Kondensator: Sein Blindwiderstand 1/(<i>ωC</i>) ist für kleines <i>ω</i> gross (ein Unterbruch) und für grosses <i>ω</i> klein (ein Draht).')].filter(Boolean).join(' ');
+    const curve = () => `${[DOES.lo[f.lo](), DOES.hi[f.hi](), ...(res ? [DOES.res[f.res]()] : [])].join(', ').replace(/, ([^,]*)$/, L(' and $1', ' und $1'))}`;
     if (single(id)) {
       const rules = L('Resistor: <i>Z</i> = <i>R</i> at every <i>ω</i>. Coil: <i>Z</i> = <i>ωL</i>, small for small <i>ω</i> (a wire) and large for large <i>ω</i> (a gap). Capacitor: <i>Z</i> = 1/(<i>ωC</i>), large for small <i>ω</i> (a gap) and small for large <i>ω</i> (a wire).',
         'Widerstand: <i>Z</i> = <i>R</i> bei jedem <i>ω</i>. Spule: <i>Z</i> = <i>ωL</i>, klein für kleines <i>ω</i> (ein Draht) und gross für grosses <i>ω</i> (ein Unterbruch). Kondensator: <i>Z</i> = 1/(<i>ωC</i>), gross für kleines <i>ω</i> (ein Unterbruch) und klein für grosses <i>ω</i> (ein Draht).');
-      const ends = `<ul><li>${L('For <i>ω</i> → 0', 'Für <i>ω</i> → 0')}: ${Zis[f.lo]}</li><li>${L('For <i>ω</i> → ∞', 'Für <i>ω</i> → ∞')}: ${Zis[f.hi]}</li></ul>`;
       // directly, without the questions: the hints ask them instead (both ends of the ω axis)
       if (ex.direct && ex.inverse) {
-        return [rules,
-          L('Read the curve at both ends: what does <i>Z</i> do for <i>ω</i> → 0, and for <i>ω</i> → ∞? Only a capacitor blocks for small <i>ω</i>, only a coil for large <i>ω</i>; a resistor alone gives a horizontal line.',
-            'Lies die Kurve an beiden Enden ab: Was macht <i>Z</i> für <i>ω</i> → 0 und für <i>ω</i> → ∞? Nur ein Kondensator sperrt für kleines <i>ω</i>, nur eine Spule für grosses <i>ω</i>; ein Widerstand allein ergibt eine waagrechte Linie.'),
-          `${L('This curve:', 'Diese Kurve:')}${ends}${L('Look for the circuit whose impedance does this.', 'Suche die Schaltung, deren Impedanz das tut.')}`];
+        return [L(`This curve ${curve()}. Which single element has an impedance that does this?`, `Diese Kurve ${curve()}. Welches einzelne Bauteil hat eine Impedanz, die das tut?`),
+          rules,
+          L('Only a capacitor blocks for small <i>ω</i>, only a coil for large <i>ω</i>; a resistor alone gives a horizontal line. Compare that with this curve for <i>ω</i> → 0 and for <i>ω</i> → ∞.',
+            'Nur ein Kondensator sperrt für kleines <i>ω</i>, nur eine Spule für grosses <i>ω</i>; ein Widerstand allein ergibt eine waagrechte Linie. Vergleiche das mit dieser Kurve für <i>ω</i> → 0 und für <i>ω</i> → ∞.')];
       }
-      if (ex.direct) {
-        return [rules,
-          L('Ask what <i>Z</i> does at both ends of the <i>ω</i> axis: for <i>ω</i> → 0, and for <i>ω</i> → ∞. Where <i>Z</i> → 0 the element acts like a wire, where <i>Z</i> → ∞ like a gap.',
-            'Frage, was <i>Z</i> an beiden Enden der <i>ω</i>-Achse tut: für <i>ω</i> → 0 und für <i>ω</i> → ∞. Wo <i>Z</i> → 0, wirkt das Bauteil wie ein Draht, wo <i>Z</i> → ∞, wie ein Unterbruch.'),
-          `${L('For this element:', 'Für dieses Bauteil:')}<ul>${[...new Set(phases(id).map((k) => alone(id, k)))].map((x) => `<li>${x}</li>`).join('')}</ul>${L('Look for the curve that does this.', 'Suche die Kurve, die das tut.')}`];
-      }
+      const el = { R: L('a resistor', 'ein Widerstand'), L: L('a coil', 'eine Spule'), C: L('a capacitor', 'ein Kondensator') }[id];
+      const first = L(`The circuit is ${el} alone, with ${ZOF[id]}. What does that give for <i>ω</i> → 0, and for <i>ω</i> → ∞?`, `Die Schaltung ist ${el} allein, mit ${ZOF[id]}. Was ergibt das für <i>ω</i> → 0, und für <i>ω</i> → ∞?`);
+      const step = { R: L('<i>ω</i> does not appear in <i>Z</i> = <i>R</i>: the same value at every <i>ω</i>.', '<i>ω</i> kommt in <i>Z</i> = <i>R</i> nicht vor: derselbe Wert bei jedem <i>ω</i>.'),
+        L: L('Put <i>ω</i> = 0 into <i>ωL</i>, then let <i>ω</i> grow: does <i>Z</i> grow in proportion to <i>ω</i> or like 1/<i>ω</i>?', 'Setze <i>ω</i> = 0 in <i>ωL</i> ein und lass dann <i>ω</i> wachsen: Wächst <i>Z</i> proportional zu <i>ω</i> oder wie 1/<i>ω</i>?'),
+        C: L('Let <i>ω</i> get very small in 1/(<i>ωC</i>), then very large: what happens to the fraction?', 'Lass <i>ω</i> in 1/(<i>ωC</i>) sehr klein werden, dann sehr gross: Was geschieht mit dem Bruch?') }[id];
+      if (ex.direct) return [first, rules, step];
+      const shift = { R: L('The shift: in the resistor <i>u</i> = <i>R</i>·<i>i</i> at every moment. Do current and voltage peak at the same time?', 'Die Verschiebung: Im Widerstand gilt in jedem Moment <i>u</i> = <i>R</i>·<i>i</i>. Erreichen Strom und Spannung ihr Maximum gleichzeitig?'),
+        L: L('The shift: in the coil <i>u</i> = <i>L</i>·d<i>i</i>/d<i>t</i>. The voltage is largest where the current changes fastest: before or after the current peaks?', 'Die Verschiebung: An der Spule gilt <i>u</i> = <i>L</i>·d<i>i</i>/d<i>t</i>. Die Spannung ist am grössten, wo sich der Strom am schnellsten ändert: vor oder nach dem Maximum des Stroms?'),
+        C: L('The shift: in the capacitor <i>i</i> = <i>C</i>·d<i>u</i>/d<i>t</i>. The current is largest where the voltage changes fastest: before or after the voltage peaks?', 'Die Verschiebung: Beim Kondensator gilt <i>i</i> = <i>C</i>·d<i>u</i>/d<i>t</i>. Der Strom ist am grössten, wo sich die Spannung am schnellsten ändert: vor oder nach dem Maximum der Spannung?') }[id];
+      return [first, shift, step];
+    }
+    const rule = L('In series, a gap blocks the current (<i>Z</i> → ∞) and a wire adds nothing. In parallel, a wire short-circuits everything else (<i>Z</i> → 0) and a gap carries no current.',
+      'In Serie sperrt ein Unterbruch den Strom (<i>Z</i> → ∞), und ein Draht trägt nichts bei. Parallel schliesst ein Draht alles andere kurz (<i>Z</i> → 0), und ein Unterbruch führt keinen Strom.');
+    const pair = pairOf(NETS[id].tree);
+    const resRule = !res ? '' : ` ${pair.op === 's'
+      ? L('Here coil and capacitor are in series with each other: at <i>ω</i>₀ = 1/√(<i>LC</i>) their reactances are equal and cancel, so the two together act like a wire.', 'Hier sind Spule und Kondensator in Serie zueinander: Bei <i>ω</i>₀ = 1/√(<i>LC</i>) sind ihre Blindwiderstände gleich gross und heben sich auf, die beiden wirken also zusammen wie ein Draht.')
+      : L('Here coil and capacitor are in parallel with each other: at <i>ω</i>₀ = 1/√(<i>LC</i>) their currents cancel, so the two together act like a gap.', 'Hier sind Spule und Kondensator parallel zueinander: Bei <i>ω</i>₀ = 1/√(<i>LC</i>) heben sich ihre Ströme auf, die beiden wirken also zusammen wie ein Unterbruch.')}`;
+    if (ex.inverse) {
       return [
-        rules,
-        L('The shift: <i>u</i> = <i>R</i>·<i>i</i> in a resistor, <i>u</i> = <i>L</i>·d<i>i</i>/d<i>t</i> in a coil, <i>i</i> = <i>C</i>·d<i>u</i>/d<i>t</i> in a capacitor. Where the one changes fastest, the other one peaks.',
-          'Die Verschiebung: <i>u</i> = <i>R</i>·<i>i</i> beim Widerstand, <i>u</i> = <i>L</i>·d<i>i</i>/d<i>t</i> bei der Spule, <i>i</i> = <i>C</i>·d<i>u</i>/d<i>t</i> beim Kondensator. Wo sich das eine am schnellsten ändert, ist das andere am grössten.'),
-        `${L('For this element:', 'Für dieses Bauteil:')}<ul><li>${L('For <i>ω</i> → 0', 'Für <i>ω</i> → 0')}: ${Zis[f.lo]}</li><li>${L('For <i>ω</i> → ∞', 'Für <i>ω</i> → ∞')}: ${Zis[f.hi]}</li><li>${SHIFT[SHIFT_OF[id]]()}</li></ul>`,
+        L(`This curve ${curve()}. For each of these, ask what in a circuit can do it.`, `Diese Kurve ${curve()}. Frage dich bei jedem davon, was in einer Schaltung das bewirken kann.`),
+        parts('LC-series'),
+        rule + (res ? ` ${RES_FACT()} ${L('In series coil and capacitor then act together like a wire, in parallel like a gap.', 'In Serie wirken Spule und Kondensator dann zusammen wie ein Draht, parallel wie ein Unterbruch.')}` : ''),
+        L(`Start with <i>ω</i> → 0: which element acts like a gap there, which like a wire, and what would have to sit where so that the curve ${DOES.lo[f.lo]()}?`, `Beginne mit <i>ω</i> → 0: Welches Bauteil wirkt dort wie ein Unterbruch, welches wie ein Draht, und was müsste wo sitzen, damit die Kurve ${DOES_DE_SUB.lo[f.lo]}?`),
       ];
     }
-    const out = [
-      L('Coil: its reactance <i>ωL</i> is small for small <i>ω</i> (a wire) and large for large <i>ω</i> (a gap). Capacitor: its reactance 1/(<i>ωC</i>) is large for small <i>ω</i> (a gap) and small for large <i>ω</i> (a wire).',
-        'Spule: Ihr Blindwiderstand <i>ωL</i> ist für kleines <i>ω</i> klein (ein Draht) und für grosses <i>ω</i> gross (ein Unterbruch). Kondensator: Sein Blindwiderstand 1/(<i>ωC</i>) ist für kleines <i>ω</i> gross (ein Unterbruch) und für grosses <i>ω</i> klein (ein Draht).'),
-      L('In series, a gap blocks the current (<i>Z</i> → ∞) and a wire adds nothing. In parallel, a wire short-circuits everything else (<i>Z</i> → 0) and a gap carries no current.',
-        'In Serie sperrt ein Unterbruch den Strom (<i>Z</i> → ∞), und ein Draht trägt nichts bei. Parallel schliesst ein Draht alles andere kurz (<i>Z</i> → 0), und ein Unterbruch führt keinen Strom.'),
+    return [
+      L(`This circuit: ${DESC[id]()}. For ${res ? 'both ends of the <i>ω</i> axis and at <i>ω</i>₀' : 'both ends of the <i>ω</i> axis'}, ask which of its parts acts like a wire and which like a gap.`,
+        `Diese Schaltung: ${DESC[id]()}. Frage dich für ${res ? 'beide Enden der <i>ω</i>-Achse und bei <i>ω</i>₀' : 'beide Enden der <i>ω</i>-Achse'}, welcher ihrer Teile wie ein Draht und welcher wie ein Unterbruch wirkt.`),
+      parts(id),
+      rule + resRule,
+      `${facts(id, 'lo')} ${L(`Redraw the circuit like that: is there a gap in series with everything, a wire parallel to everything, or ${has(id, 'R') ? 'only <i>R</i>' : 'neither'}? Then the same for <i>ω</i> → ∞.`, `Zeichne die Schaltung so neu: Gibt es einen Unterbruch in Serie zu allem, einen Draht parallel zu allem, oder ${has(id, 'R') ? 'nur <i>R</i>' : 'keines von beiden'}? Dann dasselbe für <i>ω</i> → ∞.`)}`,
     ];
-    if (resonant(id)) {
-      out.push(L('At <i>ω</i>₀ = 1/√(<i>LC</i>) the reactances of coil and capacitor are equal and cancel: in series the two act together like a wire, in parallel like a gap.',
-        'Bei <i>ω</i>₀ = 1/√(<i>LC</i>) sind die Blindwiderstände von Spule und Kondensator gleich gross und heben sich auf: In Serie wirken die beiden zusammen wie ein Draht, parallel wie ein Unterbruch.'));
-    }
-    if (ex.inverse) {
-      out.push(L('Read the curve at both ends, and its minimum or maximum if it has one. Then ask what can block the whole current there, or short-circuit everything.', 'Lies die Kurve an beiden Enden ab, und ihr Minimum oder Maximum, falls sie eines hat. Frage dann, was dort den ganzen Strom sperren oder alles kurzschliessen kann.'));
-      out.push(`${L('This curve:', 'Diese Kurve:')}<ul>${phases(id).map((k) => `<li>${inverseText(k, f[k]).value}</li>`).join('')}</ul>${L('Look for the circuit that fits all of this.', 'Suche die Schaltung, die zu all dem passt.')}`);
-      return out;
-    }
-    const list = phases(id).map((k) => `<li>${{ lo: L('For <i>ω</i> → 0', 'Für <i>ω</i> → 0'), hi: L('For <i>ω</i> → ∞', 'Für <i>ω</i> → ∞'), res: L('At <i>ω</i>₀', 'Bei <i>ω</i>₀') }[k]}: ${k === 'res' ? RES[f.res]() : Zis[f[k]]}</li>`).join('');
-    out.push(`${L('For this circuit:', 'Für diese Schaltung:')}<ul>${list}</ul>${L('Look for the curve that does all of this.', 'Suche die Kurve, die all das tut.')}`);
-    return out;
   }
 
   // The labels at the ends and at ω₀ of the right curve, for the solution.

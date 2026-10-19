@@ -20,7 +20,8 @@
 //                      view.hl: the states to highlight
 //   steps(p, formal)   the worked solution after the energies of the states: [{ rule, text,
 //                      bars, hl }], bars and hl the states whose energy bars to show and highlight
-//   hint(p, formal)    the last hint: the equation to solve
+//   hint(p, formal)    what the last hint adds for the situation (which states to compare, a
+//                      height or relation from the text), or '': not the energies of the states
 //   slips(p)           (optional) heights measured from the wrong level: [{ i, k, tex, why() }],
 //                      a wrong energy of state i (form k), for "find the error" (concepts.js)
 (function (root) {
@@ -167,7 +168,7 @@
           dm(p.ask === 'v' ? `${v}^2 = 2\\,g\\,h \\;\\Rightarrow\\; ${v} = \\sqrt{2\\,g\\,h}` : `h = \\frac{${v}^2}{2\\,g}`), ALL),
       ];
     },
-    hint: (p) => m$(p.dir === 'drop' ? `${pot('h')} = ${kin('v')}` : `${kin('v_0')} = ${pot('h')}`),
+    hint: () => '',
   };
 
   // ---------------------------------------------------------------- 2 part of the way down (worksheet A)
@@ -231,7 +232,8 @@
       }
       return out;
     },
-    hint: (p, formal) => m$(`${pot('h')} = ${pot("h'")} + ${kin("v'")}`) + (formal ? L(`, with $h' = ${coef(p.fr)}h$.`, `, mit $h' = ${coef(p.fr)}h$.`) : ''),
+    hint: (p, formal) => (formal ? L(`Here $h' = ${coef(p.fr)}h$: put that in for $h'$.`, `Hier ist $h' = ${coef(p.fr)}h$: Setze das für $h'$ ein.`)
+      : L(`The height of ② is $h' = ${tq(p.V.hp, 'm')}$.`, `Die Höhe von ② ist $h' = ${tq(p.V.hp, 'm')}$.`)),
   };
 
   // ---------------------------------------------------------------- 3 spring launcher
@@ -305,7 +307,7 @@
       step(L('Energy conservation', 'Energieerhaltung'), `<p>${L('The elastic energy of the spring becomes kinetic energy:', 'Die Spannenergie der Feder wird zu kinetischer Energie:')}</p>${dm(`${el('s')} = ${kin('v')}`)}`, ALL, [0, 1]),
       step(L('Solve', 'Auflösen'), `<p>${L(`Multiply by 2 and solve for $${p.ask}$:`, `Multipliziere mit 2 und löse nach $${p.ask}$ auf:`)}</p>` + dm(p.ask === 'v' ? 'k\\,s^2 = m\\,v^2 \\;\\Rightarrow\\; v^2 = \\frac{k\\,s^2}{m} \\;\\Rightarrow\\; v = s\\,\\sqrt{\\frac{k}{m}}' : 'k\\,s^2 = m\\,v^2 \\;\\Rightarrow\\; k = \\frac{m\\,v^2}{s^2}'), ALL),
     ],
-    hint: () => m$(`${el('s')} = ${kin('v')}`),
+    hint: () => '',
   };
 
   // ---------------------------------------------------------------- 4 pendulum
@@ -382,7 +384,9 @@
         step(L('Energy conservation', 'Energieerhaltung'), `<p>${L('The string does no work (it pulls at right angles to the motion), so', 'Der Faden verrichtet keine Arbeit (er zieht senkrecht zur Bewegung), also gilt')} $E_1 = E_2$:</p>${dm(`${pot('h')} = ${kin('v')} \\;\\Rightarrow\\; v = \\sqrt{2\\,g\\,h} = ${this.tex(p)}`)}`, ALL, [0, 1]),
       ];
     },
-    hint: (p) => m$(`${pot('h')} = ${kin('v')}`) + L(', with ', ', mit ') + m$(p.ang === 90 ? 'h = \\ell' : 'h = \\ell - \\ell\\cos 60^\\circ'),
+    hint: (p) => L('How high above the lowest point does the bob start? ', 'Wie hoch über dem tiefsten Punkt startet der Pendelkörper? ') + (p.ang === 90
+      ? L('At 90° the string is horizontal: $h = \\ell$.', 'Bei 90° ist die Schnur waagrecht: $h = \\ell$.')
+      : L('At 60° the bob is $\\ell\\cos 60^\\circ$ below the pivot: $h = \\ell - \\ell\\cos 60^\\circ$.', 'Bei 60° ist der Pendelkörper $\\ell\\cos 60^\\circ$ unter der Aufhängung: $h = \\ell - \\ell\\cos 60^\\circ$.')),
   };
 
   // ---------------------------------------------------------------- 5 a track
@@ -467,7 +471,7 @@
       step(L('Solve', 'Auflösen'), `<p>${L('Divide by $m$ and solve for $v_2^2$:', 'Durch $m$ teilen und nach $v_2^2$ auflösen:')}</p>${dm('v_2^2 = v_1^2 + 2\\,g\\,(h_1 - h_2) \\;\\Rightarrow\\; v_2 = \\sqrt{v_1^2 + 2\\,g\\,(h_1 - h_2)}')}` +
         `<p>${L('Energies add up, not speeds: the speeds are combined as squares.', 'Energien werden addiert, nicht Geschwindigkeiten: Die Geschwindigkeiten kommen im Quadrat vor.')}</p>`, ALL),
     ],
-    hint: () => m$(`${pot('h_1')} + ${kin('v_1')} = ${pot('h_2')} + ${kin('v_2')}`),
+    hint: () => L('Both heights, $h_1$ and $h_2$, are measured from the ground.', 'Beide Höhen, $h_1$ und $h_2$, werden vom Boden aus gemessen.'),
   };
 
   // ---------------------------------------------------------------- 6 thrown from a tower
@@ -541,7 +545,7 @@
         `<p>${L('The kinetic energy depends only on the speed, not on its direction: whether the ball is thrown up, sideways or down makes no difference to its speed at the ground.', 'Die kinetische Energie hängt nur vom Betrag der Geschwindigkeit ab, nicht von ihrer Richtung: Ob der Ball nach oben, zur Seite oder nach unten geworfen wird, ändert nichts an seiner Geschwindigkeit am Boden.')}</p>`, ALL, [0, 1]),
       step(L('Solve', 'Auflösen'), `<p>${L('The mass cancels out; multiply by 2 and take the square root:', 'Die Masse kürzt sich weg; multipliziere mit 2 und ziehe die Wurzel:')}</p>` + dm('v^2 = v_0^2 + 2\\,g\\,h \\;\\Rightarrow\\; v = \\sqrt{v_0^2 + 2\\,g\\,h}'), ALL),
     ],
-    hint: () => m$(`${pot('h')} + ${kin('v_0')} = ${kin('v')}`) + L(' (the direction of the throw does not matter)', ' (die Wurfrichtung spielt keine Rolle)'),
+    hint: () => L('The direction of the throw does not matter: the kinetic energy depends only on the speed $v_0$.', 'Die Wurfrichtung spielt keine Rolle: Die kinetische Energie hängt nur vom Betrag der Geschwindigkeit $v_0$ ab.'),
   };
 
   // ---------------------------------------------------------------- 7 shot up by a spring
@@ -606,7 +610,7 @@
       step(L('Energy conservation', 'Energieerhaltung'), `<p>${L('The elastic energy of the spring becomes potential energy; at the top the speed of the ball is zero:', 'Die Spannenergie der Feder wird zu Lageenergie; im höchsten Punkt ist die Geschwindigkeit des Balls null:')}</p>${dm(`${el('s')} = ${pot('h')}`)}`, ALL, [0, 1]),
       step(L('Solve', 'Auflösen'), `<p>${L('Divide both sides by $m\\,g$ to get the height:', 'Teile beide Seiten durch $m\\,g$, um die Höhe zu erhalten:')}</p>` + dm('h = \\frac{k\\,s^2}{2\\,m\\,g}'), ALL),
     ],
-    hint: () => m$(`${el('s')} = ${pot('h')}`),
+    hint: () => L('The height $h$ is measured from where the ball starts, the zero level.', 'Die Höhe $h$ wird vom Startpunkt des Balls aus gemessen, dem Nullniveau.'),
   };
 
   // ---------------------------------------------------------------- 8 a fraction of the final speed (worksheet B)
@@ -667,7 +671,8 @@
           `<p>${L(`At ${fwords(p.fr)} of the final speed, the ball has only (${fplain(p.fr)})² = ${fplain(f2)} of the final kinetic energy: it has fallen only ${fplain(f2)} of the way.`, `Bei ${fwords(p.fr)} der Endgeschwindigkeit hat der Ball erst (${fplain(p.fr)})² = ${fplain(f2)} der kinetischen Endenergie: Er ist erst ${fplain(f2)} des Wegs gefallen.`)}</p>`, ALL),
       ];
     },
-    hint: (p) => m$(`${pot("h'")} + \\tfrac{1}{2}\\,m\\,\\left(${coef(p.fr)}v_0\\right)^2 = ${kin('v_0')}`) + L(', with ', ', mit ') + m$('\\tfrac{1}{2}\\,m\\,v_0^2 = m\\,g\\,h'),
+    hint: (p) => L(`Compare ② (at the height $h'$, with $v' = ${coef(p.fr)}v_0$) with ③ at the ground; the speed $v_0$ at the ground follows from ① and ③.`,
+      `Vergleiche ② (auf der Höhe $h'$, mit $v' = ${coef(p.fr)}v_0$) mit ③ am Boden; die Geschwindigkeit $v_0$ am Boden folgt aus ① und ③.`),
   };
 
   // ---------------------------------------------------------------- 9 a block on a hanging spring (worksheet C)
@@ -773,8 +778,9 @@
           dm(`v' = \\htmlClass{result}{${rootOf(c, 'g\\,s')}}`), ALL),
       ];
     },
-    hint: (p) => (p.ask === 'k' ? m$(`${pot('s')} = ${el('s')}`)
-      : m$(`${pot('s')} = ${el('s')}`) + L(' gives k; then ', ' ergibt k; dann ') + m$(`E_1 = E_2`) + L(' with all three forms of energy in ②.', ' mit allen drei Energieformen in ②.')),
+    hint: (p) => (p.ask === 'k' ? ''
+      : L(`First find $k$ from ① and ③, the lowest point. Then compare ① with ②: how far is the spring stretched there (the block has dropped by $${coef(p.fr)}s$), and how high is the block above the lowest point?`,
+        `Bestimme zuerst $k$ aus ① und ③, dem tiefsten Punkt. Vergleiche dann ① mit ②: Wie weit ist die Feder dort gedehnt (der Klotz ist um $${coef(p.fr)}s$ gesunken), und wie hoch ist der Klotz über dem tiefsten Punkt?`)),
   };
 
   // ---------------------------------------------------------------- 10 a ball dropped onto a spring
@@ -841,7 +847,7 @@
         dm(`${pot('(h + s)')} = ${el('s')}`), ALL, [0, 2]),
       step(L('Solve', 'Auflösen'), `<p>${L('Multiply by 2 and divide by $s^2$:', 'Multipliziere mit 2 und teile durch $s^2$:')}</p>` + dm('k = \\frac{2\\,m\\,g\\,(h + s)}{s^2}'), ALL),
     ],
-    hint: () => m$(`${pot('(h + s)')} = ${el('s')}`),
+    hint: () => L('Compare ① with ③. How far above the lowest point does the ball start? It falls $h$ to the spring and then $s$ more while it compresses it.', 'Vergleiche ① mit ③. Wie hoch über dem tiefsten Punkt startet der Ball? Er fällt $h$ bis zur Feder und dann noch $s$, während er sie zusammendrückt.'),
   };
 
   // ---------------------------------------------------------------- 11 down an inclined plane
@@ -941,7 +947,8 @@
           `<p>${L('Only the height counts, not the angle: on a steeper slope the block gets there sooner, but not faster.', 'Nur die Höhe zählt, nicht der Winkel: Auf einer steileren Ebene ist der Klotz früher unten, aber nicht schneller.')}</p>`, ALL, [0, 1]),
       ];
     },
-    hint: (p) => m$(`${pot('h')} = ${kin('v')}`) + (p.ask === 's' ? L(', with ', ', mit ') + m$('h = s\\sin 30^\\circ') : L(' (the angle does not matter)', ' (der Winkel spielt keine Rolle)')),
+    hint: (p) => (p.ask === 's' ? L('The height follows from the distance along the 30° slope: $h = s\\sin 30^\\circ$.', 'Die Höhe folgt aus der Strecke entlang der 30°-Ebene: $h = s\\sin 30^\\circ$.')
+      : L(`The angle of ${p.ang}° does not matter: only the height difference $h$ counts.`, `Der Winkel von ${p.ang}° spielt keine Rolle: Nur der Höhenunterschied $h$ zählt.`)),
   };
 
   // ---------------------------------------------------------------- 12 a spring buffer
@@ -1002,7 +1009,7 @@
       step(L('Solve', 'Auflösen'), dm('s^2 = \\frac{m\\,v^2}{k} \;\\Rightarrow\; s = v\\,\\sqrt{\\frac{m}{k}}') +
         `<p>${L('Twice the speed gives twice the compression, but four times the energy.', 'Doppelte Geschwindigkeit ergibt doppelte Stauchung, aber vierfache Energie.')}</p>`, ALL),
     ],
-    hint: () => m$(`${kin('v')} = ${el('s')}`),
+    hint: () => '',
   };
 
   // ---------------------------------------------------------------- 13 a bungee jump
@@ -1071,7 +1078,7 @@
       step(L('Solve', 'Auflösen'), dm('k = \\frac{2\\,m\\,g\\,(\\ell + s)}{s^2}') +
         `<p>${L('At the lowest point the rope pulls far harder than the weight: the jumper is not at rest there for long.', 'Im tiefsten Punkt zieht das Seil viel stärker als die Gewichtskraft: Die Springerin bleibt dort nicht in Ruhe.')}</p>`, ALL),
     ],
-    hint: () => m$(`${pot('(\\ell + s)')} = ${el('s')}`),
+    hint: () => L('Compare ① with ③. How far above the lowest point does the jumper start? Free fall over $\\ell$, then the rope stretches by $s$.', 'Vergleiche ① mit ③. Wie hoch über dem tiefsten Punkt startet die Springerin? Freier Fall über $\\ell$, dann dehnt sich das Seil um $s$.'),
   };
 
   // ---------------------------------------------------------------- 14 twice the compression
@@ -1167,7 +1174,7 @@
       step(L('Solve', 'Auflösen'), dm("h' + 2\\,s = 4\\,h + 4\\,s \;\\Rightarrow\; h' = 4\\,h + 2\\,s") +
         `<p>${L('Twice the compression needs four times the energy, so the ball must fall about four times as far, not twice.', 'Doppelte Stauchung braucht vierfache Energie, der Ball muss also etwa viermal so tief fallen, nicht doppelt so tief.')}</p>`, ALL),
     ],
-    hint: () => m$(`${pot('(h + s)')} = ${el('s')}`) + L(' and ', ' und ') + m$(`${pot("(h' + 2\\,s)")} = \\tfrac{1}{2}\\,k\\,(2s)^2`),
+    hint: () => L("Write the same balance for the first drop (height $h$, compression $s$): each time the ball falls by the height plus the compression. Use the first drop to replace $k$ in the second.", "Schreibe dieselbe Bilanz für den ersten Versuch auf (Höhe $h$, Stauchung $s$): Der Ball fällt jedes Mal um die Höhe plus die Stauchung. Ersetze mit dem ersten Versuch $k$ im zweiten."),
   };
 
   // ---------------------------------------------------------------- 15 kinetic energy a multiple of the potential energy
@@ -1238,7 +1245,7 @@
           `<p>${L(`The potential energy left is ${fplain(p.fr)} of the total: the ball is at ${fplain(p.fr)} of its starting height.`, `Die verbleibende Lageenergie ist ${fplain(p.fr)} der Gesamtenergie: Der Ball ist auf ${fplain(p.fr)} seiner Anfangshöhe.`)}</p>`, ALL),
       ];
     },
-    hint: (p) => m$(`${pot('h')} = ${pot("h'")} + ${EC.etex('kin')}`) + L(', with ', ', mit ') + m$(`${EC.etex('kin')} = ${p.n[0] === p.n[1] ? '' : coef(p.n)}${pot("h'")}`),
+    hint: (p) => L('The text fixes the kinetic energy at the height $h\'$: ', 'Der Text legt die kinetische Energie auf der Höhe $h\'$ fest: ') + m$(`${EC.etex('kin')} = ${p.n[0] === p.n[1] ? '' : coef(p.n)}${pot("h'")}`) + L('; put that in for it.', '; setze das für sie ein.'),
   };
 
   // ---------------------------------------------------------------- 16 a spring launcher up a slope
@@ -1299,7 +1306,7 @@
       step(L('Height and distance', 'Höhe und Strecke'), `<p>${L('Along the slope the block covers $d$ and rises by', 'Entlang der Ebene legt der Klotz $d$ zurück und steigt dabei um')} $h = d\\sin 30^\\circ = \\tfrac{1}{2}\\,d$:</p>` +
         dm('\\tfrac{1}{2}\\,k\\,s^2 = \\tfrac{1}{2}\\,m\\,g\\,d \;\\Rightarrow\; d = \\frac{k\\,s^2}{m\\,g}'), ALL),
     ],
-    hint: () => m$(`${el('s')} = ${pot('h')}`) + L(', with ', ', mit ') + m$('h = d\\sin 30^\\circ'),
+    hint: () => L('The height follows from the distance along the 30° slope: $h = d\\sin 30^\\circ$.', 'Die Höhe folgt aus der Strecke entlang der 30°-Ebene: $h = d\\sin 30^\\circ$.'),
   };
   // the stop at the foot of the slope, the spring up to us (where its end is; relaxed at u = 0.7)
   // and the block at u (on the spring, or beyond it once it has left)
@@ -1372,7 +1379,7 @@
       step(L('Solve', 'Auflösen'), dm('s^2 = \\frac{2\\,m\\,g\\,h}{k} \;\\Rightarrow\; s = \\sqrt{\\frac{2\\,m\\,g\\,h}{k}}') +
         `<p>${L('The speed on the floor is not needed: state ② only passes the energy on.', 'Die Geschwindigkeit auf dem Boden braucht es nicht: Zustand ② gibt die Energie nur weiter.')}</p>`, ALL),
     ],
-    hint: () => m$(`${pot('h')} = ${el('s')}`),
+    hint: () => L('Compare ①, where the cart is released, with ③, where the spring is compressed most; the floor in between does not change the energy.', 'Vergleiche ①, wo der Wagen losgelassen wird, mit ③, wo die Feder am stärksten gestaucht ist; der Boden dazwischen ändert die Energie nicht.'),
   };
   // the ramp of rampSpring: a curve from the top (xt, −H) down to the floor at xr, as points
   const rsCurve = (() => {

@@ -128,9 +128,9 @@
       figure: figure(),
       questions: [qu],
       hints: [
-        T(`Treat ${body} and ${name} separately. Which horizontal forces act on the ${body} while it is in the air? Which on the ${name}?`, `Betrachte ${B.acc} und ${C.acc} getrennt. Welche horizontalen Kräfte wirken auf ${B.acc}, solange ${B.er} in der Luft ist? Welche auf ${C.acc}?`),
-        T(`Plan: compare the horizontal motion of the ${body} with that of the ${name} during the flight.`, `Plan: Vergleiche während des Flugs die horizontale Bewegung ${K.bgen} mit der ${K.gen}.`),
-        T('First law: without a horizontal force, the horizontal velocity stays the same.', 'Erstes Newtonsches Gesetz: Ohne horizontale Kraft bleibt die horizontale Geschwindigkeit gleich.'),
+        T(`While the ${body} is in the air, the ${name} ${cartDoes}. Treat the two separately: which horizontal force acts on the ${body} once it has left ${K.left}? Which on the ${name}?`, `Während ${B.nom} in der Luft ist, ${deHere}. Betrachte die beiden getrennt: Welche horizontale Kraft wirkt auf ${B.acc}, sobald ${B.er} ${K.left} verlassen hat? Welche auf ${C.acc}?`),
+        T(`Plan: ${K.at} the ${body} and the ${name} have the same horizontal velocity. Follow each of the two velocities through the flight, then compare where they are when the ${body} comes down.`, `Plan: ${cap(K.at)} haben ${B.nom} und ${C.nom} dieselbe horizontale Geschwindigkeit. Verfolge jede der beiden Geschwindigkeiten während des Flugs und vergleiche dann, wo die beiden sind, wenn ${B.nom} unten ankommt.`),
+        T(`First law for the ${body} in the air: with no horizontal force, its horizontal velocity stays what it was ${K.at}. Does the same hold for the ${name}?`, `Erstes Newtonsches Gesetz für ${B.acc} in der Luft: Ohne horizontale Kraft bleibt ${B.g === 'f' ? 'ihre' : 'seine'} horizontale Geschwindigkeit so, wie sie ${K.at} war. Gilt das auch für ${C.acc}?`),
         T(`Here the ${body} keeps the ${name}’s velocity ${K.at}, and the ${name} ${cartDoes}.`, `Hier behält ${B.nom} die Geschwindigkeit ${K.gen} ${K.at}, und ${C.nom} ${cartDoes}.`),
       ],
       steps,
@@ -257,9 +257,9 @@
       figure: figure(),
       questions: [two(r, 'path', T(`Which path does the ${name} follow after ${W0.after}?`, `Welche Bahn beschreibt ${N.nom}, nachdem ${W0.after}?`), T('Why?', 'Warum?'), preds, reasons, true)],
       hints: [
-        T(`Which forces act on the ${name} before ${W0.cut}, and which after?`, `Welche Kräfte wirken auf ${N.acc}, bevor ${W0.cut}, und welche danach?`),
-        T('Plan: find the velocity at P (direction and whether it is zero), then use what you know about bodies that move under gravity alone.', 'Plan: Bestimme die Geschwindigkeit in P (Richtung, und ob sie null ist), dann nutze, was du über Körper weisst, auf die nur die Schwerkraft wirkt.'),
-        T('Under gravity alone, a body keeps its horizontal velocity and falls with acceleration g: from rest straight down, otherwise on a parabola.', 'Wirkt nur die Schwerkraft, behält ein Körper seine horizontale Geschwindigkeit und fällt mit der Beschleunigung g: aus der Ruhe senkrecht, sonst auf einer Parabel.'),
+        T(`Before ${W0.cut}, ${W0.rope} pulls on the ${name} and the Earth pulls ${him} down. Which of the two forces is left after that?`, `Bevor ${W0.cut}, zieht ${W0.rope} an ${N.dat}, und die Erde zieht ${N.ihn} nach unten. Welche der beiden Kräfte bleibt danach übrig?`),
+        T(`Plan: the velocity of the ${name} at P — its direction, and whether it is zero — is the starting velocity of the flight; from then on only the weight acts.`, `Plan: Die Geschwindigkeit ${N.g === 'n' ? 'des Mädchens' : `des ${N.word}s`} in P — ihre Richtung, und ob sie null ist — ist die Anfangsgeschwindigkeit des Flugs; von da an wirkt nur noch die Gewichtskraft.`),
+        T(`After ${W0.cut}: horizontally no force acts (first law), vertically the weight gives the acceleration <i>g</i> (second law). Split the velocity at P into a horizontal and a vertical part.`, `Nachdem ${W0.after}: Horizontal wirkt keine Kraft (erstes Gesetz), vertikal ergibt die Gewichtskraft die Beschleunigung <i>g</i> (zweites Gesetz). Zerlege die Geschwindigkeit in P in einen horizontalen und einen vertikalen Anteil.`),
         T(`Here at P the velocity is ${vHere}.`, `Hier in P ist die Geschwindigkeit ${vHere}.`),
       ],
       steps: [
@@ -356,9 +356,9 @@
       figure: figure(),
       questions: [two(r, 'net', T(`Which way does the net force on the ${name} point at P?`, `Wohin zeigt die resultierende Kraft auf ${N.acc} im Punkt P?`), T('Why?', 'Warum?'), preds, pickReasons)],
       hints: [
-        T(`How does the velocity of the ${name} change on the way up, at the top and on the way down?`, `Wie ändert sich die Geschwindigkeit ${N.g === 'f' ? 'der' : 'des'} ${N.word}${N.g === 'f' ? '' : 's'} auf dem Weg nach oben, oben und auf dem Weg nach unten?`),
-        T('Plan: change of velocity → direction of the acceleration → direction of the net force.', 'Plan: Änderung der Geschwindigkeit → Richtung der Beschleunigung → Richtung der resultierenden Kraft.'),
-        T('Second law: the net force points along the acceleration, not along the velocity.', 'Zweites Newtonsches Gesetz: Die resultierende Kraft zeigt in Richtung der Beschleunigung, nicht der Geschwindigkeit.'),
+        T(`At P the ${name} ${motion}. How does ${its} velocity change from just before P to just after P?`, `Im Punkt P ${deMotion}. Wie ändert sich ${poss} Geschwindigkeit von kurz vor P bis kurz nach P?`),
+        T(`Plan: that change of velocity at P → direction of the acceleration at P → direction of the net force at P. Only ${its} weight and the push of the ${key === 'glider' ? 'air cushion' : 'ramp'} act on the ${name}.`, `Plan: Diese Änderung der Geschwindigkeit in P → Richtung der Beschleunigung in P → Richtung der resultierenden Kraft in P. Auf ${N.acc} wirken nur die Gewichtskraft und die Normalkraft ${key === 'glider' ? 'des Luftkissens' : 'der Rampe'}.`),
+        T(`Second law at P: ${FC.F('net')} = <i>m·a</i>, with <i>a</i> along the change of velocity${phase === 'top' ? ' — even though the velocity itself is zero at P' : `, not along the velocity (${phase === 'rising' ? 'up' : 'down'} the ramp)`}.`, `Zweites Newtonsches Gesetz in P: ${FC.F('net')} = <i>m·a</i>, mit <i>a</i> in Richtung der Änderung der Geschwindigkeit${phase === 'top' ? ' — auch wenn die Geschwindigkeit selbst in P null ist' : `, nicht in Richtung der Geschwindigkeit (die Rampe ${phase === 'rising' ? 'hinauf' : 'hinunter'})`}.`),
         T(`Here the ${name} ${motion}. Which way does ${its} velocity change?`, `Hier ${deMotion}. In welche Richtung ändert sich ${poss} Geschwindigkeit?`),
       ],
       steps: [

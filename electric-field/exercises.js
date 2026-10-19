@@ -47,6 +47,22 @@
     separate: () => L('Field lines never cross: at each point the field has a single direction, that of the sum of the fields of all the charges.', 'Feldlinien kreuzen sich nie: In jedem Punkt hat das Feld eine einzige Richtung, die der Summe der Felder aller Ladungen.'),
     swap: () => L('This pattern belongs to another arrangement: lines here run into a positive charge or out of a negative one, which cannot be.', 'Dieses Muster gehört zu einer anderen Anordnung: Linien laufen hier in eine positive Ladung hinein oder aus einer negativen heraus, was nicht sein kann.'),
   };
+  // the hints of lines-pick: the two charges of this exercise, where their lines start and end,
+  // crossing, and what the sizes (or like signs) mean for the lines between them
+  function linesPickHints(spec, labels) {
+    const [a, b] = spec.map(([q]) => q), [la, lb] = labels.map((x) => `${x}q`), like = a * b > 0;
+    const pos = a > 0 ? la : lb, neg = a > 0 ? lb : la, np = Math.max(a, b), nn = -Math.min(a, b);
+    const third = like
+      ? L(`${la} and ${lb} are both ${a > 0 ? 'positive' : 'negative'}: can a line run from one to the other? What happens to the lines between them?`, `${la} und ${lb} sind beide ${a > 0 ? 'positiv' : 'negativ'}: Kann eine Linie von der einen zur anderen laufen? Was geschieht mit den Linien zwischen ihnen?`)
+      : np === nn ? L(`${pos} and ${neg} are equally big: where do the lines that leave ${pos} end?`, `${pos} und ${neg} sind gleich gross: Wo enden die Linien, die ${pos} verlassen?`)
+        : np > nn ? L(`${pos} has ${np} times the charge of ${neg}: can all the lines that leave ${pos} end on ${neg}? Where do the others go?`, `${pos} hat ${np}-mal die Ladung von ${neg}: Können alle Linien, die ${pos} verlassen, auf ${neg} enden? Wohin gehen die übrigen?`)
+          : L(`${neg} has ${nn} times the charge of ${pos}: can all the lines that end on ${neg} come from ${pos}? Where do the others come from?`, `${neg} hat ${nn}-mal die Ladung von ${pos}: Können alle Linien, die auf ${neg} enden, von ${pos} kommen? Woher kommen die übrigen?`);
+    return [
+      L(`The charges are ${la} and ${lb}: at which do the lines start, at which do they end? Check the arrows in each diagram.`, `Die Ladungen sind ${la} und ${lb}: Bei welcher beginnen die Linien, bei welcher enden sie? Prüfe die Pfeile in jedem Diagramm.`),
+      L(`The fields of ${la} and ${lb} add up to one field: can two lines cross anywhere in the picture?`, `Die Felder von ${la} und ${lb} addieren sich zu einem Feld: Können sich irgendwo im Bild zwei Linien kreuzen?`),
+      third,
+    ];
+  }
   function linesPick(seed) {
     const r = rng(seed * 41 + 13), cf = r.pick(LCONF), opts = [];
     const small = (c, given, o = {}) => C.fig(c, { box: BOX, given, small: true, ...o });
@@ -62,7 +78,7 @@
       kind: 'lines', title: L('Field lines', 'Feldlinien'),
       text: L(`<p>Which diagram shows the field lines of ${name}?</p>`, `<p>Welches Diagramm zeigt die Feldlinien für ${name}?</p>`), figs: '',
       questions: [{ type: 'pick', key: 'd', label: L('Which diagram is right?', 'Welches Diagramm stimmt?'), options: r.shuffle(opts).map((o) => ({ html: o.html, ok: !!o.ok, tag: o.tag, why: o.ok ? '' : `${WHYL[o.tag]()} ${LINES()}` })) }],
-      hints: [L('Where do the lines start, where do they end?', 'Wo beginnen die Linien, wo enden sie?'), L('Can two lines cross?', 'Können sich zwei Linien kreuzen?'), LINES()],
+      hints: linesPickHints(spec, labels),
       solution: [LINES()], solFig: fig(C.fig(c, { box: BOX, lines: true, labels })), p: { cf: cf.id, flip, seed: seed % 5 },
     };
   }
@@ -86,7 +102,11 @@
   function linesShape(seed, key) {
     const r = rng(seed * 61 + (key === 'wire' ? 31 : 37)), q = r.pick([1, -1]), small = (c, given, o = {}) => C.fig(c, { box: BOX, given, small: true, ...o });
     const out = (lns) => (q > 0 ? lns : flipAll(lns)); // drawn from + to −
-    let opts, qs, how, solFig, text, W;
+    let opts, qs, how, solFig, text, W, hints;
+    const sgn = q > 0 ? L('positive', 'positiv') : L('negative', 'negativ');
+    // (b) for the wire, seen either way: how the lines spread round it
+    const spread = L(`(b) Round the wire the lines spread out only in the plane across it, not in all directions as round a point charge. A circle round the wire at twice the distance: how much longer is it, and so how much thinner are the lines?`,
+      `(b) Um den Draht herum laufen die Linien nur in der Ebene quer zu ihm auseinander, nicht in alle Richtungen wie um eine Punktladung. Ein Kreis um den Draht im doppelten Abstand: Wie viel länger ist er, und wie viel dünner liegen also die Linien?`);
     if (key === 'wire' && r.next() < 0.5) {
       // seen end-on: the wire runs out of the page, its lines spread out from it like spokes
       const c = { kind: 'points', charges: [{ q, x: 0, y: 0 }] }, spokes = out(Array.from({ length: 12 }, (x, k) => { const a = (k * Math.PI) / 6 + Math.PI / 12; return [[0.2 * Math.cos(a), 0.2 * Math.sin(a)], [4 * Math.cos(a), 4 * Math.sin(a)]]; }));
@@ -102,6 +122,7 @@
       const howE = L('End-on the picture looks like that of a point charge, but the lines of a point charge spread out in all directions in space (E ∝ 1/r²), those of the wire only in the plane across it: at twice the distance they are spread over twice the circumference. E = λ/(2π·ε₀·r): half the field.', 'Von vorne sieht das Bild aus wie das einer Punktladung, aber die Linien einer Punktladung breiten sich in alle Richtungen des Raums aus (E ∝ 1/r²), die des Drahts nur in der Ebene quer zu ihm: Im doppelten Abstand verteilen sie sich auf den doppelten Umfang. E = λ/(2π·ε₀·r): halbes Feld.');
       qs = [choice('E', L('(b) At twice the distance from the wire, the field is', '(b) Im doppelten Abstand vom Draht ist das Feld'), [[1, 'flat', L('The field gets weaker: the lines spread out.', 'Das Feld wird schwächer: Die Linien laufen auseinander.')], [0.5, undefined, ''], [0.25, 'square', L('A quarter: that is a point charge, whose lines spread out in all directions.', 'Ein Viertel: Das ist eine Punktladung, deren Linien sich in alle Richtungen ausbreiten.')], [2, 'other', '']].map(([x, tag, w0]) => ({ label: frac(x), ok: x === 0.5, tag, why: x === 0.5 ? '' : `${w0} ${howE}` })))];
       solFig = fig(C.fig(c, { box: BOX, given: spokes }));
+      hints = [L(`Seen end-on, the ${sgn} wire looks like a point. Do its lines run out of it or into it, and are they spread evenly all round it?`, `Von vorne gesehen sieht der ${sgn}e Draht aus wie ein Punkt. Laufen seine Linien aus ihm heraus oder in ihn hinein, und sind sie rundherum gleichmässig verteilt?`), spread];
       text = L(`<p>A long straight wire, evenly charged ${q > 0 ? 'positive' : 'negative'}, seen end-on: it runs straight out of the page.</p>`, `<p>Ein langer gerader Draht, gleichmässig ${q > 0 ? 'positiv' : 'negativ'} geladen, von vorne gesehen: Er zeigt senkrecht aus der Seite heraus.</p>`);
       how = [how, howE];
     } else if (key === 'wire') {
@@ -119,6 +140,7 @@
       const howE = L('Seen from the side the lines look parallel, but round the wire they spread out like the spokes of a wheel: at twice the distance they are spread over twice the circumference. E = λ/(2π·ε₀·r): half the field.', 'Von der Seite sehen die Linien parallel aus, aber um den Draht herum laufen sie wie die Speichen eines Rads auseinander: Im doppelten Abstand verteilen sie sich auf den doppelten Umfang. E = λ/(2π·ε₀·r): halbes Feld.');
       qs = [choice('E', L('(b) At twice the distance from the wire, the field is', '(b) Im doppelten Abstand vom Draht ist das Feld'), [[1, 'flat', L('The lines look parallel from the side, but they spread out round the wire.', 'Die Linien sehen von der Seite parallel aus, laufen aber um den Draht herum auseinander.')], [0.5, undefined, ''], [0.25, 'square', L('A quarter: that is a point charge, whose lines spread out in all directions.', 'Ein Viertel: Das ist eine Punktladung, deren Linien sich in alle Richtungen ausbreiten.')], [2, 'other', '']].map(([x, tag, w0]) => ({ label: frac(x), ok: x === 0.5, tag, why: x === 0.5 ? '' : `${w0} ${howE}` })))];
       solFig = fig(C.fig(c, { box: BOX, given: right, ...w }));
+      hints = [L(`The wire is ${sgn}: do its lines start or end on it, and at what angle do they leave it? Every piece of the long wire looks the same.`, `Der Draht ist ${sgn}: Beginnen oder enden seine Linien auf ihm, und unter welchem Winkel verlassen sie ihn? Jedes Stück des langen Drahts sieht gleich aus.`), spread];
       text = L(`<p>A long straight wire, evenly charged ${q > 0 ? 'positive' : 'negative'}, seen from the side.</p>`, `<p>Ein langer gerader Draht, gleichmässig ${q > 0 ? 'positiv' : 'negativ'} geladen, von der Seite gesehen.</p>`);
       how = [how, howE];
     } else {
@@ -137,13 +159,15 @@
         [L('the same everywhere', 'überall gleich'), true, ''], [L('strongest near the positive plate', 'am stärksten nahe der positiven Platte'), false, howE],
         [L('strongest in the middle', 'in der Mitte am stärksten'), false, howE], [L('strongest near both plates', 'nahe bei beiden Platten am stärksten'), false, howE]]).map((o) => ({ ...o, tag: o.ok ? undefined : 'nearplate' })))];
       solFig = fig(C.fig(c, { box: BOX, given: right }));
+      hints = [L(`The ${q > 0 ? 'upper' : 'lower'} plate is positive: where do the lines start and end, and at what angle do they meet the plates? Outside, beyond the plates, the fields of the two plates meet: do they add up or cancel?`, `Die ${q > 0 ? 'obere' : 'untere'} Platte ist positiv: Wo beginnen und enden die Linien, und unter welchem Winkel treffen sie auf die Platten? Aussen, jenseits der Platten, treffen sich die Felder der beiden Platten: Addieren sie sich oder heben sie sich auf?`),
+        L('(b) The charge is spread evenly over the plates, and every piece of a large plate looks the same: how are the lines spaced between the plates, near a plate and in the middle?', '(b) Die Ladung ist gleichmässig über die Platten verteilt, und jedes Stück einer grossen Platte sieht gleich aus: Wie dicht liegen die Linien zwischen den Platten, nahe einer Platte und in der Mitte?')];
       text = L(`<p>A plate capacitor, its ${q > 0 ? 'upper' : 'lower'} plate positive.</p>`, `<p>Ein Plattenkondensator, seine ${q > 0 ? 'obere' : 'untere'} Platte positiv.</p>`);
       how = [how, howE];
     }
     return {
       kind: 'lines', title: key === 'wire' ? L('A charged wire', 'Ein geladener Draht') : L('A plate capacitor', 'Ein Plattenkondensator'), text, figs: '',
       questions: [{ type: 'pick', key: 'd', label: L('(a) Which diagram shows the field lines?', '(a) Welches Diagramm zeigt die Feldlinien?'), options: r.shuffle(opts).map((o) => ({ html: o.html, ok: !!o.ok, tag: o.tag, why: o.ok ? '' : `${W[o.tag]()} ${how[0]}` })) }, ...qs],
-      hints: [L('Where does the charge sit? The lines start (or end) on it, at right angles.', 'Wo sitzt die Ladung? Die Linien beginnen (oder enden) auf ihr, senkrecht.'), L('Use the symmetry: every piece of a long wire, and every piece of a large plate, looks the same.', 'Nutze die Symmetrie: Jedes Stück eines langen Drahts und jedes Stück einer grossen Platte sieht gleich aus.')],
+      hints,
       solution: how, solFig, p: { key, q, s: seed % 5 },
     };
   }
@@ -177,6 +201,24 @@
       : L(`${cap} and a point charge ${qn} ${ch.y > p1.y ? 'above' : 'below'} it`, `${cap} und eine Punktladung ${qn} ${ch.y > p1.y ? 'über' : 'unter'} ihm`);
   }
   const PLATE = () => L('A metal plate is an equipotential: the field lines meet its surface at right angles, also next to the charge. The charge on the plate shifts towards a charge of the other sign (away from one of the same sign): there the lines are denser. Away from the plate the lines bend towards the charge (or away from it), as the fields add up.', 'Eine Metallplatte ist eine Äquipotentialfläche: Die Feldlinien treffen senkrecht auf ihre Oberfläche, auch neben der Ladung. Die Ladung auf der Platte verschiebt sich zu einer Ladung mit anderem Vorzeichen hin (von einer gleichnamigen weg): Dort liegen die Linien dichter. Weg von der Platte biegen sich die Linien zur Ladung hin (oder von ihr weg), weil sich die Felder addieren.');
+  // the hints of lines-mix: the plate(s) and the charge of this exercise, the angle at the metal, crossing,
+  // and how the charge and the plate(s) share the lines
+  function mixHints(c) {
+    const ch = c.charges[0], qn = `${label(ch.q)}q`, one = c.plates.length === 1, p = c.plates[0];
+    const [p1, p2] = [...c.plates].sort((a, b) => b.y - a.y), inside = !one && ch.y < p1.y && ch.y > p2.y;
+    const plate = one ? L(`the ${p.s > 0 ? 'positive' : 'negative'} plate`, `der ${p.s > 0 ? 'positiven' : 'negativen'} Platte`) : L('the plates', 'den Platten');
+    const last = one
+      ? (ch.q * p.s < 0 ? L(`The charge ${qn} and the plate have opposite signs: where on the plate do the lines crowd together, and do lines run between the charge and the plate?`, `Die Ladung ${qn} und die Platte haben entgegengesetzte Vorzeichen: Wo auf der Platte drängen sich die Linien, und laufen Linien zwischen der Ladung und der Platte?`)
+        : L(`The charge ${qn} and the plate have the same sign: can a line run from the charge to the plate? Which way do the lines of the charge bend?`, `Die Ladung ${qn} und die Platte haben das gleiche Vorzeichen: Kann eine Linie von der Ladung zur Platte laufen? Wohin biegen sich die Linien der Ladung?`))
+      : inside ? L(`The charge ${qn} sits between the plates, in the uniform field of the capacitor: near the charge, whose field wins, and farther away?`, `Die Ladung ${qn} sitzt zwischen den Platten, im homogenen Feld des Kondensators: Wessen Feld überwiegt nahe bei der Ladung, wessen weiter weg?`)
+        : L(`The charge ${qn} sits outside the capacitor, where the field of the plates (almost) cancels: whose lines fill the space round the charge, and where do they meet a plate?`, `Die Ladung ${qn} sitzt ausserhalb des Kondensators, wo sich das Feld der Platten (fast) aufhebt: Wessen Linien füllen den Raum um die Ladung, und wo treffen sie auf eine Platte?`);
+    return [
+      L(`Here: ${mixName(c)}. Where do the lines start, where do they end: on ${plate}, on the charge ${qn}?`, `Hier geht es um ${mixName(c)}. Wo beginnen die Linien, wo enden sie: auf ${plate}, auf der Ladung ${qn}?`),
+      L(`At which angle does a field line meet the metal of ${plate}, also right next to the charge ${qn}?`, `Unter welchem Winkel trifft eine Feldlinie auf das Metall ${one ? 'der Platte' : 'der Platten'}, auch direkt neben der Ladung ${qn}?`),
+      L(`The fields of ${plate} and of the charge add up to one field: can two lines cross?`, `Die Felder ${one ? 'der Platte' : 'der Platten'} und der Ladung addieren sich zu einem Feld: Können sich zwei Linien kreuzen?`),
+      last,
+    ];
+  }
   function linesMix(seed) {
     const r = rng(seed * 47 + 19), cf = r.pick(MIX), flip = r.next() < 0.5, mirror = r.next() < 0.5, c = mixConf(cf, flip, mirror), labels = mixLabels(c);
     const small = (given, o = {}) => C.fig(c, { box: BOX, given, small: true, labels, ...o });
@@ -187,7 +229,7 @@
       kind: 'lines', title: L('Plates and charges', 'Platten und Ladungen'),
       text: L(`<p>Which diagram shows the field lines of ${mixName(c)}?</p>`, `<p>Welches Diagramm zeigt die Feldlinien für ${mixName(c)}?</p>`), figs: '',
       questions: [{ type: 'pick', key: 'd', label: L('Which diagram is right?', 'Welches Diagramm stimmt?'), options: r.shuffle(opts).map((o) => ({ html: o.html, ok: !!o.ok, tag: o.tag, why: o.ok ? '' : `${WHYL[o.tag]()} ${LINES()}` })) }],
-      hints: [L('Where do the lines start, where do they end? Check the plates and the charge.', 'Wo beginnen die Linien, wo enden sie? Prüfe die Platten und die Ladung.'), L('At which angle does a field line meet a metal plate?', 'Unter welchem Winkel trifft eine Feldlinie auf eine Metallplatte?'), L('Can two lines cross?', 'Können sich zwei Linien kreuzen?'), LINES()],
+      hints: mixHints(c),
       solution: [PLATE(), LINES()], solFig: fig(C.fig(c, { box: BOX, given: right, labels })), p: { cf: cf.id, flip, mirror },
     };
   }
@@ -235,7 +277,11 @@
           tiles('dir', L(`(b) In which direction does the field at ${pn[at]} point?`, `(b) In welche Richtung zeigt das Feld in ${pn[at]}?`), r.shuffle(dirs.slice()).map(([d, tag]) => ({ html: `<span class="dtile">${C.icon(d)}</span>`, ok: !tag, tag, why: tag ? howD : '' }))),
           tiles('P', L('(c) Where is the field strongest?', '(c) Wo ist das Feld am stärksten?'), pn.map((n, i) => ({ html: `<span class="dtile"><b>${n}</b></span>`, ok: i === best, tag: 'density', why: howP }))),
         ],
-        hints: [L('The arrows show the direction of the field: away from positive charges, towards negative ones.', 'Die Pfeile zeigen die Richtung des Feldes: von positiven Ladungen weg, zu negativen hin.'), L('The field at a point is tangent to the field line through it.', 'Das Feld in einem Punkt ist tangential zur Feldlinie durch ihn.'), LINES()],
+        hints: [
+          L(`(a) Look right next to ${mix ? 'the plate A and the charge B' : 'A and B'}: do the arrows on the lines point away from each or into it?`, `(a) Schau direkt neben ${mix ? 'der Platte A und der Ladung B' : 'A und B'}: Zeigen die Pfeile auf den Linien von jeder weg oder in sie hinein?`),
+          L(`(b) Find the field line through ${pn[at]} (or the nearest one) and follow its arrows: the field at ${pn[at]} lies along its tangent.`, `(b) Suche die Feldlinie durch ${pn[at]} (oder die nächste) und folge ihren Pfeilen: Das Feld in ${pn[at]} liegt längs ihrer Tangente.`),
+          L(`(c) Compare how close together the lines are around ${pn.slice(0, 3).join(', ')} and ${pn[3]}.`, `(c) Vergleiche, wie dicht die Linien um ${pn.slice(0, 3).join(', ')} und ${pn[3]} liegen.`),
+        ],
         solution: [howS, howD, howP], solFig: fig(C.fig(c, { box: BOX, given: lns, labels: mix ? [label(qb)] : [label(qa), label(qb)], points: [points[at]], vecs: [{ x: cand[at][0], y: cand[at][1], dx: 46 * u[0], dy: 46 * u[1], cls: 'v-field', name: 'E⃗' }] })),
         p: { qa, qb, pts: cand.join(';'), at, ...(mix ? { c } : {}) },
       };
@@ -266,7 +312,10 @@
         choice('F', L('(a) The net force on the dipole', '(a) Die Gesamtkraft auf den Dipol'), r.shuffle(F.map(([label, ok]) => ({ label, ok, tag: ok ? undefined : 'force', why: ok ? '' : howF })))),
         choice('T', L('(b) The dipole', '(b) Der Dipol'), T.map(([k, label]) => ({ label, ok: k === turn, tag: k === turn ? undefined : 'torque', why: k === turn ? '' : howT }))),
       ],
-      hints: [L('Draw the force on each end: <span class="vec"><i>F</i></span> = q·<span class="vec"><i>E</i></span>.', 'Zeichne die Kraft auf jedes Ende: <span class="vec"><i>F</i></span> = q·<span class="vec"><i>E</i></span>.'), L('Equal and opposite forces that do not act along the same line make a torque.', 'Gleich grosse, entgegengesetzte Kräfte, die nicht auf derselben Geraden wirken, erzeugen ein Drehmoment.')],
+      hints: [
+        L(`The field points ${dirName(Ed)}. Draw the force <span class="vec"><i>F</i></span> = q·<span class="vec"><i>E</i></span> on each end: which way on the + end, which way on the − end, and how big compared with each other?`, `Das Feld zeigt ${dirName(Ed)}. Zeichne die Kraft <span class="vec"><i>F</i></span> = q·<span class="vec"><i>E</i></span> auf jedes Ende: wohin auf das +-Ende, wohin auf das −-Ende, und wie gross im Vergleich?`),
+        L(`The + end points at ${Math.abs(ang)}° to the field direction. Do the two forces act along the same line, or are they offset and turn the rod? If they do not turn it, what would a small nudge do?`, `Das +-Ende zeigt unter ${Math.abs(ang)}° zur Feldrichtung. Wirken die beiden Kräfte auf derselben Geraden, oder sind sie versetzt und drehen den Stab? Wenn sie ihn nicht drehen: Was würde ein kleiner Stoss bewirken?`),
+      ],
       solution: [howF, howT], p: { E: dkey(Ed), ang }, anim: { kind: 'uniform', o: { E: Ed, angle: (a0 * 180) / Math.PI, ...(TAP[turn] ? { nudge: TAP[turn] } : {}) }, note: noteU(turn) },
     };
   }
@@ -301,6 +350,10 @@
     if (f.d !== 1) parts.push(L(`the length ${frac(f.d)}`, `die Länge ${frac(f.d)}`));
     if (f.E !== 1) parts.push(L(`the field ${frac(f.E)}`, `das Feld ${frac(f.E)}`));
     if (a1 !== a2) parts.push(L(`sin ${a2}° / sin ${a1}° = ${nice(SIN[a2])}/${nice(SIN[a1])}, so ${frac(SIN[a2] / SIN[a1])}`, `sin ${a2}° / sin ${a1}° = ${nice(SIN[a2])}/${nice(SIN[a1])}, also ${frac(SIN[a2] / SIN[a1])}`));
+    // what changes, for the hints (the factors are in the table)
+    const andList = (a, and) => (a.length > 1 ? `${a.slice(0, -1).join(', ')} ${and} ${a[a.length - 1]}` : a[0]);
+    const changed = [[f.q, 'the charge', 'die Ladung'], [f.d, 'the length', 'die Länge'], [f.E, 'the field', 'das Feld']].filter(([x]) => x !== 1).map(([x, en, de]) => [`${en} (${frac(x)})`, `${de} (${frac(x)})`])
+      .concat(a1 !== a2 ? [[`the angle (${a1}° → ${a2}°)`, `der Winkel (${a1}° → ${a2}°)`]] : []);
     const how = L(`Each end feels the force q·E; the lever arm of the pair is d·sin φ, so M = q·E·d·sin φ: ${parts.join('; ')}. Together: ${frac(k)}.`, `Jedes Ende spürt die Kraft q·E; der Hebelarm des Paars ist d·sin φ, also M = q·E·d·sin φ: ${parts.join('; ')}. Zusammen: ${frac(k)}.`);
     const tempt = [
       [(f.q * f.d * f.E), L('The angle counts: the torque is largest at right angles to the field and zero along it.', 'Der Winkel zählt: Das Drehmoment ist senkrecht zum Feld am grössten und längs des Feldes null.'), 'angle',
@@ -322,7 +375,10 @@
         + cmpTable([L('dipole 1', 'Dipol 1'), L('dipole 2', 'Dipol 2')], rows),
       figs: fig(C.fig({ kind: 'uniform', E: [1, 0] }, { box: BOX, lines: true, rods: [[-h * p[0], -h * p[1], h * p[0], h * p[1]]], parts: [{ x: h * p[0], y: h * p[1], q: 1 }, { x: -h * p[0], y: -h * p[1], q: -1 }], vecs: [{ x: h * p[0], y: h * p[1], dx: 46, dy: 0, cls: 'v-force', name: 'F⃗' }, { x: -h * p[0], y: -h * p[1], dx: -46, dy: 0, cls: 'v-force', name: 'F⃗' }], W: 320, label: L('Dipole 1 in the field', 'Dipol 1 im Feld') })),
       questions: [choice('M', L('Compared with dipole 1, the torque on dipole 2 is', 'Verglichen mit Dipol 1 ist das Drehmoment auf Dipol 2'), factors(k, tempt, how))],
-      hints: [L('Two forces q·E, equal and opposite; their lever arm is the distance between their lines of action, d·sin φ.', 'Zwei Kräfte q·E, gleich gross und entgegengesetzt; ihr Hebelarm ist der Abstand ihrer Wirkungslinien, d·sin φ.'), L('M = q·E·d·sin φ: find the factor of each quantity. sin 90° = 1, sin 30° = sin 150° = 1/2.', 'M = q·E·d·sin φ: Bestimme den Faktor jeder Grösse. sin 90° = 1, sin 30° = sin 150° = 1/2.')],
+      hints: [
+        L(`Read the table: from dipole 1 to dipole 2, ${andList(changed.map((x) => x[0]), 'and')} change${changed.length === 1 ? 's' : ''}; the rest stays the same.`, `Lies die Tabelle: Von Dipol 1 zu Dipol 2 ${changed.length === 1 ? 'ändert' : 'ändern'} sich ${andList(changed.map((x) => x[1]), 'und')}; der Rest bleibt gleich.`),
+        L(`The torque is M = q·E·d·sin φ (two forces q·E, lever arm d·sin φ): each change multiplies M by its own factor.${a1 !== a2 ? ` For the angle, compare sin ${a2}° with sin ${a1}° (sin 90° = 1, sin 30° = sin 150° = 1/2).` : ''}`, `Das Drehmoment ist M = q·E·d·sin φ (zwei Kräfte q·E, Hebelarm d·sin φ): Jede Änderung multipliziert M mit ihrem eigenen Faktor.${a1 !== a2 ? ` Für den Winkel vergleiche sin ${a2}° mit sin ${a1}° (sin 90° = 1, sin 30° = sin 150° = 1/2).` : ''}`),
+      ],
       solution: [how], p: { f: [f.q, f.d, f.E].join(','), a1, a2 },
       anim: { kind: 'uniform', o: { E: [1, 0], angle: a1 }, note: L('Dipole 1 let go: the torque turns it clockwise. As it turns, φ and so the torque get smaller; it swings past the field direction, where sin φ = 0, and back and forth about it.', 'Dipol 1 losgelassen: Das Drehmoment dreht ihn im Uhrzeigersinn. Beim Drehen werden φ und damit das Drehmoment kleiner; er schwingt über die Feldrichtung hinaus, wo sin φ = 0, und um sie hin und her.') },
     };
@@ -366,7 +422,14 @@
         qa,
         choice('free', L('(b) If the dipole could turn freely, it would in the end be', '(b) Könnte sich der Dipol frei drehen, würde er schliesslich'), words(r, [[L('attracted', 'angezogen'), true, ''], [L('repelled', 'abgestossen'), false, howFree], [L('neither', 'weder noch'), false, howFree]])),
       ],
-      hints: [L('The field of a point charge gets weaker with the distance.', 'Das Feld einer Punktladung wird mit dem Abstand schwächer.'), L('Which end of the dipole feels the stronger force?', 'Welches Ende des Dipols spürt die stärkere Kraft?')],
+      hints: [
+        ask === 'F' ? L(`The ${near > 0 ? 'positive' : 'negative'} end is nearer the ${Q > 0 ? 'positive' : 'negative'} charge. The field of a point charge gets weaker with the distance: which end is in the stronger field?`, `Das ${near > 0 ? 'positive' : 'negative'} Ende ist näher bei der ${Q > 0 ? 'positiven' : 'negativen'} Ladung. Das Feld einer Punktladung wird mit dem Abstand schwächer: Welches Ende ist im stärkeren Feld?`)
+          : ask === 'end' ? L(`The dipole ${attract ? 'is pulled towards' : 'is pushed away from'} the ${Q > 0 ? 'positive' : 'negative'} charge. The field of a point charge gets weaker with the distance: which end feels the stronger force and so decides the motion?`, `Der Dipol ${attract ? 'wird zur' : 'wird von der'} ${Q > 0 ? 'positiven' : 'negativen'} Ladung ${attract ? 'hingezogen' : 'weggestossen'}. Das Feld einer Punktladung wird mit dem Abstand schwächer: Welches Ende spürt die stärkere Kraft und entscheidet so die Bewegung?`)
+            : L(`The ${near > 0 ? 'positive' : 'negative'} end is nearer Q, and the dipole ${attract ? 'is pulled towards' : 'is pushed away from'} it. Which end feels the stronger force and so decides the motion?`, `Das ${near > 0 ? 'positive' : 'negative'} Ende ist näher bei Q, und der Dipol ${attract ? 'wird zu ihr hingezogen' : 'wird von ihr weggestossen'}. Welches Ende spürt die stärkere Kraft und entscheidet so die Bewegung?`),
+        `${ask === 'F' ? L(`Is the nearer, ${near > 0 ? 'positive' : 'negative'} end attracted or repelled by the ${Q > 0 ? 'positive' : 'negative'} charge?`, `Wird das nähere, ${near > 0 ? 'positive' : 'negative'} Ende von der ${Q > 0 ? 'positiven' : 'negativen'} Ladung angezogen oder abgestossen?`)
+          : ask === 'end' ? L(`The nearer end is ${attract ? 'attracted' : 'repelled'} by the ${Q > 0 ? 'positive' : 'negative'} charge: which sign must it have?`, `Das nähere Ende wird von der ${Q > 0 ? 'positiven' : 'negativen'} Ladung ${attract ? 'angezogen' : 'abgestossen'}: Welches Vorzeichen muss es haben?`)
+            : L(`The nearer, ${near > 0 ? 'positive' : 'negative'} end is ${attract ? 'attracted' : 'repelled'}: which sign must Q have?`, `Das nähere, ${near > 0 ? 'positive' : 'negative'} Ende wird ${attract ? 'angezogen' : 'abgestossen'}: Welches Vorzeichen muss Q haben?`)} ${L('(b) If it could turn, which of its ends would it turn towards the charge?', '(b) Könnte er sich drehen: Welches seiner Enden würde er zur Ladung drehen?')}`,
+      ],
       solution: [sol, howFree], p: ask === 'F' ? { Q, plusNear } : { Q, plusNear, ask },
       // the dipole of the figure, let go (free to turn); when it is repelled, it is tapped after a
       // moment, as the slightest nudge turns it round
@@ -409,7 +472,15 @@
       kind: 'equi', title: L('Equipotential lines', 'Äquipotentiallinien'),
       text: L(`<p>Which diagram shows equipotential lines (equal steps of potential) of ${Q.name()}?</p>`, `<p>Welches Diagramm zeigt Äquipotentiallinien (gleiche Potentialschritte) für ${Q.name()}?</p>`), figs: '',
       questions: [{ type: 'pick', key: 'd', label: L('Which diagram is right?', 'Welches Diagramm stimmt?'), options: r.shuffle(opts).map((o) => ({ html: o.html, ok: !!o.ok, tag: o.tag, why: o.ok ? '' : `${WHYE[o.tag]()} ${PERP()}`, ...(!o.ok && NUDGEE[o.tag] ? { nudge: NUDGEE[o.tag]() } : {}) })) }],
-      hints: [L('Sketch the field lines first; the equipotentials cross them at right angles.', 'Skizziere zuerst die Feldlinien; die Äquipotentiallinien kreuzen sie senkrecht.'), L('Around a single point charge, equipotentials are circles: V = k·Q/r.', 'Um eine einzelne Punktladung sind Äquipotentiallinien Kreise: V = k·Q/r.')],
+      hints: [
+        L(`Sketch the field lines of ${Q.name()} first; the equipotentials cross them at right angles.`, `Skizziere zuerst die Feldlinien für ${Q.name()}; die Äquipotentiallinien kreuzen sie senkrecht.`),
+        {
+          point: () => L('Round the charge, V = k·Q/r: for equal steps of V, do the circles get closer together or farther apart outwards?', 'Um die Ladung ist V = k·Q/r: Liegen die Kreise für gleiche Schritte von V nach aussen dichter oder weiter auseinander?'),
+          dipole: () => L('Close to each charge its own potential wins: small rings round + and round −. Where between them is the potential zero, and what shape is that line?', 'Nahe bei jeder Ladung überwiegt ihr eigenes Potential: kleine Ringe um + und um −. Wo zwischen ihnen ist das Potential null, und welche Form hat diese Linie?'),
+          like: () => L('Close to each charge its own potential wins: small rings round each. Far away the two look like one charge of twice the size. What happens to the lines between them?', 'Nahe bei jeder Ladung überwiegt ihr eigenes Potential: kleine Ringe um jede. Weit weg sehen die beiden aus wie eine Ladung doppelter Grösse. Was geschieht mit den Linien zwischen ihnen?'),
+          plates: () => L('Between the plates the field is uniform: how do equipotentials for equal steps lie relative to the plates, and how far apart?', 'Zwischen den Platten ist das Feld homogen: Wie liegen Äquipotentiallinien für gleiche Schritte zu den Platten, und wie weit auseinander?'),
+        }[key](),
+      ],
       solution: [PERP()], solFig: fig(C.fig(Q.c, cp ? { box, given: capEqui(Q.c), equiLines: true, extra: capLines(Q.c) } : { box, equi: Q.lv, lines: true })), p: { key, s: seed % 5 },
     };
   }
@@ -437,7 +508,11 @@
       kind: 'equi', title: L('Equipotentials of plates and charges', 'Äquipotentiallinien von Platten und Ladungen'),
       text: L(`<p>Which diagram shows equipotential lines (equal steps of potential) of ${mixName(c)}?</p>`, `<p>Welches Diagramm zeigt Äquipotentiallinien (gleiche Potentialschritte) für ${mixName(c)}?</p>`), figs: '',
       questions: [{ type: 'pick', key: 'd', label: L('Which diagram is right?', 'Welches Diagramm stimmt?'), options: r.shuffle(opts).map((o) => ({ html: o.html, ok: !!o.ok, tag: o.tag, why: o.ok ? '' : `${WHYE[o.tag]()} ${PERP()}` })) }],
-      hints: [L('Sketch the field lines first; the equipotentials cross them at right angles.', 'Skizziere zuerst die Feldlinien; die Äquipotentiallinien kreuzen sie senkrecht.'), L('Close to the charge its own potential wins. A metal plate is one potential: what does that mean for the equipotentials next to it?', 'Nahe der Ladung überwiegt ihr eigenes Potential. Eine Metallplatte hat überall dasselbe Potential: Was bedeutet das für die Äquipotentiallinien neben ihr?')],
+      hints: [
+        L(`Here: ${mixName(c)}. Sketch the field lines first; the equipotentials cross them at right angles.`, `Hier geht es um ${mixName(c)}. Skizziere zuerst die Feldlinien; die Äquipotentiallinien kreuzen sie senkrecht.`),
+        L(`Close to the charge ${label(ch.q)}q its own potential wins: what shape are the equipotentials there? ${c.plates.length === 1 ? 'The metal plate is' : 'Each metal plate is'} at one potential: what does that mean for the equipotentials next to ${c.plates.length === 1 ? 'it' : 'them'}? And can two equipotentials cross?`,
+          `Nahe bei der Ladung ${label(ch.q)}q überwiegt ihr eigenes Potential: Welche Form haben die Äquipotentiallinien dort? ${c.plates.length === 1 ? 'Die Metallplatte hat' : 'Jede Metallplatte hat'} überall dasselbe Potential: Was bedeutet das für die Äquipotentiallinien daneben? Und können sich zwei Äquipotentiallinien kreuzen?`),
+      ],
       solution: [how, PERP()], solFig: fig(C.fig(c, { box: BOX, equi: lv, lines: true, labels })), p: { cf: cf.id, flip, mirror },
     };
   }
@@ -477,7 +552,11 @@
       text: L('<p>The figure shows equipotential lines (orange) with their potentials. Which diagram shows the field lines (blue)?</p>', '<p>Die Abbildung zeigt Äquipotentiallinien (orange) mit ihren Potentialen. Welches Diagramm zeigt die Feldlinien (blau)?</p>'),
       figs: fig(given),
       questions: [{ type: 'pick', key: 'd', label: L('Which diagram is right?', 'Welches Diagramm stimmt?'), options: r.shuffle(opts).map((o) => ({ html: o.html, ok: !!o.ok, tag: o.tag, why: o.ok ? '' : `${W[o.tag]} ${how}`, ...(o.tag === 'up' ? { nudge: nudgeUp } : {}) })) }],
-      hints: [L('Field lines and equipotentials meet at right angles.', 'Feldlinien und Äquipotentiallinien treffen sich senkrecht.'), L('The field points from high to low potential.', 'Das Feld zeigt von hohem zu tiefem Potential.')],
+      hints: [
+        kind === 'uniform' ? L(`The equipotentials are straight and labelled ${hiLeft ? '400 V down to 0 V' : '0 V up to 400 V'} from left to right: field lines cross them at right angles, so in which orientation do they run?`, `Die Äquipotentiallinien sind gerade und von links nach rechts mit ${hiLeft ? '400 V bis hinunter zu 0 V' : '0 V bis hinauf zu 400 V'} beschriftet: Feldlinien kreuzen sie senkrecht, wie verlaufen sie also?`)
+          : L(`The equipotentials are circles round the hidden charge, labelled from ${hiLeft ? '+' : '−'}${nice(Math.round(90 / 0.5))} V inside to ${hiLeft ? '+' : '−'}${nice(Math.round(90 / 2.1))} V outside: field lines cross them at right angles, so in which orientation do they run?`, `Die Äquipotentiallinien sind Kreise um die verdeckte Ladung, beschriftet von ${hiLeft ? '+' : '−'}${nice(Math.round(90 / 0.5))} V innen bis ${hiLeft ? '+' : '−'}${nice(Math.round(90 / 2.1))} V aussen: Feldlinien kreuzen sie senkrecht, wie verlaufen sie also?`),
+        L(`The field points from high to low potential: ${kind === 'uniform' ? 'on which side is the potential higher here?' : 'is the potential higher inside or outside here?'}`, `Das Feld zeigt von hohem zu tiefem Potential: ${kind === 'uniform' ? 'Auf welcher Seite ist das Potential hier höher?' : 'Ist das Potential hier innen oder aussen höher?'}`),
+      ],
       solution: [how], p: { kind, hiLeft, s: seed % 5 },
     };
   }
@@ -553,7 +632,16 @@
       text: L(`<p>A student sketched the field lines (blue) and the equipotential lines (orange) of ${name}. One feature of the sketch is wrong.</p>`, `<p>Eine Schülerin hat die Feldlinien (blau) und die Äquipotentiallinien (orange) für ${name} skizziert. Ein Merkmal der Skizze ist falsch.</p>`),
       figs: fig(C.fig(c, { ...o, label: L('A student’s sketch', 'Die Skizze einer Schülerin') })),
       questions: [choice('err', L('Which feature is wrong?', 'Welches Merkmal ist falsch?'), feats.map((k) => ({ label: FEAT[k](), ok: k === err, tag: k === err ? undefined : 'other', why: k === err ? '' : L(`Not this: in the sketch, ${FINE[k]()}. ${check}`, `Nicht das: In der Skizze ${FINE[k]()}. ${check}`) })))],
-      hints: [check, LINES(), PERP()],
+      hints: [
+        L(`The sketch shows ${name}. ${check}`, `Die Skizze zeigt ${name}. ${check}`),
+        {
+          dipole: () => L('The field lines of a + and a − charge: do they run from + to −, does any line end in empty space, do two of them cross?', 'Die Feldlinien einer +- und einer −-Ladung: Laufen sie von + nach −, endet eine Linie im leeren Raum, kreuzen sich zwei?'),
+          like: () => L(`The field lines of two like charges: do the arrows point ${flip ? 'into the negative charges' : 'away from the positive charges'}, does any line end in empty space, do two of them cross?`, `Die Feldlinien zweier gleichnamiger Ladungen: Zeigen die Pfeile ${flip ? 'in die negativen Ladungen hinein' : 'von den positiven Ladungen weg'}, endet eine Linie im leeren Raum, kreuzen sich zwei?`),
+          plates: () => L('The field lines of the capacitor: do they run from the + plate to the − plate, does any line end in empty space, do two of them cross?', 'Die Feldlinien des Kondensators: Laufen sie von der +-Platte zur −-Platte, endet eine Linie im leeren Raum, kreuzen sich zwei?'),
+        }[key](),
+        key === 'plates' ? L('The equipotentials of the capacitor: do they cross the field lines at right angles, parallel to the plates, and are they evenly spaced in the uniform field?', 'Die Äquipotentiallinien des Kondensators: Kreuzen sie die Feldlinien senkrecht, parallel zu den Platten, und liegen sie im homogenen Feld gleich weit auseinander?')
+          : L('The equipotentials round the two charges: do they cross the field lines at right angles, do two of them cross, and are they closer together near the charges and farther apart outwards?', 'Die Äquipotentiallinien um die beiden Ladungen: Kreuzen sie die Feldlinien senkrecht, kreuzen sich zwei davon, und liegen sie nahe bei den Ladungen dichter und nach aussen weiter auseinander?'),
+      ],
       solution: [how, L('The right sketch:', 'Die richtige Skizze:')], solFig: fig(C.fig(c, sketch(key, null, flip).o)), p: { key, err, flip },
     };
   }
@@ -581,6 +669,21 @@
     [() => L('Where the equipotential lines are closer together, the field is stronger.', 'Wo die Äquipotentiallinien dichter liegen, ist das Feld stärker.'), true, () => L('E = |ΔV|/Δx: the same ΔV over a shorter distance.', 'E = |ΔV|/Δx: dasselbe ΔV auf kürzerer Strecke.')],
     [() => L('Between the plates of a capacitor, the equipotential lines are parallel to the plates.', 'Zwischen den Platten eines Kondensators sind die Äquipotentiallinien parallel zu den Platten.'), true, () => L('They cross the field lines, which run from plate to plate, at right angles.', 'Sie kreuzen die Feldlinien, die von Platte zu Platte laufen, senkrecht.')],
   ];
+  // the hints of stmts: which topics these five statements are about, and the rules of those topics
+  const TOPICS = [
+    [[0, 1, 2, 3, 4, 5, 6, 7], () => L('field lines', 'Feldlinien'), () => LINES()],
+    [[8, 9, 10], () => L('charged wires and capacitors', 'geladenen Drähten und Kondensatoren'), () => L('Round a long wire the lines spread out like spokes (E ∝ 1/r); between the plates of a capacitor they are parallel and evenly spaced, outside there is (almost) no field.', 'Um einen langen Draht laufen die Linien wie Speichen auseinander (E ∝ 1/r); zwischen den Platten eines Kondensators sind sie parallel und gleich dicht, ausserhalb gibt es (fast) kein Feld.')],
+    [[11, 12, 13, 14], () => L('dipoles', 'Dipolen'), () => L('On a dipole the forces q·E on its ends are equal and opposite in a uniform field; their torque q·E·d·sin φ depends on the angle φ to the field. In a field that is not uniform, the nearer end wins.', 'Auf einen Dipol wirken im homogenen Feld gleich grosse, entgegengesetzte Kräfte q·E auf seine Enden; ihr Drehmoment q·E·d·sin φ hängt vom Winkel φ zum Feld ab. In einem nicht homogenen Feld gewinnt das nähere Ende.')],
+    [[15, 16, 17, 18, 19], () => L('equipotentials', 'Äquipotentiallinien'), () => PERP()],
+  ];
+  function stmtHints(pick) {
+    const ids = pick.map((x) => BANK.indexOf(x)), on = TOPICS.filter(([is]) => ids.some((i) => is.includes(i)));
+    const names = on.map((t) => t[1]()), list = names.length > 1 ? `${names.slice(0, -1).join(', ')} ${L('and', 'und')} ${names[names.length - 1]}` : names[0];
+    return [
+      L(`These five statements are about ${list}. Take them one at a time, and picture a concrete case for each.`, `Diese fünf Aussagen handeln von ${list}. Nimm sie einzeln, und stell dir zu jeder einen konkreten Fall vor.`),
+      on.map((t) => t[2]()).join(' '),
+    ];
+  }
   function statements(seed) {
     const r = rng(seed * 101 + 67);
     for (;;) {
@@ -589,7 +692,7 @@
       return {
         kind: 'stmts', title: L('Which statements are correct?', 'Welche Aussagen sind richtig?'), text: L('<p>Tick all the statements that are correct.</p>', '<p>Kreuze alle richtigen Aussagen an.</p>'), figs: '',
         questions: [{ type: 'multi', key: 's', label: L('Which statements are correct?', 'Welche Aussagen sind richtig?'), statements: pick.map(([h, ok, why]) => ({ html: h(), ok, why: why() })) }],
-        hints: [LINES(), PERP()], solution: pick.map(([h, ok, why]) => `${ok ? '✓' : '✗'} ${h()} ${why()}`), p: { s: pick.map((x) => BANK.indexOf(x)) },
+        hints: stmtHints(pick), solution: pick.map(([h, ok, why]) => `${ok ? '✓' : '✗'} ${h()} ${why()}`), p: { s: pick.map((x) => BANK.indexOf(x)) },
       };
     }
   }

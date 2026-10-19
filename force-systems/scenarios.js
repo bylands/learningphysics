@@ -123,9 +123,12 @@
       return sized(b.sc, { G: v.G, N: v.N, F: p.F });
     },
     hints: (p) => [
-      L('Find all forces on the box: its weight, the force of the floor and the force of the rope or hand.', 'Bestimme alle Kräfte auf die Kiste: die Gewichtskraft, die Kraft des Bodens und die Kraft des Seils bzw. der Hand.'),
-      L(`The box stands still, so the net force on it is zero: the upward forces balance the downward ones.`, `Die Kiste ruht, also ist die resultierende Kraft null: Die Kräfte nach oben heben die Kräfte nach unten auf.`),
-      p.dir === 'up' ? m$(`${T('N')} + ${T('F')} = ${T('G')}`) : m$(`${T('N')} = ${T('G')} + ${T('F')}`),
+      p.dir === 'up' ? L(`The box (${kg(p.m)}) stands still while the rope pulls it up with ${q(p.F, 'N')}. Which bodies act on it, and which of their forces point up, which down?`, `Die Kiste (${kg(p.m)}) ruht, während das Seil sie mit ${q(p.F, 'N')} nach oben zieht. Welche Körper wirken auf sie, und welche ihrer Kräfte zeigen nach oben, welche nach unten?`)
+        : L(`The box (${kg(p.m)}) stands still while the hand pushes it down with ${q(p.F, 'N')}. Which bodies act on it, and which of their forces point up, which down?`, `Die Kiste (${kg(p.m)}) ruht, während die Hand sie mit ${q(p.F, 'N')} nach unten drückt. Welche Körper wirken auf sie, und welche ihrer Kräfte zeigen nach oben, welche nach unten?`),
+      L(`At rest the net force is zero: the forces up balance the forces down. The weight is ${m$(`${T('G')} = ${T('m')}\\,g`)}; the balance here: ${p.dir === 'up' ? m$(`${T('N')} + ${T('F')} = ${T('G')}`) : m$(`${T('N')} = ${T('G')} + ${T('F')}`)}.`,
+        `In Ruhe ist die resultierende Kraft null: Die Kräfte nach oben heben die nach unten auf. Die Gewichtskraft ist ${m$(`${T('G')} = ${T('m')}\\,g`)}; das Gleichgewicht hier: ${p.dir === 'up' ? m$(`${T('N')} + ${T('F')} = ${T('G')}`) : m$(`${T('N')} = ${T('G')} + ${T('F')}`)}.`),
+      p.dir === 'up' ? L(`The rope carries part of the weight: must the floor push more or less than the weight, and by how much?`, 'Das Seil trägt einen Teil der Gewichtskraft: Muss der Boden mehr oder weniger drücken als die Gewichtskraft, und um wie viel?')
+        : L(`The floor has to hold the box and the hand’s push: must it push more or less than the weight, and by how much?`, 'Der Boden muss die Kiste und die Kraft der Hand halten: Muss er mehr oder weniger drücken als die Gewichtskraft, und um wie viel?'),
     ],
     nums(p, v) {
       const up = p.dir === 'up', FG = p.m * G;
@@ -196,10 +199,12 @@
       return sized(b.sc, { G: p.m * G, N: v.N, R: v.R, F: p.F, Fv: p.F * cu, Fh: p.F * cs });
     },
     hints: (p) => [
-      L('Split the pull into a vertical and a horizontal component.', 'Zerlege die Zugkraft in eine senkrechte und eine waagrechte Komponente.'),
-      L('The box stands still: vertically, the floor and the pull together balance the weight; horizontally, static friction balances the pull.', 'Die Kiste ruht: Senkrecht halten Boden und Zugkraft zusammen der Gewichtskraft das Gleichgewicht, waagrecht hält die Haftreibung der Zugkraft das Gleichgewicht.'),
-      p.ref === 'v' ? L(`The angle is measured from the vertical: the vertical component is ${m$(`${T('F')}\\cos\\alpha`)}.`, `Der Winkel ist von der Senkrechten aus gemessen: Die senkrechte Komponente ist ${m$(`${T('F')}\\cos\\alpha`)}.`)
-        : L(`The angle is measured from the horizontal: the vertical component is ${m$(`${T('F')}\\sin\\alpha`)}.`, `Der Winkel ist von der Waagrechten aus gemessen: Die senkrechte Komponente ist ${m$(`${T('F')}\\sin\\alpha`)}.`),
+      L(`The rope pulls with ${q(p.F, 'N')} at ${angleLabel(p)} to the ${p.ref === 'v' ? 'vertical' : 'horizontal'}, yet the box (${kg(p.m)}) stays still. Which forces act vertically, which along the floor? Split the pull into a vertical and a horizontal component.`,
+        `Das Seil zieht mit ${q(p.F, 'N')} unter ${angleLabel(p)} zur ${p.ref === 'v' ? 'Senkrechten' : 'Waagrechten'}, und doch ruht die Kiste (${kg(p.m)}). Welche Kräfte wirken senkrecht, welche entlang des Bodens? Zerlege die Zugkraft in eine senkrechte und eine waagrechte Komponente.`),
+      L(`The angle is measured from the ${p.ref === 'v' ? 'vertical' : 'horizontal'}: the vertical component is ${m$(`${T('F')}${p.ref === 'v' ? '\\cos' : '\\sin'}\\alpha`)}, the horizontal one ${m$(`${T('F')}${p.ref === 'v' ? '\\sin' : '\\cos'}\\alpha`)}. Vertically, ${m$(`${T('N')} + F_\\uparrow = ${T('m')}\\,g`)}; horizontally, static friction balances ${m$('F_\\rightarrow')}.`,
+        `Der Winkel ist von der ${p.ref === 'v' ? 'Senkrechten' : 'Waagrechten'} aus gemessen: Die senkrechte Komponente ist ${m$(`${T('F')}${p.ref === 'v' ? '\\cos' : '\\sin'}\\alpha`)}, die waagrechte ${m$(`${T('F')}${p.ref === 'v' ? '\\sin' : '\\cos'}\\alpha`)}. Senkrecht gilt ${m$(`${T('N')} + F_\\uparrow = ${T('m')}\\,g`)}; waagrecht hält die Haftreibung ${m$('F_\\rightarrow')} das Gleichgewicht.`),
+      L(`The weight first: ${m$(`${T('m')}\\,g = ${tq(p.m * G, 'N')}`)}. The vertical component of the pull carries part of it, so the floor pushes less.`,
+        `Zuerst die Gewichtskraft: ${m$(`${T('m')}\\,g = ${tq(p.m * G, 'N')}`)}. Die senkrechte Komponente der Zugkraft trägt einen Teil davon, also drückt der Boden weniger.`),
     ],
     nums(p, v) {
       const FG = p.m * G, [up, side] = p.ref === 'v' ? [cosOf(p), sinOf(p)] : [sinOf(p), cosOf(p)], fn = p.ref === 'v' ? '\\cos' : '\\sin';
@@ -264,9 +269,12 @@
       return sized(b.sc, { G: p.m * G, N: p.m * G, R: v.R, F });
     },
     hints: (p) => [
-      L('Find all forces on the box. Vertically, weight and normal force balance; horizontally, the pull and friction act.', 'Bestimme alle Kräfte auf die Kiste. Senkrecht heben sich Gewichtskraft und Normalkraft auf, waagrecht wirken Zugkraft und Reibung.'),
-      L(`Friction: ${m$(`${T('R')} = ${T('mu')}\\,${T('N')}`)}, and here the normal force equals the weight.`, `Reibung: ${m$(`${T('R')} = ${T('mu')}\\,${T('N')}`)}, und hier ist die Normalkraft gleich der Gewichtskraft.`),
-      L(`Only what is left of the pull after friction accelerates the box: ${m$(`${T('res')} = ${T('F')} - ${T('R')} = ${T('m')}\\,${T('a')}`)}.`, `Nur was nach Abzug der Reibung von der Zugkraft übrig bleibt, beschleunigt die Kiste: ${m$(`${T('res')} = ${T('F')} - ${T('R')} = ${T('m')}\\,${T('a')}`)}.`),
+      L(`The box (${kg(p.m)}) slides across the floor${p.given === 'a' ? `, with an acceleration of ${q(p.a, 'a')}` : `, pulled with ${q(p.F, 'N')}`}; μ = ${num(p.mu, 2)}. Which forces act along the floor, which perpendicular to it, and which way does friction point?`,
+        `Die Kiste (${kg(p.m)}) gleitet über den Boden${p.given === 'a' ? `, mit einer Beschleunigung von ${q(p.a, 'a')}` : `, gezogen mit ${q(p.F, 'N')}`}; μ = ${num(p.mu, 2)}. Welche Kräfte wirken entlang des Bodens, welche senkrecht dazu, und wohin zeigt die Reibung?`),
+      L(`Friction ${m$(`${T('R')} = ${T('mu')}\\,${T('N')}`)}, and here the normal force equals the weight, as nothing else pushes vertically. Along the floor, only what is left of the pull after friction accelerates the box: ${m$(`${T('res')} = ${T('F')} - ${T('R')} = ${T('m')}\\,${T('a')}`)}.`,
+        `Reibung ${m$(`${T('R')} = ${T('mu')}\\,${T('N')}`)}, und hier ist die Normalkraft gleich der Gewichtskraft, weil sonst nichts senkrecht drückt. Entlang des Bodens beschleunigt nur, was nach Abzug der Reibung von der Zugkraft übrig bleibt: ${m$(`${T('res')} = ${T('F')} - ${T('R')} = ${T('m')}\\,${T('a')}`)}.`),
+      L(`The normal force first: ${m$(`${T('N')} = ${T('m')}\\,g = ${tq(p.m * G, 'N')}`)}. Friction is the fraction μ of it.`,
+        `Zuerst die Normalkraft: ${m$(`${T('N')} = ${T('m')}\\,g = ${tq(p.m * G, 'N')}`)}. Die Reibung ist der Bruchteil μ davon.`),
     ],
     nums(p, v) {
       const R = v.R, fric = L('Friction is μ times the normal force, μ m g: do not forget g.', 'Die Reibung ist μ mal die Normalkraft, μ m g: Vergiss g nicht.');
@@ -368,9 +376,12 @@
       return sized(sc, { G1: p.m1 * G, G2: p.m2 * G, N1: p.m1 * G, N2: p.m2 * G, R1: p.mu * p.m1 * G, R2: p.mu * p.m2 * G, F: p.F, K1: v.K, K2: v.K });
     },
     hints: (p) => [
-      L('First look at both boxes together: they move together, with the same acceleration.', 'Betrachte zuerst beide Kisten zusammen: Sie bewegen sich gemeinsam, mit derselben Beschleunigung.'),
-      L(`For both boxes together, ${m$(`${T('res')} = ${p.mu ? `${T('F')} - ${T('R')}` : T('F')}`)} and ${m$(`${T('res')} = (${T('m')}_1 + ${T('m')}_2)\\,${T('a')}`)}.`, `Für beide Kisten zusammen gilt ${m$(`${T('res')} = ${p.mu ? `${T('F')} - ${T('R')}` : T('F')}`)} und ${m$(`${T('res')} = (${T('m')}_1 + ${T('m')}_2)\\,${T('a')}`)}.`),
-      L(`Then look at the right box alone: only ${m$(T('K'))}${p.mu ? ' and its own friction act' : ' acts'} on it horizontally, and it has the same acceleration.`, `Betrachte dann die rechte Kiste allein: Waagrecht wirkt auf sie nur ${m$(T('K'))}${p.mu ? ' und ihre eigene Reibung' : ''}, und sie hat dieselbe Beschleunigung.`),
+      L(`The push of ${q(p.F, 'N')} acts on the left box (${kg(p.m1)}) only; it pushes the right box (${kg(p.m2)}) along. ${p.mu ? `Both slide with μ = ${num(p.mu, 2)}.` : 'There is no friction.'} Where do the boxes push each other, and do those forces matter when you look at both boxes as one system?`,
+        `Die Kraft von ${q(p.F, 'N')} wirkt nur auf die linke Kiste (${kg(p.m1)}); sie schiebt die rechte (${kg(p.m2)}) vor sich her. ${p.mu ? `Beide gleiten mit μ = ${num(p.mu, 2)}.` : 'Es gibt keine Reibung.'} Wo drücken die Kisten aufeinander, und zählen diese Kräfte, wenn du beide Kisten als ein System betrachtest?`),
+      L(`Both boxes together move with the same acceleration: ${m$(`${T('res')} = ${p.mu ? `${T('F')} - ${T('R')}` : T('F')} = (${T('m')}_1 + ${T('m')}_2)\\,${T('a')}`)}. Then the right box alone: horizontally only ${m$(T('K'))}${p.mu ? ' and its own friction act' : ' acts'} on it, ${p.mu ? m$(`${T('K')} - ${T('mu')}\\,${T('m')}_2\\,g = ${T('m')}_2\\,${T('a')}`) : m$(`${T('K')} = ${T('m')}_2\\,${T('a')}`)}.`,
+        `Beide Kisten zusammen bewegen sich mit derselben Beschleunigung: ${m$(`${T('res')} = ${p.mu ? `${T('F')} - ${T('R')}` : T('F')} = (${T('m')}_1 + ${T('m')}_2)\\,${T('a')}`)}. Dann die rechte Kiste allein: Waagrecht wirkt auf sie nur ${m$(T('K'))}${p.mu ? ' und ihre eigene Reibung' : ''}, ${p.mu ? m$(`${T('K')} - ${T('mu')}\\,${T('m')}_2\\,g = ${T('m')}_2\\,${T('a')}`) : m$(`${T('K')} = ${T('m')}_2\\,${T('a')}`)}.`),
+      L(`The mass of the system: ${m$(`${T('m')}_1 + ${T('m')}_2 = ${tq(p.m1 + p.m2, 'kg')}`)}${p.mu ? `; its total normal force is its total weight, ${m$(tq((p.m1 + p.m2) * G, 'N'))}` : ''}. The right box alone has only ${kg(p.m2)}.`,
+        `Die Masse des Systems: ${m$(`${T('m')}_1 + ${T('m')}_2 = ${tq(p.m1 + p.m2, 'kg')}`)}${p.mu ? `; seine gesamte Normalkraft ist seine gesamte Gewichtskraft, ${m$(tq((p.m1 + p.m2) * G, 'N'))}` : ''}. Die rechte Kiste allein hat nur ${kg(p.m2)}.`),
     ],
     steps(p, v) {
       const M = p.m1 + p.m2, fr = p.mu > 0;
@@ -433,9 +444,12 @@
       return sized(sc, { G1: p.m1 * G, G2: p.m2 * G, N1: p.m1 * G, N2: p.m2 * G, R1: v.R1, R2: p.mu2 * p.m2 * G, F: p.F, S1: v.S, S2: v.S });
     },
     hints: (p) => [
-      L('Friction on each box: coefficient times normal force, and here the normal force equals the weight of that box.', 'Reibung auf jede Kiste: Reibungszahl mal Normalkraft, und hier ist die Normalkraft gleich der Gewichtskraft der Kiste.'),
-      L(`Both boxes together: ${m$(`${T('res')} = ${T('F')} - ${T('R', 1)}${p.mu2 ? ` - ${T('R', 2)}` : ''} = (${T('m')}_1 + ${T('m')}_2)\\,${T('a')}`)}; the rope forces are internal and cancel.`, `Beide Kisten zusammen: ${m$(`${T('res')} = ${T('F')} - ${T('R', 1)}${p.mu2 ? ` - ${T('R', 2)}` : ''} = (${T('m')}_1 + ${T('m')}_2)\\,${T('a')}`)}; die Seilkräfte sind innere Kräfte und heben sich auf.`),
-      L(`The left box alone: the rope pulls it forward, friction holds it back, ${m$(`${T('S')} - ${T('R', 1)} = ${T('m')}_1\\,${T('a')}`)}.`, `Die linke Kiste allein: Das Seil zieht sie nach vorn, die Reibung hält sie zurück, ${m$(`${T('S')} - ${T('R', 1)} = ${T('m')}_1\\,${T('a')}`)}.`),
+      L(`${q(p.F, 'N')} pulls the right box (${kg(p.m2)}); the rope drags the left box (${kg(p.m1)}) along. The left box slides with μ = ${num(p.mu1, 2)}, the right one with ${p.mu2 ? `μ = ${num(p.mu2, 2)}` : 'no friction'}. Which forces act on each box along the floor?`,
+        `${q(p.F, 'N')} zieht die rechte Kiste (${kg(p.m2)}); das Seil schleppt die linke (${kg(p.m1)}) mit. Die linke gleitet mit μ = ${num(p.mu1, 2)}, die rechte ${p.mu2 ? `mit μ = ${num(p.mu2, 2)}` : 'ohne Reibung'}. Welche Kräfte wirken entlang des Bodens auf jede Kiste?`),
+      L(`Friction on each box: ${m$(`${T('R')} = ${T('mu')}\\,${T('m')}\\,g`)} with that box’s own μ and mass. Both boxes together (the rope forces are internal and cancel): ${m$(`${T('res')} = ${T('F')} - ${T('R', 1)}${p.mu2 ? ` - ${T('R', 2)}` : ''} = (${T('m')}_1 + ${T('m')}_2)\\,${T('a')}`)}. The left box alone: ${m$(`${T('S')} - ${T('R', 1)} = ${T('m')}_1\\,${T('a')}`)}.`,
+        `Reibung auf jede Kiste: ${m$(`${T('R')} = ${T('mu')}\\,${T('m')}\\,g`)} mit μ und Masse dieser Kiste. Beide Kisten zusammen (die Seilkräfte sind innere Kräfte und heben sich auf): ${m$(`${T('res')} = ${T('F')} - ${T('R', 1)}${p.mu2 ? ` - ${T('R', 2)}` : ''} = (${T('m')}_1 + ${T('m')}_2)\\,${T('a')}`)}. Die linke Kiste allein: ${m$(`${T('S')} - ${T('R', 1)} = ${T('m')}_1\\,${T('a')}`)}.`),
+      L(`The weights first: the left box ${m$(tq(p.m1 * G, 'N'))}, the right box ${m$(tq(p.m2 * G, 'N'))}; on the level floor each is that box’s normal force. The whole system has ${kg(p.m1 + p.m2)}.`,
+        `Zuerst die Gewichtskräfte: linke Kiste ${m$(tq(p.m1 * G, 'N'))}, rechte Kiste ${m$(tq(p.m2 * G, 'N'))}; auf dem waagrechten Boden ist jede die Normalkraft dieser Kiste. Das ganze System hat ${kg(p.m1 + p.m2)}.`),
     ],
     steps(p, v) {
       const M = p.m1 + p.m2, f2 = p.mu2 > 0;
@@ -501,10 +515,13 @@
       box(2, p.m2, cx + r, heavyLeft ? yl : yh);
       return sized(sc, { G1: p.m1 * G, G2: p.m2 * G, S1: v.S, S2: v.S });
     },
-    hints: () => [
-      L('The heavier box goes down, the lighter one up, both with the same acceleration.', 'Die schwerere Kiste sinkt, die leichtere steigt, beide mit derselben Beschleunigung.'),
-      L(`Seen as one system along the rope, the difference of the two weights accelerates both masses: ${m$(`${T('res')} = (${T('m')}_\\text{heavy} - ${T('m')}_\\text{light})\\,g`)}.`, `Als ein System entlang des Seils betrachtet, beschleunigt die Differenz der Gewichtskräfte beide Massen: ${m$(`${T('res')} = (${T('m')}_\\text{schwer} - ${T('m')}_\\text{leicht})\\,g`)}.`),
-      L(`For the rope force, look at one box alone, e.g. the lighter one: ${m$(`${T('S')} - ${T('m')}\\,g = ${T('m')}\\,${T('a')}`)}.`, `Für die Seilkraft betrachte eine Kiste allein, z.B. die leichtere: ${m$(`${T('S')} - ${T('m')}\\,g = ${T('m')}\\,${T('a')}`)}.`),
+    hints: (p) => [
+      L(`${kg(p.m1)} hangs on the left, ${kg(p.m2)} on the right. Which box goes down, which up? Both move with the same acceleration, and the rope pulls both with the same force.`,
+        `Links hängen ${kg(p.m1)}, rechts ${kg(p.m2)}. Welche Kiste sinkt, welche steigt? Beide bewegen sich mit derselben Beschleunigung, und das Seil zieht beide mit derselben Kraft.`),
+      L(`Seen as one system along the rope, the difference of the two weights accelerates both masses: ${m$(`${T('res')} = (${T('m')}_\\text{heavy} - ${T('m')}_\\text{light})\\,g = (${T('m')}_1 + ${T('m')}_2)\\,${T('a')}`)}. For the rope force, the lighter box alone: ${m$(`${T('S')} - ${T('m')}\\,g = ${T('m')}\\,${T('a')}`)}.`,
+        `Als ein System entlang des Seils betrachtet, beschleunigt die Differenz der Gewichtskräfte beide Massen: ${m$(`${T('res')} = (${T('m')}_\\text{schwer} - ${T('m')}_\\text{leicht})\\,g = (${T('m')}_1 + ${T('m')}_2)\\,${T('a')}`)}. Für die Seilkraft die leichtere Kiste allein: ${m$(`${T('S')} - ${T('m')}\\,g = ${T('m')}\\,${T('a')}`)}.`),
+      L(`The weights: left ${m$(tq(p.m1 * G, 'N'))}, right ${m$(tq(p.m2 * G, 'N'))}; together the boxes have ${kg(p.m1 + p.m2)}. The rope force lies between the two weights.`,
+        `Die Gewichtskräfte: links ${m$(tq(p.m1 * G, 'N'))}, rechts ${m$(tq(p.m2 * G, 'N'))}; zusammen haben die Kisten ${kg(p.m1 + p.m2)}. Die Seilkraft liegt zwischen den beiden Gewichtskräften.`),
     ],
     steps(p, v) {
       const hi = p.m1 > p.m2 ? 1 : 2, lo = 3 - hi, mh = Math.max(p.m1, p.m2), ml = Math.min(p.m1, p.m2), all = ['G1', 'G2', 'S1', 'S2', 'a1', 'a2'];
@@ -568,10 +585,13 @@
       sc.accel({ id: 'a2', at: [x2 + w2 / 2 + 22, c2[1] - 23], dir: [0, 1], sym: ['a'], task: 'sym', lab: [8, 0] });
       return sized(sc, { G1: p.m1 * G, N: p.m1 * G, R: v.R, S1: v.S, G2: p.m2 * G, S2: v.S });
     },
-    hints: () => [
-      L('The weight of the hanging box drives both boxes; friction on the table holds them back.', 'Die Gewichtskraft der hängenden Kiste treibt beide Kisten an; die Reibung auf dem Tisch bremst sie.'),
-      L(`Along the rope: ${m$(`${T('res')} = ${T('m')}_2\\,g - ${T('R')} = (${T('m')}_1 + ${T('m')}_2)\\,${T('a')}`)}.`, `Entlang des Seils: ${m$(`${T('res')} = ${T('m')}_2\\,g - ${T('R')} = (${T('m')}_1 + ${T('m')}_2)\\,${T('a')}`)}.`),
-      L(`The box on the table alone: ${m$(`${T('S')} - ${T('R')} = ${T('m')}_1\\,${T('a')}`)}.`, `Die Kiste auf dem Tisch allein: ${m$(`${T('S')} - ${T('R')} = ${T('m')}_1\\,${T('a')}`)}.`),
+    hints: (p) => [
+      L(`The hanging box (${kg(p.m2)}) drives both boxes; friction on the box on the table (${kg(p.m1)}, μ = ${num(p.mu, 2)}) holds them back. Which forces act on each box along its motion?`,
+        `Die hängende Kiste (${kg(p.m2)}) treibt beide Kisten an; die Reibung auf die Kiste auf dem Tisch (${kg(p.m1)}, μ = ${num(p.mu, 2)}) bremst sie. Welche Kräfte wirken auf jede Kiste entlang ihrer Bewegung?`),
+      L(`Friction ${m$(`${T('R')} = ${T('mu')}\\,${T('m')}_1\\,g`)}: on the level table the normal force is that box’s weight. Along the rope: ${m$(`${T('res')} = ${T('m')}_2\\,g - ${T('R')} = (${T('m')}_1 + ${T('m')}_2)\\,${T('a')}`)}. The box on the table alone: ${m$(`${T('S')} - ${T('R')} = ${T('m')}_1\\,${T('a')}`)}.`,
+        `Reibung ${m$(`${T('R')} = ${T('mu')}\\,${T('m')}_1\\,g`)}: Auf dem waagrechten Tisch ist die Normalkraft die Gewichtskraft dieser Kiste. Entlang des Seils: ${m$(`${T('res')} = ${T('m')}_2\\,g - ${T('R')} = (${T('m')}_1 + ${T('m')}_2)\\,${T('a')}`)}. Die Kiste auf dem Tisch allein: ${m$(`${T('S')} - ${T('R')} = ${T('m')}_1\\,${T('a')}`)}.`),
+      L(`The weights first: the box on the table ${m$(tq(p.m1 * G, 'N'))} (its normal force too), the hanging box ${m$(tq(p.m2 * G, 'N'))}. Together they have ${kg(p.m1 + p.m2)}.`,
+        `Zuerst die Gewichtskräfte: Kiste auf dem Tisch ${m$(tq(p.m1 * G, 'N'))} (auch ihre Normalkraft), hängende Kiste ${m$(tq(p.m2 * G, 'N'))}. Zusammen haben sie ${kg(p.m1 + p.m2)}.`),
     ],
     nums(p, v) {
       const M = p.m1 + p.m2, W = p.m2 * G;
@@ -676,9 +696,12 @@
       return sized(sl.sc, { ...b.mags, R: v.R, F: v.F });
     },
     hints: (p) => [
-      L('Split the weight into a component down the slope and one perpendicular to it.', 'Zerlege die Gewichtskraft in eine Komponente hangabwärts und eine senkrecht zur Unterlage.'),
-      L(`Perpendicular to the slope, nothing moves: ${m$(`${T('N')} = ${T('m')}\\,g\\cos\\alpha`)}; friction ${m$(`${T('R')} = ${T('mu')}\\,${T('N')}`)}.`, `Senkrecht zur Unterlage bewegt sich nichts: ${m$(`${T('N')} = ${T('m')}\\,g\\cos\\alpha`)}; Reibung ${m$(`${T('R')} = ${T('mu')}\\,${T('N')}`)}.`),
-      L(`Along the slope: ${m$(`${T('F')} - ${T('m')}\\,g\\sin\\alpha - ${T('R')} = ${T('m')}\\,${T('a')}`)}.`, `Entlang der Unterlage: ${m$(`${T('F')} - ${T('m')}\\,g\\sin\\alpha - ${T('R')} = ${T('m')}\\,${T('a')}`)}.`),
+      L(`The box (${kg(p.m)}) is pulled up the ${angleLabel(p)} slope parallel to it, ${p.a ? `with an acceleration of ${q(p.a, 'a')}` : 'at constant speed'}; μ = ${num(p.mu, 2)}. Split its weight into a component down the slope and one perpendicular to it: which forces act along the slope, and which way does friction point?`,
+        `Die Kiste (${kg(p.m)}) wird parallel zur Unterlage den Hang mit ${angleLabel(p)} hinaufgezogen, ${p.a ? `mit einer Beschleunigung von ${q(p.a, 'a')}` : 'mit konstanter Geschwindigkeit'}; μ = ${num(p.mu, 2)}. Zerlege ihre Gewichtskraft in eine Komponente hangabwärts und eine senkrecht zur Unterlage: Welche Kräfte wirken entlang der Unterlage, und wohin zeigt die Reibung?`),
+      L(`Perpendicular to the slope nothing moves: ${m$(`${T('N')} = ${T('m')}\\,g\\cos\\alpha`)}, and friction ${m$(`${T('R')} = ${T('mu')}\\,${T('N')}`)}. Along the slope: ${m$(`${T('F')} - ${T('m')}\\,g\\sin\\alpha - ${T('R')} = ${T('m')}\\,${T('a')}`)}.`,
+        `Senkrecht zur Unterlage bewegt sich nichts: ${m$(`${T('N')} = ${T('m')}\\,g\\cos\\alpha`)}, und die Reibung ${m$(`${T('R')} = ${T('mu')}\\,${T('N')}`)}. Entlang der Unterlage: ${m$(`${T('F')} - ${T('m')}\\,g\\sin\\alpha - ${T('R')} = ${T('m')}\\,${T('a')}`)}.`),
+      L(`The weight first: ${m$(`${T('m')}\\,g = ${tq(p.m * G, 'N')}`)}. Its component down the slope goes with ${m$('\\sin\\alpha')}, the one perpendicular to it with ${m$('\\cos\\alpha')}: the pull has to overcome the first and friction${p.a ? ', and give the box its acceleration' : ''}.`,
+        `Zuerst die Gewichtskraft: ${m$(`${T('m')}\\,g = ${tq(p.m * G, 'N')}`)}. Ihre Komponente hangabwärts geht mit ${m$('\\sin\\alpha')}, die senkrecht zur Unterlage mit ${m$('\\cos\\alpha')}: Die Zugkraft muss die erste und die Reibung überwinden${p.a ? ' und der Kiste ihre Beschleunigung geben' : ''}.`),
     ],
     nums(p, v) {
       const FG = p.m * G, ma = p.m * p.a, Gp = FG * sinOf(p), Gn = FG * cosOf(p);
@@ -763,10 +786,13 @@
       sc.accel({ id: 'a2', at: [x2 + w2 / 2 + 20, c2[1] - 23], dir: [0, 1], sym: ['a'], task: 'sym', lab: [8, 0] });
       return sized(sc, { ...b.mags, R: v.R, S1: v.S, S2: v.S, G2: p.m2 * G });
     },
-    hints: () => [
-      L('The box on the slope: split its weight into a component down the slope and one perpendicular to it.', 'Die Kiste auf der Unterlage: Zerlege ihre Gewichtskraft in eine Komponente hangabwärts und eine senkrecht zur Unterlage.'),
-      L(`Along the rope, the weight of the hanging box drives both boxes; the component down the slope and friction act against it: ${m$(`${T('res')} = ${T('m')}_2\\,g - ${T('m')}_1\\,g\\sin\\alpha - ${T('R')}`)}.`, `Entlang des Seils treibt die Gewichtskraft der hängenden Kiste beide Kisten an; Hangabtriebskraft und Reibung wirken dagegen: ${m$(`${T('res')} = ${T('m')}_2\\,g - ${T('m')}_1\\,g\\sin\\alpha - ${T('R')}`)}.`),
-      L(`The hanging box alone: ${m$(`${T('m')}_2\\,g - ${T('S')} = ${T('m')}_2\\,${T('a')}`)}.`, `Die hängende Kiste allein: ${m$(`${T('m')}_2\\,g - ${T('S')} = ${T('m')}_2\\,${T('a')}`)}.`),
+    hints: (p) => [
+      L(`The box on the slope (${kg(p.m1)}, ${angleLabel(p)}, μ = ${num(p.mu, 2)}) is pulled up by the hanging box (${kg(p.m2)}), which goes down. Split the weight of the box on the slope into a component down the slope and one perpendicular to it: which forces drive the two boxes along the rope, which hold them back?`,
+        `Die Kiste auf der Unterlage (${kg(p.m1)}, ${angleLabel(p)}, μ = ${num(p.mu, 2)}) wird von der hängenden Kiste (${kg(p.m2)}) hinaufgezogen, die sinkt. Zerlege die Gewichtskraft der Kiste auf der Unterlage in eine Komponente hangabwärts und eine senkrecht zur Unterlage: Welche Kräfte treiben die beiden Kisten entlang des Seils an, welche bremsen sie?`),
+      L(`Perpendicular to the slope: ${m$(`${T('N')} = ${T('m')}_1\\,g\\cos\\alpha`)}, ${m$(`${T('R')} = ${T('mu')}\\,${T('N')}`)}. Along the rope: ${m$(`${T('res')} = ${T('m')}_2\\,g - ${T('m')}_1\\,g\\sin\\alpha - ${T('R')} = (${T('m')}_1 + ${T('m')}_2)\\,${T('a')}`)}. The hanging box alone: ${m$(`${T('m')}_2\\,g - ${T('S')} = ${T('m')}_2\\,${T('a')}`)}.`,
+        `Senkrecht zur Unterlage: ${m$(`${T('N')} = ${T('m')}_1\\,g\\cos\\alpha`)}, ${m$(`${T('R')} = ${T('mu')}\\,${T('N')}`)}. Entlang des Seils: ${m$(`${T('res')} = ${T('m')}_2\\,g - ${T('m')}_1\\,g\\sin\\alpha - ${T('R')} = (${T('m')}_1 + ${T('m')}_2)\\,${T('a')}`)}. Die hängende Kiste allein: ${m$(`${T('m')}_2\\,g - ${T('S')} = ${T('m')}_2\\,${T('a')}`)}.`),
+      L(`The weights first: the box on the slope ${m$(tq(p.m1 * G, 'N'))}, to be split with ${m$('\\sin\\alpha')} and ${m$('\\cos\\alpha')}; the hanging box ${m$(tq(p.m2 * G, 'N'))}. Together they have ${kg(p.m1 + p.m2)}.`,
+        `Zuerst die Gewichtskräfte: Kiste auf der Unterlage ${m$(tq(p.m1 * G, 'N'))}, mit ${m$('\\sin\\alpha')} und ${m$('\\cos\\alpha')} zu zerlegen; hängende Kiste ${m$(tq(p.m2 * G, 'N'))}. Zusammen haben sie ${kg(p.m1 + p.m2)}.`),
     ],
     nums(p, v) {
       const M = p.m1 + p.m2, W = p.m2 * G, F1 = p.m1 * G, Gp = F1 * sinOf(p), Gn = F1 * cosOf(p);
@@ -881,12 +907,17 @@
       sc.force({ id: 'Fs', kind: 'f', at: att, dir: [0, -1], sym: ['Fs'], lab: [p.state === 'hang' ? -10 : 8, p.state === 'hang' ? 8 : 4] });
       return sized(sc, { G: p.m * G, Fs: v.Fs });
     },
-    hints: (p) => [
-      L('Which bodies touch the box? Only the spring. Besides, the Earth pulls it down.', 'Welche Körper berühren die Kiste? Nur die Feder. Ausserdem zieht die Erde sie nach unten.'),
-      p.state === 'hang' ? L('The spring is stretched: it pulls the box back towards its relaxed length, that is up.', 'Die Feder ist gedehnt: Sie zieht die Kiste zurück zu ihrer entspannten Länge, also nach oben.')
-        : L('The spring is compressed: it pushes the box back towards its relaxed length, that is up.', 'Die Feder ist gestaucht: Sie drückt die Kiste zurück zu ihrer entspannten Länge, also nach oben.'),
-      L(`The box is at rest: ${m$(`${T('Fs')} = ${T('m')}\\,g`)}, and ${m$(`${T('Fs')} = k\\,\\Delta x`)} with ${m$('\\Delta x')} in metres.`, `Die Kiste ruht: ${m$(`${T('Fs')} = ${T('m')}\\,g`)}, und ${m$(`${T('Fs')} = k\\,\\Delta x`)} mit ${m$('\\Delta x')} in Metern.`),
-    ],
+    hints: (p) => {
+      const dx = (p.m * G * 100) / p.k, hang = p.state === 'hang';
+      return [
+        hang ? L(`The box (${kg(p.m)}) hangs at rest from the spring. Which bodies act on it? The spring is stretched: which way does it pull the box?`, `Die Kiste (${kg(p.m)}) hängt ruhig an der Feder. Welche Körper wirken auf sie? Die Feder ist gedehnt: In welche Richtung zieht sie die Kiste?`)
+          : L(`The box (${kg(p.m)}) rests on top of the spring. Which bodies act on it? The spring is compressed: which way does it push the box?`, `Die Kiste (${kg(p.m)}) liegt ruhig auf der Feder. Welche Körper wirken auf sie? Die Feder ist gestaucht: In welche Richtung drückt sie die Kiste?`),
+        L(`The box is at rest, so the spring force balances the weight, ${m$(`${T('Fs')} = ${T('m')}\\,g`)}; and the law of the spring, ${m$(`${T('Fs')} = k\\,\\Delta x`)}, links it to the ${p.given === 'k' ? 'spring constant given' : `${hang ? 'stretch' : 'compression'} given`}.`,
+          `Die Kiste ruht, also hält die Federkraft der Gewichtskraft das Gleichgewicht, ${m$(`${T('Fs')} = ${T('m')}\\,g`)}; und das Federgesetz, ${m$(`${T('Fs')} = k\\,\\Delta x`)}, verbindet sie mit ${p.given === 'k' ? 'der gegebenen Federkonstante' : `der gegebenen ${hang ? 'Dehnung' : 'Stauchung'}`}.`),
+        p.given === 'k' ? L(`Mind the units: with k in N/m, ${m$('\\Delta x')} comes out in metres; the question asks for it in centimetres.`, `Achte auf die Einheiten: Mit k in N/m ergibt sich ${m$('\\Delta x')} in Metern; gefragt ist es in Zentimetern.`)
+          : L(`Mind the units: k is in N/m, so take ${m$('\\Delta x')} in metres, ${cm(dx)} = ${num(dx / 100, 3)} m.`, `Achte auf die Einheiten: k ist in N/m, also nimm ${m$('\\Delta x')} in Metern, ${cm(dx)} = ${num(dx / 100, 3)} m.`),
+      ];
+    },
     nums(p, v) {
       const FG = p.m * G, dm = v.dx / 100;
       const unit = L(`F / k gives Δx in metres: ${num(dm, 3)} m = ${num(v.dx)} cm.`, `F / k ergibt Δx in Metern: ${num(dm, 3)} m = ${num(v.dx)} cm.`);
@@ -963,10 +994,14 @@
       return sized(b.sc, { G: p.m * G, N: p.m * G, R: v.R, Fs: v.Fs });
     },
     hints: (p) => [
-      L('Which bodies touch the box? The floor (normal force and friction) and the spring. Besides, the Earth pulls it down.', 'Welche Körper berühren die Kiste? Der Boden (Normalkraft und Reibung) und die Feder. Ausserdem zieht die Erde sie nach unten.'),
-      p.state === 'stretch' ? L('The stretched spring pulls the box back towards its relaxed length, towards the wall. Friction acts against the motion.', 'Die gedehnte Feder zieht die Kiste zurück zu ihrer entspannten Länge, zur Wand hin. Die Reibung wirkt gegen die Bewegung.')
-        : L('The compressed spring pushes the box back towards its relaxed length, away from the wall. Friction acts against the motion.', 'Die gestauchte Feder drückt die Kiste zurück zu ihrer entspannten Länge, von der Wand weg. Die Reibung wirkt gegen die Bewegung.'),
-      L(`${m$(`${T('Fs')} = k\\,\\Delta x`)} with ${m$('\\Delta x')} in metres, ${m$(`${T('R')} = ${T('mu')}\\,${T('m')}\\,g`)}, and ${m$(`${T('Fs')} - ${T('R')} = ${T('m')}\\,${T('a')}`)}.`, `${m$(`${T('Fs')} = k\\,\\Delta x`)} mit ${m$('\\Delta x')} in Metern, ${m$(`${T('R')} = ${T('mu')}\\,${T('m')}\\,g`)} und ${m$(`${T('Fs')} - ${T('R')} = ${T('m')}\\,${T('a')}`)}.`),
+      p.state === 'stretch' ? L(`The spring (k = ${Nm(p.k)}) is stretched by ${cm(p.dx)}, and the box (${kg(p.m)}, μ = ${num(p.mu, 2)}) starts to slide back towards the wall. Which bodies act on the box? Which way does the spring pull it, and which way does friction point?`,
+        `Die Feder (k = ${Nm(p.k)}) ist um ${cm(p.dx)} gedehnt, und die Kiste (${kg(p.m)}, μ = ${num(p.mu, 2)}) beginnt, zur Wand zurückzugleiten. Welche Körper wirken auf die Kiste? In welche Richtung zieht die Feder sie, und wohin zeigt die Reibung?`)
+        : L(`The spring (k = ${Nm(p.k)}) is compressed by ${cm(p.dx)}, and the box (${kg(p.m)}, μ = ${num(p.mu, 2)}) starts to slide away from the wall. Which bodies act on the box? Which way does the spring push it, and which way does friction point?`,
+          `Die Feder (k = ${Nm(p.k)}) ist um ${cm(p.dx)} gestaucht, und die Kiste (${kg(p.m)}, μ = ${num(p.mu, 2)}) beginnt, von der Wand weg zu gleiten. Welche Körper wirken auf die Kiste? In welche Richtung drückt die Feder sie, und wohin zeigt die Reibung?`),
+      L(`The law of the spring, ${m$(`${T('Fs')} = k\\,\\Delta x`)} with ${m$('\\Delta x')} in metres; friction ${m$(`${T('R')} = ${T('mu')}\\,${T('m')}\\,g`)}, as the normal force is the weight; along the floor ${m$(`${T('Fs')} - ${T('R')} = ${T('m')}\\,${T('a')}`)}.`,
+        `Das Federgesetz ${m$(`${T('Fs')} = k\\,\\Delta x`)} mit ${m$('\\Delta x')} in Metern; die Reibung ${m$(`${T('R')} = ${T('mu')}\\,${T('m')}\\,g`)}, weil die Normalkraft die Gewichtskraft ist; entlang des Bodens ${m$(`${T('Fs')} - ${T('R')} = ${T('m')}\\,${T('a')}`)}.`),
+      L(`The units first: ${m$('\\Delta x')} = ${cm(p.dx)} = ${num(p.dx / 100, 3)} m; the normal force is ${m$(`${T('m')}\\,g = ${tq(p.m * G, 'N')}`)}.`,
+        `Zuerst die Einheiten: ${m$('\\Delta x')} = ${cm(p.dx)} = ${num(p.dx / 100, 3)} m; die Normalkraft ist ${m$(`${T('m')}\\,g = ${tq(p.m * G, 'N')}`)}.`),
     ],
     nums(p, v) {
       return [num$('a', L('The acceleration just after it starts to slide:', 'Die Beschleunigung gleich nachdem sie zu gleiten beginnt:'), T('a'), 'a', v.a,
@@ -1046,11 +1081,18 @@
       return sized(sc, { G: p.m * G, D });
     },
     hints: (p) => [
-      L('Which bodies act on the skydiver? The Earth (her weight) and the air, against her velocity. Nothing else pushes her down.', 'Welche Körper wirken auf die Fallschirmspringerin? Die Erde (ihre Gewichtskraft) und die Luft, gegen ihre Geschwindigkeit. Sonst drückt sie nichts nach unten.'),
+      ({
+        early: L(`The skydiver (${kg(p.m)}) falls at ${q(p.u, 'v')}, parachute closed; the air resistance is ${q(p.D, 'N')}. Which bodies act on her, and which way does each force point? Is she getting faster, slower, or neither?`,
+          `Die Fallschirmspringerin (${kg(p.m)}) fällt mit ${q(p.u, 'v')}, Fallschirm geschlossen; der Luftwiderstand beträgt ${q(p.D, 'N')}. Welche Körper wirken auf sie, und wohin zeigt jede Kraft? Wird sie schneller, langsamer oder keins von beidem?`),
+        terminal: L(`The skydiver (${kg(p.m)}) falls at a constant ${q(p.u, 'v')}. Which bodies act on her, and which way does each force point? What does a constant speed say about the net force?`,
+          `Die Fallschirmspringerin (${kg(p.m)}) fällt mit konstanten ${q(p.u, 'v')}. Welche Körper wirken auf sie, und wohin zeigt jede Kraft? Was sagt eine konstante Geschwindigkeit über die resultierende Kraft?`),
+        chute: L(`The skydiver (${kg(p.m)}) still falls at ${q(p.u, 'v')}, but with the parachute open the air resistance is ${q(p.D, 'N')}. Which bodies act on her, and which way does each force point? Nothing else pushes her down.`,
+          `Die Fallschirmspringerin (${kg(p.m)}) fällt noch mit ${q(p.u, 'v')}, aber mit offenem Fallschirm beträgt der Luftwiderstand ${q(p.D, 'N')}. Welche Körper wirken auf sie, und wohin zeigt jede Kraft? Sonst drückt sie nichts nach unten.`),
+      })[p.phase],
       ...{
-        early: [L(`Downwards positive: ${m$(`${T('m')}\\,g - ${T('D')} = ${T('m')}\\,${T('a')}`)}.`, `Nach unten positiv: ${m$(`${T('m')}\\,g - ${T('D')} = ${T('m')}\\,${T('a')}`)}.`)],
-        terminal: [L('Her speed is constant: the forces balance.', 'Ihre Geschwindigkeit ist konstant: Die Kräfte heben sich auf.')],
-        chute: [L('She still moves down, so the air resistance still points up. It is now larger than her weight: she slows down.', 'Sie bewegt sich noch nach unten, also zeigt der Luftwiderstand noch nach oben. Er ist jetzt grösser als ihre Gewichtskraft: Sie wird langsamer.'),
+        early: [L(`Downwards positive: ${m$(`${T('m')}\\,g - ${T('D')} = ${T('m')}\\,${T('a')}`)}. Her weight is ${m$(tq(p.m * G, 'N'))}: is the air resistance smaller or larger?`, `Nach unten positiv: ${m$(`${T('m')}\\,g - ${T('D')} = ${T('m')}\\,${T('a')}`)}. Ihre Gewichtskraft ist ${m$(tq(p.m * G, 'N'))}: Ist der Luftwiderstand kleiner oder grösser?`)],
+        terminal: [L('Her speed is constant, so the forces balance: the air resistance up against her weight down.', 'Ihre Geschwindigkeit ist konstant, also heben sich die Kräfte auf: der Luftwiderstand nach oben gegen ihre Gewichtskraft nach unten.')],
+        chute: [L(`She still moves down, so the air resistance still points up. Her weight is ${m$(tq(p.m * G, 'N'))}, the air resistance ${q(p.D, 'N')}: which is larger, and which way does the net force point?`, `Sie bewegt sich noch nach unten, also zeigt der Luftwiderstand noch nach oben. Ihre Gewichtskraft ist ${m$(tq(p.m * G, 'N'))}, der Luftwiderstand ${q(p.D, 'N')}: Was ist grösser, und wohin zeigt die resultierende Kraft?`),
           L(`Upwards positive: ${m$(`${T('D')} - ${T('m')}\\,g = ${T('m')}\\,${T('a')}`)}.`, `Nach oben positiv: ${m$(`${T('D')} - ${T('m')}\\,g = ${T('m')}\\,${T('a')}`)}.`)],
       }[p.phase],
     ],
@@ -1150,10 +1192,11 @@
       sc.accel({ id: 'a', at: [top[0] + 23, top[1] - 48], dir: [-1, 0], sym: ['a'], task: 'sym', lab: [0, -12] });
       return sized(sc, { G: p.m * G, N: p.m * G, D: p.D });
     },
-    hints: () => [
-      L('Which bodies act on her? The Earth, the road (only up: rolling resistance is negligible) and the air. Once she stops pedalling, nothing pushes her forward.', 'Welche Körper wirken auf sie? Die Erde, die Strasse (nur nach oben: der Rollwiderstand ist vernachlässigbar) und die Luft. Sobald sie nicht mehr tritt, treibt sie nichts mehr nach vorn an.'),
-      L('The air resistance points against her velocity: backwards.', 'Der Luftwiderstand zeigt gegen ihre Geschwindigkeit: nach hinten.'),
-      L(`Backwards positive: ${m$(`${T('D')} = ${T('m')}\\,${T('a')}`)}.`, `Nach hinten positiv: ${m$(`${T('D')} = ${T('m')}\\,${T('a')}`)}.`),
+    hints: (p) => [
+      L(`She and her bike (${kg(p.m)}) coast at ${q(p.u, 'v')} on a level road; the air resistance is ${q(p.D, 'N')}. Which bodies act on her, vertically and along the road? Once she stops pedalling, does anything push her forward?`,
+        `Sie und ihr Velo (${kg(p.m)}) rollen mit ${q(p.u, 'v')} auf einer waagrechten Strasse aus; der Luftwiderstand beträgt ${q(p.D, 'N')}. Welche Körper wirken auf sie, senkrecht und entlang der Strasse? Treibt sie noch etwas nach vorn an, sobald sie nicht mehr tritt?`),
+      L(`Vertically nothing moves: the road’s normal force balances her weight. Along the road only the air resistance acts, against her velocity, backwards.`, 'Senkrecht bewegt sich nichts: Die Normalkraft der Strasse hält ihrer Gewichtskraft das Gleichgewicht. Entlang der Strasse wirkt nur der Luftwiderstand, gegen ihre Geschwindigkeit, nach hinten.'),
+      L(`Backwards positive: ${m$(`${T('D')} = ${T('m')}\\,${T('a')}`)}, with the whole mass of rider and bike, ${kg(p.m)}.`, `Nach hinten positiv: ${m$(`${T('D')} = ${T('m')}\\,${T('a')}`)}, mit der ganzen Masse von Fahrerin und Velo, ${kg(p.m)}.`),
     ],
     nums(p, v) {
       return [num$('a', L('Her acceleration (backwards: she slows down):', 'Ihre Beschleunigung (nach hinten: sie wird langsamer):'), T('a'), 'a', v.a,

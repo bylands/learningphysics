@@ -96,9 +96,10 @@
     fields: (p) => [choice('graph', L('Which graph shows y(t)?', 'Welcher Graph zeigt y(t)?'), p.kinds.map((k) => [k, circleGraph(k, (p.k * Math.PI) / 4), k === 'right' ? '' : circleWhy()[k], CFLAG[k], circleNudge()[k]]), { pics: true, ask: L('Which graph shows the displacement y(t) of the body?', 'Welcher Graph zeigt die Auslenkung y(t) des Körpers?') })],
     text: () => L('A pointer of length A turns anticlockwise at a constant angular velocity ω; the figure shows it at t = 0. A body moves up and down so that it is always at the height of the pointer’s tip. Which graph shows its displacement y(t)?',
       'Ein Zeiger der Länge A dreht sich mit konstanter Winkelgeschwindigkeit ω im Gegenuhrzeigersinn; die Figur zeigt ihn bei t = 0. Ein Körper bewegt sich so auf und ab, dass er immer auf der Höhe der Zeigerspitze ist. Welcher Graph zeigt seine Auslenkung y(t)?'),
-    hints: () => [
-      L('The displacement is the height of the tip: the shadow of the pointer on the vertical axis, y = A·sin φ, where φ is the angle of the pointer.', 'Die Auslenkung ist die Höhe der Spitze: der Schatten des Zeigers auf der vertikalen Achse, y = A·sin φ, wobei φ der Winkel des Zeigers ist.'),
-      L('At t = 0: is the tip above or below the centre? Does it rise or sink as the pointer turns anticlockwise?', 'Bei t = 0: Ist die Spitze oberhalb oder unterhalb des Mittelpunkts? Steigt oder sinkt sie, wenn sich der Zeiger im Gegenuhrzeigersinn dreht?'),
+    hints: (p) => [
+      L(`In the figure the pointer starts at the angle $\\varphi_0 = ${piTex(p.k)}$ from the horizontal. Where is its tip at $t = 0$: above the centre, below it, or at its height?`, `In der Figur startet der Zeiger beim Winkel $\\varphi_0 = ${piTex(p.k)}$ zur Horizontalen. Wo ist seine Spitze bei $t = 0$: oberhalb des Mittelpunkts, unterhalb oder auf seiner Höhe?`),
+      L(`The displacement is the height of the tip, its shadow on the vertical axis: $y(t) = A\\cdot\\sin(\\omega\\, t + \\varphi_0)$, so at the start $y(0) = A\\cdot\\sin\\varphi_0$, with the starting angle of the figure.`, `Die Auslenkung ist die Höhe der Spitze, ihr Schatten auf der vertikalen Achse: $y(t) = A\\cdot\\sin(\\omega\\, t + \\varphi_0)$, am Anfang also $y(0) = A\\cdot\\sin\\varphi_0$, mit dem Startwinkel der Figur.`),
+      L(`Now turn the pointer a little further anticlockwise from $${piTex(p.k)}$: does the tip rise or sink? Look for the graph that starts at the height $y(0)$ and goes that way.`, `Dreh den Zeiger nun von $${piTex(p.k)}$ aus ein wenig weiter im Gegenuhrzeigersinn: Steigt oder sinkt die Spitze? Suche den Graphen, der auf der Höhe $y(0)$ beginnt und in diese Richtung geht.`),
     ],
     steps: (p) => {
       const s0 = startOf(p.k);
@@ -211,13 +212,27 @@
     }
     return out;
   }
+  // the first step of bringing an equation into the standard form, the same for an SHM and not
+  // (so it does not tell which)
+  function firstMove(p) {
+    const s = Eq.sym(p.eq), y = s.y, c = s.c, id = p.eq.form;
+    if (['std0', 'shift', 'damp'].includes(id)) return L(`Bring every term except the one with $${s.dd}$ to the right-hand side.`, `Bring alle Terme ausser jenem mit $${s.dd}$ auf die rechte Seite.`);
+    if (['inv', 'plusinv'].includes(id)) return L(`Bring $${y}$ to the right-hand side and divide by $${c}^2$, the factor in front of $${s.dd}$.`, `Bring $${y}$ auf die rechte Seite und teile durch $${c}^2$, den Faktor vor $${s.dd}$.`);
+    if (id === 'mD') return L(`Bring $D\\cdot ${y}$ to the right-hand side and divide by $m$, the factor in front of $${s.dd}$.`, `Bring $D\\cdot ${y}$ auf die rechte Seite und teile durch $m$, den Faktor vor $${s.dd}$.`);
+    if (id === 'cinv') return L(`Divide by $${c}$, the factor in front of $${s.dd}$.`, `Teile durch $${c}$, den Faktor vor $${s.dd}$.`);
+    if (byId(id).kind === 'ode') return L('It is already solved for the derivative: compare the right-hand side directly.', 'Sie ist schon nach der Ableitung aufgelöst: Vergleiche die rechte Seite direkt.');
+    return L(`Look at the factor in front of the cosine (or sine): does it contain $t$? And write the argument as (a constant)$\\cdot t$, if you can.`, `Schau den Faktor vor dem Kosinus (oder Sinus) an: Enthält er $t$? Und schreib das Argument wenn möglich als (eine Konstante)$\\cdot t$.`);
+  }
   const eqHints = (p) => {
-    const f = byId(p.eq.form), s = Eq.sym(p.eq);
+    const f = byId(p.eq.form), s = Eq.sym(p.eq), ode = f.kind === 'ode', mD = f.id === 'mD';
+    const cs = mD ? L('the constants $m$ and $D$', 'den Konstanten $m$ und $D$') : L(`the constant $${s.c}$`, `der Konstante $${s.c}$`);
     return [
-      L('An SHM: $\\ddot y = -\\omega^2\\cdot y$ (the acceleration proportional to the displacement, opposite to it), or $y(t) = A\\cdot\\cos(\\omega\\, t - \\varphi_0)$.', 'Eine harmonische Schwingung: $\\ddot y = -\\omega^2\\cdot y$ (die Beschleunigung proportional zur Auslenkung, ihr entgegen), oder $y(t) = A\\cdot\\cos(\\omega\\, t - \\varphi_0)$.'),
-      f.shm ? (f.kind === 'ode' ? L(`Solve for the second derivative: $${f.std(s)}$.`, `Löse nach der zweiten Ableitung auf: $${f.std(s)}$.`) : L(`Compare with $${f.std(s)}$.`, `Vergleiche mit $${f.std(s)}$.`))
-        : L('Check the sign, the order of the derivative, the power of the displacement, and how t enters.', 'Prüfe das Vorzeichen, die Ordnung der Ableitung, die Potenz der Auslenkung und wie t vorkommt.'),
-      f.shm ? L(`Here $\\omega = ${f.w(s)}$, and $T = 2\\pi/\\omega$.`, `Hier ist $\\omega = ${f.w(s)}$, und $T = 2\\pi/\\omega$.`) : MISTAKES[f.mistake].short(),
+      ode ? L(`Here the displacement is $${s.y}$, with ${cs}. In the equation: which derivative of $${s.y}$ appears, with which sign, and is $${s.y}$ itself to the first power?`, `Hier ist die Auslenkung $${s.y}$, mit ${cs}. In der Gleichung: Welche Ableitung von $${s.y}$ kommt vor, mit welchem Vorzeichen, und steht $${s.y}$ selbst in der ersten Potenz?`)
+        : L(`Here the displacement is $${s.Yt}$ and the constant $${s.c}$. Is the factor in front of the cosine (or sine) constant, and does the argument grow evenly with $t$?`, `Hier ist die Auslenkung $${s.Yt}$ und die Konstante $${s.c}$. Ist der Faktor vor dem Kosinus (oder Sinus) konstant, und wächst das Argument gleichmässig mit $t$?`),
+      (ode ? L(`Compare with $${s.dd} = -\\omega^2\\cdot ${s.y}$ (a positive constant times $-${s.y}$ on the right). `, `Vergleiche mit $${s.dd} = -\\omega^2\\cdot ${s.y}$ (eine positive Konstante mal $-${s.y}$ rechts). `)
+        : L(`Compare with $${s.Yt} = A\\cdot\\cos(\\omega\\, t - \\varphi_0)$. `, `Vergleiche mit $${s.Yt} = A\\cdot\\cos(\\omega\\, t - \\varphi_0)$. `)) + firstMove(p),
+      L(`If it has this form, read off ${ode ? '$\\omega^2$, take the root' : '$\\omega$, the factor of $t$'} and use $T = 2\\pi/\\omega$. If not, find the one feature of this equation that breaks the form; the letters (here $${s.y}$${mD ? '' : `, $${s.c}$`}) and the way the derivative is written do not matter.`,
+        `Hat sie diese Form, lies ${ode ? '$\\omega^2$ ab, zieh die Wurzel' : '$\\omega$ ab, den Faktor von $t$,'} und verwende $T = 2\\pi/\\omega$. Wenn nicht, suche das eine Merkmal dieser Gleichung, das die Form verletzt; die Buchstaben (hier $${s.y}$${mD ? '' : `, $${s.c}$`}) und die Schreibweise der Ableitung spielen keine Rolle.`),
     ];
   };
   const eqFigure = (p, v, view) => box(Eq.tex(p.eq)) + (view.show && view.show.has('graph') ? `<div class="fig">${eqGraph(p)}</div>` : '');
@@ -262,10 +277,16 @@
     fields: (p) => [choice('which', L('Which equation describes a simple harmonic motion?', 'Welche Gleichung beschreibt eine harmonische Schwingung?'),
       p.eqs.map((e, i) => { const f = byId(e.form); return [String(i), `$${Eq.tex(e)}$`, f.shm ? '' : MISTAKES[f.mistake].short(), f.shm ? null : f.mistake]; }), { stack: true })],
     text: () => L('Only one of these equations describes a simple harmonic motion. Which one?', 'Nur eine dieser Gleichungen beschreibt eine harmonische Schwingung. Welche?'),
-    hints: () => [
-      L('An SHM: $\\ddot y = -\\omega^2\\cdot y$, or $y(t) = A\\cdot\\cos(\\omega\\, t - \\varphi_0)$.', 'Eine harmonische Schwingung: $\\ddot y = -\\omega^2\\cdot y$, oder $y(t) = A\\cdot\\cos(\\omega\\, t - \\varphi_0)$.'),
-      L('Check each one: the sign, the order of the derivative, the power of the displacement, how t enters.', 'Prüfe jede: das Vorzeichen, die Ordnung der Ableitung, die Potenz der Auslenkung, wie t vorkommt.'),
-    ],
+    hints: (p) => {
+      const s = Eq.sym(p.eqs[0]), odes = p.eqs.filter((e) => byId(e.form).kind === 'ode'), sols = p.eqs.filter((e) => byId(e.form).kind === 'sol');
+      const zero = p.eqs.filter((e) => /= 0$/.test(Eq.tex(e))).map((e) => `$${Eq.tex(e)}$`);
+      return [
+        L(`All four use the displacement $${s.y}$ and the constant $${s.c}$. An SHM in these letters: $${s.dd} = -\\omega^2\\cdot ${s.y}$, or $${s.Yt} = A\\cdot\\cos(\\omega\\, t - \\varphi_0)$.`, `Alle vier verwenden die Auslenkung $${s.y}$ und die Konstante $${s.c}$. Eine harmonische Schwingung in diesen Buchstaben: $${s.dd} = -\\omega^2\\cdot ${s.y}$, oder $${s.Yt} = A\\cdot\\cos(\\omega\\, t - \\varphi_0)$.`),
+        [odes.length ? L(`For ${odes.length === 1 ? 'the equation of motion' : `the ${odes.length} equations of motion`}: which derivative, which sign on the right (once solved for it), which power of $${s.y}$?`, `Bei ${odes.length === 1 ? 'der Bewegungsgleichung' : `den ${odes.length} Bewegungsgleichungen`}: welche Ableitung, welches Vorzeichen rechts (nach ihr aufgelöst), welche Potenz von $${s.y}$?`) : '',
+          sols.length ? L(`For ${sols.length === 1 ? 'the solution' : `the ${sols.length} solutions`} $${s.Yt} = \\ldots$: a constant amplitude, and an argument that grows evenly with $t$?`, `Bei ${sols.length === 1 ? 'der Lösung' : `den ${sols.length} Lösungen`} $${s.Yt} = \\ldots$: eine konstante Amplitude und ein Argument, das gleichmässig mit $t$ wächst?`) : '',
+          zero.length ? L(`Solve ${zero.join(L(' and ', ' und '))} for the second derivative first.`, `Löse ${zero.join(' und ')} zuerst nach der zweiten Ableitung auf.`) : ''].filter(Boolean).join(' '),
+      ];
+    },
     steps: (p) => [step(L('One by one', 'Eine nach der anderen'), `<ul class="eqlist">${p.eqs.map((e) => { const f = byId(e.form); return `<li>$${Eq.tex(e)}$: ${f.shm ? `<span class="result">${L('an SHM', 'harmonisch')}</span>` : MISTAKES[f.mistake].short()}</li>`; }).join('')}</ul>`)],
     figure: () => '',
   };
@@ -347,11 +368,24 @@
     first: L('ẏ = −k·y: the velocity is proportional to the displacement; the body creeps towards 0 (exponentially) and never turns back.', 'ẏ = −k·y: Die Geschwindigkeit ist proportional zur Auslenkung; der Körper kriecht (exponentiell) gegen 0 und kehrt nie um.'),
     const: L('ÿ = −g: a constant acceleration, as in a throw: the graph is a parabola opening downwards.', 'ÿ = −g: eine konstante Beschleunigung, wie bei einem Wurf: Der Graph ist eine nach unten geöffnete Parabel.'),
   });
-  const MATCH_HINTS = () => [
-    L('Look at the form of the equation, not at numbers: is there ÿ = −ω²·y (an oscillation), a term with ẏ (damping or driving), a constant (a shifted equilibrium), a plus sign or only the first derivative (no oscillation)?', 'Schau auf die Form der Gleichung, nicht auf Zahlen: Gibt es ÿ = −ω²·y (eine Schwingung), einen Term mit ẏ (Dämpfung oder Antrieb), eine Konstante (eine verschobene Gleichgewichtslage), ein Pluszeichen oder nur die erste Ableitung (keine Schwingung)?'),
-    L('In the graphs: does the amplitude stay the same, die away or grow? Around which line does it oscillate? Does it oscillate at all?', 'In den Graphen: Bleibt die Amplitude gleich, klingt sie ab oder wächst sie? Um welche Linie schwingt er? Schwingt er überhaupt?'),
-    L('At the start the body is at rest above 0: the graph starts with a horizontal tangent.', 'Am Anfang ist der Körper oberhalb von 0 in Ruhe: Der Graph beginnt mit einer waagrechten Tangente.'),
-  ];
+  // the hints of match-1 and match-2: a question on the term that matters in the equation given
+  // (not what it does), the graphs, and the start
+  function matchHints(p) {
+    const y = p.y, Q = {
+      shm: L(`The right-hand side is $-\\omega^2\\cdot ${y}$ and nothing else: where is the acceleration zero, and is there a term that brakes or drives the motion?`, `Rechts steht $-\\omega^2\\cdot ${y}$ und sonst nichts: Wo ist die Beschleunigung null, und gibt es einen Term, der die Bewegung bremst oder antreibt?`),
+      damp: L(`Besides $\\omega^2\\cdot ${y}$ there is the term $+\\gamma\\cdot\\dot ${y}$. Solved for $\\ddot ${y}$, does it act with the velocity or against it?`, `Neben $\\omega^2\\cdot ${y}$ gibt es den Term $+\\gamma\\cdot\\dot ${y}$. Nach $\\ddot ${y}$ aufgelöst: Wirkt er mit der Geschwindigkeit oder gegen sie?`),
+      anti: L(`Besides $\\omega^2\\cdot ${y}$ there is the term $-\\gamma\\cdot\\dot ${y}$. Solved for $\\ddot ${y}$, does it act with the velocity or against it?`, `Neben $\\omega^2\\cdot ${y}$ gibt es den Term $-\\gamma\\cdot\\dot ${y}$. Nach $\\ddot ${y}$ aufgelöst: Wirkt er mit der Geschwindigkeit oder gegen sie?`),
+      plus: L(`The right-hand side is $+k^2\\cdot ${y}$. For ${y} > 0, which way does the acceleration point: towards 0 or away from it?`, `Rechts steht $+k^2\\cdot ${y}$. Für ${y} > 0: Wohin zeigt die Beschleunigung, zu 0 hin oder von 0 weg?`),
+      first: L(`Only the first derivative $\\dot ${y}$ appears: the equation fixes the velocity, not the acceleration. What is the velocity while ${y} > 0, and what happens to it as ${y} gets smaller?`, `Nur die erste Ableitung $\\dot ${y}$ kommt vor: Die Gleichung legt die Geschwindigkeit fest, nicht die Beschleunigung. Wie ist die Geschwindigkeit, solange ${y} > 0, und was geschieht mit ihr, wenn ${y} kleiner wird?`),
+      const: L(`The right-hand side is $-g$, without $${y}$: does the acceleration depend on where the body is?`, `Rechts steht $-g$, ohne $${y}$: Hängt die Beschleunigung davon ab, wo der Körper ist?`),
+      shift: L(`Besides $-\\omega^2\\cdot ${y}$ there is the constant $+g$. At which ${y} is the acceleration zero?`, `Neben $-\\omega^2\\cdot ${y}$ gibt es die Konstante $+g$. Bei welchem ${y} ist die Beschleunigung null?`),
+    };
+    const start = p.given === 'first' ? L(`At the start ${y}(0) > 0: what is $\\dot ${y}(0) = -k\\cdot ${y}(0)$, and which way does the graph start?`, `Am Anfang ist ${y}(0) > 0: Wie gross ist $\\dot ${y}(0) = -k\\cdot ${y}(0)$, und in welche Richtung beginnt der Graph?`)
+      : L(`At the start ${y}(0) > 0 and $\\dot ${y}(0) = 0$. Put this into the equation: is $\\ddot ${y}(0)$ positive or negative? So does the graph start bending down or up?`, `Am Anfang ist ${y}(0) > 0 und $\\dot ${y}(0) = 0$. Setz das in die Gleichung ein: Ist $\\ddot ${y}(0)$ positiv oder negativ? Beginnt der Graph also nach unten oder nach oben gekrümmt?`);
+    return [Q[p.given],
+      L(`Compare the four graphs of ${y}(t): does the amplitude stay the same, die away or grow? Around which line does it oscillate, and does it oscillate at all?`, `Vergleiche die vier Graphen von ${y}(t): Bleibt die Amplitude gleich, klingt sie ab oder wächst sie? Um welche Linie schwingt er, und schwingt er überhaupt?`),
+      start];
+  }
 
   function matchScenario(id, difficulty, table) {
     return {
@@ -368,7 +402,7 @@
       fields: (p) => [choice('graph', L('Which graph shows the motion?', 'Welcher Graph zeigt die Bewegung?'), p.kinds.map((k) => [k, qGraph(k, p.y, axisOf(p.kinds)), k === p.given ? '' : graphWhy(k, p.given), k === p.given ? null : FLAG[k], k === p.given ? '' : graphNudge(k, p.given)]), { pics: true })],
       text: (p) => L(`A body moves according to the equation below (the constants are positive). At the start it is displaced to ${p.y} > 0 and at rest. Which graph shows its motion?`,
         `Ein Körper bewegt sich gemäss der Gleichung unten (die Konstanten sind positiv). Am Anfang ist er nach ${p.y} > 0 ausgelenkt und in Ruhe. Welcher Graph zeigt seine Bewegung?`),
-      hints: () => MATCH_HINTS(),
+      hints: (p) => matchHints(p),
       steps: (p) => [
         step(L('The form of the equation', 'Die Form der Gleichung'), p$(KIND_TEXT()[p.given])),
         step(L('The graph', 'Der Graph'), p$(L('So the graph is this one:', 'Der Graph ist also dieser:')), ['graph']),
@@ -392,7 +426,21 @@
     traps: [],
     fields: (p) => [choice('eq', L('Which equation belongs to the graph?', 'Welche Gleichung gehört zum Graphen?'), p.kinds.map((k) => [k, `$${NKINDS[k].tex(p.y)}$`, k === p.given ? '' : graphWhy(k, p.given), k === p.given ? null : FLAG[k], k === p.given ? '' : graphNudge(k, p.given)]), { stack: true })],
     text: (p) => L(`The graph shows the motion of a body; it starts at rest. Which equation of motion belongs to it (the constants are positive)?`, `Der Graph zeigt die Bewegung eines Körpers; er startet in Ruhe. Welche Bewegungsgleichung gehört dazu (die Konstanten sind positiv)?`),
-    hints: () => [MATCH_HINTS()[1], MATCH_HINTS()[0]],
+    hints: (p) => {
+      const y = p.y, TERM = {
+        shm: L(`$\\ddot ${y} = -\\omega^2\\cdot ${y}$ alone: nothing brakes or drives, the acceleration is zero at ${y} = 0`, `$\\ddot ${y} = -\\omega^2\\cdot ${y}$ allein: Nichts bremst oder treibt an, die Beschleunigung ist null bei ${y} = 0`),
+        unshift: L(`$\\ddot ${y} = -\\omega^2\\cdot ${y}$ alone: the acceleration is zero at ${y} = 0`, `$\\ddot ${y} = -\\omega^2\\cdot ${y}$ allein: Die Beschleunigung ist null bei ${y} = 0`),
+        damp: L(`$+\\gamma\\cdot\\dot ${y}$ on the left: solved for $\\ddot ${y}$, it acts against the velocity, like friction`, `$+\\gamma\\cdot\\dot ${y}$ links: Nach $\\ddot ${y}$ aufgelöst wirkt er gegen die Geschwindigkeit, wie Reibung`),
+        anti: L(`$-\\gamma\\cdot\\dot ${y}$ on the left: solved for $\\ddot ${y}$, it acts with the velocity`, `$-\\gamma\\cdot\\dot ${y}$ links: Nach $\\ddot ${y}$ aufgelöst wirkt er mit der Geschwindigkeit`),
+        plus: L(`$+k^2\\cdot ${y}$: the acceleration points away from 0`, `$+k^2\\cdot ${y}$: Die Beschleunigung zeigt von 0 weg`),
+        first: L(`only $\\dot ${y}$: the velocity, not the acceleration, follows ${y}`, `nur $\\dot ${y}$: Die Geschwindigkeit, nicht die Beschleunigung, folgt ${y}`),
+        shift: L(`the constant $+g$: the acceleration is zero at $${y} = g/\\omega^2$, not at 0`, `die Konstante $+g$: Die Beschleunigung ist null bei $${y} = g/\\omega^2$, nicht bei 0`),
+      };
+      return [
+        L(`Read the graph of ${y}(t) first: does its amplitude stay the same, die away or grow? Does it oscillate around the line ${y} = 0 or around another one?`, `Lies zuerst den Graphen von ${y}(t): Bleibt seine Amplitude gleich, klingt sie ab oder wächst sie? Schwingt er um die Linie ${y} = 0 oder um eine andere?`),
+        L(`The four equations differ in one term: ${p.kinds.map((k) => TERM[k]).join('; ')}. Which of these does what you read off the graph?`, `Die vier Gleichungen unterscheiden sich in einem Term: ${p.kinds.map((k) => TERM[k]).join('; ')}. Welcher davon bewirkt, was du am Graphen abgelesen hast?`),
+      ];
+    },
     steps: (p) => [
       step(L('What the graph shows', 'Was der Graph zeigt'), p$({
         shm: L('A constant amplitude around 0: an SHM.', 'Eine konstante Amplitude um 0: eine harmonische Schwingung.'),
@@ -442,9 +490,9 @@
     nudge: { square: NUDGEK.square },
     fields: (p) => [num$('vmax', VH, speedUnit(p.A * p.w), L('largest speed', 'grösste Geschwindigkeit')), num$('amax', AH, 'm/s²', L('largest acceleration', 'grösste Beschleunigung'))],
     text: (p) => L(`A body oscillates harmonically with ${given(p)}. What are its largest speed and its largest acceleration?`, `Ein Körper schwingt harmonisch mit ${given(p)}. Wie gross sind seine grösste Geschwindigkeit und seine grösste Beschleunigung?`),
-    hints: () => [
-      L('From $y(t) = A\\cdot\\cos(\\omega t)$: $v(t) = -A\\omega\\cdot\\sin(\\omega t)$ and $a(t) = -A\\omega^2\\cdot\\cos(\\omega t)$. Sine and cosine are at most 1 in size.', 'Aus $y(t) = A\\cdot\\cos(\\omega t)$: $v(t) = -A\\omega\\cdot\\sin(\\omega t)$ und $a(t) = -A\\omega^2\\cdot\\cos(\\omega t)$. Sinus und Kosinus sind dem Betrag nach höchstens 1.'),
-      L('$\\hat v = A\\,\\omega$ and $\\hat a = A\\,\\omega^2$, the amplitude in metres.', '$\\hat v = A\\,\\omega$ und $\\hat a = A\\,\\omega^2$, die Amplitude in Metern.'),
+    hints: (p) => [
+      L(`Here $A = ${tq(p.A, unitOfA(p.A))}$ and $\\omega = ${W(p.w)}$. With $y(t) = A\\cdot\\cos(\\omega t)$, $v(t) = -A\\omega\\cdot\\sin(\\omega t)$ and $a(t) = -A\\omega^2\\cdot\\cos(\\omega t)$: where on its path is the body fastest, where is its acceleration largest?`, `Hier ist $A = ${tq(p.A, unitOfA(p.A))}$ und $\\omega = ${W(p.w)}$. Mit $y(t) = A\\cdot\\cos(\\omega t)$ ist $v(t) = -A\\omega\\cdot\\sin(\\omega t)$ und $a(t) = -A\\omega^2\\cdot\\cos(\\omega t)$: Wo auf seiner Bahn ist der Körper am schnellsten, wo ist seine Beschleunigung am grössten?`),
+      L(`Sine and cosine are at most 1 in size, so $\\hat v = A\\,\\omega$ and $\\hat a = A\\,\\omega^2$ (or $\\hat a = \\hat v\\cdot\\omega$). First the amplitude in metres: how many metres are ${q(p.A, unitOfA(p.A))}?`, `Sinus und Kosinus sind dem Betrag nach höchstens 1, also $\\hat v = A\\,\\omega$ und $\\hat a = A\\,\\omega^2$ (oder $\\hat a = \\hat v\\cdot\\omega$). Zuerst die Amplitude in Metern: Wie viele Meter sind ${q(p.A, unitOfA(p.A))}?`),
     ],
     steps: (p, v) => [
       step(L('The largest speed', 'Die grösste Geschwindigkeit'), p$(L('With $y(t) = A\\cdot\\cos(\\omega t)$, the velocity is $v(t) = -A\\omega\\cdot\\sin(\\omega t)$: largest in size where the sine is ±1, at the equilibrium.', 'Mit $y(t) = A\\cdot\\cos(\\omega t)$ ist die Geschwindigkeit $v(t) = -A\\omega\\cdot\\sin(\\omega t)$: dem Betrag nach am grössten, wo der Sinus ±1 ist, in der Gleichgewichtslage.')) +
@@ -466,7 +514,14 @@
     nudge: { flip: NUDGEK.inverse, square: NUDGEK.square },
     fields: () => [num$('w', '\\omega', 'rad/s', L('angular frequency', 'Kreisfrequenz')), num$('amax', AH, 'm/s²', L('largest acceleration', 'grösste Beschleunigung'))],
     text: (p) => { const vm = p.A * p.w; return L(`A body oscillates harmonically with an amplitude of ${q(p.A, unitOfA(p.A))}. Its largest speed is ${q(vm, speedUnit(vm))}. What are its angular frequency and its largest acceleration?`, `Ein Körper schwingt harmonisch mit einer Amplitude von ${q(p.A, unitOfA(p.A))}. Seine grösste Geschwindigkeit beträgt ${q(vm, speedUnit(vm))}. Wie gross sind seine Kreisfrequenz und seine grösste Beschleunigung?`); },
-    hints: () => [L('$\\hat v = A\\,\\omega$: solve for $\\omega$.', '$\\hat v = A\\,\\omega$: Löse nach $\\omega$ auf.'), L('Then $\\hat a = A\\,\\omega^2$ (or $\\hat a = \\hat v\\,\\omega$).', 'Dann $\\hat a = A\\,\\omega^2$ (oder $\\hat a = \\hat v\\,\\omega$).')],
+    hints: (p) => {
+      const vm = p.A * p.w;
+      return [
+        L(`Given are the amplitude $A = ${tq(p.A, unitOfA(p.A))}$ and the largest speed $\\hat v = ${tq(vm, speedUnit(vm))}$. Which equation links $\\hat v$, $A$ and $\\omega$?`, `Gegeben sind die Amplitude $A = ${tq(p.A, unitOfA(p.A))}$ und die grösste Geschwindigkeit $\\hat v = ${tq(vm, speedUnit(vm))}$. Welche Gleichung verknüpft $\\hat v$, $A$ und $\\omega$?`),
+        L(`$\\hat v = A\\,\\omega$: solve it for $\\omega$, then put in $\\hat v$ in m/s and $A$ in metres (${q(p.A, unitOfA(p.A))} is how many metres?).`, `$\\hat v = A\\,\\omega$: Löse nach $\\omega$ auf und setz dann $\\hat v$ in m/s und $A$ in Metern ein (${q(p.A, unitOfA(p.A))} sind wie viele Meter?).`),
+        L(`Then the largest acceleration with your $\\omega$: $\\hat a = A\\,\\omega^2$, or quicker, $\\hat a = \\hat v\\cdot\\omega$ with the given largest speed.`, `Dann die grösste Beschleunigung mit deinem $\\omega$: $\\hat a = A\\,\\omega^2$, oder schneller, $\\hat a = \\hat v\\cdot\\omega$ mit der gegebenen grössten Geschwindigkeit.`),
+      ];
+    },
     steps: (p, v) => [
       step(L('The angular frequency', 'Die Kreisfrequenz'), `$$\\omega = \\frac{\\hat v}{A} = \\frac{${tq(v.vm, 'm/s')}}{${tq(p.A, 'm')}} = ${res(W(v.w))}$$`),
       step(L('The largest acceleration', 'Die grösste Beschleunigung'), `$$\\hat a = A\\,\\omega^2 = ${tq(p.A, 'm')}\\cdot (${W(v.w)})^2 = ${res(tq(v.amax, 'm/s²'))}$$`, ['top']),
@@ -484,7 +539,14 @@
     nudge: { flip: NUDGEK.inverseA },
     fields: (p) => [num$('w', '\\omega', 'rad/s', L('angular frequency', 'Kreisfrequenz')), num$('A', 'A', unitOfA(p.A), L('amplitude', 'Amplitude'))],
     text: (p) => { const vm = p.A * p.w, am = vm * p.w; return L(`A body oscillates harmonically. Its largest speed is ${q(vm, speedUnit(vm))}, its largest acceleration ${q(am, 'm/s²')}. What are its angular frequency and its amplitude?`, `Ein Körper schwingt harmonisch. Seine grösste Geschwindigkeit beträgt ${q(vm, speedUnit(vm))}, seine grösste Beschleunigung ${q(am, 'm/s²')}. Wie gross sind seine Kreisfrequenz und seine Amplitude?`); },
-    hints: () => [L('$\\hat v = A\\,\\omega$ and $\\hat a = A\\,\\omega^2$: two equations for $A$ and $\\omega$.', '$\\hat v = A\\,\\omega$ und $\\hat a = A\\,\\omega^2$: zwei Gleichungen für $A$ und $\\omega$.'), L('Divide them: $\\hat a / \\hat v = \\omega$.', 'Teile sie: $\\hat a / \\hat v = \\omega$.')],
+    hints: (p) => {
+      const vm = p.A * p.w, am = vm * p.w;
+      return [
+        L(`Two values are given, $\\hat v = ${tq(vm, speedUnit(vm))}$ and $\\hat a = ${tq(am, 'm/s²')}$, and two are unknown, $A$ and $\\omega$: write both values as equations in $A$ and $\\omega$.`, `Zwei Werte sind gegeben, $\\hat v = ${tq(vm, speedUnit(vm))}$ und $\\hat a = ${tq(am, 'm/s²')}$, und zwei sind unbekannt, $A$ und $\\omega$: Schreib beide Werte als Gleichungen in $A$ und $\\omega$.`),
+        L(`$\\hat v = A\\,\\omega$ and $\\hat a = A\\,\\omega^2$. Divide the second by the first: $A$ cancels, one $\\omega$ is left. Put in $\\hat v$ in m/s.`, `$\\hat v = A\\,\\omega$ und $\\hat a = A\\,\\omega^2$. Teile die zweite durch die erste: $A$ kürzt sich weg, ein $\\omega$ bleibt. Setz $\\hat v$ in m/s ein.`),
+        L(`Then $A = \\hat v/\\omega$ with your $\\omega$; it comes out in metres, the answer is asked in ${unitOfA(p.A)}.`, `Dann $A = \\hat v/\\omega$ mit deinem $\\omega$; das gibt Meter, gefragt ist die Antwort in ${unitOfA(p.A)}.`),
+      ];
+    },
     steps: (p, v) => [
       step(L('The angular frequency', 'Die Kreisfrequenz'), p$(L('Divide $\\hat a = A\\,\\omega^2$ by $\\hat v = A\\,\\omega$:', 'Teile $\\hat a = A\\,\\omega^2$ durch $\\hat v = A\\,\\omega$:')) + `$$\\omega = \\frac{\\hat a}{\\hat v} = \\frac{${tq(v.am, 'm/s²')}}{${tq(v.vm, 'm/s')}} = ${res(W(v.w))}$$`),
       step(L('The amplitude', 'Die Amplitude'), `$$A = \\frac{\\hat v}{\\omega} = \\frac{${tq(v.vm, 'm/s')}}{${W(v.w)}} = ${res(tq(v.A, unitOfA(p.A)))}$$`, ['top']),
@@ -523,10 +585,22 @@
     traps: [],
     fields: (p) => [choice('pt', ASK[p.ask].q(), p.us.map((u, i) => [PTS[i], PTS[i], ASK[p.ask].ok(u) ? '' : L(`At ${PTS[i]} the body is ${stateAt(u)}.`, `In ${PTS[i]} ist der Körper ${stateAt(u)}.`), null]))],
     text: () => L('The graph shows the displacement y of a harmonic oscillation against time.', 'Der Graph zeigt die Auslenkung y einer harmonischen Schwingung gegen die Zeit.'),
-    hints: () => [
-      L('The velocity is the slope of y(t): largest where the graph crosses the t axis, zero at crests and troughs; negative where the graph falls.', 'Die Geschwindigkeit ist die Steigung von y(t): am grössten, wo der Graph die t-Achse kreuzt, null in Bergen und Tälern; negativ, wo der Graph fällt.'),
-      L('The acceleration is a = −ω²·y: opposite to the displacement, largest in size at the turning points, zero at the equilibrium.', 'Die Beschleunigung ist a = −ω²·y: entgegen der Auslenkung, dem Betrag nach am grössten an den Umkehrpunkten, null in der Gleichgewichtslage.'),
-    ],
+    hints: (p) => {
+      const onV = p.ask === 'vmax' || p.ask === 'v0' || p.ask === 'vminus';
+      const look = {
+        vmax: L('Fastest means the steepest graph: which of the four points lies where the graph crosses the t axis?', 'Am schnellsten heisst: der Graph am steilsten. Welcher der vier Punkte liegt dort, wo der Graph die t-Achse kreuzt?'),
+        v0: L('At rest means a slope of zero: which of the four points lies at a crest or in a trough?', 'In Ruhe heisst: Steigung null. Welcher der vier Punkte liegt auf einem Berg oder in einem Tal?'),
+        amax: L('|a| = ω²·|y| is largest where |y| is largest: which of the four points lies at a crest or in a trough?', '|a| = ω²·|y| ist am grössten, wo |y| am grössten ist: Welcher der vier Punkte liegt auf einem Berg oder in einem Tal?'),
+        aplus: L('a = −ω²·y is positive where y is negative: which of the four points lies below the t axis?', 'a = −ω²·y ist positiv, wo y negativ ist: Welcher der vier Punkte liegt unterhalb der t-Achse?'),
+        vminus: L('A negative velocity is a negative slope: at which of the four points does the graph go down?', 'Eine negative Geschwindigkeit ist eine negative Steigung: In welchem der vier Punkte geht der Graph nach unten?'),
+      };
+      return [
+        L(`The question is about the ${onV ? 'velocity' : 'acceleration'}. For each of ${PTS.join(', ')}: is the point above, below or on the t axis, and is the graph rising or falling there?`, `Die Frage betrifft die ${onV ? 'Geschwindigkeit' : 'Beschleunigung'}. Für jeden der Punkte ${PTS.join(', ')}: Liegt er oberhalb, unterhalb oder auf der t-Achse, und steigt oder fällt der Graph dort?`),
+        onV ? L('The velocity is the slope of y(t): steep where the graph crosses the t axis, zero at crests and troughs, negative where the graph falls.', 'Die Geschwindigkeit ist die Steigung von y(t): steil, wo der Graph die t-Achse kreuzt, null in Bergen und Tälern, negativ, wo der Graph fällt.')
+          : L('The acceleration is a = −ω²·y: opposite to the displacement, largest in size at the turning points, zero at the equilibrium.', 'Die Beschleunigung ist a = −ω²·y: entgegen der Auslenkung, dem Betrag nach am grössten an den Umkehrpunkten, null in der Gleichgewichtslage.'),
+        look[p.ask],
+      ];
+    },
     steps: (p) => [step(L('Point by point', 'Punkt für Punkt'), `<ul class="eqlist">${p.us.map((u, i) => `<li>${ASK[p.ask].ok(u) ? `<span class="result">${PTS[i]}</span>` : PTS[i]}: ${stateAt(u)}</li>`).join('')}</ul>`)],
     figure: (p) => {
       const pts = Array.from({ length: 241 }, (z, j) => { const t = (j * 2) / 240; return [t, Math.sin(PI2 * t)]; });
@@ -607,10 +681,21 @@
       return [choice('ans', `${lead} …`, LC_WHEN_OPTS().map(([k, html, why]) => [k === 'zero' ? 'right' : k, html, why, k === 'zero' ? null : 'lcphase', k === 'zero' ? '' : LC_WHEN_NUDGE()]), { stack: true, ask: `${lead} …` })];
     },
     text: () => L('In an LC circuit without resistance, the voltages across the coil and the capacitor add up to zero: $L\\,\\dot I + Q/C = 0$, where $Q$ is the charge on the capacitor and $I = \\dot Q$ the current. Compare it with a body on a spring.', 'In einem Schwingkreis ohne Widerstand ergeben die Spannungen an der Spule und am Kondensator zusammen null: $L\\,\\dot I + Q/C = 0$, wobei $Q$ die Ladung auf dem Kondensator ist und $I = \\dot Q$ der Strom. Vergleiche mit einem Körper an einer Feder.'),
-    hints: () => [
-      L('Put the two equations side by side, term by term: what stands where $y$, $m$ and $D$ stand?', 'Lege die beiden Gleichungen nebeneinander, Term für Term: Was steht dort, wo $y$, $m$ und $D$ stehen?'),
-      L('For the spring, $\\ddot y = -\\frac{D}{m}\\,y$, so $\\omega^2 = D/m$, and $v = \\dot y$ is zero where $y$ is largest.', 'Für die Feder ist $\\ddot y = -\\frac{D}{m}\\,y$, also $\\omega^2 = D/m$, und $v = \\dot y$ ist null, wo $y$ am grössten ist.'),
-    ],
+    // by the question asked: where to look in the two equations, and the first step
+    hints: (p) => {
+      const side = L('Write $L\\,\\ddot Q = -\\frac{1}{C}\\,Q$ (from $L\\,\\dot I + Q/C = 0$ with $I = \\dot Q$) above $m\\,\\ddot y = -D\\,y$, term by term.', 'Schreib $L\\,\\ddot Q = -\\frac{1}{C}\\,Q$ (aus $L\\,\\dot I + Q/C = 0$ mit $I = \\dot Q$) über $m\\,\\ddot y = -D\\,y$, Term für Term.');
+      const H = {
+        y: [L('Which quantity of the circuit sits in the place of $y$, on both sides of the equation?', 'Welche Grösse des Schwingkreises steht an der Stelle von $y$, auf beiden Seiten der Gleichung?'), L('In $m\\,\\ddot y = -D\\,y$ the quantity under the two dots is the one that oscillates. Which letter stands under the dots in the circuit’s equation?', 'In $m\\,\\ddot y = -D\\,y$ ist die Grösse unter den zwei Punkten jene, die schwingt. Welcher Buchstabe steht in der Gleichung des Schwingkreises unter den Punkten?')],
+        v: [L('First find what sits in the place of $y$. The velocity is $v = \\dot y$, the rate of change of $y$.', 'Finde zuerst, was an der Stelle von $y$ steht. Die Geschwindigkeit ist $v = \\dot y$, die Änderungsrate von $y$.'), L('So: which quantity of the circuit is the rate of change of the one in the place of $y$? The text names it.', 'Also: Welche Grösse des Schwingkreises ist die Änderungsrate jener an der Stelle von $y$? Der Text nennt sie.')],
+        m: [L('Look only at the left-hand sides: which factor stands in front of the second derivative?', 'Schau nur die linken Seiten an: Welcher Faktor steht vor der zweiten Ableitung?'), L('In $m\\,\\ddot y$ the mass is the factor of $\\ddot y$. Which factor multiplies $\\ddot Q$ in the circuit?', 'In $m\\,\\ddot y$ ist die Masse der Faktor von $\\ddot y$. Welcher Faktor multipliziert im Schwingkreis $\\ddot Q$?')],
+        D: [L('Look only at the right-hand sides, $-\\frac{1}{C}\\,Q$ and $-D\\,y$: what stands in front of $Q$ where $D$ stands in front of $y$?', 'Schau nur die rechten Seiten an, $-\\frac{1}{C}\\,Q$ und $-D\\,y$: Was steht vor $Q$, wo $D$ vor $y$ steht?'), L('Write $\\frac{Q}{C}$ as (a factor)$\\cdot Q$: is that factor $C$ itself?', 'Schreib $\\frac{Q}{C}$ als (ein Faktor)$\\cdot Q$: Ist dieser Faktor $C$ selbst?')],
+        w: [L('Divide by $L$, as $m\\,\\ddot y = -D\\,y$ becomes $\\ddot y = -\\frac{D}{m}\\,y$: what stands in front of $-Q$ then?', 'Teile durch $L$, so wie $m\\,\\ddot y = -D\\,y$ zu $\\ddot y = -\\frac{D}{m}\\,y$ wird: Was steht dann vor $-Q$?'), L('Compare with $\\ddot Q = -\\omega^2\\,Q$: is that factor $\\omega$ or $\\omega^2$?', 'Vergleiche mit $\\ddot Q = -\\omega^2\\,Q$: Ist dieser Faktor $\\omega$ oder $\\omega^2$?')],
+        T: [L('Divide by $L$, as $m\\,\\ddot y = -D\\,y$ becomes $\\ddot y = -\\frac{D}{m}\\,y$: what stands in front of $-Q$ then?', 'Teile durch $L$, so wie $m\\,\\ddot y = -D\\,y$ zu $\\ddot y = -\\frac{D}{m}\\,y$ wird: Was steht dann vor $-Q$?'), L('That factor is $\\omega^2$: find $\\omega$ from it, then the period $T = 2\\pi/\\omega$.', 'Dieser Faktor ist $\\omega^2$: Bestimme daraus $\\omega$, dann die Periode $T = 2\\pi/\\omega$.')],
+        whenQ: [L('$Q$ plays the role of $y$, and $I = \\dot Q$ that of $v = \\dot y$. So for a body on a spring: how fast is it when its displacement is largest?', '$Q$ spielt die Rolle von $y$, und $I = \\dot Q$ jene von $v = \\dot y$. Also bei einem Körper an einer Feder: Wie schnell ist er, wenn seine Auslenkung am grössten ist?'), L('Where is the body on the spring when its displacement is largest, and what does it do there next?', 'Wo ist der Körper an der Feder, wenn seine Auslenkung am grössten ist, und was tut er dort als Nächstes?')],
+        whenI: [L('$Q$ plays the role of $y$, and $I = \\dot Q$ that of $v = \\dot y$. So for a body on a spring: how large is its displacement when it is fastest?', '$Q$ spielt die Rolle von $y$, und $I = \\dot Q$ jene von $v = \\dot y$. Also bei einem Körper an einer Feder: Wie gross ist seine Auslenkung, wenn er am schnellsten ist?'), L('At which place on its path is the body on the spring fastest?', 'An welcher Stelle seiner Bahn ist der Körper an der Feder am schnellsten?')],
+      }[p.ask];
+      return [`${side} ${H[0]}`, H[1]];
+    },
     steps: (p) => {
       const R = ROLE();
       const answer = ROLES[p.ask] ? p$(L(`So ${ROLES[p.ask][0]()} corresponds to <span class="result">${R[ROLES[p.ask][1]][0]}</span>.`, `Der Rolle ${ROLES[p.ask][0]()} entspricht also <span class="result">${R[ROLES[p.ask][1]][0]}</span>.`))
@@ -651,7 +736,15 @@
         ? L(`In an LC circuit, both the capacitance and the inductance are made ${by(k)}. By what factor does its frequency change?`, `In einem Schwingkreis werden sowohl die Kapazität als auch die Induktivität ${by(k)} gemacht. Um welchen Faktor ändert sich seine Frequenz?`)
         : L(`In an LC circuit, ${what[p.what]} is made ${by(k)}. By what factor does its frequency change?`, `In einem Schwingkreis wird ${what[p.what]} ${by(k)} gemacht. Um welchen Faktor ändert sich seine Frequenz?`);
     },
-    hints: () => [L('As $\\omega = \\sqrt{D/m}$ for a spring, $\\omega = 1/\\sqrt{L\\,C}$ for the circuit: what happens to $\\sqrt{L\\,C}$?', 'Wie $\\omega = \\sqrt{D/m}$ bei der Feder ist $\\omega = 1/\\sqrt{L\\,C}$ beim Schwingkreis: Was passiert mit $\\sqrt{L\\,C}$?'), L('A larger $L$ (like a larger mass) or a larger $C$ (like a softer spring) makes the oscillation slower.', 'Ein grösseres $L$ (wie eine grössere Masse) oder ein grösseres $C$ (wie eine weichere Feder) macht die Schwingung langsamer.')],
+    hints: (p) => {
+      const what = { C: L('the capacitance', 'die Kapazität'), L: L('the inductance', 'die Induktivität'), both: L('both $L$ and $C$', 'sowohl $L$ als auch $C$') }[p.what];
+      const big = p.k > 1;
+      return [
+        L(`Here ${what} ${p.what === 'both' ? 'get' : 'gets'} ${big ? 'larger' : 'smaller'} (${fac(p.k)}). A larger $L$ is like a larger mass, a larger $C$ like a softer spring: does the circuit oscillate faster or slower now?`, `Hier ${p.what === 'both' ? 'werden' : 'wird'} ${what} ${big ? 'grösser' : 'kleiner'} (${fac(p.k)}). Ein grösseres $L$ ist wie eine grössere Masse, ein grösseres $C$ wie eine weichere Feder: Schwingt der Kreis jetzt schneller oder langsamer?`),
+        L(`$f = 1/(2\\pi\\sqrt{L\\,C})$: the frequency depends only on the product $L\\cdot C$. ${p.what === 'both' ? 'Both factors change: by what factor does the product $L\\cdot C$ change, then its root, then one over the root?' : 'By what factor does the product $L\\cdot C$ change here, then its root, then one over the root?'}`,
+          `$f = 1/(2\\pi\\sqrt{L\\,C})$: Die Frequenz hängt nur vom Produkt $L\\cdot C$ ab. ${p.what === 'both' ? 'Beide Faktoren ändern sich: Um welchen Faktor ändert sich das Produkt $L\\cdot C$, dann seine Wurzel, dann eins durch die Wurzel?' : 'Um welchen Faktor ändert sich das Produkt $L\\cdot C$ hier, dann seine Wurzel, dann eins durch die Wurzel?'}`),
+      ];
+    },
     steps: (p) => {
       const LC = p.what === 'both' ? p.k * p.k : p.k, right = 1 / Math.sqrt(LC);
       return [step(L('The factor', 'Der Faktor'), p$(L(`From $\\omega = 1/\\sqrt{L\\,C}$, $f = \\omega/(2\\pi) = 1/(2\\pi\\sqrt{L\\,C})$. The product $L\\cdot C$ changes by the factor ${sig(LC, 3)}; its root by ${sig(Math.sqrt(LC), 3)}. The frequency is one over it:`, `Aus $\\omega = 1/\\sqrt{L\\,C}$ folgt $f = \\omega/(2\\pi) = 1/(2\\pi\\sqrt{L\\,C})$. Das Produkt $L\\cdot C$ ändert sich um den Faktor ${sig(LC, 3)}; seine Wurzel um ${sig(Math.sqrt(LC), 3)}. Die Frequenz ist eins durch sie:`)) +

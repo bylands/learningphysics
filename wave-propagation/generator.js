@@ -173,7 +173,11 @@
         fig: snap(at(p, 0), { arrows: [arrowOf(p, 0)], label: tLabel(0) }),
         anim: { sc, t0: -1, t1: 0, show: ['sum'] }, solAnim: { sc, t0: 0, t1: t, show: ['sum'] },
         questions: [{ type: 'pick', key: 'fig', options: pickFrom(r, right, cands) }],
-        hints: [RULE.move(), L(`Distance: ${num(v)} m/s · ${num(t)} s = ${num(d)} m ${dirWord(dir)}. Follow one corner of the crest.`, `Strecke: ${num(v)} m/s · ${num(t)} s = ${num(d)} m ${dirWord(dir)}. Verfolge eine Ecke des Buckels.`)],
+        hints: [
+          L(`The crest runs ${dirWord(dir)} at ${num(v)} m/s; at t = 0 it reaches from x = ${num(x0)} m to ${num(x0 + w)} m. How far does it get in ${num(t)} s?`, `Der Buckel läuft mit ${num(v)} m/s ${dirWord(dir)}; bei t = 0 reicht er von x = ${num(x0)} m bis ${num(x0 + w)} m. Wie weit kommt er in ${num(t)} s?`),
+          `${RULE.move()} ${L('Here with the speed and the time from the text.', 'Hier mit der Geschwindigkeit und der Zeit aus der Aufgabe.')}`,
+          L(`Follow one corner, e.g. the left end at x = ${num(x0)} m: where must it be at t = ${num(t)} s? Look for the diagram with the same shape there, not turned round or upside down.`, `Verfolge eine Ecke, z. B. das linke Ende bei x = ${num(x0)} m: Wo muss es bei t = ${num(t)} s sein? Suche das Diagramm mit derselben Form dort, nicht umgedreht und nicht auf dem Kopf.`),
+        ],
         solution: [L(`In ${num(t)} s the crest moves ${num(v)} m/s · ${num(t)} s = ${num(d)} m ${dirWord(dir)}, unchanged.`, `In ${num(t)} s bewegt sich der Buckel um ${num(v)} m/s · ${num(t)} s = ${num(d)} m ${dirWord(dir)}, unverändert.`)],
         solFig: right, p: { k: 'move', x0, dir, v, t, w },
       };
@@ -210,7 +214,11 @@
       fig: snap((x) => ev(p, x, 0), { arrows: [arrowOf(p, 0)], marks: [{ x: xp, label: `${num(xp)} m` }], label: tLabel(0) }),
       anim: { sc, t0: -1, t1: 0, show: ['sum'], mark: xp }, solAnim: { sc, t0: 0, t1: T, show: ['sum'], mark: xp, trace: xp },
       questions: [{ type: 'pick', key: 'fig', options: pickFrom(r, right, cands) }],
-      hints: [RULE.yt(), L(`The front reaches x = ${num(xp)} m after (${num(xp)} m − ${num(x0 + w)} m)/(${num(v)} m/s) = ${num(tf)} s.`, `Die Front erreicht x = ${num(xp)} m nach (${num(xp)} m − ${num(x0 + w)} m)/(${num(v)} m/s) = ${num(tf)} s.`), RULE.dur()],
+      hints: [
+        L(`The crest runs to the right at ${num(v)} m/s; at t = 0 its front (right end) is at x = ${num(x0 + w)} m, the place at x = ${num(xp)} m. Which part of the crest reaches the place first?`, `Der Buckel läuft mit ${num(v)} m/s nach rechts; bei t = 0 ist seine Front (das rechte Ende) bei x = ${num(x0 + w)} m, der Ort bei x = ${num(xp)} m. Welcher Teil des Buckels erreicht den Ort zuerst?`),
+        `${RULE.yt()} ${L('The front arrives after the time distance/speed, with the distance from the front to the place.', 'Die Front kommt nach der Zeit Strecke/Geschwindigkeit an, mit der Strecke von der Front bis zum Ort.')}`,
+        L(`${RULE.dur()} Here the crest is ${num(w)} m long.`, `${RULE.dur()} Hier ist der Buckel ${num(w)} m lang.`),
+      ],
       solution: [L(`The front arrives at t = ${num(tf)} s, the back leaves at t = ${num(tb)} s: the crest takes ${num(w)} m / ${num(v)} m/s = ${num(w / v)} s to pass.`, `Die Front kommt bei t = ${num(tf)} s an, der Rücken verlässt den Ort bei t = ${num(tb)} s: Der Buckel braucht ${num(w)} m / ${num(v)} m/s = ${num(w / v)} s, um vorbeizulaufen.`), RULE.yt()],
       solFig: right, p: { k: 'yt', x0, xp, v, w },
     };
@@ -237,7 +245,10 @@
       fig: graphT((t) => ev(p, xp, t), T, { label: L(`x = ${num(xp)} m`, `x = ${num(xp)} m`) }),
       anim: null, solAnim: { sc, t0: 0, t1, show: ['sum'], mark: xp },
       questions: [{ type: 'pick', key: 'fig', options: pickFrom(r, right, cands) }],
-      hints: [RULE.yt(), L(`The front passes x = ${num(xp)} m at t = ${num(tf)} s. Where is it at t = ${num(t1)} s?`, `Die Front passiert x = ${num(xp)} m bei t = ${num(tf)} s. Wo ist sie bei t = ${num(t1)} s?`)],
+      hints: [
+        L(`Read the graph at x = ${num(xp)} m: at which time does the rope there start to move? ${RULE.yt()}`, `Lies den Graphen bei x = ${num(xp)} m: Zu welcher Zeit beginnt sich das Seil dort zu bewegen? ${RULE.yt()}`),
+        L(`From that time on, the front runs on to the right at ${num(v)} m/s until t = ${num(t1)} s: how far beyond x = ${num(xp)} m is it then? The crest lies behind it, the right way round.`, `Von dieser Zeit an läuft die Front mit ${num(v)} m/s weiter nach rechts, bis t = ${num(t1)} s: Wie weit ist sie dann über x = ${num(xp)} m hinaus? Der Buckel liegt dahinter, seitenrichtig.`),
+      ],
       solution: [L(`The y(t) graph starts with the front, at t = ${num(tf)} s. At t = ${num(t1)} s the front is at ${num(xp)} m + ${num(v)} m/s · (${num(t1)} s − ${num(tf)} s) = ${num(x0 + w + v * t1)} m; the crest lies behind it, the right way round.`, `Das y(t)-Bild beginnt mit der Front, bei t = ${num(tf)} s. Bei t = ${num(t1)} s ist die Front bei ${num(xp)} m + ${num(v)} m/s · (${num(t1)} s − ${num(tf)} s) = ${num(x0 + w + v * t1)} m; der Buckel liegt dahinter, seitenrichtig.`)],
       solFig: right, p: { k: 'ty', x0, xp, v, w, t1 },
     };
@@ -277,7 +288,11 @@
           type: 'choice', key: names[i], label: names[i],
           options: ['up', 'down', 'rest'].map((m) => ({ label: word[m](), ok: m === q.m, why: `${RULE.medium()} ${point(q, i)}` })),
         })),
-        hints: [RULE.medium(), L('Imagine the crest shifted a little further: is the rope at the point higher or lower then?', 'Stell dir den Buckel ein Stück weiter vor: Ist das Seil am Punkt dann höher oder tiefer?')],
+        hints: [
+          L(`The crest runs ${dirWord(dir)}, so the wave comes from the ${dir > 0 ? 'left' : 'right'}. Look at ${uniq.map((q, i) => names[i]).join(', ')} one by one.`, `Der Buckel läuft ${dirWord(dir)}, die Welle kommt also von ${dir > 0 ? 'links' : 'rechts'}. Schau ${uniq.map((q, i) => names[i]).join(', ')} einzeln an.`),
+          RULE.medium(),
+          L(`For each point: is the rope just ${dir > 0 ? 'left' : 'right'} of it higher, lower, or as high (flat)? Imagine the crest shifted a little further ${dirWord(dir)}.`, `Für jeden Punkt: Ist das Seil gleich ${dir > 0 ? 'links' : 'rechts'} davon höher, tiefer oder gleich hoch (flach)? Stell dir den Buckel ein Stück weiter ${dirWord(dir)} vor.`),
+        ],
         solution: [RULE.medium(), L('The points at the front of the crest rise, those at its back fall; where the rope is flat, it is at rest for the moment.', 'Die Punkte an der Front des Buckels steigen, die an seinem Rücken sinken; wo das Seil flach ist, ist es im Moment in Ruhe.'), ...uniq.map(point)],
         p: { k: 'medium', x0, dir, sh: sh.w },
       };
@@ -304,7 +319,10 @@
         fig: [snap((x) => ev(p, x, t1), { label: tLabel(t1) }), snap((x) => ev(p, x, t2), { label: tLabel(t2) })],
         anim: null, solAnim: { sc, t0: t1, t1: t2, show: ['sum'] },
         questions: [{ type: 'choice', key: 'v', label: 'v', options: opts4(r, v, [{ value: (x0 + w + v * t2) / t2, tag: 'total', why: L(`That divides the position of the front by the time. Use how far it moved between the two times: ${why}`, `Das teilt die Lage der Front durch die Zeit. Nimm, wie weit er sich zwischen den zwei Zeiten bewegt hat: ${why}`) }, { value: dt / d, tag: 'inverse', why }, { value: d / t2, tag: 'total', why }], 'm/s') }],
-        hints: [L('Follow one corner of the crest from one diagram to the other.', 'Verfolge eine Ecke des Buckels von einem Diagramm zum anderen.'), 'v = Δx/Δt'],
+        hints: [
+          L(`The diagrams are ${num(dt)} s apart (t = ${num(t1)} s and ${num(t2)} s). Follow one corner of the crest, e.g. its front: where is it in each diagram?`, `Die Diagramme liegen ${num(dt)} s auseinander (t = ${num(t1)} s und ${num(t2)} s). Verfolge eine Ecke des Buckels, z. B. seine Front: Wo ist sie in jedem Diagramm?`),
+          L('v = Δx/Δt, with Δx how far that corner moved between the two diagrams (not where it is) and Δt the time between them.', 'v = Δx/Δt, mit Δx, wie weit sich diese Ecke zwischen den zwei Diagrammen bewegt hat (nicht, wo sie ist), und Δt der Zeit dazwischen.'),
+        ],
         solution: [why], p: { k: 'speed-x', x0, v, t1, dt, w },
       };
     }
@@ -320,7 +338,10 @@
         fig: [graphT((t) => ev(p, x1, t), T, { label: `x = ${num(x1)} m` }), graphT((t) => ev(p, x2, t), T, { label: `x = ${num(x2)} m` })],
         anim: null, solAnim: { sc, t0: 0, t1: T, show: ['sum'], mark: x1, mark2: x2 },
         questions: [{ type: 'choice', key: 'v', label: 'v', options: opts4(r, v, [{ value: (x2 - x1) / (w / v), tag: 'dur', why: L(`That uses how long the crest takes to pass. Use the delay between the two places: ${why}`, `Das verwendet, wie lange der Buckel zum Vorbeilaufen braucht. Nimm die Verzögerung zwischen den zwei Orten: ${why}`) }, { value: dt / (x2 - x1), tag: 'inverse', why }, { value: x2 / t2f, tag: 'total', why }], 'm/s') }],
-        hints: [L('Compare when the same feature (e.g. the front) appears in the two graphs.', 'Vergleiche, wann dasselbe Merkmal (z. B. die Front) in den zwei Graphen erscheint.'), 'v = Δx/Δt'],
+        hints: [
+          L(`The two places are ${num(x2 - x1)} m apart. At which time does the front (where the rope starts to move) appear in the graph at x = ${num(x1)} m, and at which in the one at x = ${num(x2)} m?`, `Die zwei Orte liegen ${num(x2 - x1)} m auseinander. Zu welcher Zeit erscheint die Front (wo sich das Seil zu bewegen beginnt) im Graphen bei x = ${num(x1)} m, und zu welcher in jenem bei x = ${num(x2)} m?`),
+          L('v = Δx/Δt, with Δt the delay of the front between the two places (not how long one graph lasts).', 'v = Δx/Δt, mit Δt der Verzögerung der Front zwischen den zwei Orten (nicht, wie lange ein Graph dauert).'),
+        ],
         solution: [why], p: { k: 'speed-t', x1, x2, v, w },
       };
     }
@@ -335,7 +356,10 @@
       fig: graphT((t) => ev(p, xp, t), T, { label: `x = ${num(xp)} m` }),
       anim: null, solAnim: { sc, t0: 0, t1: T, show: ['sum'], mark: xp },
       questions: [{ type: 'choice', key: 'len', label: 'ℓ', options: opts4(r, w, [{ value: dur / v, tag: 'inverse', why }, { value: dur, tag: 'time', why: L(`That is the time the crest takes, in s. Its length: ${why}`, `Das ist die Zeit, die der Buckel braucht, in s. Seine Länge: ${why}`) }, { value: v / dur, tag: 'inverse', why }], 'm') }],
-      hints: [L('Read how long the rope at that place is displaced.', 'Lies ab, wie lange das Seil an diesem Ort ausgelenkt ist.'), 'ℓ = v·Δt'],
+      hints: [
+        L(`Read from the graph at x = ${num(xp)} m: from when to when is the rope there displaced?`, `Lies am Graphen bei x = ${num(xp)} m ab: Von wann bis wann ist das Seil dort ausgelenkt?`),
+        L(`In that time the whole crest runs past the place at ${num(v)} m/s: ℓ = v·Δt.`, `In dieser Zeit läuft der ganze Buckel mit ${num(v)} m/s am Ort vorbei: ℓ = v·Δt.`),
+      ],
       solution: [why], p: { k: 'speed-len', xp, v, w },
     };
   }
@@ -366,7 +390,10 @@
         fig: snap((x) => ev(pa, x, 0) + ev(pb, x, 0), { arrows: [arrowOf(pa, 0), arrowOf(pb, 0, { up: pb.sgn < 0 })], label: tLabel(0) }),
         anim: { sc, t0: -0.5, t1: 0, show: ['sum'] }, solAnim: { sc, t0: 0, t1: apart(pa, pb), show: ['parts', 'sum'], hold: t },
         questions: [{ type: 'pick', key: 'fig', options: pickFrom(r, right, cands) }],
-        hints: [L(`First draw each crest where it is at t = ${num(t)} s: each has moved ${num(v * t)} m.`, `Zeichne zuerst jeden Buckel dort, wo er bei t = ${num(t)} s ist: Jeder hat sich um ${num(v * t)} m bewegt.`), RULE.sup()],
+        hints: [
+          L(`The left crest runs to the right, the right one (${pb.sgn < 0 ? 'upside down' : 'upright'}) to the left, both at ${num(v)} m/s. How far has each moved at t = ${num(t)} s, and where is each then?`, `Der linke Buckel läuft nach rechts, der rechte (${pb.sgn < 0 ? 'nach unten' : 'nach oben'} gerichtet) nach links, beide mit ${num(v)} m/s. Wie weit hat sich jeder bei t = ${num(t)} s bewegt, und wo ist jeder dann?`),
+          L(`${RULE.sup()} Draw both crests at t = ${num(t)} s, each unchanged, then add their heights where they overlap.`, `${RULE.sup()} Zeichne beide Buckel bei t = ${num(t)} s, jeden unverändert, und addiere dann ihre Höhen, wo sie sich überlagern.`),
+        ],
         solution: [L(`Each crest moves ${num(v * t)} m. Where they overlap, the displacements add.`, `Jeder Buckel bewegt sich um ${num(v * t)} m. Wo sie sich überlagern, addieren sich die Auslenkungen.`), RULE.sup()],
         solFig: snap(f, { label: tLabel(t), more: [{ f: A, cls: 'part' }, { f: B, cls: 'part2' }] }), p: { k: 'sup', a: pa.x0, b: pb.x0, v, t, s: pb.sgn },
       };
@@ -411,7 +438,11 @@
         fig: snap(onRope(sc), { hi: E, end: sc.end, arrows: [arrowOf(p, 0)], label: tLabel(0) }),
         anim: { sc, t0: -0.5, t1: 0, show: ['sum'] }, solAnim: { sc, t0: 0, t1: t, show: ['sum'] },
         questions: [{ type: 'pick', key: 'fig', options: pickFrom(r, right, cands) }],
-        hints: [RULE.fixed(), L(`The whole crest has reached the end after ${num(tb)} s; then it runs back at ${num(v)} m/s.`, `Der ganze Buckel hat das Ende nach ${num(tb)} s erreicht; dann läuft er mit ${num(v)} m/s zurück.`), RULE.mirror()],
+        hints: [
+          L(`The crest runs at ${num(v)} m/s towards ${endWord(et)} at x = ${num(E)} m; at t = 0 its back is at x = ${num(p.x0)} m, ${num(E - p.x0)} m from the end. Has the whole crest been reflected by t = ${num(t)} s?`, `Der Buckel läuft mit ${num(v)} m/s auf ${endWord(et)} bei x = ${num(E)} m zu; bei t = 0 ist sein Rücken bei x = ${num(p.x0)} m, ${num(E - p.x0)} m vor dem Ende. Ist der ganze Buckel bis t = ${num(t)} s reflektiert?`),
+          RULE.fixed(),
+          L(`Follow the front: in ${num(t)} s it runs v·t in all; what is left after reaching the end, it runs back. Then put the crest behind it, the way it comes back from this end.`, `Verfolge die Front: In ${num(t)} s läuft sie insgesamt v·t; was nach dem Ende übrig bleibt, läuft sie zurück. Setz dann den Buckel dahinter, so wie er von diesem Ende zurückkommt.`),
+        ],
         solution: [RULE.fixed(), L(`At t = ${num(t)} s the crest has run ${num(v * t)} m: to the end and ${num(v * t - (E - p.x0 - w))} m back (its front).`, `Bei t = ${num(t)} s hat der Buckel ${num(v * t)} m zurückgelegt: bis zum Ende und ${num(v * t - (E - p.x0 - w))} m zurück (seine Front).`)],
         solFig: right, p: { k: 'refl', x0: p.x0, E, v, t, et },
       };
@@ -443,7 +474,11 @@
         fig: snap(onRope(sc), { hi: E, end: sc.end, arrows: [arrowOf(p, 0)], label: tLabel(0) }),
         anim: { sc, t0: -0.5, t1: 0, show: ['sum'] }, solAnim: { sc, t0: 0, t1: tb + 0.5, show: ['parts', 'sum'], virtual: true, hold: t },
         questions: [{ type: 'pick', key: 'fig', options: pickFrom(r, right, cands) }],
-        hints: [RULE.mirror(), L(`At t = ${num(t)} s, draw the incoming crest (partly beyond the end) and its mirror image; on the rope, add them.`, `Zeichne für t = ${num(t)} s den einlaufenden Buckel (teils hinter dem Ende) und sein Spiegelbild; auf dem Seil addierst du sie.`), RULE.fixed()],
+        hints: [
+          L(`At t = ${num(t)} s the crest is being reflected at ${endWord(et)} (x = ${num(E)} m): its front has reached the end, its back not yet. Which way up does a crest come back from ${endWord(et)}?`, `Bei t = ${num(t)} s wird der Buckel an ${et === 'fixed' ? 'einem festen Ende' : 'einem losen Ende'} (x = ${num(E)} m) reflektiert: Seine Front hat das Ende erreicht, sein Rücken noch nicht. Wie herum kommt ein Buckel von ${et === 'fixed' ? 'einem festen Ende' : 'einem losen Ende'} zurück?`),
+          RULE.mirror(),
+          L(`Draw the incoming crest at t = ${num(t)} s as if the rope went on beyond x = ${num(E)} m (moved ${num(v)} m per second), mirror it at x = ${num(E)} m, and on the rope add the two.`, `Zeichne den einlaufenden Buckel bei t = ${num(t)} s, als ginge das Seil über x = ${num(E)} m hinaus weiter (${num(v)} m pro Sekunde verschoben), spiegle ihn an x = ${num(E)} m und addiere auf dem Seil beide.`),
+        ],
         solution: [RULE.mirror(), RULE.fixed(), L('On the rope the incoming and the reflected part add up.', 'Auf dem Seil addieren sich der einlaufende und der reflektierte Teil.')],
         solFig: snap(sum(sc), { hi: E, end: sc.end, label: tLabel(t), more: [{ f: (x) => yIn(sc, x, t), cls: 'part' }, { f: (x) => yRef(sc, x, t), cls: 'part2' }] }),
         p: { k: 'reflsum', x0: p.x0, E, v, t, et },
@@ -472,7 +507,11 @@
       fig: snap(onRope(sc), { hi: E, end: sc.end, arrows: [arrowOf(p, 0)], label: tLabel(0) }),
       anim: null, solAnim: { sc, t0: 0, t1: (E - p.x0) / v + 0.5, show: ['parts', 'sum'], virtual: true },
       questions: [{ type: 'pick', key: 'fig', options: pickFrom(r, right, cands) }],
-      hints: [RULE.mirror(), L(`Mirror the crest at x = ${num(E)} m: each point at distance d in front of the end goes to distance d behind it.`, `Spiegle den Buckel an x = ${num(E)} m: Jeder Punkt im Abstand d vor dem Ende kommt in den Abstand d dahinter.`), RULE.fixed()],
+      hints: [
+        L(`The front of the crest is at x = ${num(p.x0 + w)} m, ${num(E - p.x0 - w)} m in front of ${endWord(et)} at x = ${num(E)} m. How far behind the end must the front of the mirror crest be, and which way must it face?`, `Die Front des Buckels ist bei x = ${num(p.x0 + w)} m, ${num(E - p.x0 - w)} m vor ${et === 'fixed' ? 'einem festen Ende' : 'einem losen Ende'} bei x = ${num(E)} m. Wie weit hinter dem Ende muss die Front des Spiegelbuckels sein, und wohin muss sie zeigen?`),
+        L(`${RULE.mirror()} Each point at the distance d in front of x = ${num(E)} m goes to the distance d behind it.`, `${RULE.mirror()} Jeder Punkt im Abstand d vor x = ${num(E)} m kommt in den Abstand d dahinter.`),
+        L(`Then the sign: here the end is ${et === 'fixed' ? 'fixed' : 'free'}. ${RULE.fixed()}`, `Dann das Vorzeichen: Hier ist das Ende ${et === 'fixed' ? 'fest' : 'lose'}. ${RULE.fixed()}`),
+      ],
       solution: [RULE.mirror(), L(`At ${endWord(et)} the mirror crest is ${et === 'fixed' ? 'upside down' : 'upright'}.`, `Bei ${endWord(et)} steht der Spiegelbuckel ${et === 'fixed' ? 'auf dem Kopf' : 'aufrecht'}.`)],
       solFig: right, p: { k: 'mirror', x0: p.x0, E, et, w },
     };
@@ -498,7 +537,11 @@
       fig: snap(onRope(sc), { hi: E, end: sc.end, arrows: [arrowOf(p, 0)], label: tLabel(0), Y: 11 }),
       anim: { sc, t0: -0.5, t1: 0, show: ['sum'] }, solAnim: { sc, t0: 0, t1: T, show: ['sum'], mark: E, trace: E },
       questions: [{ type: 'pick', key: 'fig', options: pickFrom(r, right, cands) }],
-      hints: [RULE.mirror(), L('At the end itself the incoming crest and its mirror crest arrive at the same time.', 'Am Ende selbst kommen der einlaufende Buckel und sein Spiegelbuckel gleichzeitig an.'), RULE.yt()],
+      hints: [
+        L(`The end at x = ${num(E)} m is ${type === 'fixed' ? 'fixed (a wall)' : 'free (a ring on a pole)'}. At the end itself, the incoming crest and its mirror crest arrive at the same time: what does their sum give there?`, `Das Ende bei x = ${num(E)} m ist ${type === 'fixed' ? 'fest (eine Wand)' : 'lose (ein Ring an einer Stange)'}. Am Ende selbst kommen der einlaufende Buckel und sein Spiegelbuckel gleichzeitig an: Was gibt ihre Summe dort?`),
+        RULE.mirror(),
+        L(`${RULE.yt()} Here the front reaches x = ${num(E)} m first.`, `${RULE.yt()} Hier erreicht die Front x = ${num(E)} m zuerst.`),
+      ],
       solution: [type === 'free' ? L('At a free end the incoming and the reflected crest are the same there at every moment: the end moves twice as far as the crest is high.', 'An einem losen Ende sind der einlaufende und der reflektierte Buckel dort in jedem Moment gleich: Das Ende bewegt sich doppelt so weit, wie der Buckel hoch ist.') : L('At a fixed end the incoming and the reflected crest cancel there at every moment: the end stays at rest.', 'An einem festen Ende heben sich der einlaufende und der reflektierte Buckel dort in jedem Moment auf: Das Ende bleibt in Ruhe.'), RULE.yt()],
       solFig: right, p: { k: 'end', x0: p.x0, E, v, type },
     };
@@ -613,7 +656,14 @@
         anim: { sc, t0: -0.5, t1: 0, show: ['sum'] }, solAnim: { sc, t0: 0, t1: task === 'refl' ? t : task === 'sup' ? apart(...sc.pulses) : (sc.end.x - sc.pulses[0].x0) / sc.pulses[0].v + 0.5, show: task === 'refl' ? ['sum'] : ['parts', 'sum'], virtual: task !== 'sup', hold: task === 'refl' ? null : t, Y: Yd },
         draw: { hi, Y: Yd, end: sc.end, label: tLabel(t) },
         questions: [],
-        hints: [task === 'sup' ? RULE.sup() : RULE.mirror(), L(`First move each crest to t = ${num(t)} s (1 m per second), then add the heights at each grid line.`, `Verschiebe zuerst jeden Buckel auf t = ${num(t)} s (1 m pro Sekunde), dann addiere die Höhen bei jeder Gitterlinie.`), ...(task === 'sup' ? [] : [RULE.fixed()])],
+        hints: task === 'sup' ? [
+          L(`Both crests move 1 m per second, the left one to the right, the right one to the left: how far has each moved at t = ${num(t)} s?`, `Beide Buckel bewegen sich 1 m pro Sekunde, der linke nach rechts, der rechte nach links: Wie weit hat sich jeder bei t = ${num(t)} s bewegt?`),
+          L(`${RULE.sup()} Draw both moved crests, then add their heights at each grid line (every 0.5 m).`, `${RULE.sup()} Zeichne beide verschobenen Buckel und addiere dann ihre Höhen bei jeder Gitterlinie (alle 0.5 m).`),
+        ] : [
+          L(`The crest moves 1 m per second towards ${endWord(sc.end.type)} at x = ${num(hi)} m. Where would it be at t = ${num(t)} s if the rope went on beyond the end?`, `Der Buckel bewegt sich 1 m pro Sekunde auf ${endWord(sc.end.type)} bei x = ${num(hi)} m zu. Wo wäre er bei t = ${num(t)} s, wenn das Seil über das Ende hinaus weiterginge?`),
+          RULE.mirror(),
+          L(`${RULE.fixed()} Mirror the moved crest at x = ${num(hi)} m accordingly, then add the heights on the rope at each grid line (every 0.5 m).`, `${RULE.fixed()} Spiegle den verschobenen Buckel entsprechend an x = ${num(hi)} m und addiere dann auf dem Seil die Höhen bei jeder Gitterlinie (alle 0.5 m).`),
+        ],
         solution: [task === 'sup' ? RULE.sup() : RULE.mirror(), ...(task === 'sup' ? [] : [RULE.fixed()])],
         solFig: snap((x) => y(sc, x, t), { hi, Y: Yd, end: sc.end, label: tLabel(t), more: task === 'sup' ? sc.pulses.map((p, i) => ({ f: (x) => ev(p, x, t), cls: i ? 'part2' : 'part' })) : [{ f: (x) => yIn(sc, x, t), cls: 'part' }, { f: (x) => yRef(sc, x, t), cls: 'part2' }] }),
         p: { k: 'draw', task, t, s: sc.pulses.map((p) => [p.x0, p.sgn]) },
@@ -676,7 +726,10 @@
       text: L(`A rope is ${endsText(ends)}. Which picture can show a standing wave on it? Each picture shows the rope at its two extreme positions.`, `Ein Seil ist ${endsText(ends)}. Welches Bild kann eine stehende Welle darauf zeigen? Jedes Bild zeigt das Seil in seinen beiden äussersten Lagen.`),
       fig: null, anim: null, solAnim: null,
       questions: [{ type: 'pick', key: 'fig', options: pickFrom(r, right, cands) }],
-      hints: [RULE.ends(), RULE.stand()],
+      hints: [
+        L(`This rope is ${endsText(ends)}. In each picture, what is at the left end and at the right end: a node (the rope at rest) or an antinode?`, `Dieses Seil ist ${endsText(ends)}. Was ist in jedem Bild am linken und am rechten Ende: ein Knoten (das Seil in Ruhe) oder ein Bauch?`),
+        L(`${RULE.ends()} And neighbouring nodes are λ/2 apart: are the nodes in the picture evenly spaced?`, `${RULE.ends()} Und benachbarte Knoten sind λ/2 voneinander entfernt: Sind die Knoten im Bild gleichmässig verteilt?`),
+      ],
       solution: [RULE.ends(), L(`The right picture has a node at each fixed end, an antinode at each free end and evenly spaced nodes: ${qText(ends, q)}.`, `Das richtige Bild hat einen Knoten an jedem festen Ende, einen Bauch an jedem losen Ende und gleichmässig verteilte Knoten: ${qText(ends, q)}.`)],
       solFig: right, p: { k: 'stand-pic', ends, q, len },
     };
@@ -699,7 +752,11 @@
         text: L(`A rope ${num(len)} m long is ${endsText(ends)}. The picture shows a standing wave on it (the rope at its two extreme positions). What is its wavelength?`, `Ein ${num(len)} m langes Seil ist ${endsText(ends)}. Das Bild zeigt eine stehende Welle darauf (das Seil in seinen beiden äussersten Lagen). Wie gross ist ihre Wellenlänge?`),
         fig: standFig(len, ends, q, phOf(ends)), anim: null, solAnim: null,
         questions: [{ type: 'choice', key: 'lam', label: 'λ', options: opts4(r, lam, wrongs, 'm') }],
-        hints: [RULE.stand(), L('Count the loops; at a free end the last piece is half a loop.', 'Zähle die Schleifen; an einem losen Ende ist das letzte Stück eine halbe Schleife.')],
+        hints: [
+          same ? L(`The rope is ${num(len)} m long and ${endsText(ends)}. How many loops (from node to node) does the picture show?`, `Das Seil ist ${num(len)} m lang und ${endsText(ends)}. Wie viele Schleifen (von Knoten zu Knoten) zeigt das Bild?`)
+            : L(`The rope is ${num(len)} m long and ${endsText(ends)}. How many whole loops does the picture show, and what is left at the free end?`, `Das Seil ist ${num(len)} m lang und ${endsText(ends)}. Wie viele ganze Schleifen zeigt das Bild, und was bleibt am losen Ende übrig?`),
+          `${RULE.stand()} ${same ? L('So the length of the rope is the number of loops times λ/2.', 'Die Länge des Seils ist also die Anzahl Schleifen mal λ/2.') : L('At the free end the last piece is half a loop, a quarter wavelength: count the rope in quarter wavelengths, ℓ = q·λ/4.', 'Am losen Ende ist das letzte Stück eine halbe Schleife, eine Viertelwellenlänge: Zähle das Seil in Viertelwellenlängen, ℓ = q·λ/4.')}`,
+        ],
         solution: [RULE.stand(), why], p: { k: 'stand-count', ends, q, lam },
       };
     }
@@ -727,7 +784,10 @@
         text: L(`A rope is ${endsText(ends)}. Its fundamental (the standing wave of lowest frequency) has the wavelength λ₁. Which picture shows a standing wave on this rope with the wavelength λ = λ₁/${k}? Each picture shows the rope at its two extreme positions.`, `Ein Seil ist ${endsText(ends)}. Seine Grundschwingung (die stehende Welle mit der tiefsten Frequenz) hat die Wellenlänge λ₁. Welches Bild zeigt eine stehende Welle auf diesem Seil mit der Wellenlänge λ = λ₁/${k}? Jedes Bild zeigt das Seil in seinen beiden äussersten Lagen.`),
         fig: null, anim: null, solAnim: null,
         questions: [{ type: 'pick', key: 'fig', options: pickFrom(r, right, cands) }],
-        hints: [RULE.ends(), RULE.modes()],
+        hints: [
+          L(`This rope is ${endsText(ends)}. Its fundamental is the simplest standing wave that fits: how much of a wave is that, and so λ₁ in terms of the length ℓ?`, `Dieses Seil ist ${endsText(ends)}. Seine Grundschwingung ist die einfachste stehende Welle, die passt: Wie viel einer Welle ist das, und also λ₁ ausgedrückt durch die Länge ℓ?`),
+          same ? L('Fixed at both ends, n loops fit: ℓ = n·λ/2, so λ = λ₁/n.', 'An beiden Enden fest passen n Schleifen: ℓ = n·λ/2, also λ = λ₁/n.') : L('With one end free, the last piece is a quarter wavelength: ℓ = q·λ/4 with q = 1, 3, 5, …, so λ = λ₁/q. Count the quarter wavelengths: half a loop at the free end, two in each whole loop.', 'Mit einem losen Ende ist das letzte Stück eine Viertelwellenlänge: ℓ = q·λ/4 mit q = 1, 3, 5, …, also λ = λ₁/q. Zähle die Viertelwellenlängen: eine halbe Schleife am losen Ende, zwei in jeder ganzen Schleife.'),
+        ],
         solution: [RULE.modes(), why], solFig: right, p: { k: 'stand-ratio', ends, q, pic: true },
       };
     }
@@ -746,7 +806,10 @@
       text: L(`A rope is ${endsText(ends)}. Its fundamental (the standing wave of lowest frequency) has the wavelength λ₁. What is the wavelength of the standing wave in the picture?`, `Ein Seil ist ${endsText(ends)}. Seine Grundschwingung (die stehende Welle mit der tiefsten Frequenz) hat die Wellenlänge λ₁. Wie gross ist die Wellenlänge der stehenden Welle im Bild?`),
       fig: standFig(6, ends, q, phOf(ends)), anim: null, solAnim: null,
       questions: [{ type: 'choice', key: 'lam', label: 'λ', options: opts.sort((a, b) => a.d - b.d).map((o) => ({ ...o, label: lab(o.d) })) }],
-      hints: [RULE.ends(), RULE.modes()],
+      hints: [
+        L(`This rope is ${endsText(ends)}. Its fundamental is the simplest standing wave that fits: how much of a wave is that, and so λ₁ in terms of the length ℓ?`, `Dieses Seil ist ${endsText(ends)}. Seine Grundschwingung ist die einfachste stehende Welle, die passt: Wie viel einer Welle ist das, und also λ₁ ausgedrückt durch die Länge ℓ?`),
+        same ? L('Fixed at both ends, n loops fit: ℓ = n·λ/2, so λ = λ₁/n.', 'An beiden Enden fest passen n Schleifen: ℓ = n·λ/2, also λ = λ₁/n.') : L('With one end free, the last piece is a quarter wavelength: ℓ = q·λ/4 with q = 1, 3, 5, …, so λ = λ₁/q. Count the quarter wavelengths: half a loop at the free end, two in each whole loop.', 'Mit einem losen Ende ist das letzte Stück eine Viertelwellenlänge: ℓ = q·λ/4 mit q = 1, 3, 5, …, also λ = λ₁/q. Zähle die Viertelwellenlängen: eine halbe Schleife am losen Ende, zwei in jeder ganzen Schleife.'),
+      ],
       solution: [RULE.modes(), why], p: { k: 'stand-ratio', ends, q },
     };
   }
@@ -810,7 +873,13 @@
         ? L('A student sketched four reflections. In each, the dashed crest runs towards the end (a wall: a fixed end; a ring on a pole: a free end), and the solid crest is the student’s sketch of it after the reflection. One sketch is wrong. Which?', 'Eine Schülerin hat vier Reflexionen skizziert. In jeder läuft der gestrichelte Buckel auf das Ende zu (eine Wand: ein festes Ende; ein Ring an einer Stange: ein loses Ende), und der ausgezogene ist ihre Skizze von ihm nach der Reflexion. Eine Skizze ist falsch. Welche?')
         : L('A student sketched standing waves on four ropes, each as the rope at its two extreme positions (a wall: a fixed end; a ring on a pole: a free end). One sketch is wrong. Which?', 'Eine Schülerin hat stehende Wellen auf vier Seilen skizziert, jede als das Seil in seinen beiden äussersten Lagen (eine Wand: ein festes Ende; ein Ring an einer Stange: ein loses Ende). Eine Skizze ist falsch. Welche?'),
       questions: [{ type: 'pick', key: 'fig', options }],
-      hints: what === 'refl' ? [RULE.fixed(), L('Check each sketch: which kind of end, and which way up does the crest come back?', 'Prüfe jede Skizze: Was für ein Ende, und wie herum kommt der Buckel zurück?')] : [RULE.ends(), L('Check each end of each sketch: node or antinode?', 'Prüfe jedes Ende jeder Skizze: Knoten oder Bauch?')],
+      hints: what === 'refl' ? [
+        L(`The ends: ${sketches.map((o, i) => `${i + 1} ${o.type === 'fixed' ? 'a wall (fixed)' : 'a ring (free)'}`).join(', ')}. In each sketch, does the solid crest come back upright or upside down?`, `Die Enden: ${sketches.map((o, i) => `${i + 1} ${o.type === 'fixed' ? 'eine Wand (fest)' : 'ein Ring (lose)'}`).join(', ')}. Kommt der ausgezogene Buckel in jeder Skizze aufrecht oder auf dem Kopf zurück?`),
+        RULE.fixed(),
+      ] : [
+        L(`The ends, left and right: ${sketches.map((o, i) => `${i + 1} ${o.type.map((e) => (e === 'fixed' ? 'fixed' : 'free')).join('–')}`).join(', ')}. In each sketch, is there a node or an antinode at each end?`, `Die Enden, links und rechts: ${sketches.map((o, i) => `${i + 1} ${o.type.map((e) => (e === 'fixed' ? 'fest' : 'lose')).join('–')}`).join(', ')}. Ist in jeder Skizze an jedem Ende ein Knoten oder ein Bauch?`),
+        RULE.ends(),
+      ],
       solution: what === 'refl'
         ? [RULE.fixed(), L(`Sketch ${n} is wrong: at ${endWord(wrongType)} the crest comes back ${wrongType === 'fixed' ? 'upside down' : 'upright'}, not ${wrongType === 'fixed' ? 'upright' : 'upside down'}. The figure above shows it corrected.`, `Skizze ${n} ist falsch: An ${wrongType === 'fixed' ? 'einem festen Ende' : 'einem losen Ende'} kommt der Buckel ${wrongType === 'fixed' ? 'umgedreht' : 'aufrecht'} zurück, nicht ${wrongType === 'fixed' ? 'aufrecht' : 'umgedreht'}. Die Figur oben zeigt sie richtig.`)]
         : [RULE.ends(), L(`Sketch ${n} is wrong: it has an antinode at a fixed end. The figure above shows it corrected.`, `Skizze ${n} ist falsch: Sie hat einen Bauch an einem festen Ende. Die Figur oben zeigt sie richtig.`)],

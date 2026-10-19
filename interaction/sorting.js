@@ -167,9 +167,9 @@
       figure: figure(),
       questions: [q],
       hints: [
-        T('For each force, name the two bodies: who exerts it, and on whom?', 'Nenne für jede Kraft die beiden Körper: Wer übt sie aus, und auf wen?'),
-        T('Plan: the partner of “A acts on B” is “B acts on A” — find the force with the two bodies swapped.', 'Plan: Die Gegenkraft zu „A wirkt auf B“ ist „B wirkt auf A“ — suche die Kraft mit den vertauschten Körpern.'),
-        T('Recall the third law: what do the two forces of a pair have in common, and on which bodies do they act?', 'Erinnere dich an das dritte Gesetz: Was haben die beiden Kräfte eines Paars gemeinsam, und auf welche Körper wirken sie?'),
+        T(`The picture numbers ${sc.forces.length} forces, 1 to ${sc.forces.length}. For each of them, name the two bodies: who exerts it, and on whom?`, `Im Bild sind ${sc.forces.length} Kräfte nummeriert, 1 bis ${sc.forces.length}. Nenne für jede die beiden Körper: Wer übt sie aus, und auf wen?`),
+        T('Plan: the partner of “A acts on B” is “B acts on A” — for each numbered force, find the one with the two bodies swapped. Two forces on the same body are never partners, even if they balance.', 'Plan: Die Gegenkraft zu „A wirkt auf B“ ist „B wirkt auf A“ — suche zu jeder nummerierten Kraft die mit den vertauschten Körpern. Zwei Kräfte auf denselben Körper sind nie Kraft und Gegenkraft, auch wenn sie sich aufheben.'),
+        T(`Start with force 1: “${sc.forces[0]}” Which body exerts it, and on which body does it act? Its partner is exerted by the second body on the first.`, `Beginne mit Kraft 1: „${sc.forces[0]}“ Welcher Körper übt sie aus, und auf welchen wirkt sie? Ihre Gegenkraft übt der zweite Körper auf den ersten aus.`),
         T('Here: check every pair you matched. Do its two forces act on two different bodies, and are these the same two bodies, swapped?', 'Hier: Prüfe jedes Paar, das du gebildet hast. Wirken seine beiden Kräfte auf zwei verschiedene Körper, und sind es dieselben zwei Körper, vertauscht?'),
       ],
       steps: [

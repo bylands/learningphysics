@@ -165,7 +165,15 @@
       return {
         kind: 'dir', title: L('The direction of the force', 'Die Richtung der Kraft'), text, figs: `<div class="fig">${fig}</div>`, draw,
         questions: [tiles('F', L('In which direction does the magnetic force point?', 'In welche Richtung zeigt die magnetische Kraft?'), forceOptions(r, F, tempt, how))],
-        hints: [PERP(), RULE(), kind === 'I' ? L('A current counts as positive charges moving along it.', 'Ein Strom zählt als positive Ladungen, die sich in Stromrichtung bewegen.') : chargeOf(pt)],
+        hints: q ? [
+          kind === 'I' ? L(`The current flows ${dirName(v)}, the field points ${dirName(B)}. A current counts as positive charges moving along it. Does it run across the field or along it?`, `Der Strom fliesst ${dirName(v)}, das Feld zeigt ${dirName(B)}. Ein Strom zählt als positive Ladungen, die sich in Stromrichtung bewegen. Läuft er quer zum Feld oder längs?`)
+            : L(`${chargeOf(pt)} It moves ${dirName(v)}, the field points ${dirName(B)}: across the field or along it?`, `${chargeOf(pt)} Es bewegt sich ${dirName(v)}, das Feld zeigt ${dirName(B)}: quer zum Feld oder längs?`),
+          L(`${LAW()}: the force is perpendicular both to ${vName(kind)} (${dirName(v)}) and to the field (${dirName(B)}), and zero if the two are parallel.`, `${LAW()}: Die Kraft steht senkrecht zu ${kind === 'I' ? `dem Strom ${it('I')}` : `der Geschwindigkeit ${it('v')}`} (${dirName(v)}) und zum Feld (${dirName(B)}), und sie ist null, wenn die beiden parallel sind.`),
+          L(`${hand(q)}: thumb ${dirName(v)}, index finger ${dirName(B)}. Where does the middle finger point?`, `${hand(q)}: Daumen ${dirName(v)}, Zeigefinger ${dirName(B)}. Wohin zeigt der Mittelfinger?`),
+        ] : [
+          L(`${chargeOf(pt)} It moves ${dirName(v)} through a field ${dirName(B)}, but what charge does it bring?`, `${chargeOf(pt)} Es bewegt sich ${dirName(v)} durch ein Feld, das ${dirName(B)} zeigt, aber welche Ladung bringt es mit?`),
+          L(`${LAW()}: what does the force come to for a particle without charge?`, `${LAW()}: Was ergibt sich für die Kraft bei einem Teilchen ohne Ladung?`),
+        ],
         solution: [how], p: { q, v: key(v), B: key(B), pt: pt.id },
       };
     }
@@ -221,7 +229,9 @@
       return {
         kind: 'dir', title: missing === 'B' ? L('Which field?', 'Welches Feld?') : L('Which velocity?', 'Welche Geschwindigkeit?'), text, figs: `<div class="fig">${fig}</div>`, draw,
         questions: [tiles('m', missing === 'B' ? L('Which directions of the field fit? Tick all that do.', 'Welche Richtungen des Feldes passen? Kreuze alle an, die passen.') : L('Which directions of motion fit? Tick all that do.', 'Welche Bewegungsrichtungen passen? Kreuze alle an, die passen.'), options, true)],
-        hints: [chargeOf(pt), RULE(), L(`The force is perpendicular to ${missing === 'B' ? 'the field' : 'the velocity'}: a direction along the force or against it cannot fit.`, `Die Kraft steht senkrecht zu${missing === 'B' ? 'm Feld' : 'r Geschwindigkeit'}: Eine Richtung längs der Kraft oder ihr entgegen kann nicht passen.`),
+        hints: [L(`${chargeOf(pt)} Given are ${missing === 'B' ? `the velocity (${dirName(a)})` : `the field (${dirName(a)})`} and the force (${dirName(F)}); ${what} is missing.`, `${chargeOf(pt)} Gegeben sind ${missing === 'B' ? `die Geschwindigkeit (${dirName(a)})` : `das Feld (${dirName(a)})`} und die Kraft (${dirName(F)}); ${missing === 'B' ? 'das Feld' : 'die Geschwindigkeit'} fehlt.`),
+          L(`${hand(q)}: thumb along the velocity, index finger along the field, middle finger along the force. Hold the ${missing === 'B' ? 'thumb' : 'index finger'} ${dirName(a)} and the middle finger ${dirName(F)}: where does the ${missing === 'B' ? 'index finger' : 'thumb'} point?`, `${hand(q)}: Daumen in Richtung der Geschwindigkeit, Zeigefinger in Richtung des Feldes, Mittelfinger in Richtung der Kraft. Halte den ${missing === 'B' ? 'Daumen' : 'Zeigefinger'} ${dirName(a)} und den Mittelfinger ${dirName(F)}: Wohin zeigt der ${missing === 'B' ? 'Zeigefinger' : 'Daumen'}?`),
+          L(`The force is perpendicular to ${missing === 'B' ? 'the field' : 'the velocity'}: a direction along the force or against it cannot fit.`, `Die Kraft steht senkrecht zu${missing === 'B' ? 'm Feld' : 'r Geschwindigkeit'}: Eine Richtung längs der Kraft oder ihr entgegen kann nicht passen.`),
           L(`Only the part of ${what} perpendicular to the ${missing === 'B' ? 'velocity' : 'field'} counts: a slanting direction can fit as well as a straight one.`, `Nur der Teil ${missing === 'B' ? 'des Feldes senkrecht zur Geschwindigkeit' : 'der Geschwindigkeit senkrecht zum Feld'} zählt: Eine schräge Richtung kann ebenso passen wie eine gerade.`)],
         solution: [sol], p: { q, missing, a: key(a), F: key(F), o: opts.map(key), pt: pt.id },
       };
@@ -271,7 +281,11 @@
       return {
         kind: 'pair', title: L('Two currents', 'Zwei Ströme'), text, figs: `<div class="fig">${fig}</div>`,
         questions: kind === 'parallel' ? [qB, qF, qA] : [qB, qF],
-        hints: [GRIP(), L('First the field of the first one at the place of the second, then the force on the second in this field.', 'Zuerst das Feld des ersten am Ort des zweiten, dann die Kraft auf das zweite in diesem Feld.'), RULE()],
+        hints: [
+          L(`Wire 1 carries its current ${dirName(d1)}; wire 2 lies ${P[0] > 0 ? 'to the right of' : P[0] < 0 ? 'to the left of' : P[1] > 0 ? 'above' : 'below'} it, its current ${dirName(d2)}. First the field of wire 1 at wire 2, then the force on wire 2 in that field.`, `Draht 1 führt seinen Strom ${dirName(d1)}; Draht 2 liegt ${P[0] > 0 ? 'rechts von' : P[0] < 0 ? 'links von' : P[1] > 0 ? 'über' : 'unter'} ihm, sein Strom ${dirName(d2)}. Zuerst das Feld von Draht 1 bei Draht 2, dann die Kraft auf Draht 2 in diesem Feld.`),
+          L(`(a) Grip wire 1 with your right hand, thumb ${dirName(d1)}: which way do the fingers curl at the place of wire 2?`, `(a) Umfasse Draht 1 mit der rechten Hand, Daumen ${dirName(d1)}: Wohin zeigen die gekrümmten Finger am Ort von Draht 2?`),
+          L(`(b) Right hand for wire 2: thumb along its current (${dirName(d2)}), index finger along the field from (a): where does the middle finger point?${kind === 'parallel' ? ' (c) Does that force point towards wire 1 or away from it, and what does Newton’s third law say about the force on wire 1?' : ''}`, `(b) Rechte Hand für Draht 2: Daumen in seiner Stromrichtung (${dirName(d2)}), Zeigefinger in Richtung des Feldes aus (a): Wohin zeigt der Mittelfinger?${kind === 'parallel' ? ' (c) Zeigt diese Kraft zu Draht 1 hin oder von ihm weg, und was sagt das dritte Newtonsche Axiom über die Kraft auf Draht 1?' : ''}`),
+        ],
         solution: kind === 'parallel' ? [howB, howF, howA] : [howB, howF], p: { kind, d1: key(d1), d2: key(d2), P: P.join(','), big: kind === 'parallel' ? big : 0 },
       };
     }
@@ -351,7 +365,19 @@
     return {
       kind: 'lines', title: L(`The field of ${what}`, `Das Feld ${what}`), text, figs: `<div class="fig">${linesFig({ ...base, wrong: 'none' })}</div>`,
       questions: [qp, qb],
-      hints: [src === 'magnet' ? L('Outside a magnet, the field points from N to S.', 'Ausserhalb eines Magneten zeigt das Feld von N nach S.') : GRIP(), L('Magnetic field lines have no beginning and no end: they are closed.', 'Magnetische Feldlinien haben keinen Anfang und kein Ende: Sie sind geschlossen.')],
+      hints: src === 'wire' ? [
+        L(`The current flows ${way(s)}, and (b) asks for the field ${where}.`, `Der Strom fliesst ${way(s)}, und (b) fragt nach dem Feld ${where}.`),
+        L(`(a) Grip the wire with your right hand, thumb ${way(s)}: do your fingers curl clockwise or anticlockwise as you see the page?`, `(a) Umfasse den Draht mit der rechten Hand, Daumen ${way(s)}: Krümmen sich deine Finger, wie du die Seite siehst, im oder gegen den Uhrzeigersinn?`),
+        L(`(b) Follow that circle to the point ${where}: which way does it run there?`, `(b) Folge diesem Kreis bis zum Punkt ${where}: In welche Richtung läuft er dort?`),
+      ] : src === 'magnet' ? [
+        L(`N is ${nSide[0]}, S ${nSide[2]}; (b) asks for the field ${where}.`, `N ist ${nSide[1]}, S ${nSide[3]}; (b) fragt nach dem Feld ${where}.`),
+        L(`(a) Outside this magnet the lines run from N, ${nSide[0]}, to S, ${nSide[2]}. Field lines have no beginning and no end: how must they carry on inside the magnet?`, `(a) Ausserhalb dieses Magneten laufen die Linien von N, ${nSide[1]}, nach S, ${nSide[3]}. Feldlinien haben keinen Anfang und kein Ende: Wie müssen sie im Innern des Magneten weiterlaufen?`),
+        L(`(b) Is the point asked for inside the magnet or outside, and which pole is the line there coming from or going to?`, `(b) Liegt der gefragte Punkt im Innern des Magneten oder ausserhalb, und von welchem Pol kommt die Linie dort, oder zu welchem läuft sie?`),
+      ] : [
+        L(`In the ${ends[0]} ${src === 'loop' ? 'conductor' : 'row'} the current flows ${way(s)}, in the ${ends[1]} one ${way(-s)}; (b) asks for the field ${where}.`, `Im ${ends[0]} ${src === 'loop' ? 'Leiter' : 'Teil'} fliesst der Strom ${way(s)}, im ${ends[1]} ${way(-s)}; (b) fragt nach dem Feld ${where}.`),
+        L(`(a) Right-hand grip rule at each ${src === 'loop' ? 'conductor' : 'row'}: between the two, do their fields add up or cancel, and which way do they point there?`, `(a) Rechte-Hand-Regel bei jedem ${src === 'loop' ? 'Leiter' : 'Teil'}: Addieren sich ihre Felder zwischen den beiden oder heben sie sich auf, und wohin zeigen sie dort?`),
+        L(`(b) Field lines are closed: the lines through the middle come back round outside. Is the point asked for on the way through the middle, or on the way back?`, `(b) Feldlinien sind geschlossen: Die Linien durch die Mitte kehren aussen zurück. Liegt der gefragte Punkt auf dem Weg durch die Mitte oder auf dem Rückweg?`),
+      ],
       solution: [how, howB], solFig: `<div class="fig">${linesFig({ ...base, wrong: null })}</div>`, p: { ...base, at },
     };
   }
@@ -384,7 +410,11 @@
       figs: `<div class="fig">${fig}</div>`,
       questions: [choice('F', L('(a) the size of the force on the wire', '(a) der Betrag der Kraft auf den Draht'), values(F, mistakes, how)),
         tiles('d', L('(b) In which direction does the force point?', '(b) In welche Richtung zeigt die Kraft?'), forceOptions(r, Fd, [[neg(Fd), 'hand'], [d, 'alongV'], [Bv, 'alongB']], howF))],
-      hints: [L('F = I·L·B·sin θ, θ the angle between the wire and the field.', 'F = I·L·B·sin θ, θ der Winkel zwischen Draht und Feld.'), L('sin 90° = 1, sin 30° = sin 150° = 0.5. The length in metres.', 'sin 90° = 1, sin 30° = sin 150° = 0.5. Die Länge in Metern.'), RULE()],
+      hints: [
+        L(`Given: the current ${I} A, the length ${cm} cm, the field ${nice(B)} T, and the angle ${ang}° between the wire and the field lines.`, `Gegeben: der Strom ${I} A, die Länge ${cm} cm, das Feld ${nice(B)} T und der Winkel ${ang}° zwischen Draht und Feldlinien.`),
+        L('(a) The force on a wire: F = I·L·B·sin θ, with the length in metres and θ the angle between the wire and the field.', '(a) Die Kraft auf einen Draht: F = I·L·B·sin θ, mit der Länge in Metern und θ dem Winkel zwischen Draht und Feld.'),
+        L(`First the two factors that are not plain numbers yet: ${cm} cm = ${nice(Lm)} m, and sin ${ang}° = ${SIN[ang]}. (b) Right hand: thumb along the current, index finger ${dirName(Bv)}.`, `Zuerst die beiden Faktoren, die noch keine einfachen Zahlen sind: ${cm} cm = ${nice(Lm)} m, und sin ${ang}° = ${SIN[ang]}. (b) Rechte Hand: Daumen in Stromrichtung, Zeigefinger ${dirName(Bv)}.`),
+      ],
       solution: [how, howF], p: { I, cm, B, ang, bx },
     };
   }
@@ -407,13 +437,21 @@
       const cands = [[ratio, 'ok'], ...(angle ? [[noAngle, 'sin']] : []), [ratio ? 1 / ratio : 1, 'other'], [ratio * 2, 'other'], [ratio / 2, 'other'], [ratio * 4, 'other'], [1, 'other'], [2, 'other'], [0.5, 'other'], [4, 'other']];
       const opts = [];
       for (const [x, tag] of cands) if (opts.length < 4 && opts.every((o) => Math.abs(o.x - x) > 1e-9 && times(o.x) !== times(x))) opts.push({ x, tag });
+      // for the hints: the quantity each change touches, and one change's factor (not the angle along the field: that one alone gives the answer)
+      const sym = (c) => (c[0] === 'a' ? L(`sin θ (θ from 90° to ${c[1] ? 30 : 0}°)`, `sin θ (θ von 90° auf ${c[1] ? 30 : 0}°)`) : it(c[0]));
+      const factorOf = (c) => (c[0] === 'a' ? L('sin 30° = 0.5 instead of sin 90° = 1: a factor 0.5', 'sin 30° = 0.5 statt sin 90° = 1: ein Faktor 0.5') : L(`a factor ${nice(c[1])}`, `ein Faktor ${nice(c[1])}`));
+      const first = { c: a[0] === 'a' && !a[1] ? b : a };
       const whyOf = (tag) => (tag === 'sin' ? L(`The angle counts too: only the part of the wire across the field feels a force. ${how}`, `Auch der Winkel zählt: Nur der Teil des Drahts quer zum Feld spürt eine Kraft. ${how}`) : how);
       return {
         kind: 'size', title: L('Changing the force on a wire', 'Die Kraft auf einen Draht ändern'),
         text: L(`<p>A straight wire lies in a uniform magnetic field, perpendicular to the field lines; the magnetic force on it is F. Now ${a[2][0]}, and ${b[2][0]}.</p>`, `<p>Ein gerader Draht liegt in einem homogenen Magnetfeld, senkrecht zu den Feldlinien; die magnetische Kraft auf ihn ist F. Nun ${a[2][1]}, und ${b[2][1]}.</p>`),
         figs: '',
         questions: [choice('k', L('The force on the wire is now', 'Die Kraft auf den Draht ist nun'), opts.sort((x, y) => x.x - y.x).map((o) => ({ label: times(o.x), ok: o.tag === 'ok', tag: o.tag === 'ok' ? undefined : o.tag, why: o.tag === 'ok' ? '' : whyOf(o.tag) })))],
-        hints: [L('F = I·L·B·sin θ: each factor changes the force in proportion.', 'F = I·L·B·sin θ: Jeder Faktor ändert die Kraft im selben Verhältnis.'), L('Perpendicular to the field, sin 90° = 1; at 30°, sin 30° = 0.5; along the field, sin 0° = 0.', 'Senkrecht zum Feld ist sin 90° = 1; bei 30° ist sin 30° = 0.5; längs des Feldes ist sin 0° = 0.')],
+        hints: [
+          L(`Two of the factors in F = I·L·B·sin θ change here: ${[a, b].map(sym).join(L(' and ', ' und '))}. Everything else stays the same.`, `Zwei der Faktoren in F = I·L·B·sin θ ändern sich hier: ${[a, b].map(sym).join(L(' and ', ' und '))}. Alles andere bleibt gleich.`),
+          L('The force is proportional to each factor: find the factor of each change, then multiply the two.', 'Die Kraft ist proportional zu jedem Faktor: Bestimme den Faktor jeder Änderung und multipliziere dann die beiden.'),
+          L(`Start with this one: ${first.c[2][0]}, ${factorOf(first.c)}. Now the other change.`, `Beginne mit dieser: ${first.c[2][1]}, ${factorOf(first.c)}. Nun die andere Änderung.`),
+        ],
         solution: [how], p: { a: CHANGES.indexOf(a), b: CHANGES.indexOf(b) },
       };
     }
@@ -481,7 +519,11 @@
         choice('m', L('(c) The torque on the coil is largest when', '(c) Das Drehmoment auf die Spule ist am grössten, wenn'), r.shuffle(max)),
         choice('u', `(d) ${L(...ap.q)}`, r.shuffle(apOpts)),
       ],
-      hints: [RULE(), L('Do the two forces act along one line, or do they form a pair that turns the coil?', 'Wirken die beiden Kräfte längs einer Geraden, oder bilden sie ein Paar, das die Spule dreht?'), L('The torque is force times lever arm: the distance from the axis across to the line of the force.', 'Das Drehmoment ist Kraft mal Hebelarm: der Abstand von der Achse quer zur Wirkungslinie der Kraft.')],
+      hints: [
+        L(`Side 1 carries the current ${s > 0 ? 'out of' : 'into'} the page, side 2 ${s > 0 ? 'into' : 'out of'} it; the field points ${dirName(Bv)}${phi === 0 ? ', along the coil' : `, at ${phi}° to the coil`}.`, `Seite 1 führt den Strom ${s > 0 ? 'aus der Seite heraus' : 'in die Seite hinein'}, Seite 2 ${s > 0 ? 'in die Seite hinein' : 'aus der Seite heraus'}; das Feld zeigt ${dirName(Bv)}${phi === 0 ? ', längs der Spule' : `, unter ${phi}° zur Spule`}.`),
+        L(`(a) Right hand at side 1: thumb ${dirName([0, 0, s])}, index finger ${dirName(Bv)}: where does the middle finger point? Side 2 carries the opposite current, so its force points the opposite way.`, `(a) Rechte Hand bei Seite 1: Daumen ${dirName([0, 0, s])}, Zeigefinger ${dirName(Bv)}: Wohin zeigt der Mittelfinger? Seite 2 führt den Strom in Gegenrichtung, also zeigt ihre Kraft in die Gegenrichtung.`),
+        L(`(b), (c) Draw both forces at the sides in the drawing along the axis: do they act along one line through the axis, or do they form a pair that turns the coil? The torque is force times lever arm, the distance from the axis across to the line of the force: how does that arm change as the coil turns?`, `(b), (c) Zeichne beide Kräfte bei den Seiten in die Zeichnung längs der Achse: Wirken sie längs einer Geraden durch die Achse, oder bilden sie ein Paar, das die Spule dreht? Das Drehmoment ist Kraft mal Hebelarm, der Abstand von der Achse quer zur Wirkungslinie der Kraft: Wie ändert sich dieser Arm, wenn sich die Spule dreht?`),
+      ],
       solution: [howF, howT, howMax, `${L(...ap.ok)} ${L(...ap.why)}`], solFig: coilFigs(phi, s, bx, true), p: { s, bx, phi, app },
     };
   }
@@ -525,7 +567,12 @@
           L(` ${who} finds the direction of the magnetic force in four steps: it points ${dirName(Fs)}. One step is wrong.</p>`, ` ${who} bestimmt die Richtung der magnetischen Kraft in vier Schritten: Sie zeige ${dirName(Fs)}. Ein Schritt ist falsch.</p>`),
         figs: `<div class="fig">${fig}</div>`,
         questions: [{ ...tiles('e', L('Which step is wrong?', 'Welcher Schritt ist falsch?'), steps.map((t, k) => ({ html: `<span class="step-opt"><b>${k + 1}.</b> ${t}</span>`, ok: k === bad, tag: k === bad ? undefined : 'step', why: k === bad ? '' : L(`Step ${k + 1} is right. ${right}`, `Schritt ${k + 1} ist richtig. ${right}`) }))), wide: true }],
-        hints: [RULE(), kind === 'current' ? L('Which way does the current flow when electrons move?', 'In welche Richtung fliesst der Strom, wenn sich Elektronen bewegen?') : chargeOf(pt), L('Redo each step yourself and compare.', 'Mache jeden Schritt selbst und vergleiche.')],
+        hints: [
+          kind === 'current' ? L(`The electrons drift ${dirName(v)}, the field points ${dirName(B)}. The current is defined by positive charges: which way does it flow here?`, `Die Elektronen driften ${dirName(v)}, das Feld zeigt ${dirName(B)}. Der Strom ist über positive Ladungen festgelegt: In welche Richtung fliesst er hier?`)
+            : L(`${chargeOf(pt)} It moves ${dirName(v)}, the field points ${dirName(B)}.`, `${chargeOf(pt)} Es bewegt sich ${dirName(v)}, das Feld zeigt ${dirName(B)}.`),
+          L(`The rule ${who} should follow: the right hand for a positive charge or a current, the left hand for a negative charge; thumb along the velocity (or the current), index finger along the field, the middle finger shows the force.`, `Die Regel, der ${who} folgen sollte: die rechte Hand für eine positive Ladung oder einen Strom, die linke Hand für eine negative Ladung; Daumen in Richtung der Geschwindigkeit (oder des Stroms), Zeigefinger in Richtung des Feldes, der Mittelfinger zeigt die Kraft.`),
+          L(`Do it yourself first, then go through ${who}’s four steps one by one: in which step does your hand first differ?`, `Mach es zuerst selbst und geh dann die vier Schritte von ${who} einzeln durch: In welchem Schritt weicht deine Hand zum ersten Mal ab?`),
+        ],
         solution: [L(`Step ${bad + 1} is wrong. ${whyBad}`, `Schritt ${bad + 1} ist falsch. ${whyBad}`), `${right}`], p: { kind, q, v: key(v), B: key(B), bad, pt: pt ? pt.id : '' },
       };
     }
@@ -560,6 +607,24 @@
     [() => L('In a moving-coil meter, the torque on the coil is proportional to the current.', 'In einem Drehspulinstrument ist das Drehmoment auf die Spule proportional zum Strom.'), true, () => L('Each side feels I·L·B; a spring balances the torque.', 'Jede Seite spürt I·L·B; eine Feder hält dem Drehmoment das Gleichgewicht.')],
     [() => L('A very strong magnetic field exerts a force on a charge at rest.', 'Ein sehr starkes Magnetfeld übt eine Kraft auf eine ruhende Ladung aus.'), false, () => L('Without motion there is no magnetic force, however strong the field.', 'Ohne Bewegung gibt es keine magnetische Kraft, wie stark das Feld auch ist.')],
   ];
+  // the hints: one for each topic among the statements picked (BANK indices), naming them by their place from the top
+  const TOPICS = [
+    [[0, 1, 2, 6, 7, 8, 25], ['the force on a moving charge', 'die Kraft auf eine bewegte Ladung'], ['it is q·v × B: what if the charge is at rest, neutral, negative, or moves along the field?', 'sie ist q·v × B: Was, wenn die Ladung ruht, neutral oder negativ ist oder sich längs des Feldes bewegt?']],
+    [[9, 10, 11, 12], ['the force on a wire', 'die Kraft auf einen Draht'], ['F = I·L·B·sin θ, with θ the angle between the wire and the field: find the factor of each change.', 'F = I·L·B·sin θ, mit θ dem Winkel zwischen Draht und Feld: Bestimme den Faktor jeder Änderung.']],
+    [[3, 4, 5], ['two currents', 'zwei Ströme'], ['the field of one wire at the other (grip rule), then the force on the other (right hand); Newton’s third law for the pair.', 'das Feld des einen Drahts beim anderen (Umfassungsregel), dann die Kraft auf den anderen (rechte Hand); für das Paar das dritte Newtonsche Axiom.']],
+    [[13, 14, 15, 16, 17, 18, 19], ['field lines', 'Feldlinien'], ['they circle a wire, run from N to S outside a magnet, and have no beginning and no end.', 'sie umkreisen einen Draht, laufen ausserhalb eines Magneten von N nach S und haben weder Anfang noch Ende.']],
+    [[20, 21, 22, 23, 24], ['a coil in a field', 'eine Spule im Feld'], ['the forces on opposite sides are equal and opposite; the torque is force times lever arm.', 'die Kräfte auf gegenüberliegende Seiten sind gleich gross und entgegengesetzt; das Drehmoment ist Kraft mal Hebelarm.']]];
+  function stmtHints(pick) {
+    const out = [];
+    for (const [idx, name, rule] of TOPICS) {
+      const ks = pick.map((s, k) => [BANK.indexOf(s), k + 1]).filter(([i]) => idx.includes(i)).map(([, k]) => k);
+      if (!ks.length) continue;
+      const list = ks.length === 1 ? String(ks[0]) : `${ks.slice(0, -1).join(', ')}${L(' and ', ' und ')}${ks[ks.length - 1]}`;
+      out.push(L(`${ks.length === 1 ? 'Statement' : 'Statements'} ${list} (from the top): ${name[0]}. ${cap(rule[0])}`, `${ks.length === 1 ? 'Aussage' : 'Aussagen'} ${list} (von oben): ${name[1]}. ${cap(rule[1])}`));
+    }
+    if (out.length < 2) out.push(L('Take the statements one by one: which quantity does each one change or compare, and does that quantity count at all?', 'Nimm die Aussagen einzeln: Welche Grösse ändert oder vergleicht jede, und zählt diese Grösse überhaupt?'));
+    return out;
+  }
   function statements(seed) {
     const r = rng(seed * 73 + 43);
     for (;;) {
@@ -569,7 +634,7 @@
         kind: 'stmts', title: L('Which statements are correct?', 'Welche Aussagen sind richtig?'),
         text: L('<p>Tick all the statements that are correct.</p>', '<p>Kreuze alle richtigen Aussagen an.</p>'), figs: '',
         questions: [{ type: 'multi', key: 's', label: L('Which statements are correct?', 'Welche Aussagen sind richtig?'), statements: pick.map(([h, ok, why]) => ({ html: h(), ok, why: why() })) }],
-        hints: [PERP(), L('F = I·L·B·sin θ on a wire; field lines are closed.', 'F = I·L·B·sin θ auf einen Draht; Feldlinien sind geschlossen.')],
+        hints: stmtHints(pick),
         solution: pick.map(([h, ok, why]) => `${ok ? '✓' : '✗'} ${h()} ${why()}`), p: { s: pick.map((s) => BANK.indexOf(s)) },
       };
     }

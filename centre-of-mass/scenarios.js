@@ -31,6 +31,7 @@
   const cm = (x) => q(x, 'cm', 1);
   // a field: key, symbol, unit, decimals, what
   const field = (key, sym, unit, dec, what) => ({ key, sym, unit, dec, what });
+  const m$ = (s) => `$${s}$`;
 
   // A figure of thin wire of the same kind throughout: the mass of each part is proportional to its
   // length, and each part's own centre of mass is its middle. The centre of mass is the
@@ -227,14 +228,26 @@
       text: () => L(`A figure is bent from one piece of uniform wire. Find its centre of mass G: its coordinates in the system drawn, with the origin O.${S.ask.length === 1 ? ` (By symmetry, ${S.ask[0] === 'x' ? 'y' : 'x'}<sub>G</sub> = 0.)` : ''}`,
         `Eine Figur ist aus einem gleichmässigen Draht gebogen. Bestimme ihren Schwerpunkt S: seine Koordinaten im eingezeichneten System mit dem Ursprung O.${S.ask.length === 1 ? ` (Aus Symmetriegründen ist ${S.ask[0] === 'x' ? 'y' : 'x'}<sub>S</sub> = 0.)` : ''}`),
       figure: (p, v, view) => comFigure(shape, p, v, view),
-      hints: (p) => { const hasSquare = S.parts(p).some((pt) => pt.kind === 'square'); return [
-        hasSquare ? L('Split the figure into simple parts: straight pieces and squares. The mass of each part is proportional to its length (a square: its four sides).', 'Zerlege die Figur in einfache Teile: gerade Stücke und Quadrate. Die Masse jedes Teils ist proportional zu seiner Länge (beim Quadrat: seine vier Seiten).')
-          : L('Split the figure into simple parts: its straight pieces. The mass of each part is proportional to its length.', 'Zerlege die Figur in einfache Teile: ihre geraden Stücke. Die Masse jedes Teils ist proportional zu seiner Länge.'),
-        hasSquare ? L('Find the centre of mass of each part: the middle of a straight piece, the centre of a square (its opposite sides meet in the middle).', 'Bestimme den Schwerpunkt jedes Teils: die Mitte eines geraden Stücks, den Mittelpunkt eines Quadrats (seine gegenüberliegenden Seiten treffen sich in der Mitte).')
-          : L('Find the centre of mass of each part: the middle of each straight piece.', 'Bestimme den Schwerpunkt jedes Teils: die Mitte jedes geraden Stücks.'),
-        L('Combine the parts two at a time. The common centre of mass lies on the line between their centres, closer to the heavier part: m₁ · a₁ = m₂ · a₂, where a₁ and a₂ are its distances from the two centres. Then combine the result with the next part.',
-          'Fasse die Teile schrittweise zu zweit zusammen. Der gemeinsame Schwerpunkt liegt auf der Verbindungslinie ihrer Schwerpunkte, näher beim schwereren Teil: m₁ · a₁ = m₂ · a₂, wobei a₁ und a₂ seine Abstände von den beiden Schwerpunkten sind. Fasse das Ergebnis dann mit dem nächsten Teil zusammen.'),
-      ]; },
+      hints: (p) => {
+        const parts = S.parts(p), pt$ = (c) => `$(${num(c[0], 1)}\\,|\\,${num(c[1], 1)})$`;
+        // each part in words: a straight piece from one point to another, or a square of side s
+        const named = parts.map((pt) => (pt.kind === 'square' ? L(`the square of side ${cm(pt.s)} (${cm(lengthOf(pt))} of wire)`, `das Quadrat mit der Seite ${cm(pt.s)} (${cm(lengthOf(pt))} Draht)`)
+          : L(`the piece from ${pt$(pt.a)} to ${pt$(pt.b)} (${cm(lengthOf(pt))})`, `das Stück von ${pt$(pt.a)} bis ${pt$(pt.b)} (${cm(lengthOf(pt))})`)));
+        const k = combos(parts)[0], A = parts[Number(k.A.name) - 1], B = parts[Number(k.B.name) - 1];
+        const ask = S.ask.map((a) => `$${a}_\\mathrm{${cS()}}$`).join(L(' and ', ' und '));
+        return [
+          L(`The figure consists of ${parts.length} parts: ${named.join(', ')}. The wire is uniform, so the masses are in the ratio of the lengths. Which part is the heaviest, and towards which part will the centre of mass lie?`,
+            `Die Figur besteht aus ${parts.length} Teilen: ${named.join(', ')}. Der Draht ist gleichmässig, also stehen die Massen im Verhältnis der Längen. Welches Teil ist das schwerste, und zu welchem Teil hin wird der Schwerpunkt liegen?`),
+          L(`Each part has its centre of mass in its middle (a square: in its centre): here ${parts.map((pt) => pt$(centreOf(pt))).join(', ')}. ${ask}: the mean of these, each weighted with its length; or combine two parts at a time with the lever rule ${m$('m_1\\,a_1 = m_2\\,a_2')}.`,
+            `Jedes Teil hat seinen Schwerpunkt in seiner Mitte (ein Quadrat: in seinem Mittelpunkt): hier ${parts.map((pt) => pt$(centreOf(pt))).join(', ')}. ${ask}: das Mittel davon, jedes mit seiner Länge gewichtet; oder fasse mit dem Hebelgesetz ${m$('m_1\\,a_1 = m_2\\,a_2')} zwei Teile nach dem anderen zusammen.`),
+          k.D < 1e-9 ? L(`Start with the parts of ${cm(lengthOf(A))} and ${cm(lengthOf(B))}: their centres coincide at ${pt$(k.A.c)}, so they count as one part there, of length ${cm(k.S.m)}.`,
+            `Beginne mit den Teilen von ${cm(lengthOf(A))} und ${cm(lengthOf(B))}: Ihre Schwerpunkte fallen in ${pt$(k.A.c)} zusammen, also zählen sie dort als ein Teil der Länge ${cm(k.S.m)}.`)
+            : Math.abs(k.A.m - k.B.m) < 1e-9 ? L(`Start with the two parts of equal length, ${cm(k.A.m)} each, with their centres at ${pt$(k.A.c)} and ${pt$(k.B.c)}: their common centre of mass lies halfway between them.`,
+              `Beginne mit den zwei gleich langen Teilen, je ${cm(k.A.m)}, mit ihren Schwerpunkten in ${pt$(k.A.c)} und ${pt$(k.B.c)}: Ihr gemeinsamer Schwerpunkt liegt in der Mitte dazwischen.`)
+              : L(`Start with the parts of ${cm(k.A.m)} and ${cm(k.B.m)}, with their centres at ${pt$(k.A.c)} and ${pt$(k.B.c)}: their common centre of mass lies on the line between them, the fraction ${m$(`\\tfrac{${num(k.B.m, 1)}}{${num(k.A.m + k.B.m, 1)}}`)} of the way from ${pt$(k.A.c)}.`,
+                `Beginne mit den Teilen von ${cm(k.A.m)} und ${cm(k.B.m)}, mit ihren Schwerpunkten in ${pt$(k.A.c)} und ${pt$(k.B.c)}: Ihr gemeinsamer Schwerpunkt liegt auf ihrer Verbindungslinie, beim Bruchteil ${m$(`\\tfrac{${num(k.B.m, 1)}}{${num(k.A.m + k.B.m, 1)}}`)} des Wegs von ${pt$(k.A.c)} aus.`),
+        ];
+      },
       steps(p, v) {
         const parts = S.parts(p), cs = parts.map(centreOf);
         const lenTex = (pt) => (pt.kind === 'square' ? `4\\cdot ${tq(pt.s, 'cm')} = ${tq(lengthOf(pt), 'cm')}` : tq(lengthOf(pt), 'cm'));
@@ -319,10 +332,13 @@
       }
       return P.svg();
     },
-    hints: () => [
-      L('When it starts to tip, the box rests only on its edge on the far side: that edge is the axis.', 'Wenn sie zu kippen beginnt, steht die Kiste nur noch auf der Kante auf der anderen Seite: Diese Kante ist die Drehachse.'),
-      L('About that edge, the push has the lever arm y (its height); the weight, acting at the centre, has the lever arm w/2.', 'Bezüglich dieser Kante hat die Kraft den Hebelarm y (ihre Höhe); die Gewichtskraft, die im Schwerpunkt angreift, den Hebelarm w/2.'),
-      L('It tips when F · y > m g · w/2.', 'Sie kippt, wenn F · y > m g · w/2.'),
+    hints: (p) => [
+      L(`The box (${cm(p.w)} wide, ${cm(p.h)} high) is pushed ${cm(p.y)} above the floor. When it starts to tip, it rests only on one bottom edge: which one? Take that edge as the axis: which forces have a torque about it?`,
+        `Die Kiste (${cm(p.w)} breit, ${cm(p.h)} hoch) wird ${cm(p.y)} über dem Boden gestossen. Wenn sie zu kippen beginnt, steht sie nur noch auf einer unteren Kante: auf welcher? Nimm diese Kante als Drehachse: Welche Kräfte haben bezüglich ihr ein Drehmoment?`),
+      L(`It tips once the push’s torque about the edge exceeds the weight’s: ${m$('F\\cdot y = m\\,g\\cdot\\tfrac{w}{2}')}, with the push’s height above the floor and half the box’s width as the lever arms.`,
+        `Sie kippt, sobald das Drehmoment der Kraft bezüglich der Kante grösser ist als das der Gewichtskraft: ${m$('F\\cdot y = m\\,g\\cdot\\tfrac{w}{2}')}, mit der Höhe der Kraft über dem Boden und der halben Breite der Kiste als Hebelarmen.`),
+      L(`The weight first: ${m$(`m\\,g = ${tq(p.m * G, 'N')}`)} acts at the centre, ${cm(p.w / 2)} from the edge horizontally. The push acts ${cm(p.y)} above the edge.`,
+        `Zuerst die Gewichtskraft: ${m$(`m\\,g = ${tq(p.m * G, 'N')}`)} greift in der Mitte an, waagrecht ${cm(p.w / 2)} von der Kante entfernt. Die Kraft greift ${cm(p.y)} über der Kante an.`),
     ],
     steps: (p, v) => [
       step(L('The axis', 'Die Drehachse'), `<p>${L('As the box starts to tip, it stands only on its far edge; the floor’s forces act there and have no torque about it. The push turns the box over the edge, the weight turns it back:', 'Beginnt die Kiste zu kippen, steht sie nur noch auf der gegenüberliegenden Kante; die Kräfte des Bodens greifen dort an und haben bezüglich dieser Kante kein Drehmoment. Die Kraft dreht die Kiste über die Kante, die Gewichtskraft dreht sie zurück:')}</p>`, ['G']),
@@ -374,10 +390,13 @@
       }
       return P.svg();
     },
-    hints: () => [
-      L('Standing on its edge, the cabinet turns about that edge. Its weight acts at the centre of mass G.', 'Auf der Kante stehend dreht sich der Schrank um diese Kante. Seine Gewichtskraft greift im Schwerpunkt S an.'),
-      L('As long as G is above the base (on the inner side of the edge), the weight turns it back. It falls once G is straight above the edge.', 'Solange S über der Standfläche liegt (innerhalb der Kante), dreht ihn die Gewichtskraft zurück. Er fällt, sobald S senkrecht über der Kante liegt.'),
-      L('Then the line from the edge to G is vertical: tan θ = (w/2) / (h/2) = w/h.', 'Dann ist die Linie von der Kante zu S senkrecht: tan θ = (w/2) / (h/2) = w/h.'),
+    hints: (p) => [
+      L(`The cabinet (${cm(p.w)} wide, ${cm(p.h)} high) stands on one bottom edge, with ${cS()} in its middle. As it leans further, ${cS()} moves towards the vertical through the edge: where must ${cS()} be for the weight to stop turning it back?`,
+        `Der Schrank (${cm(p.w)} breit, ${cm(p.h)} hoch) steht auf einer unteren Kante, ${cS()} in seiner Mitte. Neigt er sich weiter, rückt ${cS()} zur Senkrechten durch die Kante: Wo muss ${cS()} liegen, damit die Gewichtskraft ihn nicht mehr zurückdreht?`),
+      L(`It falls once ${cS()} is straight above the edge. Then the line from the edge to ${cS()} is vertical, and θ is the angle between that line and the cabinet’s side: ${m$('\\tan\\theta')} is the distance across over the distance up, both measured in the cabinet from the edge to ${cS()}.`,
+        `Er fällt, sobald ${cS()} senkrecht über der Kante liegt. Dann ist die Linie von der Kante zu ${cS()} senkrecht, und θ ist der Winkel zwischen dieser Linie und der Seite des Schranks: ${m$('\\tan\\theta')} ist die Strecke quer durch die Strecke hoch, beide im Schrank von der Kante bis ${cS()} gemessen.`),
+      L(`From the edge, ${cS()} is half the width across, ${cm(p.w / 2)}, and half the height up, ${cm(p.h / 2)}.`,
+        `Von der Kante aus liegt ${cS()} die halbe Breite quer, ${cm(p.w / 2)}, und die halbe Höhe hoch, ${cm(p.h / 2)}.`),
     ],
     steps: (p, v) => [
       step(L('Tipping point', 'Kipppunkt'), `<p>${L('The weight acts at G. While G is on the inner side of the edge, its torque turns the cabinet back; once G is straight above the edge, the torque is zero, and beyond that the cabinet falls.', 'Die Gewichtskraft greift in S an. Solange S innerhalb der Kante liegt, dreht ihr Drehmoment den Schrank zurück; liegt S senkrecht über der Kante, ist das Drehmoment null, und darüber hinaus fällt der Schrank.')}</p>`, ['S']),
@@ -463,9 +482,11 @@
     text: () => L('A uniform board can turn without friction about a fixed axis through D, perpendicular to the drawing. Its centre of mass G is in its middle. The board is let go at rest in the position drawn. What kind of equilibrium is it in, if any?',
       'Ein gleichmässiges Brett ist reibungsfrei um eine feste Achse durch D drehbar, die senkrecht zur Zeichnung steht. Sein Schwerpunkt S liegt in seiner Mitte. Das Brett wird in der gezeichneten Lage in Ruhe losgelassen. In welchem Gleichgewicht ist es, wenn überhaupt?'),
     figure: boardFigure,
-    hints: () => [
-      L('The weight acts at G, straight down. It has no torque about D if its line of action, the vertical through G, passes through D.', 'Die Gewichtskraft greift in S an, senkrecht nach unten. Sie hat bezüglich D kein Drehmoment, wenn ihre Wirkungslinie, die Senkrechte durch S, durch D geht.'),
-      L('If it has no torque, turn the board a little in your mind: does the weight turn it back, further away, or not at all?', 'Hat sie kein Drehmoment, so drehe das Brett in Gedanken ein wenig: Dreht die Gewichtskraft es zurück, weiter weg oder gar nicht?'),
+    hints: (p) => [
+      L(`The board is ${p.phi ? `turned by ${Math.abs(p.phi)}°, but that alone settles nothing` : 'level'}: what counts is where D lies compared with ${cS()}. Draw the vertical through ${cS()}: does it pass through D, and if so, is D above ${cS()}, below it, or at ${cS()} itself?`,
+        `Das Brett ist ${p.phi ? `um ${Math.abs(p.phi)}° gedreht, aber das allein entscheidet nichts` : 'waagrecht'}: Es zählt, wo D im Vergleich zu ${cS()} liegt. Zeichne die Senkrechte durch ${cS()}: Geht sie durch D, und wenn ja, liegt D über ${cS()}, darunter oder in ${cS()} selbst?`),
+      L(`The weight acts at ${cS()}, straight down; its lever arm about D is the distance from D to that vertical. If it is zero, turn the board a little in your mind: does ${cS()} rise or drop, and does the weight turn the board back, further away, or not at all?`,
+        `Die Gewichtskraft greift in ${cS()} an, senkrecht nach unten; ihr Hebelarm bezüglich D ist der Abstand von D zu dieser Senkrechten. Ist er null, so drehe das Brett in Gedanken ein wenig: Hebt oder senkt sich ${cS()}, und dreht die Gewichtskraft das Brett zurück, weiter weg oder gar nicht?`),
     ],
     steps(p) {
       const s = stateOf(p.D), a = Math.abs(p.D[0]);
@@ -595,10 +616,16 @@
       : L('Four bodies are tilted onto one of their bottom edges and let go. Their centres of mass are marked; some are weighted at the bottom or narrower at the top, so that it lies lower than the middle. Which body falls over? The others fall back onto their base.',
         'Vier Körper werden auf eine ihrer unteren Kanten gekippt und losgelassen. Ihre Schwerpunkte sind eingezeichnet; einige sind unten beschwert oder oben schmaler, sodass er tiefer als die Mitte liegt. Welcher Körper kippt um? Die anderen fallen auf ihre Grundfläche zurück.')),
     figure: blocksFigure,
-    hints: () => [
-      L('The weight acts at the centre of mass, straight down. Draw the vertical through each centre of mass.', 'Die Gewichtskraft greift im Schwerpunkt an, senkrecht nach unten. Zeichne die Senkrechte durch jeden Schwerpunkt.'),
-      L('Each body would tip over its lower edge. If the vertical through its centre of mass passes inside that edge, under its base, the weight turns it back; beyond the edge, it turns it over.', 'Jeder Körper würde über seine untere Kante kippen. Verläuft die Senkrechte durch seinen Schwerpunkt innerhalb dieser Kante, unter seiner Grundfläche, dreht ihn die Gewichtskraft zurück; ausserhalb der Kante kippt sie ihn um.'),
-    ],
+    hints: (p) => {
+      const shape = (b) => ({ box: L('a box', 'ein Quader'), tri: L('a triangular prism', 'ein Dreiecksprisma'), trap: L('a trapezoid prism', 'ein Trapezprisma') })[b.shape || 'box'];
+      const b0 = p.bodies[0];
+      return [
+        L(`${p.bodies.map((b, i) => `${LETTERS[i]}: ${shape(b)}, ${cm(b.w)} wide, ${cm(b.h)} high${p.slope != null ? '' : L(`, tilted by ${b.th}°`, `, um ${b.th}° geneigt`)}`).join('; ')}${p.slope != null ? L(`, all on the ${p.slope}° slope`, `, alle auf der ${p.slope}°-Ebene`) : ''}. Each would tip over its lower edge (the dot). Draw the vertical through each centre of mass: does it pass inside that edge, under the base, or beyond it?`,
+          `${p.bodies.map((b, i) => `${LETTERS[i]}: ${shape(b)}, ${cm(b.w)} breit, ${cm(b.h)} hoch${p.slope != null ? '' : `, um ${b.th}° geneigt`}`).join('; ')}${p.slope != null ? `, alle auf der ${p.slope}°-Ebene` : ''}. Jeder würde über seine untere Kante kippen (der Punkt). Zeichne die Senkrechte durch jeden Schwerpunkt: Verläuft sie innerhalb dieser Kante, unter der Grundfläche, oder ausserhalb?`),
+        L(`A body tips once its tilt is larger than the angle θ at which its centre of mass is straight above the edge, ${m$('\\tan\\theta = \\dfrac{w/2}{\\text{height of the centre of mass}}')}. For A: its centre of mass is ${cm(b0.w / 2)} from the edge sideways and ${cm(b0.sy)} above its base. ${p.slope != null ? 'Here the tilt is the slope.' : 'The most tilted body need not be the one that falls.'}`,
+          `Ein Körper kippt, sobald seine Neigung grösser ist als der Winkel θ, bei dem sein Schwerpunkt senkrecht über der Kante liegt, ${m$('\\tan\\theta = \\dfrac{w/2}{\\text{Höhe des Schwerpunkts}}')}. Für A: Sein Schwerpunkt liegt ${cm(b0.w / 2)} seitlich der Kante und ${cm(b0.sy)} über der Grundfläche. ${p.slope != null ? 'Hier ist die Neigung die der Ebene.' : 'Der am stärksten geneigte Körper ist nicht unbedingt der, der kippt.'}`),
+      ];
+    },
     steps(p, v) {
       const rows = p.bodies.map((b, i) => {
         const x = v.beyond[i];

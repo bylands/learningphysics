@@ -159,8 +159,24 @@
         L('The probe shows the slope of the tangent in Ω·s; since ω is in rad/s, 1 Ω·s = 1 H.', 'Die Sonde zeigt die Steigung der Tangente in Ω·s; da ω in rad/s gemessen wird, ist 1 Ω·s = 1 H.') +
         // series RC: Z² is a straight line in ω⁻², which the probe shows too
         (ex.c.kind === 'RC' && ex.c.conn === 'series' ? ` ${L('To check: $Z^2 = R^2 + \\frac{1}{C^2}\\,\\omega^{-2}$, so one point ($\\omega^{-2}$, $Z$) of the probe gives $C = \\sqrt{\\omega^{-2}/(Z^2 - R^2)}$.', 'Zur Kontrolle: $Z^2 = R^2 + \\frac{1}{C^2}\\,\\omega^{-2}$, also liefert ein Punkt ($\\omega^{-2}$, $Z$) der Sonde $C = \\sqrt{\\omega^{-2}/(Z^2 - R^2)}$.')}` : ''),
-      L('Readings to check yours against:', 'Ablesungen zum Vergleich mit deinen:') + list(ks.map((k) => `<i>${k}</i>: ${an.readings[k]}`)),
+      L('Where to read on this graph:', 'Wo du an diesem Graphen abliest:') + list(ks.map((k) => `<i>${k}</i>: ${where(ex.c, ex.ax)[k]}`)),
     ];
+  }
+  // Where each value is read on the graph of circuit c (axes ax), without the reading itself: the
+  // last hint must not give R, L or C away.
+  function where(c, ax) {
+    const series = c.conn === 'series', right = I.H(ax.lin.wmax, 'w');
+    const atZero = L('the height where the graph starts, at <i>ω</i> = 0', 'die Höhe, bei der der Graph beginnt, bei <i>ω</i> = 0');
+    const levels = L(`the height the graph levels off at, towards the right end (<i>ω</i> = ${right})`, `die Höhe, der sich der Graph nähert, gegen den rechten Rand (<i>ω</i> = ${right})`);
+    const tanRight = L(`put the probe at the right end, <i>ω</i> = ${right}, and read the slope of the tangent there (in Ω·s, that is H)`, `setze die Sonde an den rechten Rand, <i>ω</i> = ${right}, und lies dort die Steigung der Tangente ab (in Ω·s, also H)`);
+    const tanOrigin = L('put the probe close to the origin and read the slope of the tangent there (in Ω·s, that is H)', 'setze die Sonde nahe an den Ursprung und lies dort die Steigung der Tangente ab (in Ω·s, also H)');
+    if (c.kind === 'RL') return { R: series ? atZero : levels, L: series ? tanRight : tanOrigin };
+    if (c.kind === 'RC') {
+      return { R: series ? levels : atZero,
+        C: L(`work out ${series ? '√2·<i>R</i>' : '<i>R</i>/√2'} from your <i>R</i>, find this height on the graph and read the <i>ω</i> below it: that is <i>ω</i><sub>c</sub>`, `rechne ${series ? '√2·<i>R</i>' : '<i>R</i>/√2'} aus deinem <i>R</i> aus, suche diese Höhe am Graphen und lies das <i>ω</i> darunter ab: Das ist <i>ω</i><sub>c</sub>`) };
+    }
+    return { R: series ? L('the height of the minimum', 'die Höhe des Minimums') : L('the height of the maximum', 'die Höhe des Maximums'), L: series ? tanRight : tanOrigin,
+      C: L(`find where the tangent is horizontal (the ${series ? 'minimum' : 'maximum'}) and read <i>ω</i>₀ below it; then use it with your <i>L</i>`, `suche, wo die Tangente waagrecht ist (das ${series ? 'Minimum' : 'Maximum'}), und lies darunter <i>ω</i>₀ ab; verwende es dann mit deinem <i>L</i>`) };
   }
 
   function results(e = ex) {

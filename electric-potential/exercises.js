@@ -94,7 +94,13 @@
         choice('W', L(`(c) the work done by the field on ${pt.name()} moving from A to B`, `(c) die Arbeit, die das Feld an ${pt.name().replace(/^ein /, 'einem ').replace(/^eine /, 'einer ')} verrichtet, das sich von A nach B bewegt`), values(Wp, [sgnTrap(Wp, howW), ...(Math.abs(pt.z) === 2 ? [{ value: Wp / 2, tag: 'z', why: L(`An alpha particle has the charge 2e. ${howW}`, `Ein Alphateilchen hat die Ladung 2e. ${howW}`) }] : [])], null, howW, { signed: true, fmt: eV, extra: [2, 0.5] })),
         choice('K', L('(d) the change of the kinetic energy of an electron moving from C to B', '(d) die Änderung der kinetischen Energie eines Elektrons, das sich von C nach B bewegt'), values(elec, [sgnTrap(elec, howK)], null, howK, { signed: true, fmt: eV, extra: [2, 0.5] })),
       ],
-      hints: [`${L('The potential difference between two points:', 'Die Spannung zwischen zwei Punkten:')} ${vab('A', 'B')}. ${RULE()}`, L('1 eV is the energy of a charge e moved through 1 V.', '1 eV ist die Energie einer Ladung e, die 1 V durchläuft.'), chargeOf(pt)],
+      // the hints: where to read the potentials, the relation for each part, the charges in e
+      hints: [
+        L(`A, B and C each lie on a labelled equipotential line (from ${levels[0]} V on the left to ${levels[n - 1]} V on the right): read off the potential of each point.`, `A, B und C liegen je auf einer beschrifteten Äquipotentiallinie (von ${levels[0]} V links bis ${levels[n - 1]} V rechts): Lies das Potential jedes Punkts ab.`),
+        L(`(a) ${vab('C', 'A')}, in that order. (b) The potential energy of the test charge +${nice(qn)} nC at B is q·V_B. (c), (d) From a start point to an end point the field does the work W = q·(V_start − V_end), and the kinetic energy changes by that much.`,
+          `(a) ${vab('C', 'A')}, in dieser Reihenfolge. (b) Die potentielle Energie der Probeladung +${nice(qn)} nC in B ist q·Φ_B. (c), (d) Von einem Anfangs- zu einem Endpunkt verrichtet das Feld die Arbeit W = q·(Φ_Anfang − Φ_Ende), und die kinetische Energie ändert sich um so viel.`),
+        `${chargeOf(pt)} ${L(`(c) Its charge is ${pt.z > 0 ? (pt.z > 1 ? '2e' : 'e') : '−e'}, (d) that of the electron −e: with the charge in units of e and the potentials in volts, W comes out directly in eV (1 eV: a charge e moved through 1 V).`, `(c) Seine Ladung ist ${pt.z > 0 ? (pt.z > 1 ? '2e' : 'e') : '−e'}, (d) die des Elektrons −e: Mit der Ladung in Einheiten von e und den Potentialen in Volt kommt W direkt in eV heraus (1 eV: eine Ladung e, die 1 V durchläuft).`)}`,
+      ],
       solution: [howU, howE, howW, howK], p: { step, V0, pick: pick.join(''), pt: pt.id, qn },
     };
   }
@@ -118,7 +124,13 @@
       kind: 'pot', title: L('Which way?', 'In welche Richtung?'),
       text: L(`<p>Between two parallel plates at ${mv(Vl)} V (left) and ${mv(Vr)} V (right), ${pt.name()} is released at rest.</p>`, `<p>Zwischen zwei parallelen Platten auf ${mv(Vl)} V (links) und ${mv(Vr)} V (rechts) wird ${pt.name()} in Ruhe losgelassen.</p>`),
       figs: fig(C.fig({ kind: 'uniform', E: Ed }, { box: [-2.75, 2.75, -1.6, 1.6], lines: true, rods: [[-2.6, -1.5, -2.6, 1.5], [2.6, -1.5, 2.6, 1.5]], parts: [{ x: 0, y: 0, q, sym: pt.sym }], tops: [{ x: -2.6, label: `${mv(Vl)} V` }, { x: 2.6, label: `${mv(Vr)} V` }] })),
-      questions: qs, hints: [chargeOf(pt), DOWNHILL(), L('The field points from high to low potential.', 'Das Feld zeigt von hohem zu tiefem Potential.')],
+      // the hints: the charge and the two plates of this exercise, then force and energy
+      questions: qs, hints: [
+        `${chargeOf(pt)} ${L(`The left plate is at ${mv(Vl)} V, the right one at ${mv(Vr)} V: on which side is the potential higher?`, `Die linke Platte liegt auf ${mv(Vl)} V, die rechte auf ${mv(Vr)} V: Auf welcher Seite ist das Potential höher?`)}`,
+        q ? L(`The field points from high to low potential: which way is that here? ${cap(pt.name())} is ${q > 0 ? 'positive' : 'negative'}: is it pushed along the field or against it?`, `Das Feld zeigt von hohem zu tiefem Potential: Wohin ist das hier? ${cap(pt.name())} ist ${q > 0 ? 'positiv' : 'negativ'}: Wird es in Feldrichtung gestossen oder entgegen?`)
+          : L(`There is a field between the plates, but ${pt.name()} carries no charge: does the field push it at all?`, `Zwischen den Platten gibt es ein Feld, aber ${pt.name()} trägt keine Ladung: Stösst das Feld es überhaupt?`),
+        ...(q ? [L('(c) Released at rest, it speeds up: its kinetic energy grows. Where does that energy come from?', '(c) In Ruhe losgelassen, wird es schneller: Seine kinetische Energie wächst. Woher kommt diese Energie?')] : []),
+      ],
       solution: q ? [how, howE] : [how], p: { q, Vl, Vr, pt: pt.id },
     };
   }
@@ -156,7 +168,12 @@
         choice('Ep', L('(b) The potential energy of q′ at P is', '(b) Die potentielle Energie von q′ in P ist'), opts4(q2 * VP, [[q * VP, 'noq', L(`The potential energy is proportional to the charge. ${howE}`, `Die potentielle Energie ist proportional zur Ladung. ${howE}`)], [-q2 * VP, 'sign', L(`Mind the sign of q′. ${howE}`, `Achte auf das Vorzeichen von q′. ${howE}`)], [q2 * U, 'diff', L(`That is the change of its potential energy from Q to P. ${howE}`, `Das ist die Änderung seiner potentiellen Energie von Q nach P. ${howE}`)]], howE, fJ)),
         choice('U', L('(c) Now the potential difference V_PQ is', '(c) Jetzt ist die Spannung U_PQ'), opts4(U, [[k * U, 'testq', testq(howU), NUDGE.testqU()], [VP, 'point', L(`That is the potential at P alone. ${howU}`, `Das ist das Potential in P allein. ${howU}`)], [-U, 'sign', `${ORDER('P', 'Q')} ${howU}`]], howU, fV)),
       ],
-      hints: [L(`The potential V belongs to a point; the potential energy q·V to a charge at a point; the potential difference ${vab('P', 'Q')} to two points.`, `Das Potential Φ gehört zu einem Punkt; die potentielle Energie q·Φ zu einer Ladung in einem Punkt; die Spannung ${vab('P', 'Q')} zu zwei Punkten.`), L('Which of the three depends on the charge?', 'Welche der drei Grössen hängt von der Ladung ab?')],
+      // the hints: what changes here (the charge at P) and what each asked quantity belongs to
+      hints: [
+        L(`Here only the charge at P changes, from ${nC(q)} to ${nC(q2)}; V_P = ${VP} V and V_Q = ${VQ} V are given. Which of the asked quantities belongs to the point P, which to the charge at P, which to the two points P and Q?`,
+          `Hier ändert sich nur die Ladung in P, von ${nC(q)} auf ${nC(q2)}; Φ_P = ${VP} V und Φ_Q = ${VQ} V sind gegeben. Welche der gefragten Grössen gehört zum Punkt P, welche zur Ladung in P, welche zu den beiden Punkten P und Q?`),
+        L(`Which of the three depends on the charge placed at P? For that one use the new charge q′ = ${nC(q2)} with its sign; for (c) mind the order, ${vab('P', 'Q')}.`, `Welche der drei Grössen hängt von der Ladung in P ab? Für diese nimm die neue Ladung q′ = ${nC(q2)} mit ihrem Vorzeichen; für (c) achte auf die Reihenfolge, ${vab('P', 'Q')}.`),
+      ],
       solution: [howV, howE, howU], p: { VP, VQ, q, k },
     };
   }
@@ -183,7 +200,12 @@
         choice('Ep', L('(a) Its potential energy', '(a) Seine potentielle Energie'), values(dE, [{ value: -dE, tag: 'sign', why: sign, nudge: NUDGE.gain() }, ...(z === 2 ? [{ value: dE / 2, tag: 'z', why: L(`An alpha particle has the charge 2e. ${how}`, `Ein Alphateilchen hat die Ladung 2e. ${how}`) }] : [])], null, how, { signed: true, fmt: grow, extra: [2, 0.5] })),
         choice('K', L('(b) If only the field acts on it, its kinetic energy', '(b) Wirkt nur das Feld darauf, so nimmt seine kinetische Energie'), words(r, [[L('increases', 'zu'), dE < 0, howK], [L('decreases', 'ab'), dE > 0, howK]])),
       ],
-      hints: [L('ΔE_pot = q·(V_B − V_A): first the sign of ΔV, then that of q.', 'ΔE_pot = q·(Φ_B − Φ_A): zuerst das Vorzeichen von ΔΦ, dann das von q.'), chargeOf(pt), L('1 eV is the energy of a charge e moved through 1 V.', '1 eV ist die Energie einer Ladung e, die 1 V durchläuft.')],
+      // the hints: reading off A and B, the relation, then the charge of this particle in e
+      hints: [
+        L(`A and B lie on labelled equipotential lines (from ${levels[0]} V on the left to ${levels[n - 1]} V on the right): read off V_A and V_B. Does the potential rise or fall from A to B?`, `A und B liegen auf beschrifteten Äquipotentiallinien (von ${levels[0]} V links bis ${levels[n - 1]} V rechts): Lies Φ_A und Φ_B ab. Steigt oder fällt das Potential von A nach B?`),
+        L('ΔE_pot = q·(V_B − V_A): first the sign of ΔV, then that of q.', 'ΔE_pot = q·(Φ_B − Φ_A): zuerst das Vorzeichen von ΔΦ, dann das von q.'),
+        `${chargeOf(pt)} ${L(`Its charge is ${qs}: with the charge in units of e and ΔV in volts, ΔE_pot comes out directly in eV. (b) If only the field acts, the total energy stays the same.`, `Seine Ladung ist ${qs}: Mit der Ladung in Einheiten von e und ΔΦ in Volt kommt ΔE_pot direkt in eV heraus. (b) Wirkt nur das Feld, bleibt die Gesamtenergie gleich.`)}`,
+      ],
       solution: [how, howK], p: { step, V0, ia, ib, pt: pt.id },
     };
   }
@@ -206,7 +228,12 @@
           choice('U', L('(a) the potential difference V_BA', '(a) die Spannung U_BA'), values(dV, [{ value: -dV, tag: 'sign', why: L(`The potential falls along the field; mind the order of the indices, ${vab('B', 'A')}. ${how}`, `Das Potential fällt in Feldrichtung; achte auf die Reihenfolge der Indizes, ${vab('B', 'A')}. ${how}`), nudge: NUDGE.uniform() }, { value: -Ef * dist * Math.sign(dx), tag: 'straight', why: L(`Not the straight distance AB: only the part along the field lines counts. ${how}`, `Nicht der direkte Abstand AB: Nur der Teil längs der Feldlinien zählt. ${how}`) }, { value: -Ef * Math.abs(by - ay) / 100 * Math.sign(dx), tag: 'across', why: how }], null, how, { signed: true, fmt: fmtV, extra: [2, 0.5] })),
           choice('W', L('(b) the work done by the field on an electron moving from A to B', '(b) die Arbeit, die das Feld an einem Elektron verrichtet, das sich von A nach B bewegt'), values(Wel, [{ value: -Wel, tag: 'sign', why: L(`The electron is negative. ${howW}`, `Das Elektron ist negativ. ${howW}`) }], null, howW, { signed: true, fmt: eV, extra: [2, 0.5] })),
         ],
-        hints: [L(`${vab('B', 'A')}. In a uniform field: |ΔV| = E·d, with d the distance measured along the field lines.`, `${vab('B', 'A')}. Im homogenen Feld: |U| = E·d, mit d dem Abstand längs der Feldlinien gemessen.`), L('Moving across the field lines changes nothing: those are equipotentials.', 'Eine Bewegung quer zu den Feldlinien ändert nichts: Das sind Äquipotentiallinien.'), L('The potential falls in the direction of the field.', 'Das Potential fällt in Feldrichtung.')],
+        // the hints: the two distances on the grid, the relation, then the sign
+        hints: [
+          L(`Count on the grid: from A to B it is ${Math.abs(bx - ax)} cm along the field (to the ${bx > ax ? 'right' : 'left'}) and ${Math.abs(by - ay)} cm across it. Which of the two changes the potential?`, `Zähle auf dem Gitter: Von A nach B sind es ${Math.abs(bx - ax)} cm längs des Feldes (nach ${bx > ax ? 'rechts' : 'links'}) und ${Math.abs(by - ay)} cm quer dazu. Welcher der beiden ändert das Potential?`),
+          L(`In a uniform field |ΔV| = E·d, with d measured along the field lines, in metres; ${vab('B', 'A')}.`, `Im homogenen Feld ist |U| = E·d, mit d längs der Feldlinien gemessen, in Metern; ${vab('B', 'A')}.`),
+          L(`The potential falls in the direction of the field, here to the right: is V_B higher or lower than V_A? (b) The electron is negative: W = q·(V_A − V_B) with q = −e.`, `Das Potential fällt in Feldrichtung, hier nach rechts: Ist Φ_B höher oder tiefer als Φ_A? (b) Das Elektron ist negativ: W = q·(Φ_A − Φ_B) mit q = −e.`),
+        ],
         solution: [how, howW], p: { Ef, ax, ay, bx, by },
       };
     }
@@ -238,6 +265,7 @@
     const Va = (x) => { let i = alt.sl.length - 1; while (i > 0 && x < br[i]) i--; return g.v0 + atA[i] + alt.sl[i] * (x - br[i]); };
     const Ea = (x) => { let i = alt.sl.length - 1; while (i > 0 && x < br[i]) i--; return -alt.sl[i]; };
     const pieces = g.sl.map((s, i) => L(`${br[i]}–${br[i + 1]} mm: V changes by ${sgn(s * (br[i + 1] - br[i]))} V, so E = ${sgn(-s)} kV/m`, `${br[i]}–${br[i + 1]} mm: Φ ändert sich um ${sgn(s * (br[i + 1] - br[i]))} V, also E = ${sgn(-s)} kV/m`));
+    const parts = br.slice(0, -1).map((a, i) => `${a}–${br[i + 1]} mm`).join(', ');
     const sol = `${L('E = −dV/dx: the slope of the potential, with the opposite sign (1 V/mm = 1 kV/m).', 'E = −dΦ/dx: die Steigung des Potentials, mit umgekehrtem Vorzeichen (1 V/mm = 1 kV/m).')}<ul>${pieces.map((p) => `<li>${p}.</li>`).join('')}</ul>`;
     const fits = (f, lo, hi) => { for (let x = 0; x <= 8; x += 0.05) { const y = f(Math.min(x, 7.999)); if (y < lo - 1e-9 || y > hi + 1e-9) return false; } return true; };
     let opts;
@@ -254,7 +282,14 @@
       text: back ? L(`<p>The graph shows the field E along the x axis. At x = 0 the potential is ${g.v0} V.</p>`, `<p>Der Graph zeigt das Feld E längs der x-Achse. Bei x = 0 ist das Potential ${g.v0} V.</p>`) : L('<p>The graph shows the potential V along the x axis (the field points along x).</p>', '<p>Der Graph zeigt das Potential Φ längs der x-Achse (das Feld zeigt längs x).</p>'),
       figs: fig(back ? eGraph(g.E, br) : vGraph(g.V, br)),
       questions: [{ type: 'pick', key: 'g', label: back ? L('Which graph shows the potential?', 'Welcher Graph zeigt das Potential?') : L('Which graph shows the field?', 'Welcher Graph zeigt das Feld?'), options: r.shuffle(opts).map((o) => ({ html: o.html, ok: !!o.ok, tag: o.tag, why: o.ok ? '' : WHYG[o.tag](), ...(!o.ok && o.tag === 'sign' ? { nudge: back ? NUDGE.e2v() : NUDGE.v2e() } : {}) })) }],
-      hints: [L('E = −dV/dx: the field is the slope of the potential graph, with the opposite sign.', 'E = −dΦ/dx: Das Feld ist die Steigung des Potentialgraphen, mit umgekehrtem Vorzeichen.'), back ? L('Going back: V changes by −E·Δx, minus the area under the E graph (1 kV/m · 1 mm = 1 V).', 'Zurück: Φ ändert sich um −E·Δx, minus die Fläche unter dem E-Graphen (1 kV/m · 1 mm = 1 V).') : L('Where V is constant, E = 0; where V falls, E is positive.', 'Wo Φ konstant ist, ist E = 0; wo Φ fällt, ist E positiv.')],
+      // the hints: the parts of this graph, then the relation part by part
+      hints: back ? [
+        L(`The E graph has ${br.length - 1} parts: ${parts}. Start from V = ${g.v0} V at x = 0 and go part by part.`, `Der E-Graph hat ${br.length - 1} Teile: ${parts}. Beginne bei Φ = ${g.v0} V bei x = 0 und gehe Teil für Teil.`),
+        L('In each part V changes by −E·Δx, minus the area under the E graph (1 kV/m · 1 mm = 1 V): where E is positive V falls, where it is negative V rises, where it is zero V stays level.', 'In jedem Teil ändert sich Φ um −E·Δx, minus die Fläche unter dem E-Graphen (1 kV/m · 1 mm = 1 V): Wo E positiv ist, fällt Φ, wo es negativ ist, steigt Φ, wo es null ist, bleibt Φ gleich.'),
+      ] : [
+        L(`The V graph has ${br.length - 1} straight pieces: ${parts}. Read off how much V changes in each, in V per mm (1 V/mm = 1 kV/m).`, `Der Φ-Graph hat ${br.length - 1} gerade Stücke: ${parts}. Lies ab, um wie viel sich Φ in jedem ändert, in V pro mm (1 V/mm = 1 kV/m).`),
+        L('E = −dV/dx, the slope with the opposite sign: where a piece is level, E = 0; where it falls, E is positive; where it rises, E is negative. The steeper the piece, the larger |E|.', 'E = −dΦ/dx, die Steigung mit umgekehrtem Vorzeichen: Wo ein Stück waagrecht ist, ist E = 0; wo es fällt, ist E positiv; wo es steigt, ist E negativ. Je steiler das Stück, desto grösser |E|.'),
+      ],
       solution: [sol], solFig: `<div class="figs">${fig(vGraph(g.V, br))}${fig(eGraph(g.E, br))}</div>`, p: { br: br.join(','), sl: g.sl.join(','), v0: g.v0 },
     };
   }
@@ -295,7 +330,11 @@
         choice('U', L('(b) Q alone: the potential difference V_BA', '(b) Q allein: die Spannung U_BA'), values(dBA, [{ value: -dBA, tag: 'sign', why: L(`Mind the order of the indices, ${vab('B', 'A')}, and the sign of Q.`, `Achte auf die Reihenfolge der Indizes, ${vab('B', 'A')}, und auf das Vorzeichen von Q.`) }, { value: sQ * (1 / (k * k) - 1), tag: 'field', why: field, nudge: NUDGE.field() }], null, howD, { signed: true, fmt: inV0, extra: [2, 0.5] })),
         choice('P', L('(c) both charges: the potential at P', '(c) beide Ladungen: das Potential in P'), values(VP, [{ value: sQ + Math.abs(m) / s2 * sQ, tag: 'abs', why: L('Mind the signs of the charges.', 'Achte auf die Vorzeichen der Ladungen.') }, { value: sQ + m / (s2 * s2), tag: 'field', why: field, nudge: NUDGE.field() }, { value: sQ, tag: 'one', why: L('Both charges contribute.', 'Beide Ladungen tragen bei.') }], null, howP, { signed: true, fmt: inV0, extra: [2, 0.5] })),
       ],
-      hints: [L(`V = k·Q/r, with the sign of Q: it falls with 1/r. The potential difference between two points: ${vab('B', 'A')}.`, `Φ = k·Q/r, mit dem Vorzeichen von Q: Es nimmt mit 1/r ab. Die Spannung zwischen zwei Punkten: ${vab('B', 'A')}.`), L('Potentials of several charges add as numbers (no directions).', 'Die Potentiale mehrerer Ladungen addieren sich als Zahlen (ohne Richtungen).')],
+      // the hints: Q alone at r and kr, then the two contributions at P
+      hints: [
+        L(`(a), (b) Q = ${qs(sQ)} alone: A is at r, B at ${k}r. V = k·Q/r, with the sign of Q: how does V change at ${k} times the distance? Then ${vab('B', 'A')}, in units of V₀.`, `(a), (b) Q = ${qs(sQ)} allein: A ist bei r, B bei ${k}r. Φ = k·Q/r, mit dem Vorzeichen von Q: Wie ändert sich Φ beim ${k}-fachen Abstand? Dann ${vab('B', 'A')}, in Einheiten von Φ₀.`),
+        L(`(c) Potentials add as numbers, with their signs: the contribution of Q = ${qs(sQ)} at r, and that of q₂ = ${qs(m)} at ${s2 === 1 ? 'r' : `${s2}r`}, each in units of V₀ = k·q/r.`, `(c) Potentiale addieren sich als Zahlen, mit ihren Vorzeichen: der Beitrag von Q = ${qs(sQ)} im Abstand r und der von q₂ = ${qs(m)} im Abstand ${s2 === 1 ? 'r' : `${s2}r`}, je in Einheiten von Φ₀ = k·q/r.`),
+      ],
       solution: [howK, howD, howP], p: { sQ, k, m, s2 },
     };
   }
@@ -343,7 +382,13 @@
         tiles('E', L('(a) The field at M points', '(a) Das Feld in M zeigt'), r.shuffle(opts).map((o) => ({ html: tile(o.d, L('nowhere: it is zero', 'nirgends hin: Es ist null')), ok: !!o.ok, why: o.ok ? '' : howE }))),
         choice('V', L('(b) The potential at M is', '(b) Das Potential in M ist'), words(r, [[L('positive', 'positiv'), vs > 0, howV], [L('zero', 'null'), vs === 0, howV], [L('negative', 'negativ'), vs < 0, howV]])),
       ],
-      hints: [L('Fields are vectors: they add with their directions and can cancel.', 'Felder sind Vektoren: Sie addieren sich mit ihren Richtungen und können sich aufheben.'), L('Potentials are numbers with a sign: V = k·q/r for each charge, then add.', 'Potentiale sind Zahlen mit Vorzeichen: Φ = k·q/r für jede Ladung, dann addieren.')],
+      // the hints: the fields of these charges at M, then their potentials
+      hints: [
+        L(`(a) Draw the field of each of the ${ch.length} charges at M: away from a positive charge, towards a negative one, stronger for a larger or nearer charge. They add as vectors: which of them cancel?`, `(a) Zeichne das Feld jeder der ${ch.length} Ladungen in M: von einer positiven Ladung weg, zu einer negativen hin, stärker bei einer grösseren oder näheren Ladung. Sie addieren sich als Vektoren: Welche heben sich auf?`),
+        `${L('(b) The potentials are numbers with a sign, V = k·q/r for each charge, and they simply add.', '(b) Die Potentiale sind Zahlen mit Vorzeichen, Φ = k·q/r für jede Ladung, und sie addieren sich einfach.')} ${ch.every((x) => Math.abs(Math.hypot(x.x, x.y) - Math.hypot(ch[0].x, ch[0].y)) < 1e-9)
+          ? L(`All ${ch.length} charges are equally far from M: what is their total charge, with the signs?`, `Alle ${ch.length} Ladungen sind gleich weit von M entfernt: Wie gross ist ihre Gesamtladung, mit den Vorzeichen?`)
+          : L('The negative charges are half as far from M as the positive ones: which contributions are larger in size?', 'Die negativen Ladungen sind halb so weit von M entfernt wie die positiven: Welche Beiträge sind dem Betrag nach grösser?')}`,
+      ],
       solution: [howE, howV], p: { S: S.id, flip },
     };
   }
@@ -373,6 +418,20 @@
     [() => L('The potential of a point charge falls with 1/r², like its field.', 'Das Potential einer Punktladung fällt mit 1/r², wie ihr Feld.'), false, () => L('V ∝ 1/r, E ∝ 1/r².', 'Φ ∝ 1/r, E ∝ 1/r².')],
     [() => L('A negative charge gains kinetic energy when it moves towards higher potential.', 'Eine negative Ladung gewinnt kinetische Energie, wenn sie sich zu höherem Potential bewegt.'), true, () => L('W = q·(V_A − V_B) > 0 for q < 0 and V_B > V_A.', 'W = q·(Φ_A − Φ_B) > 0 für q < 0 und Φ_B > Φ_A.')],
   ];
+  // the hints of stmts: which topics these five statements are about, and the rules of those topics
+  const TOPICS = [
+    [[0, 1, 7, 8, 9, 10, 16, 18, 20], () => L('the potential of charges', 'dem Potential von Ladungen'), () => L('The potential is a number with a sign: V = k·Q/r for a point charge, falling with 1/r; the potentials of several charges simply add. Only differences of potential matter.', 'Das Potential ist eine Zahl mit Vorzeichen: Φ = k·Q/r für eine Punktladung, abnehmend mit 1/r; die Potentiale mehrerer Ladungen addieren sich einfach. Nur Potentialdifferenzen zählen.')],
+    [[2, 4, 11, 12, 13, 19], () => L('field and potential', 'Feld und Potential'), () => L('The field points from high to low potential, E = −dV/dx; in a uniform field |ΔV| = E·d, with d along the field lines.', 'Das Feld zeigt von hohem zu tiefem Potential, E = −dΦ/dx; im homogenen Feld ist |U| = E·d, mit d längs der Feldlinien.')],
+    [[3, 5, 6, 14, 15, 17, 21], () => L('energy and work', 'Energie und Arbeit'), () => `${RULE()} ${DOWNHILL()}`],
+  ];
+  function stmtHints(pick) {
+    const ids = pick.map((x) => BANK.indexOf(x)), on = TOPICS.filter(([is]) => ids.some((i) => is.includes(i)));
+    const names = on.map((t) => t[1]()), list = names.length > 1 ? `${names.slice(0, -1).join(', ')} ${L('and', 'und')} ${names[names.length - 1]}` : names[0];
+    return [
+      L(`These five statements are about ${list}. Take them one at a time, and picture a concrete case for each.`, `Diese fünf Aussagen handeln von ${list}. Nimm sie einzeln, und stell dir zu jeder einen konkreten Fall vor.`),
+      on.map((t) => t[2]()).join(' '),
+    ];
+  }
   function statements(seed) {
     const r = rng(seed * 101 + 67);
     for (;;) {
@@ -381,7 +440,7 @@
       return {
         kind: 'stmts', title: L('Which statements are correct?', 'Welche Aussagen sind richtig?'), text: L('<p>Tick all the statements that are correct.</p>', '<p>Kreuze alle richtigen Aussagen an.</p>'), figs: '',
         questions: [{ type: 'multi', key: 's', label: L('Which statements are correct?', 'Welche Aussagen sind richtig?'), statements: pick.map(([h, ok, why]) => ({ html: h(), ok, why: why() })) }],
-        hints: [RULE(), DOWNHILL()], solution: pick.map(([h, ok, why]) => `${ok ? '✓' : '✗'} ${h()} ${why()}`), p: { s: pick.map((x) => BANK.indexOf(x)) },
+        hints: stmtHints(pick), solution: pick.map(([h, ok, why]) => `${ok ? '✓' : '✗'} ${h()} ${why()}`), p: { s: pick.map((x) => BANK.indexOf(x)) },
       };
     }
   }
@@ -677,9 +736,14 @@
       kind: 'sketch', title: L('Sketch the potential: metal plates', 'Das Potential skizzieren: Metallplatten'),
       text: `<p>${intro} ${L('The plates are large; x is measured across them (in mm). Sketch the potential V(x) from x = 0 to 8 mm, through the metal and the gaps.', 'Die Platten sind gross; x wird quer zu ihnen gemessen (in mm). Skizziere das Potential Φ(x) von x = 0 bis 8 mm, durch das Metall und die Lücken.')}</p>`,
       figs: fig(platesFig(spec)), questions: [], sketch: spec,
-      hints: [NO_FIELD(), L('Between two large plates the field is uniform: the potential changes evenly, along a straight line.', 'Zwischen zwei grossen Platten ist das Feld homogen: Das Potential ändert sich gleichmässig, entlang einer Geraden.'),
-        how === 'iso' ? L('The uncharged plate B has as much positive charge on one face as negative charge on the other: the field is the same on both sides of it.', 'Die ungeladene Platte B trägt auf einer Seite so viel positive Ladung wie negative auf der anderen: Das Feld ist auf beiden Seiten gleich.')
-          : L('Put each plate\'s piece level at its potential, then join them.', 'Lege das Stück jeder Platte waagrecht auf ihr Potential und verbinde sie dann.')],
+      // the hints: where the metal of this exercise is and its potentials, the gaps, then plate B or
+      // the joining
+      hints: [
+        `${NO_FIELD()} ${L('Here', 'Hier')}: ${spec.metal.map((m) => L(`plate ${m.name} from ${ts[m.k]} to ${mm(ts[m.k + 1])}, ${m.iso ? 'uncharged' : `at ${signed(m.V)}`}`, `Platte ${m.name} von ${ts[m.k]} bis ${mm(ts[m.k + 1])}, ${m.iso ? 'ungeladen' : `auf ${signed(m.V)}`}`)).join('; ')}.`,
+        L(`In the gap${gaps.length > 1 ? 's' : ''} (${gaps.map((k) => `${ts[k]}–${mm(ts[k + 1])}`).join(', ')}) the field between the large plates is uniform: the potential changes evenly, along a straight line from one plate's value to the next.`, `In ${gaps.length > 1 ? 'den Lücken' : 'der Lücke'} (${gaps.map((k) => `${ts[k]}–${mm(ts[k + 1])}`).join(', ')}) ist das Feld zwischen den grossen Platten homogen: Das Potential ändert sich gleichmässig, entlang einer Geraden vom Wert der einen Platte zu dem der nächsten.`),
+        how === 'iso' ? L(`The uncharged plate B has as much positive charge on one face as negative charge on the other: the field is the same in both gaps (${mm(ts[2] - ts[1])} and ${mm(ts[4] - ts[3])} wide), so the potential changes by the same amount per mm in both, from ${signed(A.V)} to ${signed(Cc.V)} in all.`, `Die ungeladene Platte B trägt auf einer Seite so viel positive Ladung wie negative auf der anderen: Das Feld ist in beiden Lücken (${mm(ts[2] - ts[1])} und ${mm(ts[4] - ts[3])} breit) gleich, also ändert sich das Potential in beiden um gleich viel pro mm, insgesamt von ${signed(A.V)} bis ${signed(Cc.V)}.`)
+          : L('Put each plate\'s piece level at its potential, then join them across the gaps; where two neighbouring plates differ more per mm, the line is steeper.', 'Lege das Stück jeder Platte waagrecht auf ihr Potential und verbinde sie dann über die Lücken; wo sich zwei benachbarte Platten pro mm stärker unterscheiden, ist die Linie steiler.'),
+      ],
       solution: sol, p: { how, ts: ts.join(','), V: spec.metal.map((m) => m.V).join(',') },
     };
   }
@@ -691,7 +755,7 @@
       kind: 'sketch', title: L('Sketch V from E', 'Φ aus E skizzieren'),
       text: L(`<p>The graph shows the field E along the x axis. At x = 0 the potential is ${signed(g.v0)}. Sketch the potential V(x) from x = 0 to 8 mm.</p>`, `<p>Der Graph zeigt das Feld E längs der x-Achse. Bei x = 0 ist das Potential ${signed(g.v0)}. Skizziere das Potential Φ(x) von x = 0 bis 8 mm.</p>`),
       figs: fig(eGraph(g.E, br)), questions: [], sketch: spec,
-      hints: [L('E = −dV/dx: where E is positive, V falls; where E is negative, V rises; where E = 0, V stays level.', 'E = −dΦ/dx: Wo E positiv ist, fällt Φ; wo E negativ ist, steigt Φ; wo E = 0 ist, bleibt Φ gleich.'),
+      hints: [L(`The E graph has ${br.length - 1} parts (${br.slice(0, -1).map((a, i) => `${a}–${br[i + 1]} mm`).join(', ')}), and V starts at ${signed(g.v0)}. E = −dV/dx: where E is positive, V falls; where E is negative, V rises; where E = 0, V stays level.`, `Der E-Graph hat ${br.length - 1} Teile (${br.slice(0, -1).map((a, i) => `${a}–${br[i + 1]} mm`).join(', ')}), und Φ beginnt bei ${signed(g.v0)}. E = −dΦ/dx: Wo E positiv ist, fällt Φ; wo E negativ ist, steigt Φ; wo E = 0 ist, bleibt Φ gleich.`),
         L('The stronger the field, the steeper the potential: V changes by −E·Δx (1 kV/m · 1 mm = 1 V).', 'Je stärker das Feld, desto steiler das Potential: Φ ändert sich um −E·Δx (1 kV/m · 1 mm = 1 V).'),
         `${L('The first part', 'Der erste Teil')}: ${lines[0]}`],
       solution: [L(`E = −dV/dx: the potential falls where E is positive, by E·Δx (1 kV/m · 1 mm = 1 V), starting from V(0) = ${signed(g.v0)}.`, `E = −dΦ/dx: Das Potential fällt, wo E positiv ist, um E·Δx (1 kV/m · 1 mm = 1 V), ausgehend von Φ(0) = ${signed(g.v0)}.`) + `<ul>${lines.map((x) => `<li>${x}</li>`).join('')}</ul>`, SAME()],

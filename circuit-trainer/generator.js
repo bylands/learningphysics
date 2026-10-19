@@ -458,9 +458,10 @@
     const first = real.slice(0, 3).map((st) => `${formula(st)} &nbsp;(${SHORT()[st.rel.rule]})`);
     hints.push(`${L('First steps', 'Erste Schritte')}:${list(first)}`);
 
-    // Values of the intermediate quantities that the final steps rely on.
-    const inputs = new Set(targets.flatMap((t) => origin(t).from));
-    const key = real.filter((st) => !targets.includes(st.key) && !givens.has(st.key));
+    // Values of the intermediate quantities that the final steps rely on; not one that a target
+    // equals (the same current or voltage), which would give its answer away.
+    const inputs = new Set(targets.flatMap((t) => origin(t).from)), same = new Set(targets.map((t) => origin(t).key));
+    const key = real.filter((st) => !targets.includes(st.key) && !givens.has(st.key) && !same.has(st.key));
     const chosen = [...key.filter((st) => inputs.has(st.key)), ...key.filter((st) => !inputs.has(st.key))].slice(0, 3)
       .sort((a, b) => steps.indexOf(a) - steps.indexOf(b));
     if (chosen.length) hints.push(`${L('Check your intermediate results', 'Prüfe deine Zwischenresultate')}: ${listing(chosen.map((st) => `$${nm.sym(st.key)} = ${nm.qtex(st.key)}$`))}.`);
@@ -1155,7 +1156,7 @@
       const RgS = sym('R' + g.id), VgS = sym('V' + g.id), Ip = M`I'`;
       fields = [field(A), field(V)];
       text = L('The ammeter and the voltmeter are ideal. Look closely at how they are connected: what do they show?', 'Das Amperemeter und das Voltmeter sind ideal. Schau genau, wie sie angeschlossen sind: Was zeigen sie an?');
-      hints = [L('Is each meter connected the right way? An ammeter belongs in series, a voltmeter in parallel.', 'Ist jedes Messgerät richtig angeschlossen? Ein Amperemeter gehört in Serie, ein Voltmeter parallel.'),
+      hints = [L(`Look at the ammeter in the main line and the voltmeter next to ${Rb}: is each connected the right way? An ammeter belongs in series, a voltmeter in parallel.`, `Schau dir das Amperemeter in der Hauptleitung und das Voltmeter bei ${Rb} an: Ist jedes richtig angeschlossen? Ein Amperemeter gehört in Serie, ein Voltmeter parallel.`),
         L(M`The voltmeter is in series with ${Rb}, in its branch. With $R_\text{V} \to \infty$, it blocks the current there: the branch drops out. What is the total resistance without it?`,
           M`Das Voltmeter ist in Serie zu ${Rb}, in dessen Zweig. Mit $R_\text{V} \to \infty$ sperrt es dort den Strom: Der Zweig fällt weg. Wie gross ist der Gesamtwiderstand ohne ihn?`),
         L(`Without a current there is no voltage across ${Rb}: the voltmeter has the whole voltage of its branch, the voltage across ${nm.who(g)}.`, `Ohne Strom gibt es keine Spannung an ${Rb}: Am Voltmeter liegt die ganze Spannung seines Zweigs, die Spannung an ${nm.who(g)}.`)];
@@ -1176,7 +1177,7 @@
       fields = [field(A), field(V)];
       text = L('The ammeter and the voltmeter are ideal. Look closely at how they are connected: what do they show?', 'Das Amperemeter und das Voltmeter sind ideal. Schau genau, wie sie angeschlossen sind: Was zeigen sie an?');
       hints = [L(M`Is the voltmeter connected in series or in parallel? What does its resistance $R_\text{V} \to \infty$ do there?`, M`Ist das Voltmeter in Serie oder parallel angeschlossen? Was bewirkt dort sein Widerstand $R_\text{V} \to \infty$?`),
-        L('In series in the main line, the voltmeter blocks the current. What does that mean for the ammeter, and for the voltages across the resistors?', 'In Serie in der Hauptleitung sperrt das Voltmeter den Strom. Was heisst das für das Amperemeter und für die Spannungen an den Widerständen?'),
+        L(`In series in the main line, the voltmeter blocks the current. What does that mean for the ammeter at ${Rk}, and for the voltages across the resistors?`, `In Serie in der Hauptleitung sperrt das Voltmeter den Strom. Was heisst das für das Amperemeter bei ${Rk} und für die Spannungen an den Widerständen?`),
         L('The voltages around the circuit still add up to the battery voltage (voltage rule).', 'Die Spannungen im Kreis ergeben zusammen immer noch die Batteriespannung (Maschenregel).')];
       solution = [L(M`The voltmeter is in the main line, in series with the battery and everything else. An ideal voltmeter has an (almost) infinite resistance, $R_\text{V} \to \infty$: it blocks the current, $I \approx 0$. So the ammeter at ${Rk} shows $${resTex(0, 'mA')}$.`,
         M`Das Voltmeter ist in der Hauptleitung, in Serie mit der Batterie und allem anderen. Ein ideales Voltmeter hat einen (fast) unendlich grossen Widerstand, $R_\text{V} \to \infty$: Es sperrt den Strom, $I \approx 0$. Das Amperemeter bei ${Rk} zeigt also $${resTex(0, 'mA')}$.`),
