@@ -470,18 +470,64 @@
     return out;
   }
 
+  // The hints: the circuit before t = 0 with the inductors as wires (what carries current, and
+  // how the inductor currents follow), the jump with the circuit as it is after switching, and
+  // the order of the work. No value of a current or emf asked for: every branch current right
+  // after switching is asked, and an inductor current keeps its value from before.
   function hints(c, nm, st) {
-    const U = uSym(c, nm), Uis = uIs(c, nm);
+    const U = uSym(c, nm), V = VB();
     const Ls = c.branches.map((b, j) => j).filter((j) => c.branches[j].L), n = Ls.length;
-    const IL = listing(Ls.map((j) => `$${nm.IL(j)}$`)), vals = listing(Ls.map((j) => `$${nm.IL(j)} = ${q(st.IL[j], 'A')}$`));
+    const IL = listing(Ls.map((j) => `$${nm.IL(j)}$`)), Lnames = listing(Ls.map((j) => `$${nm.L(j)}$`));
+    const R1 = c.r1 ? nm.R(nm.r1) : null;
+    // before t = 0
+    const b = config(c, st.first), s0 = st.s0;
+    const on = c.branches.map((x, j) => j).filter((j) => b.active[j]);
+    const wire0 = b.main ? on.find((j) => c.branches[j].L && !c.branches[j].R) : undefined;
+    const Rs0 = on.filter((j) => c.branches[j].R).map((j) => nm.R(nm.br[j].R));
+    const own = L(`and ${pl(n, 'the inductor current is', 'each inductor current is')} the current through the resistor in the same branch, $\\frac{U}{R}$ of that branch`,
+      `und ${pl(n, 'der Spulenstrom ist', 'jeder Spulenstrom ist')} der Strom durch den Widerstand im selben Zweig, $\\frac{U}{R}$ dieses Zweigs`);
+    let before;
+    if (!b.main) {
+      before = L(`Before $t = 0$ the main line is open: nothing drives a current. What ${pl(n, 'is', 'are')} ${IL} then?`, `Vor $t = 0$ ist die Hauptleitung offen: Nichts treibt einen Strom an. Wie gross ${pl(n, 'ist', 'sind')} dann ${IL}?`);
+    } else if (wire0 !== undefined) {
+      before = L(`Before $t = 0$, $${nm.L(wire0)}$ alone connects the two rails like a wire: no voltage is left for the other branches. So the whole current flows through $${R1}$ and $${nm.L(wire0)}$, limited by $${R1}$ alone: $${nm.IL(wire0)} = \\frac{${V}}{${R1}}$.`,
+        `Vor $t = 0$ verbindet $${nm.L(wire0)}$ allein die beiden Schienen wie ein Draht: Für die anderen Zweige bleibt keine Spannung. Also fliesst der ganze Strom durch $${R1}$ und $${nm.L(wire0)}$, begrenzt nur durch $${R1}$: $${nm.IL(wire0)} = \\frac{${V}}{${R1}}$.`);
+    } else if (isZero(b.r)) {
+      before = L(`Before $t = 0$ the battery is connected directly across the branches${b.bridged ? ` (S bridges $${R1}$)` : ''}: $U = ${V}$, ${own}.`,
+        `Vor $t = 0$ liegt die Batterie direkt an den Zweigen${b.bridged ? ` (S überbrückt $${R1}$)` : ''}: $U = ${V}$, ${own}.`);
+    } else {
+      const Rp0 = s0.G ? fdiv(ONE, s0.G) : ZERO;
+      const par = Rs0.length > 1 ? L(`the branches ${listing(Rs0.map((x) => `$${x}$`))} in parallel`, `die parallelen Zweige ${listing(Rs0.map((x) => `$${x}$`))}`) : `$${Rs0[0]}$`;
+      before = L(`Before $t = 0$, with ${pl(n, 'the inductor as a wire', 'the inductors as wires')}, ${par} ${Rs0.length > 1 ? 'are' : 'is'} in series with $${R1}$. Here $R_\\text{p} = ${q(Rp0, 'O')}$: first $${nm.main()} = \\frac{${V}}{${R1} + R_\\text{p}}$, then the voltage across the branches $U = R_\\text{p}\\,${nm.main()}$, ${own}.`,
+        `Vor $t = 0$, mit ${pl(n, 'der Spule als Draht', 'den Spulen als Drähten')}, ${Rs0.length > 1 ? 'sind' : 'ist'} ${par} in Serie mit $${R1}$. Hier ist $R_\\text{p} = ${q(Rp0, 'O')}$: zuerst $${nm.main()} = \\frac{${V}}{${R1} + R_\\text{p}}$, dann die Spannung über den Zweigen $U = R_\\text{p}\\,${nm.main()}$, ${own}.`);
+    }
+    // right after t = 0
+    const s = st.s1, res = s.res, Rs = res.map((j) => nm.R(nm.br[j].R));
+    const sumSym = Ls.map((j) => nm.IL(j)).join(' + ');
+    let rules;
+    if (!s.main) {
+      rules = L(`The main line is open now: no current flows through the battery${R1 ? ` or $${R1}$` : ''}. The inductor current has to flow back through ${listing(Rs.map((x) => `$${x}$`))}: junction rule at the top rail, $0 = ${sumSym} + ${Rs.map((x) => M`\frac{${U}}{${x}}`).join(' + ')}$.`,
+        `Die Hauptleitung ist jetzt offen: Durch die Batterie${R1 ? ` und $${R1}$` : ''} fliesst kein Strom. Der Spulenstrom muss durch ${listing(Rs.map((x) => `$${x}$`))} zurückfliessen: Knotenregel an der oberen Schiene, $0 = ${sumSym} + ${Rs.map((x) => M`\frac{${U}}{${x}}`).join(' + ')}$.`);
+    } else if (isZero(s.r)) {
+      rules = L(`Now the battery is connected directly across the branches${s.bridged ? ` (the closed S bridges $${R1}$)` : ''}: $${U} = ${V}$.`, `Jetzt liegt die Batterie direkt an den Zweigen${s.bridged ? ` (der geschlossene S überbrückt $${R1}$)` : ''}: $${U} = ${V}$.`);
+    } else if (!res.length) {
+      rules = L(`No other branch can take current: the inductor current flows through $${R1}$, $${nm.IR1()} = ${sumSym}$, and the loop rule gives the rest of the battery voltage across the branches, $${V} = ${R1}\\,${nm.IR1()} + ${U}$.`,
+        `Kein anderer Zweig kann Strom aufnehmen: Der Spulenstrom fliesst durch $${R1}$, $${nm.IR1()} = ${sumSym}$, und die Maschenregel gibt den Rest der Batteriespannung über den Zweigen, $${V} = ${R1}\\,${nm.IR1()} + ${U}$.`);
+    } else {
+      rules = L(`Loop rule through the battery, $${V} = ${R1}\\,${nm.IR1()} + ${U}$, and junction rule at the top rail, $${nm.IR1()} = ${sumSym} + ${Rs.map((x) => M`\frac{${U}}{${x}}`).join(' + ')}$.`,
+        `Maschenregel durch die Batterie, $${V} = ${R1}\\,${nm.IR1()} + ${U}$, und Knotenregel an der oberen Schiene, $${nm.IR1()} = ${sumSym} + ${Rs.map((x) => M`\frac{${U}}{${x}}`).join(' + ')}$.`);
+    }
+    const emfSer = L('$V_L = U - R\\,I_L$ for an inductor with a resistor in its branch', '$U_L = U - R\\,I_L$ für eine Spule mit einem Widerstand in ihrem Zweig');
+    const emfWire = L('across an inductor that is a branch on its own, the voltage across the branches', 'über einer Spule, die allein einen Zweig bildet, die Spannung über den Zweigen');
+    const emf = [Ls.some((j) => c.branches[j].R) && emfSer, Ls.some((j) => !c.branches[j].R) && emfWire].filter(Boolean).join('; ');
     return [
-      L(`Before $t = 0$, the switch has been ${state(st.first)} for a long time: the currents are constant, so there is no self-induced emf and an inductor acts like a wire. Find ${IL} before $t = 0$.`,
-        `Vor $t = 0$ ist der Schalter seit langer Zeit ${state(st.first)}: Die Ströme sind konstant, also wird keine Spannung induziert, und eine Spule wirkt wie ein Draht. Bestimme ${IL} vor $t = 0$.`),
-      L(`Before $t = 0$: ${vals}. An inductor current cannot jump, so it still has this value right after the switch is ${verb(st.then)}.`,
-        `Vor $t = 0$: ${vals}. Der Strom durch eine Spule kann nicht springen, also hat er unmittelbar nachdem der Schalter ${verb(st.then)} wurde noch denselben Wert.`),
-      L(`Right after switching, ${pl(n, 'the inductor acts like a current source', 'the inductors act like current sources')}. Use the junction rule and the loop rule, with ${Uis}.`,
-        `Unmittelbar nach dem Schalten ${pl(n, 'wirkt die Spule wie eine Stromquelle', 'wirken die Spulen wie Stromquellen')}. Verwende die Knotenregel und die Maschenregel, mit ${Uis}.`),
-      L(`Right after switching, the voltage across the branches is $${U} = ${q(st.s1.U, 'V')}$.`, `Unmittelbar nach dem Schalten ist die Spannung über den Zweigen $${U} = ${q(st.s1.U, 'V')}$.`),
+      L(`Before $t = 0$, S ${where(c, nm)} has been ${state(st.first)} for a long time: the currents are constant, so ${Lnames} ${pl(n, 'acts like a wire', 'act like wires')}. Draw the circuit like that: which resistors carry current, and which way does ${pl(n, 'the current through', 'the current through each of')} ${Lnames} flow?`,
+        `Vor $t = 0$ ist S ${where(c, nm)} seit langer Zeit ${state(st.first)}: Die Ströme sind konstant, also ${pl(n, 'wirkt', 'wirken')} ${Lnames} wie ${pl(n, 'ein Draht', 'Drähte')}. Zeichne die Schaltung so: Welche Widerstände führen Strom, und in welche Richtung fliesst der Strom durch ${Lnames}?`),
+      before,
+      L(`At $t = 0$ S is ${verb(st.then)}, but ${IL} cannot jump: right after switching, ${pl(n, 'the inductor', 'each inductor')} still carries its current from before, like a current source. ${rules}`,
+        `Bei $t = 0$ wird S ${verb(st.then)}, aber ${IL} ${pl(n, 'kann', 'können')} nicht springen: Unmittelbar nach dem Schalten führt ${pl(n, 'die Spule', 'jede Spule')} noch ihren Strom von vorher, wie eine Stromquelle. ${rules}`),
+      L(`Get $${U}$ from this first; then every resistor current is $\\frac{${U}}{R}$ of its branch${n ? `, and for the emf: ${emf}; $|${EMF()}| = |V_L|$` : ''}.`,
+        `Bestimme daraus zuerst $${U}$; dann ist jeder Widerstandsstrom $\\frac{${U}}{R}$ seines Zweigs${n ? `, und für die induzierte Spannung: ${emf}; $|${EMF()}| = |U_L|$` : ''}.`),
     ];
   }
 

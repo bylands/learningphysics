@@ -241,6 +241,11 @@
     return `${arrow(seg)} ${kind}: ${parts.join(', ')}.`;
   }
   const ruleT = () => L('T ∝ pV: the temperature is proportional to the product of pressure and volume.', 'T ∝ pV: Die Temperatur ist proportional zum Produkt aus Druck und Volumen.');
+  // for the hints: the described steps by kind ("A → B isobaric, B → C isothermal"), and where a
+  // state lies in a diagram ("p = 3 p₀, V = 2 V₀")
+  const kindsOf = (c) => c.segs.filter((s) => !s.closing).map((s) => `${arrow(s)} ${ADJ[s.type]()}`).join(', ');
+  const at = (d, s) => { const [x, y] = AXES[d]; return `${y} = ${frac(VARS[y](s))} ${y}₀, ${x} = ${frac(VARS[x](s))} ${x}₀`; };
+  const shapes = (d) => L(`In the ${dname(d)} diagram: isobaric is ${shape('isobaric', d)}, isochoric ${shape('isochoric', d)}, isothermal ${shape('isothermal', d)}.`, `Im ${dname(d)}-Diagramm: isobar ist ${shape('isobaric', d)}, isochor ${shape('isochoric', d)}, isotherm ${shape('isothermal', d)}.`);
 
   // ---------------------------------------------------------------- mistakes: other cycles
   // Variants of a cycle as a student might get it wrong: one step of another kind, one factor
@@ -317,11 +322,11 @@
         `Eine feste Menge eines idealen Gases durchläuft einen Kreisprozess: <ul>${describeCycle(c).map((x) => `<li>${x}</li>`).join('')}<li>von D direkt zurück nach A</li></ul> Die Diagramme sind von verschiedener Art. Welches zeigt den Prozess?`),
       questions: [{ type: 'pick', key: 'fig', options }],
       hints: [
-        L('First read the axes: which diagram is a p(V), a p(T) or a V(T) diagram?', 'Lies zuerst die Achsen: Welches Diagramm ist ein p(V)-, ein p(T)- oder ein V(T)-Diagramm?'),
+        L(`Here the steps are ${kindsOf(c)}, then D straight back to A. First read the axes of the four diagrams: which is a p(V), a p(T) or a V(T) diagram?`, `Hier sind die Schritte ${kindsOf(c)}, dann D direkt zurück nach A. Lies zuerst die Achsen der vier Diagramme: Welches ist ein p(V)-, ein p(T)- oder ein V(T)-Diagramm?`),
         L(`Isobaric is ${shape('isobaric', 'pV')} in p(V), ${shape('isobaric', 'pT')} in p(T) and ${shape('isobaric', 'VT')} in V(T); isochoric is ${shape('isochoric', 'pV')}, ${shape('isochoric', 'pT')} and ${shape('isochoric', 'VT')}; isothermal ${shape('isothermal', 'pV')}, ${shape('isothermal', 'pT')} and ${shape('isothermal', 'VT')}.`,
           `Isobar ist im p(V)-Diagramm ${shape('isobaric', 'pV')}, im p(T)-Diagramm ${shape('isobaric', 'pT')} und im V(T)-Diagramm ${shape('isobaric', 'VT')}; isochor ${shape('isochoric', 'pV')}, ${shape('isochoric', 'pT')} und ${shape('isochoric', 'VT')}; isotherm ${shape('isothermal', 'pV')}, ${shape('isothermal', 'pT')} und ${shape('isothermal', 'VT')}.`),
-        L('Go step by step from A in each diagram: does the step have the right shape, does it go the right way, and by the right factor?', 'Geh in jedem Diagramm Schritt für Schritt von A aus: Hat der Schritt die richtige Form, geht er in die richtige Richtung und um den richtigen Faktor?'),
-        ruleT(),
+        L(`Start with A → B, ${describe(c.segs[0])}: in each diagram, does the first step have that shape, go the right way, and change by that factor?`, `Beginne mit A → B, ${describe(c.segs[0])}: Hat der erste Schritt in jedem Diagramm diese Form, geht er in die richtige Richtung und um diesen Faktor?`),
+        L(`${ruleT()} In the diagrams with a T axis, work out from p and V how T changes in A → B, then in the next steps.`, `${ruleT()} In den Diagrammen mit einer T-Achse bestimme aus p und V, wie sich T bei A → B ändert, dann bei den nächsten Schritten.`),
       ],
       solution: c.segs.map((s) => summary(c, s)),
       p: { kind: 'match', d: 'mix', s: c.states },
@@ -350,9 +355,9 @@
         `Eine feste Menge eines idealen Gases durchläuft einen Kreisprozess: <ul>${describeCycle(c).map((x) => `<li>${x}</li>`).join('')}<li>von D direkt zurück nach A</li></ul> Welches ${dname(d)}-Diagramm zeigt ihn?`),
       questions: [{ type: 'pick', key: 'fig', options }],
       hints: [
-        L(`In the ${dname(d)} diagram: isobaric is ${shape('isobaric', d)}, isochoric ${shape('isochoric', d)}, isothermal ${shape('isothermal', d)}.`, `Im ${dname(d)}-Diagramm: isobar ist ${shape('isobaric', d)}, isochor ${shape('isochoric', d)}, isotherm ${shape('isothermal', d)}.`),
-        L('Go step by step from A: does the step have the right shape, does it go the right way, and by the right factor?', 'Geh Schritt für Schritt von A aus: Hat der Schritt die richtige Form, geht er in die richtige Richtung und um den richtigen Faktor?'),
-        ruleT(),
+        L(`Here the steps are ${kindsOf(c)}, then D straight back to A. Which quantity stays the same in each, and which changes by which factor?`, `Hier sind die Schritte ${kindsOf(c)}, dann D direkt zurück nach A. Welche Grösse bleibt bei jedem gleich, und welche ändert sich um welchen Faktor?`),
+        `${shapes(d)}${d === 'pV' ? '' : ` ${ruleT()}`}`,
+        L(`Start with A → B, ${describe(c.segs[0])}: which diagrams have a first step of that shape, in that direction and by that factor? Then check B → C in those.`, `Beginne mit A → B, ${describe(c.segs[0])}: Welche Diagramme haben einen ersten Schritt mit dieser Form, in diese Richtung und um diesen Faktor? Prüfe dann bei diesen B → C.`),
       ],
       solution: c.segs.map((s) => summary(c, s)),
       p: { kind: 'match', d, s: c.states },
@@ -392,8 +397,10 @@
         `Eine feste Menge eines idealen Gases durchläuft die Schritte <ul>${describeCycle(c).map((x) => `<li>${x}</li>`).join('')}</ul> und dann direkt von D zurück nach A. Das Diagramm zeigt die ersten drei Schritte. Wie lässt sich der Schritt D → A am besten beschreiben?`),
       questions: [{ type: 'choice', key: 'back', label: 'D → A', options: r.shuffle(opts).map((x) => ({ ...x, label: x.html })) }],
       hints: [
-        L('Compare D and A: which of p, V and T are the same, which grow, which shrink?', 'Vergleiche D und A: Welche von p, V und T sind gleich, welche wachsen, welche nehmen ab?'),
-        L('If p is the same, the step is isobaric; if V is the same, isochoric; if T = pV is the same, isothermal; else it is none of them.', 'Ist p gleich, ist der Schritt isobar; ist V gleich, isochor; ist T = pV gleich, isotherm; sonst keiner davon.'),
+        L(`A is at ${at(d, c.states[0])}. Read off D in the ${dname(d)} diagram, or follow the three steps from A: from D to A, which of p, V and T stay the same, which grow, which shrink?`,
+          `A liegt bei ${at(d, c.states[0])}. Lies D im ${dname(d)}-Diagramm ab oder folge den drei Schritten ab A: Welche von p, V und T bleiben von D nach A gleich, welche wachsen, welche nehmen ab?`),
+        L('Same p: isobaric; same V: isochoric; same T = pV (in units of T₀): isothermal; else none of them. Then the direction from D to A: does V grow (expansion) or shrink, or, at constant V, does T rise (heating) or fall?',
+          'Gleiches p: isobar; gleiches V: isochor; gleiches T = pV (in Einheiten von T₀): isotherm; sonst keiner davon. Dann die Richtung von D nach A: Wächst V (Expansion) oder nimmt es ab, oder, bei konstantem V, steigt T (Erwärmung) oder sinkt es?'),
       ],
       solution: [summary(c, back)],
       p: { kind: 'close', d, s: c.states },
@@ -469,8 +476,9 @@
       text: L(`The ${dname(d)} diagram shows a cyclic process of a fixed amount of an ideal gas. Which statements are correct? Tick all of them.`, `Das ${dname(d)}-Diagramm zeigt einen Kreisprozess einer festen Menge eines idealen Gases. Welche Aussagen sind richtig? Kreuze alle an.`),
       questions: [{ type: 'multi', key: 'st', statements: r.shuffle(picked) }],
       hints: [
-        L(`In the ${dname(d)} diagram: isobaric is ${shape('isobaric', d)}, isochoric ${shape('isochoric', d)}, isothermal ${shape('isothermal', d)}.`, `Im ${dname(d)}-Diagramm: isobar ist ${shape('isobaric', d)}, isochor ${shape('isochoric', d)}, isotherm ${shape('isothermal', d)}.`),
-        `${ruleT()} ${L('Count the ticks to compare values.', 'Zähle die Teilstriche, um Werte zu vergleichen.')}`,
+        L(`The cycle has ${c.segs.length} steps, ${c.segs.map(arrow).join(', ')}. ${shapes(d)} What kind is each step here?`, `Der Kreisprozess hat ${c.segs.length} Schritte, ${c.segs.map(arrow).join(', ')}. ${shapes(d)} Welche Art ist jeder Schritt hier?`),
+        L(`Write down ${AXES[d][1]} and ${AXES[d][0]} of A, B, … by counting the ticks${d === 'pV' ? ', and T ∝ pV for the temperature.' : `, and the third quantity from ${ruleT()}`} Then check each statement against these values, starting with the first one.`,
+          `Schreib ${AXES[d][1]} und ${AXES[d][0]} von A, B, … auf, indem du die Teilstriche zählst${d === 'pV' ? ', und T ∝ pV für die Temperatur.' : `, und die dritte Grösse aus ${ruleT()}`} Prüfe dann jede Aussage an diesen Werten, beginnend mit der ersten.`),
       ],
       solution: c.segs.map((s) => summary(c, s)),
       p: { kind: 'statements', d, s: c.states },
@@ -501,9 +509,12 @@
       text: L(`The ${dname(from)} diagram shows a cyclic process of a fixed amount of an ideal gas. Which ${dname(to)} diagram shows the same process?`, `Das ${dname(from)}-Diagramm zeigt einen Kreisprozess einer festen Menge eines idealen Gases. Welches ${dname(to)}-Diagramm zeigt denselben Prozess?`),
       questions: [{ type: 'pick', key: 'fig', options: r.shuffle(opts) }],
       hints: [
-        L(`First name each step from the ${dname(from)} diagram: isobaric, isochoric or isothermal, and which way.`, `Benenne zuerst jeden Schritt aus dem ${dname(from)}-Diagramm: isobar, isochor oder isotherm, und in welche Richtung.`),
-        L(`Then draw each in the ${dname(to)} diagram: isobaric is ${shape('isobaric', to)}, isochoric ${shape('isochoric', to)}, isothermal ${shape('isothermal', to)}.`, `Dann zeichne jeden im ${dname(to)}-Diagramm: isobar ist ${shape('isobaric', to)}, isochor ${shape('isochoric', to)}, isotherm ${shape('isothermal', to)}.`),
-        ruleT(),
+        L(`The ${dname(from)} diagram shows ${c.segs.map(arrow).join(', ')}. Name each step from it: in the ${dname(from)} diagram, isobaric is ${shape('isobaric', from)}, isochoric ${shape('isochoric', from)}, isothermal ${shape('isothermal', from)}. Which way does each go?`,
+          `Das ${dname(from)}-Diagramm zeigt ${c.segs.map(arrow).join(', ')}. Benenne daraus jeden Schritt: Im ${dname(from)}-Diagramm ist isobar ${shape('isobaric', from)}, isochor ${shape('isochoric', from)}, isotherm ${shape('isothermal', from)}. In welche Richtung geht jeder?`),
+        L(`Then each step keeps its kind, but takes the shape of the ${dname(to)} diagram: isobaric is ${shape('isobaric', to)} there, isochoric ${shape('isochoric', to)}, isothermal ${shape('isothermal', to)}. ${ruleT()}`,
+          `Dann behält jeder Schritt seine Art, nimmt aber die Form im ${dname(to)}-Diagramm an: Isobar ist dort ${shape('isobaric', to)}, isochor ${shape('isochoric', to)}, isotherm ${shape('isothermal', to)}. ${ruleT()}`),
+        L(`Start with A, at ${at(from, c.states[0])}: where does it lie in the ${dname(to)} diagram, and which options start A → B there with the right shape?`,
+          `Beginne mit A, bei ${at(from, c.states[0])}: Wo liegt es im ${dname(to)}-Diagramm, und welche Optionen beginnen dort A → B mit der richtigen Form?`),
       ],
       solution: c.segs.map((s) => summary(c, s)),
       p: { kind: 'switch', from, to, s: c.states },
@@ -531,6 +542,8 @@
     }));
     const bigger = a < b ? [a, b] : [b, a], hi = numbered[bigger[1] - 1].c > numbered[bigger[0] - 1].c ? bigger[1] : bigger[0];
     const qv = v[pair], why = orderWhy(pair, d);
+    // for the hint: two vertical lines are compared at the same value of the vertical axis, others at the same value of the horizontal one
+    const cut = AXES[d][shape(pair, d) === shape('isochoric', 'pV') ? 1 : 0];
     // asked only once the kinds are right: it names the kind of two lines
     const orderQ = {
       type: 'choice', key: 'order', after: true, label: L(`Lines ${bigger[0]} and ${bigger[1]} are both ${kinds[pair]()}s: which has the larger ${QTY[qv]()}?`, `Die Linien ${bigger[0]} und ${bigger[1]} sind beide ${kinds[pair]()}n: Welche hat ${qv === 'p' ? 'den grösseren Druck' : qv === 'V' ? 'das grössere Volumen' : 'die grössere Temperatur'}?`),
@@ -541,9 +554,12 @@
       text: L(`The ${dname(d)} diagram shows four lines, each an isobar (constant p), an isochore (constant V) or an isotherm (constant T) of a fixed amount of an ideal gas. Which is which?`, `Das ${dname(d)}-Diagramm zeigt vier Linien, jede eine Isobare (p konstant), eine Isochore (V konstant) oder eine Isotherme (T konstant) einer festen Menge eines idealen Gases. Welche ist welche?`),
       questions: [...typeQ, orderQ],
       hints: [
-        L('Ask for each line which quantity stays the same along it. Where p or V is an axis, a line of constant p or V is parallel to the other axis.', 'Frage dich bei jeder Linie, welche Grösse entlang der Linie gleich bleibt. Wo p oder V eine Achse ist, ist eine Linie mit konstantem p oder V parallel zur anderen Achse.'),
-        L('pV ∝ T: at constant p, V ∝ T; at constant V, p ∝ T (lines through the origin); at constant T, p ∝ 1/V (a hyperbola).', 'pV ∝ T: Bei konstantem p ist V ∝ T, bei konstantem V ist p ∝ T (Geraden durch den Ursprung); bei konstantem T ist p ∝ 1/V (eine Hyperbel).'),
-        why,
+        L(`Here ${AXES[d][1]} is up and ${AXES[d][0]} to the right. For each of the lines 1 to 4: is it horizontal, vertical, a line through the origin or a curve, and which quantity stays the same along it?`,
+          `Hier ist ${AXES[d][1]} nach oben und ${AXES[d][0]} nach rechts aufgetragen. Für jede der Linien 1 bis 4: Ist sie waagrecht, senkrecht, eine Gerade durch den Ursprung oder eine Kurve, und welche Grösse bleibt entlang der Linie gleich?`),
+        L(`Along a horizontal line ${AXES[d][1]} stays the same, along a vertical one ${AXES[d][0]}. For the third quantity, ${['p', 'V', 'T'].find((x) => !AXES[d].includes(x))}, use pV ∝ T: what shape does a line have along which it stays the same?`,
+          `Entlang einer waagrechten Linie bleibt ${AXES[d][1]} gleich, entlang einer senkrechten ${AXES[d][0]}. Für die dritte Grösse, ${['p', 'V', 'T'].find((x) => !AXES[d].includes(x))}, nimm pV ∝ T: Welche Form hat eine Linie, entlang der sie gleich bleibt?`),
+        L(`Start with line 1. For the last question, compare the two lines of the same kind at the same ${cut}: which value of the constant quantity does each give there?`,
+          `Beginne mit Linie 1. Für die letzte Frage vergleiche die zwei Linien derselben Art beim gleichen ${cut}: Welchen Wert der konstanten Grösse gibt jede dort?`),
       ],
       solution: [L(`In the ${dname(d)} diagram: isobars are ${shape('isobaric', d)}, isochores ${shape('isochoric', d)}, isotherms ${shape('isothermal', d)}.`, `Im ${dname(d)}-Diagramm: Isobaren sind ${shape('isobaric', d)}, Isochoren ${shape('isochoric', d)}, Isothermen ${shape('isothermal', d)}.`), why],
       p: { kind: 'lines', d, ls: numbered },
@@ -570,9 +586,9 @@
       steps: c.segs.filter((s) => !s.closing).map((s) => ({ to: s.to, html: `${nameOf(s.to)}: ${describe(s)}` })),
       questions: [{ type: 'choice', key: 'back', label: L('Finally: how is D → A best described?', 'Zum Schluss: Wie lässt sich D → A am besten beschreiben?'), after: true, options: close2(r, c, back) }],
       hints: [
-        L(`In the ${dname(d)} diagram: isobaric is ${shape('isobaric', d)}, isochoric ${shape('isochoric', d)}, isothermal ${shape('isothermal', d)}.`, `Im ${dname(d)}-Diagramm: isobar ist ${shape('isobaric', d)}, isochor ${shape('isochoric', d)}, isotherm ${shape('isothermal', d)}.`),
-        L('Isobaric: V and T change by the same factor. Isochoric: p and T change by the same factor. Isothermal: p changes by the inverse factor of V.', 'Isobar: V und T ändern sich um denselben Faktor. Isochor: p und T ändern sich um denselben Faktor. Isotherm: p ändert sich um den Kehrwert des Faktors von V.'),
-        ruleT(),
+        L(`A is at ${at(d, c.states[0])}${d === 'pV' ? '' : ` (T = pV in units of T₀)`}. The steps are ${kindsOf(c)}. ${shapes(d)}`, `A liegt bei ${at(d, c.states[0])}${d === 'pV' ? '' : ` (T = pV in Einheiten von T₀)`}. Die Schritte sind ${kindsOf(c)}. ${shapes(d)}`),
+        L(`${ruleT()} Isobaric: V and T change by the same factor. Isochoric: p and T change by the same factor. Isothermal: p changes by the inverse factor of V.`, `${ruleT()} Isobar: V und T ändern sich um denselben Faktor. Isochor: p und T ändern sich um denselben Faktor. Isotherm: p ändert sich um den Kehrwert des Faktors von V.`),
+        L(`Start with B: from A, ${describe(c.segs[0])}. Which of ${AXES[d][1]} and ${AXES[d][0]} change, and by which factor? Then go on from B in the same way.`, `Beginne mit B: von A aus ${describe(c.segs[0])}. Welche von ${AXES[d][1]} und ${AXES[d][0]} ändern sich, und um welchen Faktor? Geh dann von B aus gleich weiter.`),
       ],
       solution: c.segs.map((s) => summary(c, s)),
       p: { kind: 'draw', d, s: c.states },
@@ -635,8 +651,8 @@
           { type: 'choice', key: 'what', label: L('What is wrong', 'Was falsch ist'), options: reasons.filter((x) => x.tag !== 'shape' || d === 'pV').map((x) => ({ label: x.label, ok: x.tag === m, why: whyOf[m] })) },
         ],
         hints: [
-          L('Check the steps one at a time, each from where the drawing starts it: the kind of process (its shape), its direction, and its factor.', 'Prüfe die Schritte einzeln, jeden von dort aus, wo die Zeichnung ihn beginnt: die Art des Prozesses (seine Form), seine Richtung und seinen Faktor.'),
-          L(`In the ${dname(d)} diagram: isobaric is ${shape('isobaric', d)}, isochoric ${shape('isochoric', d)}, isothermal ${shape('isothermal', d)}.`, `Im ${dname(d)}-Diagramm: isobar ist ${shape('isobaric', d)}, isochor ${shape('isochoric', d)}, isotherm ${shape('isothermal', d)}.`),
+          L(`The description says ${kindsOf(c)}. Check A → B, B → C and C → D one at a time, each from where the drawing starts it: its shape, its direction and its factor.`, `Die Beschreibung sagt ${kindsOf(c)}. Prüfe A → B, B → C und C → D einzeln, jeden von dort aus, wo die Zeichnung ihn beginnt: seine Form, seine Richtung und seinen Faktor.`),
+          L(`${shapes(d)} Start with A → B, ${describe(c.segs[0])}: read off A and B in the drawing and compare.`, `${shapes(d)} Beginne mit A → B, ${describe(c.segs[0])}: Lies A und B in der Zeichnung ab und vergleiche.`),
         ],
         solution: [`${L('Wrong', 'Falsch')}: ${nameOf(i)} → ${nameOf(i + 1)}. ${whyOf[m]}`, `${L('As described', 'Wie beschrieben')}: ${truth}`],
         p: { kind: 'error', d, s: c.states, i, m },
@@ -679,9 +695,15 @@
       asked: asked.map(({ i, v }) => `${nameOf(i)}${v}`),
       questions,
       hints: [
-        L('Isobaric: p stays, V and T change by the same factor. Isochoric: V stays, p and T change by the same factor. Isothermal: T stays, p changes by the inverse factor of V.', 'Isobar: p bleibt, V und T ändern sich um denselben Faktor. Isochor: V bleibt, p und T ändern sich um denselben Faktor. Isotherm: T bleibt, p ändert sich um den Kehrwert des Faktors von V.'),
-        L('Work through the table row by row, from A: each state follows from the one before it.', 'Arbeite die Tabelle Zeile für Zeile ab A durch: Jeder Zustand folgt aus dem vorherigen.'),
-        L('pV/T is the same in every state: use it to check your values.', 'pV/T ist in jedem Zustand gleich: Prüfe damit deine Werte.'),
+        L(`Asked are ${asked.map(({ i, v }) => `${v} in ${nameOf(i)}`).join(', ')}. Each state follows from the one before it, starting from A with ${nice(val('p', A))} kPa, ${nice(val('V', A))} L and ${nice(val('T', A))} K: which step leads to each asked state, and of which kind is it?`,
+          `Gesucht sind ${asked.map(({ i, v }) => `${v} in ${nameOf(i)}`).join(', ')}. Jeder Zustand folgt aus dem vorherigen, ab A mit ${nice(val('p', A))} kPa, ${nice(val('V', A))} L und ${nice(val('T', A))} K: Welcher Schritt führt zu jedem gesuchten Zustand, und welcher Art ist er?`),
+        L('pV/T stays the same in every state. So isobaric: p stays, V and T change by the same factor. Isochoric: V stays, p and T change by the same factor. Isothermal: T stays, p changes by the inverse factor of V. T in kelvin.',
+          'pV/T bleibt in jedem Zustand gleich. Also isobar: p bleibt, V und T ändern sich um denselben Faktor. Isochor: V bleibt, p und T ändern sich um denselben Faktor. Isotherm: T bleibt, p ändert sich um den Kehrwert des Faktors von V. T in Kelvin.'),
+        (() => {
+          const { i, v } = asked[0], seg = c.segs[i - 1];
+          return L(`Start with ${v} in ${nameOf(i)}: ${arrow(seg)} is an ${describe(seg)}. By which factor does ${v} change in this step? Multiply ${v} in ${nameOf(i - 1)}${i > 1 ? ', found from the steps before,' : ''} by it.`,
+            `Beginne mit ${v} in ${nameOf(i)}: ${arrow(seg)} ist eine ${describe(seg)}. Um welchen Faktor ändert sich ${v} bei diesem Schritt? Multipliziere ${v} in ${nameOf(i - 1)}${i > 1 ? ', aus den Schritten davor bestimmt,' : ''} damit.`);
+        })(),
       ],
       solution: c.segs.filter((s) => !s.closing).map((s) => summary(c, s)).concat(steps, [c.states.map((s, i) => `${nameOf(i)}: p = ${nice(val('p', s))} kPa, V = ${nice(val('V', s))} L, T = ${nice(val('T', s))} K`).join('; ')]),
       p: { kind: 'table', s: c.states, real },

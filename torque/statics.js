@@ -6,6 +6,7 @@
   const { SCENARIOS, H } = root.Scenarios;
   const { L, G, tex: T, tq, q, num, svgSym, pick } = root.TQ;
   const { step, res, exact, beamPic, kg, cm } = H;
+  const m$ = (s) => `$${s}$`;
   const m_ = (x) => q(x, 'm', 2);
   // a field: key, symbol, unit, decimals, what
   const field = (key, sym, unit, dec, what) => ({ key, sym, unit, dec, what });
@@ -63,10 +64,13 @@
       }
       return P.svg();
     },
-    hints: () => [
-      L('Three forces push down (the plank’s weight at its middle and the person’s weight), two push up (the supports). At rest, both the forces and the torques balance.', 'Nach unten wirken die Gewichtskraft des Bretts (in seiner Mitte) und die der Person, nach oben die Kräfte der zwei Stützen. In Ruhe heben sich die Kräfte und die Drehmomente auf.'),
-      L('Choose A as the axis: then F_A has no lever arm, and only F_B is unknown: F_B · b = m g · ℓ/2 + M g · x.', 'Wähle A als Drehachse: Dann hat F_A keinen Hebelarm, und nur F_B ist unbekannt: F_B · b = m g · ℓ/2 + M g · x.'),
-      L('Then F_A from the forces: F_A + F_B = m g + M g.', 'Dann F_A aus den Kräften: F_A + F_B = m g + M g.'),
+    hints: (p) => [
+      L(`Down: the plank’s weight at its middle, ${m_(p.len / 2)} from A, and the person’s weight, ${m_(p.x)} from A. Up: support A at the left end and support B ${m_(p.b)} from A. The plank is at rest: which two balances hold?`,
+        `Nach unten: die Gewichtskraft des Bretts in seiner Mitte, ${m_(p.len / 2)} von A, und die der Person, ${m_(p.x)} von A. Nach oben: die Stütze A am linken Ende und die Stütze B ${m_(p.b)} von A. Das Brett ruht: Welche zwei Gleichgewichte gelten?`),
+      L(`Take A as the axis: ${m$(`${T('A')}`)} has no lever arm there, so the torques give ${m$(`${T('B')}`)} alone, ${m$(`${T('B')}\\cdot b = m\\,g\\cdot\\tfrac{\\ell}{2} + M\\,g\\cdot x`)}. Then the forces: ${m$(`${T('A')} + ${T('B')} = m\\,g + M\\,g`)}.`,
+        `Nimm A als Drehachse: ${m$(`${T('A')}`)} hat dort keinen Hebelarm, also liefern die Drehmomente ${m$(`${T('B')}`)} allein, ${m$(`${T('B')}\\cdot b = m\\,g\\cdot\\tfrac{\\ell}{2} + M\\,g\\cdot x`)}. Dann die Kräfte: ${m$(`${T('A')} + ${T('B')} = m\\,g + M\\,g`)}.`),
+      L(`The weights first: the plank’s is ${m$(tq(p.m * G, 'N'))}, the person’s ${m$(tq(p.M * G, 'N'))}; together the supports carry ${m$(tq((p.m + p.M) * G, 'N'))}.`,
+        `Zuerst die Gewichtskräfte: Die des Bretts ist ${m$(tq(p.m * G, 'N'))}, die der Person ${m$(tq(p.M * G, 'N'))}; zusammen tragen die Stützen ${m$(tq((p.m + p.M) * G, 'N'))}.`),
     ],
     steps(p, v) {
       const W = p.m * G, Wp = p.M * G;
@@ -132,10 +136,13 @@
       if (show.has('E')) P.arrow(B.mid(0), [0, -1], 34, `force k-s${view.hl && view.hl.has('E') ? ' hl' : ''}`, svgSym('E'), [-8, 6]);
       return P.svg();
     },
-    hints: () => [
-      L('Take the elbow as the axis. The muscle turns the forearm up, the weights of forearm and ball turn it down.', 'Nimm den Ellbogen als Drehachse. Der Muskel dreht den Unterarm nach oben, die Gewichtskräfte von Unterarm und Ball drehen ihn nach unten.'),
-      L('F_M · d = m_A g · c + M g · a: the muscle’s lever arm is tiny, so its force is large.', 'F_M · d = m_A g · c + M g · a: Der Hebelarm des Muskels ist winzig, darum ist seine Kraft gross.'),
-      L('The forces balance too: the joint pushes down with F_E = F_M − m_A g − M g.', 'Auch die Kräfte heben sich auf: Das Gelenk drückt mit F_E = F_M − m_A g − M g nach unten.'),
+    hints: (p) => [
+      L(`Take the elbow as the axis. The biceps pulls up ${cm(p.d)} from it; the forearm’s weight acts ${cm(p.c)} from it, the ball’s ${cm(p.a)} from it. Which of them turn the forearm up, which down? Does the joint’s force have a torque about the elbow?`,
+        `Nimm den Ellbogen als Drehachse. Der Bizeps zieht ${cm(p.d)} davon entfernt nach oben; die Gewichtskraft des Unterarms greift ${cm(p.c)} davon entfernt an, die des Balls ${cm(p.a)}. Welche drehen den Unterarm nach oben, welche nach unten? Hat die Kraft des Gelenks ein Drehmoment bezüglich des Ellbogens?`),
+      L(`Torques about the elbow: ${m$(`${T('Fm')}\\cdot d = m_\\mathrm{A}\\,g\\cdot c + M\\,g\\cdot a`)}. Then the forces: up ${m$(T('Fm'))}, down the two weights and the joint’s ${m$(T('E'))}.`,
+        `Drehmomente bezüglich des Ellbogens: ${m$(`${T('Fm')}\\cdot d = m_\\mathrm{A}\\,g\\cdot c + M\\,g\\cdot a`)}. Dann die Kräfte: nach oben ${m$(T('Fm'))}, nach unten die zwei Gewichtskräfte und die Kraft ${m$(T('E'))} des Gelenks.`),
+      L(`The weights first: the forearm’s is ${m$(tq(p.mA * G, 'N'))}, the ball’s ${m$(tq(p.M * G, 'N'))}. The muscle’s lever arm, ${cm(p.d)}, is much shorter than theirs: its force must be many times larger.`,
+        `Zuerst die Gewichtskräfte: Die des Unterarms ist ${m$(tq(p.mA * G, 'N'))}, die des Balls ${m$(tq(p.M * G, 'N'))}. Der Hebelarm des Muskels, ${cm(p.d)}, ist viel kürzer als ihre: Seine Kraft muss viel grösser sein.`),
     ],
     steps(p, v) {
       const WA = p.mA * G, WB = p.M * G;

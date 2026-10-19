@@ -143,6 +143,18 @@
     return `${how(c, s)}: $${eq}$`;
   }
   const walk = (c, upTo = c.steps.length) => c.steps.slice(0, upTo).map((s) => stepLine(c, s));
+  // For the hints: what lies on a step (no result), the elements met from A up to step k (all:
+  // once round), and the first step as a question.
+  function onStep(c, s) {
+    const el = s.el;
+    if (!el) return L('a wire', 'ein Draht');
+    if (el.t === 'bat') return el.up ? L(`the ${el.V} V battery, from − to +`, `die ${el.V}-V-Batterie, von − nach +`) : L(`the ${el.V} V battery, from + to −`, `die ${el.V}-V-Batterie, von + nach −`);
+    if (el.t === 'par') return L(`${lampTex(el.n)} and ${lampTex(el.n + 1)} in parallel`, `${lampTex(el.n)} und ${lampTex(el.n + 1)} parallel`);
+    return lampTex(el.n);
+  }
+  const onTheWay = (c, upTo = c.steps.length) => c.steps.slice(0, upTo).map((s) => `${stepName(c, s)}: ${onStep(c, s)}`).join('; ');
+  const firstStep = (c) => L(`The first step, ${stepName(c, c.steps[0])}, crosses ${onStep(c, c.steps[0])}: does the potential go up or down, and by how much?`,
+    `Der erste Schritt, ${stepName(c, c.steps[0])}, geht über ${onStep(c, c.steps[0])}: Steigt oder sinkt das Potential, und um wie viel?`);
   function currentNote(c) {
     const b = batteries(c), o = against(c);
     if (b.length === 1) return L('The current flows clockwise: out of the + terminal of the battery, through the lamps and back into its − terminal.', 'Der Strom fliesst im Uhrzeigersinn: aus dem Pluspol der Batterie, durch die Lampen und zurück in ihren Minuspol.');
@@ -262,7 +274,11 @@
       kind: 'pot', c, ask: names, difficulty: two ? 2 : 1,
       text: `<p>${ZERO(c)} ${L(`Find the potentials at ${names.join(' and ')}.`, `Bestimme die Potentiale in ${names.join(' und ')}.`)}</p>`,
       fields: ask.map((k) => numField(`p${nameOf(c, k)}`, phi(nameOf(c, k)), 'V', c.points[k].phi)),
-      hints: [currentNote(c), RULES(), `${L('The first step', 'Der erste Schritt')}: ${stepLine(c, c.steps[0])}.`],
+      hints: [
+        L(`${currentNote(c)} Walk from A (0 V) with the current to ${names[names.length - 1]}${names.length > 1 ? `, passing ${names[0]}` : ''}. On the way: ${onTheWay(c, ask[ask.length - 1])}.`, `${currentNote(c)} Geh von A (0 V) mit dem Strom bis ${names[names.length - 1]}${names.length > 1 ? `, vorbei an ${names[0]}` : ''}. Auf dem Weg: ${onTheWay(c, ask[ask.length - 1])}.`),
+        RULES(),
+        firstStep(c),
+      ],
       solution: [currentNote(c), ...walk(c).map((x) => `${x}.`), back(c)],
       results: ask.map((k) => `$${phi(nameOf(c, k))} = ${tv(c.points[k].phi)}$`).join(', '),
       figure: (sol) => draw(c, { known: sol, cur: true, ask: sol ? null : names[0] }) + (sol ? plot(c) : ''),
@@ -280,7 +296,12 @@
       kind: 'loop', c, difficulty: two ? 3 : 2,
       text: `<p>${ZERO(c)} ${L(`The voltage $${uN(u.n)}$ across $L_${u.n}$ is not marked. Find it, and the potential at ${nameOf(c, end)}.`, `Die Spannung $${uN(u.n)}$ an $L_${u.n}$ ist nicht angegeben. Bestimme sie und das Potential in ${nameOf(c, end)}.`)}</p>`,
       fields: [numField('U', `${uN(u.n)}`, 'V', u.V), numField(`p${nameOf(c, end)}`, phi(nameOf(c, end)), 'V', c.points[end].phi)],
-      hints: [LOOP(), L(`The rises: ${rises(c).map((v) => `${v} V`).join(' and ')}. The drops: every lamp${against(c) ? `, and the ${against(c).V} V battery, which the current flows through from + to −` : ''}.`, `Die Anstiege: ${rises(c).map((v) => `${v} V`).join(' und ')}. Die Abfälle: jede Lampe${against(c) ? `, und die ${against(c).V}-V-Batterie, durch die der Strom von + nach − fliesst` : ''}.`), RULES()],
+      hints: [
+        L(`$${uN(u.n)}$ is the one voltage not marked. Go once round the loop from A with the current: ${onTheWay(c)}. ${LOOP()}`, `$${uN(u.n)}$ ist die einzige Spannung, die nicht angegeben ist. Geh einmal mit dem Strom im Kreis herum, von A aus: ${onTheWay(c)}. ${LOOP()}`),
+        L(`The rises: ${rises(c).map((v) => `${v} V`).join(' and ')}. The drops: ${lampsOf(c).map((x) => `${lampTex(x.n)} (${x === u ? `$${uN(u.n)}$` : `${x.V} V`})`).join(', ')}${against(c) ? `, and the ${against(c).V} V battery, which the current flows through from + to −` : ''}. Together the drops make up the rises.`,
+          `Die Anstiege: ${rises(c).map((v) => `${v} V`).join(' und ')}. Die Abfälle: ${lampsOf(c).map((x) => `${lampTex(x.n)} (${x === u ? `$${uN(u.n)}$` : `${x.V} V`})`).join(', ')}${against(c) ? `, und die ${against(c).V}-V-Batterie, durch die der Strom von + nach − fliesst` : ''}. Zusammen ergeben die Abfälle die Anstiege.`),
+        L(`Then, with $${uN(u.n)}$ known, walk from A (0 V) with the current to ${nameOf(c, end)}: up across a battery from − to +, down across a lamp and across a battery from + to −, level along a wire.`, `Dann, mit bekanntem $${uN(u.n)}$, geh von A (0 V) mit dem Strom bis ${nameOf(c, end)}: hinauf über eine Batterie von − nach +, hinunter über eine Lampe und über eine Batterie von + nach −, gleich entlang eines Drahts.`),
+      ],
       solution: [`${LOOP()} $${eqn}$, ${L('so', 'also')} $${uN(u.n)} = ${tv(u.V)}$.`, ...walk(c, s.to ? c.steps.indexOf(s) + 1 : c.steps.length - 1).map((x) => `${x}.`)],
       results: `$${uN(u.n)} = ${tv(u.V)}$, $${phi(nameOf(c, end))} = ${tv(c.points[end].phi)}$`,
       figure: (sol) => draw(c, { known: sol, cur: true, hide: sol ? null : hide, ask: sol ? null : nameOf(c, end) }) + (sol ? plot(c) : ''),
@@ -300,7 +321,7 @@
       fields: [numField('I', `I_${n}`, 'mA', par.I[k]), numField('U', `${uN(par.n)}`, 'V', par.V)],
       hints: [
         L(`Junction rule: at ${D} the current $I$ splits into $I_${par.n}$ and $I_${par.n + 1}$; what flows in flows out: $I = I_${par.n} + I_${par.n + 1}$. (Through $L_${one.n}$ flows all of $I$: a lamp does not use up current.)`, `Knotenregel: In ${D} teilt sich der Strom $I$ in $I_${par.n}$ und $I_${par.n + 1}$; was hineinfliesst, fliesst hinaus: $I = I_${par.n} + I_${par.n + 1}$. (Durch $L_${one.n}$ fliesst der ganze Strom $I$: Eine Lampe verbraucht keinen Strom.)`),
-        L(`Loop rule for the loop through the battery, $L_${one.n}$ and $L_${par.n}$: $${tv(c.slots[0].V)} = ${uN(one.n)} + ${uN(par.n)}$.`, `Maschenregel für die Masche durch die Batterie, $L_${one.n}$ und $L_${par.n}$: $${tv(c.slots[0].V)} = ${uN(one.n)} + ${uN(par.n)}$.`),
+        L(`Loop rule for the loop through the battery, $L_${one.n}$ and $L_${par.n}$: $${U0()} = ${uN(one.n)} + ${uN(par.n)}$, with the battery voltage $${U0()}$ and $${uN(one.n)}$ from the figure.`, `Maschenregel für die Masche durch die Batterie, $L_${one.n}$ und $L_${par.n}$: $${U0()} = ${uN(one.n)} + ${uN(par.n)}$, mit der Batteriespannung $${U0()}$ und $${uN(one.n)}$ aus der Abbildung.`),
         L(`The loop through $L_${par.n + 1}$ instead gives the same: lamps in parallel have the same voltage, each the whole of it.`, `Die Masche durch $L_${par.n + 1}$ ergibt dasselbe: Parallele Lampen haben dieselbe Spannung, jede die ganze.`),
       ],
       solution: [
@@ -324,6 +345,8 @@
     }
     return all.slice(0, count);
   }
+  // the points of the pairs, in the order of the loop
+  const needed = (pp) => [...new Set(pp.flat())].sort((a, b) => a.node - b.node).map((x) => x.name).join(', ').replace(/, ([^,]*)$/, L(' and $1', ' und $1'));
   function volt(r, given) {
     const c = r.next() < 0.5 ? oneBattery(r, 3) : twoBatteries(r, r.next() < 0.5), pp = pairs(r, c, 2);
     const U = ([a, b]) => `$${uxy(a.name, b.name)} = ${phi(a.name)} - ${phi(b.name)} = ${tv(a.phi)} - ${b.phi < 0 ? `(${tv(b.phi)})` : tv(b.phi)} = ${tv(a.phi - b.phi)}$`;
@@ -333,9 +356,9 @@
       text: `<p>${given ? L('The potentials at the points are given.', 'Die Potentiale in den Punkten sind gegeben.') : ZERO(c)} ${L(`Find the voltages ${names.join(' and ')}.`, `Bestimme die Spannungen ${names.join(' und ')}.`)}</p>`,
       fields: pp.map(([a, b]) => numField(`U${a.name}${b.name}`, uxy(a.name, b.name), 'V', a.phi - b.phi)),
       hints: [
-        ...(given ? [] : [L('First find the potentials at the points: ', 'Bestimme zuerst die Potentiale in den Punkten: ') + RULES()]),
-        L(`The voltage between two points is the difference of their potentials, the first minus the second: $${uxy('X', 'Y')} = ${phi('X')} - ${phi('Y')}$.`, `Die Spannung zwischen zwei Punkten ist die Differenz ihrer Potentiale, das erste minus das zweite: $${uxy('X', 'Y')} = ${phi('X')} - ${phi('Y')}$.`),
-        L('A negative voltage means that the first point lies lower than the second.', 'Eine negative Spannung bedeutet, dass der erste Punkt tiefer liegt als der zweite.'),
+        ...(given ? [] : [L(`First the potentials at the points you need, ${needed(pp)}, with A at 0 V. ${RULES()}`, `Zuerst die Potentiale in den Punkten, die du brauchst, ${needed(pp)}, mit A bei 0 V. ${RULES()}`)]),
+        L(`The voltage between two points is the difference of their potentials, the first minus the second: ${pp.map(([a, b]) => `$${uxy(a.name, b.name)} = ${phi(a.name)} - ${phi(b.name)}$`).join(' and ')}.`, `Die Spannung zwischen zwei Punkten ist die Differenz ihrer Potentiale, das erste minus das zweite: ${pp.map(([a, b]) => `$${uxy(a.name, b.name)} = ${phi(a.name)} - ${phi(b.name)}$`).join(' und ')}.`),
+        L(`Mind the order: in ${pp.map(([a, b]) => `$${uxy(a.name, b.name)}$`).join(' and ')} the first point comes first. Where the first point lies lower than the second, the voltage is negative.`, `Achte auf die Reihenfolge: In ${pp.map(([a, b]) => `$${uxy(a.name, b.name)}$`).join(' und ')} kommt der erste Punkt zuerst. Wo der erste Punkt tiefer liegt als der zweite, ist die Spannung negativ.`),
       ],
       solution: [...(given ? [] : walk(c).map((x) => `${x}.`)), ...pp.map(U)],
       results: pp.map(([a, b]) => `$${uxy(a.name, b.name)} = ${tv(a.phi - b.phi)}$`).join(', '),
@@ -388,7 +411,7 @@
         hints: [
           L(`The sketch ends at ${num(end)} V back at A, not at 0 V: it breaks the loop rule, so one of its steps is wrong.`, `Die Skizze endet zurück in A bei ${num(end)} V, nicht bei 0 V: Sie verletzt die Maschenregel, also ist einer ihrer Schritte falsch.`),
           `${currentNote(c)} ${RULES()}`,
-          L('Check the steps one at a time: does each one go up, down or stay the same, and by how much?', 'Prüfe die Schritte einzeln: Geht jeder hinauf, hinunter oder bleibt er gleich, und um wie viel?'),
+          L(`Check the steps one at a time against the circuit (${onTheWay(c)}): should each one go up, down or stay the same, and by how much? Then compare with the sketch.`, `Prüfe die Schritte einzeln an der Schaltung (${onTheWay(c)}): Sollte jeder hinauf, hinunter gehen oder gleich bleiben, und um wie viel? Vergleiche dann mit der Skizze.`),
         ],
         solution: [`${L('Wrong', 'Falsch')}: ${stepName(c, s)}. ${why}`, L(`The right potentials: ${c.points.map((p) => `${p.name} ${num(p.phi)} V`).join(', ')}.`, `Die richtigen Potentiale: ${c.points.map((p) => `${p.name} ${num(p.phi)} V`).join(', ')}.`)],
         results: `${stepName(c, s)}: ${REASON[m]()}`,
@@ -565,7 +588,7 @@
       text: `<p>${intro} ${L('Sketch the potential around the loop, from A in the direction of the current back to A.', 'Skizziere das Potential im Kreis herum, von A in Stromrichtung zurück nach A.')}</p>`,
       fields: [],
       hints: [currentNote(c), RULES(), eq ? L(`The battery raises the potential by $${U0()}$; the ${n} identical lamps share it equally, so across each one it drops by $${sixth(6 / n)}$.`, `Die Batterie erhöht das Potential um $${U0()}$; die ${n} gleichen Lampen teilen sich das gleichmässig, also sinkt es über jeder um $${sixth(6 / n)}$.`)
-        : `${L('The first step', 'Der erste Schritt')}: ${stepLine(c, c.steps[0])}.`],
+        : `${L(`Round the loop from A: ${onTheWay(c)}.`, `Im Kreis herum von A aus: ${onTheWay(c)}.`)} ${firstStep(c)}`],
       solution: [currentNote(c), ...(eq ? c.steps.map((s) => `${stepLineEq(c, s)}.`) : walk(c).map((x) => `${x}.`)),
         eq ? L(`Back at A: 0, as it must be (loop rule: the drops, ${n} × $${sixth(6 / n)}$, add up to the rise $${U0()}$).`, `Zurück in A: 0, wie es sein muss (Maschenregel: Die Abfälle, ${n} × $${sixth(6 / n)}$, ergeben zusammen den Anstieg $${U0()}$).`) : back(c),
         L('The right graph is laid over your sketch, dashed.', 'Der richtige Graph liegt gestrichelt über deiner Skizze.')],

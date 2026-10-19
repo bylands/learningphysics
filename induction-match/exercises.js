@@ -105,37 +105,58 @@
   const LAW = () => L(`${Vi()} = −${DPHI}: the induced voltage is the slope of the flux graph, with the opposite sign (Lenz's rule).`,
     `${Vi()} = −${DPHI}: Die induzierte Spannung ist die Steigung des Flussgraphen, mit umgekehrtem Vorzeichen (Lenzsche Regel).`);
 
-  // A worked step for the hints: the first piece where something happens.
+  // A first step for the hints, in the first piece where something happens: what to read off there,
+  // without the result (the student works it out).
   function example(dir, family, g) {
     const ps = g.pieces, p = (family === 'smooth' && ps.find(curved)) || ps.find((q) => q.d0 !== 0) || ps[0];
-    if (dir === 'v2phi') return `${L('For example', 'Zum Beispiel')} ${when(p)}: ${describeBack(g, p).replace(/^[^:]*: /, '')}.`;
     const V = Vi(), len = p.t1 - p.t0, y1 = endOf(g, p);
-    if (curved(p)) {
-      return L(`For example, between ${fmt(p.t0)} s and ${fmt(p.t1)} s the slope of ${PHI} changes steadily from ${num(p.d0)} mWb/s to ${num(p.d1)} mWb/s (draw tangents at the start and at the end). So ${V} goes from ${num(neg(p.d0))} mV to ${num(neg(p.d1))} mV along a straight line.`,
-        `Zum Beispiel ändert sich zwischen ${fmt(p.t0)} s und ${fmt(p.t1)} s die Steigung von ${PHI} gleichmässig von ${num(p.d0)} mWb/s auf ${num(p.d1)} mWb/s (zeichne Tangenten am Anfang und am Ende). Also geht ${V} auf einer Geraden von ${num(neg(p.d0))} mV auf ${num(neg(p.d1))} mV.`);
+    if (dir === 'v2phi') {
+      const a = neg(p.d0), b = neg(p.d1);
+      return curved(p)
+        ? L(`For example ${between(p.t0, p.t1)}: under the voltage graph lies a trapezoid, from ${num(a)} mV to ${num(b)} mV and ${fmt(len)} s wide. Its area, with the opposite sign, is how much ${PHI} changes there; and where ${V} crosses zero, ${PHI} turns round.`,
+          `Zum Beispiel ${between(p.t0, p.t1)}: Unter dem Spannungsgraphen liegt ein Trapez, von ${num(a)} mV bis ${num(b)} mV und ${fmt(len)} s breit. Seine Fläche, mit umgekehrtem Vorzeichen, ist die Änderung von ${PHI} dort; und wo ${V} durch null geht, kehrt ${PHI} um.`)
+        : L(`For example ${between(p.t0, p.t1)}: under the voltage graph lies a rectangle, ${num(a)} mV high and ${fmt(len)} s wide. Its area, with the opposite sign, is how much ${PHI} changes there, starting from ${fmt(p.p0)} mWb.`,
+          `Zum Beispiel ${between(p.t0, p.t1)}: Unter dem Spannungsgraphen liegt ein Rechteck, ${num(a)} mV hoch und ${fmt(len)} s breit. Seine Fläche, mit umgekehrtem Vorzeichen, ist die Änderung von ${PHI} dort, ausgehend von ${fmt(p.p0)} mWb.`);
     }
-    return L(`For example, between ${fmt(p.t0)} s and ${fmt(p.t1)} s, ${PHI} changes from ${fmt(p.p0)} mWb to ${fmt(y1)} mWb, so ${V} = −(${sgn(y1 - p.p0)} mWb)/(${fmt(len)} s) = ${num(neg(p.d0))} mV there.`,
-      `Zum Beispiel ändert sich ${PHI} zwischen ${fmt(p.t0)} s und ${fmt(p.t1)} s von ${fmt(p.p0)} mWb auf ${fmt(y1)} mWb, also ist dort ${V} = −(${sgn(y1 - p.p0)} mWb)/(${fmt(len)} s) = ${num(neg(p.d0))} mV.`);
+    if (curved(p)) {
+      return L(`For example ${between(p.t0, p.t1)}: draw tangents to the flux graph at ${fmt(p.t0)} s and at ${fmt(p.t1)} s and read off their slopes. ${V} runs along a straight line between minus these two slopes.`,
+        `Zum Beispiel ${between(p.t0, p.t1)}: Zeichne Tangenten an den Flussgraphen bei ${fmt(p.t0)} s und bei ${fmt(p.t1)} s und lies ihre Steigungen ab. ${V} verläuft auf einer Geraden zwischen minus diesen beiden Steigungen.`);
+    }
+    return L(`For example ${between(p.t0, p.t1)}: ${PHI} goes from ${fmt(p.p0)} mWb to ${fmt(y1)} mWb in ${fmt(len)} s. What slope is that, and so what voltage?`,
+      `Zum Beispiel ${between(p.t0, p.t1)}: ${PHI} geht in ${fmt(len)} s von ${fmt(p.p0)} mWb auf ${fmt(y1)} mWb. Welche Steigung ist das, und also welche Spannung?`);
   }
+  // the parts of a graph, and where the slope of the flux changes suddenly (the voltage jumps)
+  const partsOf = (g) => g.pieces.map(when).join(', ');
+  const kinksOf = (g) => g.pieces.slice(1).filter((p, i) => p.d0 !== g.pieces[i].d1).map((p) => `${fmt(p.t0)} s`);
+  const listOf = (xs) => (xs.length < 2 ? xs.join('') : `${xs.slice(0, -1).join(', ')}${L(' and ', ' und ')}${xs[xs.length - 1]}`);
 
   function graphHints(dir, family, g, phi0) {
-    const V = Vi();
+    const V = Vi(), n = g.pieces.length, kinks = kinksOf(g), curvedParts = g.pieces.filter(curved).map(when);
     if (dir === 'phi2v') {
       return [
-        L(`The induced voltage only depends on how fast the flux changes: ${V} = −${DPHI}, the slope of the flux graph with the opposite sign. The value of ${PHI} itself does not matter.`,
-          `Die induzierte Spannung hängt nur davon ab, wie schnell sich der Fluss ändert: ${V} = −${DPHI}, die Steigung des Flussgraphen mit umgekehrtem Vorzeichen. Der Wert von ${PHI} selbst spielt keine Rolle.`),
-        L(`Where the flux graph is horizontal, ${V} = 0. Where ${PHI} increases, ${V} is negative; where it decreases, ${V} is positive. A steeper graph gives a larger voltage.`,
-          `Wo der Flussgraph waagrecht ist, ist ${V} = 0. Wo ${PHI} zunimmt, ist ${V} negativ; wo er abnimmt, ist ${V} positiv. Ein steilerer Graph ergibt eine grössere Spannung.`),
-        RULE.phi2v[family](),
+        L(`The flux graph has ${n} parts: ${partsOf(g)}. In each, does ${PHI} rise, fall or stay constant, and how steeply? Only that counts for ${V}, not how large ${PHI} is.`,
+          `Der Flussgraph hat ${n} Teile: ${partsOf(g)}. Steigt ${PHI} in jedem davon, sinkt er oder bleibt er konstant, und wie steil? Nur das zählt für ${V}, nicht wie gross ${PHI} ist.`),
+        L(`In each part, ${V} = −${DPHI}: the slope of the flux graph with the opposite sign (Lenz's rule). Rising flux gives a negative voltage, falling flux a positive one, a horizontal part zero.`,
+          `In jedem Teil ist ${V} = −${DPHI}: die Steigung des Flussgraphen mit umgekehrtem Vorzeichen (Lenzsche Regel). Steigender Fluss ergibt eine negative Spannung, sinkender eine positive, ein waagrechtes Stück null.`),
+        family === 'lin'
+          ? L(`Here every part is straight, so each gives one constant voltage. Where does the slope change suddenly, from one part to the next? There ${V} jumps.`,
+            `Hier ist jeder Teil gerade, also ergibt jeder eine konstante Spannung. Wo ändert sich die Steigung plötzlich, von einem Teil zum nächsten? Dort springt ${V}.`)
+          : L(`Here the flux graph has no kinks, so ${V} has no jumps. ${curvedParts.length ? `It is curved ${listOf(curvedParts)}: there its slope changes steadily, so ${V} is a sloping straight line. ` : ''}Where does ${PHI} have a peak or a valley?`,
+            `Hier hat der Flussgraph keine Knicke, also hat ${V} keine Sprünge. ${curvedParts.length ? `Gekrümmt ist er ${listOf(curvedParts)}: Dort ändert sich seine Steigung gleichmässig, also ist ${V} eine schräge Gerade. ` : ''}Wo hat ${PHI} einen Hoch- oder Tiefpunkt?`),
         example(dir, family, g),
       ];
     }
+    const zs = g.pieces.map(zeroOf).filter((z) => z !== null).map((z) => `${fmt(z)} s`);
     return [
-      L(`${V} = −${DPHI}, so the voltage tells you the slope of the flux graph: where ${V} is positive, ${PHI} decreases; where ${V} is negative, ${PHI} increases; where ${V} = 0, ${PHI} is constant. The voltage does not tell you the value of ${PHI}.`,
-        `${V} = −${DPHI}, also sagt dir die Spannung die Steigung des Flussgraphen: Wo ${V} positiv ist, nimmt ${PHI} ab; wo ${V} negativ ist, nimmt ${PHI} zu; wo ${V} = 0 ist, ist ${PHI} konstant. Den Wert von ${PHI} sagt dir die Spannung nicht.`),
-      L(`The flux starts at ${fmt(phi0)} mWb. In a time span, it changes by minus the area under the voltage graph (area above the axis counts positive, below negative).`,
-        `Der Fluss beginnt bei ${fmt(phi0)} mWb. In einer Zeitspanne ändert er sich um minus die Fläche unter dem Spannungsgraphen (Fläche über der Achse zählt positiv, darunter negativ).`),
-      RULE.v2phi[family](),
+      L(`The voltage graph has ${n} parts: ${partsOf(g)}. In each, is ${V} positive, negative or zero? That tells you whether ${PHI} falls, rises or stays constant there, but not its value.`,
+        `Der Spannungsgraph hat ${n} Teile: ${partsOf(g)}. Ist ${V} in jedem davon positiv, negativ oder null? Das sagt dir, ob ${PHI} dort sinkt, steigt oder konstant bleibt, aber nicht seinen Wert.`),
+      L(`${DPHI} = −${V}: starting at ${fmt(phi0)} mWb, in each part ${PHI} changes by minus the area under the voltage graph (area above the axis counts positive, below negative).`,
+        `${DPHI} = −${V}: Ausgehend von ${fmt(phi0)} mWb ändert sich ${PHI} in jedem Teil um minus die Fläche unter dem Spannungsgraphen (Fläche über der Achse zählt positiv, darunter negativ).`),
+      family === 'lin'
+        ? L(`Here ${V} is constant in each part, so the flux graph is a straight line there. ${kinks.length ? `Where ${V} jumps, at ${listOf(kinks)}, the flux graph has a kink, not a jump.` : ''}`,
+          `Hier ist ${V} in jedem Teil konstant, also ist der Flussgraph dort eine Gerade. ${kinks.length ? `Wo ${V} springt, bei ${listOf(kinks)}, hat der Flussgraph einen Knick, keinen Sprung.` : ''}`).trim()
+        : L(`Where ${V} is a sloping line here, the flux graph is curved, without kinks. ${zs.length ? `${V} crosses zero at ${listOf(zs)}: there ${PHI} has a peak or a valley.` : `${V} does not cross zero inside a part.`}`,
+          `Wo ${V} hier eine schräge Gerade ist, ist der Flussgraph gekrümmt, ohne Knicke. ${zs.length ? `${V} geht bei ${listOf(zs)} durch null: Dort hat ${PHI} einen Hoch- oder Tiefpunkt.` : `${V} geht innerhalb eines Teils nicht durch null.`}`),
       example(dir, family, g),
     ];
   }
@@ -293,8 +314,9 @@
       text: L('<p>The graph shows the magnetic flux through a conducting loop. How large is the induced voltage at the two times?</p>', '<p>Der Graph zeigt den magnetischen Fluss durch eine Leiterschleife. Wie gross ist die induzierte Spannung zu den beiden Zeiten?</p>'),
       figs: one('flux', fluxGraph(g)), questions: qs,
       hints: graphHints('phi2v', family, g).slice(0, 2).concat(family === 'lin'
-        ? [L(`Read off the slope with a triangle: ${DPHI} = Δ${PHI}/Δ<i>t</i>.`, `Lies die Steigung mit einem Dreieck ab: ${DPHI} = Δ${PHI}/Δ<i>t</i>.`)]
-        : [L('Draw the tangent at that time and read off its slope.', 'Zeichne die Tangente zu dieser Zeit und lies ihre Steigung ab.')]),
+        ? [L(`${at.map(({ t, i }, n) => `(${'ab'[n]}) ${fmt(t)} s lies in the part ${when(ps[i])}`).join(', ')}: read off how much ${PHI} changes over each whole part and divide by its duration, ${DPHI} = Δ${PHI}/Δ<i>t</i>.`,
+          `${at.map(({ t, i }, n) => `(${'ab'[n]}) ${fmt(t)} s liegt im Teil ${when(ps[i])}`).join(', ')}: Lies ab, um wie viel sich ${PHI} über den ganzen Teil ändert, und teile durch seine Dauer, ${DPHI} = Δ${PHI}/Δ<i>t</i>.`)]
+        : [L(`Draw the tangent to the flux graph at ${listOf(at.map(({ t }) => `${fmt(t)} s`))} and read off its slope there, as Δ${PHI}/Δ<i>t</i> along the tangent.`, `Zeichne die Tangente an den Flussgraphen bei ${listOf(at.map(({ t }) => `${fmt(t)} s`))} und lies dort ihre Steigung ab, als Δ${PHI}/Δ<i>t</i> längs der Tangente.`)]),
       solution: graphSolution('phi2v', g).concat(hows), solFig: solGraphs(g), g, p: { ...keyOf(g), at: at.map((x) => x.t) },
     };
   }
@@ -332,8 +354,8 @@
         choice('e', L('(b) the flux at <i>t</i> = 8 s', '(b) der Fluss bei <i>t</i> = 8 s'), explained(q2, WHYD, how2).map((o) => nudged(o, o.tag === 'sign' && NUDGE.signD))),
       ],
       hints: [graphHints('v2phi', family, g, phi0)[0], graphHints('v2phi', family, g, phi0)[1],
-        family === 'lin' ? L('Where the voltage is constant, the area is a rectangle: voltage × time (1 mV · 1 s = 1 mWb).', 'Wo die Spannung konstant ist, ist die Fläche ein Rechteck: Spannung × Zeit (1 mV · 1 s = 1 mWb).')
-          : L('Where the voltage is a sloping line, the area is a trapezoid: the average of the two voltages × the time (1 mV · 1 s = 1 mWb).', 'Wo die Spannung eine schräge Gerade ist, ist die Fläche ein Trapez: der Mittelwert der beiden Spannungen × die Zeit (1 mV · 1 s = 1 mWb).')],
+        L(`(a) ${cap(between(a, b))} the area under the voltage graph is made of ${listOf(inside.map((p) => (curved(p) ? `a trapezoid from ${num(neg(p.d0))} to ${num(neg(p.d1))} mV, ${fmt(p.t1 - p.t0)} s wide` : `a rectangle ${num(neg(p.d0))} mV high, ${fmt(p.t1 - p.t0)} s wide`)))} (1 mV · 1 s = 1 mWb). (b) For the end value, take the whole area from 0 to 8 s and start from ${fmt(phi0)} mWb.`,
+          `(a) ${cap(between(a, b))} besteht die Fläche unter dem Spannungsgraphen aus ${listOf(inside.map((p) => (curved(p) ? `einem Trapez von ${num(neg(p.d0))} bis ${num(neg(p.d1))} mV, ${fmt(p.t1 - p.t0)} s breit` : `einem Rechteck, ${num(neg(p.d0))} mV hoch, ${fmt(p.t1 - p.t0)} s breit`)))} (1 mV · 1 s = 1 mWb). (b) Für den Endwert nimm die ganze Fläche von 0 bis 8 s und geh von ${fmt(phi0)} mWb aus.`)],
       solution: [how1, how2].concat(graphSolution('v2phi', g, phi0)), solFig: solGraphs(g), g, phi0, p: { ...keyOf(g), a, b },
     };
   }
@@ -521,10 +543,13 @@
         `Während der nächsten ${fmt(L0.t2 - L0.t1)} s ändert sich die Fläche im Feld nicht: ${PHI} ist konstant und ${Vi()} = 0. Dann ${wide ? 'verlässt die Schleife das Feld' : 'bewegt sich die Schleife weiter'}, und der Fluss sinkt in ${fmt(L0.m)} s auf 0: ${Vi()} = +${fmt(L0.V)} mV.`),
     ];
   }
-  const loopHints = () => [
-    L(`The flux through the loop is ${PHI} = <i>B</i> · <i>A</i>, where <i>A</i> is the part of the loop inside the field.`, `Der Fluss durch die Schleife ist ${PHI} = <i>B</i> · <i>A</i>, wobei <i>A</i> der Teil der Schleife im Feld ist.`),
-    L('While the loop moves into the field, the area inside grows steadily; while it leaves, the area shrinks steadily.', 'Während die Schleife ins Feld fährt, wächst die Fläche im Feld gleichmässig; während sie es verlässt, nimmt sie gleichmässig ab.'),
-    L(`While the area in the field does not change, ${PHI} is constant, and no voltage is induced. Compare the side of the loop with the width of the field.`, `Solange sich die Fläche im Feld nicht ändert, ist ${PHI} konstant, und es wird keine Spannung induziert. Vergleiche die Seite der Schleife mit der Breite des Feldes.`),
+  const loopHints = (L0) => [
+    L(`The loop has sides of ${fmt(L0.s)} cm, the field region is ${fmt(L0.w)} cm wide, and the loop moves at ${fmt(L0.v)} cm/s, its front edge starting ${fmt(L0.d)} cm before the field. Which is wider, the loop or the field region?`,
+      `Die Schleife hat ${fmt(L0.s)} cm Seitenlänge, das Feldgebiet ist ${fmt(L0.w)} cm breit, und die Schleife fährt mit ${fmt(L0.v)} cm/s, ihre vordere Kante ${fmt(L0.d)} cm vor dem Feld startend. Was ist breiter, die Schleife oder das Feldgebiet?`),
+    L(`The flux is ${PHI} = <i>B</i> · <i>A</i>, with <i>A</i> the part of the loop inside the field, and ${Vi()} = −${DPHI}. While an edge crosses into or out of the field, <i>A</i> changes by <i>s</i> · <i>v</i> each second (in m² with <i>s</i> and <i>v</i> in m and m/s); while <i>A</i> stays the same, no voltage is induced.`,
+      `Der Fluss ist ${PHI} = <i>B</i> · <i>A</i>, mit <i>A</i> dem Teil der Schleife im Feld, und ${Vi()} = −${DPHI}. Während eine Kante ins Feld hinein- oder aus ihm hinausfährt, ändert sich <i>A</i> jede Sekunde um <i>s</i> · <i>v</i> (in m² mit <i>s</i> und <i>v</i> in m und m/s); solange <i>A</i> gleich bleibt, wird keine Spannung induziert.`),
+    L(`First the times: the front edge reaches the field after ${fmt(L0.t0)} s. From then on, when does the area in the field stop growing, and when does it start to shrink?`,
+      `Zuerst die Zeiten: Die vordere Kante erreicht das Feld nach ${fmt(L0.t0)} s. Wann hört die Fläche im Feld danach auf zu wachsen, und wann beginnt sie zu schrumpfen?`),
   ];
   const WHYL = {
     width: () => L('The flux stays constant only while the whole loop is inside the field, and the loop needs time to get in and out.', 'Der Fluss bleibt nur konstant, solange die ganze Schleife im Feld ist, und die Schleife braucht Zeit, um hinein- und hinauszufahren.'),
@@ -566,7 +591,7 @@
       const L0 = loopSetup(r, variant), g = loopGraph(L0), pic = ['loop', { s: L0.s, w: L0.w, d: L0.d, v: L0.v, B: L0.B }];
       const base = {
         kind: 'loop', title: L('A loop moves through a field', 'Eine Schleife fährt durch ein Feld'), text: loopText(L0), figs: '', pic,
-        hints: loopHints(), solution: loopExplain(L0), solFig: solGraphs(g), g, loop: L0, p: { ...L0 },
+        hints: loopHints(L0), solution: loopExplain(L0), solFig: solGraphs(g), g, loop: L0, p: { ...L0 },
       };
       if (variant !== 'num') {
         const o = loopOptions(r, L0, g);
@@ -630,7 +655,12 @@
         choice('force', L('(b) The ring is', '(b) Der Ring wird'), words(r, [[L('pushed away from the magnet', 'vom Magneten weggestossen'), move === 'toward', why], [L('pulled towards the magnet', 'zum Magneten hingezogen'), move === 'away', why], [L('neither pushed nor pulled', 'weder gestossen noch gezogen'), move === 'still', why]])),
         choice('dir', L('(c) Seen from the magnet, the current in the ring flows', '(c) Vom Magneten aus gesehen fliesst der Strom im Ring'), words(r, [[L('clockwise', 'im Uhrzeigersinn'), dir === 'cw' && face !== null, full], [L('anticlockwise', 'im Gegenuhrzeigersinn'), dir === 'acw' && face !== null, full], [L('not at all', 'gar nicht'), face === null, full]])),
       ],
-      hints: [L('Does the flux through the ring change? Does it increase or decrease?', 'Ändert sich der Fluss durch den Ring? Nimmt er zu oder ab?'), LENZ() + ' ' + L('Magnet and ring that approach each other repel, ones that move apart attract; only their motion relative to each other counts.', 'Magnet und Ring, die sich einander nähern, stossen sich ab; solche, die sich voneinander entfernen, ziehen sich an. Es zählt nur ihre Bewegung relativ zueinander.'), RIGHTHAND()],
+      hints: [
+        L(`The ${poleName(pole)} faces the ring, and ${{ rest: 'nothing moves', together: 'magnet and ring move together', magnet: `the magnet moves ${move === 'toward' ? 'towards' : 'away from'} the ring`, ring: `the ring moves ${move === 'toward' ? 'towards' : 'away from'} the magnet` }[who]}. Does the distance between them change, and so does the flux through the ring increase, decrease or stay the same?`,
+          `Der ${poleName(pole)} zeigt zum Ring, und ${{ rest: 'nichts bewegt sich', together: 'Magnet und Ring bewegen sich zusammen', magnet: `der Magnet bewegt sich ${move === 'toward' ? 'auf den Ring zu' : 'vom Ring weg'}`, ring: `der Ring bewegt sich ${move === 'toward' ? 'auf den Magneten zu' : 'vom Magneten weg'}` }[who]}. Ändert sich der Abstand zwischen ihnen, und nimmt also der Fluss durch den Ring zu, ab, oder bleibt er gleich?`),
+        LENZ() + ' ' + L(`If a current flows, the side of the ring facing the magnet acts as a pole: to oppose this change, must it push the magnet’s ${poleName(pole)} away or hold it back? Like poles repel, unlike poles attract.`, `Fliesst ein Strom, wirkt die Seite des Rings zum Magneten als Pol: Muss er, um dieser Änderung entgegenzuwirken, den ${poleName(pole)} des Magneten wegstossen oder zurückhalten? Gleichnamige Pole stossen sich ab, ungleichnamige ziehen sich an.`),
+        L(`(c) ${RIGHTHAND()} Seen from the magnet, you look at the side of the ring facing it.`, `(c) ${RIGHTHAND()} Vom Magneten aus siehst du auf die Seite des Rings, die zu ihm zeigt.`),
+      ],
       solution: [full], p: { pole, move, who },
     };
   }
@@ -661,7 +691,12 @@
         choice('ind', L("(a) Inside the loop, the field of the induced current points", '(a) Innerhalb der Schleife zeigt das Feld des induzierten Stroms'), words(r, [[cap(fieldName(true)), indInto, why], [cap(fieldName(false)), !indInto, why]])),
         choice('dir', L('(b) As seen in the figure, the induced current flows', '(b) Wie in der Abbildung gesehen fliesst der induzierte Strom'), words(r, [[L('clockwise', 'im Uhrzeigersinn'), dir === 'cw', why + turn], [L('anticlockwise', 'im Gegenuhrzeigersinn'), dir === 'acw', why + turn]])),
       ],
-      hints: [L('Does the flux through the loop increase or decrease?', 'Nimmt der Fluss durch die Schleife zu oder ab?'), LENZ() + ' ' + L("If the flux increases, the induced field points against the outer field; if it decreases, along it.", 'Nimmt der Fluss zu, zeigt das induzierte Feld gegen das äussere Feld; nimmt er ab, in seine Richtung.'), L('Curl the fingers of your right hand in the direction of the current: your thumb shows the field inside the loop.', 'Krümme die Finger der rechten Hand in Stromrichtung: Der Daumen zeigt das Feld innerhalb der Schleife.')],
+      hints: [
+        L(`The field points ${fieldName(into)}, and ${{ up: 'it gets stronger', down: 'it gets weaker', out: 'the loop is pulled out of it', in: 'the loop is pushed into it', shrink: 'the area of the loop gets smaller', off: 'it is switched off' }[how]}: does the flux through the loop increase or decrease?`,
+          `Das Feld zeigt ${fieldName(into)}, und ${{ up: 'es wird stärker', down: 'es wird schwächer', out: 'die Schleife wird aus ihm herausgezogen', in: 'die Schleife wird in es hineingeschoben', shrink: 'die Fläche der Schleife wird kleiner', off: 'es wird ausgeschaltet' }[how]}: Nimmt der Fluss durch die Schleife zu oder ab?`),
+        LENZ() + ' ' + L(`(a) If the flux increases, the induced field inside the loop points against the outer field (${fieldName(into)}); if it decreases, along it.`, `(a) Nimmt der Fluss zu, zeigt das induzierte Feld innerhalb der Schleife gegen das äussere Feld (${fieldName(into)}); nimmt er ab, in seine Richtung.`),
+        L('(b) Curl the fingers of your right hand in the direction of the current: your thumb shows the field inside the loop. Which way must the fingers turn, as seen in the figure, for the field from (a)?', '(b) Krümme die Finger der rechten Hand in Stromrichtung: Der Daumen zeigt das Feld innerhalb der Schleife. In welche Richtung müssen die Finger, wie in der Abbildung gesehen, drehen für das Feld aus (a)?'),
+      ],
       solution: [why + turn], p: { into, how },
     };
   }
@@ -714,9 +749,12 @@
           o3(L('towards the stronger field', 'zum stärkeren Feld hin'), force === 'stronger', wrongForce('stronger'), nudgeForce('stronger')), o3(L('towards the weaker field', 'zum schwächeren Feld hin'), force === 'weaker', wrongForce('weaker'), nudgeForce('weaker')),
           o3(L('nowhere: there is no force', 'nirgends hin: Es wirkt keine Kraft'), force === null, wrongForce(null), nudgeForce(null))])),
       ],
-      hints: [L('Where is the field stronger? Does the loop move to a stronger field, to a weaker one, or does the field stay equally strong along its path? So does the flux through the loop increase, decrease or stay the same?', 'Wo ist das Feld stärker? Bewegt sich die Schleife zu einem stärkeren Feld, zu einem schwächeren, oder bleibt das Feld entlang ihres Weges gleich stark? Nimmt also der Fluss durch die Schleife zu, ab, oder bleibt er gleich?'),
-        LENZ() + ' ' + L('If the flux increases, the induced field points against the outer field; if it decreases, along it.', 'Nimmt der Fluss zu, zeigt das induzierte Feld gegen das äussere Feld; nimmt er ab, in seine Richtung.'),
-        L('Curl the fingers of your right hand in the direction of the current: your thumb shows the field inside the loop. The force on the induced current opposes the motion of the loop.', 'Krümme die Finger der rechten Hand in Stromrichtung: Der Daumen zeigt das Feld innerhalb der Schleife. Die Kraft auf den induzierten Strom wirkt der Bewegung der Schleife entgegen.')],
+      hints: [
+        L(`The field (${fieldName(into)}) is stronger ${where}, and the loop moves ${moveName}: towards the stronger field, towards the weaker one, or along a line where the field is equally strong? So does the flux through the loop increase, decrease or stay the same?`,
+          `Das Feld (${fieldName(into)}) ist ${where} stärker, und die Schleife bewegt sich ${moveName}: zum stärkeren Feld hin, zum schwächeren, oder entlang einer Linie, wo das Feld gleich stark ist? Nimmt also der Fluss durch die Schleife zu, ab, oder bleibt er gleich?`),
+        LENZ() + ' ' + L(`If the flux increases, the induced field inside the loop points against the outer field (${fieldName(into)}); if it decreases, along it.`, `Nimmt der Fluss zu, zeigt das induzierte Feld innerhalb der Schleife gegen das äussere Feld (${fieldName(into)}); nimmt er ab, in seine Richtung.`),
+        L(`(a) Curl the fingers of your right hand in the direction of the current: your thumb shows the field inside the loop. (b) If a current flows, the force on it opposes the motion ${moveName}: which side of the field is that, the stronger or the weaker?`, `(a) Krümme die Finger der rechten Hand in Stromrichtung: Der Daumen zeigt das Feld innerhalb der Schleife. (b) Fliesst ein Strom, wirkt die Kraft auf ihn der Bewegung ${moveName} entgegen: Welche Seite des Feldes ist das, die stärkere oder die schwächere?`),
+      ],
       solution: [why + turn + brake], p: { into, strong, move },
     };
   }

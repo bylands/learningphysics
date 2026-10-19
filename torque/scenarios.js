@@ -148,6 +148,46 @@
   }
 
   const plateWhat = (k) => L(`torque of $F_${k}$`, `Drehmoment von $F_${k}$`);
+  // Hints for the plates: the forces of this plate, M = F · d for each, the lever arm of the first
+  // force along the grid read off (not the torque), and (oblique) the components of the first
+  // oblique force with their lever arms; rank: what to rank by
+  const AXIS_WORD = { '1,0': () => L('to the right', 'nach rechts'), '-1,0': () => L('to the left', 'nach links'), '0,1': () => L('up', 'nach oben'), '0,-1': () => L('down', 'nach unten') };
+  const dirWord = (f) => (isAxis(f) ? AXIS_WORD[f.u.join()]() : L('at a slant', 'schräg'));
+  // where a force acts, in squares from D: "3 right of and 2 above D"
+  const sqs = (n) => `${Math.abs(n)} ${Math.abs(n) === 1 ? 'square' : 'squares'}`;
+  const whereWord = (P) => [
+    P[0] ? L(`${sqs(P[0])} ${P[0] > 0 ? 'right' : 'left'} of D`, `${Math.abs(P[0])} Kästchen ${P[0] > 0 ? 'rechts' : 'links'} von D`) : '',
+    P[1] ? L(`${sqs(P[1])} ${P[1] > 0 ? 'above' : 'below'} D`, `${Math.abs(P[1])} Kästchen ${P[1] > 0 ? 'über' : 'unter'} D`) : '',
+  ].filter(Boolean).join(L(' and ', ' und '));
+  function plateHints(p, oblique, rank) {
+    const fs = p.forces, n = fs.length, list = fs.map((f, i) => `$F_${i + 1} = ${tq(f.F, 'N')}$ ${dirWord(f)}`).join(', ');
+    const top = Math.max(...fs.map((f) => f.F)), big = fs.map((f, i) => (f.F === top ? `$F_${i + 1}$` : null)).filter(Boolean);
+    const first = [
+      L(`The ${n === 3 ? 'three' : n === 4 ? 'four' : 'five'} forces about D: ${list}. Extend each arrow to its line of action: does any of them pass through D? Which way would each force alone turn the plate pinned at D?`,
+        `Die ${n === 3 ? 'drei' : n === 4 ? 'vier' : 'fünf'} Kräfte bezüglich D: ${list}. Verlängere jeden Pfeil zu seiner Wirkungslinie: Geht eine davon durch D? In welche Richtung würde jede Kraft allein die in D festgesteckte Platte drehen?`) +
+        (rank ? L(` Rank by the torques, not by the forces: ${big.length > 1 ? `the largest forces here, ${big.join(L(' and ', ' und '))}, need not have the largest torques` : `the largest force here, ${big[0]}, need not have the largest torque`}.`, ` Ordne nach den Drehmomenten, nicht nach den Kräften: ${big.length > 1 ? `Die grössten Kräfte hier, ${big.join(' und ')}, haben nicht unbedingt die grössten Drehmomente` : `Die grösste Kraft hier, ${big[0]}, hat nicht unbedingt das grösste Drehmoment`}.`) : ''),
+      L(`For each force ${m$('M = F\\cdot d')}: the force as given, in N, times its lever arm d, the distance from D to the line of action (not to the point where the force acts), read off the grid and taken in metres.`,
+        `Für jede Kraft gilt ${m$('M = F\\cdot d')}: die gegebene Kraft in N mal ihr Hebelarm d, der Abstand von D zur Wirkungslinie (nicht zum Angriffspunkt), am Gitter abgelesen und in Metern genommen.`),
+    ];
+    // the first force along the grid that turns the plate: its lever arm read off the grid
+    const k = fs.findIndex((f) => isAxis(f) && torqueOf(f) !== 0);
+    if (k >= 0) {
+      const f = fs[k], d = armOf(f).d, vert = f.u[0] === 0, far = exact(Math.hypot(...f.P) * UNIT);
+      first.push(L(`$F_${k + 1}$ points ${dirWord(f)} and acts ${whereWord(f.P)}: its line of action is the ${vert ? 'vertical' : 'horizontal'} line ${sqs(d / UNIT)} ${vert ? (f.P[0] > 0 ? 'right of' : 'left of') : (f.P[1] > 0 ? 'above' : 'below')} D. So $d_${k + 1} = ${tq(d, 'cm')} = ${tq(d / 100, 'm')}$${Math.abs(far - d) > 0.05 ? `, not the ${q(far, 'cm', 1)} from D to its point of application` : ''}. The other forces along the grid work the same way.`,
+        `$F_${k + 1}$ zeigt ${dirWord(f)} und greift ${whereWord(f.P)} an: Ihre Wirkungslinie ist die ${vert ? 'senkrechte' : 'waagrechte'} Gerade ${d / UNIT} Kästchen ${vert ? (f.P[0] > 0 ? 'rechts von' : 'links von') : (f.P[1] > 0 ? 'über' : 'unter')} D. Also ist $d_${k + 1} = ${tq(d, 'cm')} = ${tq(d / 100, 'm')}$${Math.abs(far - d) > 0.05 ? `, nicht die ${q(far, 'cm', 1)} von D bis zu ihrem Angriffspunkt` : ''}. Die anderen Kräfte entlang des Gitters gehen gleich.`));
+    } else {
+      first.push(L('Each lever arm is the perpendicular from D onto the extended arrow: it meets the line of action at a right angle and is shorter than the distance from D to where the force acts.',
+        'Jeder Hebelarm ist das Lot von D auf den verlängerten Pfeil: Er trifft die Wirkungslinie rechtwinklig und ist kürzer als der Abstand von D zum Angriffspunkt.'));
+    }
+    if (oblique) {
+      const j = fs.findIndex((f) => !isAxis(f)), f = fs[j];
+      const Fx = Math.abs(exact(f.F * f.u[0])), Fy = Math.abs(exact(f.F * f.u[1])), dx = Math.abs(f.P[1]) * UNIT, dy = Math.abs(f.P[0]) * UNIT;
+      const arm = (d) => (d ? `${q(d, 'cm')}` : L('0 cm (its line passes through D)', '0 cm (ihre Gerade geht durch D)'));
+      first.push(L(`$F_${j + 1}$ is oblique (steepness 3 : 4): split it into ${q(Fx, 'N')} horizontally and ${q(Fy, 'N')} vertically, both acting ${whereWord(f.P)}. The horizontal part has the lever arm ${arm(dx)}, the vertical part ${arm(dy)}. Do the two parts turn the plate the same way or opposite ways?`,
+        `$F_${j + 1}$ ist schräg (Steigung 3 : 4): Zerlege sie in ${q(Fx, 'N')} waagrecht und ${q(Fy, 'N')} senkrecht, beide greifen ${whereWord(f.P)} an. Der waagrechte Teil hat den Hebelarm ${arm(dx)}, der senkrechte ${arm(dy)}. Drehen die beiden Teile die Platte gleich oder gegeneinander?`));
+    }
+    return first;
+  }
   function plate(id, difficulty, n, oblique) {
     return {
       id, family: 'torque', difficulty,
@@ -165,16 +205,7 @@
       text: () => L(`A flat plate can turn about a fixed axis through D, perpendicular to the plate. ${n} forces act on it, drawn on a grid of 10 cm squares. Find the torque of each force about D and the sense in which it would turn the plate. Then rank the torques by size.`,
         `Eine flache Platte ist um eine feste Achse durch D drehbar, die senkrecht zur Platte steht. ${n === 3 ? 'Drei' : n === 4 ? 'Vier' : 'Fünf'} Kräfte wirken auf sie, gezeichnet auf einem Gitter aus Kästchen von 10 cm. Bestimme das Drehmoment jeder Kraft bezüglich D und den Drehsinn, in dem sie die Platte drehen würde. Ordne die Drehmomente dann nach ihrem Betrag.`),
       figure: plateFigure,
-      hints: (p) => [
-        L('The torque of a force is M = F · d, where the lever arm d is the distance from the axis D to the line of action of the force (not to the point where it acts).',
-          'Das Drehmoment einer Kraft ist M = F · d; der Hebelarm d ist der Abstand der Drehachse D von der Wirkungslinie der Kraft (nicht vom Angriffspunkt).'),
-        L('Extend each arrow to a line: the line of action. For a force along the grid, the lever arm is the number of squares from D to that line (times 10 cm).',
-          'Verlängere jeden Pfeil zu einer Geraden, der Wirkungslinie. Bei einer Kraft entlang des Gitters ist der Hebelarm die Anzahl Kästchen von D bis zu dieser Geraden (mal 10 cm).'),
-        ...(oblique ? [L('An oblique force has the steepness 3 : 4 or 4 : 3. Split it into a horizontal and a vertical component (0.6 F and 0.8 F). Each has a lever arm you can read off the grid; their torques add, or subtract if they turn opposite ways.',
-          'Eine schräge Kraft hat die Steigung 3 : 4 oder 4 : 3. Zerlege sie in eine horizontale und eine vertikale Komponente (0.6 F und 0.8 F). Jede hat einen Hebelarm, den du am Gitter ablesen kannst; ihre Drehmomente addieren sich, oder sie subtrahieren sich, wenn sie gegeneinander drehen.')] : []),
-        L(`Sense of rotation: imagine the plate pinned at D and pushed only by this force. If the line of action passes through D, the torque is zero.`,
-          'Drehsinn: Stell dir vor, die Platte sei in D festgesteckt und nur diese Kraft wirke. Geht die Wirkungslinie durch D, ist das Drehmoment null.'),
-      ],
+      hints: (p) => plateHints(p, oblique, false),
       steps(p, v) {
         const out = [step(L('Torque', 'Drehmoment'),
           `<p>${L('The torque of a force about D is the force times its lever arm, the distance from D to the line of action:', 'Das Drehmoment einer Kraft bezüglich D ist die Kraft mal ihr Hebelarm, der Abstand von D zur Wirkungslinie:')}</p>$$M = F\\cdot d$$` +
@@ -252,8 +283,7 @@
       title: () => L('Ranking torques', 'Drehmomente ordnen'),
       text: () => L(`A flat plate can turn about a fixed axis through D, perpendicular to the plate. ${n === 3 ? 'Three' : 'Four'} forces act on it, drawn on a grid of 10 cm squares. Rank their torques about D by size.`,
         `Eine flache Platte ist um eine feste Achse durch D drehbar, die senkrecht zur Platte steht. ${n === 3 ? 'Drei' : 'Vier'} Kräfte wirken auf sie, gezeichnet auf einem Gitter aus Kästchen von 10 cm. Ordne ihre Drehmomente bezüglich D nach dem Betrag.`),
-      hints: (p) => [...base.hints(p).slice(0, -1),
-        L('Work out M = F · d for each force. The largest force need not have the largest torque.', 'Bestimme M = F · d für jede Kraft. Die grösste Kraft hat nicht unbedingt das grösste Drehmoment.')],
+      hints: (p) => plateHints(p, oblique, true),
     };
   }
 
@@ -285,9 +315,11 @@
       `</p><p>${p.forces.map((f, i) => `$M_${i + 1} = ${f.F}\\,\\mathrm{N}\\cdot ${tq(student(p, i) / 100, 'm', 3)} = ${tq((f.F * student(p, i)) / 100, 'Nm', 2)}$`).join(', ')}.</p><p>` +
       L('One of the lever arms is drawn wrong. Which?', 'Einer der Hebelarme ist falsch gezeichnet. Welcher?'),
     figure: plateFigure,
-    hints: () => [
-      L('The lever arm is the distance from D to the line of action: the perpendicular from D onto the extended arrow.', 'Der Hebelarm ist der Abstand von D zur Wirkungslinie: das Lot von D auf den verlängerten Pfeil.'),
-      L('A lever arm meets the line of action at a right angle. It need not end where the force acts.', 'Ein Hebelarm trifft die Wirkungslinie rechtwinklig. Er muss nicht dort enden, wo die Kraft angreift.'),
+    hints: (p) => [
+      L(`Extend each arrow to its line of action: ${p.forces.map((f, i) => `$F_${i + 1}$ points ${dirWord(f)}, so its line of action is ${f.u[0] === 0 ? 'vertical' : 'horizontal'}`).join('; ')}.`,
+        `Verlängere jeden Pfeil zu seiner Wirkungslinie: ${p.forces.map((f, i) => `$F_${i + 1}$ zeigt ${dirWord(f)}, ihre Wirkungslinie ist also ${f.u[0] === 0 ? 'senkrecht' : 'waagrecht'}`).join('; ')}.`),
+      L(`A lever arm runs from D to the line of action and meets it at a right angle: to a vertical line of action it runs horizontally, to a horizontal one vertically. It need not end where the force acts. Check $d_1$, $d_2$ and $d_3$ in the sketch against their lines of action.`,
+        `Ein Hebelarm führt von D zur Wirkungslinie und trifft sie rechtwinklig: zu einer senkrechten Wirkungslinie verläuft er waagrecht, zu einer waagrechten senkrecht. Er muss nicht dort enden, wo die Kraft angreift. Prüfe $d_1$, $d_2$ und $d_3$ in der Skizze an ihren Wirkungslinien.`),
     ],
     steps(p, v) {
       const out = [step(L('The lever arm', 'Der Hebelarm'),
@@ -362,9 +394,14 @@
       return P.svg();
     },
     hints: (p) => [
-      L('Each weight turns the beam about the support: the left one counterclockwise, the right one clockwise. In balance the two torques are equal.', 'Jede Gewichtskraft dreht den Balken um die Stütze: die linke im Gegenuhrzeigersinn, die rechte im Uhrzeigersinn. Im Gleichgewicht sind die beiden Drehmomente gleich gross.'),
-      L('Torque = weight × lever arm, and the weight is m g. So m₁ g a₁ = m₂ g a₂: g cancels.', 'Drehmoment = Gewichtskraft × Hebelarm, und die Gewichtskraft ist m g. Also m₁ g a₁ = m₂ g a₂: g kürzt sich weg.'),
-      p.find === 'x' ? L('Solve for the unknown arm: x = m₁ a₁ / m₂.', 'Löse nach dem unbekannten Hebelarm auf: x = m₁ a₁ / m₂.') : L('Solve for the unknown mass: m₂ = m₁ a₁ / a₂.', 'Löse nach der unbekannten Masse auf: m₂ = m₁ a₁ / a₂.'),
+      p.find === 'x' ? L(`On the left, ${kg(p.m1)} hangs ${cm(p.a1)} from the support; on the right, ${kg(p.m2)} at the unknown distance x. Which way does each load turn the beam? ${p.m2 > p.m1 ? 'The right load is the heavier one' : 'The right load is the lighter one'}: does it need a longer or a shorter lever arm than ${cm(p.a1)}?`,
+        `Links hängt ${kg(p.m1)} ${cm(p.a1)} von der Stütze entfernt, rechts ${kg(p.m2)} im unbekannten Abstand x. In welche Richtung dreht jede Last den Balken? ${p.m2 > p.m1 ? 'Die rechte Last ist die schwerere' : 'Die rechte Last ist die leichtere'}: Braucht sie einen längeren oder kürzeren Hebelarm als ${cm(p.a1)}?`)
+        : L(`On the left, ${kg(p.m1)} hangs ${cm(p.a1)} from the support; on the right, the unknown mass hangs ${cm(p.a2)} from it. Which way does each load turn the beam? The right lever arm is ${p.a2 > p.a1 ? 'the longer one' : 'the shorter one'}: must its mass be larger or smaller than ${kg(p.m1)}?`,
+          `Links hängt ${kg(p.m1)} ${cm(p.a1)} von der Stütze entfernt, rechts die unbekannte Masse ${cm(p.a2)} von ihr entfernt. In welche Richtung dreht jede Last den Balken? Der rechte Hebelarm ist ${p.a2 > p.a1 ? 'der längere' : 'der kürzere'}: Muss ihre Masse grösser oder kleiner sein als ${kg(p.m1)}?`),
+      L(`Balance of torques about the support: weight times lever arm on the left equals weight times lever arm on the right, ${m$(`m_1\\,g\\,a_1 = m_2\\,g\\,${p.find === 'x' ? 'x' : 'a_2'}`)}. g cancels, so the masses in kg and the arms in cm can go in as they are.`,
+        `Gleichgewicht der Drehmomente bezüglich der Stütze: Gewichtskraft mal Hebelarm links gleich Gewichtskraft mal Hebelarm rechts, ${m$(`m_1\\,g\\,a_1 = m_2\\,g\\,${p.find === 'x' ? 'x' : 'a_2'}`)}. g kürzt sich weg, also können die Massen in kg und die Arme in cm so eingesetzt werden.`),
+      L(`Start with the known side: the left load gives ${m$(`m_1\\,a_1 = ${tq(p.m1 * p.a1, '', 1)}\\,\\mathrm{kg\\,cm}`)}. The right side must give the same.`,
+        `Beginne mit der bekannten Seite: Die linke Last ergibt ${m$(`m_1\\,a_1 = ${tq(p.m1 * p.a1, '', 1)}\\,\\mathrm{kg\\,cm}`)}. Die rechte Seite muss dasselbe ergeben.`),
     ],
     steps(p, v) {
       const law = `m_1\\,g\\,a_1 = m_2\\,g\\,${p.find === 'x' ? 'x' : 'a_2'}`;
@@ -414,9 +451,11 @@
       P.dim(B.top(c), B.top(c + xr), x == null ? svgSym('x') + ' = ?' : cm(x), 14, 'dimline hl');
       return P.svg();
     },
-    hints: () => [
-      L('Both loads on the left turn the beam counterclockwise; the load on the right turns it clockwise.', 'Beide Lasten links drehen den Balken im Gegenuhrzeigersinn, die Last rechts im Uhrzeigersinn.'),
-      L('In balance, the sum of the counterclockwise torques equals the sum of the clockwise ones: m₁ g a₁ + m₂ g a₂ = m₃ g x.', 'Im Gleichgewicht ist die Summe der Drehmomente im Gegenuhrzeigersinn gleich der Summe derjenigen im Uhrzeigersinn: m₁ g a₁ + m₂ g a₂ = m₃ g x.'),
+    hints: (p) => [
+      L(`On the left, ${kg(p.m1)} at ${cm(p.a1)} and ${kg(p.m2)} at ${cm(p.a2)} from the support both turn the beam counterclockwise; ${kg(p.m3)} on the right, at the unknown x, turns it clockwise. Each left load counts with its own lever arm.`,
+        `Links drehen ${kg(p.m1)} bei ${cm(p.a1)} und ${kg(p.m2)} bei ${cm(p.a2)} von der Stütze den Balken beide im Gegenuhrzeigersinn; ${kg(p.m3)} rechts, beim unbekannten x, dreht ihn im Uhrzeigersinn. Jede linke Last zählt mit ihrem eigenen Hebelarm.`),
+      L(`Balance of torques about the support: the sum of the two left torques equals the right one, ${m$('m_1\\,g\\,a_1 + m_2\\,g\\,a_2 = m_3\\,g\\,x')}. g cancels; work out the two products on the left first, in kg·cm, then solve for x.`,
+        `Gleichgewicht der Drehmomente bezüglich der Stütze: Die Summe der beiden linken Drehmomente ist gleich dem rechten, ${m$('m_1\\,g\\,a_1 + m_2\\,g\\,a_2 = m_3\\,g\\,x')}. g kürzt sich weg; berechne zuerst die beiden Produkte links, in kg·cm, und löse dann nach x auf.`),
     ],
     steps: (p, v) => [
       step(L('Balance of torques', 'Gleichgewicht der Drehmomente'),
@@ -466,10 +505,13 @@
       }
       return P.svg();
     },
-    hints: () => [
-      L('The beam’s own weight acts at its middle. It turns the beam the other way than the load.', 'Die Gewichtskraft des Balkens greift in seiner Mitte an. Sie dreht den Balken in die andere Richtung als die Last.'),
-      L('Lever arms are measured from the support: the load’s is the distance from the support to the left end, the beam’s is the distance from the support to the middle.', 'Hebelarme werden von der Stütze aus gemessen: Der der Last ist der Abstand von der Stütze zum linken Ende, der des Balkens der Abstand von der Stütze zur Mitte.'),
-      L('Balance: m g s = m_B g (ℓ/2 − s).', 'Gleichgewicht: m g s = m_B g (ℓ/2 − s).'),
+    hints: (p) => [
+      L(`The beam is ${cm(p.len)} long and rests on the support ${cm(p.s)} from its left end. Where does its own weight act, and on which side of the support is that? Which way does it turn the beam, and which way the load at the left end?`,
+        `Der Balken ist ${cm(p.len)} lang und liegt ${cm(p.s)} von seinem linken Ende entfernt auf der Stütze. Wo greift seine eigene Gewichtskraft an, und auf welcher Seite der Stütze ist das? In welche Richtung dreht sie den Balken, und in welche die Last am linken Ende?`),
+      L(`Balance of torques about the support: ${m$('m\\,g\\cdot s = m_\\mathrm{B}\\,g\\cdot\\left(\\tfrac{\\ell}{2} - s\\right)')}, with the ${p.find === 'm' ? 'beam’s mass given and the load’s wanted' : 'load given and the beam’s mass wanted'}. g cancels; the lever arms are measured from the support.`,
+        `Gleichgewicht der Drehmomente bezüglich der Stütze: ${m$('m\\,g\\cdot s = m_\\mathrm{B}\\,g\\cdot\\left(\\tfrac{\\ell}{2} - s\\right)')}, ${p.find === 'm' ? 'die Masse des Balkens gegeben, die der Last gesucht' : 'die Last gegeben, die Masse des Balkens gesucht'}. g kürzt sich weg; die Hebelarme werden von der Stütze aus gemessen.`),
+      L(`The lever arms: the load at the left end has ${cm(p.s)}; the beam’s weight acts at its middle, ${cm(p.len / 2)} from the left end, so ${cm(p.len / 2 - p.s)} to the right of the support.`,
+        `Die Hebelarme: Die Last am linken Ende hat ${cm(p.s)}; die Gewichtskraft des Balkens greift in seiner Mitte an, ${cm(p.len / 2)} vom linken Ende, also ${cm(p.len / 2 - p.s)} rechts der Stütze.`),
     ],
     steps(p, v) {
       const arm = p.len / 2 - p.s;
@@ -534,9 +576,12 @@
       return P.svg();
     },
     hints: (p) => [
-      L('The beam’s own weight acts at its middle, to the right of the support: it turns the beam clockwise. The load on the left turns it counterclockwise.', 'Die Gewichtskraft des Balkens greift in seiner Mitte an, rechts der Stütze: Sie dreht den Balken im Uhrzeigersinn. Die Last links dreht ihn im Gegenuhrzeigersinn.'),
-      L('Lever arms are measured from the support: the beam’s is ℓ/2 − s, the load’s is the unknown distance x from the support.', 'Hebelarme werden von der Stütze aus gemessen: Der des Balkens ist ℓ/2 − s, der der Last der unbekannte Abstand x von der Stütze.'),
-      L(`Balance: m g x = m_B g (ℓ/2 − s), so x = m_B (ℓ/2 − s) / m.${p.from === 'end' ? ' Then the distance from the left end is s − x.' : ''}`, `Gleichgewicht: m g x = m_B g (ℓ/2 − s), also x = m_B (ℓ/2 − s) / m.${p.from === 'end' ? ' Der Abstand vom linken Ende ist dann s − x.' : ''}`),
+      L(`The beam (${kg(p.mb)}, ${cm(p.len)}) rests on the support ${cm(p.s)} from its left end. Where does its weight act, and which way does it turn the beam? The load of ${kg(p.m)} on the left of the support turns it the other way.`,
+        `Der Balken (${kg(p.mb)}, ${cm(p.len)}) liegt ${cm(p.s)} von seinem linken Ende entfernt auf der Stütze. Wo greift seine Gewichtskraft an, und in welche Richtung dreht sie den Balken? Die Last von ${kg(p.m)} links der Stütze dreht ihn in die andere Richtung.`),
+      L(`Balance of torques about the support: ${m$('m\\,g\\cdot x = m_\\mathrm{B}\\,g\\cdot\\left(\\tfrac{\\ell}{2} - s\\right)')}, with x the load’s distance from the support (its lever arm). g cancels.${p.from === 'end' ? ' The question asks for the distance from the left end, s − x.' : ''}`,
+        `Gleichgewicht der Drehmomente bezüglich der Stütze: ${m$('m\\,g\\cdot x = m_\\mathrm{B}\\,g\\cdot\\left(\\tfrac{\\ell}{2} - s\\right)')}, mit x dem Abstand der Last von der Stütze (ihrem Hebelarm). g kürzt sich weg.${p.from === 'end' ? ' Gefragt ist der Abstand vom linken Ende, s − x.' : ''}`),
+      L(`The beam’s lever arm: its middle is ${cm(p.len / 2)} from the left end, so ${cm(p.len / 2 - p.s)} to the right of the support. The load ${p.m > p.mb ? 'is heavier than the beam: does it need a shorter or a longer arm?' : 'is lighter than the beam: does it need a shorter or a longer arm?'}`,
+        `Der Hebelarm des Balkens: Seine Mitte ist ${cm(p.len / 2)} vom linken Ende entfernt, also ${cm(p.len / 2 - p.s)} rechts der Stütze. Die Last ${p.m > p.mb ? 'ist schwerer als der Balken: Braucht sie einen kürzeren oder längeren Arm?' : 'ist leichter als der Balken: Braucht sie einen kürzeren oder längeren Arm?'}`),
     ],
     steps(p, v) {
       const arm = p.len / 2 - p.s, x = exact((p.mb * arm) / p.m), end = p.from === 'end';
@@ -680,9 +725,12 @@
       return P.svg();
     },
     hints: (p) => [
-      L('Two torques about D: the beam’s weight (at its middle) and the rope force. In balance they are equal.', 'Zwei Drehmomente bezüglich D: das der Gewichtskraft des Balkens (in seiner Mitte) und das der Seilkraft. Im Gleichgewicht sind sie gleich gross.'),
-      L('Only the part of F perpendicular to the beam turns it: F⊥ = F · sin α. Equivalently, the lever arm of F is b · sin α.', 'Nur der Anteil von F senkrecht zum Balken dreht ihn: F⊥ = F · sin α. Gleichwertig: Der Hebelarm von F ist b · sin α.'),
-      L(`Balance: m g · a = F · sin α · b, so F = m g a / (b sin α).${p.alpha === 90 ? '' : ''}`, 'Gleichgewicht: m g · a = F · sin α · b, also F = m g a / (b sin α).'),
+      L(`Two torques about D: the beam’s weight acts at its middle, ${cm(p.a)} left of D; the rope pulls ${cm(p.b)} left of D, at ${q(p.alpha, 'deg', 1)} to the beam. Which way does each turn the beam?`,
+        `Zwei Drehmomente bezüglich D: Die Gewichtskraft des Balkens greift in seiner Mitte an, ${cm(p.a)} links von D; das Seil zieht ${cm(p.b)} links von D, unter ${q(p.alpha, 'deg', 1)} zum Balken. In welche Richtung dreht jede den Balken?`),
+      L(`Balance of torques about D: ${m$('m\\,g\\cdot a = F\\cdot b\\,\\sin\\alpha')}. Only the part of F perpendicular to the beam turns it; equivalently, the lever arm of F is ${m$('b\\,\\sin\\alpha')}, not b itself.`,
+        `Gleichgewicht der Drehmomente bezüglich D: ${m$('m\\,g\\cdot a = F\\cdot b\\,\\sin\\alpha')}. Nur der Anteil von F senkrecht zum Balken dreht ihn; gleichwertig: Der Hebelarm von F ist ${m$('b\\,\\sin\\alpha')}, nicht b selbst.`),
+      L(`Start with the known torque, that of the weight: ${m$(`m\\,g = ${tq(p.m * G, 'N')}`)} with the lever arm ${m$(tq(p.a / 100, 'm'))} gives ${m$(`${tq(p.m * G * p.a / 100, 'Nm')}`)}. The rope’s torque must be as large.`,
+        `Beginne mit dem bekannten Drehmoment, dem der Gewichtskraft: ${m$(`m\\,g = ${tq(p.m * G, 'N')}`)} mit dem Hebelarm ${m$(tq(p.a / 100, 'm'))} ergibt ${m$(`${tq(p.m * G * p.a / 100, 'Nm')}`)}. Das Drehmoment des Seils muss gleich gross sein.`),
     ],
     steps(p, v) {
       const d = p.b * Math.sin(rad(p.alpha));
@@ -748,10 +796,13 @@
         : L(`A uniform beam ${cm(p.len)} long with a mass of ${kg(p.m)} carries a load of ${N(p.F2)} at its right end. At which distance from the left end must it be hung up so that it stays level? How large is the force with which it must be held? Take g = 10 m/s².`,
           `Ein gleichmässiger Balken von ${cm(p.len)} Länge und ${kg(p.m)} Masse trägt an seinem rechten Ende eine Last von ${N(p.F2)}. In welchem Abstand vom linken Ende muss er aufgehängt werden, damit er waagrecht bleibt? Wie gross ist die Kraft, mit der er gehalten werden muss? Rechne mit g = 10 m/s².`)),
       figure: hangFigure,
-      hints: () => [
-        L('Two conditions: the forces balance (the holding force carries everything), and the torques balance about the suspension point.', 'Zwei Bedingungen: Die Kräfte heben sich auf (die Haltekraft trägt alles), und die Drehmomente bezüglich des Aufhängepunkts heben sich auf.'),
-        L('The beam’s weight m g acts at its middle. Choose the left end as the axis: the holding force F_H at x balances the torques of the weight and the loads.', 'Die Gewichtskraft m g des Balkens greift in seiner Mitte an. Wähle das linke Ende als Drehachse: Die Haltekraft F_H bei x hält den Drehmomenten der Gewichtskraft und der Lasten das Gleichgewicht.'),
-        L('About the left end: F_H · x = m g · ℓ/2 + F · ℓ. Solve for x.', 'Bezüglich des linken Endes: F_H · x = m g · ℓ/2 + F · ℓ. Nach x auflösen.'),
+      hints: (p) => [
+        L(`Down: the beam’s weight at its middle, ${cm(p.len / 2)} from the left end, ${two ? `${N(p.F1)} at the left end ` : ''}and ${N(p.F2)} at the right end. Up: only the holding force, at the unknown x. Two conditions hold: the forces balance, and the torques balance.`,
+          `Nach unten: die Gewichtskraft des Balkens in seiner Mitte, ${cm(p.len / 2)} vom linken Ende, ${two ? `${N(p.F1)} am linken Ende ` : ''}und ${N(p.F2)} am rechten Ende. Nach oben: nur die Haltekraft beim unbekannten x. Zwei Bedingungen gelten: Die Kräfte heben sich auf, und die Drehmomente heben sich auf.`),
+        L(`Forces: the holding force carries the beam’s weight and ${two ? 'both loads' : 'the load'}. Torques about the left end (${two ? 'the left load has no lever arm there' : 'the holding force is then the only one turning it one way'}): ${m$(`${T('H')}\\cdot x = m\\,g\\cdot\\tfrac{\\ell}{2} + ${two ? 'F_2' : 'F'}\\cdot\\ell`)}.`,
+          `Kräfte: Die Haltekraft trägt die Gewichtskraft des Balkens und ${two ? 'beide Lasten' : 'die Last'}. Drehmomente bezüglich des linken Endes (${two ? 'die linke Last hat dort keinen Hebelarm' : 'die Haltekraft dreht dann als einzige in die eine Richtung'}): ${m$(`${T('H')}\\cdot x = m\\,g\\cdot\\tfrac{\\ell}{2} + ${two ? 'F_2' : 'F'}\\cdot\\ell`)}.`),
+        L(`First the beam’s weight: ${m$(`m\\,g = ${tq(p.m * G, 'N')}`)}. With it, the forces give ${m$(T('H'))}, and then the torques give x.`,
+          `Zuerst die Gewichtskraft des Balkens: ${m$(`m\\,g = ${tq(p.m * G, 'N')}`)}. Damit ergeben die Kräfte ${m$(T('H'))}, und dann die Drehmomente x.`),
       ],
       steps(p, v) {
         const W = p.m * G;

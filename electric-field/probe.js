@@ -182,10 +182,12 @@
               nudge: `${L(`Measure the field at ${p.name} with the probe: is it zero there?`, `Miss das Feld in ${p.name} mit der Sonde: Ist es dort null?`)} ${NUDGEZ[p.tag]()}` };
           })),
         ],
+        // the hints: where to measure in this figure (A and B, then the four points), then how the zero
+        // point compares the charges
         hints: [
-          L('The field points away from a positive charge and towards a negative one: measure close to each charge.', 'Das Feld zeigt von einer positiven Ladung weg und zu einer negativen hin: Miss nahe bei jeder Ladung.'),
-          L('Measure at each of the marked points; the probe snaps to a point when you are close to it.', 'Miss in jedem der markierten Punkte; die Sonde rastet ein, wenn du nahe bei einem Punkt bist.'),
-          L('Where the field is zero, the fields of A and B are equal and opposite: E = k·|q|/r² is the same for both, so the bigger charge is farther away.', 'Wo das Feld null ist, sind die Felder von A und B gleich gross und entgegengesetzt: E = k·|q|/r² ist für beide gleich, also ist die grössere Ladung weiter weg.'),
+          L(`(a) Measure just next to A (${xa < xb ? 'on the left' : 'on the right'}) and just next to B: does the arrow point away from the charge or towards it?`, `(a) Miss direkt neben A (${xa < xb ? 'links' : 'rechts'}) und direkt neben B: Zeigt der Pfeil von der Ladung weg oder zu ihr hin?`),
+          L(`(b) Measure at ${PN.join(', ').replace(/, S$/, ' and S')}; the probe snaps to a point when you are close to it. Where does it read 0 kN/C?`, `(b) Miss in ${PN.join(', ').replace(/, S$/, ' und S')}; die Sonde rastet ein, wenn du nahe bei einem Punkt bist. Wo zeigt sie 0 kN/C an?`),
+          L(`Where the field is zero, E = k·|q|/r² is the same for A and B. Count on the 1 cm grid how far that point is from A and from B (A and B are ${nice(Math.abs(xb - xa))} cm apart): the farther charge is the bigger one, by the square of the ratio.`, `Wo das Feld null ist, ist E = k·|q|/r² für A und B gleich. Zähle auf dem 1-cm-Gitter ab, wie weit dieser Punkt von A und von B entfernt ist (A und B sind ${nice(Math.abs(xb - xa))} cm voneinander entfernt): Die weiter entfernte Ladung ist die grössere, um das Quadrat des Verhältnisses.`),
         ],
         solution: [howS, howQ, howZ], solFig: `<div class="fig">${sol}</div>`,
         p: { qa, qb, xa, xb, y0, pts: points.map((q) => [q.x, q.y]), zero: points.indexOf(z) },
@@ -248,10 +250,11 @@
         text: L(`<p>Two point charges A and B are hidden: you see where they are, but not their signs or sizes (each is ±q, ±2q or ±3q, with q = 1 nC). The grid has 1 cm squares.</p><p>${POTTEXT()}</p>`, `<p>Zwei Punktladungen A und B sind verdeckt: Du siehst, wo sie sind, aber nicht ihre Vorzeichen und Beträge (jede ist ±q, ±2q oder ±3q, mit q = 1 nC). Das Gitter hat 1-cm-Quadrate.</p><p>${POTTEXT()}</p>`),
         figs: probeFig(svg, d, READ0()),
         questions: [choice('q', L('(a) The charges', '(a) Die Ladungen'), chargeOpts(r, P, { S: howS, Q: howQ }, nudgeQ)), dirTiles(r, u, howD, `(b) ${DIRQ()}`)],
+        // the hints: where to measure in this figure, for the signs, the sizes and the field at P
         hints: [
-          L('A positive charge raises the potential around it, a negative one lowers it: measure close to A and close to B.', 'Eine positive Ladung hebt das Potential um sich herum an, eine negative senkt es: Miss nahe bei A und nahe bei B.'),
-          L('V = k·q/r: to compare the sizes, measure at the same short distance from each charge.', 'V = k·q/r: Um die Beträge zu vergleichen, miss im gleichen kleinen Abstand von jeder Ladung.'),
-          L('The field points from high to low potential, the way the potential falls fastest: measure in a small circle around P.', 'Das Feld zeigt von hohem zu tiefem Potential, dorthin, wo das Potential am schnellsten fällt: Miss auf einem kleinen Kreis um P.'),
+          L(`(a) Measure just next to A (${xa < xb ? 'on the left' : 'on the right'}) and just next to B: is the potential there positive or negative?`, `(a) Miss direkt neben A (${xa < xb ? 'links' : 'rechts'}) und direkt neben B: Ist das Potential dort positiv oder negativ?`),
+          L(`V = k·q/r: to compare the sizes, measure at the same short distance from A and from B, say 2 or 3 mm, each on the side away from the other charge (they are ${nice(Math.abs(xb - xa))} cm apart).`, `V = k·q/r: Um die Beträge zu vergleichen, miss im gleichen kleinen Abstand von A und von B, etwa 2 oder 3 mm, jeweils auf der von der anderen Ladung abgewandten Seite (sie sind ${nice(Math.abs(xb - xa))} cm voneinander entfernt).`),
+          L('(b) The field points from high to low potential, the way the potential falls fastest: measure on a small circle about 3 mm round P. Where is the reading lowest?', '(b) Das Feld zeigt von hohem zu tiefem Potential, dorthin, wo das Potential am schnellsten fällt: Miss auf einem kleinen Kreis von etwa 3 mm um P. Wo ist der Wert am tiefsten?'),
         ],
         solution: [howS, howQ, howD], solFig: `<div class="fig">${sol}</div>`,
         p: { kind: 'points', qa, qb, xa, xb, y0, P: Pt, dir: u },
@@ -303,10 +306,11 @@
         choice('E', L('(b) The field strength between the plates', '(b) Die Feldstärke zwischen den Platten'), Eopts),
         dirTiles(r, u, howD, `(c) ${DIRQ()}`),
       ],
+      // the hints: plate B or A at 0 V, the gap of this capacitor, and P's height
       hints: [
-        L('The positive plate is the one at the higher potential: measure close to each plate.', 'Die positive Platte ist die auf dem höheren Potential: Miss nahe bei jeder Platte.'),
-        L('Measure at two heights between the plates: E = |ΔV|/Δd, with Δd in metres.', 'Miss in zwei Höhen zwischen den Platten: E = |ΔV|/Δd, mit Δd in Metern.'),
-        L('The field points from high to low potential.', 'Das Feld zeigt von hohem zu tiefem Potential.'),
+        L(`(a) Plate ${bot} (below) is at 0 V. Measure just below plate ${top}: is the potential there higher or lower than 0 V? The positive plate is the one at the higher potential.`, `(a) Platte ${bot} (unten) ist auf 0 V. Miss direkt unter Platte ${top}: Ist das Potential dort höher oder tiefer als 0 V? Die positive Platte ist die auf dem höheren Potential.`),
+        L(`(b) The plates are ${nice(gap)} cm apart. Take two readings at different heights between them and use E = |ΔV|/Δd, with the difference of the heights Δd in metres.`, `(b) Die Platten sind ${nice(gap)} cm voneinander entfernt. Miss in zwei verschiedenen Höhen zwischen ihnen und benutze E = |ΔV|/Δd, mit dem Höhenunterschied Δd in Metern.`),
+        L(`(c) P is ${nice(r2(Pt[1] + h))} cm above plate ${bot}. Measure a little above and a little below P: which way does the potential fall? The field points from high to low potential.`, `(c) P liegt ${nice(r2(Pt[1] + h))} cm über Platte ${bot}. Miss ein wenig über und ein wenig unter P: In welche Richtung fällt das Potential? Das Feld zeigt von hohem zu tiefem Potential.`),
       ],
       solution: [howP, howE, howD], solFig: `<div class="fig">${sol}</div>`,
       p: { kind: 'plates', h, w, U, top, E: E0, P: Pt, dir: u },

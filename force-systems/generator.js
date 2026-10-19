@@ -499,12 +499,29 @@
         show: base, hl: k || !hl.length ? [] : hl, fig: k === e.at && !e.at && DRAWN.has(e.flag) ? student : null,
       })),
     ];
-    const hints = springs ? [
-      L('Check the drawing first: does a body push or pull for every force drawn? Does the spring force point back towards the relaxed length? Does air resistance point against the velocity, and is it larger or smaller than the weight as the motion says?', 'Prüfe zuerst die Zeichnung: Drückt oder zieht für jede eingezeichnete Kraft ein Körper? Zeigt die Federkraft zurück zur entspannten Länge? Zeigt der Luftwiderstand gegen die Geschwindigkeit, und ist er grösser oder kleiner als die Gewichtskraft, so wie es die Bewegung verlangt?'),
-      L('Then each line: at rest or at a constant speed the forces balance; when the speed changes they do not. F = k Δx with Δx in metres; a = net force / mass.', 'Dann jede Zeile: In Ruhe oder bei konstanter Geschwindigkeit heben sich die Kräfte auf; wenn sich die Geschwindigkeit ändert, nicht. F = k Δx mit Δx in Metern; a = resultierende Kraft / Masse.'),
-    ] : [
-      L('Check the drawing first: does a body push or pull for every force drawn? Is friction there wherever a box slides?', 'Prüfe zuerst die Zeichnung: Drückt oder zieht für jede eingezeichnete Kraft ein Körper? Ist Reibung da, wo immer eine Kiste gleitet?'),
-      L('Then each equation: perpendicular to the motion the forces balance; along it they add up to m a of the system chosen. A rope force equals a weight only when nothing accelerates.', 'Dann jede Gleichung: Senkrecht zur Bewegung heben sich die Kräfte auf; entlang der Bewegung ergeben sie m a des gewählten Systems. Eine Seilkraft ist nur dann gleich einer Gewichtskraft, wenn nichts beschleunigt wird.'),
+    // the hints: the bodies of this situation and what their motion says about the forces
+    const who = t.boxes.join(L(' and ', ' und ')), kg = (m) => FS.q(m, 'kg');
+    const sys = p.m1 != null ? L(`; the system of both boxes has ${kg(p.m1 + p.m2)}`, `; das System beider Kisten hat ${kg(p.m1 + p.m2)}`) : '';
+    const motion = {
+      'spring-hang': L(`The box hangs at rest; the spring is ${p.state === 'hang' ? 'stretched: which way must it pull' : 'compressed: which way must it push'}?`, `Die Kiste ruht; die Feder ist ${p.state === 'hang' ? 'gedehnt: In welche Richtung muss sie ziehen' : 'gestaucht: In welche Richtung muss sie drücken'}?`),
+      'spring-floor': L(`The box slides ${p.state === 'stretch' ? 'towards the wall; the spring is stretched' : 'away from the wall; the spring is compressed'}: which way must the spring force point, and which way friction?`, `Die Kiste gleitet ${p.state === 'stretch' ? 'zur Wand hin; die Feder ist gedehnt' : 'von der Wand weg; die Feder ist gestaucht'}: Wohin muss die Federkraft zeigen, wohin die Reibung?`),
+      'drag-fall': { early: L('She falls faster and faster: must the air resistance be smaller or larger than her weight?', 'Sie fällt immer schneller: Muss der Luftwiderstand kleiner oder grösser sein als ihre Gewichtskraft?'),
+        terminal: L('She falls at a constant speed: how large must the air resistance be compared with her weight?', 'Sie fällt mit konstanter Geschwindigkeit: Wie gross muss der Luftwiderstand im Vergleich zu ihrer Gewichtskraft sein?'),
+        chute: L('She slows down while still falling: must the air resistance be smaller or larger than her weight?', 'Sie wird langsamer, während sie noch fällt: Muss der Luftwiderstand kleiner oder grösser sein als ihre Gewichtskraft?') }[p.phase],
+      'drag-bike': L('She coasts and slows down: does anything push her forward, and which way does the air resistance point?', 'Sie rollt aus und wird langsamer: Treibt sie etwas nach vorn an, und wohin zeigt der Luftwiderstand?'),
+    }[scn.id];
+    const lines = springs
+      ? L(`Then each line: ${scn.still || p.phase === 'terminal' ? 'here nothing accelerates, so the forces balance' : 'here the speed changes, so the forces add up to m a'}. ${scn.id.startsWith('spring') ? 'In F = k Δx, Δx goes in metres.' : 'The acceleration is the net force divided by the mass.'}`,
+        `Dann jede Zeile: ${scn.still || p.phase === 'terminal' ? 'Hier wird nichts beschleunigt, also heben sich die Kräfte auf' : 'Hier ändert sich die Geschwindigkeit, also ergeben die Kräfte zusammen m a'}. ${scn.id.startsWith('spring') ? 'In F = k Δx kommt Δx in Metern.' : 'Die Beschleunigung ist die resultierende Kraft geteilt durch die Masse.'}`)
+      : L(`Then each equation: perpendicular to the motion the forces balance; along it they add up to m a of the system chosen${sys}. ${/pulley|atwood/.test(scn.id) ? 'The hanging box accelerates: can the rope force equal its weight?' : 'Where a box slides, friction is μ times its normal force.'}`,
+        `Dann jede Gleichung: Senkrecht zur Bewegung heben sich die Kräfte auf; entlang der Bewegung ergeben sie m a des gewählten Systems${sys}. ${/pulley|atwood/.test(scn.id) ? 'Die hängende Kiste wird beschleunigt: Kann die Seilkraft gleich ihrer Gewichtskraft sein?' : 'Wo eine Kiste gleitet, ist die Reibung μ mal ihre Normalkraft.'}`);
+    const fric = colOf(t, 'r') >= 0 && t.table.some((row) => row[colOf(t, 'r')]);
+    const slide = fric ? L('Which of the boxes slides over a surface, and is friction drawn wherever one does?', 'Welche der Kisten gleitet über eine Unterlage, und ist überall dort Reibung eingezeichnet?')
+      : L('There is no friction here: is anything drawn that no body causes, such as a force pushing a box along its motion?', 'Hier gibt es keine Reibung: Ist etwas eingezeichnet, das kein Körper verursacht, etwa eine Kraft, die eine Kiste in Bewegungsrichtung antreibt?');
+    const hints = [
+      L(`Check the drawing first, force by force on ${who}: does a body push or pull (or the Earth) for every force drawn? ${springs ? motion : slide}`,
+        `Prüfe zuerst die Zeichnung, Kraft für Kraft auf ${who}: Drückt oder zieht für jede eingezeichnete Kraft ein Körper (oder die Erde)? ${springs ? motion : slide}`),
+      lines,
     ];
     return {
       scenario: type,

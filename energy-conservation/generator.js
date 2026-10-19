@@ -46,6 +46,39 @@
     return `E_${i + 1} = ${terms.join(' + ') || '0'}`;
   });
 
+  // The hints of an exercise, without the table or the energies of the states (the student fills
+  // them in): the states, zero level, givens and wanted quantity; the forms of energy with this
+  // exercise's symbols; then the balance to set up and how to solve it (scn.hint adds what is
+  // particular to the situation).
+  const UNIT_OF = (k) => (k === 'm' ? 'kg' : k === 'k' || k === 'g' ? k : k[0] === 'v' ? 'v' : 'm');
+  function hints(scn, p, formal, { states, want, vars, sym, energy }) {
+    const and = L('and', 'und'), join = (a) => (a.length > 1 ? `${a.slice(0, -1).join(', ')} ${and} ${a[a.length - 1]}` : a[0]);
+    const named = CIRCLED.slice(0, states.length);
+    // the givens, g last, with their values when the exercise has numbers
+    const given = join([...vars.filter((x) => x !== 'g'), ...vars.filter((x) => x === 'g')]
+      .map((x) => (formal ? `$${T(x)}$` : `$${T(x)} = ${trq(p.V[x], UNIT_OF(x))}$`)));
+    const orient = L(`Zero level: ${scn.zero(p)}. Look at each of the states ${join(named)} in the drawing: is the body moving there? How high is it above the zero level?${scn.spring ? ' Is the spring stretched or compressed?' : ''} Given: ${given}; wanted: the ${want.what} $${sym}$.`,
+      `Nullniveau: ${scn.zero(p)}. Schau dir jeden der Zustände ${join(named)} in der Zeichnung an: Bewegt sich der Körper dort? Wie hoch ist er über dem Nullniveau?${scn.spring ? ' Ist die Feder gedehnt oder gestaucht?' : ''} Gegeben: ${given}; gesucht: die ${want.what} $${sym}$.`);
+    // the symbols the energies are written with, the givens with their values
+    const syms = join(energy.esyms.map((x) => `$${T(x)}$${!formal && x !== 'g' && vars.includes(x) ? ` ($${trq(p.V[x], UNIT_OF(x))}$)` : ''}`));
+    const relation = L(`No friction: the total energy is the same in ${join(named)}. Each state's energy is the sum of its forms: $${etex('pot')} = m\\,g\\,h$ with the height above the zero level, $${etex('kin')} = \\tfrac{1}{2}\\,m\\,v^2$${scn.spring ? `, $${etex('el')} = \\tfrac{1}{2}\\,k\\,s^2$ with the stretch or compression of the spring` : ''}. Write them with the symbols of this exercise: ${syms}.`,
+      `Ohne Reibung ist die Gesamtenergie in ${join(named)} gleich. Die Energie eines Zustands ist die Summe seiner Formen: $${etex('pot')} = m\\,g\\,h$ mit der Höhe über dem Nullniveau, $${etex('kin')} = \\tfrac{1}{2}\\,m\\,v^2$${scn.spring ? `, $${etex('el')} = \\tfrac{1}{2}\\,k\\,s^2$ mit der Dehnung oder Stauchung der Feder` : ''}. Schreibe sie mit den Symbolen dieser Aufgabe: ${syms}.`);
+    // does the mass cancel (every energy proportional to m)?
+    const { efun, rel, ebase } = energy;
+    const at = (V) => efun.map((t) => Object.keys(t).map((k) => t[k](rel(V))));
+    const one = at(ebase), two = at({ ...ebase, m: 2 * ebase.m });
+    const cancels = one.every((row, i) => row.every((x, j) => Math.abs(two[i][j] - 2 * x) <= 1e-9 * Math.max(1, Math.abs(x))));
+    const squared = want.unit === 'v' || want.key === 's';
+    const step = [
+      states.length === 2 ? L('Set $E_1 = E_2$.', 'Setze $E_1 = E_2$.') : L('Set the energies of two of the states equal.', 'Setze die Energien von zwei der Zustände gleich.'),
+      scn.hint(p, formal),
+      cancels ? L(`The mass $m$ is in every term: it cancels${vars.includes('m') ? '' : ', which is why it is not given'}.`, `Die Masse $m$ steckt in jedem Term: Sie kürzt sich weg${vars.includes('m') ? '' : ', darum ist sie nicht gegeben'}.`) : '',
+      L(`Then solve for $${sym}$${squared ? ` (the equation gives $${sym}^2$ first)` : ''}${formal ? '' : ', with symbols, and put in the numbers at the end'}.`,
+        `Löse dann nach $${sym}$ auf${squared ? ` (die Gleichung liefert zuerst $${sym}^2$)` : ''}${formal ? '' : ', mit Symbolen, und setze die Zahlen erst am Schluss ein'}.`),
+    ];
+    return [orient, relation, step.filter(Boolean).join(' ')];
+  }
+
   function exercise(scn, p, formal) {
     const forms = FORMS(scn), states = scn.states(p), want = scn.want(p), f = scn.f(p);
     const vars = scn.vars(p), sampled = [...new Set([...vars, 'g'])];
@@ -117,11 +150,7 @@
       want, vars, f, sampled, value, answer, traps, energy,
       figure: (view = {}) => fig(view),
       solutionFigure: () => fig({ bars: null }),
-      hints: [
-        `${L('Choose the zero level', 'Wähle das Nullniveau')} (${L('here', 'hier')}: ${scn.zero(p)}). ${L('Then write down the energy in each state:', 'Schreibe dann die Energie in jedem Zustand auf:')} $${etex('pot')} = m\\,g\\,h$, $${etex('kin')} = \\tfrac{1}{2}\\,m\\,v^2$${scn.spring ? `, $${etex('el')} = \\tfrac{1}{2}\\,k\\,s^2$` : ''}.`,
-        energyLines(scn, p).map((e) => `$${e}$`).join(', '),
-        `${L('Energy conservation', 'Energieerhaltung')}: ${scn.hint(p, formal)}`,
-      ],
+      hints: hints(scn, p, formal, { states, want, vars, sym, energy }),
       steps,
       solution: steps.map(stepHtml),
       results: `$${sym} = ${formal ? answer : trq(value, want.unit)}$`,

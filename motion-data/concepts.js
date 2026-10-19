@@ -132,9 +132,12 @@
       title: L('From the table to the graph', 'Von der Tabelle zum Graphen'),
       text, figure: fig(), questions: [G.question],
       hints: [
-        L('Each column of the table gives a point (t, s) of the graph.', 'Jede Spalte der Tabelle gibt einen Punkt (t, s) des Graphen.'),
-        L(`Read the row of ${Tn.name} from left to right: where does s increase, where does it decrease?`, `Lies die Zeile von ${Tn.name} von links nach rechts: Wo nimmt s zu, wo nimmt es ab?`),
-        L(`${Tn.name} starts at ${val(Tn.values[0], 'm')} and ends at ${val(Tn.values[6], 'm')}.`, `${Tn.name} startet bei ${val(Tn.values[0], 'm')} und endet bei ${val(Tn.values[6], 'm')}.`),
+        L(`Only the row of ${Tn.name} matters: ${Tn.values.map((x) => num(x)).join(', ')} m. Read it from left to right: from which column to which does s increase, and where does it decrease?`,
+          `Nur die Zeile von ${Tn.name} zählt: ${Tn.values.map((x) => num(x)).join(', ')} m. Lies sie von links nach rechts: Von welcher Spalte zu welcher nimmt s zu, und wo nimmt es ab?`),
+        L(`Each column gives a point (t, s) of the graph of ${Tn.name}, seven points from 0 s to 30 s; between them the graph is straight. Its direction changes only where the changes of position change their sign.`,
+          `Jede Spalte gibt einen Punkt (t, s) des Graphen von ${Tn.name}, sieben Punkte von 0 s bis 30 s; dazwischen ist der Graph gerade. Seine Richtung ändert sich nur dort, wo die Ortsänderungen ihr Vorzeichen wechseln.`),
+        L(`Start with the first point: at t = 0 s, ${Tn.name} is at s = ${val(Tn.values[0], 'm')}. Which graphs start there? Then check them at 15 s and 30 s.`,
+          `Beginne mit dem ersten Punkt: Bei t = 0 s ist ${Tn.name} bei s = ${val(Tn.values[0], 'm')}. Welche Graphen beginnen dort? Prüfe sie dann bei 15 s und 30 s.`),
       ],
       steps: [step(L('The changes', 'Die Änderungen'), `${Tn.name}: ${Tn.values.slice(1).map((v2, k) => `${v2 - Tn.values[k] > 0 ? '+' : ''}${num(v2 - Tn.values[k])}`).join(', ')} m`, fig()), graphStep],
     });
@@ -221,9 +224,12 @@
         text: L('<p>Two vehicles A and B move uniformly. The table gives some of their positions.</p>', '<p>Zwei Fahrzeuge A und B bewegen sich gleichförmig. Die Tabelle gibt einige ihrer Orte an.</p>'),
         figure: fig(), questions: [q5],
         hints: [
-          L('Uniform motion: the velocity is the same all the time, v = Δs/Δt from the two known positions.', 'Gleichförmige Bewegung: Die Geschwindigkeit ist die ganze Zeit gleich, v = Δs/Δt aus den zwei bekannten Orten.'),
-          ['A', 'B'].map((n) => { const f = F[n]; return L(`${n}: Δs = ${num(f.sj)} m − ${br(f.si)} in Δt = ${num(f.tj - f.ti)} s.`, `${n}: Δs = ${num(f.sj)} m − ${br(f.si)} in Δt = ${num(f.tj - f.ti)} s.`); }).join(' '),
-          L('In a v(t) graph, a uniform motion is a horizontal line at the height of its velocity, with its sign.', 'Im v(t)-Diagramm ist eine gleichförmige Bewegung eine waagrechte Gerade auf der Höhe ihrer Geschwindigkeit, mit Vorzeichen.'),
+          L(`A is known at ${num(F.A.ti)} s and ${num(F.A.tj)} s, B at ${num(F.B.ti)} s and ${num(F.B.tj)} s. From the earlier to the later of these times: does the position of A increase or decrease, and that of B?`,
+            `A ist bei ${num(F.A.ti)} s und ${num(F.A.tj)} s bekannt, B bei ${num(F.B.ti)} s und ${num(F.B.tj)} s. Vom früheren zum späteren dieser Zeitpunkte: Nimmt der Ort von A zu oder ab, und der von B?`),
+          L('Both move uniformly, so each v(t) graph is a horizontal line at the height of v = Δs/Δt, with Δs and Δt between the two known columns of that vehicle and v with its sign.',
+            'Beide bewegen sich gleichförmig, also ist jeder v(t)-Graph eine waagrechte Gerade auf der Höhe von v = Δs/Δt, mit Δs und Δt zwischen den zwei bekannten Spalten dieses Fahrzeugs und v mit Vorzeichen.'),
+          L(`Start with A: its Δs from ${num(F.A.ti)} s to ${num(F.A.tj)} s, in Δt = ${num(F.A.tj - F.A.ti)} s. Then B in the same way, and look for the graph with both lines at the right heights.`,
+            `Beginne mit A: sein Δs von ${num(F.A.ti)} s bis ${num(F.A.tj)} s, in Δt = ${num(F.A.tj - F.A.ti)} s. Dann B gleich, und suche den Graphen mit beiden Geraden auf der richtigen Höhe.`),
         ],
         steps: [...velSteps, step(L('The v(t) graph', 'Der v(t)-Graph'), L(`Each velocity stays the same all the time: two horizontal lines, A at ${sval(A.v, 'm/s')} and B at ${sval(B.v, 'm/s')}.`, `Jede Geschwindigkeit bleibt die ganze Zeit gleich: zwei waagrechte Geraden, A bei ${sval(A.v, 'm/s')} und B bei ${sval(B.v, 'm/s')}.`), vFig(A.v, B.v))],
       });
@@ -235,9 +241,12 @@
       figure: fig(),
       questions: [vQ('A'), vQ('B'), sQ('A'), sQ('B')],
       hints: [
-        L('Uniform motion: the position changes by the same amount in every second. So v = Δs/Δt from any two known positions.', 'Gleichförmige Bewegung: Der Ort ändert sich in jeder Sekunde um gleich viel. Also v = Δs/Δt aus zwei beliebigen bekannten Orten.'),
-        ['A', 'B'].map((n) => { const f = F[n]; return L(`${n}: Δs = ${num(f.sj)} m − ${br(f.si)} in Δt = ${num(f.tj - f.ti)} s.`, `${n}: Δs = ${num(f.sj)} m − ${br(f.si)} in Δt = ${num(f.tj - f.ti)} s.`); }).join(' '),
-        L('A missing position: start from a known one and add v · Δt (going back in time, Δt is negative).', 'Ein fehlender Ort: Geh von einem bekannten aus und zähle v · Δt dazu (rückwärts in der Zeit ist Δt negativ).'),
+        L(`A is known at ${num(F.A.ti)} s and ${num(F.A.tj)} s and missing at ${num(F.A.tk)} s; B is known at ${num(F.B.ti)} s and ${num(F.B.tj)} s and missing at ${num(F.B.tk)} s. Which two positions give the velocity of each?`,
+          `A ist bei ${num(F.A.ti)} s und ${num(F.A.tj)} s bekannt und fehlt bei ${num(F.A.tk)} s; B ist bei ${num(F.B.ti)} s und ${num(F.B.tj)} s bekannt und fehlt bei ${num(F.B.tk)} s. Welche zwei Orte geben die Geschwindigkeit von jedem?`),
+        L('Both move uniformly: v = Δs/Δt, with Δs the later minus the earlier known position of that vehicle (with signs) and Δt the time between them.',
+          'Beide bewegen sich gleichförmig: v = Δs/Δt, mit Δs dem späteren minus dem früheren bekannten Ort dieses Fahrzeugs (mit Vorzeichen) und Δt der Zeit dazwischen.'),
+        L(`For a gap, start from the nearer known position and add v · Δt: for A from ${num(F.A.tb)} s to ${num(F.A.tk)} s, for B from ${num(F.B.tb)} s to ${num(F.B.tk)} s (going back in time, Δt is negative).`,
+          `Für eine Lücke geh vom näheren bekannten Ort aus und zähle v · Δt dazu: für A von ${num(F.A.tb)} s bis ${num(F.A.tk)} s, für B von ${num(F.B.tb)} s bis ${num(F.B.tk)} s (rückwärts in der Zeit ist Δt negativ).`),
       ],
       steps: [
         ...velSteps,
@@ -464,13 +473,16 @@
       v: L(`With constant acceleration, v(t) is a straight line with slope a = ${sv(a, 'm/s²')}, from ${sv(v0, 'm/s')} at t = 0 to ${sv(v0 + a * times[n - 1], 'm/s')} at ${num(times[n - 1])} s.`, `Bei konstanter Beschleunigung ist v(t) eine Gerade mit der Steigung a = ${sv(a, 'm/s²')}, von ${sv(v0, 'm/s')} bei t = 0 bis ${sv(v0 + a * times[n - 1], 'm/s')} bei ${num(times[n - 1])} s.`),
       a: L(`The acceleration is the same all the time: a(t) is a horizontal line at a = ${sv(a, 'm/s²')}.`, `Die Beschleunigung ist die ganze Zeit gleich: a(t) ist eine waagrechte Gerade bei a = ${sv(a, 'm/s²')}.`),
     }[gq];
+    const askedAt = and(asked.map((k) => `${num(times[k])}&nbsp;s`));
     const hints = [
-      L(`The positions are given every ${ts}. Where two neighbouring positions are given, work out the change of position Δs from one column to the next.`, `Die Orte sind alle ${ts} gegeben. Wo zwei benachbarte Orte gegeben sind, bestimme die Ortsänderung Δs von einer Spalte zur nächsten.`),
-      L(`From ${sAt(b)} to ${sAt(b + 2)}: Δs = ${dif(gaps[b])} m and ${dif(gaps[b + 1])} m, a change of Δ(Δs) = ${dif(DD)} m. With constant acceleration, Δs changes by this same amount every ${ts}.`,
-        `Von ${sAt(b)} bis ${sAt(b + 2)}: Δs = ${dif(gaps[b])} m und ${dif(gaps[b + 1])} m, eine Änderung von Δ(Δs) = ${dif(DD)} m. Bei konstanter Beschleunigung ändert sich Δs alle ${ts} um genau so viel.`),
-      L(`Continue the Δs${fwd ? ' forwards (add Δ(Δs))' : ''}${fwd && back ? ' and' : ''}${back ? ' backwards (subtract Δ(Δs))' : ''}, and add them to the positions. The acceleration follows from Δ(Δs) = a · (${ts})².`,
-        `Setze die Δs fort${fwd ? ' vorwärts (Δ(Δs) dazuzählen)' : ''}${fwd && back ? ' und' : ''}${back ? ' rückwärts (Δ(Δs) abziehen)' : ''}, und zähle sie zu den Orten dazu. Die Beschleunigung folgt aus Δ(Δs) = a · (${ts})².`),
-      ...(d === 4 ? [L(`With constant acceleration, the mean velocity over an interval is the velocity in its middle: v(${num(tm)} s) = (${sAt(b + 2)} − ${sAt(b)}) / ${num(2 * tau)} s.`, `Bei konstanter Beschleunigung ist die mittlere Geschwindigkeit über ein Intervall gleich der Geschwindigkeit in seiner Mitte: v(${num(tm)} s) = (${sAt(b + 2)} − ${sAt(b)}) / ${num(2 * tau)} s.`)] : []),
+      L(`Three neighbouring positions are given together: ${sAt(b)}, ${sAt(b + 1)} and ${sAt(b + 2)}. The gaps are at ${askedAt}. What are the two changes of position Δs between these three columns, with their signs?`,
+        `Drei benachbarte Orte sind zusammen gegeben: ${sAt(b)}, ${sAt(b + 1)} und ${sAt(b + 2)}. Die Lücken sind bei ${askedAt}. Wie gross sind die zwei Ortsänderungen Δs zwischen diesen drei Spalten, mit Vorzeichen?`),
+      L(`With constant acceleration, Δs changes by the same Δ(Δs) from each step to the next, and Δ(Δs) = a · τ², with the time step τ = ${ts} of this table.`,
+        `Bei konstanter Beschleunigung ändert sich Δs von jedem Schritt zum nächsten um dasselbe Δ(Δs), und Δ(Δs) = a · τ², mit dem Zeitschritt τ = ${ts} dieser Tabelle.`),
+      L(`First take the difference of these two Δs. Then continue the Δs${fwd ? ' forwards (add Δ(Δs))' : ''}${fwd && back ? ' and' : ''}${back ? ' backwards (subtract Δ(Δs))' : ''} up to the gaps, and add each Δs to its known neighbour.`,
+        `Bilde zuerst die Differenz dieser zwei Δs. Setze die Δs dann${fwd ? ' vorwärts (Δ(Δs) dazuzählen)' : ''}${fwd && back ? ' und' : ''}${back ? ' rückwärts (Δ(Δs) abziehen)' : ''} bis zu den Lücken fort, und zähle jedes Δs zu seinem bekannten Nachbarn dazu.`),
+      ...(d === 4 ? [L(`${num(tm)} s is the middle of ${interval(times[b], times[b + 2])}. With constant acceleration, the mean velocity Δs/Δt over this interval is the velocity in its middle: which two positions and which Δt go in?`,
+        `${num(tm)} s ist die Mitte von ${interval(times[b], times[b + 2])}. Bei konstanter Beschleunigung ist die mittlere Geschwindigkeit Δs/Δt über dieses Intervall die Geschwindigkeit in seiner Mitte: Welche zwei Orte und welches Δt gehören hinein?`)] : []),
     ];
     const steps = [
       step(L(`Changes of position per ${num(tau)} s`, `Ortsänderungen pro ${num(tau)} s`),
@@ -507,8 +519,26 @@
         text: L(`<p>A ${body()} moves along a straight ${car ? 'road' : 'track'} with constant acceleration. The table gives its position every ${ts}.</p>`,
           `<p>Ein Wagen bewegt sich mit konstanter Beschleunigung auf einer geraden ${car ? 'Strasse' : 'Bahn'}. Die Tabelle gibt seinen Ort alle ${ts} an.</p>`),
         figure: taskFig(), questions: [G.question],
-        hints: [hints[0], L(`The Δs change by Δ(Δs) = ${dif(DD)} m from step to step: Δ(Δs) = a · (${ts})².`, `Die Δs ändern sich von Schritt zu Schritt um Δ(Δs) = ${dif(DD)} m: Δ(Δs) = a · (${ts})².`),
-          { s: L('s(t) is a parabola through the points of the table.', 's(t) ist eine Parabel durch die Punkte der Tabelle.'), v: L('With constant acceleration, v(t) is a straight line; each Δs/Δt is the velocity in the middle of its step.', 'Bei konstanter Beschleunigung ist v(t) eine Gerade; jedes Δs/Δt ist die Geschwindigkeit in der Mitte seines Schritts.'), a: L('With constant acceleration, a(t) is a horizontal line at the value of a.', 'Bei konstanter Beschleunigung ist a(t) eine waagrechte Gerade beim Wert von a.') }[gq]],
+        hints: [
+          L(`The table gives all six positions, every ${ts}: ${xs.map((x) => num(x)).join(', ')} m. From column to column, how big are the changes of position Δs, with their signs, and how do they change?`,
+            `Die Tabelle gibt alle sechs Orte an, alle ${ts}: ${xs.map((x) => num(x)).join(', ')} m. Wie gross sind die Ortsänderungen Δs von Spalte zu Spalte, mit Vorzeichen, und wie ändern sie sich?`),
+          {
+            s: L('With constant acceleration, s(t) is a parabola through the six points (t, s) of the table; it bends upwards where the Δs grow (with their signs) and downwards where they shrink.',
+              'Bei konstanter Beschleunigung ist s(t) eine Parabel durch die sechs Punkte (t, s) der Tabelle; sie ist nach oben gekrümmt, wenn die Δs (mit Vorzeichen) wachsen, nach unten, wenn sie schrumpfen.'),
+            v: L(`Each Δs/τ, with τ = ${ts}, is the mean velocity in its step, reached in the middle of that step; with constant acceleration, v(t) is the straight line through these points.`,
+              `Jedes Δs/τ, mit τ = ${ts}, ist die mittlere Geschwindigkeit in seinem Schritt, erreicht in der Mitte dieses Schritts; bei konstanter Beschleunigung ist v(t) die Gerade durch diese Punkte.`),
+            a: L(`The Δs change by the same Δ(Δs) every step, and Δ(Δs) = a · τ² with τ = ${ts}; a(t) is a horizontal line at the value of a.`,
+              `Die Δs ändern sich jeden Schritt um dasselbe Δ(Δs), und Δ(Δs) = a · τ² mit τ = ${ts}; a(t) ist eine waagrechte Gerade beim Wert von a.`),
+          }[gq],
+          {
+            s: L(`Start with the first and the last column: the graph goes through (0 s, ${num(xs[0])} m) and (${num(times[n - 1])} s, ${num(xs[n - 1])} m). Which graphs do? Then check how they bend in between.`,
+              `Beginne mit der ersten und der letzten Spalte: Der Graph geht durch (0 s, ${num(xs[0])} m) und (${num(times[n - 1])} s, ${num(xs[n - 1])} m). Welche Graphen tun das? Prüfe dann, wie sie dazwischen gekrümmt sind.`),
+            v: L(`Start with the first step, from 0 s to ${ts}: its Δs divided by τ gives v at ${num(tau / 2)} s. Do the same for the last step, and look for the line through both points.`,
+              `Beginne mit dem ersten Schritt, von 0 s bis ${ts}: Sein Δs geteilt durch τ gibt v bei ${num(tau / 2)} s. Mach dasselbe für den letzten Schritt und suche die Gerade durch beide Punkte.`),
+            a: L('Start with the first two Δs: their difference, with its sign, is Δ(Δs). Divide it by τ², not by τ.',
+              'Beginne mit den ersten zwei Δs: Ihre Differenz, mit Vorzeichen, ist Δ(Δs). Teile sie durch τ², nicht durch τ.'),
+          }[gq],
+        ],
         steps: [steps[0], steps[1], steps[4], graphStep],
       });
     }
@@ -639,16 +669,21 @@
     };
     const text = L('<p>A cart moves along a straight track with constant acceleration. The stroboscope picture shows where it is every second, from t = 0 (the numbers above the dots are the times in s).</p>',
       '<p>Ein Wagen bewegt sich mit konstanter Beschleunigung auf einer geraden Bahn. Die Stroboskopaufnahme zeigt, wo er jede Sekunde ist, ab t = 0 (die Zahlen über den Punkten sind die Zeiten in s).</p>');
-    const hint0 = L('The distance between two neighbouring dots is how far the cart moves in one second, and corresponds to its mean velocity in that second: a large distance means fast, a small one slow.', 'Der Abstand zwischen zwei benachbarten Punkten ist, wie weit der Wagen in einer Sekunde fährt, und entspricht seiner mittleren Geschwindigkeit in dieser Sekunde: Ein grosser Abstand bedeutet schnell, ein kleiner langsam.');
+    const hint0 = L(`The ${n + 1} dots show the cart at t = 0, 1, …, ${n} s. The distance between two neighbouring dots is how far it moves in that second: which way do the dots move, and do the distances grow or shrink?`,
+      `Die ${n + 1} Punkte zeigen den Wagen bei t = 0, 1, …, ${n} s. Der Abstand zwischen zwei benachbarten Punkten ist, wie weit er in dieser Sekunde fährt: In welche Richtung wandern die Punkte, und werden die Abstände grösser oder kleiner?`);
     if (gmode) {
       return finish('strobegraph', seed, d, {
         data: { xs, gaps, acc, v0, graph: gq },
         title: L('From the picture to the graph', 'Vom Bild zum Graphen'),
         text, figure: fig(), questions: graphQs,
-        hints: [hint0, L(`The changes of position per second: ${gapText}.`, `Die Ortsänderungen pro Sekunde: ${gapText}.`), {
-          s: L(`So the s(t) graph goes through ${xs.map((x, k) => `(${k} s, ${num(x)} m)`).join(', ')}, curved like a parabola.`, `Der s(t)-Graph geht also durch ${xs.map((x, k) => `(${k} s, ${num(x)} m)`).join(', ')}, gekrümmt wie eine Parabel.`),
-          v: L(`The mean velocity in each second is reached in its middle: v(0.5 s) = ${sval(gaps[0], 'm/s')}, v(1.5 s) = ${sval(gaps[1], 'm/s')}, …; v(t) is the straight line through these points.`, `Die mittlere Geschwindigkeit jeder Sekunde wird in deren Mitte erreicht: v(0.5 s) = ${sval(gaps[0], 'm/s')}, v(1.5 s) = ${sval(gaps[1], 'm/s')}, …; v(t) ist die Gerade durch diese Punkte.`),
-          a: L('The distances per second change by the same amount each second: a constant acceleration, a horizontal line in the a(t) graph.', 'Die Abstände pro Sekunde ändern sich jede Sekunde um gleich viel: eine konstante Beschleunigung, eine waagrechte Gerade im a(t)-Graphen.'),
+        hints: [hint0, {
+          s: L('Each dot in the picture gives a point (t, s) of the graph. With constant acceleration, s(t) is a parabola through these points.', 'Jeder Punkt im Bild gibt einen Punkt (t, s) des Graphen. Bei konstanter Beschleunigung ist s(t) eine Parabel durch diese Punkte.'),
+          v: L('The distance moved in each second, with its sign, is the mean velocity in that second, reached in its middle; v(t) is the straight line through these points.', 'Der Abstand in jeder Sekunde, mit Vorzeichen, ist die mittlere Geschwindigkeit in dieser Sekunde, erreicht in deren Mitte; v(t) ist die Gerade durch diese Punkte.'),
+          a: L('a = (change of the distance per second) / (1 s)², with signs; with constant acceleration, a(t) is a horizontal line at that value.', 'a = (Änderung des Abstands pro Sekunde) / (1 s)², mit Vorzeichen; bei konstanter Beschleunigung ist a(t) eine waagrechte Gerade bei diesem Wert.'),
+        }[gq], {
+          s: L(`Start with the ends: the graph starts at (0 s, ${num(xs[0])} m) and ends at (${n} s, ${num(xs[n])} m). Which graphs do both? Then compare them at 1 s and 2 s with the dots.`, `Beginne mit den Enden: Der Graph beginnt bei (0 s, ${num(xs[0])} m) und endet bei (${n} s, ${num(xs[n])} m). Welche Graphen tun beides? Vergleiche sie dann bei 1 s und 2 s mit den Punkten.`),
+          v: L(`Start with the first second: from ${num(xs[0])} m to ${num(xs[1])} m. That gives v at 0.5 s; then do the second second, 1–2 s.`, `Beginne mit der ersten Sekunde: von ${num(xs[0])} m auf ${num(xs[1])} m. Das gibt v bei 0.5 s; dann die zweite Sekunde, 1–2 s.`),
+          a: L(`Start with the first two seconds: 0–1 s from ${num(xs[0])} m to ${num(xs[1])} m, 1–2 s from ${num(xs[1])} m to ${num(xs[2])} m. How much does the distance per second change, with its sign?`, `Beginne mit den ersten zwei Sekunden: 0–1 s von ${num(xs[0])} m auf ${num(xs[1])} m, 1–2 s von ${num(xs[1])} m auf ${num(xs[2])} m. Um wie viel ändert sich der Abstand pro Sekunde, mit Vorzeichen?`),
         }[gq]],
         steps: gq === 's' ? [S.gaps, S.s] : gq === 'v' ? [S.gaps, S.v] : [S.gaps, S.v, S.a()],
       });
@@ -662,8 +697,10 @@
       questions,
       hints: [
         hint0,
-        L('With constant acceleration, the distances per second change by the same amount each second.', 'Bei konstanter Beschleunigung ändern sich die Abstände pro Sekunde jede Sekunde um gleich viel.'),
-        L(`The changes of position per second: ${gapText}.`, `Die Ortsänderungen pro Sekunde: ${gapText}.`),
+        L(`With constant acceleration, the distances per second change by the same amount each second${d === 3 ? ', and that change per (1 s)² is a, with its sign' : ''}. Do the dots ever come back towards the start?`,
+          `Bei konstanter Beschleunigung ändern sich die Abstände pro Sekunde jede Sekunde um gleich viel${d === 3 ? ', und diese Änderung pro (1 s)² ist a, mit Vorzeichen' : ''}. Kommen die Punkte irgendwann zum Start zurück?`),
+        L(`Start with the first second: the cart goes from ${num(xs[0])} m (t = 0) to ${num(xs[1])} m (t = 1 s). Now read the next seconds in the same way and compare the distances.`,
+          `Beginne mit der ersten Sekunde: Der Wagen fährt von ${num(xs[0])} m (t = 0) nach ${num(xs[1])} m (t = 1 s). Lies die nächsten Sekunden gleich ab und vergleiche die Abstände.`),
       ],
       steps: [S.gaps, S.v],
     });

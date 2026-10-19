@@ -126,7 +126,11 @@
         { ask: L(`Which has ${byText(p)}?`, `Welche hat ${byText(p)}?`) })];
     },
     text: (p) => L(`Which of these kinds of electromagnetic radiation has ${byText(p)}?`, `Welche dieser Strahlungsarten hat ${byText(p)}?`),
-    hints: () => [ORDER_TEXT(), TREND()],
+    hints: (p) => [
+      L(`The four here: ${p.regs.map(regName).join(', ')}. Asked is the one with ${byText(p)}. ${p.by === 'lam' ? 'Which of them has the shortest waves, which the longest?' : `First: does ${p.by === 'f' ? 'the frequency' : 'the photon energy'} grow or fall as the wavelength gets longer?`}`,
+        `Die vier hier: ${p.regs.map(regName).join(', ')}. Gefragt ist jene, die ${byText(p)} hat. ${p.by === 'lam' ? 'Welche von ihnen hat die kürzesten Wellen, welche die längsten?' : `Zuerst: Wächst oder sinkt ${p.by === 'f' ? 'die Frequenz' : 'die Photonenenergie'}, wenn die Wellenlänge grösser wird?`}`),
+      `${L('Their wavelengths:', 'Ihre Wellenlängen:')} ${p.regs.map((k) => REG[k].range()).join(' ')}${p.by === 'lam' ? '' : ` ${TREND()}`}`,
+    ],
     steps: (p, v) => [
       step(L('The order', 'Die Reihenfolge'), p$(L(`The four, from the shortest to the longest wavelength: ${v.sorted.map(regName).join(', ')}.`, `Die vier, von der kleinsten zur grössten Wellenlänge: ${v.sorted.map(regName).join(', ')}.`)) +
         (p.by === 'lam' ? '' : p$(TREND()))),
@@ -186,7 +190,14 @@
     nudge: { inv: NUDGE_INV },
     fields: (p, v) => { const u = fUnit(C / v.lam); return [num$('f', 'f', u, L('frequency', 'Frequenz'), { sci: u === 'Hz' }), regionField(p, SOURCES[p.s].reg)]; },
     text: (p) => { const s = SOURCES[p.s], lam = g3(p.x); return L(`${cap(s.en)} has a wavelength of ${q(lam, lengthUnit(lam))}. What is its frequency, and in which region of the spectrum is it?`, `${cap(s.de)} hat eine Wellenlänge von ${q(lam, lengthUnit(lam))}. Wie gross ist ihre Frequenz, und in welchem Bereich des Spektrums liegt sie?`); },
-    hints: () => [HINT_C(), L('The wavelength in metres: 1 nm = 10⁻⁹ m, 1 pm = 10⁻¹² m, 1 μm = 10⁻⁶ m.', 'Die Wellenlänge in Metern: 1 nm = 10⁻⁹ m, 1 pm = 10⁻¹² m, 1 μm = 10⁻⁶ m.'), HINT_REG()],
+    hints: (p) => {
+      const lam = g3(p.x);
+      return [
+        L(`The wavelength is ${q(lam, lengthUnit(lam))}, and the frequency is asked. Which relation links the two for every electromagnetic wave in vacuum?`, `Die Wellenlänge ist ${q(lam, lengthUnit(lam))}, gefragt ist die Frequenz. Welche Beziehung verknüpft die beiden für jede elektromagnetische Welle im Vakuum?`),
+        `${HINT_C()} ${L(`Solve it for $f$ and put in the wavelength in metres: ${q(lam, lengthUnit(lam))} = $${tq(lam, 'm')}$.`, `Löse nach $f$ auf und setz die Wellenlänge in Metern ein: ${q(lam, lengthUnit(lam))} = $${tq(lam, 'm')}$.`)}`,
+        `${L(`For the region: is ${q(lam, lengthUnit(lam))} shorter or longer than visible light, and by how many powers of ten?`, `Für den Bereich: Ist ${q(lam, lengthUnit(lam))} kürzer oder länger als sichtbares Licht, und um wie viele Zehnerpotenzen?`)} ${HINT_REG()}`,
+      ];
+    },
     steps: (p, v) => [
       step(L('The frequency', 'Die Frequenz'), p$(L('All electromagnetic waves travel at $c$ in vacuum, and $c = \\lambda\\cdot f$:', 'Alle elektromagnetischen Wellen laufen im Vakuum mit $c$, und $c = \\lambda\\cdot f$:')) +
         `$$f = \\frac{c}{\\lambda} = \\frac{${cT}}{${tq(v.lam, 'm')}} = ${res(tq(v.f, fUnit(v.f)))}$$`),
@@ -209,7 +220,14 @@
       const s = SOURCES[p.s], f = g3(C / p.x), u = fUnit(f);
       return L(`${cap(s.en)} has a frequency of ${q(f, u)}. What is its wavelength, and in which region of the spectrum is it?`, `${cap(s.de)} hat eine Frequenz von ${q(f, u)}. Wie gross ist ihre Wellenlänge, und in welchem Bereich des Spektrums liegt sie?`);
     },
-    hints: () => [HINT_C(), L('The frequency in hertz: 1 MHz = 10⁶ Hz, 1 GHz = 10⁹ Hz, 1 THz = 10¹² Hz.', 'Die Frequenz in Hertz: 1 MHz = 10⁶ Hz, 1 GHz = 10⁹ Hz, 1 THz = 10¹² Hz.'), HINT_REG()],
+    hints: (p) => {
+      const f = g3(C / p.x), u = fUnit(f);
+      return [
+        L(`The frequency is ${q(f, u)}, and the wavelength is asked. Which relation links the two for every electromagnetic wave in vacuum?`, `Die Frequenz ist ${q(f, u)}, gefragt ist die Wellenlänge. Welche Beziehung verknüpft die beiden für jede elektromagnetische Welle im Vakuum?`),
+        `${HINT_C()} ${u === 'Hz' ? L('Solve it for $\\lambda$; the frequency is already in hertz.', 'Löse nach $\\lambda$ auf; die Frequenz ist schon in Hertz.') : L(`Solve it for $\\lambda$ and put in the frequency in hertz: ${q(f, u)} = $${tq(f, 'Hz')}$.`, `Löse nach $\\lambda$ auf und setz die Frequenz in Hertz ein: ${q(f, u)} = $${tq(f, 'Hz')}$.`)}`,
+        `${L('For the region: is your wavelength shorter or longer than visible light, and by how many powers of ten?', 'Für den Bereich: Ist deine Wellenlänge kürzer oder länger als sichtbares Licht, und um wie viele Zehnerpotenzen?')} ${HINT_REG()}`,
+      ];
+    },
     steps: (p, v) => [
       step(L('The wavelength', 'Die Wellenlänge'), p$(L('All electromagnetic waves travel at $c$ in vacuum, and $c = \\lambda\\cdot f$:', 'Alle elektromagnetischen Wellen laufen im Vakuum mit $c$, und $c = \\lambda\\cdot f$:')) +
         `$$\\lambda = \\frac{c}{f} = \\frac{${cT}}{${tq(v.f, 'Hz')}} = ${res(tq(v.lam, lengthUnit(v.lam)))}$$`),
@@ -239,11 +257,14 @@
     why: { mult: WHY_MULT, same: () => L('The frequency stays the same at the border: the wave oscillates in time with the wave arriving. It is the wavelength that changes.', 'Die Frequenz bleibt an der Grenze gleich: Die Welle schwingt im Takt der ankommenden Welle. Es ist die Wellenlänge, die sich ändert.') },
     fields: () => [num$('v', 'v', 'm/s', L('speed', 'Geschwindigkeit'), { sci: true }), num$('f', 'f', 'THz', L('frequency', 'Frequenz')), num$('lam', '\\lambda', 'nm', L('wavelength', 'Wellenlänge'))],
     text: (p) => { const m = MATS[p.m]; return L(`Light with a wavelength of ${q(p.lam0, 'nm')} in vacuum enters ${m[0]} (refractive index ${m[2]}). What are its speed, its frequency and its wavelength in the ${m[0]}?`, `Licht mit einer Wellenlänge von ${q(p.lam0, 'nm')} im Vakuum tritt in ${m[1]} ein (Brechzahl ${m[2]}). Wie gross sind seine Geschwindigkeit, seine Frequenz und seine Wellenlänge im ${m[1]}?`); },
-    hints: () => [
-      L('The refractive index says how many times slower light is in the medium: $v = c/n$.', 'Die Brechzahl sagt, wievielmal langsamer das Licht im Medium ist: $v = c/n$.'),
-      L('At the border the frequency stays the same: each crest arriving makes one crest inside.', 'An der Grenze bleibt die Frequenz gleich: Jeder ankommende Wellenberg erzeugt einen Wellenberg im Innern.'),
-      L('Then $\\lambda = v/f$.', 'Dann ist $\\lambda = v/f$.'),
-    ],
+    hints: (p) => {
+      const m = MATS[p.m];
+      return [
+        L(`In vacuum the light has ${q(p.lam0, 'nm')}; ${m[0]} has the refractive index ${m[2]}. At the border, each crest arriving makes one crest inside: which of speed, frequency and wavelength can change, and which cannot?`, `Im Vakuum hat das Licht ${q(p.lam0, 'nm')}; ${m[1]} hat die Brechzahl ${m[2]}. An der Grenze erzeugt jeder ankommende Wellenberg einen Wellenberg im Innern: Welche von Geschwindigkeit, Frequenz und Wellenlänge kann sich ändern, welche nicht?`),
+        L(`The refractive index says how many times slower light is in the ${m[0]}: $v = c/n$. The frequency from the vacuum values, $f = c/\\lambda_0$; then $\\lambda = v/f = \\lambda_0/n$.`, `Die Brechzahl sagt, wievielmal langsamer das Licht im ${m[1]} ist: $v = c/n$. Die Frequenz aus den Werten im Vakuum, $f = c/\\lambda_0$; dann $\\lambda = v/f = \\lambda_0/n$.`),
+        L(`Units: ${q(p.lam0, 'nm')} = $${tq(p.lam0, 'm')}$, and the frequency is asked in THz, 1 THz = 10¹² Hz.`, `Einheiten: ${q(p.lam0, 'nm')} = $${tq(p.lam0, 'm')}$, und die Frequenz ist in THz gefragt, 1 THz = 10¹² Hz.`),
+      ];
+    },
     steps: (p, v) => { const n = MATS[p.m][2]; return [
       step(L('The speed', 'Die Geschwindigkeit'), `$$v = \\frac{c}{n} = \\frac{${cT}}{${n}} = ${res(tq(v.v, 'm/s'))}$$`),
       step(L('The frequency', 'Die Frequenz'), p$(L('It is the same as in vacuum:', 'Sie ist dieselbe wie im Vakuum:')) + `$$f = \\frac{c}{\\lambda_0} = \\frac{${cT}}{${tq(p.lam0, 'm')}} = ${res(tq(v.f, 'THz'))}$$`),
@@ -263,7 +284,13 @@
     why: { ninv: () => L('Upside down: the medium shortens the waves, $\\lambda = \\lambda_0/n$, so $n = \\lambda_0/\\lambda$ is larger than 1.', 'Kehrwert verwechselt: Das Medium verkürzt die Wellen, $\\lambda = \\lambda_0/n$, also ist $n = \\lambda_0/\\lambda$ grösser als 1.') },
     fields: () => [num$('n', 'n', '', L('refractive index', 'Brechzahl')), num$('v', 'v', 'm/s', L('speed of light in it', 'Lichtgeschwindigkeit darin'), { sci: true })],
     text: (p) => { const lam = g3(p.lam0 / MATS[p.m][2]); return L(`Laser light with a wavelength of ${q(p.lam0, 'nm')} in vacuum has a wavelength of only ${q(lam, 'nm')} in a transparent material. What is the refractive index of the material, and how fast is light in it?`, `Laserlicht mit einer Wellenlänge von ${q(p.lam0, 'nm')} im Vakuum hat in einem durchsichtigen Material eine Wellenlänge von nur ${q(lam, 'nm')}. Wie gross ist die Brechzahl des Materials, und wie schnell ist das Licht darin?`); },
-    hints: () => [L('The frequency is the same inside and outside; so $\\lambda$ shrinks by the same factor as the speed.', 'Die Frequenz ist innen und aussen gleich; also schrumpft $\\lambda$ um denselben Faktor wie die Geschwindigkeit.'), L('$\\lambda = \\lambda_0/n$ and $v = c/n$.', '$\\lambda = \\lambda_0/n$ und $v = c/n$.')],
+    hints: (p) => {
+      const lam = g3(p.lam0 / MATS[p.m][2]);
+      return [
+        L(`The wave shrinks from ${q(p.lam0, 'nm')} in vacuum to ${q(lam, 'nm')} in the material. The frequency is the same inside and outside: so by what factor is the light slower inside?`, `Die Welle schrumpft von ${q(p.lam0, 'nm')} im Vakuum auf ${q(lam, 'nm')} im Material. Die Frequenz ist innen und aussen gleich: Um welchen Faktor ist das Licht innen also langsamer?`),
+        L('$\\lambda = \\lambda_0/n$, so $n = \\lambda_0/\\lambda$ (larger than 1); then $v = c/n$.', '$\\lambda = \\lambda_0/n$, also $n = \\lambda_0/\\lambda$ (grösser als 1); dann $v = c/n$.'),
+      ];
+    },
     steps: (p, v) => [
       step(L('The refractive index', 'Die Brechzahl'), p$(L('At the same frequency, $\\lambda = v/f$ shrinks as much as the speed: $\\lambda = \\lambda_0/n$.', 'Bei gleicher Frequenz schrumpft $\\lambda = v/f$ gleich stark wie die Geschwindigkeit: $\\lambda = \\lambda_0/n$.')) + `$$n = \\frac{\\lambda_0}{\\lambda} = \\frac{${tq(p.lam0, 'nm')}}{${tq(v.lam, 'nm')}} = ${res(tnum(v.n))}$$` + p$(L(`That fits ${MATS[p.m][0]} (n = ${MATS[p.m][2]}).`, `Das passt zu ${MATS[p.m][1]} (n = ${MATS[p.m][2]}).`))),
       step(L('The speed', 'Die Geschwindigkeit'), `$$v = \\frac{c}{n} = \\frac{${cT}}{${tnum(v.n)}} = ${res(tq(v.v, 'm/s'))}$$`),
@@ -303,7 +330,13 @@
       const says = (k) => (k === 'c' ? L(`the wave travels ${dirName(v.c)}`, `die Welle läuft ${dirName(v.c)}`) : L(`${QN[k]()} points ${dirName(v[k])}`, `${QN[k]()} zeigt ${dirName(v[k])}`));
       return L(`At one point of an electromagnetic wave, ${says(a)}, and ${says(b)}. ${ASK(p.miss)}`, `An einem Punkt einer elektromagnetischen Welle gilt: ${cap(says(a))}, und ${says(b)}. ${ASK(p.miss)}`);
     },
-    hints: () => [L('$\\vec E$, $\\vec B$ and $\\vec c$ are perpendicular to each other.', '$\\vec E$, $\\vec B$ und $\\vec c$ stehen senkrecht aufeinander.'), HAND()],
+    hints: (p) => {
+      const v = ebDir.solve(p), [a, b] = ['E', 'B', 'c'].filter((k) => k !== p.miss), sym = (k) => `$\\vec ${k}$`;
+      return [
+        L(`Given: ${sym(a)} ${dirName(v[a])}, ${sym(b)} ${dirName(v[b])}; asked: ${sym(p.miss)}. All three are perpendicular to each other: which two directions are left for ${sym(p.miss)}?`, `Gegeben: ${sym(a)} ${dirName(v[a])}, ${sym(b)} ${dirName(v[b])}; gesucht: ${sym(p.miss)}. Alle drei stehen senkrecht aufeinander: Welche zwei Richtungen bleiben für ${sym(p.miss)}?`),
+        `${HAND()} ${L(`Point the two fingers you know the given ways, and turn your hand until they fit; then read off ${sym(p.miss)}.`, `Richte die zwei Finger, die du kennst, in die gegebenen Richtungen und dreh die Hand, bis sie passen; lies dann ${sym(p.miss)} ab.`)}`,
+      ];
+    },
     steps: (p, v) => [step(L('The right hand', 'Die rechte Hand'), p$(`${L('The wave runs in the direction of $\\vec E\\times\\vec B$.', 'Die Welle läuft in Richtung von $\\vec E\\times\\vec B$.')} ${HAND()}`) +
       p$(L(`Here: $\\vec E$ ${dirName(v.E)}, $\\vec B$ ${dirName(v.B)}, $\\vec c$ ${dirName(v.c)}. So ${p.miss === 'c' ? 'the wave travels' : `${QN[p.miss]()} points`} <span class="result">${dirName(v.ans)}</span>.`, `Hier: $\\vec E$ ${dirName(v.E)}, $\\vec B$ ${dirName(v.B)}, $\\vec c$ ${dirName(v.c)}. Also ${p.miss === 'c' ? 'läuft die Welle' : `zeigt ${QN[p.miss]()}`} <span class="result">${dirName(v.ans)}</span>.`)))],
     figure: (p, v, view) => {
@@ -330,7 +363,18 @@
     text: (p) => (p.give === 'E'
       ? L(`The electric field of an electromagnetic wave oscillates with an amplitude of ${q(p.E, fieldUnit(p.E))}. What is the amplitude of its magnetic field?`, `Das elektrische Feld einer elektromagnetischen Welle schwingt mit einer Amplitude von ${q(p.E, fieldUnit(p.E))}. Wie gross ist die Amplitude ihres Magnetfelds?`)
       : L(`The magnetic field of an electromagnetic wave oscillates with an amplitude of ${q(g3(p.E / C), bUnit(p.E / C))}. What is the amplitude of its electric field?`, `Das Magnetfeld einer elektromagnetischen Welle schwingt mit einer Amplitude von ${q(g3(p.E / C), bUnit(p.E / C))}. Wie gross ist die Amplitude ihres elektrischen Felds?`)),
-    hints: () => [L('In an electromagnetic wave, $E = c\\cdot B$ at every place and every moment.', 'In einer elektromagnetischen Welle gilt $E = c\\cdot B$ an jedem Ort und zu jedem Zeitpunkt.'), L('1 T = 1 V·s/m²: V/m divided by m/s gives tesla.', '1 T = 1 V·s/m²: V/m geteilt durch m/s ergibt Tesla.')],
+    hints: (p) => {
+      const B = g3(p.E / C);
+      return p.give === 'E' ? [
+        L(`Given is the amplitude of the electric field, ${q(p.E, fieldUnit(p.E))}; asked is that of the magnetic field. Which relation links $E$ and $B$ in an electromagnetic wave?`, `Gegeben ist die Amplitude des elektrischen Felds, ${q(p.E, fieldUnit(p.E))}; gesucht ist jene des Magnetfelds. Welche Beziehung verknüpft $E$ und $B$ in einer elektromagnetischen Welle?`),
+        L(`$E = c\\cdot B$ at every place and every moment, with $c = ${cT}$: solve it for $B$, with $E$ in V/m.`, `$E = c\\cdot B$ an jedem Ort und zu jedem Zeitpunkt, mit $c = ${cT}$: Löse nach $B$ auf, mit $E$ in V/m.`),
+        L(`1 T = 1 V·s/m²: V/m divided by m/s gives tesla. Expect a tiny number; the answer is asked in ${bUnit(p.E / C)}.`, `1 T = 1 V·s/m²: V/m geteilt durch m/s ergibt Tesla. Erwarte eine winzige Zahl; gefragt ist die Antwort in ${bUnit(p.E / C)}.`),
+      ] : [
+        L(`Given is the amplitude of the magnetic field, ${q(B, bUnit(p.E / C))}; asked is that of the electric field. Which relation links $E$ and $B$ in an electromagnetic wave?`, `Gegeben ist die Amplitude des Magnetfelds, ${q(B, bUnit(p.E / C))}; gesucht ist jene des elektrischen Felds. Welche Beziehung verknüpft $E$ und $B$ in einer elektromagnetischen Welle?`),
+        L(`$E = c\\cdot B$ at every place and every moment, with $c = ${cT}$ and $B$ in tesla: ${q(B, bUnit(p.E / C))} = $${tq(B, 'T')}$.`, `$E = c\\cdot B$ an jedem Ort und zu jedem Zeitpunkt, mit $c = ${cT}$ und $B$ in Tesla: ${q(B, bUnit(p.E / C))} = $${tq(B, 'T')}$.`),
+        L(`1 T = 1 V·s/m²: m/s times tesla gives V/m. The answer is asked in ${fieldUnit(B * C)}.`, `1 T = 1 V·s/m²: m/s mal Tesla ergibt V/m. Gefragt ist die Antwort in ${fieldUnit(B * C)}.`),
+      ];
+    },
     steps: (p, v) => [step(L('E = c·B', 'E = c·B'), p$(L('The fields oscillate together, in phase; their sizes are linked by $E = c\\cdot B$:', 'Die Felder schwingen gemeinsam, in Phase; ihre Grössen hängen über $E = c\\cdot B$ zusammen:')) +
       (p.give === 'E' ? `$$\\hat B = \\frac{\\hat E}{c} = \\frac{${tq(p.E, 'V/m')}}{${cT}} = ${res(tq(v.B, bUnit(v.B)))}$$` : `$$\\hat E = c\\cdot\\hat B = ${cT}\\cdot ${tq(g3(p.E / C), 'T')} = ${res(tq(v.E, fieldUnit(v.E)))}$$`) +
       p$(L('Compared with the Earth’s field (about 50 μT), the magnetic field of a wave is weak: most detectors, and the antennas of radios, respond to its electric field.', 'Verglichen mit dem Erdfeld (etwa 50 μT) ist das Magnetfeld einer Welle schwach: Die meisten Detektoren und die Antennen von Radios sprechen auf ihr elektrisches Feld an.')))],
@@ -366,7 +410,10 @@
     text: (p) => (p.ask === 'zero'
       ? L('The graph shows the electric field of an electromagnetic wave along its direction of propagation, at one moment. At which of the points P, Q, R, S is its magnetic field zero?', 'Das Diagramm zeigt das elektrische Feld einer elektromagnetischen Welle längs ihrer Ausbreitungsrichtung, zu einem Zeitpunkt. An welchem der Punkte P, Q, R, S ist ihr Magnetfeld null?')
       : L('The graph shows the electric field of an electromagnetic wave along its direction of propagation, at one moment. At which of the points P, Q, R, S is its magnetic field largest (in size)?', 'Das Diagramm zeigt das elektrische Feld einer elektromagnetischen Welle längs ihrer Ausbreitungsrichtung, zu einem Zeitpunkt. An welchem der Punkte P, Q, R, S ist ihr Magnetfeld (dem Betrag nach) am grössten?')),
-    hints: () => [L('$E = c\\cdot B$ holds at every place and every moment.', '$E = c\\cdot B$ gilt an jedem Ort und zu jedem Zeitpunkt.'), L('So E and B are zero at the same places, and largest at the same places.', 'Also sind E und B an denselben Orten null und an denselben Orten am grössten.')],
+    hints: (p) => [
+      L('Look at the four points P, Q, R, S on the graph of E: which lie where E crosses the x axis, which at a crest or in a trough, and which in between?', 'Schau die vier Punkte P, Q, R, S auf dem Graphen von E an: Welche liegen dort, wo E die x-Achse kreuzt, welche auf einem Berg oder in einem Tal, und welche dazwischen?'),
+      L(`$E = c\\cdot B$ holds at every place and every moment. So at a point where E ${p.ask === 'zero' ? 'is zero' : 'is largest in size'}, what is B?`, `$E = c\\cdot B$ gilt an jedem Ort und zu jedem Zeitpunkt. Wie gross ist B also an einem Punkt, wo E ${p.ask === 'zero' ? 'null ist' : 'dem Betrag nach am grössten ist'}?`),
+    ],
     steps: (p, v) => [step(L('In phase', 'In Phase'), p$(L(`In a travelling electromagnetic wave, $E = c\\cdot B$ everywhere: the fields are in phase. The magnetic field (dashed) is ${p.ask === 'zero' ? 'zero where the electric field is zero' : 'largest where the electric field is largest'}: at <span class="result">${v.pt}</span>.`, `In einer fortschreitenden elektromagnetischen Welle gilt überall $E = c\\cdot B$: Die Felder sind in Phase. Das Magnetfeld (gestrichelt) ist ${p.ask === 'zero' ? 'null, wo das elektrische Feld null ist' : 'am grössten, wo das elektrische Feld am grössten ist'}: bei <span class="result">${v.pt}</span>.`)))],
     figure: (p, v, view) => {
       const n = 240, pts = [], pb = [];
@@ -437,6 +484,27 @@
         [['9·10¹⁰ T', '9·10¹⁰ T'], ['Turned round: E = c·B, so B = E/c, a tiny number in tesla.', 'Umgekehrt: E = c·B, also B = E/c, eine winzige Zahl in Tesla.'], 'einv', ['Check the units: does V/m times m/s really give tesla (1 T = 1 V·s/m²)?', 'Prüfe die Einheiten: Ergibt V/m mal m/s wirklich Tesla (1 T = 1 V·s/m²)?']],
         [['0 T: the magnetic field is zero where E is largest.', '0 T: Das Magnetfeld ist null, wo E am grössten ist.'], ['E and B are in phase: B is largest where E is largest.', 'E und B sind in Phase: B ist am grössten, wo E am grössten ist.'], 'phase', ['Is B really zero where E is largest? How do E and B oscillate relative to each other in a travelling wave?', 'Ist B wirklich null, wo E am grössten ist? Wie schwingen E und B in einer fortschreitenden Welle zueinander?']]]],
   ];
+  // a first hint for each statement (in the order of CONCEPTS): where to look in this question,
+  // without the answer
+  const CONCEPT_ASK = [
+    ['Where do UV and infrared lie in the spectrum, on either side of visible light? What does that mean for the frequency, and for the energy $E = h\\cdot f$ of one photon?', 'Wo liegen UV und Infrarot im Spektrum, auf beiden Seiten des sichtbaren Lichts? Was heisst das für die Frequenz und für die Energie $E = h\\cdot f$ eines Photons?'],
+    ['Place X-rays and radio waves in the spectrum: which has the shorter waves? Then check each statement for the frequency ($c = \\lambda\\cdot f$), the photon energy and the speed in vacuum.', 'Ordne Röntgenstrahlung und Radiowellen im Spektrum ein: Welche hat die kürzeren Wellen? Prüfe dann jede Aussage auf die Frequenz ($c = \\lambda\\cdot f$), die Photonenenergie und die Geschwindigkeit im Vakuum.'],
+    ['Growing photon energy $E = h\\cdot f$ means growing frequency: in which direction of the wavelength must the list run?', 'Wachsende Photonenenergie $E = h\\cdot f$ heisst wachsende Frequenz: In welche Richtung der Wellenlänge muss die Liste laufen?'],
+    ['Which has the shorter wavelength, blue or red light? With the same $c = \\lambda\\cdot f$ for both, what follows for the frequency?', 'Was hat die kleinere Wellenlänge, blaues oder rotes Licht? Mit demselben $c = \\lambda\\cdot f$ für beide: Was folgt für die Frequenz?'],
+    ['How does sunlight reach the Earth? What lies between the Sun and the Earth?', 'Wie gelangt das Sonnenlicht zur Erde? Was liegt zwischen Sonne und Erde?'],
+    ['Radio waves and light differ in wavelength and frequency. Does $c = \\lambda\\cdot f$ leave room for a different speed in vacuum?', 'Radiowellen und Licht unterscheiden sich in Wellenlänge und Frequenz. Lässt $c = \\lambda\\cdot f$ Platz für eine andere Geschwindigkeit im Vakuum?'],
+    ['At the border, each crest arriving makes one crest in the water. And is light as fast in water as in air?', 'An der Grenze erzeugt jeder ankommende Wellenberg einen Wellenberg im Wasser. Und ist Licht im Wasser gleich schnell wie in Luft?'],
+    ['Count the crests: how many arrive at the glass surface per second, and how many travel on in the air?', 'Zähle die Wellenberge: Wie viele kommen pro Sekunde an der Glasoberfläche an, und wie viele laufen in der Luft weiter?'],
+    ['Is an electromagnetic wave longitudinal or transverse? And with $E = c\\cdot B$ at every place and moment, where is B largest?', 'Ist eine elektromagnetische Welle longitudinal oder transversal? Und wo ist B am grössten, wenn an jedem Ort und zu jedem Zeitpunkt $E = c\\cdot B$ gilt?'],
+    ['The direction of travel is that of $\\vec E\\times\\vec B$. What happens to a cross product when one factor is turned round?', 'Die Ausbreitungsrichtung ist jene von $\\vec E\\times\\vec B$. Was passiert mit einem Vektorprodukt, wenn man einen Faktor umdreht?'],
+    ['$E = c\\cdot B$ with $c = 3\\cdot 10^8$ m/s: solve it for $B$, with $E$ in V/m. Will $B$ in tesla be a large or a tiny number?', '$E = c\\cdot B$ mit $c = 3\\cdot 10^8$ m/s: Löse nach $B$ auf, mit $E$ in V/m. Wird $B$ in Tesla eine grosse oder eine winzige Zahl?'],
+  ];
+  // the rule of each group, as a second hint
+  const CONCEPT_RULE = {
+    spec: ORDER_TEXT,
+    c: () => L('In vacuum, every electromagnetic wave travels at c, and $c = \\lambda\\cdot f$; in matter it is slower, $v = c/n$.', 'Im Vakuum läuft jede elektromagnetische Welle mit c, und $c = \\lambda\\cdot f$; in Materie ist sie langsamer, $v = c/n$.'),
+    eb: () => L('E, B and the direction of travel are perpendicular to each other, a right-handed set; E = c·B at every place and moment.', 'E, B und die Ausbreitungsrichtung stehen senkrecht aufeinander, ein Rechtssystem; E = c·B an jedem Ort und zu jedem Zeitpunkt.'),
+  };
   // a statement on one group of ideas
   const conceptOf = (group) => {
     const ks = CONCEPTS.map((c, k) => k).filter((k) => CONCEPTS[k][0] === group);
@@ -453,8 +521,8 @@
         return [choice('ans', L('Your answer:', 'Deine Antwort:'), opts, { stack: true, ask: tr(qu) })];
       },
       text: (p) => L(CONCEPTS[p.k][1][0], CONCEPTS[p.k][1][1]),
-      hints: () => [{ spec: ORDER_TEXT, c: () => L('In vacuum, every electromagnetic wave travels at c; in matter at c/n, with its frequency unchanged.', 'Im Vakuum läuft jede elektromagnetische Welle mit c; in Materie mit c/n, bei unveränderter Frequenz.'),
-        eb: () => L('E, B and the direction of travel are perpendicular to each other, a right-handed set; E = c·B at every place and moment.', 'E, B und die Ausbreitungsrichtung stehen senkrecht aufeinander, ein Rechtssystem; E = c·B an jedem Ort und zu jedem Zeitpunkt.') }[group]()],
+      // the question's own hint, then the rule of its group (left out where it would give the answer)
+      hints: (p) => [L(...CONCEPT_ASK[p.k]), ...(CONCEPT_RULE[group] && p.k !== 8 ? [CONCEPT_RULE[group]()] : [])],
       steps: (p) => [step(L('The answer', 'Die Antwort'), p$(`<span class="result">${L(CONCEPTS[p.k][2][0], CONCEPTS[p.k][2][1])}</span>`))],
       figure: () => '',
     };

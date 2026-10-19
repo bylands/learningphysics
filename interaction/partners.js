@@ -421,11 +421,11 @@
       figure: figure({ force: true }),
       questions,
       hints: [
-        T('Who exerts the force in the picture, and on whom?', 'Wer übt die Kraft im Bild aus, und auf wen?'),
-        T('Plan: name the two bodies of the interaction, swap them to get the partner, then use the third law for its size.', 'Plan: Nenne die beiden Körper der Wechselwirkung, vertausche sie, um die Gegenkraft zu erhalten, und wende dann für ihre Grösse das dritte Gesetz an.'),
-        T('Recall the third law: what does it say about the size and direction of the partner, compared with the force in the picture? Does it depend on mass, charge or motion?',
-          'Erinnere dich an das dritte Gesetz: Was sagt es über Grösse und Richtung der Gegenkraft, verglichen mit der Kraft im Bild? Hängt das von Masse, Ladung oder Bewegung ab?'),
-        T('Here: for each option, name who exerts the force and on whom. Is it the same pair of bodies as in the picture, swapped?', 'Hier: Nenne bei jeder Antwort, wer die Kraft auf wen ausübt. Sind es dieselben zwei Körper wie im Bild, vertauscht?'),
+        T(`The arrow in the picture: ${sc.force}. Which body exerts this force, and on which body does it act?`, `Der Pfeil im Bild: ${cap(sc.force)}. Welcher Körper übt diese Kraft aus, und auf welchen Körper wirkt sie?`),
+        T('Plan: name the two bodies of this interaction, swap them to get the partner (it acts on the other body), then use the third law for its size.', 'Plan: Nenne die beiden Körper dieser Wechselwirkung, vertausche sie, um die Gegenkraft zu erhalten (sie wirkt auf den anderen Körper), und wende dann für ihre Grösse das dritte Gesetz an.'),
+        T(`Recall the third law for the interaction between ${sc.bodies}: what does it say about the size and direction of the partner, compared with the force in the picture? Does it depend on which of them is heavier or which one moves?`,
+          `Erinnere dich an das dritte Gesetz für die Wechselwirkung zwischen ${sc.bodies}: Was sagt es über Grösse und Richtung der Gegenkraft, verglichen mit der Kraft im Bild? Hängt das davon ab, welcher Körper schwerer ist oder welcher sich bewegt?`),
+        T('Here: for each option, name who exerts the force and on whom. Which one has the same two bodies as the arrow in the picture, swapped?', 'Hier: Nenne bei jeder Antwort, wer die Kraft auf wen ausübt. Welche hat dieselben zwei Körper wie der Pfeil im Bild, vertauscht?'),
       ],
       steps: [
         { title: T('The interaction', 'Die Wechselwirkung'), figure: figure({ force: true }),
@@ -591,8 +591,9 @@
       figure: figure(),
       questions,
       hints: [
-        T('For each pair, ask of both forces: who exerts it, and on which body does it act?', 'Frage bei jedem Paar für beide Kräfte: Wer übt sie aus, und auf welchen Körper wirkt sie?'),
-        T('Plan: in a right pair, the two bodies are swapped: “A on B” ↔ “B on A”, and each force has only one partner. Look for the pair where that is not so.', 'Plan: In einem richtigen Paar sind die beiden Körper vertauscht: „A auf B“ ↔ „B auf A“, und jede Kraft hat nur eine Gegenkraft. Suche das Paar, bei dem das nicht so ist.'),
+        T(`${who} lists ${lines.length} pairs. Take pair ${lines.findIndex((x) => !x.wrong) + 1}, “${lineText(lines.find((x) => !x.wrong))}”: who exerts each of the two forces, and on which body does each act? Then do the same for the other pairs.`,
+          `${who} notiert ${lines.length} Paare. Nimm Paar ${lines.findIndex((x) => !x.wrong) + 1}, „${lineText(lines.find((x) => !x.wrong))}“: Wer übt jede der beiden Kräfte aus, und auf welchen Körper wirkt sie? Mach dasselbe dann für die anderen Paare.`),
+        T(`Plan: in a right pair the two bodies are swapped, “A on B” ↔ “B on A”, and each force has only one partner. Go through ${who}'s pairs 1 to ${lines.length} and look for the one where that is not so.`, `Plan: In einem richtigen Paar sind die beiden Körper vertauscht, „A auf B“ ↔ „B auf A“, und jede Kraft hat nur eine Gegenkraft. Geh die Paare 1 bis ${lines.length} von ${who} durch und suche das, bei dem das nicht so ist.`),
         T('Recall the third law: on how many bodies do the two forces of a pair act? Can two forces that balance each other be a pair?', 'Erinnere dich an das dritte Gesetz: Auf wie viele Körper wirken die beiden Kräfte eines Paars? Können zwei Kräfte, die sich aufheben, ein Paar sein?'),
         T('Here: write next to every force of every pair the body it acts on. Which pair breaks the rule?', 'Hier: Schreibe zu jeder Kraft jedes Paars den Körper, auf den sie wirkt. Welches Paar verletzt die Regel?'),
       ],
