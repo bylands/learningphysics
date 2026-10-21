@@ -83,7 +83,8 @@
 
   // The tutor: the task with what is wanted, then the steps of the solution; then the same for
   // each further exercise of the example (lesson.more). With lesson.watch (the index of one of
-  // these exercises), a last frame to watch its run (app.js): tutorial(lesson).watch().
+  // these exercises), a last frame to watch its run (app.js): tutorial(lesson).watch(); with
+  // lesson.page, the frame links to the run on a page of its own (watch-page.js).
   // a choice of graphs or pictures: its options, read-only, so that the task can be read
   const pics = (ex) => ex.fields.filter((f) => f.type === 'choice' && f.pics && !f.after)
     .map((f) => `<span class="choices levels small pics tq-pics">${f.options.map((o) => `<label><span>${o[1]}</span></label>`).join('')}</span>`).join('');
@@ -111,10 +112,12 @@
     parts.slice(1).forEach((fr, i) => { fr[0].text = `<p class="step-rule">${eq ? L(`Another equation (${i + 2} of ${parts.length})`, `Eine weitere Gleichung (${i + 2} von ${parts.length})`) : L(`Another exercise (${i + 2} of ${parts.length})`, `Eine weitere Aufgabe (${i + 2} von ${parts.length})`)}</p>${fr[0].text.replace(/^<p class="step-rule">[^<]*<\/p>/, '')}`; });
     if (lesson.watch == null) return { frames: parts.flat(), watch: null };
     const one = all[lesson.watch], scn = byId(one.scenario), watch = () => exercise(scn, one.p || make(scn, rng(one.seed))).watch();
-    const frame = { text: `<p class="step-rule">${L('Watch it happen', 'Zuschauen')}</p><p>${WATCH_TEXT[watch().kind]()}</p>`, figure: '<div class="pw-host osw-host"></div>' };
+    // with lesson.page, a link to the run on a page of its own (watch-page.js)
+    const page = lesson.page ? `<p class="note"><a href="${lesson.page}/" target="_blank" rel="noopener">${L('Open it on a page of its own ↗', 'Auf einer eigenen Seite öffnen ↗')}</a></p>` : '';
+    const frame = { text: `<p class="step-rule">${L('Watch it happen', 'Zuschauen')}</p><p>${WATCH_TEXT[watch().kind]()}</p>${page}`, figure: '<div class="pw-host osw-host"></div>' };
     return { frames: [...parts.flat(), frame], watch };
   }
 
-  root.Osc = { SCENARIOS, practiceOf, quiz, tutorial, exercise, byId };
+  root.Osc = { SCENARIOS, practiceOf, quiz, tutorial, exercise, byId, WATCH_TEXT };
   if (typeof module !== 'undefined') module.exports = root.Osc;
 })(typeof window !== 'undefined' ? window : globalThis);
