@@ -54,7 +54,7 @@
     return {
       title: ex.title,
       // an equation to judge needs no words; the others say what is given
-      text: scn.kind === 'shm' ? '' : ex.text,
+      text: scn.kind === 'shm' ? '' : ex.textFor(f.key),
       figure: ex.figure({ task: true }),
       ask,
       options: qz.options.map((o) => ({ html: o.html, correct: !!o.correct, flag: o.flag, why: o.why })),

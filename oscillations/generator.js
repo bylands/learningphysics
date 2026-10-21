@@ -39,6 +39,8 @@
       difficulty: scn.difficulty,
       title: scn.title(p),
       text: `<p>${scn.text(p)}</p>`,
+      // the task asking for one field only (for the check)
+      textFor: (key) => `<p>${scn.text(p, key)}</p>`,
       fields,
       figure: (view = { task: true }) => scn.figure(p, v, view),
       solutionFigure: () => scn.figure(p, v, { show: all }),
