@@ -29,9 +29,11 @@
   const inGraph = (w, q, x) => (w.units ? OC.inUnit(x, w.units[q]) : x);
 
   // The graph at time t: y (and v and a) up to t, the line of t with a dot on each curve, and the
-  // marks reached; o.extrema: lines where the curves have their maxima and minima.
+  // marks reached; o.extrema: lines where the curves have their maxima and minima; o.hoverAt: the
+  // time under the cursor (a line through every panel), or null.
+  const GW = 330, GML = 46, GMR = 14;
   function graph(w, t, marks, o = {}) {
-    const W = 330, ml = 46, mr = 14, t0 = -0.15 * w.t1, T1 = w.t1, n = w.panels.length, ph = n === 1 ? 150 : 62, gap = 26;
+    const W = GW, ml = GML, mr = GMR, t0 = -0.15 * w.t1, T1 = w.t1, n = w.panels.length, ph = n === 1 ? 150 : 62, gap = 26;
     const panels = w.panels.map((q, i) => ({ q, top: 26 + i * (ph + gap), h: ph }));
     const bottom = panels[n - 1].top + ph, H = bottom + 34;
     const X = (x) => ml + ((x - t0) / (T1 - t0)) * (W - ml - mr), f1 = (x) => x.toFixed(1);
@@ -89,6 +91,12 @@
       for (let k = 0; k <= T1 + 1e-9; k++) svg += `<text class="tick" x="${f1(X(k))}" y="${bottom + 15}" text-anchor="middle">${k === 0 ? '0' : `${k === 1 ? '' : k}<tspan class="it">T</tspan>`}</text>`;
     }
     svg += `<text class="tick" x="${W - mr}" y="${bottom + 30}" text-anchor="end"><tspan class="it">t</tspan>${w.unit === 's' ? ' in s' : ''}</text>`;
+    // the time under the cursor
+    if (o.hoverAt != null) {
+      const x = f1(X(o.hoverAt));
+      svg += `<line class="hover" x1="${x}" x2="${x}" y1="${panels[0].top - 4}" y2="${bottom + 4}"/>`;
+      if (w.unit === 's') svg += `<text class="tick hover-t" x="${x}" y="${panels[0].top - 8}" text-anchor="${o.hoverAt > 0.7 * T1 ? 'end' : 'start'}">t = ${fix(o.hoverAt, T1 < 2 ? 2 : 1)} s</text>`;
+    }
     // the answers reached, then a dot on each curve
     marks.forEach((m) => {
       const pn = panels.find((x) => x.q === m.q), cx = X(m.t), cy = pn.Y(m.y);
@@ -101,7 +109,8 @@
   // The player of the run w in host. o: { locked(), marks() → the student's answers (w.marks),
   // ok(mark) → whether a number answered is right (as in the feedback), after() once the scene is
   // drawn anew (e.g. to mark wide figures scrollable), slow() → true for slow motion (SLOW times
-  // slower), extrema (lines through the graphs at their maxima and minima) }; all optional.
+  // slower), extrema (lines through the graphs at their maxima and minima), hover (a line through
+  // the graphs where the cursor is) }; all optional.
   function mountWatch(host, w, o = {}) {
     let shown = null, scene = null;
     const L = OC.L;
@@ -115,7 +124,9 @@
       const rate = w.t1 / seconds(), factor = rate < 1 ? 1 / rate : rate, fx = OC.num(OC.sig(factor, 2));
       return w.unit !== 's' ? '' : factor < 1.1 ? L('In real time.', 'In Echtzeit.') : rate < 1 ? L(`Slow motion: ${fx} times slower than in reality.`, `Zeitlupe: ${fx}-mal langsamer als in Wirklichkeit.`) : L(`Time lapse: ${fx} times faster than in reality.`, `Zeitraffer: ${fx}-mal schneller als in Wirklichkeit.`);
     };
-    return window.Play.create(host, {
+    // with o.hover: the time under the cursor in the graph (null when it is elsewhere)
+    const view = { ...o, hoverAt: null };
+    const player = window.Play.create(host, {
       t0: -0.15 * w.t1, t1: w.t1,
       get seconds() { return seconds(); }, // read on every frame: the speed may change while it plays
       locked: o.locked,
@@ -142,7 +153,7 @@
         // one line per answer (a graph: ✓ only if every ring is)
         const says = [...new Set(marks.map((m) => m.say))];
         says.forEach((say) => { const ok = marks.filter((m) => m.say === say).every((m) => m.ok); rows.push(`<li class="pred ${ok ? 'ok' : 'bad'}">${ok ? '✓' : '✗'} ${say}</li>`); });
-        side.innerHTML = graph(w, s.t, marks, o) + `<ul class="osw-read">${rows.join('')}</ul>` + (scale() ? `<p class="note osw-scale">${scale()}</p>` : '');
+        side.innerHTML = graph(w, s.t, marks, view) + `<ul class="osw-read">${rows.join('')}</ul>` + (scale() ? `<p class="note osw-scale">${scale()}</p>` : '');
       },
       texts: () => ({
         switch: w.kind === 'pointer' ? L('The pointer: set it turning', 'Der Zeiger: drehen lassen') : w.push ? L('The body: push it', 'Der Körper: anstossen') : L('The body: let it go', 'Der Körper: loslassen'),
@@ -156,6 +167,24 @@
         time: w.unit === 's' ? (t) => `t = ${fix(t, w.t1 < 2 ? 2 : 1)} s` : w.unit === 'T' ? (t) => `t = ${fix(t, 2)} T` : null,
       }),
     });
+    if (o.hover) {
+      const t0 = -0.15 * w.t1;
+      const move = (evt) => {
+        const svg = evt.target.closest && evt.target.closest('svg.osw-plot');
+        let at = null;
+        if (svg && svg.getScreenCTM()) {
+          const pt = svg.createSVGPoint();
+          pt.x = evt.clientX; pt.y = evt.clientY;
+          const x = pt.matrixTransform(svg.getScreenCTM().inverse()).x;
+          if (x >= GML && x <= GW - GMR) at = t0 + ((x - GML) / (GW - GML - GMR)) * (w.t1 - t0);
+        }
+        if (at !== view.hoverAt) { view.hoverAt = at; player.refresh(); }
+      };
+      // assigned, not added: a page that mounts a new run in the same host replaces them
+      host.onpointermove = move;
+      host.onpointerleave = () => { if (view.hoverAt != null) { view.hoverAt = null; player.refresh(); } };
+    }
+    return player;
   }
 
   root.OscWatch = { mount: mountWatch, graph };
