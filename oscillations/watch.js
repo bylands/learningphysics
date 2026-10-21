@@ -29,14 +29,23 @@
   const inGraph = (w, q, x) => (w.units ? OC.inUnit(x, w.units[q]) : x);
 
   // The graph at time t: y (and v and a) up to t, the line of t with a dot on each curve, and the
-  // marks reached.
-  function graph(w, t, marks) {
+  // marks reached; o.extrema: lines where the curves have their maxima and minima.
+  function graph(w, t, marks, o = {}) {
     const W = 330, ml = 46, mr = 14, t0 = -0.15 * w.t1, T1 = w.t1, n = w.panels.length, ph = n === 1 ? 150 : 62, gap = 26;
     const panels = w.panels.map((q, i) => ({ q, top: 26 + i * (ph + gap), h: ph }));
     const bottom = panels[n - 1].top + ph, H = bottom + 34;
     const X = (x) => ml + ((x - t0) / (T1 - t0)) * (W - ml - mr), f1 = (x) => x.toFixed(1);
     const ts = Array.from({ length: 241 }, (_, k) => (k * T1) / 240), until = Math.min(t, T1);
     let svg = `<svg class="osw-plot" viewBox="0 0 ${W} ${H}" role="img" aria-label="${OC.L('The motion against time', 'Die Bewegung gegen die Zeit')}">`;
+    // with o.extrema, a line through every panel where y, v or a is largest or smallest: every
+    // quarter period, ωt − φ₀ = k·π/2 (not for a run on a track)
+    if (o.extrema && w.T) {
+      for (let k = Math.ceil((-2 * w.phi) / Math.PI - 1e-9); ; k++) {
+        const x = (w.phi + (k * Math.PI) / 2) / w.w;
+        if (x > T1 + 1e-9) break;
+        svg += `<line class="ext" x1="${f1(X(x))}" x2="${f1(X(x))}" y1="${panels[0].top - 4}" y2="${bottom + 4}"/>`;
+      }
+    }
     panels.forEach((pn) => {
       const q = pn.q, mine = marks.filter((m) => m.q === q).map((m) => Math.abs(m.y));
       // the axis: that of the exercise's graphs (a track), else symmetric around 0, with room for
@@ -92,7 +101,7 @@
   // The player of the run w in host. o: { locked(), marks() → the student's answers (w.marks),
   // ok(mark) → whether a number answered is right (as in the feedback), after() once the scene is
   // drawn anew (e.g. to mark wide figures scrollable), slow() → true for slow motion (SLOW times
-  // slower) }; all optional.
+  // slower), extrema (lines through the graphs at their maxima and minima) }; all optional.
   function mountWatch(host, w, o = {}) {
     let shown = null, scene = null;
     const L = OC.L;
@@ -133,7 +142,7 @@
         // one line per answer (a graph: ✓ only if every ring is)
         const says = [...new Set(marks.map((m) => m.say))];
         says.forEach((say) => { const ok = marks.filter((m) => m.say === say).every((m) => m.ok); rows.push(`<li class="pred ${ok ? 'ok' : 'bad'}">${ok ? '✓' : '✗'} ${say}</li>`); });
-        side.innerHTML = graph(w, s.t, marks) + `<ul class="osw-read">${rows.join('')}</ul>` + (scale() ? `<p class="note osw-scale">${scale()}</p>` : '');
+        side.innerHTML = graph(w, s.t, marks, o) + `<ul class="osw-read">${rows.join('')}</ul>` + (scale() ? `<p class="note osw-scale">${scale()}</p>` : '');
       },
       texts: () => ({
         switch: w.kind === 'pointer' ? L('The pointer: set it turning', 'Der Zeiger: drehen lassen') : w.push ? L('The body: push it', 'Der Körper: anstossen') : L('The body: let it go', 'Der Körper: loslassen'),

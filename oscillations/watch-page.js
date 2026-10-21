@@ -4,7 +4,8 @@
 // (1 … 5, as in the tutor); its name, idea and run come from lessons.js and generator.js, and the
 // player from watch.js, so that the page and the tutor always show the same. On the page of the
 // pointer (with <div id="phase">), a slider sets the initial phase φ₀ (y = A·cos(ωt − φ₀)) in steps
-// of 15°, from the example's to any other. On both, a button switches slow motion on and off (also while it plays).
+// of 15°, from the example's to any other. On fastest-strongest/, lines through the graphs mark
+// the maxima and minima of y, v and a. On both, a button switches slow motion on and off (also while it plays).
 (function () {
   'use strict';
 
@@ -53,7 +54,8 @@
 
   let player = null;
   const slow = () => $('#slow').getAttribute('aria-pressed') === 'true';
-  const mount = () => window.OscWatch.mount($('#watch'), w, { slow });
+  // with <body data-extrema>, lines where the curves have their maxima and minima
+  const mount = () => window.OscWatch.mount($('#watch'), w, { slow, extrema: 'extrema' in document.body.dataset });
   function show() {
     const name = lesson.name[OC.getLang()];
     document.title = `${name} · ${ui().app}`;
