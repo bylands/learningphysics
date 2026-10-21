@@ -7,7 +7,7 @@
 //   here (v_max = Aω, a_max = Aω², v = ω√(A² − x²), …),
 // - one right option per choice, distinct options, an explanation for every wrong one, traps that
 //   differ from the answer, four options in every quiz question,
-// - the pointer: the right graph is the shadow A·sin(ωt + φ₀), four graphs that do not look alike,
+// - the pointer: the right graph is the shadow A·cos(ωt − φ₀), four graphs that do not look alike,
 // - the LC circuit: the roles (Q ↔ y, I ↔ v, L ↔ m, 1/C ↔ D), ω = 1/√(LC), T = 2π√(LC), and the
 //   factor of the frequency when L or C change,
 // - that texts, hints, solutions and figures contain no undefined values (and no ß in German),
@@ -110,10 +110,10 @@ const LAWS = {
   circle: (p, ex) => {
     const g = val(ex, 'graph'), phi = (p.k * Math.PI) / 4;
     if (g.value !== 'right' || g.options.length !== 4 || !g.options.some((o) => o[0] === 'right')) fail('circle: graph');
-    // the right graph: y(0) = A·sin φ₀, rising where cos φ₀ > 0
+    // the right graph: y(0) = A·cos φ₀, rising where sin φ₀ > 0
     const right = (u) => Scenarios.CIRCLE.right(u, phi);
-    if (!close(right(0), Math.sin(phi) || 1e-30, 1e-9) && Math.abs(right(0) - Math.sin(phi)) > 1e-12) fail(`circle: start at ${p.k}`);
-    if (Math.abs(Math.cos(phi)) > 1e-9 && Math.sign(right(0.01) - right(0)) !== Math.sign(Math.cos(phi))) fail(`circle: direction at ${p.k}`);
+    if (!close(right(0), Math.cos(phi) || 1e-30, 1e-9) && Math.abs(right(0) - Math.cos(phi)) > 1e-12) fail(`circle: start at ${p.k}`);
+    if (Math.abs(Math.sin(phi)) > 1e-9 && Math.sign(right(0.01) - right(0)) !== Math.sign(Math.sin(phi))) fail(`circle: direction at ${p.k}`);
     const pts = (k) => Array.from({ length: 121 }, (z, j) => [j / 60, Scenarios.CIRCLE[k](j / 60, phi)]);
     for (let i = 0; i < 4; i++) for (let j = i + 1; j < 4; j++) if (Plot.alike(pts(g.options[i][0]), pts(g.options[j][0]), 2.8)) fail(`circle: graphs alike at ${p.k}`);
   },
