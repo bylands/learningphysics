@@ -100,8 +100,8 @@
   const WATCH_TEXT = {
     spring: () => L('Let the body go and watch: at the turning points it stops for a moment, and its acceleration is largest, pointing back; through the equilibrium it is fastest, and the acceleration is zero.',
       'Lass den Körper los und schau zu: An den Umkehrpunkten steht er einen Moment still, und seine Beschleunigung ist am grössten und zeigt zurück; durch die Gleichgewichtslage geht er am schnellsten, und die Beschleunigung ist null.'),
-    pointer: () => L('Set the pointer turning and watch the body follow the height of its tip: one turn is one period, and the graph of y(t) is a sine.',
-      'Lass den Zeiger drehen und schau zu, wie der Körper der Höhe seiner Spitze folgt: Eine Umdrehung ist eine Periode, und der Graph von y(t) ist ein Sinus.'),
+    pointer: () => L('Set the pointer turning and watch the body follow the height of its tip: one turn is one period, and the graph of y(t) is a cosine, shifted in time by the initial phase.',
+      'Lass den Zeiger drehen und schau zu, wie der Körper der Höhe seiner Spitze folgt: Eine Umdrehung ist eine Periode, und der Graph von y(t) ist ein Kosinus, zeitlich verschoben um die Anfangsphase.'),
     track: () => L('Let the body go and watch it move as the equation says, while its graph is drawn.',
       'Lass den Körper los und schau zu, wie er sich gemäss der Gleichung bewegt, während sein Graph entsteht.'),
   };

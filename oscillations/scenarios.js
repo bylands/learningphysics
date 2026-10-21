@@ -37,10 +37,11 @@
   const PI2 = 2 * Math.PI;
 
   // ================================================================ 0 the pointer
-  // A pointer of length A turns anticlockwise at the angular velocity ω; at t = 0 it is at the
-  // angle φ₀ = k·π/4 from the horizontal. A body is always at the height of its tip:
-  // y = A·sin(ωt + φ₀), an SHM. Which graph (no numbers, two periods)? The wrong ones: the pointer
-  // turning the other way, its shadow on the horizontal axis, a start opposite or a quarter turn off.
+  // A pointer of length A turns anticlockwise at the angular velocity ω; its angle from the top is
+  // ωt − φ₀, so at t = 0 it is short of the top by the initial phase φ₀ = k·π/4 (clockwise from the
+  // top; φ₀ = 0: at the top). A body is always at the height of its tip: y = A·cos(ωt − φ₀), an
+  // SHM. Which graph (no numbers, two periods)? The wrong ones: the pointer turning the other way,
+  // its shadow on the horizontal axis, a start opposite or a quarter turn off.
   const gcd = (a, b) => (b ? gcd(b, a % b) : Math.abs(a));
   // k·π/4 as TeX
   function piTex(k) {
@@ -50,29 +51,30 @@
   }
   // the displacement over A at u periods, for each graph offered
   const CIRCLE = {
-    right: (u, phi) => Math.sin(PI2 * u + phi),
-    turn: (u, phi) => Math.sin(phi - PI2 * u),
-    proj: (u, phi) => Math.cos(PI2 * u + phi),
-    start: (u, phi) => -Math.sin(PI2 * u + phi),
-    late: (u, phi) => -Math.cos(PI2 * u + phi),
+    right: (u, phi) => Math.cos(PI2 * u - phi),
+    turn: (u, phi) => Math.cos(PI2 * u + phi),
+    proj: (u, phi) => -Math.sin(PI2 * u - phi),
+    start: (u, phi) => -Math.cos(PI2 * u - phi),
+    late: (u, phi) => Math.sin(PI2 * u - phi),
   };
   const CFLAG = { right: null, turn: 'turn', proj: 'proj', start: 'start', late: 'start' };
   const circlePts = (kind, phi) => Array.from({ length: 241 }, (z, j) => { const u = (j * 2) / 240; return [u, CIRCLE[kind](u, phi)]; });
   const circleGraph = (kind, phi) => Plot.graph([{ pts: circlePts(kind, phi) }], { tEnd: 2, axis: { lo: -1.4, hi: 1.4, step: 1 }, name: 'y', bare: true, label: L('A graph of the displacement against time', 'Ein Graph der Auslenkung gegen die Zeit') });
   const circleWhy = () => ({
     turn: L('This is the shadow of a pointer turning the other way, clockwise. The arrow ω shows it turning anticlockwise.', 'Das ist der Schatten eines Zeigers, der sich andersherum dreht, im Uhrzeigersinn. Der Pfeil ω zeigt: Er dreht sich im Gegenuhrzeigersinn.'),
-    proj: L('This is the shadow on the horizontal axis, A·cos(ωt + φ₀). The body is at the height of the tip: its shadow on the vertical axis.', 'Das ist der Schatten auf der horizontalen Achse, A·cos(ωt + φ₀). Der Körper ist auf der Höhe der Spitze: ihr Schatten auf der vertikalen Achse.'),
-    start: L('This one starts at the opposite point of the circle: y(0) = −A·sin φ₀.', 'Diese beginnt im gegenüberliegenden Punkt des Kreises: y(0) = −A·sin φ₀.'),
+    proj: L('This is the shadow on the horizontal axis. The body is at the height of the tip: its shadow on the vertical axis.', 'Das ist der Schatten auf der horizontalen Achse. Der Körper ist auf der Höhe der Spitze: ihr Schatten auf der vertikalen Achse.'),
+    start: L('This one starts at the opposite point of the circle, at the height −y(0).', 'Diese beginnt im gegenüberliegenden Punkt des Kreises, auf der Höhe −y(0).'),
     late: L('This one starts a quarter turn away from where the pointer is at t = 0.', 'Diese beginnt eine Vierteldrehung von dort entfernt, wo der Zeiger bei t = 0 steht.'),
   });
   // the nudges in practice where the reason above would give the right graph away
   const circleNudge = () => ({
     turn: L('This is the shadow of a pointer turning clockwise. Which way does the arrow ω show it turning?', 'Das ist der Schatten eines Zeigers, der sich im Uhrzeigersinn dreht. Wie herum dreht er sich laut dem Pfeil ω?'),
-    proj: L('This is the shadow on the horizontal axis, A·cos(ωt + φ₀). The body is at the height of the tip: on which axis is the shadow that shows its height?', 'Das ist der Schatten auf der horizontalen Achse, A·cos(ωt + φ₀). Der Körper ist auf der Höhe der Spitze: Auf welcher Achse liegt der Schatten, der diese Höhe zeigt?'),
+    proj: L('This is the shadow on the horizontal axis. The body is at the height of the tip: on which axis is the shadow that shows its height?', 'Das ist der Schatten auf der horizontalen Achse. Der Körper ist auf der Höhe der Spitze: Auf welcher Achse liegt der Schatten, der diese Höhe zeigt?'),
   });
-  // where the tip is at t = 0, and which way it goes next (it rises where cos φ₀ > 0)
+  // where the tip is at t = 0 (y = cos φ₀ up, c = sin φ₀ to the right), and which way it goes next
+  // (it rises where sin φ₀ > 0)
   function startOf(k) {
-    const phi = (k * Math.PI) / 4, y = Math.sin(phi), c = Math.cos(phi), y0 = Math.abs(y) < 1e-9 ? '0' : Math.abs(Math.abs(y) - 1) < 1e-9 ? (y > 0 ? 'A' : '-A') : `${y > 0 ? '' : '-'}0.71\\,A`;
+    const phi = (k * Math.PI) / 4, y = Math.cos(phi), c = Math.sin(phi), y0 = Math.abs(y) < 1e-9 ? '0' : Math.abs(Math.abs(y) - 1) < 1e-9 ? (y > 0 ? 'A' : '-A') : `${y > 0 ? '' : '-'}0.71\\,A`;
     const where = Math.abs(c) < 1e-9 ? (y > 0 ? L('at the top', 'zuoberst') : L('at the bottom', 'zuunterst'))
       : Math.abs(y) < 1e-9 ? (c > 0 ? L('on the right, at the height of the centre', 'rechts, auf der Höhe des Mittelpunkts') : L('on the left, at the height of the centre', 'links, auf der Höhe des Mittelpunkts'))
         : y > 0 ? L('above the centre', 'oberhalb des Mittelpunkts') : L('below the centre', 'unterhalb des Mittelpunkts');
@@ -97,22 +99,22 @@
     text: () => L('A pointer of length A turns anticlockwise at a constant angular velocity ω; the figure shows it at t = 0. A body moves up and down so that it is always at the height of the pointer’s tip. Which graph shows its displacement y(t)?',
       'Ein Zeiger der Länge A dreht sich mit konstanter Winkelgeschwindigkeit ω im Gegenuhrzeigersinn; die Figur zeigt ihn bei t = 0. Ein Körper bewegt sich so auf und ab, dass er immer auf der Höhe der Zeigerspitze ist. Welcher Graph zeigt seine Auslenkung y(t)?'),
     hints: (p) => [
-      L(`In the figure the pointer starts at the angle $\\varphi_0 = ${piTex(p.k)}$ from the horizontal. Where is its tip at $t = 0$: above the centre, below it, or at its height?`, `In der Figur startet der Zeiger beim Winkel $\\varphi_0 = ${piTex(p.k)}$ zur Horizontalen. Wo ist seine Spitze bei $t = 0$: oberhalb des Mittelpunkts, unterhalb oder auf seiner Höhe?`),
-      L(`The displacement is the height of the tip, its shadow on the vertical axis: $y(t) = A\\cdot\\sin(\\omega\\, t + \\varphi_0)$, so at the start $y(0) = A\\cdot\\sin\\varphi_0$, with the starting angle of the figure.`, `Die Auslenkung ist die Höhe der Spitze, ihr Schatten auf der vertikalen Achse: $y(t) = A\\cdot\\sin(\\omega\\, t + \\varphi_0)$, am Anfang also $y(0) = A\\cdot\\sin\\varphi_0$, mit dem Startwinkel der Figur.`),
+      L(`In the figure the pointer starts at the initial phase $\\varphi_0 = ${piTex(p.k)}$: the angle by which it is short of the top, measured clockwise from the top. Where is its tip at $t = 0$: above the centre, below it, or at its height?`, `In der Figur startet der Zeiger bei der Anfangsphase $\\varphi_0 = ${piTex(p.k)}$: dem Winkel, um den er die Spitze des Kreises noch nicht erreicht hat, im Uhrzeigersinn von oben gemessen. Wo ist seine Spitze bei $t = 0$: oberhalb des Mittelpunkts, unterhalb oder auf seiner Höhe?`),
+      L(`The displacement is the height of the tip, its shadow on the vertical axis: $y(t) = A\\cdot\\cos(\\omega\\, t - \\varphi_0)$, so at the start $y(0) = A\\cdot\\cos\\varphi_0$, with the initial phase of the figure.`, `Die Auslenkung ist die Höhe der Spitze, ihr Schatten auf der vertikalen Achse: $y(t) = A\\cdot\\cos(\\omega\\, t - \\varphi_0)$, am Anfang also $y(0) = A\\cdot\\cos\\varphi_0$, mit der Anfangsphase der Figur.`),
       L(`Now turn the pointer a little further anticlockwise from $${piTex(p.k)}$: does the tip rise or sink? Look for the graph that starts at the height $y(0)$ and goes that way.`, `Dreh den Zeiger nun von $${piTex(p.k)}$ aus ein wenig weiter im Gegenuhrzeigersinn: Steigt oder sinkt die Spitze? Suche den Graphen, der auf der Höhe $y(0)$ beginnt und in diese Richtung geht.`),
     ],
     steps: (p) => {
       const s0 = startOf(p.k);
       return [
-        step(L('The shadow of the pointer', 'Der Schatten des Zeigers'), p$(L('The pointer turns evenly: its angle grows as $\\varphi = \\omega\\, t + \\varphi_0$. The body is at the height of the tip, so', 'Der Zeiger dreht sich gleichmässig: Sein Winkel wächst wie $\\varphi = \\omega\\, t + \\varphi_0$. Der Körper ist auf der Höhe der Spitze, also')) +
-          '$$y(t) = A\\cdot\\sin(\\omega\\, t + \\varphi_0)$$' + p$(L('a harmonic oscillation. Its amplitude is the length $A$ of the pointer, its angular frequency is the angular velocity $\\omega$ of the pointer, and one period $T = 2\\pi/\\omega$ is one turn.', 'eine harmonische Schwingung. Ihre Amplitude ist die Länge $A$ des Zeigers, ihre Kreisfrequenz die Winkelgeschwindigkeit $\\omega$ des Zeigers, und eine Periode $T = 2\\pi/\\omega$ ist eine Umdrehung.')), ['angle']),
-        step(L('At the start', 'Am Anfang'), p$(L(`At $t = 0$ the pointer is at $\\varphi_0 = ${piTex(p.k)}$: the tip is ${s0.where}, $y(0) = A\\cdot\\sin\\varphi_0 = ${s0.y0}$. And ${s0.next}.`, `Bei $t = 0$ steht der Zeiger bei $\\varphi_0 = ${piTex(p.k)}$: Die Spitze ist ${s0.where}, $y(0) = A\\cdot\\sin\\varphi_0 = ${s0.y0}$. Und ${s0.next}.`) + (p.k === 2 ? L(' Starting at the top, the graph is a cosine: $y(t) = A\\cdot\\sin(\\omega\\, t + \\tfrac{\\pi}{2}) = A\\cdot\\cos(\\omega\\, t)$.', ' Von zuoberst aus ist der Graph ein Kosinus: $y(t) = A\\cdot\\sin(\\omega\\, t + \\tfrac{\\pi}{2}) = A\\cdot\\cos(\\omega\\, t)$.') : '')), ['angle']),
+        step(L('The shadow of the pointer', 'Der Schatten des Zeigers'), p$(L('The pointer turns evenly: its angle from the top grows as $\\varphi = \\omega\\, t - \\varphi_0$, where the initial phase $\\varphi_0$ is how far it is short of the top at $t = 0$. The body is at the height of the tip, so', 'Der Zeiger dreht sich gleichmässig: Sein Winkel von oben gemessen wächst wie $\\varphi = \\omega\\, t - \\varphi_0$, wobei die Anfangsphase $\\varphi_0$ angibt, wie weit er bei $t = 0$ noch vor der Spitze des Kreises steht. Der Körper ist auf der Höhe der Spitze, also')) +
+          '$$y(t) = A\\cdot\\cos(\\omega\\, t - \\varphi_0)$$' + p$(L('a harmonic oscillation. Its amplitude is the length $A$ of the pointer, its angular frequency is the angular velocity $\\omega$ of the pointer, and one period $T = 2\\pi/\\omega$ is one turn.', 'eine harmonische Schwingung. Ihre Amplitude ist die Länge $A$ des Zeigers, ihre Kreisfrequenz die Winkelgeschwindigkeit $\\omega$ des Zeigers, und eine Periode $T = 2\\pi/\\omega$ ist eine Umdrehung.')), ['angle']),
+        step(L('At the start', 'Am Anfang'), p$(L(`At $t = 0$ the initial phase is $\\varphi_0 = ${piTex(p.k)}$: the tip is ${s0.where}, $y(0) = A\\cdot\\cos\\varphi_0 = ${s0.y0}$. And ${s0.next}.`, `Bei $t = 0$ ist die Anfangsphase $\\varphi_0 = ${piTex(p.k)}$: Die Spitze ist ${s0.where}, $y(0) = A\\cdot\\cos\\varphi_0 = ${s0.y0}$. Und ${s0.next}.`) + (p.k === 0 ? L(' Starting at the top, the initial phase is zero and the graph is a plain cosine: $y(t) = A\\cdot\\cos(\\omega\\, t)$.', ' Von zuoberst aus ist die Anfangsphase null und der Graph ein reiner Kosinus: $y(t) = A\\cdot\\cos(\\omega\\, t)$.') : '')), ['angle']),
         step(L('The graph', 'Der Graph'), p$(L('So the graph is <span class="result">this one</span>; after one turn of the pointer, it starts again.', 'Der Graph ist also <span class="result">dieser</span>; nach einer Umdrehung des Zeigers beginnt er von vorn.')), ['angle', 'graph']),
       ];
     },
     figure: (p, v, view) => {
       const phi = (p.k * Math.PI) / 4, sh = view.show || new Set();
-      return root.Figures.pointer(phi, { angle: sh.has('angle') }) + (sh.has('graph') ? `<div class="fig">${circleGraph('right', phi)}</div>` : '');
+      return root.Figures.pointer(Math.PI / 2 - phi, { angle: sh.has('angle') }) + (sh.has('graph') ? `<div class="fig">${circleGraph('right', phi)}</div>` : '');
     },
   };
 
@@ -758,14 +760,14 @@
   // examples), the student lets the body go and watches it move (app.js, play.js; the scene is
   // Figures.watchScene): oscWatch(o), o = { kind ('spring': a body on a spring; 'pointer': the
   // turning pointer and its body; 'track': a body on a track, moving by an equation), and either
-  // A, w, phi (spring, pointer: y = A·sin(ωt + φ₀) once let go, at rest at y = A·sin φ₀ before;
-  // push: at rest at the equilibrium and pushed upwards at t = 0), or given and curve [[t, y]]
+  // A, w, phi (spring, pointer: y = A·cos(ωt − φ₀) once let go, at rest at y = A·cos φ₀ before;
+  // push: at rest at the equilibrium and pushed upwards at t = 0, φ₀ = π/2), or given and curve [[t, y]]
   // (track: the kind of equation, NKINDS, and its motion from rest at y(0) > 0) and axis (that of the exercise's graphs); t1 (the end of the
   // run: two periods, or the time of the exercise's graphs), unit ('s': numbers in SI, shown in
   // units { y, v, a }; 'T': times in periods, y in units of A, no numbers; '': no numbers at
   // all), panels (['y'], or ['y', 'v', 'a'] with the arrows of v and a in the scene), name (the
   // letter of y), marks(w, get) }.
-  // It returns o with at(t) → { y, v, a, ph (the pointer's angle) } (before t = 0 at rest, a = 0:
+  // It returns o with at(t) → { y, v, a, ph (the pointer's angle from the horizontal, π/2 + ωt − φ₀) } (before t = 0 at rest, a = 0:
   // the support holds the body; at t = 0 the acceleration jumps, or with a push the velocity),
   // amp { y, v, a } (the largest sizes) and marks(get): get(key) is the answer of a field (a
   // number in its unit, NaN if none, or the option chosen, null if none); each mark is { key, q
@@ -782,8 +784,8 @@
     } else {
       const { A, w: om, phi } = o;
       w.T = PI2 / om;
-      w.at = (t) => (t < 0 ? { y: A * Math.sin(phi), v: 0, a: 0, ph: phi }
-        : { y: A * Math.sin(om * t + phi), v: A * om * Math.cos(om * t + phi), a: -A * om * om * Math.sin(om * t + phi), ph: om * t + phi });
+      w.at = (t) => (t < 0 ? { y: o.push ? 0 : A * Math.cos(phi), v: 0, a: 0, ph: Math.PI / 2 - phi }
+        : { y: A * Math.cos(om * t - phi), v: -A * om * Math.sin(om * t - phi), a: -A * om * om * Math.cos(om * t - phi), ph: Math.PI / 2 + om * t - phi });
       w.amp = { y: A, v: A * om, a: A * om * om };
     }
     w.marks = (get) => (o.marks ? o.marks(w, get) : []).filter((m) => Number.isFinite(m.t) && m.t >= 0 && Number.isFinite(m.y)).map((m) => ({ ...m, t: Math.min(m.t, w.t1) }));
@@ -805,7 +807,7 @@
     return out.sort((a, b) => a.t - b.t);
   }
   // the kinematics: a body on a spring let go from y = A, y = A·cos(ωt), for two periods
-  const kinWatch = (p, panels, marks) => oscWatch({ kind: 'spring', A: p.A, w: p.w, phi: Math.PI / 2, t1: (2 * PI2) / p.w, unit: 's', panels,
+  const kinWatch = (p, panels, marks) => oscWatch({ kind: 'spring', A: p.A, w: p.w, phi: 0, t1: (2 * PI2) / p.w, unit: 's', panels,
     units: { y: unitOfA(p.A), v: speedUnit(p.A * p.w), a: 'm/s²' }, marks });
   // the motion of an equation, finer than the graphs (the same for the same kind)
   const FINE = {};
@@ -820,8 +822,8 @@
   match1.watch = (p) => matchWatch(p, 'graph', axisOf(p.kinds));
   match2.watch = (p) => matchWatch(p, 'graph', axisOf(p.kinds));
   matchBack.watch = (p) => matchWatch(p, 'eq', axisOf([p.given]));
-  // y = A·sin(ωt): at rest at the equilibrium, pushed upwards at t = 0; the point chosen
-  points.watch = (p) => oscWatch({ kind: 'spring', push: true, A: 1, w: PI2, phi: 0, t1: 2, unit: 'T', panels: ['y', 'v', 'a'],
+  // y = A·sin(ωt) = A·cos(ωt − π/2): at rest at the equilibrium, pushed upwards at t = 0; the point chosen
+  points.watch = (p) => oscWatch({ kind: 'spring', push: true, A: 1, w: PI2, phi: Math.PI / 2, t1: 2, unit: 'T', panels: ['y', 'v', 'a'],
     marks: (w, get) => {
       const i = PTS.indexOf(get('pt'));
       return i < 0 ? [] : [{ key: 'pt', q: 'y', t: p.us[i], y: Math.sin(PI2 * p.us[i]), ok: ASK[p.ask].ok(p.us[i]), say: L(`your point ${PTS[i]}`, `dein Punkt ${PTS[i]}`) }];

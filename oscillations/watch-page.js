@@ -3,8 +3,9 @@
 // a body on a spring with y, v and a). The page says which example in <body data-example="n">
 // (1 … 5, as in the tutor); its name, idea and run come from lessons.js and generator.js, and the
 // player from watch.js, so that the page and the tutor always show the same. On the page of the
-// pointer (with <div id="phase">), a slider sets the initial phase φ₀ in steps of 15°, from the
-// example's to any other. On both, a button switches slow motion on and off (also while it plays).
+// pointer (with <div id="phase">), a slider sets the initial phase φ₀ (y = A·cos(ωt − φ₀)) in steps
+// of 15°, from the example's to any other. On fastest-strongest/, lines through the graphs mark
+// the maxima and minima of y, v and a. On both, a button switches slow motion on and off (also while it plays).
 (function () {
   'use strict';
 
@@ -19,20 +20,29 @@
   };
   const ui = () => UI[OC.getLang()];
 
-  // the initial phase: k·π/12 (k from −12 to 12), in degrees and as a multiple of π
+  // KaTeX in an element ($…$), and a formula as KaTeX
+  function math(el) {
+    if (window.renderMathInElement) window.renderMathInElement(el, { delimiters: [{ left: '$', right: '$', display: false }], throwOnError: false });
+  }
+  const tex = (s) => (window.katex ? window.katex.renderToString(s, { throwOnError: false }) : s);
+
+  // the initial phase φ₀ = k·π/12 (k from −12 to 12; y = A·cos(ωt − φ₀)), in degrees and as a
+  // multiple of π: as TeX, and as text for screen readers
   const STEPS = 12;
   const gcd = (a, b) => (b ? gcd(b, a % b) : a);
-  function phaseText(k) {
-    if (k === 0) return '0';
-    const g = gcd(Math.abs(k), STEPS), num = k / g, den = STEPS / g, sign = num < 0 ? '−' : '';
-    return `${k * 15}°`.replace('-', '−') + ` = ${sign}${Math.abs(num) === 1 ? '' : Math.abs(num)}π${den === 1 ? '' : `/${den}`}`;
+  function phaseOf(k) {
+    if (k === 0) return { tex: '\\varphi_0 = 0', text: '0' };
+    const g = gcd(Math.abs(k), STEPS), num = Math.abs(k / g), den = STEPS / g, sign = k < 0 ? '-' : '';
+    const n = num === 1 ? '' : num;
+    return { tex: `\\varphi_0 = ${sign}${Math.abs(k) * 15}^\\circ = ${sign}${den === 1 ? `${n}\\pi` : `\\tfrac{${n}\\pi}{${den}}`}`,
+      text: `${sign ? '−' : ''}${Math.abs(k) * 15}° = ${sign ? '−' : ''}${n}π${den === 1 ? '' : `/${den}`}` };
   }
   function showPhase() {
-    const k = Number($('#phi').value);
-    $('#phi-out').innerHTML = `<i>φ</i>₀ = ${phaseText(k)}`;
-    $('#phi').setAttribute('aria-valuetext', phaseText(k));
+    const ph = phaseOf(Number($('#phi').value));
+    $('#phi-out').innerHTML = tex(ph.tex);
+    $('#phi').setAttribute('aria-valuetext', ph.text);
   }
-  // a new run with the pointer at k·π/12, at rest before it is set turning
+  // a new run with the pointer short of the top by k·π/12, at rest before it is set turning
   function setPhase() {
     showPhase();
     const run = { ...w };
@@ -44,13 +54,15 @@
 
   let player = null;
   const slow = () => $('#slow').getAttribute('aria-pressed') === 'true';
-  const mount = () => window.OscWatch.mount($('#watch'), w, { slow });
+  // with <body data-extrema>, lines where the curves have their maxima and minima
+  const mount = () => window.OscWatch.mount($('#watch'), w, { slow, extrema: 'extrema' in document.body.dataset });
   function show() {
     const name = lesson.name[OC.getLang()];
     document.title = `${name} · ${ui().app}`;
     Lang.apply(ui());
     $('#name').textContent = name;
-    $('#idea').textContent = lesson.idea[OC.getLang()];
+    $('#idea').innerHTML = lesson.idea[OC.getLang()];
+    math($('#idea'));
     $('#what').textContent = WATCH_TEXT[w.kind]();
     if (player) player.refresh();
     else player = mount();

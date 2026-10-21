@@ -1,11 +1,11 @@
 // Verifies the runs shown while watching ("predict, then watch", oscWatch in scenarios.js): run
 // with `node oscillations/test/check-watch.js`. For many seeds of every exercise type with a run,
 // in both languages, and for the worked examples, it checks that
-// - before t = 0 the body is at rest where it starts (y = A·sin φ₀, v = a = 0: held, or at the
+// - before t = 0 the body is at rest where it starts (y = A·cos φ₀, v = a = 0: held, or at the
 //   equilibrium before the push; on a track at y(0) > 0), and its position does not jump at t = 0;
 // - the body on its spring and the pointer's shadow move harmonically: v = dy/dt, a = dv/dt
 //   (numerically), a = −ω²·y, y(t + T) = y(t), the largest sizes A, A·ω and A·ω²; the exercise's
-//   y = A·cos(ωt) (kinematics), y = A·sin(ωt) (the points), y = A·sin(ωt + φ₀) (the pointer);
+//   y = A·cos(ωt) (kinematics), y = A·sin(ωt) (the points), y = A·cos(ωt − φ₀) (the pointer);
 // - on a track the body follows the motion of the given equation (the graph of the exercise);
 // - the answers of the exercise lie on the curves (v̂, â, the period 2π/ω, the lower turning
 //   point −A), so that right answers are rings marked ✓, the point asked for and the right graph
@@ -44,7 +44,7 @@ function verifyRun(w, tag) {
     pts.forEach(([t, y]) => { if (Math.abs(y) < 50 && Math.abs(w.at(t).y - y) > 0.01 * Math.max(span, Math.abs(y))) fail(`${tag}: off the equation's motion at t = ${t}`); });
   } else {
     const { A, w: om } = w, T = PI2 / om;
-    if (before.v !== 0 || before.a !== 0 || !near(before.y, A * Math.sin(w.phi))) fail(`${tag}: not at rest before t = 0`);
+    if (before.v !== 0 || before.a !== 0 || !near(before.y, w.push ? 0 : A * Math.cos(w.phi))) fail(`${tag}: not at rest before t = 0`);
     if (!near(w.t1, 2 * T, 1e-9)) fail(`${tag}: not two periods`);
     let ymax = 0, vmax = 0, amax = 0;
     for (let k = 0; k <= 400; k++) {
@@ -66,7 +66,7 @@ function verifyExercise(ex, w, tag) {
   const p = ex.p;
   if (ex.scenario === 'circle') {
     if (w.kind !== 'pointer' || !near(w.phi, (p.k * Math.PI) / 4)) fail(`${tag}: the pointer's φ₀`);
-    for (const u of [0.1, 0.6, 1.3]) if (!near(w.at(u).y, Math.sin(PI2 * u + w.phi))) fail(`${tag}: the shadow at ${u} T`);
+    for (const u of [0.1, 0.6, 1.3]) if (!near(w.at(u).y, Math.cos(PI2 * u - w.phi))) fail(`${tag}: the shadow at ${u} T`);
   } else if (ex.scenario === 'points') {
     if (!w.push || w.at(-1).y !== 0) fail(`${tag}: not pushed at the equilibrium`);
     for (const u of p.us) if (!near(w.at(u).y, Math.sin(PI2 * u))) fail(`${tag}: the graph of the points at ${u}`);

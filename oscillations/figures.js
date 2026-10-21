@@ -1,9 +1,10 @@
 // The drawings of the app, in the manner of a physics textbook (the shared figure kit, figkit.js):
 // thin even ink outlines; the displacement in its colour (red), the motion in blue. The colours
 // follow the dark mode (style.css).
-//   Figures.pointer(phi, o)   a pointer turning anticlockwise on a circle, at the angle phi (rad),
-//                             and its projection on the vertical axis: the oscillating body;
-//                             o.angle: the angle φ₀ marked
+//   Figures.pointer(phi, o)   a pointer turning anticlockwise on a circle, at the angle phi (rad,
+//                             from the horizontal), and its projection on the vertical axis: the
+//                             oscillating body; o.angle: the initial phase φ₀ = π/2 − phi marked
+//                             (how far the pointer is short of the top, clockwise from it)
 //   Figures.lc(k, o)          an LC circuit in the k-th quarter of its period (0 … 3); o.caption:
 //                             false for none
 //   Figures.watchScene(w)     the scene to watch (play.js, the run w of oscWatch in scenarios.js):
@@ -23,6 +24,8 @@
   const L = (en, de) => root.OC.L(en, de);
   const it = (s) => `<tspan font-style="italic">${s}</tspan>`;
   const sub = (s, d) => `${it(s)}<tspan font-size="72%" dy="4">${d}</tspan><tspan dy="-4">​</tspan>`;
+  // φ as \varphi (the curly form: KaTeX's font, where the page loads it)
+  const varphi = '<tspan font-family="KaTeX_Math, \'STIX Two Text\', serif">φ</tspan>';
 
   // an arrow head at (x, y) along (ux, uy)
   const head = (x, y, ux, uy, H = 10, B = 4) => { const bx = x - H * ux, by = y - H * uy; return `<polygon points="${f(x)},${f(y)} ${f(bx - B * uy)},${f(by + B * ux)} ${f(bx + B * uy)},${f(by - B * ux)}"/>`; };
@@ -42,10 +45,11 @@
     const cx = 118, cy = 112, R = 76, bx = 272, at = (r, a) => [cx + r * Math.cos(a), cy - r * Math.sin(a)];
     const [px, py] = at(R, phi);
     let s = line(cx - R - 16, cy, cx + R + 16, cy, 'tb-thin') + line(cx, cy + R + 16, cx, cy - R - 16, 'tb-thin') + circle(cx, cy, R, 'tb-line');
-    // the angle φ₀ from the horizontal
-    if (o.angle && Math.abs(phi) > 1e-9) {
-      const r = 24, [ax, ay] = at(r, phi), [mx, my] = at(r + 14, phi / 2);
-      s += path(`M${f(cx + r)} ${cy} A${r} ${r} 0 0 ${phi > 0 ? 0 : 1} ${f(ax)} ${f(ay)}`, 'osc-angle') + text(mx, my + 5, sub('φ', '0'), 'tb-axis');
+    // the initial phase φ₀: from the top clockwise to the pointer (in −π … π)
+    const phi0 = Math.atan2(Math.sin(Math.PI / 2 - phi), Math.cos(Math.PI / 2 - phi));
+    if (o.angle && Math.abs(phi0) > 1e-9) {
+      const r = 24, [ax, ay] = at(r, phi), [mx, my] = at(r + 14, Math.PI / 2 - phi0 / 2);
+      s += path(`M${cx} ${f(cy - r)} A${r} ${r} 0 0 ${phi0 > 0 ? 1 : 0} ${f(ax)} ${f(ay)}`, 'osc-angle') + text(mx, my + 5, sub(varphi, '0'), 'tb-axis');
     }
     // the sense of rotation: an arc ahead of the pointer, anticlockwise
     const r2 = R + 13, a1 = phi + 0.3, a2 = phi + 0.95, [sx, sy] = at(r2, a1), [ex, ey] = at(r2, a2), [lx, ly] = at(r2 + 15, (a1 + a2) / 2);

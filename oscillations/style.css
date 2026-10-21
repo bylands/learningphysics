@@ -98,6 +98,7 @@ span.result { background: var(--ok-bg); border-radius: 3px; padding: 0.05em 0.25
 .osw-side { width: min(100%, 340px); }
 .osw-wait { max-width: 30em; margin: 0; }
 svg.osw-plot { display: block; width: 100%; height: auto; }
+.osw-plot .ext { stroke: var(--muted); stroke-width: 1; stroke-dasharray: 1 3; opacity: 0.8; }
 .osw-plot .release { stroke: var(--muted); stroke-width: 1; stroke-dasharray: 3 3; }
 .osw-plot .now { stroke: var(--ink); stroke-width: 1; opacity: 0.45; }
 .osw-plot .tick { font-size: 11px; }
