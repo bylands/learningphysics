@@ -238,6 +238,8 @@
       data: { times, A, B },
       title: L('Completing a value table', 'Wertetabelle ergänzen'),
       text: L('<p>Two vehicles A and B move uniformly. The table gives some of their positions; complete it.</p>', '<p>Zwei Fahrzeuge A und B bewegen sich gleichförmig. Die Tabelle gibt einige ihrer Orte an; ergänze sie.</p>'),
+      // without the task (for the check, which asks for one value)
+      situation: L('<p>Two vehicles A and B move uniformly. The table gives some of their positions.</p>', '<p>Zwei Fahrzeuge A und B bewegen sich gleichförmig. Die Tabelle gibt einige ihrer Orte an.</p>'),
       figure: fig(),
       questions: [vQ('A'), vQ('B'), sQ('A'), sQ('B')],
       hints: [
@@ -547,6 +549,8 @@
       title: L('Value table with acceleration', 'Wertetabelle mit Beschleunigung'),
       text: L(`<p>A ${body()} moves along a straight ${car ? 'road' : 'track'} with constant acceleration. The table gives its position every ${ts}, with gaps; complete it.</p>`,
         `<p>Ein Wagen bewegt sich mit konstanter Beschleunigung auf einer geraden ${car ? 'Strasse' : 'Bahn'}. Die Tabelle gibt seinen Ort alle ${ts} an, mit Lücken; ergänze sie.</p>`),
+      situation: L(`<p>A ${body()} moves along a straight ${car ? 'road' : 'track'} with constant acceleration. The table gives its position every ${ts}, with gaps.</p>`,
+        `<p>Ein Wagen bewegt sich mit konstanter Beschleunigung auf einer geraden ${car ? 'Strasse' : 'Bahn'}. Die Tabelle gibt seinen Ort alle ${ts} an, mit Lücken.</p>`),
       figure: taskFig(),
       questions,
       hints,

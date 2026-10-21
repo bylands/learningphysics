@@ -17,6 +17,8 @@
       task: 'How bright are the bulbs?', taskChange: 'What changes?',
       introShow: 'Instructions',
       taskText: 'All batteries are identical, and so are all bulbs. Compare each bulb with the reference circuit: one bulb connected to one battery. Is it brighter, equally bright, less bright, or off?',
+      // the task without its question (the check asks about one bulb)
+      checkText: 'All batteries are identical, and so are all bulbs. The reference circuit is one bulb connected to one battery.',
       reference: 'Reference', yours: 'Your circuit', circuit: 'Circuit',
       check: 'Check', reveal: 'Show solution', hints: 'Hints', solution: 'Solution',
       revealNote: 'The solution unlocks once you have solved the exercise, used all hints or made three attempts.',
@@ -37,6 +39,7 @@
       task: 'Wie hell leuchten die Lampen?', taskChange: 'Was ändert sich?',
       introShow: 'Anleitung',
       taskText: 'Alle Batterien sind gleich, ebenso alle Lampen. Vergleiche jede Lampe mit der Vergleichsschaltung: eine Lampe an einer Batterie. Leuchtet sie heller, gleich hell, weniger hell, oder ist sie aus?',
+      checkText: 'Alle Batterien sind gleich, ebenso alle Lampen. Die Vergleichsschaltung ist eine Lampe an einer Batterie.',
       reference: 'Vergleich', yours: 'Deine Schaltung', circuit: 'Schaltung',
       check: 'Prüfen', reveal: 'Lösung zeigen', hints: 'Tipps', solution: 'Lösung',
       revealNote: 'Die Lösung wird freigeschaltet, sobald du die Aufgabe gelöst, alle Tipps genutzt oder drei Versuche gemacht hast.',
@@ -807,7 +810,7 @@
       title: ui().task,
       key: `${e.packKey} ${canonOf(e.load)}`, // the same circuit counts as a repeat, whichever bulb is asked
       // a plain paragraph: the check's list of questions catches the toggling of any <details> in it
-      text: `<p>${ui().taskText}</p>`,
+      text: `<p>${ui().checkText}</p>`,
       figure: `<figure class="fig ref">${ref(GLOW.equal)}<figcaption>${ui().reference}</figcaption></figure><figure class="fig">${taskOf(e, [], [b.name])}</figure>`,
       ask: L(`How bright is ${it(b.name)} compared with the reference bulb?`, `Wie hell leuchtet ${it(b.name)} im Vergleich zur Vergleichslampe?`),
       options: ANSWERS.map((a) => {

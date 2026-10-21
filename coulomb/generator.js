@@ -146,6 +146,8 @@
       difficulty: scn.difficulty,
       title: scn.title(p),
       text: `<p>${scn.text(p)}</p>`,
+      // the situation without the questions (for the check, which asks for one answer)
+      situation: scn.situation ? `<p>${scn.situation(p)}</p>` : null,
       fields,
       figure: (view = { task: true }) => scn.figure(p, v, view),
       solutionFigure: () => scn.figure(p, v, { show: all }),

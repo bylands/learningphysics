@@ -252,7 +252,7 @@
     const [k, d, key] = kind.split(':');
     const e = KINDS[k].make(seed, Number(d)), a = Concepts.question(e, seed, key);
     return {
-      title: e.title, text: e.text, figure: e.figure.startsWith('<div') ? e.figure : `<figure class="fig">${e.figure}</figure>`, ask: a.ask,
+      title: e.title, text: e.situation || e.text, figure: e.figure.startsWith('<div') ? e.figure : `<figure class="fig">${e.figure}</figure>`, ask: a.ask,
       options: a.options.map((o) => ({ html: o.html, correct: o.correct, flag: o.correct ? null : o.flag, why: o.correct ? '' : o.why })),
       explain: () => `<div class="steps">${stepsHtml(e)}</div>`,
     };

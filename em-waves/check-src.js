@@ -46,7 +46,7 @@
     return {
       title: ex.title,
       // a statement to choose needs no words before it: the question is the ask
-      text: kind.startsWith('concept') ? '' : ex.text,
+      text: kind.startsWith('concept') ? '' : ex.textFor(f.key),
       figure: ex.figure({ task: true }),
       ask,
       options: qz.options.map((o) => ({ html: o.html, correct: !!o.correct, flag: o.flag, why: o.why })),

@@ -487,7 +487,7 @@
       // four marked points, one of them the only one that moves as asked
       const moves = e.questions.map((q) => q.options.find((o) => o.ok).label), want = moves.find((m) => moves.filter((x) => x === m).length === 1);
       if (!want || e.questions.length !== 4) return checkQuestion(kind, seed + 1);
-      return { title: TITLE.medium(), text: `<p>${e.text}</p>`, figure, ask: L(`Which point ${want}?`, `Welcher Punkt ${want}?`), options: e.questions.map((q) => ({ html: q.label, correct: q.options.find((o) => o.ok).label === want, flag: 'medium', why: q.options.find((o) => o.ok).why })), explain };
+      return { title: TITLE.medium(), text: `<p>${e.situation}</p>`, figure, ask: L(`Which point ${want}?`, `Welcher Punkt ${want}?`), options: e.questions.map((q) => ({ html: q.label, correct: q.options.find((o) => o.ok).label === want, flag: 'medium', why: q.options.find((o) => o.ok).why })), explain };
     }
     const q = e.questions[0];
     if (q.type === 'pick') return { title: TITLE[e.kind](), text: `<p>${e.text}</p>`, figure, ask: e.kind === 'error' ? L('Which sketch is wrong?', 'Welche Skizze ist falsch?') : e.kind === 'reflyt' ? L('Which graph is right?', 'Welcher Graph stimmt?') : L('Which diagram is right?', 'Welches Diagramm stimmt?'), options: q.options.map((o) => ({ html: P.graph(o.fig, { small: true }), correct: o.ok, flag: flagOf(e, o.tag), why: o.why })), explain };

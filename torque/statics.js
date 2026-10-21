@@ -45,6 +45,9 @@
     title: () => L('A plank on two supports', 'Ein Brett auf zwei Stützen'),
     text: (p) => L(`A uniform plank ${m_(p.len)} long with a mass of ${kg(p.m)} rests on two supports: A at its left end and B ${m_(p.b)} from A${p.b === p.len ? ', at its right end' : ''}. A person of ${kg(p.M)} stands ${m_(p.x)} from A. With which forces do the supports push on the plank? Take g = 10 m/s².`,
       `Ein gleichmässiges Brett von ${m_(p.len)} Länge und ${kg(p.m)} Masse liegt auf zwei Stützen: A an seinem linken Ende und B ${m_(p.b)} von A entfernt${p.b === p.len ? ', an seinem rechten Ende' : ''}. Eine Person von ${kg(p.M)} steht ${m_(p.x)} von A entfernt. Mit welchen Kräften drücken die Stützen auf das Brett? Rechne mit g = 10 m/s².`),
+    // the situation without the questions (for the check, which asks for one answer)
+    situation: (p) => L(`A uniform plank ${m_(p.len)} long with a mass of ${kg(p.m)} rests on two supports: A at its left end and B ${m_(p.b)} from A${p.b === p.len ? ', at its right end' : ''}. A person of ${kg(p.M)} stands ${m_(p.x)} from A. Take g = 10 m/s².`,
+      `Ein gleichmässiges Brett von ${m_(p.len)} Länge und ${kg(p.m)} Masse liegt auf zwei Stützen: A an seinem linken Ende und B ${m_(p.b)} von A entfernt${p.b === p.len ? ', an seinem rechten Ende' : ''}. Eine Person von ${kg(p.M)} steht ${m_(p.x)} von A entfernt. Rechne mit g = 10 m/s².`),
     figure(p, v, view = {}) {
       const B = beamPic(p.len, L('A plank on two supports with a person on it', 'Ein Brett auf zwei Stützen mit einer Person darauf')), P = B.P, show = view.show || new Set();
       P.support(B.bottom(0)); P.support(B.bottom(p.b));
@@ -109,6 +112,9 @@
     title: () => L('Holding a ball', 'Einen Ball halten'),
     text: (p) => L(`A forearm is held level and carries a ball of ${kg(p.M)} in the hand, ${cm(p.a)} from the elbow. The forearm’s mass is ${kg(p.mA)}, with its centre of mass ${cm(p.c)} from the elbow. The biceps pulls straight up on the forearm ${cm(p.d)} from the elbow. How large is the muscle force, and how large the force with which the elbow joint pushes down on the forearm? Take g = 10 m/s².`,
       `Ein Unterarm wird waagrecht gehalten und trägt in der Hand, ${cm(p.a)} vom Ellbogen entfernt, einen Ball von ${kg(p.M)}. Der Unterarm hat die Masse ${kg(p.mA)}, sein Schwerpunkt liegt ${cm(p.c)} vom Ellbogen entfernt. Der Bizeps zieht ${cm(p.d)} vom Ellbogen entfernt senkrecht nach oben am Unterarm. Wie gross ist die Muskelkraft, und wie gross die Kraft, mit der das Ellbogengelenk auf den Unterarm nach unten drückt? Rechne mit g = 10 m/s².`),
+    // the situation without the questions (for the check, which asks for one answer)
+    situation: (p) => L(`A forearm is held level and carries a ball of ${kg(p.M)} in the hand, ${cm(p.a)} from the elbow. The forearm’s mass is ${kg(p.mA)}, with its centre of mass ${cm(p.c)} from the elbow. The biceps pulls straight up on the forearm ${cm(p.d)} from the elbow; the elbow joint pushes down on it. Take g = 10 m/s².`,
+      `Ein Unterarm wird waagrecht gehalten und trägt in der Hand, ${cm(p.a)} vom Ellbogen entfernt, einen Ball von ${kg(p.M)}. Der Unterarm hat die Masse ${kg(p.mA)}, sein Schwerpunkt liegt ${cm(p.c)} vom Ellbogen entfernt. Der Bizeps zieht ${cm(p.d)} vom Ellbogen entfernt senkrecht nach oben am Unterarm; das Ellbogengelenk drückt nach unten auf ihn. Rechne mit g = 10 m/s².`),
     figure(p, v, view = {}) {
       const len = p.a + 6, B = beamPic(len, L('A forearm held level with a ball in the hand; the biceps pulls up near the elbow', 'Ein waagrecht gehaltener Unterarm mit einem Ball in der Hand; der Bizeps zieht nahe am Ellbogen nach oben')), P = B.P, show = view.show || new Set();
       const up = 120 / P.s;

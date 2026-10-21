@@ -102,6 +102,8 @@
   const LISTS = { 'forces-one': ONE, 'forces-two': TWO, 'spring-forces': SPRING, 'drag-forces': DRAG };
   const shuffle = (r, a) => { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(r() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
   const byId = (id) => SCENARIOS.find((s) => s.id === id);
+  // the situation of an exercise, without its task where that asks for more than the question (the check asks for one step)
+  const situation = (scn, p) => (scn.situation || scn.text)(p);
   // the free-body diagram (all forces, the first step of the worked solution), with hl highlighted
   const fbd = (ex, hl = []) => ex.figure({ show: new Set(ex.steps[0].show), hl: new Set(hl) });
   const explain = (ex, html) => () => `<div class="figs">${fbd(ex)}</div><div class="steps">${html}</div>`;
@@ -124,7 +126,7 @@
     const options = [{ html: list(has), correct: true }, ...shuffle(r, typical), ...shuffle(r, other)].slice(0, 4);
     // with drag, the body with its velocity and acceleration only, so that the drawing does not give the drag away
     const figure = kind === 'drag-forces' ? ex.figure({ show: MARKS }) : ex.figure({ task: true });
-    return { title: ex.title, text: `<p>${byId(ex.scenario).text(ex.p)}</p>`, figure,
+    return { title: ex.title, text: `<p>${situation(byId(ex.scenario), ex.p)}</p>`, figure,
       ask: L(`Which forces act on ${t.boxes[i]}?`, `Welche Kräfte wirken auf ${t.boxes[i]}?`), options: shuffle(r, options),
       explain: explain(ex, ex.solution[0]), key: `${ex.scenario}|${JSON.stringify(ex.p)}|${i}` };
   }
@@ -140,7 +142,7 @@
       { html: `$${c.base}$`, flag: 'whole', why: L('Only a part of the weight acts in this direction.', 'Nur ein Teil der Gewichtskraft wirkt in diese Richtung.') },
     ];
     const step = ex.steps.find((s) => (s.hl || []).includes('Gp'));
-    return { title: ex.title, text: `<p>${scn.text(ex.p)}</p>`, figure: ex.figure({ show: new Set(['G', 'Gp', 'Gn']), hl: new Set([c.fig]) }),
+    return { title: ex.title, text: `<p>${situation(scn, ex.p)}</p>`, figure: ex.figure({ show: new Set(['G', 'Gp', 'Gn']), hl: new Set([c.fig]) }),
       ask: `${c.what.replace(/:$/, '')}: $${c.sym} = {?}$`, options: shuffle(r, options),
       explain: () => `<div class="figs">${ex.figure({ show: new Set(step.show), hl: new Set(step.hl) })}</div><div class="steps">${step.text}</div>`, key: `comp|${scn.id}|${c.key}` };
   }
@@ -149,7 +151,7 @@
   function law(ids, seed, keys) {
     const r = FS.rng(seed), id = FS.pick(r, ids), ex = generateFor(id, seed);
     const list = Equations.of(id, ex.p), it = FS.pick(r, keys ? list.filter((e) => keys.includes(e.key)) : list);
-    return { title: ex.title, text: `<p>${byId(id).text(ex.p)}</p>`, figure: fbd(ex),
+    return { title: ex.title, text: `<p>${situation(byId(id), ex.p)}</p>`, figure: fbd(ex),
       ask: `${L('Which equation is right?', 'Welche Gleichung stimmt?')} ${it.what.replace(/:$/, '.')}`, options: choose(it),
       explain: explain(ex, `<p>${it.value}</p>`), key: `${id}|${it.key}` };
   }
@@ -170,7 +172,7 @@
       opt(both, inner, { flag: 'internal', why: inner.why }),
       opt(it, w, { flag: w.flag, why: w.why }),
     ];
-    return { title: ex.title, text: `<p>${byId(id).text(ex.p)}</p>`, figure: fbd(ex),
+    return { title: ex.title, text: `<p>${situation(byId(id), ex.p)}</p>`, figure: fbd(ex),
       ask: L(`You want the ${force} $${FS.tex(it.want)}$. Which system and equation give it?`, `Gesucht ist die ${force} $${FS.tex(it.want)}$. Welches System und welche Gleichung liefern sie?`),
       options: shuffle(r, options), explain: explain(ex, `<p>${it.sys}: ${it.value}</p><p>${both.sys}: ${both.value}</p>`), key: `${id}|${it.key}` };
   }
@@ -203,7 +205,7 @@
       { html: opt(d, cmF), flag: 'unit', why: unit },
       { html: opt(o, cmF), flag: 'stretch', why: `${along} ${unit}` },
     ];
-    return { title: ex.title, text: `<p>${byId(id).text(p)}${more}</p>`, figure: ex.figure({ task: true }),
+    return { title: ex.title, text: `<p>${situation(byId(id), p)}${more}</p>`, figure: ex.figure({ task: true }),
       ask: L('Which is the spring force on the box, in direction and size?', 'Welches ist die Federkraft auf die Kiste, nach Richtung und Grösse?'), options: shuffle(r, options),
       explain: explain(ex, ex.solution.slice(0, 2).join('')), key: `sdir|${id}|${JSON.stringify(p)}` };
   }
@@ -243,7 +245,7 @@
           { flag: 'dir', why: L('Air resistance acts against the velocity: she falls down, so it points up.', 'Der Luftwiderstand wirkt gegen die Geschwindigkeit: Sie fällt nach unten, also zeigt er nach oben.') }],
       ],
     }[c].map(([html, correct, w]) => ({ html, correct, ...(w || {}) }));
-    return { title: ex.title, text: `<p>${byId(ex.scenario).text(p)}</p>`, figure: ex.figure({ show: MARKS }),
+    return { title: ex.title, text: `<p>${situation(byId(ex.scenario), p)}</p>`, figure: ex.figure({ show: MARKS }),
       ask: L(`Which describes the air resistance on ${she}?`, `Was beschreibt den Luftwiderstand auf ${she}?`), options: shuffle(r, list),
       explain: explain(ex, ex.solution.slice(0, 2).join('')), key: `ddir|${c}|${p.m}` };
   }

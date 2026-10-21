@@ -256,7 +256,13 @@
     },
     why: { mult: WHY_MULT, same: () => L('The frequency stays the same at the border: the wave oscillates in time with the wave arriving. It is the wavelength that changes.', 'Die Frequenz bleibt an der Grenze gleich: Die Welle schwingt im Takt der ankommenden Welle. Es ist die Wellenlänge, die sich ändert.') },
     fields: () => [num$('v', 'v', 'm/s', L('speed', 'Geschwindigkeit'), { sci: true }), num$('f', 'f', 'THz', L('frequency', 'Frequenz')), num$('lam', '\\lambda', 'nm', L('wavelength', 'Wellenlänge'))],
-    text: (p) => { const m = MATS[p.m]; return L(`Light with a wavelength of ${q(p.lam0, 'nm')} in vacuum enters ${m[0]} (refractive index ${m[2]}). What are its speed, its frequency and its wavelength in the ${m[0]}?`, `Licht mit einer Wellenlänge von ${q(p.lam0, 'nm')} im Vakuum tritt in ${m[1]} ein (Brechzahl ${m[2]}). Wie gross sind seine Geschwindigkeit, seine Frequenz und seine Wellenlänge im ${m[1]}?`); },
+    // with the key of one field (the check asks for one), the question asks for that one only
+    text: (p, key) => {
+      const m = MATS[p.m];
+      const en = { v: 'What is its speed', f: 'What is its frequency', lam: 'What is its wavelength' }[key] || 'What are its speed, its frequency and its wavelength';
+      const de = { v: 'Wie gross ist seine Geschwindigkeit', f: 'Wie gross ist seine Frequenz', lam: 'Wie gross ist seine Wellenlänge' }[key] || 'Wie gross sind seine Geschwindigkeit, seine Frequenz und seine Wellenlänge';
+      return L(`Light with a wavelength of ${q(p.lam0, 'nm')} in vacuum enters ${m[0]} (refractive index ${m[2]}). ${en} in the ${m[0]}?`, `Licht mit einer Wellenlänge von ${q(p.lam0, 'nm')} im Vakuum tritt in ${m[1]} ein (Brechzahl ${m[2]}). ${de} im ${m[1]}?`);
+    },
     hints: (p) => {
       const m = MATS[p.m];
       return [
@@ -283,7 +289,12 @@
     nudge: { ninv: () => L('Can a refractive index be smaller than 1? Does the medium make the waves shorter or longer?', 'Kann eine Brechzahl kleiner als 1 sein? Macht das Medium die Wellen kürzer oder länger?') },
     why: { ninv: () => L('Upside down: the medium shortens the waves, $\\lambda = \\lambda_0/n$, so $n = \\lambda_0/\\lambda$ is larger than 1.', 'Kehrwert verwechselt: Das Medium verkürzt die Wellen, $\\lambda = \\lambda_0/n$, also ist $n = \\lambda_0/\\lambda$ grösser als 1.') },
     fields: () => [num$('n', 'n', '', L('refractive index', 'Brechzahl')), num$('v', 'v', 'm/s', L('speed of light in it', 'Lichtgeschwindigkeit darin'), { sci: true })],
-    text: (p) => { const lam = g3(p.lam0 / MATS[p.m][2]); return L(`Laser light with a wavelength of ${q(p.lam0, 'nm')} in vacuum has a wavelength of only ${q(lam, 'nm')} in a transparent material. What is the refractive index of the material, and how fast is light in it?`, `Laserlicht mit einer Wellenlänge von ${q(p.lam0, 'nm')} im Vakuum hat in einem durchsichtigen Material eine Wellenlänge von nur ${q(lam, 'nm')}. Wie gross ist die Brechzahl des Materials, und wie schnell ist das Licht darin?`); },
+    text: (p, key) => {
+      const lam = g3(p.lam0 / MATS[p.m][2]);
+      const en = { n: 'What is the refractive index of the material?', v: 'How fast is light in it?' }[key] || 'What is the refractive index of the material, and how fast is light in it?';
+      const de = { n: 'Wie gross ist die Brechzahl des Materials?', v: 'Wie schnell ist das Licht darin?' }[key] || 'Wie gross ist die Brechzahl des Materials, und wie schnell ist das Licht darin?';
+      return L(`Laser light with a wavelength of ${q(p.lam0, 'nm')} in vacuum has a wavelength of only ${q(lam, 'nm')} in a transparent material. ${en}`, `Laserlicht mit einer Wellenlänge von ${q(p.lam0, 'nm')} im Vakuum hat in einem durchsichtigen Material eine Wellenlänge von nur ${q(lam, 'nm')}. ${de}`);
+    },
     hints: (p) => {
       const lam = g3(p.lam0 / MATS[p.m][2]);
       return [

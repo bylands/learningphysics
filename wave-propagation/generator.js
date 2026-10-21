@@ -281,6 +281,8 @@
       return {
         kind: 'medium', level, difficulty: level === 'lin' ? 2 : 3, sc,
         text: L(`A crest runs ${dirWord(dir)} along a rope. How does each marked point of the rope move at this moment?`, `Ein Wellenbuckel läuft ${dirWord(dir)} über ein Seil. Wie bewegt sich jeder markierte Punkt des Seils in diesem Moment?`),
+        // without the question (for the check, which asks about one of the points)
+        situation: L(`A crest runs ${dirWord(dir)} along a rope. The figure shows it at one moment, with some points of the rope marked.`, `Ein Wellenbuckel läuft ${dirWord(dir)} über ein Seil. Die Figur zeigt ihn in einem Moment, mit einigen markierten Punkten des Seils.`),
         fig: snap((x) => ev(p, x, 0), { arrows: [arrowOf(p, 0)], dots: uniq.map((q, i) => ({ x: q.x, y: ev(p, q.x, 0), label: names[i] })) }),
         anim: { sc, t0: -1, t1: 0, show: ['sum'], dots: uniq.map((q, i) => ({ x: q.x, label: names[i] })) },
         solAnim: { sc, t0: 0, t1: 0.6, show: ['sum'], dots: uniq.map((q, i) => ({ x: q.x, label: names[i] })) },

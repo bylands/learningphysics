@@ -204,6 +204,9 @@
       title: () => (oblique ? L('Torques on a plate', 'Drehmomente auf eine Platte') : L('Forces along the grid', 'Kräfte entlang des Gitters')),
       text: () => L(`A flat plate can turn about a fixed axis through D, perpendicular to the plate. ${n} forces act on it, drawn on a grid of 10 cm squares. Find the torque of each force about D and the sense in which it would turn the plate. Then rank the torques by size.`,
         `Eine flache Platte ist um eine feste Achse durch D drehbar, die senkrecht zur Platte steht. ${n === 3 ? 'Drei' : n === 4 ? 'Vier' : 'Fünf'} Kräfte wirken auf sie, gezeichnet auf einem Gitter aus Kästchen von 10 cm. Bestimme das Drehmoment jeder Kraft bezüglich D und den Drehsinn, in dem sie die Platte drehen würde. Ordne die Drehmomente dann nach ihrem Betrag.`),
+      // the situation without the questions (for the check, which asks for one answer)
+      situation: () => L(`A flat plate can turn about a fixed axis through D, perpendicular to the plate. ${n} forces act on it, drawn on a grid of 10 cm squares.`,
+        `Eine flache Platte ist um eine feste Achse durch D drehbar, die senkrecht zur Platte steht. ${n === 3 ? 'Drei' : n === 4 ? 'Vier' : 'Fünf'} Kräfte wirken auf sie, gezeichnet auf einem Gitter aus Kästchen von 10 cm.`),
       figure: plateFigure,
       hints: (p) => plateHints(p, oblique, false),
       steps(p, v) {
@@ -490,6 +493,12 @@
         `Ein gleichmässiger Balken von ${cm(p.len)} Länge und ${kg(p.mb)} Masse liegt ${cm(p.s)} von seinem linken Ende entfernt auf einer Stütze. Welche Masse muss am linken Ende hängen, damit der Balken im Gleichgewicht ist?`)
       : L(`A uniform beam ${cm(p.len)} long rests on a support ${cm(p.s)} from its left end. With a mass of ${kg(p.m)} hanging at its left end, it is balanced. What is the mass of the beam?`,
         `Ein gleichmässiger Balken von ${cm(p.len)} Länge liegt ${cm(p.s)} von seinem linken Ende entfernt auf einer Stütze. Hängt an seinem linken Ende eine Masse von ${kg(p.m)}, ist er im Gleichgewicht. Wie gross ist die Masse des Balkens?`)),
+    // the situation without the questions (for the check, which asks for one answer)
+    situation: (p) => (p.find === 'm'
+      ? L(`A uniform beam ${cm(p.len)} long with a mass of ${kg(p.mb)} rests on a support ${cm(p.s)} from its left end. A mass hangs at its left end so that the beam is balanced.`,
+        `Ein gleichmässiger Balken von ${cm(p.len)} Länge und ${kg(p.mb)} Masse liegt ${cm(p.s)} von seinem linken Ende entfernt auf einer Stütze. An seinem linken Ende hängt eine Masse, sodass der Balken im Gleichgewicht ist.`)
+      : L(`A uniform beam ${cm(p.len)} long rests on a support ${cm(p.s)} from its left end. With a mass of ${kg(p.m)} hanging at its left end, it is balanced.`,
+        `Ein gleichmässiger Balken von ${cm(p.len)} Länge liegt ${cm(p.s)} von seinem linken Ende entfernt auf einer Stütze. Hängt an seinem linken Ende eine Masse von ${kg(p.m)}, ist er im Gleichgewicht.`)),
     figure(p, v, view = {}) {
       const B = beamPic(p.len, L('A beam on a support near its left end, with a load at that end', 'Ein Balken auf einer Stütze nahe seinem linken Ende, mit einer Last an diesem Ende')), P = B.P;
       const show = view.show || new Set();
@@ -795,6 +804,12 @@
           `Ein gleichmässiger Balken von ${cm(p.len)} Länge und ${kg(p.m)} Masse trägt an seinem linken Ende eine Last von ${N(p.F1)} und an seinem rechten eine von ${N(p.F2)}. In welchem Abstand vom linken Ende muss er aufgehängt werden, damit er waagrecht bleibt? Wie gross ist die Kraft, mit der er gehalten werden muss? Rechne mit g = 10 m/s².`)
         : L(`A uniform beam ${cm(p.len)} long with a mass of ${kg(p.m)} carries a load of ${N(p.F2)} at its right end. At which distance from the left end must it be hung up so that it stays level? How large is the force with which it must be held? Take g = 10 m/s².`,
           `Ein gleichmässiger Balken von ${cm(p.len)} Länge und ${kg(p.m)} Masse trägt an seinem rechten Ende eine Last von ${N(p.F2)}. In welchem Abstand vom linken Ende muss er aufgehängt werden, damit er waagrecht bleibt? Wie gross ist die Kraft, mit der er gehalten werden muss? Rechne mit g = 10 m/s².`)),
+      // the situation without the questions (for the check, which asks for one answer)
+      situation: (p) => (two
+        ? L(`A uniform beam ${cm(p.len)} long with a mass of ${kg(p.m)} carries a load of ${N(p.F1)} at its left end and one of ${N(p.F2)} at its right end. It is hung up at one point so that it stays level. Take g = 10 m/s².`,
+          `Ein gleichmässiger Balken von ${cm(p.len)} Länge und ${kg(p.m)} Masse trägt an seinem linken Ende eine Last von ${N(p.F1)} und an seinem rechten eine von ${N(p.F2)}. Er wird in einem Punkt so aufgehängt, dass er waagrecht bleibt. Rechne mit g = 10 m/s².`)
+        : L(`A uniform beam ${cm(p.len)} long with a mass of ${kg(p.m)} carries a load of ${N(p.F2)} at its right end. It is hung up at one point so that it stays level. Take g = 10 m/s².`,
+          `Ein gleichmässiger Balken von ${cm(p.len)} Länge und ${kg(p.m)} Masse trägt an seinem rechten Ende eine Last von ${N(p.F2)}. Er wird in einem Punkt so aufgehängt, dass er waagrecht bleibt. Rechne mit g = 10 m/s².`)),
       figure: hangFigure,
       hints: (p) => [
         L(`Down: the beam’s weight at its middle, ${cm(p.len / 2)} from the left end, ${two ? `${N(p.F1)} at the left end ` : ''}and ${N(p.F2)} at the right end. Up: only the holding force, at the unknown x. Two conditions hold: the forces balance, and the torques balance.`,
