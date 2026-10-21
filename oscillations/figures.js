@@ -113,7 +113,7 @@
     const py = (y) => cy + span - ((Math.max(lo, Math.min(hi, w.kind === 'track' ? y : y / w.amp.y)) - lo) / (hi - lo)) * 2 * span;
     const level = (y, name) => line(bx - 32, py(y), bx + 32, py(y), 'tb-ghost') + text(30, py(y) + 5, name, 'tb-axis', 'end');
     function pose(s) {
-      if (w.kind === 'pointer') return pointerBody(s.ph);
+      if (w.kind === 'pointer') return pointerBody(s.ph, { angle: s.held }); // before it turns, its angle φ₀
       const y = py(s.y);
       if (w.kind === 'track') {
         return `<rect class="tb-metal" x="${bx - 3}" y="${cy - span - 12}" width="6" height="${2 * span + 24}" rx="2"/>` + level(0, '0') +

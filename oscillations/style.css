@@ -118,3 +118,10 @@ svg.osw-plot { display: block; width: 100%; height: auto; }
 .osw-read .pred { font-size: 0.85rem; }
 .osw-read .pred.ok { color: var(--ok); } .osw-read .pred.bad { color: var(--bad); }
 .osw-scale { margin: 4px 0 0; font-size: 0.85rem; }
+
+/* the pages of a run of their own (watch-page.js): the initial phase and slow motion */
+.wp-controls { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; margin: 8px 0 4px; }
+.phase { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; flex: 1 1 320px; }
+.phase input { flex: 1 1 160px; max-width: 320px; accent-color: var(--accent); }
+.phase output { min-width: 9em; font-variant-numeric: tabular-nums; }
+#slow[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }

@@ -11,7 +11,7 @@
   'use strict';
 
   const OC = root.OC;
-  const SECONDS = 3;
+  const SECONDS = 3, SLOW = 4;
   const fix = (x, d) => (Math.abs(x) < 0.5 * Math.pow(10, -d) ? 0 : x).toFixed(d).replace('-', '−');
   // a tidy step for about n intervals of size span
   function niceStep(span, n) {
@@ -91,18 +91,24 @@
 
   // The player of the run w in host. o: { locked(), marks() → the student's answers (w.marks),
   // ok(mark) → whether a number answered is right (as in the feedback), after() once the scene is
-  // drawn anew (e.g. to mark wide figures scrollable) }; all optional.
+  // drawn anew (e.g. to mark wide figures scrollable), slow() → true for slow motion (SLOW times
+  // slower) }; all optional.
   function mountWatch(host, w, o = {}) {
     let shown = null, scene = null;
     const L = OC.L;
     // a number answered (ok null) is judged by the app
     const okOf = (m) => (m.ok != null ? m.ok : !!(o.ok && o.ok(m)));
     const body = w.kind === 'pointer' ? L('the pointer', 'den Zeiger') : L('the body', 'den Körper');
+    // how long a run lasts: SECONDS, or SLOW times that while o.slow() (a page's slow motion)
+    const seconds = () => SECONDS * (o.slow && o.slow() ? SLOW : 1);
     // scene time per real second: a run with numbers in slow motion or time lapse
-    const rate = w.t1 / SECONDS, factor = rate < 1 ? 1 / rate : rate, fx = OC.num(OC.sig(factor, 2));
-    const scale = () => (w.unit !== 's' ? '' : factor < 1.1 ? L('In real time.', 'In Echtzeit.') : rate < 1 ? L(`Slow motion: ${fx} times slower than in reality.`, `Zeitlupe: ${fx}-mal langsamer als in Wirklichkeit.`) : L(`Time lapse: ${fx} times faster than in reality.`, `Zeitraffer: ${fx}-mal schneller als in Wirklichkeit.`));
+    const scale = () => {
+      const rate = w.t1 / seconds(), factor = rate < 1 ? 1 / rate : rate, fx = OC.num(OC.sig(factor, 2));
+      return w.unit !== 's' ? '' : factor < 1.1 ? L('In real time.', 'In Echtzeit.') : rate < 1 ? L(`Slow motion: ${fx} times slower than in reality.`, `Zeitlupe: ${fx}-mal langsamer als in Wirklichkeit.`) : L(`Time lapse: ${fx} times faster than in reality.`, `Zeitraffer: ${fx}-mal schneller als in Wirklichkeit.`);
+    };
     return window.Play.create(host, {
-      t0: -0.15 * w.t1, t1: w.t1, seconds: SECONDS,
+      t0: -0.15 * w.t1, t1: w.t1,
+      get seconds() { return seconds(); }, // read on every frame: the speed may change while it plays
       locked: o.locked,
       render(el, s) {
         const lock = !!(o.locked && o.locked()), key = `${lock}|${OC.getLang()}`;
