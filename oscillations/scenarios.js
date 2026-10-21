@@ -491,7 +491,9 @@
     why: { square: WHYK.square },
     nudge: { square: NUDGEK.square },
     fields: (p) => [num$('vmax', VH, speedUnit(p.A * p.w), L('largest speed', 'grösste Geschwindigkeit')), num$('amax', AH, 'm/s²', L('largest acceleration', 'grösste Beschleunigung'))],
-    text: (p) => L(`A body oscillates harmonically with ${given(p)}. What are its largest speed and its largest acceleration?`, `Ein Körper schwingt harmonisch mit ${given(p)}. Wie gross sind seine grösste Geschwindigkeit und seine grösste Beschleunigung?`),
+    // with the key of one field (the check asks for one), the question asks for that one only
+    text: (p, key) => L(`A body oscillates harmonically with ${given(p)}. ${{ vmax: 'What is its largest speed?', amax: 'What is its largest acceleration?' }[key] || 'What are its largest speed and its largest acceleration?'}`,
+      `Ein Körper schwingt harmonisch mit ${given(p)}. ${{ vmax: 'Wie gross ist seine grösste Geschwindigkeit?', amax: 'Wie gross ist seine grösste Beschleunigung?' }[key] || 'Wie gross sind seine grösste Geschwindigkeit und seine grösste Beschleunigung?'}`),
     hints: (p) => [
       L(`Here $A = ${tq(p.A, unitOfA(p.A))}$ and $\\omega = ${W(p.w)}$. With $y(t) = A\\cdot\\cos(\\omega t)$, $v(t) = -A\\omega\\cdot\\sin(\\omega t)$ and $a(t) = -A\\omega^2\\cdot\\cos(\\omega t)$: where on its path is the body fastest, where is its acceleration largest?`, `Hier ist $A = ${tq(p.A, unitOfA(p.A))}$ und $\\omega = ${W(p.w)}$. Mit $y(t) = A\\cdot\\cos(\\omega t)$ ist $v(t) = -A\\omega\\cdot\\sin(\\omega t)$ und $a(t) = -A\\omega^2\\cdot\\cos(\\omega t)$: Wo auf seiner Bahn ist der Körper am schnellsten, wo ist seine Beschleunigung am grössten?`),
       L(`Sine and cosine are at most 1 in size, so $\\hat v = A\\,\\omega$ and $\\hat a = A\\,\\omega^2$ (or $\\hat a = \\hat v\\cdot\\omega$). First the amplitude in metres: how many metres are ${q(p.A, unitOfA(p.A))}?`, `Sinus und Kosinus sind dem Betrag nach höchstens 1, also $\\hat v = A\\,\\omega$ und $\\hat a = A\\,\\omega^2$ (oder $\\hat a = \\hat v\\cdot\\omega$). Zuerst die Amplitude in Metern: Wie viele Meter sind ${q(p.A, unitOfA(p.A))}?`),
