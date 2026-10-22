@@ -44,7 +44,7 @@
   const explain = (ex) => () => `<div class="figs">${ex.solutionFigure()}</div><div class="steps">${ex.solution.join('')}</div>`;
   const plain = (s) => s.replace(/<[^>]*>/g, '');
   const ask = (f) => L(`Find the ${plain(f.what)} $${TQ.tex(...f.sym)}$.`, `Wie gross ist $${TQ.tex(...f.sym)}$ (${plain(f.what)})?`);
-  const common = (ex) => ({ title: ex.title, text: ex.text, figure: ex.figure({ task: true }), explain: explain(ex) });
+  const common = (ex) => ({ title: ex.title, text: ex.situation || ex.text, figure: ex.figure({ task: true }), explain: explain(ex) });
 
   // a quantity of an exercise, as in practice
   function quantity(kind, seed) {

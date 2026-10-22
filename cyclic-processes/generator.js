@@ -646,6 +646,9 @@
         kind: 'error', diagram: d, cycle: wrong, straight, wrongStep: i, difficulty: 4,
         text: L(`A student drew this cyclic process in the ${dname(d)} diagram: <ul>${describeCycle(c).map((x) => `<li>${x}</li>`).join('')}<li>from D straight back to A</li></ul> One of the first three steps is wrong. Which, and what is wrong with it?`,
           `Eine Schülerin hat diesen Kreisprozess ins ${dname(d)}-Diagramm gezeichnet: <ul>${describeCycle(c).map((x) => `<li>${x}</li>`).join('')}<li>von D direkt zurück nach A</li></ul> Einer der ersten drei Schritte ist falsch. Welcher, und was ist daran falsch?`),
+        // without the question (for the check, which asks only for the step and offers D → A too)
+        situation: L(`A student drew this cyclic process in the ${dname(d)} diagram: <ul>${describeCycle(c).map((x) => `<li>${x}</li>`).join('')}<li>from D straight back to A</li></ul> One of the steps is drawn wrong.`,
+          `Eine Schülerin hat diesen Kreisprozess ins ${dname(d)}-Diagramm gezeichnet: <ul>${describeCycle(c).map((x) => `<li>${x}</li>`).join('')}<li>von D direkt zurück nach A</li></ul> Einer der Schritte ist falsch gezeichnet.`),
         questions: [
           { type: 'choice', key: 'step', label: L('The wrong step', 'Der falsche Schritt'), options: [0, 1, 2].map((j) => ({ label: `${nameOf(j)} → ${nameOf(j + 1)}`, ok: j === i, why: j === i ? '' : L(`${nameOf(j)} → ${nameOf(j + 1)} is drawn as described. Check each step against its description, starting from where the drawing puts its first state.`, `${nameOf(j)} → ${nameOf(j + 1)} ist wie beschrieben gezeichnet. Prüfe jeden Schritt an seiner Beschreibung, ausgehend davon, wo die Zeichnung seinen ersten Zustand hinlegt.`) })) },
           { type: 'choice', key: 'what', label: L('What is wrong', 'Was falsch ist'), options: reasons.filter((x) => x.tag !== 'shape' || d === 'pV').map((x) => ({ label: x.label, ok: x.tag === m, why: whyOf[m] })) },

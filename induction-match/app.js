@@ -539,7 +539,7 @@
     const q = key ? e.questions.find((x) => x.key === key) : e.questions[seed % e.questions.length];
     const { ask, list } = e.kind === 'lenz' ? lenzQuestion(e, seed) : { ask: cap(q.label.replace(/^\([a-d]\) /, '')), list: options(q) };
     return {
-      title: e.title, text: e.text, figure: `<div class="figs">${pic(e)}${e.figs || ''}</div>`, ask, options: list,
+      title: e.title, text: e.situation || e.text, figure: `<div class="figs">${pic(e)}${e.figs || ''}</div>`, ask, options: list,
       explain: () => `${e.solFig || ''}<div class="steps">${e.solution.map((s) => (s.startsWith('<ul') ? s : `<p>${s}</p>`)).join('')}</div>`,
       key: `${e.id}|${e.kind === 'lenz' ? '' : q.key}`,
     };

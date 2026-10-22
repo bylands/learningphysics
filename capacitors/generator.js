@@ -144,6 +144,7 @@
       if (sp) ft.push({ value: 1 / a + 1 / vb, why: WHY_INVERT(), flag: 'invert' });
       return {
         text: p$(L(`Find the capacitance $C_{23}$ of the block of $C_2$ and $C_3$, then the total capacitance between A and B.`, `Bestimme die Kapazität $C_{23}$ des Blocks aus $C_2$ und $C_3$, dann die Gesamtkapazität zwischen A und B.`)),
+        situation: p$(L('The capacitors are connected between A and B as shown.', 'Die Kondensatoren sind wie gezeigt zwischen A und B geschaltet.')),
         fields: [numF('C23', 'C_{23}', 'µF', L('block', 'Block'), vb, fb), numF('C', 'C', 'µF', totalWhat(), value, ft)],
         figure: () => Fg.network(net, { hl: block, cap: '$C_{23}$' }),
         solutionFigure: () => Fg.network(net, { reduce: [[block, '23', vb]] }),
@@ -280,6 +281,7 @@
     ].map(([o, h, f]) => opt(o, h, o === v ? '' : why, o === v ? null : f, nudge)), { stack: true, ask: L(`Compared with ${name} alone: is the total capacitance smaller or larger?`, `Verglichen mit ${name} allein: Ist die Gesamtkapazität kleiner oder grösser?`) });
     return {
       text: p$(L(`Three capacitors, ${capList([a, b, c])}, are connected as shown. Without calculating: how does the total capacitance compare with $C_1$ alone, and with the block $C_{23}$ of $C_2$ and $C_3$ alone?`, `Drei Kondensatoren, ${capList([a, b, c])}, sind wie gezeigt geschaltet. Ohne zu rechnen: Wie verhält sich die Gesamtkapazität zu $C_1$ allein und zum Block $C_{23}$ aus $C_2$ und $C_3$ allein?`)),
+      situation: p$(L(`Three capacitors, ${capList([a, b, c])}, are connected as shown; $C_2$ and $C_3$ form the block $C_{23}$. Answer without calculating.`, `Drei Kondensatoren, ${capList([a, b, c])}, sind wie gezeigt geschaltet; $C_2$ und $C_3$ bilden den Block $C_{23}$. Antworte, ohne zu rechnen.`)),
       fields: [cmp('where', '$C_1$'), cmp('more', L('the block $C_{23}$', 'dem Block $C_{23}$'))],
       figure: () => Fg.network(net, { hl: block, cap: '$C_{23}$' }),
       solutionFigure: () => Fg.network(net, { reduce: [[block, '23', vb]] }),
@@ -573,6 +575,12 @@
         mid: L(`Some time later the capacitor has the voltage $\\Delta V_C = ${tq(UC, 'V')}$. Find $\\Delta V_R$ and $I$ at this moment.`, `Etwas später hat der Kondensator die Spannung $U_C = ${tq(UC, 'V')}$. Bestimme $U_R$ und $I$ in diesem Moment.`),
         fromI: L(`Some time later the current is $I = ${tq(I, 'mA')}$. Find the voltages $\\Delta V_R$ and $\\Delta V_C$ at this moment.`, `Etwas später ist der Strom $I = ${tq(I, 'mA')}$. Bestimme die Spannungen $U_R$ und $U_C$ in diesem Moment.`),
       }[moment];
+      // the moment without the question (for the check, which asks for one of the two)
+      const when = {
+        start: L('Look at the moment right after the switch is closed.', 'Betrachte den Moment unmittelbar nach dem Schliessen des Schalters.'),
+        mid: L(`Some time later the capacitor has the voltage $\\Delta V_C = ${tq(UC, 'V')}$.`, `Etwas später hat der Kondensator die Spannung $U_C = ${tq(UC, 'V')}$.`),
+        fromI: L(`Some time later the current is $I = ${tq(I, 'mA')}$.`, `Etwas später ist der Strom $I = ${tq(I, 'mA')}$.`),
+      }[moment];
       const LOOP = charge ? L('Across the resistor is the rest: $\\Delta V_R = \\Delta V_0 - \\Delta V_C$, not $\\Delta V_C$ itself.', 'Über dem Widerstand liegt der Rest: $U_R = U_0 - U_C$, nicht $U_C$ selbst.')
         : L('While discharging there is no battery: the resistor is connected straight across the capacitor, $\\Delta V_R = \\Delta V_C$.', 'Beim Entladen gibt es keine Batterie: Der Widerstand ist direkt an den Kondensator angeschlossen, $U_R = U_C$.');
       const loopNudge = NUDGE.loop(charge);
@@ -597,6 +605,7 @@
       if (moment !== 'fromI') solution.push(step(L('The current', 'Der Strom'), p$(`$I = \\frac{${Vs('R')}}{R} = \\frac{${tq(UR, 'V')}}{${tq(R, 'kΩ')}} = \\htmlClass{result}{${tq(I, 'mA')}}$`)));
       return {
         text: p$(sit) + p$(ask),
+        situation: p$(sit) + p$(when),
         fields: [urF, second],
         figure: () => Fg.rc(kind, { R: `${num(R)} kΩ`, U0: `${num(U0)} V` }),
         solutionFigure: () => Fg.rc(kind, { closed: true, cur: true, R: `${num(R)} kΩ`, U0: `${num(U0)} V` }),
@@ -673,10 +682,12 @@
       const twoText = ask === 'time'
         ? L(`After ${k} half-lives the ${charge ? 'gap to $\\Delta V_0$' : 'voltage'} is down to $${FRAC[k][0]}$ of $\\Delta V_0$${charge ? `, so the capacitor is at $${frac}\\,\\Delta V_0$` : ''}: $t_2 = ${k}\\,T_{1/2} = \\htmlClass{result}{${tq(t2, unit)}}$.`, `Nach ${k} Halbwertszeiten ist ${charge ? 'der Abstand zu $U_0$' : 'die Spannung'} auf $${FRAC[k][0]}$ von $U_0$ gesunken${charge ? `, der Kondensator also bei $${frac}\\,U_0$` : ''}: $t_2 = ${k}\\,T_{1/2} = \\htmlClass{result}{${tq(t2, unit)}}$.`)
         : L(`$t = ${tq(t2, unit)}$ is ${k} half-lives: the ${charge ? 'gap to $\\Delta V_0$' : 'voltage'} is down to $${FRAC[k][0]}$ of $\\Delta V_0$, so $\\Delta V_2 = ${frac}\\cdot ${tq(U0, 'V')} = \\htmlClass{result}{${tq(q, 'V')}}$.`, `$t = ${tq(t2, unit)}$ sind ${k} Halbwertszeiten: ${charge ? 'Der Abstand zu $U_0$' : 'Die Spannung'} ist auf $${FRAC[k][0]}$ von $U_0$ gesunken, also $U_2 = ${frac}\\cdot ${tq(U0, 'V')} = \\htmlClass{result}{${tq(q, 'V')}}$.`);
+      const given = p$(charge ? L(`A capacitor is charged through a resistor to $\\Delta V_0 = ${tq(U0, 'V')}$. The graph shows its voltage against time.`, `Ein Kondensator wird über einen Widerstand auf $U_0 = ${tq(U0, 'V')}$ geladen. Der Graph zeigt seine Spannung gegen die Zeit.`) : L(`A capacitor charged to $\\Delta V_0 = ${tq(U0, 'V')}$ is discharged through a resistor. The graph shows its voltage against time.`, `Ein auf $U_0 = ${tq(U0, 'V')}$ geladener Kondensator wird über einen Widerstand entladen. Der Graph zeigt seine Spannung gegen die Zeit.`));
+      const point = p$(`<span class="note">${L('Point at the graph to read its coordinates.', 'Zeige auf den Graphen, um seine Koordinaten abzulesen.')}</span>`);
       return {
-        text: p$(charge ? L(`A capacitor is charged through a resistor to $\\Delta V_0 = ${tq(U0, 'V')}$. The graph shows its voltage against time.`, `Ein Kondensator wird über einen Widerstand auf $U_0 = ${tq(U0, 'V')}$ geladen. Der Graph zeigt seine Spannung gegen die Zeit.`) : L(`A capacitor charged to $\\Delta V_0 = ${tq(U0, 'V')}$ is discharged through a resistor. The graph shows its voltage against time.`, `Ein auf $U_0 = ${tq(U0, 'V')}$ geladener Kondensator wird über einen Widerstand entladen. Der Graph zeigt seine Spannung gegen die Zeit.`)) +
-          p$(`${charge ? L('Read the half-life $T_{1/2}$ (the time until the capacitor is charged to $\\Delta V_0/2$),', 'Lies die Halbwertszeit $T_{1/2}$ ab (die Zeit, bis der Kondensator auf $U_0/2$ geladen ist)') : L('Read the half-life $T_{1/2}$,', 'Lies die Halbwertszeit $T_{1/2}$ ab')} ${askText}`) +
-          p$(`<span class="note">${L('Point at the graph to read its coordinates.', 'Zeige auf den Graphen, um seine Koordinaten abzulesen.')}</span>`),
+        situation: given + point,
+        text: given +
+          p$(`${charge ? L('Read the half-life $T_{1/2}$ (the time until the capacitor is charged to $\\Delta V_0/2$),', 'Lies die Halbwertszeit $T_{1/2}$ ab (die Zeit, bis der Kondensator auf $U_0/2$ geladen ist)') : L('Read the half-life $T_{1/2}$,', 'Lies die Halbwertszeit $T_{1/2}$ ab')} ${askText}`) + point,
         fields: [
           numF('th', 'T_{1/2}', unit, L('half-life', 'Halbwertszeit'), th, [{ value: tau, why: WHY_TAU(), flag: 'half' }, { value: t2, why: L(`At $t = ${tq(t2, unit)}$ the voltage is $${frac}\\,\\Delta V_0$: that is $${k}\\,T_{1/2}$.`, `Bei $t = ${tq(t2, unit)}$ ist die Spannung $${frac}\\,U_0$: Das ist $${k}\\,T_{1/2}$.`), flag: null,
             nudge: L(`At $t = ${tq(t2, unit)}$ the voltage is $${frac}\\,\\Delta V_0$, not $\\Delta V_0/2$. Where does the curve reach $\\Delta V_0/2$?`, `Bei $t = ${tq(t2, unit)}$ ist die Spannung $${frac}\\,U_0$, nicht $U_0/2$. Wo erreicht die Kurve $U_0/2$?`) }], 0.08),

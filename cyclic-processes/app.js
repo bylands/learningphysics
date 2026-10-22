@@ -417,7 +417,7 @@
     if (q.type === 'pick') return { title: TITLE[e.kind](), text: e.kind === 'switch' ? '' : `<div class="desc">${e.text}</div>`, figure: e.kind === 'switch' ? `<div class="fig">${D.diagram({ cycle: e.cycle, diagram: e.diagram })}</div>` : '', ask: e.kind === 'switch' ? e.text : L('Which diagram?', 'Welches Diagramm?'), options: q.options.map((o) => ({ html: D.diagram(o.fig, { small: true }), correct: o.ok, flag: FLAG[o.tag] || 'other', why: o.why })), explain };
     if (e.kind === 'error') {
       const q1 = e.questions[0];
-      return { title: TITLE.error(), text: `<div class="desc">${e.text}</div>`, figure: `<div class="fig">${figureOf(e)}</div>`, ask: L('Which step is wrong?', 'Welcher Schritt ist falsch?'),
+      return { title: TITLE.error(), text: `<div class="desc">${e.situation}</div>`, figure: `<div class="fig">${figureOf(e)}</div>`, ask: L('Which step is wrong?', 'Welcher Schritt ist falsch?'),
         options: [...q1.options.map((o) => ({ html: o.label, correct: o.ok, flag: 'reading', why: o.why || e.solution[0] })), { html: 'D → A', correct: false, flag: 'reading', why: L('D → A only closes the loop: it goes back to A from wherever D is.', 'D → A schliesst nur den Kreis: Es führt von D, wo immer es liegt, zurück nach A.') }], explain };
     }
     const qq = kind === 'table' ? r.pick(e.questions) : q;

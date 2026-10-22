@@ -312,6 +312,8 @@
     return {
       kind: 'value', dir: 'phi2v', family, title: L('Reading off the voltage', 'Die Spannung ablesen'),
       text: L('<p>The graph shows the magnetic flux through a conducting loop. How large is the induced voltage at the two times?</p>', '<p>Der Graph zeigt den magnetischen Fluss durch eine Leiterschleife. Wie gross ist die induzierte Spannung zu den beiden Zeiten?</p>'),
+      // without the question (for the check, which asks for one of the answers)
+      situation: prompt('phi2v'),
       figs: one('flux', fluxGraph(g)), questions: qs,
       hints: graphHints('phi2v', family, g).slice(0, 2).concat(family === 'lin'
         ? [L(`${at.map(({ t, i }, n) => `(${'ab'[n]}) ${fmt(t)} s lies in the part ${when(ps[i])}`).join(', ')}: read off how much ${PHI} changes over each whole part and divide by its duration, ${DPHI} = Δ${PHI}/Δ<i>t</i>.`,
@@ -348,6 +350,7 @@
     return {
       kind: 'value', dir: 'v2phi', family, title: L('The change of the flux', 'Die Änderung des Flusses'),
       text: prompt('v2phi', phi0) + L('<p>By how much does the flux change, and where does it end?</p>', '<p>Um wie viel ändert sich der Fluss, und wo endet er?</p>'),
+      situation: prompt('v2phi', phi0),
       figs: one('volt', voltGraph(g)),
       questions: [
         choice('d', L(`(a) the change of the flux ${between(a, b)}`, `(a) die Änderung des Flusses ${between(a, b)}`), explained(q1, WHYD, how1).map((o) => nudged(o, o.tag === 'sign' && NUDGE.signD))),

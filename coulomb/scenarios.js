@@ -204,6 +204,8 @@
       return L(`Two small charged spheres A and B sit on a grid, as shown. In which direction does the force on B (in the ring) point, and in which the force on A? ${c ? `${c.now}: how does the force on ${c.on} change?` : 'Which of the two forces is larger?'}`,
         `Zwei kleine geladene Kugeln A und B sitzen auf einem Gitter, wie abgebildet. In welche Richtung zeigt die Kraft auf B (im Ring), in welche die Kraft auf A? ${c ? `${c.now}: Wie ändert sich die Kraft auf ${c.on}?` : 'Welche der beiden Kräfte ist grösser?'}`);
     },
+    // the situation without the questions (for the check, which asks for one answer)
+    situation: () => L('Two small charged spheres A and B sit on a grid, as shown; B is in the ring.', 'Zwei kleine geladene Kugeln A und B sitzen auf einem Gitter, wie abgebildet; B ist im Ring.'),
     hints: (p) => [
       L(`A carries ${qs(p.qa, 'μC')}, B ${qs(p.qb, 'μC')}: do they attract or repel each other? The force on B lies on the grid line through A and B, towards A or away from it.`, `A trägt ${qs(p.qa, 'μC')}, B ${qs(p.qb, 'μC')}: Ziehen sie sich an oder stossen sie sich ab? Die Kraft auf B liegt auf der Gitterlinie durch A und B, zu A hin oder von A weg.`),
       L(`The charges differ (${q(Math.abs(p.qa), 'μC')} and ${q(Math.abs(p.qb), 'μC')}), but the force on A is the reaction to the force on B (Newton’s third law), and both are ${m$('k\\,\\frac{|q_A|\\,|q_B|}{r^2}')}: the same product for both.`, `Die Ladungen sind verschieden (${q(Math.abs(p.qa), 'μC')} und ${q(Math.abs(p.qb), 'μC')}), aber die Kraft auf A ist die Reaktion auf die Kraft auf B (actio = reactio), und beide sind ${m$('k\\,\\frac{|q_A|\\,|q_B|}{r^2}')}: dasselbe Produkt für beide.`),
@@ -289,6 +291,11 @@
       return L(`Two point charges exert a force of ${q(p.F, 'N')} on each other. Now ${c(p.a, 1)}, ${c(p.b, 2)}, and their distance is ${DIST[p.n]()}. By what factor does the force change, and how large is it now?`,
         `Zwei Punktladungen üben eine Kraft von ${q(p.F, 'N')} aufeinander aus. Nun ${c(p.a, 1).replace(/^Ladung (\d) (bleibt|wird)/, '$2 Ladung $1')}, ${c(p.b, 2)}, und ihr Abstand wird ${DIST[p.n]()}. Um welchen Faktor ändert sich die Kraft, und wie gross ist sie jetzt?`);
     },
+    situation: (p) => {
+      const c = (x, i) => (x === 1 ? L(`charge ${i} stays the same`, `Ladung ${i} bleibt gleich`) : L(`charge ${i} is ${CHG[x]()}`, `Ladung ${i} wird ${CHG[x]()}`));
+      return L(`Two point charges exert a force of ${q(p.F, 'N')} on each other. Now ${c(p.a, 1)}, ${c(p.b, 2)}, and their distance is ${DIST[p.n]()}.`,
+        `Zwei Punktladungen üben eine Kraft von ${q(p.F, 'N')} aufeinander aus. Nun ${c(p.a, 1).replace(/^Ladung (\d) (bleibt|wird)/, '$2 Ladung $1')}, ${c(p.b, 2)}, und ihr Abstand wird ${DIST[p.n]()}.`);
+    },
     hints: (p) => [
       L(`Three changes, each with its own factor for the force: $q_1$ times $${ft(p.a)}$, $q_2$ times $${ft(p.b)}$, the distance $r$ times $${ft(p.n)}$.`, `Drei Änderungen, jede mit ihrem eigenen Faktor für die Kraft: $q_1$ mal $${ft(p.a)}$, $q_2$ mal $${ft(p.b)}$, der Abstand $r$ mal $${ft(p.n)}$.`),
       L(`The charges count directly, the distance squared and in the denominator. Multiply the three factors, then the old force, ${q(p.F, 'N')}, by the result.`, `Die Ladungen zählen direkt, der Abstand im Quadrat und im Nenner. Multipliziere die drei Faktoren und dann die alte Kraft, ${q(p.F, 'N')}, mit dem Resultat.`),
@@ -319,6 +326,8 @@
     fields: () => [num$('n', "r'/r", '', L('factor for the distance', 'Faktor für den Abstand')), num$('r2', "r'", 'cm', L('new distance', 'neuer Abstand'))],
     text: (p) => L(`Two point charges ${q(p.r0, 'cm')} apart exert a force of ${q(p.F, 'N')} on each other. At what distance is the force between them ${q(p.F * p.m, 'N')}? By what factor must their distance change?`,
       `Zwei Punktladungen im Abstand ${q(p.r0, 'cm')} üben eine Kraft von ${q(p.F, 'N')} aufeinander aus. In welchem Abstand beträgt die Kraft zwischen ihnen ${q(p.F * p.m, 'N')}? Um welchen Faktor muss sich ihr Abstand ändern?`),
+    situation: (p) => L(`Two point charges ${q(p.r0, 'cm')} apart exert a force of ${q(p.F, 'N')} on each other. Their distance is changed so that the force between them is ${q(p.F * p.m, 'N')}.`,
+      `Zwei Punktladungen im Abstand ${q(p.r0, 'cm')} üben eine Kraft von ${q(p.F, 'N')} aufeinander aus. Ihr Abstand wird so geändert, dass die Kraft zwischen ihnen ${q(p.F * p.m, 'N')} beträgt.`),
     hints: (p) => [
       L(`Compare the forces first: from ${q(p.F, 'N')} to ${q(p.F * p.m, 'N')}, by what factor does the force change? ${p.m > 1 ? 'A larger force: must the charges come closer or move apart?' : 'A smaller force: must the charges come closer or move apart?'}`, `Vergleiche zuerst die Kräfte: Von ${q(p.F, 'N')} auf ${q(p.F * p.m, 'N')}, um welchen Faktor ändert sich die Kraft? ${p.m > 1 ? 'Eine grössere Kraft: Müssen die Ladungen näher zusammen oder weiter auseinander?' : 'Eine kleinere Kraft: Müssen die Ladungen näher zusammen oder weiter auseinander?'}`),
       L(`If the distance changes by the factor $n = r'/r$, the force changes by $1/n^2$. Set $1/n^2$ equal to the factor of the force, solve for $n$, and multiply ${q(p.r0, 'cm')} by it.`, `Ändert sich der Abstand um den Faktor $n = r'/r$, ändert sich die Kraft um $1/n^2$. Setze $1/n^2$ gleich dem Faktor der Kraft, löse nach $n$ auf und multipliziere ${q(p.r0, 'cm')} damit.`),
@@ -669,6 +678,11 @@
       return L(`A charge of ${qs(p.t, 'μC')} sits at the corner of a right angle; charge 1 (${qs(p.q1, 'μC')}) and charge 2 (${qs(p.q2, 'μC')}) lie on the two sides, ${same ? 'both at the same distance' : 'at different distances'}, as shown. Charge 1 exerts a force of ${q(p.F1, 'N')} on the charge in the corner. How large is the force of charge 2 on it? How large is the net force, and roughly where does it point?`,
         `Eine Ladung von ${qs(p.t, 'μC')} sitzt in der Ecke eines rechten Winkels; Ladung 1 (${qs(p.q1, 'μC')}) und Ladung 2 (${qs(p.q2, 'μC')}) liegen auf den beiden Schenkeln, ${same ? 'beide im gleichen Abstand' : 'in verschiedenen Abständen'}, wie abgebildet. Ladung 1 übt auf die Ladung in der Ecke eine Kraft von ${q(p.F1, 'N')} aus. Wie gross ist die Kraft von Ladung 2 auf sie? Wie gross ist die resultierende Kraft, und ungefähr wohin zeigt sie?`);
     },
+    situation: (p) => {
+      const same = Math.abs(Math.abs(p.x1) - Math.abs(p.y2)) < 1e-9;
+      return L(`A charge of ${qs(p.t, 'μC')} sits at the corner of a right angle; charge 1 (${qs(p.q1, 'μC')}) and charge 2 (${qs(p.q2, 'μC')}) lie on the two sides, ${same ? 'both at the same distance' : 'at different distances'}, as shown. Charge 1 exerts a force of ${q(p.F1, 'N')} on the charge in the corner.`,
+        `Eine Ladung von ${qs(p.t, 'μC')} sitzt in der Ecke eines rechten Winkels; Ladung 1 (${qs(p.q1, 'μC')}) und Ladung 2 (${qs(p.q2, 'μC')}) liegen auf den beiden Schenkeln, ${same ? 'beide im gleichen Abstand' : 'in verschiedenen Abständen'}, wie abgebildet. Ladung 1 übt auf die Ladung in der Ecke eine Kraft von ${q(p.F1, 'N')} aus.`);
+    },
     // the hints: the two charges and distances seen from the corner, the ratio of the forces, then the
     // directions and the diagonal
     hints: (p) => {
@@ -744,6 +758,8 @@
     fields: () => [choice('region', L('The point lies …', 'Der Punkt liegt …'), zeroRegions(), L('where the point lies', 'wo der Punkt liegt')), num$('x', 'x', 'cm', L('distance from q₁', 'Abstand von q₁'))],
     text: (p) => L(`Two point charges of ${qs(p.q1, 'μC')} (q₁) and ${qs(p.q2, 'μC')} (q₂) are ${q(p.d, 'cm')} apart. At which point on the line through them does a third charge feel no net force? Give the region and the distance from q₁.`,
       `Zwei Punktladungen von ${qs(p.q1, 'μC')} (q₁) und ${qs(p.q2, 'μC')} (q₂) sind ${q(p.d, 'cm')} voneinander entfernt. An welchem Punkt auf der Geraden durch sie spürt eine dritte Ladung keine resultierende Kraft? Gib den Bereich und den Abstand von q₁ an.`),
+    situation: (p) => L(`Two point charges of ${qs(p.q1, 'μC')} (q₁) and ${qs(p.q2, 'μC')} (q₂) are ${q(p.d, 'cm')} apart. At one point on the line through them, a third charge feels no net force.`,
+      `Zwei Punktladungen von ${qs(p.q1, 'μC')} (q₁) und ${qs(p.q2, 'μC')} (q₂) sind ${q(p.d, 'cm')} voneinander entfernt. In einem Punkt auf der Geraden durch sie spürt eine dritte Ladung keine resultierende Kraft.`),
     // the hints: the signs of this pair and where the forces can cancel, the equal sizes, then the
     // ratio of the distances from that of the charges
     hints: (p) => {
@@ -827,6 +843,11 @@
     return L(`Three point charges of the same size lie on a line, the middle one exactly halfway between the others. There the forces on it cancel. Now the middle charge is moved slightly ${side} (the drawing exaggerates it). In which direction does the net force on it point? Does it push the charge back to the middle?`,
       `Drei gleich grosse Punktladungen liegen auf einer Geraden, die mittlere genau in der Mitte zwischen den anderen. Dort heben sich die Kräfte auf sie auf. Nun wird die mittlere Ladung ein wenig verschoben, ${side} (die Zeichnung übertreibt). In welche Richtung zeigt die resultierende Kraft auf sie? Treibt sie die Ladung zur Mitte zurück?`) + (like ? '' : '');
   };
+  const nudgeSituation = (p) => {
+    const side = p.across ? L('away from the line, across it', 'quer zur Geraden') : L('along the line, towards one of the outer charges', 'entlang der Geraden, zu einer der äusseren Ladungen hin');
+    return L(`Three point charges of the same size lie on a line, the middle one exactly halfway between the others. There the forces on it cancel. Now the middle charge is moved slightly ${side} (the drawing exaggerates it).`,
+      `Drei gleich grosse Punktladungen liegen auf einer Geraden, die mittlere genau in der Mitte zwischen den anderen. Dort heben sich die Kräfte auf sie auf. Nun wird die mittlere Ladung ein wenig verschoben, ${side} (die Zeichnung übertreibt).`);
+  };
   // the hints: the signs of this exercise, then where the charge was moved and what that does to the
   // distances
   const nudgeHints = (p) => {
@@ -854,7 +875,7 @@
           : L('The middle is an unstable position for this displacement: the slightest push moves the charge away, like a ball on a hilltop.', 'Die Mitte ist für diese Verschiebung eine labile Lage: Der kleinste Stoss treibt die Ladung weg, wie eine Kugel auf einer Kuppe.')), ['Fa', 'Fb', 'F'], ['F']),
     ];
   }
-  const nudgeAlong = { id: 'nudge-along', difficulty: 2, title: () => L('Moved along the line', 'Entlang der Geraden verschoben'), make: (r) => nudgeMake(r, false), solve: nudgeSolve, traps: [], why: {}, fields: nudgeFields, text: nudgeText, hints: nudgeHints, steps: nudgeSteps, figure: nudgeFigure };
+  const nudgeAlong = { id: 'nudge-along', difficulty: 2, title: () => L('Moved along the line', 'Entlang der Geraden verschoben'), make: (r) => nudgeMake(r, false), solve: nudgeSolve, traps: [], why: {}, fields: nudgeFields, text: nudgeText, situation: nudgeSituation, hints: nudgeHints, steps: nudgeSteps, figure: nudgeFigure };
   const nudgeAcross = { ...nudgeAlong, id: 'nudge-across', difficulty: 3, title: () => L('Moved off the line', 'Neben die Gerade verschoben'), make: (r) => nudgeMake(r, true) };
 
   // ---------------------------------------------------------------- 9 field and force
@@ -907,6 +928,8 @@
       dirField('dir', L('direction of that force', 'Richtung dieser Kraft'), DIR_ALL)],
     text: (p) => L(`A small test charge of ${qs(p.q1, 'nC')} at a point P feels an electric force of ${q(p.q1 * p.E, 'μN')}, pointing ${dirName(p.d)}. Then it is replaced by a charge of ${qs(p.q2, 'nC')}. How strong is the field at P? How large is the force on the second charge, and which way does it point?`,
       `Eine kleine Probeladung von ${qs(p.q1, 'nC')} in einem Punkt P spürt eine elektrische Kraft von ${q(p.q1 * p.E, 'μN')}, die ${dirName(p.d)} zeigt. Dann wird sie durch eine Ladung von ${qs(p.q2, 'nC')} ersetzt. Wie stark ist das Feld in P? Wie gross ist die Kraft auf die zweite Ladung, und wohin zeigt sie?`),
+    situation: (p) => L(`A small test charge of ${qs(p.q1, 'nC')} at a point P feels an electric force of ${q(p.q1 * p.E, 'μN')}, pointing ${dirName(p.d)}. Then it is replaced by a charge of ${qs(p.q2, 'nC')}.`,
+      `Eine kleine Probeladung von ${qs(p.q1, 'nC')} in einem Punkt P spürt eine elektrische Kraft von ${q(p.q1 * p.E, 'μN')}, die ${dirName(p.d)} zeigt. Dann wird sie durch eine Ladung von ${qs(p.q2, 'nC')} ersetzt.`),
     // the hints: what is given at P and what stays, the two relations, then the prefixes and the sign
     hints: (p) => [
       L(`At P, the test charge ${qs(p.q1, 'nC')} feels ${q(p.q1 * p.E, 'μN')}, pointing ${dirName(p.d)}. Then ${qs(p.q2, 'nC')} takes its place: what stays the same at P, and what changes?`,
@@ -987,6 +1010,8 @@
     fields: () => [dirField('E', L('direction of the net field at P', 'Richtung des Gesamtfeldes in P'), DIR_ALL), dirField('F', L('direction of the force on a negative charge at P', 'Richtung der Kraft auf eine negative Ladung in P'), DIR_ALL)],
     text: (p) => L(`The point charges ${p.ch.map((x, i) => `${NAMES[i]} = $${qTex(x.s)}$`).join(', ')} sit on a grid of side d around the point P, as shown. In which direction does their net electric field at P point? A small negative charge is placed at P: in which direction does the force on it point?`,
       `Die Punktladungen ${p.ch.map((x, i) => `${NAMES[i]} = $${qTex(x.s)}$`).join(', ')} sitzen auf einem Gitter mit der Seitenlänge d um den Punkt P, wie abgebildet. In welche Richtung zeigt ihr elektrisches Gesamtfeld in P? Eine kleine negative Ladung wird nach P gebracht: In welche Richtung zeigt die Kraft auf sie?`),
+    situation: (p) => L(`The point charges ${p.ch.map((x, i) => `${NAMES[i]} = $${qTex(x.s)}$`).join(', ')} sit on a grid of side d around the point P, as shown.`,
+      `Die Punktladungen ${p.ch.map((x, i) => `${NAMES[i]} = $${qTex(x.s)}$`).join(', ')} sitzen auf einem Gitter mit der Seitenlänge d um den Punkt P, wie abgebildet.`),
     // the hints: each charge's sign and distance from P, the strength of a point charge's field, then
     // the strengths worked out (not their directions)
     hints: (p) => {

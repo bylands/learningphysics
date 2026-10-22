@@ -58,7 +58,7 @@
   // a quantity of an exercise, as in practice
   function quantity(kind, seed) {
     const ex = generateFor(kind, seed), qz = quiz(ex, seed), f = qz.field;
-    return { ...common(ex), ask: ask(f),
+    return { ...common(ex), text: ex.textFor(f.key), ask: ask(f),
       options: qz.options.map((o) => ({ html: `$${TQ.tq(o.value, f.unit, f.dec)}$`, correct: !!o.correct, flag: o.flag, why: o.why })) };
   }
 

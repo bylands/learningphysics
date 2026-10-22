@@ -225,8 +225,11 @@
       },
       fields: fieldsOf,
       title: () => S.title(),
-      text: () => L(`A figure is bent from one piece of uniform wire. Find its centre of mass G: its coordinates in the system drawn, with the origin O.${S.ask.length === 1 ? ` (By symmetry, ${S.ask[0] === 'x' ? 'y' : 'x'}<sub>G</sub> = 0.)` : ''}`,
-        `Eine Figur ist aus einem gleichmässigen Draht gebogen. Bestimme ihren Schwerpunkt S: seine Koordinaten im eingezeichneten System mit dem Ursprung O.${S.ask.length === 1 ? ` (Aus Symmetriegründen ist ${S.ask[0] === 'x' ? 'y' : 'x'}<sub>S</sub> = 0.)` : ''}`),
+      // with the key of one coordinate (the check asks for one), the text asks for that one only
+      text: (p, key) => (key ? L(`A figure is bent from one piece of uniform wire. Find the coordinate ${key}<sub>G</sub> of its centre of mass G in the system drawn, with the origin O.`,
+        `Eine Figur ist aus einem gleichmässigen Draht gebogen. Bestimme die Koordinate ${key}<sub>S</sub> ihres Schwerpunkts S im eingezeichneten System mit dem Ursprung O.`)
+        : L(`A figure is bent from one piece of uniform wire. Find its centre of mass G: its coordinates in the system drawn, with the origin O.${S.ask.length === 1 ? ` (By symmetry, ${S.ask[0] === 'x' ? 'y' : 'x'}<sub>G</sub> = 0.)` : ''}`,
+          `Eine Figur ist aus einem gleichmässigen Draht gebogen. Bestimme ihren Schwerpunkt S: seine Koordinaten im eingezeichneten System mit dem Ursprung O.${S.ask.length === 1 ? ` (Aus Symmetriegründen ist ${S.ask[0] === 'x' ? 'y' : 'x'}<sub>S</sub> = 0.)` : ''}`)),
       figure: (p, v, view) => comFigure(shape, p, v, view),
       hints: (p) => {
         const parts = S.parts(p), pt$ = (c) => `$(${num(c[0], 1)}\\,|\\,${num(c[1], 1)})$`;

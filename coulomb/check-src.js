@@ -60,7 +60,7 @@
           : f.what;
     return {
       title: ex.title,
-      text: ex.text,
+      text: ex.situation || ex.text,
       figure: ex.figure({ task: true }),
       ask,
       options: qz.options.map((o) => ({ html: o.html, correct: !!o.correct, flag: o.flag, why: o.why })),
