@@ -4,7 +4,7 @@
   "note": "aus den Aufgabenblättern (W2 Wärmekraftmaschinen, Nr. 2; W2 Wärmemaschinen, Nr. 2)",
   "language": "GER",
   "type": 1,
-  "default_difficulty": 1,
+  "default_difficulty": 2,
   "default_points": 0,
   "tags": [
     "carnot-wirkungsgrad",
