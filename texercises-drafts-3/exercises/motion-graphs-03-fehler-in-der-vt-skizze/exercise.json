@@ -1,4 +1,5 @@
 {
+  "id": 25192,
   "title": "Fehler in der v(t)-Skizze",
   "note": "aus learningphysics.ch (Lernziel sketch)",
   "language": "GER",
@@ -6,9 +7,8 @@
   "default_difficulty": 4,
   "default_points": 0,
   "tags": [
-    "diagramme",
+    "diagramm",
     "fehler finden",
-    "kinematik",
     "learningphysics",
     "s-t-diagramm",
     "v-t-diagramm"

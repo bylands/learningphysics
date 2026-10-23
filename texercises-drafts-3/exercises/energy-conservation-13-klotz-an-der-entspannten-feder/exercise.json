@@ -1,4 +1,5 @@
 {
+  "id": 25160,
   "title": "Klotz an der entspannten Feder",
   "note": "aus learningphysics.ch (Lernziel turn)",
   "language": "GER",
@@ -6,12 +7,12 @@
   "default_difficulty": 3,
   "default_points": 0,
   "tags": [
-    "energieerhaltungssatz",
+    "energieerhaltung",
     "federkonstante",
-    "spannenergie",
-    "umkehrpunkt",
     "gleichgewichtslage",
-    "learningphysics"
+    "learningphysics",
+    "spannenergie",
+    "umkehrpunkt"
   ],
   "subbranches": [
     "Work, Energy, Power"

@@ -1,4 +1,5 @@
 {
+  "id": 25145,
   "title": "Zwei Isothermen im p(V)-Diagramm",
   "note": "aus learningphysics.ch (Lernziel identify)",
   "language": "GER",
@@ -10,8 +11,8 @@
     "isochor",
     "isotherm",
     "kreisprozess",
-    "p-v-diagramm",
-    "learningphysics"
+    "learningphysics",
+    "p-v-diagramm"
   ],
   "subbranches": [
     "Gas Laws"

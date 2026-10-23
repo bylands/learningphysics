@@ -1,4 +1,5 @@
 {
+  "id": 25199,
   "title": "A Lamp that Raises the Potential",
   "note": "from learningphysics.ch (objective potential-circuit:error)",
   "language": "ENG",
@@ -6,15 +7,15 @@
   "default_difficulty": 3,
   "default_points": 0,
   "tags": [
-    "potential",
-    "potential difference",
     "circuit",
-    "loop rule",
+    "learningphysics",
     "light bulb",
-    "learningphysics"
+    "loop rule",
+    "potential",
+    "potential difference"
   ],
   "subbranches": [
-    "Electrodynamics"
+    "Direct Current"
   ],
   "youtube": ""
 }

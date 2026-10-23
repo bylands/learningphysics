@@ -2,8 +2,8 @@
 
 75 new exercises for the 38 learning objectives that had fewer than three exercises in the pool
 (`hub-admin/sheets/pool.json`, 23 October 2026). Each one takes a scenario, a question type or a typical
-mistake from the matching learningphysics.ch module; `"note"` names its objective. None has an `"id"`,
-so an upload creates them. They are in 19 private collections, one per module (`<app>-objectives`).
+mistake from the matching learningphysics.ch module; `"note"` names its objective. Uploaded on 23 October 2026: each now has its TeXercises `"id"`,
+so an upload updates them in place. They are in 19 private collections, one per module (`<app>-objectives`).
 
 | Module | Exercises | Objectives | Collection | Language |
 |---|---|---|---|---|

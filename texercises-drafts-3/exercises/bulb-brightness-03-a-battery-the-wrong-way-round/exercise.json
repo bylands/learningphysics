@@ -1,4 +1,5 @@
 {
+  "id": 25135,
   "title": "A Battery the Wrong Way Round",
   "note": "from learningphysics.ch (objective bulb-brightness:power)",
   "language": "ENG",
@@ -6,16 +7,16 @@
   "default_difficulty": 3,
   "default_points": 0,
   "tags": [
-    "light bulb",
-    "brightness",
-    "power",
     "battery",
-    "series",
+    "brightness",
+    "learningphysics",
+    "light bulb",
     "parallel",
-    "learningphysics"
+    "power",
+    "series"
   ],
   "subbranches": [
-    "Circuits"
+    "Direct Current"
   ],
   "youtube": ""
 }

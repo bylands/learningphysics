@@ -1,4 +1,5 @@
 {
+  "id": 25191,
   "title": "Von v(t) zu a(t)",
   "note": "aus learningphysics.ch (Lernziel sketch)",
   "language": "GER",
@@ -8,8 +9,7 @@
   "tags": [
     "a-t-diagramm",
     "beschleunigung",
-    "diagramme",
-    "kinematik",
+    "diagramm",
     "learningphysics",
     "v-t-diagramm"
   ],

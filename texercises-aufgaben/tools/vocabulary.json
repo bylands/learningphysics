@@ -207,7 +207,9 @@
    "divider": "voltage divider",
    "electric current": "current",
    "self-induced emf": "self-induction",
-   "induction": "electromagnetic induction"
+   "induction": "electromagnetic induction",
+   "kirchhoff's rules": "kirchhoff",
+   "lorentz force": "magnetic force"
   }
  },
  "tags": {

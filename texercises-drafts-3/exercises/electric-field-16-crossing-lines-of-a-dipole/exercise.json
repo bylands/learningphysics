@@ -1,4 +1,5 @@
 {
+  "id": 25157,
   "title": "Crossing Lines of a Dipole",
   "note": "from learningphysics.ch (objective electric-field:error)",
   "language": "ENG",
@@ -6,11 +7,11 @@
   "default_difficulty": 2,
   "default_points": 0,
   "tags": [
+    "dipole",
     "electric field",
     "field lines",
-    "dipole",
-    "superposition",
-    "learningphysics"
+    "learningphysics",
+    "superposition"
   ],
   "subbranches": [
     "Electrostatics"

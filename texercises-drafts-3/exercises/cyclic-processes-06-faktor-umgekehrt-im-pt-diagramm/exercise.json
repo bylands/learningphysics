@@ -1,4 +1,5 @@
 {
+  "id": 25149,
   "title": "Faktor umgekehrt im p(T)-Diagramm",
   "note": "aus learningphysics.ch (Lernziel error)",
   "language": "GER",
@@ -6,12 +7,12 @@
   "default_difficulty": 4,
   "default_points": 0,
   "tags": [
+    "fehler finden",
     "isochor",
     "isotherm",
     "kreisprozess",
-    "p-t-diagramm",
-    "fehler finden",
-    "learningphysics"
+    "learningphysics",
+    "p-t-diagramm"
   ],
   "subbranches": [
     "Gas Laws"

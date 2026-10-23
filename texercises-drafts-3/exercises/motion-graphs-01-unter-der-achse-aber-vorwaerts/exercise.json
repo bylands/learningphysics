@@ -1,4 +1,5 @@
 {
+  "id": 25190,
   "title": "Unter der Achse, aber vorwärts",
   "note": "aus learningphysics.ch (Lernziel negative)",
   "language": "GER",
@@ -7,7 +8,6 @@
   "default_points": 0,
   "tags": [
     "geschwindigkeit",
-    "kinematik",
     "learningphysics",
     "s-t-diagramm",
     "vorzeichen"

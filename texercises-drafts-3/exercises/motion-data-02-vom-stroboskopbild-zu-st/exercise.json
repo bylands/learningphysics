@@ -1,4 +1,5 @@
 {
+  "id": 25187,
   "title": "Vom Stroboskopbild zu s(t)",
   "note": "aus learningphysics.ch (Lernziel convert)",
   "language": "GER",
@@ -7,7 +8,6 @@
   "default_points": 0,
   "tags": [
     "beschleunigte bewegung",
-    "kinematik",
     "learningphysics",
     "s-t-diagramm",
     "stroboskop"
