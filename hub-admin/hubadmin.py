@@ -3375,6 +3375,7 @@ SUPER_SECTIONS = """
       <details id="sheets-audit" class="card audit"><summary>Exercise review <span class="only">only you see this</span> <span class="note">Loading…</span></summary><div class="audit-body"></div></details>
       <p class="lead">Exercise sheets from your TeXercises exercises: choose modules and their learning objectives, let the panel suggest a balanced sheet, replace or reorder its exercises, and preview them. Then download it as a PDF (with or without the solutions) or share an online version with your students: a secret link that works without logging in and shows no solutions.</p>
       <div id="sheets-state" class="sheetstate"><p class="note">Loading…</p></div>
+      <div id="sheets-audit-replace" class="sheetstate"></div>
     </section>""" + TEACHERS_SECTION
 
 COMMON_SECTIONS = """
@@ -3798,8 +3799,8 @@ h2.section { font-size: 1.15rem; margin: 28px 0 4px; }
 .audit .fig-saved > summary { cursor: pointer; color: var(--accent); font-size: 0.85rem; }
 .audit .fig-saved .pic { margin-top: 6px; max-width: 520px; }
 @media (max-width: 560px) { .audit .stat { flex: 1 1 5.5rem; padding: 3px 8px; } .audit .filters .what { width: auto; flex-basis: 100%; } }
-.sheetstate .upload summary { cursor: pointer; color: var(--accent); font-size: 0.95rem; }
-.sheetstate .upload { margin: 0 0 10px; }
+.sheetstate .upload summary, .sheetstate .replace summary { cursor: pointer; color: var(--accent); font-size: 0.95rem; }
+.sheetstate .upload, .sheetstate .replace { margin: 0 0 10px; }
 .sheet h3 { margin: 22px 0 8px; font-size: 1.05rem; }
 .sheet select, .sheet input.count { font: inherit; color: inherit; background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: 5px 8px; max-width: 100%; }
 .sheet input.count { width: 5.5em; }
@@ -4928,6 +4929,7 @@ SHEETS_JS = r"""
   const WHERE = { text: 'exercise text', solution: 'solution', short: 'short solution', solver: 'solver', title: 'title', compile: 'LaTeX compile' };
   const PAGE = 60;
   const body = box.querySelector('.audit-body'), line = box.querySelector('summary .note');
+  const replaceBox = document.querySelector('#sheets-audit-replace'); // "Replace report", at the foot of the tab next to the export upload
   let report = null, sevOn = '', catOn = '', collOn = '', topOn = '', markOn = '', imgOn = '', query = '', shown = PAGE, loaded = false;
   let topics = { areas: [], of: {} }; // categories.json: the areas and topics of the report's exercises
   let feedback = {}; // ref → { comment, accepted: [fp], tikz: { image: { code } } }
@@ -5179,6 +5181,7 @@ SHEETS_JS = r"""
       line.textContent = 'no report yet';
       body.replaceChildren(el('p', { class: 'note' }, 'No review of the TeXercises exercises is stored yet. Upload its report (JSON: {"generated", "source", "reviewed", "exercises": [{"id", "key", "title", "lang", "url", "issues": [{"severity", "category", "where", "issue", "fix"}]}]}). The admin service keeps it (hub-data/, not served); it never goes into the public repository.'),
         upload('Upload report'));
+      if (replaceBox) replaceBox.replaceChildren();
       return;
     }
     const all = report.exercises.slice().sort(order);
@@ -5272,8 +5275,9 @@ SHEETS_JS = r"""
         colls.size ? el('div', { class: 'row' }, el('span', { class: 'what' }, 'Collection'), collSel) : '',
         topics.areas.length ? el('div', { class: 'row' }, el('span', { class: 'what' }, 'Topic'), topSel) : '',
         markRow, imgRow, el('div', { class: 'row' }, el('span', { class: 'what' }, 'Search'), search)),
-      el('div', { class: 'rv-line' }, info, exportLink), list, el('div', { class: 'tools-line' }, more),
-      el('details', { class: 'replace' }, el('summary', {}, 'Replace report'), upload('Replace report')));
+      el('div', { class: 'rv-line' }, info, exportLink), list, el('div', { class: 'tools-line' }, more));
+    const replace = el('details', { class: 'replace' }, el('summary', {}, 'Replace the exercise review report'), upload('Replace report'));
+    if (replaceBox) replaceBox.replaceChildren(replace); else body.append(replace);
     fill();
   }
 
