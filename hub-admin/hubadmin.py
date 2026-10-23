@@ -3673,7 +3673,11 @@ h2.section { font-size: 1.15rem; margin: 28px 0 4px; }
 .topics { padding: 10px 16px; margin: 0 0 14px; }
 .topics > summary { cursor: pointer; font-weight: 600; }
 .topics > summary .note { font-weight: 400; margin-left: 6px; }
-.topicgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 12px 20px; margin-top: 10px; font-size: 0.9rem; }
+.topicgrid { margin-top: 10px; font-size: 0.9rem; }
+.topicarea + .topicarea { margin-top: 18px; }
+.topicarea > h3 { display: flex; gap: 10px; align-items: baseline; margin: 0 0 8px; font-size: 1rem; }
+.topicarea > h3 .n { color: var(--muted); font-size: 0.82rem; font-weight: 400; font-variant-numeric: tabular-nums; }
+.topicmods { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 12px 20px; }
 .topicmod .head { display: flex; gap: 8px; align-items: baseline; border-bottom: 1px solid var(--line); padding-bottom: 2px; margin-bottom: 4px; }
 .topicmod .head strong { flex: 1 1 auto; }
 .topicmod .n { color: var(--muted); font-size: 0.82rem; white-space: nowrap; font-variant-numeric: tabular-nums; }
@@ -4310,13 +4314,28 @@ SHEETS_JS = r"""
     const n = mods.reduce((s, m) => s + m.exercises, 0), objs = mods.flatMap((m) => m.objectives), empty = objs.filter((o) => !o.exercises).length;
     box.querySelector('summary .note').textContent = `${mods.filter((m) => m.exercises).length} of ${mods.length} modules · ${n} exercises · `
       + (empty ? `${empty} of ${objs.length} learning objectives without an exercise` : `every one of the ${objs.length} learning objectives has exercises`);
-    box.querySelector('.topicgrid').replaceChildren(...mods.map((m) => el('div', { class: `topicmod${m.exercises ? '' : ' zero'}` },
+    const card = (m) => el('div', { class: `topicmod${m.exercises ? '' : ' zero'}` },
       el('div', { class: 'head' }, el('strong', {}, m.name),
         el('span', { class: 'n', title: `${m.exercises} exercises in the pool, ${m.there} of them in the uploaded export or the drafts` },
           `${m.exercises} ex.` + (m.there < m.exercises ? ` (${m.there} there)` : ''))),
       m.objectives.length ? el('ul', {}, ...m.objectives.map((o) => el('li', { class: o.exercises ? '' : 'zero', title: `${o.exercises} exercises practise it, ${o.there} of them there` },
         el('span', {}, o.en), el('span', { class: 'n' }, String(o.exercises))))) : el('p', { class: 'note' }, 'No learning objectives: its exercises count for the module as a whole.'),
-      m.general && m.objectives.length ? el('p', { class: 'note' }, `${m.general} for the module as a whole (no objective)`) : '')));
+      m.general && m.objectives.length ? el('p', { class: 'note' }, `${m.general} for the module as a whole (no objective)`) : '');
+    // grouped by area (Mechanics, …: sheets.py AREAS), the hub's order within an area
+    const areas = [];
+    mods.forEach((m) => {
+      const name = m.area || 'Other';
+      let a = areas.find((x) => x.name === name);
+      if (!a) areas.push(a = { name, rank: m.area_rank == null ? 99 : m.area_rank, mods: [] });
+      a.mods.push(m);
+    });
+    areas.sort((a, b) => a.rank - b.rank);
+    box.querySelector('.topicgrid').replaceChildren(...areas.map((a) => {
+      const n = a.mods.reduce((s, m) => s + m.exercises, 0);
+      return el('section', { class: 'topicarea' },
+        el('h3', {}, a.name, el('span', { class: 'n' }, `${a.mods.length} module${a.mods.length === 1 ? '' : 's'} · ${n} ex.`)),
+        el('div', { class: 'topicmods' }, ...a.mods.map(card)));
+    }));
     if (!mods.length) box.querySelector('.topicgrid').replaceChildren(el('p', { class: 'note' }, 'The pool (sheets/pool.json) is empty.'));
   }
   function renderList() {

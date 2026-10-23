@@ -409,6 +409,10 @@ class Sheets(unittest.TestCase):
                          [("vector", "Vector sum", 3, 3), ("factor", "factor", 5, 4), ("field", "field", 2, 2)])
         self.assertEqual((coulomb["exercises"], coulomb["there"], coulomb["general"]), (9, 8, 0))
         self.assertEqual([m["id"] for m in S.coverage(POOL, apps[:1], set())], ["photons", "coulomb"])  # (not on the hub: after)
+        # each module has its area (the topics section groups by it); a module AREAS does not name is "Other", last
+        self.assertEqual([(m["area"], m["area_de"], m["area_rank"]) for m in got],
+                         [("Quantum Physics", "Quantenphysik", 4), ("Mechanics", "Mechanik", 0), ("Electricity and Magnetism", "Elektrizität und Magnetismus", 2)])
+        self.assertEqual(S.area_of("no-such-app"), (len(S.AREAS), "Other", "Weitere"))
 
     # categories.json in small: two areas (Optics without exercises there), x2 a near-duplicate of x1 (flagged)
     CATS = {"tree": {"Mechanics": {"Kinematics": {"kin.a": "Uniform motion", "kin.b": "Free fall"}, "Forces": {"dyn.a": "Newton's laws"}},
