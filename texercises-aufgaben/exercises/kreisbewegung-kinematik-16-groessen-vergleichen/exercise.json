@@ -10,10 +10,10 @@
     "bogenmass",
     "einheiten",
     "grössenvergleich",
-    "kinematik",
     "kreisbewegung"
   ],
   "subbranches": [
+    "Quantities and Units",
     "Kinematics"
   ],
   "youtube": ""

@@ -9,12 +9,11 @@
   "tags": [
     "adiabatisch",
     "p-v-diagramm",
-    "thermodynamik",
     "volumenarbeit"
   ],
   "subbranches": [
-    "Laws of Thermodynamics",
-    "Gas Laws"
+    "Gas Laws",
+    "Laws of Thermodynamics"
   ],
   "youtube": ""
 }

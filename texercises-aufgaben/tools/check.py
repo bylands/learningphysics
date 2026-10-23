@@ -1,4 +1,5 @@
-"""Checks the drafts: JSON schema, solver references, \\XP on givens, risky names.
+"""Checks the drafts: JSON schema, solver references, \\XP on givens, risky names, topics and tags
+(tools/vocabulary.json: unknown or retired topics, tags to be replaced, new tags as a note).
 
     python3 tools/check.py [key-prefix ...]
 """
@@ -13,6 +14,8 @@ RISKY = set('a b c d i j k l o r t u v g m s A C F H J K L N O P S T V W '
             'ss oe ae aa AA AE OE l L o O i j ell'.split())
 prefixes = sys.argv[1:]
 errors = 0
+VOCAB = json.load(open(os.path.join(ROOT, 'tools', 'vocabulary.json')))
+TOPICS = set(VOCAB['topics'])
 
 
 def err(key, msg):
@@ -44,6 +47,21 @@ for d in sorted(glob.glob(os.path.join(ROOT, 'exercises', '*'))):
             jsonschema.validate(meta, es)
     except Exception as e:
         err(key, f'exercise.json: {e}')
+        meta = {}
+    for t in meta.get('subbranches', []):
+        if t in VOCAB['retired_topics']:
+            err(key, f'topic {t!r} is no longer used: {VOCAB["retired_topics"][t]}')
+        elif t not in TOPICS:
+            err(key, f'topic {t!r} is not a TeXercises topic')
+    lang = meta.get('language', 'GER')
+    replace, known = VOCAB['replace'].get(lang, {}), set(VOCAB['tags'].get(lang, []))
+    for t in meta.get('tags', []):
+        if t != t.lower():
+            err(key, f'tag {t!r} is not lowercase')
+        elif t in replace:
+            err(key, f'tag {t!r}: ' + (f'use {replace[t]!r}' if replace[t] else 'drop it (repeats the topic or says nothing)'))
+        elif t not in known:
+            print(f'{key}: note: new tag {t!r} (add it to tools/vocabulary.json if it is meant)')
     pre = open(files['preamble']).read() if os.path.exists(files['preamble']) else ''
     new = set(re.findall(r'\\NewQty\*?\{(\w+)\}', pre))
     solved = set(re.findall(r'\\(?:SolQty|ConvTo)\{(\w+)\}', pre))
