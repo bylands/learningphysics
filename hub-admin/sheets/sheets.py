@@ -672,12 +672,36 @@ def alternatives(key: str, sheet: List[str], bks: List[Tuple[object, List[str]]]
     return sorted(order, key=rank)[:limit]
 
 
+# the areas the topics section groups the modules by (Sheets tab), in this order; a module not named
+# here is under "Other" at the end
+AREAS = [
+    ("Mechanics", "Mechanik", ["motion-data", "motion-graphs", "motion-areas", "force-concepts", "interaction", "force-systems",
+                               "torque", "centre-of-mass", "coe"]),
+    ("Thermodynamics", "Wärmelehre", ["cyclic-processes"]),
+    ("Electricity and Magnetism", "Elektrizität und Magnetismus", ["coulomb", "electric-field", "electric-potential", "bulb-brightness",
+                                                                  "circuit-trainer", "potential-circuit", "capacitors", "magnetic-forces",
+                                                                  "charged-particles", "induction-match", "rl-switch", "impedance"]),
+    ("Oscillations and Waves", "Schwingungen und Wellen", ["oscillations", "wave-propagation", "interference", "em-waves"]),
+    ("Quantum Physics", "Quantenphysik", ["photons", "matter-waves"]),
+]
+OTHER_AREA = ("Other", "Weitere")
+
+
+def area_of(app: str) -> Tuple[int, str, str]:
+    """(rank, English, German name) of the area of a module (AREAS; "Other" last)."""
+    for n, (en, de, ids) in enumerate(AREAS):
+        if app in ids:
+            return n, en, de
+    return len(AREAS), *OTHER_AREA
+
+
 def coverage(pool: Dict[str, object], apps: List[Dict[str, object]], have) -> List[Dict[str, object]]:
     """The topics the pool covers (the first section of the Sheets tab): per module, in the order of
     apps (the hub's, each {id, name, de?, objectives: [{id, en, de}]}; then any other app of the
     pool), its exercises, those of them that are there (have), those that practise none of its
     objectives (the module as a whole), and per objective the same two numbers. An objective of the
-    pool that apps does not name comes after the others, by its id; one without exercises has 0."""
+    pool that apps does not name comes after the others, by its id; one without exercises has 0.
+    Each module also has its area (area, area_de, area_rank: AREAS), which the tab groups by."""
     out = []
     known = [a for a in apps if isinstance(a, dict) and isinstance(a.get("id"), str)]
     extra = [{"id": k, "name": k, "objectives": []} for k in pool if k not in {a["id"] for a in known}]
@@ -694,7 +718,9 @@ def coverage(pool: Dict[str, object], apps: List[Dict[str, object]], have) -> Li
             tied.update(keys)
             rows.append({"id": o["id"], "en": str(o.get("en") or o["id"]), "de": str(o.get("de") or o.get("en") or o["id"]),
                          "exercises": len(keys), "there": len([k for k in keys if k in have])})
+        rank, area, area_de = area_of(a["id"])
         out.append({"id": a["id"], "name": str(a.get("name") or a["id"]), **({"de": a["de"]} if a.get("de") else {}),
+                    "area": area, "area_de": area_de, "area_rank": rank,
                     "exercises": len(exs), "there": len([k for k in exs if k in have]),
                     "general": len([k for k in exs if k not in tied]), "objectives": rows})
     return out

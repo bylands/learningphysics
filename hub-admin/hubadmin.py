@@ -29,7 +29,8 @@ cards in its order, shows their tags, and lets visitors filter by tag. This serv
                          a comment or a TikZ figure, as JSON to download, for Claude to work on. The GET of
                          /admin/api/exercise-audit also gives "images" ({ref: [{"name", "url", "pdf"}]}: the
                          gallery images of the report's exercises in the export), "figures" (LaTeX draws) and
-                         "claude" ("" or why Claude cannot be asked). An image replaced by TikZ: POST
+                         "claude" ("" or why Claude cannot be asked), and "clean": the exercises reviewed
+                         without an issue (the report's "reviewed_ids" in the export; see audit_clean). An image replaced by TikZ: POST
                          {"exercise": ref, "tikz": {"image", "code"}} to /feedback ("" removes it; one
                          tikzpicture or circuitikz, at most 20 KB, sheets/tikzdraft.py check), exported as
                          "tikz": [{"image", "code", "use"}]; {"tikz": {"image", "use": "tikz" | "original"}}
@@ -1464,7 +1465,7 @@ class Admin:
         """The review's feedback for Claude to work on: every exercise of the report with an accepted fix,
         a comment or a TikZ replacement of an image, its accepted issues, the others, the comment and the
         TikZ ("tikz": [{"image", "code", "use": "tikz" (replace the image) or "original" (keep it)}])."""
-        report = self.audit() or {"exercises": []}
+        report = self.audit_all(self.audit()) or {"exercises": []}
         feedback = self.audit_feedback()
         out = []
         for e in report["exercises"]:
@@ -1503,6 +1504,30 @@ class Admin:
                 out[e["ref"]] = f
         return out
 
+    def audit_clean(self, report: Optional[Dict[str, object]]) -> List[Dict[str, object]]:
+        """The exercises the review found nothing wrong with: those of its "reviewed_ids" (every exercise it
+        reviewed) in the uploaded export that are not among the report's, as the report's exercises are
+        (with their ref; no issues, no collections); [] for a report without reviewed_ids."""
+        sheetlib = sheets_module()
+        if sheetlib is None or not report or not report.get("reviewed_ids"):
+            return []
+        want = set(report["reviewed_ids"]) - {e.get("id") for e in report.get("exercises", [])}
+        out = []
+        for key, folder in sorted(sheetlib.available(self.texercises).items()):
+            m = sheetlib.exercise_meta(folder)
+            if m.get("id") in want:
+                want.discard(m["id"])
+                e = {"id": m["id"], "key": key, "title": m["title"], "lang": "GER" if m.get("lang") == "de" else "ENG",
+                     "url": m.get("url") or "", "collections": [], "issues": []}
+                out.append({**e, "ref": audit_ref(e)})
+        return out
+
+    def audit_all(self, report: Optional[Dict[str, object]], clean: Optional[List[Dict[str, object]]] = None) -> Optional[Dict[str, object]]:
+        """The report with its exercises without an issue (audit_clean) among its exercises."""
+        if not report:
+            return report
+        return {**report, "exercises": report["exercises"] + (self.audit_clean(report) if clean is None else clean)}
+
     def audit_images(self, report: Optional[Dict[str, object]]) -> Dict[str, List[Dict[str, object]]]:
         """{ref: [{"name", "url": the image as the panel shows it, or None, "pdf": a PDF copy is there, "key":
         the exercise's folder (for /api/images/fetch)}]}: the gallery images the report's exercises there use
@@ -1527,7 +1552,7 @@ class Admin:
         """(ref, its folder or None) of an exercise of the report (ValueError: not one of it)."""
         if not isinstance(ref, str) or not AUDIT_REF.fullmatch(ref):
             raise ValueError("exercise: its id (or key:<key> for one without)")
-        report = self.audit()
+        report = self.audit_all(self.audit())
         if not report or not any(e["ref"] == ref for e in report["exercises"]):
             raise ValueError("not an exercise of the review")
         mine = {**report, "exercises": [e for e in report["exercises"] if e["ref"] == ref]}
@@ -2200,7 +2225,8 @@ def normalize_audit(raw: object) -> Dict[str, object]:
     else is a ValueError. Texts are cut to their length, a url that is no TeXercises exercise's is
     dropped, the collections are the strings among them (each once, at most MAX_AUDIT_COLLECTIONS; a
     report without them is fine), and the exercises without issues are left out (reviewed still
-    counts them)."""
+    counts them). "reviewed_ids": [the ids of every exercise reviewed] (optional) lets the review show
+    those without an issue too (audit_clean); kept as positive ints, each once."""
     if not isinstance(raw, dict) or not isinstance(raw.get("exercises"), list):
         raise ValueError('a report is an object with "exercises": [...]')
     if len(raw["exercises"]) > MAX_AUDIT_EXERCISES:
@@ -2237,8 +2263,10 @@ def normalize_audit(raw: object) -> Dict[str, object]:
                     "lang": e.get("lang") if e.get("lang") in ("ENG", "GER") else "", "url": url, "collections": colls, "issues": kept})
     reviewed = raw.get("reviewed")
     reviewed = reviewed if isinstance(reviewed, int) and not isinstance(reviewed, bool) and reviewed >= 0 else len(raw["exercises"])
+    ids = raw.get("reviewed_ids") if isinstance(raw.get("reviewed_ids"), list) else []
+    ids = sorted({i for i in ids if isinstance(i, int) and not isinstance(i, bool) and i > 0})[:MAX_AUDIT_EXERCISES]
     return {"generated": audit_text(raw.get("generated"), 40).replace("\n", " "), "source": audit_text(raw.get("source"), 300).replace("\n", " "),
-            "reviewed": max(reviewed, len(out)), "exercises": out}
+            "reviewed": max(reviewed, len(out), len(ids)), "exercises": out, **({"reviewed_ids": ids} if ids else {})}
 
 
 # ---------------------------------------------------------------------- All In (/all-in/)
@@ -3012,9 +3040,11 @@ def make_handler(admin: Admin):
                     self.json(403, {"error": "the superuser only"})
                 elif path == "/api/exercise-audit":
                     report = admin.audit()
+                    clean = admin.audit_clean(report)
+                    every = admin.audit_all(report, clean)
                     figs = sheets_module("figures")
-                    self.json(200, {"report": report, "feedback": admin.audit_feedback(), "topics": admin.audit_topics(report),
-                                    "images": admin.audit_images(report), "figures": bool(figs and figs.available()),
+                    self.json(200, {"report": report, "clean": clean, "feedback": admin.audit_feedback(), "topics": admin.audit_topics(every),
+                                    "images": admin.audit_images(every), "figures": bool(figs and figs.available()),
                                     "claude": admin.categoriser.available()})
                 elif path.endswith("/draft"):
                     q = parse_qs(self.path.split("?", 1)[1] if "?" in self.path else "")
@@ -3375,6 +3405,7 @@ SUPER_SECTIONS = """
       <details id="sheets-audit" class="card audit"><summary>Exercise review <span class="only">only you see this</span> <span class="note">Loading…</span></summary><div class="audit-body"></div></details>
       <p class="lead">Exercise sheets from your TeXercises exercises: choose modules and their learning objectives, let the panel suggest a balanced sheet, replace or reorder its exercises, and preview them. Then download it as a PDF (with or without the solutions) or share an online version with your students: a secret link that works without logging in and shows no solutions.</p>
       <div id="sheets-state" class="sheetstate"><p class="note">Loading…</p></div>
+      <div id="sheets-audit-replace" class="sheetstate"></div>
     </section>""" + TEACHERS_SECTION
 
 COMMON_SECTIONS = """
@@ -3672,7 +3703,11 @@ h2.section { font-size: 1.15rem; margin: 28px 0 4px; }
 .topics { padding: 10px 16px; margin: 0 0 14px; }
 .topics > summary { cursor: pointer; font-weight: 600; }
 .topics > summary .note { font-weight: 400; margin-left: 6px; }
-.topicgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 12px 20px; margin-top: 10px; font-size: 0.9rem; }
+.topicgrid { margin-top: 10px; font-size: 0.9rem; }
+.topicarea + .topicarea { margin-top: 18px; }
+.topicarea > h3 { display: flex; gap: 10px; align-items: baseline; margin: 0 0 8px; font-size: 1rem; }
+.topicarea > h3 .n { color: var(--muted); font-size: 0.82rem; font-weight: 400; font-variant-numeric: tabular-nums; }
+.topicmods { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 12px 20px; }
 .topicmod .head { display: flex; gap: 8px; align-items: baseline; border-bottom: 1px solid var(--line); padding-bottom: 2px; margin-bottom: 4px; }
 .topicmod .head strong { flex: 1 1 auto; }
 .topicmod .n { color: var(--muted); font-size: 0.82rem; white-space: nowrap; font-variant-numeric: tabular-nums; }
@@ -3716,6 +3751,8 @@ h2.section { font-size: 1.15rem; margin: 28px 0 4px; }
 .audit .ex.s-error { border-left-color: var(--sev-error); }
 .audit .ex.s-warning { border-left-color: var(--sev-warning); }
 .audit .ex.s-doubt { border-left-color: var(--sev-doubt); }
+.audit .ex.s-clean { border-left-color: var(--ok); }
+.audit .ex .clean { color: var(--ok); font-size: 0.86rem; margin: 6px 0 0; }
 .audit .ex h3 { margin: 0; font-size: 1rem; overflow-wrap: anywhere; }
 .audit .ex h3 a { color: var(--accent); }
 .audit .ex .id { color: var(--muted); font-size: 0.8rem; overflow-wrap: anywhere; }
@@ -3798,8 +3835,8 @@ h2.section { font-size: 1.15rem; margin: 28px 0 4px; }
 .audit .fig-saved > summary { cursor: pointer; color: var(--accent); font-size: 0.85rem; }
 .audit .fig-saved .pic { margin-top: 6px; max-width: 520px; }
 @media (max-width: 560px) { .audit .stat { flex: 1 1 5.5rem; padding: 3px 8px; } .audit .filters .what { width: auto; flex-basis: 100%; } }
-.sheetstate .upload summary { cursor: pointer; color: var(--accent); font-size: 0.95rem; }
-.sheetstate .upload { margin: 0 0 10px; }
+.sheetstate .upload summary, .sheetstate .replace summary { cursor: pointer; color: var(--accent); font-size: 0.95rem; }
+.sheetstate .upload, .sheetstate .replace { margin: 0 0 10px; }
 .sheet h3 { margin: 22px 0 8px; font-size: 1.05rem; }
 .sheet select, .sheet input.count { font: inherit; color: inherit; background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: 5px 8px; max-width: 100%; }
 .sheet input.count { width: 5.5em; }
@@ -4309,13 +4346,28 @@ SHEETS_JS = r"""
     const n = mods.reduce((s, m) => s + m.exercises, 0), objs = mods.flatMap((m) => m.objectives), empty = objs.filter((o) => !o.exercises).length;
     box.querySelector('summary .note').textContent = `${mods.filter((m) => m.exercises).length} of ${mods.length} modules · ${n} exercises · `
       + (empty ? `${empty} of ${objs.length} learning objectives without an exercise` : `every one of the ${objs.length} learning objectives has exercises`);
-    box.querySelector('.topicgrid').replaceChildren(...mods.map((m) => el('div', { class: `topicmod${m.exercises ? '' : ' zero'}` },
+    const card = (m) => el('div', { class: `topicmod${m.exercises ? '' : ' zero'}` },
       el('div', { class: 'head' }, el('strong', {}, m.name),
         el('span', { class: 'n', title: `${m.exercises} exercises in the pool, ${m.there} of them in the uploaded export or the drafts` },
           `${m.exercises} ex.` + (m.there < m.exercises ? ` (${m.there} there)` : ''))),
       m.objectives.length ? el('ul', {}, ...m.objectives.map((o) => el('li', { class: o.exercises ? '' : 'zero', title: `${o.exercises} exercises practise it, ${o.there} of them there` },
         el('span', {}, o.en), el('span', { class: 'n' }, String(o.exercises))))) : el('p', { class: 'note' }, 'No learning objectives: its exercises count for the module as a whole.'),
-      m.general && m.objectives.length ? el('p', { class: 'note' }, `${m.general} for the module as a whole (no objective)`) : '')));
+      m.general && m.objectives.length ? el('p', { class: 'note' }, `${m.general} for the module as a whole (no objective)`) : '');
+    // grouped by area (Mechanics, …: sheets.py AREAS), the hub's order within an area
+    const areas = [];
+    mods.forEach((m) => {
+      const name = m.area || 'Other';
+      let a = areas.find((x) => x.name === name);
+      if (!a) areas.push(a = { name, rank: m.area_rank == null ? 99 : m.area_rank, mods: [] });
+      a.mods.push(m);
+    });
+    areas.sort((a, b) => a.rank - b.rank);
+    box.querySelector('.topicgrid').replaceChildren(...areas.map((a) => {
+      const n = a.mods.reduce((s, m) => s + m.exercises, 0);
+      return el('section', { class: 'topicarea' },
+        el('h3', {}, a.name, el('span', { class: 'n' }, `${a.mods.length} module${a.mods.length === 1 ? '' : 's'} · ${n} ex.`)),
+        el('div', { class: 'topicmods' }, ...a.mods.map(card)));
+    }));
     if (!mods.length) box.querySelector('.topicgrid').replaceChildren(el('p', { class: 'note' }, 'The pool (sheets/pool.json) is empty.'));
   }
   function renderList() {
@@ -4920,6 +4972,8 @@ SHEETS_JS = r"""
 // asked for until Claude's answer is there; disabled, with the server's reason d.claude, without the
 // anthropic package or key) and "Save": kept in the feedback (tikz: {image: {code}}), folded under the
 // image, removable; such an exercise is marked and exported too.
+// "Issues: No issues" lists the exercises reviewed without an issue instead (the server's d.clean: the
+// report's reviewed_ids found in the export), by title, with the same filters but severity and category.
 (function () {
   'use strict';
   const box = document.querySelector('#sheets-audit');
@@ -4928,7 +4982,9 @@ SHEETS_JS = r"""
   const WHERE = { text: 'exercise text', solution: 'solution', short: 'short solution', solver: 'solver', title: 'title', compile: 'LaTeX compile' };
   const PAGE = 60;
   const body = box.querySelector('.audit-body'), line = box.querySelector('summary .note');
+  const replaceBox = document.querySelector('#sheets-audit-replace'); // "Replace report", at the foot of the tab next to the export upload
   let report = null, sevOn = '', catOn = '', collOn = '', topOn = '', markOn = '', imgOn = '', query = '', shown = PAGE, loaded = false;
+  let clean = [], cleanOn = false; // the exercises reviewed without an issue; listed instead of those with issues
   let topics = { areas: [], of: {} }; // categories.json: the areas and topics of the report's exercises
   let feedback = {}; // ref → { comment, accepted: [fp], tikz: { image: { code } } }
   let images = {}, noClaude = '', canDraw = false; // the exercises' gallery images; why Claude cannot draft; LaTeX draws figures
@@ -5162,10 +5218,10 @@ SHEETS_JS = r"""
     };
     comment.addEventListener('input', () => { clearTimeout(timer); timer = setTimeout(save, 800); said(''); });
     comment.addEventListener('blur', save);
-    return el('li', { class: `ex s-${issues[0].severity}` },
+    return el('li', { class: `ex s-${issues.length ? issues[0].severity : 'clean'}` },
       el('h3', {}, title),
       el('div', { class: 'id' }, [e.id ? `id ${e.id}` : '', e.key, e.lang, collsOf(e).join(', ')].filter(Boolean).join(' · ')),
-      el('ul', {}, issues.map((i) => el('li', {},
+      !issues.length ? el('p', { class: 'clean' }, 'No issues found.') : el('ul', {}, issues.map((i) => el('li', {},
         el('div', { class: 'ihead' }, el('span', { class: `sev s-${i.severity}` }, SEV[i.severity]),
           el('span', { class: 'where' }, [i.category, WHERE[i.where] || i.where].filter(Boolean).join(' · ')), accept(i)),
         el('p', { class: 'issue' }, i.issue),
@@ -5179,29 +5235,33 @@ SHEETS_JS = r"""
       line.textContent = 'no report yet';
       body.replaceChildren(el('p', { class: 'note' }, 'No review of the TeXercises exercises is stored yet. Upload its report (JSON: {"generated", "source", "reviewed", "exercises": [{"id", "key", "title", "lang", "url", "issues": [{"severity", "category", "where", "issue", "fix"}]}]}). The admin service keeps it (hub-data/, not served); it never goes into the public repository.'),
         upload('Upload report'));
+      if (replaceBox) replaceBox.replaceChildren();
       return;
     }
-    const all = report.exercises.slice().sort(order);
-    const issues = all.flatMap((e) => e.issues);
+    const flagged = report.exercises.slice().sort(order);
+    if (!clean.length) cleanOn = false;
+    // the exercises listed: those with issues, or (cleanOn) those without, by title
+    const all = cleanOn ? clean.slice().sort((a, b) => a.title.localeCompare(b.title)) : flagged;
+    const issues = flagged.flatMap((e) => e.issues);
     const n = (s) => issues.filter((i) => i.severity === s).length;
-    line.textContent = `${report.reviewed} reviewed · ${all.length} with issues · ${n('error')} errors, ${n('warning')} warnings, ${n('doubt')} doubts`;
+    line.textContent = `${report.reviewed} reviewed · ${flagged.length} with issues · ${n('error')} errors, ${n('warning')} warnings, ${n('doubt')} doubts`;
     const cats = [...new Set(issues.map((i) => i.category).filter(Boolean))].sort();
     const stat = (num, label, cls) => el('div', { class: `stat ${cls || ''}` }, el('b', {}, String(num)), el('span', {}, label));
     const chip = (label, num, pressed, onclick) => el('button', { type: 'button', 'aria-pressed': String(pressed), onclick }, label, el('span', { class: 'n' }, String(num)));
     const list = el('ol', { class: 'exs' }), info = el('p', { class: 'shown' });
     const search = el('input', { type: 'search', placeholder: 'Search title, id, key or issue', 'aria-label': 'Search the exercises and their issues', value: query });
-    const sevRow = el('div', { class: 'row' }), catRow = el('div', { class: 'row' }), markRow = el('div', { class: 'row' }), imgRow = el('div', { class: 'row' });
+    const issueRow = el('div', { class: 'row' }), sevRow = el('div', { class: 'row' }), catRow = el('div', { class: 'row' }), markRow = el('div', { class: 'row' }), imgRow = el('div', { class: 'row' });
     const hasImg = (e) => !!(images[e.ref] || []).length;  // (gallery images, as the export shows them)
     const IMG = { yes: 'With images', no: 'Without' };
     const exportLink = el('a', { class: 'export', href: '/admin/api/exercise-audit/export', download: '' });
     const MARK = { yes: 'Accepted, commented or TikZ', no: 'Not yet' };
     counted = () => {
-      const k = all.filter(marked).length;
+      const k = all.filter(marked).length, out = flagged.filter(marked).length + clean.filter(marked).length;
       markRow.replaceChildren(el('span', { class: 'what' }, 'Marked'), chip('All', all.length, !markOn, pick(() => { markOn = ''; })),
         ...Object.entries(MARK).map(([m, label]) => chip(label, m === 'yes' ? k : all.length - k, markOn === m, pick(() => { markOn = markOn === m ? '' : m; }))));
-      exportLink.textContent = `Export for Claude (${k})`;
-      exportLink.title = k ? `The ${k} exercises with an accepted fix, a comment or TikZ, as JSON` : 'Accept a fix, write a comment or save a TikZ figure first';
-      exportLink.classList.toggle('off', !k);
+      exportLink.textContent = `Export for Claude (${out})`;
+      exportLink.title = out ? `The ${out} exercises with an accepted fix, a comment or TikZ, as JSON` : 'Accept a fix, write a comment or save a TikZ figure first';
+      exportLink.classList.toggle('off', !out);
     };
     // the collections, by name, each with its exercises with issues (as the chips: of the whole report)
     const colls = new Map();
@@ -5234,6 +5294,10 @@ SHEETS_JS = r"""
     if (colls.size) search.placeholder = 'Search title, id, key, collection or issue';
     const more = el('button', { type: 'button', onclick: () => { shown += PAGE; fill(); } });
     const pick = (f) => () => { f(); shown = PAGE; fill(); };
+    // (a new list: its selects count anew)
+    issueRow.replaceChildren(el('span', { class: 'what' }, 'Issues'),
+      chip('With issues', flagged.length, !cleanOn, () => { if (cleanOn) { cleanOn = false; shown = PAGE; draw(); } }),
+      chip('No issues', clean.length, cleanOn, () => { if (!cleanOn) { cleanOn = true; shown = PAGE; draw(); } }));
     function fill() {
       sevRow.replaceChildren(el('span', { class: 'what' }, 'Severity'), chip('All', issues.length, !sevOn, pick(() => { sevOn = ''; })),
         ...Object.keys(SEV).filter((s) => n(s)).map((s) => chip(SEV[s], n(s), sevOn === s, pick(() => { sevOn = sevOn === s ? '' : s; }))));
@@ -5251,13 +5315,15 @@ SHEETS_JS = r"""
         if (imgOn && hasImg(e) !== (imgOn === 'yes')) return;
         if (!onTopic(e)) return;
         const head = fold([e.title, e.id, e.key, e.lang, ...collsOf(e)].join(' '));
+        if (cleanOn) { if (words.every((w) => head.includes(w))) rows.push([e, []]); return; }
         const kept = e.issues.filter((i) => (!sevOn || i.severity === sevOn) && (!catOn || i.category === catOn)
           && words.every((w) => head.includes(w) || fold([i.issue, i.fix, i.category, i.where].join(' ')).includes(w)))
           .sort((a, b) => RANK[a.severity] - RANK[b.severity]);
         if (kept.length) rows.push([e, kept]);
       });
-      info.textContent = !sevOn && !catOn && !collOn && !topOn && !markOn && !imgOn && !words.length ? `${all.length} exercises with issues, the most serious first.`
-        : `${rows.length} of ${all.length} exercises with issues match.`;
+      const what = cleanOn ? 'exercises without issues' : 'exercises with issues';
+      info.textContent = (cleanOn || (!sevOn && !catOn)) && !collOn && !topOn && !markOn && !imgOn && !words.length
+        ? `${all.length} ${what}, ${cleanOn ? 'by title' : 'the most serious first'}.` : `${rows.length} of ${all.length} ${what} match.`;
       list.replaceChildren(...rows.slice(0, shown).map(([e, kept]) => exercise(e, kept)));
       more.hidden = rows.length <= shown;
       more.textContent = `Show ${Math.min(PAGE, rows.length - shown)} more (${rows.length - shown} left)`;
@@ -5266,14 +5332,15 @@ SHEETS_JS = r"""
     const when = report.uploaded ? new Date(report.uploaded * 1000).toLocaleString() : '';
     body.replaceChildren(
       el('p', { class: 'meta' }, [report.generated && `Review of ${report.generated}`, report.source, when && `uploaded ${when}`].filter(Boolean).join(' · ')),
-      el('div', { class: 'stats' }, stat(report.reviewed, 'exercises reviewed'), stat(all.length, 'with issues'),
+      el('div', { class: 'stats' }, stat(report.reviewed, 'exercises reviewed'), stat(flagged.length, 'with issues'),
         stat(n('error'), 'errors', 's-error'), stat(n('warning'), 'warnings', 's-warning'), stat(n('doubt'), 'doubts', 's-doubt')),
-      el('div', { class: 'filters' }, sevRow, cats.length ? catRow : '',
+      el('div', { class: 'filters' }, clean.length ? issueRow : '', cleanOn ? '' : sevRow, cats.length && !cleanOn ? catRow : '',
         colls.size ? el('div', { class: 'row' }, el('span', { class: 'what' }, 'Collection'), collSel) : '',
         topics.areas.length ? el('div', { class: 'row' }, el('span', { class: 'what' }, 'Topic'), topSel) : '',
         markRow, imgRow, el('div', { class: 'row' }, el('span', { class: 'what' }, 'Search'), search)),
-      el('div', { class: 'rv-line' }, info, exportLink), list, el('div', { class: 'tools-line' }, more),
-      el('details', { class: 'replace' }, el('summary', {}, 'Replace report'), upload('Replace report')));
+      el('div', { class: 'rv-line' }, info, exportLink), list, el('div', { class: 'tools-line' }, more));
+    const replace = el('details', { class: 'replace' }, el('summary', {}, 'Replace the exercise review report'), upload('Replace report'));
+    if (replaceBox) replaceBox.replaceChildren(replace); else body.append(replace);
     fill();
   }
 
@@ -5282,6 +5349,7 @@ SHEETS_JS = r"""
     if (r.status === 403) { location.reload(); return; }
     const d = await r.json();
     report = d.report && Array.isArray(d.report.exercises) ? d.report : null;
+    clean = Array.isArray(d.clean) ? d.clean.filter((e) => e && e.ref && Array.isArray(e.issues)) : [];
     feedback = d.feedback && typeof d.feedback === 'object' ? d.feedback : {};
     topics = d.topics && Array.isArray(d.topics.areas) && d.topics.of ? d.topics : { areas: [], of: {} };
     images = d.images && typeof d.images === 'object' ? d.images : {};
