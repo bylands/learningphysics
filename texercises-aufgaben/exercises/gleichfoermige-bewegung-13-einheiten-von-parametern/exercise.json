@@ -8,10 +8,10 @@
   "default_points": 0,
   "tags": [
     "dimensionsanalyse",
-    "einheiten",
-    "kinematik"
+    "einheiten"
   ],
   "subbranches": [
+    "Quantities and Units",
     "Kinematics"
   ],
   "youtube": ""

@@ -8,9 +8,8 @@
   "default_points": 0,
   "tags": [
     "blutdruck",
-    "hydrostatik",
     "schweredruck",
-    "schätzung"
+    "abschätzung"
   ],
   "subbranches": [
     "Hydrostatics"

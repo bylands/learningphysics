@@ -69,18 +69,35 @@ Syntax: `../cheatsheet.md`, `../examples.md`,
 `{"title", "note": "aus den Aufgabenblättern (<sheet>, Nr. <n>)",
 "language": "GER", "type": 0 descriptive | 1 calculative | 2 both | 7 algebraic,
 "default_difficulty": 1-6 (rule below), "default_points": 0,
-"tags": [...lowercase German], "subbranches": [TeXercises names, e.g.
-"Kinematics", "Dynamics", "Momentum", "Circular Motion", "Projectile Motion",
-"Lever", "Work, Energy, Power", "Hydrostatics", "Gravitation",
-"Gravitation/Celestial mechanics", "Thermal Expansion", "Gas Laws",
-"Vapor Pressure & Humidity", "Temperatur & Heat", "Laws of Thermodynamics",
-"Heat Transfer"], "youtube": ""}`. No `"id"` until the collection has been
+"tags": [...] and "subbranches": [...] (rules below), "youtube": ""}`. No `"id"` until the collection has been
 uploaded; then the ids from Samuel's export go in so uploads update in place.
 Collection: `{"title": "<Name> – Aufgaben aus den Aufgabenblättern",
 "description": "...", "kind": "sheet", "is_private": true, "tags": [...],
 "items": [{"exercise": "<key>"}, ...]}`.
 
 Check with `python3 tools/check.py` before handing over.
+
+## Topics and tags (agreed with Samuel 23.10.2026)
+`tools/vocabulary.json` holds the TeXercises topics, the rule for each one
+that is easy to confuse, and the tags in use per language; `check.py` reads it.
+- Topics (`subbranches`): the main topic first, a second one only when the
+  exercise is really about it too. Electricity: DC circuits under "Direct
+  Current", AC circuits under "Alternating Current", induction under
+  "Electrodynamics" (plus "Magnetism"); "Circuits" is no longer used. Density
+  under "Density", not Dynamics or Hydrostatics. Units and orders of
+  magnitude: "Quantities and Units" first, the physics context second. Error
+  estimates: "Measurement Uncertainty". Stars and galaxies: "Astrophysics".
+  Ultrasound and sound level: "Acoustics"; every Doppler exercise: "Doppler
+  Effect"; double slit and thin films: "Interference"; kinetic gas theory:
+  "Gas Laws".
+- Tags: lowercase, in the language of the exercise (German exercises get
+  German tags; names like `de broglie` stay), singular, 2–5 per exercise.
+  Take them from the vocabulary; `check.py` notes a new one, and it goes into
+  the vocabulary only if it is meant. No tag that only repeats the topic
+  (`kinematik`, `dynamik`, `hydrostatik`, `thermodynamik`, `gasgesetze`).
+  Source tags have one spelling: `learningphysics`, `formelsammlung`,
+  `matura` (+ `matura 2023`), `abschätzung`, `herleitung`,
+  `ohne taschenrechner`.
 
 ## Difficulty (default_difficulty), agreed with Samuel 14.10.2026
 Judge the exercise by its hardest required part, for a Gymnasium student who

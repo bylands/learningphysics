@@ -7,10 +7,9 @@
   "default_difficulty": 3,
   "default_points": 0,
   "tags": [
-    "durchschnittsgeschwindigkeit",
+    "mittlere geschwindigkeit",
     "gleichförmige bewegung",
     "graphische lösung",
-    "kinematik",
     "relativgeschwindigkeit"
   ],
   "subbranches": [

@@ -7,10 +7,9 @@
   "default_difficulty": 1,
   "default_points": 0,
   "tags": [
-    "einheiten umrechnen",
+    "einheiten",
     "geschwindigkeit",
-    "gleichförmige bewegung",
-    "kinematik"
+    "gleichförmige bewegung"
   ],
   "subbranches": [
     "Kinematics"

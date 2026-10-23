@@ -8,12 +8,11 @@
   "default_points": 0,
   "tags": [
     "ideales gas",
-    "innere energie",
-    "thermodynamik"
+    "innere energie"
   ],
   "subbranches": [
-    "Laws of Thermodynamics",
-    "Gas Laws"
+    "Gas Laws",
+    "Laws of Thermodynamics"
   ],
   "youtube": ""
 }
