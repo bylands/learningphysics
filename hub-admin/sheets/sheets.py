@@ -788,7 +788,7 @@ AREAS = [
                                                                   "circuit-trainer", "potential-circuit", "capacitors", "magnetic-forces",
                                                                   "charged-particles", "induction-match", "rl-switch", "impedance"]),
     ("Oscillations and Waves", "Schwingungen und Wellen", ["oscillations", "wave-propagation", "interference", "em-waves"]),
-    ("Quantum Physics", "Quantenphysik", ["photons", "matter-waves"]),
+    ("Modern Physics", "Moderne Physik", ["photons", "matter-waves"]),
 ]
 OTHER_AREA = ("Other", "Weitere")
 

@@ -331,7 +331,7 @@ class Sheets(unittest.TestCase):
             self.assertEqual(got["exercises"]["14"], {"objectives": ["qm.photon.energy"], "quality": 5, "difficulty": None, "dup_of": "12"})
             # the areas: one AREAS names by its rank, the others after them
             self.assertEqual(S.area_of("c-kinematics-in-1d"), (0, "Mechanics", "Mechanik"))
-            self.assertEqual(S.area_of("c-quantum-physics"), (len(S.AREAS) + 2, "Modern physics", "Moderne Physik"))
+            self.assertEqual(S.area_of("c-quantum-physics"), (4, "Modern Physics", "Moderne Physik"))  # the hub's area of that name
             # the exercises (by TeXercises id) and their meta: quality, and the catalogue's difficulty wins
             folders = {}
             for eid, key in ((11, "a"), (12, "b"), (13, "c"), (14, "q")):
@@ -457,7 +457,7 @@ class Sheets(unittest.TestCase):
         self.assertEqual([m["id"] for m in S.coverage(POOL, apps[:1], set())], ["photons", "coulomb"])  # (not on the hub: after)
         # each module has its area (the topics section groups by it); a module AREAS does not name is "Other", last
         self.assertEqual([(m["area"], m["area_de"], m["area_rank"]) for m in got],
-                         [("Quantum Physics", "Quantenphysik", 4), ("Mechanics", "Mechanik", 0), ("Electricity and Magnetism", "Elektrizität und Magnetismus", 2)])
+                         [("Modern Physics", "Moderne Physik", 4), ("Mechanics", "Mechanik", 0), ("Electricity and Magnetism", "Elektrizität und Magnetismus", 2)])
         self.assertEqual(S.area_of("no-such-app"), (len(S.AREAS) + 100, "Other", "Weitere"))
 
     # categories.json in small: two areas (Optics without exercises there), x2 a near-duplicate of x1 (flagged)
