@@ -1246,7 +1246,7 @@ def fetch_image(images: Path, name: str, stem: str, timeout: float = 20) -> Tupl
 
 def status(export: Path) -> Dict[str, object]:
     have = available(export)
-    pool = load_pool()
+    pool = full_pool(catalog(have))  # the hub's modules and those of catalogue.json
     keys = {k for a in pool.values() for k in a.get("exercises", {})}
     uploaded = export / "exercises"
     return {"latex": bool(lualatex()), "exercises": len(have), "pool": len(keys), "in_pool": len(keys & set(have)),
