@@ -22,7 +22,8 @@ served). The editor makes it in three steps (`sheets.py` on the server):
    saved before the tree keeps its TeXercises topics (the `subbranches` of exercise.json): they still
    match (`on_topics`) and are listed below the tree, to drop them.
 2. **Learning objectives**: per module, the objectives that `pool.json` links to at least one exercise
-   on these topics, with how many (`objective_keys`); those a new topic brings are ticked, each can be
+   on these topics, with how many (`objective_keys`); after the hub's modules come the topics of
+   `catalogue.json` (below), each a module with the objectives of the larger list; those a new topic brings are ticked, each can be
    unticked, and **Select all** / **None** do a whole module. **Exercises without a learning
    objective** (on the topics, in none of the pool's objectives: `loose_keys`) is a choice of its own,
    off by default.
@@ -41,7 +42,8 @@ served). The editor makes it in three steps (`sheets.py` on the server):
   modules' order, those without objective last), so every objective has one exercise before any has
   two; per objective an exercise in the sheet's language first, then the one that brings the sheet
   nearest to its concept and difficulty shares, then one not too similar (0.9) to those already on
-  the sheet, then one without image, then the pool's order. Never two **near-duplicates** on one sheet
+  the sheet, then the better **quality** (`catalogue.json`), then one without image, then the pool's
+  order. An exercise of quality 2 or less (an error) comes only when nothing better fits. Never two **near-duplicates** on one sheet
   (one flagged `dup:<id>` of the other in `categories.json`; similarity alone only orders), nor an
   exercise flagged `broken`. Once
   every objective has one (or from the start, if the sheet has fewer exercises than objectives), the
@@ -210,6 +212,15 @@ used and can be deleted.
       python3 hub-admin/sheets/build_pool.py ../texercises-by-2026-10-10 --fails run-final.txt [--data <folder>]
 
   It overwrites `pool.json`: to change the sheets for good, change the mapping and build again.
+- `catalogue.json` is Claude's reading of all 1540 exercises of the teacher on TeXercises (2026-10-23):
+  a larger list of learning objectives (307, in English and German, under the 133 subtopics of
+  `categories.json`, each linked to the hub's objectives it refines), and per exercise its main
+  subtopic, 1 to 3 of these objectives, its **quality** 1–5 (5 ready for a sheet, 4 minor flaws, 3 usable
+  with care, 2 an error a student would notice, 1 unusable) and its **difficulty** 1–6 (the rule of
+  `texercises-aufgaben/STYLE.md`). Sheets offers each topic of its tree as a module (`load_catalogue`,
+  `catalogue_pool`: an objective's exercises the best quality first), next to the hub's modules of
+  `pool.json`, which stays as it is for the hub; its difficulty wins over TeXercises' for the balance,
+  and the editor shows the quality (Q1–Q5) on every exercise. It holds no exercise texts.
 - `sheets.py` (used by `../hubadmin.py`) reads what a sheet needs of the exercises (`exercise_meta`:
   language, type, difficulty, topics, image; kept while the files are unchanged), suggests the exercises
   and their alternatives and runs

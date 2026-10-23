@@ -299,13 +299,59 @@ class Sheets(unittest.TestCase):
             (f / "text.tex").write_text("\\includegraphics{#image_path:coil-1#}")
             m = S.exercise_meta(f)
             self.assertEqual(m, {"title": "Two charges", "id": None, "lang": "de", "difficulty": None, "type": 2, "kind": "both", "band": 2,
-                                 "topics": ["Electrostatics"], "images": True, "url": "/exercise/two-charges/"})
+                                 "topics": ["Electrostatics"], "images": True, "url": "/exercise/two-charges/", "quality": None})
             (f / "exercise.json").write_text(json.dumps({"language": "ENG", "type": 0, "default_difficulty": 4, "info": {"url": "javascript:x"}}))
             os.utime(f / "exercise.json", ns=(1, 2))  # changed: read again
             m = S.exercise_meta(f)
             self.assertEqual((m["title"], m["lang"], m["kind"], m["band"], m["topics"], m["url"]), ("e1", "en", "concept", 3, [], None))
             self.assertEqual(S.catalog({"e1": f})["e1"], m)
             self.assertEqual(S.topic_counts({"e1": f}), [])  # no topic, and no other: none listed
+
+    def test_catalogue(self):
+        # catalogue.json: a module per topic of its tree that has objectives (ids "c-" + slug, objectives with "-"),
+        # each exercise's objectives, quality and difficulty
+        cata = {"tree": [{"en": "Mechanics", "de": "Mechanik", "topics": [
+                    {"en": "Kinematics in 1D", "de": "Kinematik in 1D", "subtopics": [{"id": "kin.accel", "objectives": [
+                        {"id": "kin.accel.equations", "en": "Equations", "de": "Gleichungen"}, {"id": "kin.accel.braking", "en": "Braking"}]}]},
+                    {"en": "Statics", "subtopics": [{"id": "stat.com", "objectives": []}]}]},
+                    {"en": "Modern physics", "de": "Moderne Physik", "topics": [{"en": "Quantum physics", "subtopics": [{"id": "qm.photon", "objectives": [
+                        {"id": "qm.photon.energy", "en": "Photon energy"}]}]}]}],
+                "exercises": {"11": {"objectives": ["kin.accel.equations", "no.such"], "quality": 3, "difficulty": 2},
+                              "12": {"objectives": ["kin.accel.equations", "kin.accel.braking"], "quality": 5, "difficulty": 4},
+                              "13": {"objectives": ["kin.accel.equations"], "quality": 2, "difficulty": 1},
+                              "14": {"objectives": ["qm.photon.energy"], "quality": 9, "difficulty": "x", "dup_of": "12"}}}
+        with tempfile.TemporaryDirectory() as d, mock.patch.object(S, "CATALOGUE", Path(d) / "catalogue.json"):
+            (Path(d) / "catalogue.json").write_text(json.dumps(cata))
+            got = S.load_catalogue()
+            self.assertEqual([(a["id"], a["name"], a["de"], a["area"]) for a in got["apps"]],
+                             [("c-kinematics-in-1d", "Kinematics in 1D", "Kinematik in 1D", "Mechanics"), ("c-quantum-physics", "Quantum physics", "Quantum physics", "Modern physics")])
+            self.assertEqual(got["apps"][0]["objectives"], [{"id": "kin-accel-equations", "en": "Equations", "de": "Gleichungen"},
+                                                            {"id": "kin-accel-braking", "en": "Braking", "de": "Braking"}])
+            self.assertEqual(got["exercises"]["11"], {"objectives": ["kin.accel.equations"], "quality": 3, "difficulty": 2, "dup_of": None})
+            self.assertEqual(got["exercises"]["14"], {"objectives": ["qm.photon.energy"], "quality": 5, "difficulty": None, "dup_of": "12"})
+            # the areas: one AREAS names by its rank, the others after them
+            self.assertEqual(S.area_of("c-kinematics-in-1d"), (0, "Mechanics", "Mechanik"))
+            self.assertEqual(S.area_of("c-quantum-physics"), (len(S.AREAS) + 2, "Modern physics", "Moderne Physik"))
+            # the exercises (by TeXercises id) and their meta: quality, and the catalogue's difficulty wins
+            folders = {}
+            for eid, key in ((11, "a"), (12, "b"), (13, "c"), (14, "q")):
+                f = Path(d) / key
+                f.mkdir()
+                (f / "exercise.json").write_text(json.dumps({"id": eid, "title": key, "language": "ENG", "type": 1, "default_difficulty": 1}))
+                folders[key] = f
+            cat = S.catalog(folders)
+            self.assertEqual([(cat[k]["quality"], cat[k]["difficulty"], cat[k]["band"]) for k in "abcq"], [(3, 2, 2), (5, 4, 3), (2, 1, 1), (5, 1, 1)])
+            self.assertEqual((cat["q"]["flag"], S.flagged_dup(cat["q"], cat["b"])), ("dup:12", True))  # a copy: never with its original
+            pool = S.catalogue_pool(cat)
+            self.assertEqual(pool["c-kinematics-in-1d"]["objectives"], {"kin-accel-equations": ["b", "a", "c"], "kin-accel-braking": ["b"]})
+            self.assertEqual(sorted(pool["c-kinematics-in-1d"]["exercises"]), ["a", "b", "c"])
+            self.assertEqual(S.full_pool(cat)["c-quantum-physics"]["objectives"], {"qm-photon-energy": ["q"]})
+            # a sheet prefers the better quality, and one of quality 2 comes only when no other fits
+            bks = [(("c-kinematics-in-1d", "kin-accel-equations"), ["c", "a"])]
+            bal = {"concept": 0, "easy": 100, "medium": 0, "hard": 0}
+            self.assertEqual(S.suggest(bks, cat, "en", bal, 1), ["a"])  # c is easy as the balance wants, but weak
+            self.assertEqual(S.suggest(bks, cat, "en", bal, 2), ["c", "a"])
+            self.assertEqual(S.alternatives("b", ["b"], bks, cat, "en"), ["a", "c"])
 
     def test_objectives_and_loose(self):
         # step 2: per module the objectives the pool links to exercises on the topics (there), in the apps' order
@@ -412,7 +458,7 @@ class Sheets(unittest.TestCase):
         # each module has its area (the topics section groups by it); a module AREAS does not name is "Other", last
         self.assertEqual([(m["area"], m["area_de"], m["area_rank"]) for m in got],
                          [("Quantum Physics", "Quantenphysik", 4), ("Mechanics", "Mechanik", 0), ("Electricity and Magnetism", "Elektrizität und Magnetismus", 2)])
-        self.assertEqual(S.area_of("no-such-app"), (len(S.AREAS), "Other", "Weitere"))
+        self.assertEqual(S.area_of("no-such-app"), (len(S.AREAS) + 100, "Other", "Weitere"))
 
     # categories.json in small: two areas (Optics without exercises there), x2 a near-duplicate of x1 (flagged)
     CATS = {"tree": {"Mechanics": {"Kinematics": {"kin.a": "Uniform motion", "kin.b": "Free fall"}, "Forces": {"dyn.a": "Newton's laws"}},
