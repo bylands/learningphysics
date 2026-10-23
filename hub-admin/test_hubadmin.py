@@ -312,13 +312,14 @@ class Sheets(unittest.TestCase):
         # each exercise's objectives, quality and difficulty
         cata = {"tree": [{"en": "Mechanics", "de": "Mechanik", "topics": [
                     {"en": "Kinematics in 1D", "de": "Kinematik in 1D", "subtopics": [{"id": "kin.accel", "objectives": [
-                        {"id": "kin.accel.equations", "en": "Equations", "de": "Gleichungen"}, {"id": "kin.accel.braking", "en": "Braking"}]}]},
+                        {"id": "kin.accel.equations", "en": "Equations", "de": "Gleichungen"}, {"id": "kin.accel.braking", "en": "Braking"},
+                        {"id": "kin.accel.graph", "en": "Graph", "hub": ["motion:graph", "motion:none", "nohub"]}]}]},
                     {"en": "Statics", "subtopics": [{"id": "stat.com", "objectives": []}]}]},
                     {"en": "Modern physics", "de": "Moderne Physik", "topics": [{"en": "Quantum physics", "subtopics": [{"id": "qm.photon", "objectives": [
                         {"id": "qm.photon.energy", "en": "Photon energy"}]}]}]}],
                 "exercises": {"11": {"objectives": ["kin.accel.equations", "no.such"], "quality": 3, "difficulty": 2},
                               "12": {"objectives": ["kin.accel.equations", "kin.accel.braking"], "quality": 5, "difficulty": 4},
-                              "13": {"objectives": ["kin.accel.equations"], "quality": 2, "difficulty": 1},
+                              "13": {"objectives": ["kin.accel.equations", "kin.accel.graph"], "quality": 2, "difficulty": 1},
                               "14": {"objectives": ["qm.photon.energy"], "quality": 9, "difficulty": "x", "dup_of": "12"}}}
         with tempfile.TemporaryDirectory() as d, mock.patch.object(S, "CATALOGUE", Path(d) / "catalogue.json"):
             (Path(d) / "catalogue.json").write_text(json.dumps(cata))
@@ -328,6 +329,8 @@ class Sheets(unittest.TestCase):
             self.assertEqual(got["apps"][0]["objectives"], [{"id": "kin-accel-equations", "en": "Equations", "de": "Gleichungen"},
                                                             {"id": "kin-accel-braking", "en": "Braking", "de": "Braking"}])
             self.assertEqual(got["exercises"]["11"], {"objectives": ["kin.accel.equations"], "quality": 3, "difficulty": 2, "dup_of": None})
+            self.assertEqual(got["hub"], {"kin.accel.graph": [("motion", "graph"), ("motion", "none")]})  # a hub objective's: no topic's
+            self.assertEqual(got["exercises"]["13"]["objectives"], ["kin.accel.equations", "kin.accel.graph"])
             self.assertEqual(got["exercises"]["14"], {"objectives": ["qm.photon.energy"], "quality": 5, "difficulty": None, "dup_of": "12"})
             # the areas: one AREAS names by its rank, the others after them
             self.assertEqual(S.area_of("c-kinematics-in-1d"), (0, "Mechanics", "Mechanik"))
@@ -345,7 +348,13 @@ class Sheets(unittest.TestCase):
             pool = S.catalogue_pool(cat)
             self.assertEqual(pool["c-kinematics-in-1d"]["objectives"], {"kin-accel-equations": ["b", "a", "c"], "kin-accel-braking": ["b"]})
             self.assertEqual(sorted(pool["c-kinematics-in-1d"]["exercises"]), ["a", "b", "c"])
-            self.assertEqual(S.full_pool(cat)["c-quantum-physics"]["objectives"], {"qm-photon-energy": ["q"]})
+            hub = {"motion": {"objectives": {"graph": ["x"]}, "exercises": {"x": {"title": "x"}}}}
+            with mock.patch.object(S, "load_pool", lambda: hub):
+                full = S.full_pool(cat)
+            self.assertEqual(full["c-quantum-physics"]["objectives"], {"qm-photon-energy": ["q"]})
+            # the exercises of an objective that restates a hub objective join that one, after pool.json's own
+            self.assertEqual(full["motion"]["objectives"], {"graph": ["x", "c"]})
+            self.assertEqual((sorted(full["motion"]["exercises"]), full["motion"]["exercises"]["c"]["quality"]), (["c", "x"], 2))
             # a sheet prefers the better quality, and one of quality 2 comes only when no other fits
             bks = [(("c-kinematics-in-1d", "kin-accel-equations"), ["c", "a"])]
             bal = {"concept": 0, "easy": 100, "medium": 0, "hard": 0}
@@ -1800,7 +1809,7 @@ class Service(unittest.TestCase):
         self.assertTrue(keys)
         self.assertEqual(len(keys), len(set(keys)))
         self.assertTrue(all(k in drafts for k in keys))
-        self.assertEqual(plan["default_count"], len(keys))
+        self.assertGreaterEqual(plan["default_count"], len(keys))  # (catalogue.json adds exercises to photons' objectives: more than the drafts)
         self.assertEqual(plan["count"], len(keys))
         # step 1's tree (categories.json; the drafts it does not know: not yet categorised), and the most
         # similar exercises of each one on the sheet, none on it
@@ -1830,6 +1839,7 @@ class Service(unittest.TestCase):
         for bad in ({"modules": [{"id": "../../etc"}]}, {"exercises": ["../x"]}, {"exercises": ["nope"]}, {"topics": [{}]}, {"balance": {"concept": -5}}):
             self.assertEqual(self.req("/api/plan", j({"sheet": bad}), "application/json", cookie)[0], 400)
         draft["balance"] = {"concept": 0, "easy": 0, "medium": 100, "hard": 0}
+        keys = keys[:-2]  # (the suggestion takes all there are: two left out, as alternatives)
         # create it
         st, _, body = self.req("/api/sheets/new", j({"sheet": {**draft, "exercises": keys}}), "application/json", cookie)
         self.assertEqual(st, 200)

@@ -1,5 +1,5 @@
 {
- "_about": "Claude's reading of every exercise of the teacher on TeXercises (2026-10-23): per exercise its main subtopic, 1-3 learning objectives of the tree below, quality 1-5 (5 ready for a sheet, 2 or less has an error) and difficulty 1-6 (STYLE.md's rule). Sheets offers each topic as a module and prefers the exercises of better quality. No exercise texts.",
+ "_about": "Claude's reading of every exercise of the teacher on TeXercises (2026-10-23): per exercise its main subtopic, 1-3 learning objectives of the tree below, quality 1-5 (5 ready for a sheet, 2 or less has an error) and difficulty 1-6 (STYLE.md's rule). Sheets offers each topic as a module (an objective with \"hub\": the hub objectives it restates, \"app:objective\", is no topic's: its exercises join those) and prefers the exercises of better quality. No exercise texts.",
  "tree": [
   {
    "en": "Mechanics",
@@ -21,12 +21,20 @@
         {
          "id": "kin.uniform.mean",
          "en": "Calculate the average speed of a trip made of several sections.",
-         "de": "Die Durchschnittsgeschwindigkeit einer Fahrt aus mehreren Abschnitten berechnen."
+         "de": "Die Durchschnittsgeschwindigkeit einer Fahrt aus mehreren Abschnitten berechnen.",
+         "hub": [
+          "motion-areas:mean"
+         ]
         },
         {
          "id": "kin.uniform.data",
          "en": "Read positions and times from a value table or stroboscope picture and decide whether a motion is uniform or uniformly accelerated.",
-         "de": "Orte und Zeiten aus einer Wertetabelle oder einem Stroboskopbild lesen und entscheiden, ob eine Bewegung gleichförmig oder gleichmässig beschleunigt ist."
+         "de": "Orte und Zeiten aus einer Wertetabelle oder einem Stroboskopbild lesen und entscheiden, ob eine Bewegung gleichförmig oder gleichmässig beschleunigt ist.",
+         "hub": [
+          "motion-data:instant",
+          "motion-data:convert",
+          "motion-data:uniform"
+         ]
         }
        ]
       },
@@ -74,17 +82,30 @@
         {
          "id": "kin.graphs.slope",
          "en": "Read velocity as the slope of x(t) and acceleration as the slope of v(t), including negative values.",
-         "de": "Geschwindigkeit als Steigung von x(t) und Beschleunigung als Steigung von v(t) ablesen, auch mit negativen Werten."
+         "de": "Geschwindigkeit als Steigung von x(t) und Beschleunigung als Steigung von v(t) ablesen, auch mit negativen Werten.",
+         "hub": [
+          "motion-graphs:slope",
+          "motion-graphs:negative",
+          "motion-graphs:uniform"
+         ]
         },
         {
          "id": "kin.graphs.area",
          "en": "Find the displacement as the signed area under v(t) and compare the positions of several bodies.",
-         "de": "Die Verschiebung als vorzeichenbehaftete Fläche unter v(t) bestimmen und die Orte mehrerer Körper vergleichen."
+         "de": "Die Verschiebung als vorzeichenbehaftete Fläche unter v(t) bestimmen und die Orte mehrerer Körper vergleichen.",
+         "hub": [
+          "motion-areas:area",
+          "motion-areas:farther"
+         ]
         },
         {
          "id": "kin.graphs.sketch",
          "en": "Sketch x(t), v(t) and a(t) of a motion from one another or from a description, and find the error in such a sketch.",
-         "de": "x(t), v(t) und a(t) einer Bewegung auseinander oder aus einer Beschreibung skizzieren und Fehler in einer solchen Skizze finden."
+         "de": "x(t), v(t) und a(t) einer Bewegung auseinander oder aus einer Beschreibung skizzieren und Fehler in einer solchen Skizze finden.",
+         "hub": [
+          "motion-graphs:sketch",
+          "motion-areas:sketch"
+         ]
         }
        ]
       },
@@ -187,17 +208,29 @@
         {
          "id": "dyn.laws.first",
          "en": "Predict the motion of a body with zero net force and explain that balanced forces allow constant velocity.",
-         "de": "Die Bewegung eines Körpers ohne resultierende Kraft vorhersagen und erklären, dass ein Kräftegleichgewicht auch konstante Geschwindigkeit erlaubt."
+         "de": "Die Bewegung eines Körpers ohne resultierende Kraft vorhersagen und erklären, dass ein Kräftegleichgewicht auch konstante Geschwindigkeit erlaubt.",
+         "hub": [
+          "force-concepts:first",
+          "force-concepts:balanced"
+         ]
         },
         {
          "id": "dyn.laws.second",
          "en": "Apply F = m·a to find a force, a mass or an acceleration, the net force pointing along the acceleration.",
-         "de": "F = m·a anwenden, um Kraft, Masse oder Beschleunigung zu finden; die resultierende Kraft zeigt in Richtung der Beschleunigung."
+         "de": "F = m·a anwenden, um Kraft, Masse oder Beschleunigung zu finden; die resultierende Kraft zeigt in Richtung der Beschleunigung.",
+         "hub": [
+          "force-concepts:second"
+         ]
         },
         {
          "id": "dyn.laws.third",
          "en": "Identify the interaction partner of each force and explain that the two are equal, opposite and act on different bodies.",
-         "de": "Den Wechselwirkungspartner jeder Kraft bestimmen und erklären, dass beide gleich gross, entgegengesetzt sind und an verschiedenen Körpern angreifen."
+         "de": "Den Wechselwirkungspartner jeder Kraft bestimmen und erklären, dass beide gleich gross, entgegengesetzt sind und an verschiedenen Körpern angreifen.",
+         "hub": [
+          "interaction:equal",
+          "interaction:partner",
+          "interaction:normal"
+         ]
         },
         {
          "id": "dyn.laws.kinematics",
@@ -213,7 +246,11 @@
         {
          "id": "dyn.fbd.draw",
          "en": "Choose a system and draw every force acting on it, and find the error in a free-body diagram.",
-         "de": "Ein System wählen, alle daran angreifenden Kräfte einzeichnen und Fehler in einem Kräftediagramm finden."
+         "de": "Ein System wählen, alle daran angreifenden Kräfte einzeichnen und Fehler in einem Kräftediagramm finden.",
+         "hub": [
+          "force-systems:forces",
+          "force-systems:error"
+         ]
         },
         {
          "id": "dyn.fbd.resolve",
@@ -223,7 +260,11 @@
         {
          "id": "dyn.fbd.strategy",
          "en": "Set up Newton's second law along each axis following the strategy system, forces, axes, components, equations.",
-         "de": "Das zweite Newtonsche Gesetz entlang jeder Achse aufstellen nach der Strategie System, Kräfte, Achsen, Komponenten, Gleichungen."
+         "de": "Das zweite Newtonsche Gesetz entlang jeder Achse aufstellen nach der Strategie System, Kräfte, Achsen, Komponenten, Gleichungen.",
+         "hub": [
+          "force-systems:law",
+          "force-systems:system"
+         ]
         }
        ]
       },
@@ -250,7 +291,10 @@
         {
          "id": "dyn.spring.hooke",
          "en": "Apply Hooke's law F = k·Δx, find the spring constant from a measurement, and combine springs in series and parallel.",
-         "de": "Das Hookesche Gesetz F = k·Δx anwenden, die Federkonstante aus einer Messung bestimmen und Federn in Serie und parallel kombinieren."
+         "de": "Das Hookesche Gesetz F = k·Δx anwenden, die Federkonstante aus einer Messung bestimmen und Federn in Serie und parallel kombinieren.",
+         "hub": [
+          "force-systems:spring"
+         ]
         }
        ]
       },
@@ -277,7 +321,10 @@
         {
          "id": "dyn.incline.components",
          "en": "Resolve the weight on a slope into components parallel and perpendicular to the slope and find the normal force.",
-         "de": "Die Gewichtskraft auf einer schiefen Ebene in Komponenten parallel und senkrecht zur Ebene zerlegen und die Normalkraft bestimmen."
+         "de": "Die Gewichtskraft auf einer schiefen Ebene in Komponenten parallel und senkrecht zur Ebene zerlegen und die Normalkraft bestimmen.",
+         "hub": [
+          "force-systems:slope"
+         ]
         },
         {
          "id": "dyn.incline.motion",
@@ -293,7 +340,10 @@
         {
          "id": "dyn.connected.system",
          "en": "Find the common acceleration and the rope forces of bodies connected by ropes and pulleys.",
-         "de": "Die gemeinsame Beschleunigung und die Seilkräfte von über Seile und Rollen verbundenen Körpern bestimmen."
+         "de": "Die gemeinsame Beschleunigung und die Seilkräfte von über Seile und Rollen verbundenen Körpern bestimmen.",
+         "hub": [
+          "force-systems:system"
+         ]
         },
         {
          "id": "dyn.connected.pulley",
@@ -309,7 +359,10 @@
         {
          "id": "dyn.drag.terminal",
          "en": "Use the drag force F = ½·cw·ρ·A·v² and find the terminal velocity where it balances the weight.",
-         "de": "Die Luftwiderstandskraft F = ½·cw·ρ·A·v² verwenden und die Endgeschwindigkeit bestimmen, bei der sie die Gewichtskraft ausgleicht."
+         "de": "Die Luftwiderstandskraft F = ½·cw·ρ·A·v² verwenden und die Endgeschwindigkeit bestimmen, bei der sie die Gewichtskraft ausgleicht.",
+         "hub": [
+          "force-systems:drag"
+         ]
         },
         {
          "id": "dyn.drag.power",
@@ -341,7 +394,10 @@
         {
          "id": "dyn.centripetal.force",
          "en": "Identify which force provides the centripetal force and calculate it with F = m·v²/r.",
-         "de": "Bestimmen, welche Kraft die Zentripetalkraft liefert, und sie mit F = m·v²/r berechnen."
+         "de": "Bestimmen, welche Kraft die Zentripetalkraft liefert, und sie mit F = m·v²/r berechnen.",
+         "hub": [
+          "force-concepts:centre"
+         ]
         },
         {
          "id": "dyn.centripetal.vertical",
@@ -379,7 +435,11 @@
         {
          "id": "stat.torque.arm",
          "en": "Determine a torque as force times lever arm with its sense of rotation, and rank torques.",
-         "de": "Ein Drehmoment als Kraft mal Hebelarm mit seinem Drehsinn bestimmen und Drehmomente vergleichen."
+         "de": "Ein Drehmoment als Kraft mal Hebelarm mit seinem Drehsinn bestimmen und Drehmomente vergleichen.",
+         "hub": [
+          "torque:arm",
+          "torque:rank"
+         ]
         },
         {
          "id": "stat.torque.lever",
@@ -395,7 +455,11 @@
         {
          "id": "stat.equilibrium.both",
          "en": "Apply both conditions of equilibrium (zero net force, zero net torque) to find support and pivot forces.",
-         "de": "Beide Gleichgewichtsbedingungen (keine resultierende Kraft, kein resultierendes Drehmoment) anwenden, um Auflage- und Lagerkräfte zu bestimmen."
+         "de": "Beide Gleichgewichtsbedingungen (keine resultierende Kraft, kein resultierendes Drehmoment) anwenden, um Auflage- und Lagerkräfte zu bestimmen.",
+         "hub": [
+          "torque:balance",
+          "torque:weight"
+         ]
         },
         {
          "id": "stat.equilibrium.ladder",
@@ -411,12 +475,19 @@
         {
          "id": "stat.com.locate",
          "en": "Locate the centre of mass of a composite body or a system of masses.",
-         "de": "Den Schwerpunkt eines zusammengesetzten Körpers oder eines Massensystems bestimmen."
+         "de": "Den Schwerpunkt eines zusammengesetzten Körpers oder eines Massensystems bestimmen.",
+         "hub": [
+          "centre-of-mass:locate"
+         ]
         },
         {
          "id": "stat.com.stability",
          "en": "Classify an equilibrium as stable, unstable or neutral and predict whether a body tips over.",
-         "de": "Ein Gleichgewicht als stabil, labil oder indifferent einordnen und vorhersagen, ob ein Körper kippt."
+         "de": "Ein Gleichgewicht als stabil, labil oder indifferent einordnen und vorhersagen, ob ein Körper kippt.",
+         "hub": [
+          "centre-of-mass:stability",
+          "centre-of-mass:tipping"
+         ]
         }
        ]
       }
@@ -438,7 +509,10 @@
         {
          "id": "en.work.kinds",
          "en": "Calculate lifting, acceleration, spring and friction work and explain why lifting work does not depend on the path.",
-         "de": "Hub-, Beschleunigungs-, Spann- und Reibungsarbeit berechnen und erklären, warum die Hubarbeit nicht vom Weg abhängt."
+         "de": "Hub-, Beschleunigungs-, Spann- und Reibungsarbeit berechnen und erklären, warum die Hubarbeit nicht vom Weg abhängt.",
+         "hub": [
+          "coe:path"
+         ]
         }
        ]
       },
@@ -449,7 +523,10 @@
         {
          "id": "en.forms.calc",
          "en": "Calculate kinetic, gravitational and elastic energy, and identify the forms present in a state.",
-         "de": "Kinetische, potentielle und Spannenergie berechnen und die in einem Zustand vorhandenen Energieformen bestimmen."
+         "de": "Kinetische, potentielle und Spannenergie berechnen und die in einem Zustand vorhandenen Energieformen bestimmen.",
+         "hub": [
+          "coe:forms"
+         ]
         },
         {
          "id": "en.forms.scaling",
@@ -465,12 +542,20 @@
         {
          "id": "en.conservation.balance",
          "en": "Set up the energy balance between two states to find a speed, height or compression, solving symbolically first.",
-         "de": "Die Energiebilanz zwischen zwei Zuständen aufstellen, um eine Geschwindigkeit, Höhe oder Stauchung zu bestimmen, zuerst symbolisch."
+         "de": "Die Energiebilanz zwischen zwei Zuständen aufstellen, um eine Geschwindigkeit, Höhe oder Stauchung zu bestimmen, zuerst symbolisch.",
+         "hub": [
+          "coe:balance",
+          "coe:turn",
+          "coe:error"
+         ]
         },
         {
          "id": "en.conservation.friction",
          "en": "Include the energy lost to friction or drag in an energy balance.",
-         "de": "Die durch Reibung oder Luftwiderstand verlorene Energie in einer Energiebilanz berücksichtigen."
+         "de": "Die durch Reibung oder Luftwiderstand verlorene Energie in einer Energiebilanz berücksichtigen.",
+         "hub": [
+          "coe:path"
+         ]
         },
         {
          "id": "en.conservation.circle",
@@ -913,7 +998,10 @@
         {
          "id": "gas.processes.special",
          "en": "Apply the laws of Boyle–Mariotte, Gay-Lussac and Amontons to isothermal, isobaric and isochoric changes.",
-         "de": "Die Gesetze von Boyle-Mariotte, Gay-Lussac und Amontons auf isotherme, isobare und isochore Zustandsänderungen anwenden."
+         "de": "Die Gesetze von Boyle-Mariotte, Gay-Lussac und Amontons auf isotherme, isobare und isochore Zustandsänderungen anwenden.",
+         "hub": [
+          "cyclic-processes:identify"
+         ]
         },
         {
          "id": "gas.processes.adiabatic",
@@ -998,7 +1086,12 @@
         {
          "id": "td.cycles.diagram",
          "en": "Sketch a cycle in p(V), p(T) and V(T) diagrams and tell states from processes.",
-         "de": "Einen Kreisprozess in p(V)-, p(T)- und V(T)-Diagrammen skizzieren und Zustände von Prozessen unterscheiden."
+         "de": "Einen Kreisprozess in p(V)-, p(T)- und V(T)-Diagrammen skizzieren und Zustände von Prozessen unterscheiden.",
+         "hub": [
+          "cyclic-processes:states",
+          "cyclic-processes:sketch",
+          "cyclic-processes:error"
+         ]
         },
         {
          "id": "td.cycles.efficiency",
@@ -1063,17 +1156,26 @@
         {
          "id": "es.coulomb.direction",
          "en": "Find the direction of the Coulomb force and state that the two forces are equal and opposite.",
-         "de": "Die Richtung der Coulombkraft bestimmen und angeben, dass beide Kräfte gleich gross und entgegengesetzt sind."
+         "de": "Die Richtung der Coulombkraft bestimmen und angeben, dass beide Kräfte gleich gross und entgegengesetzt sind.",
+         "hub": [
+          "coulomb:direction"
+         ]
         },
         {
          "id": "es.coulomb.calc",
          "en": "Calculate the force between two point charges and predict its change by ratios.",
-         "de": "Die Kraft zwischen zwei Punktladungen berechnen und ihre Änderung mit Verhältnissen vorhersagen."
+         "de": "Die Kraft zwischen zwei Punktladungen berechnen und ihre Änderung mit Verhältnissen vorhersagen.",
+         "hub": [
+          "coulomb:factor"
+         ]
         },
         {
          "id": "es.coulomb.vector",
          "en": "Add the Coulomb forces of several charges as vectors and find where the net force vanishes.",
-         "de": "Die Coulombkräfte mehrerer Ladungen vektoriell addieren und den Ort bestimmen, an dem die resultierende Kraft verschwindet."
+         "de": "Die Coulombkräfte mehrerer Ladungen vektoriell addieren und den Ort bestimmen, an dem die resultierende Kraft verschwindet.",
+         "hub": [
+          "coulomb:vector"
+         ]
         },
         {
          "id": "es.coulomb.equilibrium",
@@ -1094,7 +1196,10 @@
         {
          "id": "es.field.point",
          "en": "Calculate the field E = k·Q/r² of a point charge and relate field and force with E = F/q.",
-         "de": "Das Feld E = k·Q/r² einer Punktladung berechnen und Feld und Kraft mit E = F/q verknüpfen."
+         "de": "Das Feld E = k·Q/r² einer Punktladung berechnen und Feld und Kraft mit E = F/q verknüpfen.",
+         "hub": [
+          "coulomb:field"
+         ]
         },
         {
          "id": "es.field.superposition",
@@ -1104,7 +1209,12 @@
         {
          "id": "es.field.lines",
          "en": "Sketch and read field lines of charge configurations, and find errors in such sketches.",
-         "de": "Feldlinien von Ladungsanordnungen skizzieren und lesen sowie Fehler in solchen Skizzen finden."
+         "de": "Feldlinien von Ladungsanordnungen skizzieren und lesen sowie Fehler in solchen Skizzen finden.",
+         "hub": [
+          "electric-field:sketch",
+          "electric-field:read",
+          "electric-field:error"
+         ]
         }
        ]
       },
@@ -1141,7 +1251,10 @@
         {
          "id": "es.dipole.torque",
          "en": "Determine the torque and force on a dipole in a uniform and in a non-uniform field.",
-         "de": "Drehmoment und Kraft auf einen Dipol im homogenen und inhomogenen Feld bestimmen."
+         "de": "Drehmoment und Kraft auf einen Dipol im homogenen und inhomogenen Feld bestimmen.",
+         "hub": [
+          "electric-field:dipole"
+         ]
         }
        ]
       },
@@ -1152,7 +1265,10 @@
         {
          "id": "es.uniform.plates",
          "en": "Use E = ΔV/d in the uniform field of parallel plates and E = σ/ε0.",
-         "de": "E = ΔV/d im homogenen Feld paralleler Platten sowie E = σ/ε0 anwenden."
+         "de": "E = ΔV/d im homogenen Feld paralleler Platten sowie E = σ/ε0 anwenden.",
+         "hub": [
+          "electric-potential:uniform"
+         ]
         },
         {
          "id": "es.uniform.forces",
@@ -1168,7 +1284,12 @@
         {
          "id": "es.potential.concepts",
          "en": "Tell potential energy, potential and voltage apart and sketch equipotential lines.",
-         "de": "Potentielle Energie, Potential und Spannung unterscheiden und Äquipotentiallinien skizzieren."
+         "de": "Potentielle Energie, Potential und Spannung unterscheiden und Äquipotentiallinien skizzieren.",
+         "hub": [
+          "electric-potential:quantities",
+          "electric-potential:point",
+          "electric-field:equi"
+         ]
         },
         {
          "id": "es.potential.point",
@@ -1178,7 +1299,10 @@
         {
          "id": "es.potential.energy",
          "en": "Use W = q·ΔV with energy conservation to find speeds or closest approaches of charges.",
-         "de": "W = q·ΔV mit Energieerhaltung verwenden, um Geschwindigkeiten oder minimale Abstände von Ladungen zu bestimmen."
+         "de": "W = q·ΔV mit Energieerhaltung verwenden, um Geschwindigkeiten oder minimale Abstände von Ladungen zu bestimmen.",
+         "hub": [
+          "electric-potential:energy"
+         ]
         }
        ]
       },
@@ -1189,7 +1313,10 @@
         {
          "id": "es.motion.accel",
          "en": "Apply ΔE_kin = q·ΔV to a charge accelerated through a voltage, in joules and electronvolts.",
-         "de": "ΔE_kin = q·ΔV auf eine durch eine Spannung beschleunigte Ladung anwenden, in Joule und Elektronvolt."
+         "de": "ΔE_kin = q·ΔV auf eine durch eine Spannung beschleunigte Ladung anwenden, in Joule und Elektronvolt.",
+         "hub": [
+          "charged-particles:accel"
+         ]
         },
         {
          "id": "es.motion.deflection",
@@ -1210,7 +1337,10 @@
         {
          "id": "es.capacitor.combine",
          "en": "Combine capacitors in series and parallel and find charges and voltages.",
-         "de": "Kondensatoren in Serie und parallel kombinieren und Ladungen und Spannungen bestimmen."
+         "de": "Kondensatoren in Serie und parallel kombinieren und Ladungen und Spannungen bestimmen.",
+         "hub": [
+          "capacitors:combine"
+         ]
         },
         {
          "id": "es.capacitor.energy",
@@ -1242,7 +1372,10 @@
         {
          "id": "dc.current.charge",
          "en": "Relate charge, current and time with ΔQ = I·Δt, including battery capacities in mAh, and explain that current is not used up.",
-         "de": "Ladung, Strom und Zeit mit ΔQ = I·Δt verknüpfen, inklusive Akkukapazitäten in mAh, und erklären, dass Strom nicht verbraucht wird."
+         "de": "Ladung, Strom und Zeit mit ΔQ = I·Δt verknüpfen, inklusive Akkukapazitäten in mAh, und erklären, dass Strom nicht verbraucht wird.",
+         "hub": [
+          "bulb-brightness:current"
+         ]
         },
         {
          "id": "dc.current.drift",
@@ -1284,22 +1417,39 @@
         {
          "id": "dc.network.equivalent",
          "en": "Reduce series and parallel combinations to an equivalent resistance and find every current and voltage.",
-         "de": "Serien- und Parallelschaltungen zu einem Ersatzwiderstand zusammenfassen und alle Ströme und Spannungen bestimmen."
+         "de": "Serien- und Parallelschaltungen zu einem Ersatzwiderstand zusammenfassen und alle Ströme und Spannungen bestimmen.",
+         "hub": [
+          "circuit-trainer:combine",
+          "circuit-trainer:divide"
+         ]
         },
         {
          "id": "dc.network.kirchhoff",
          "en": "Apply Kirchhoff's junction and loop rules to networks with several sources, tracking the potential around a loop.",
-         "de": "Die Kirchhoffschen Knoten- und Maschenregeln auf Netzwerke mit mehreren Quellen anwenden und das Potential entlang einer Masche verfolgen."
+         "de": "Die Kirchhoffschen Knoten- und Maschenregeln auf Netzwerke mit mehreren Quellen anwenden und das Potential entlang einer Masche verfolgen.",
+         "hub": [
+          "potential-circuit:rules",
+          "potential-circuit:track",
+          "potential-circuit:voltage",
+          "potential-circuit:error"
+         ]
         },
         {
          "id": "dc.network.brightness",
          "en": "Predict the brightness of bulbs and how it changes when a bulb is added, removed or short-circuited.",
-         "de": "Die Helligkeit von Lampen vorhersagen und wie sie sich ändert, wenn eine Lampe hinzugefügt, entfernt oder kurzgeschlossen wird."
+         "de": "Die Helligkeit von Lampen vorhersagen und wie sie sich ändert, wenn eine Lampe hinzugefügt, entfernt oder kurzgeschlossen wird.",
+         "hub": [
+          "bulb-brightness:power",
+          "bulb-brightness:change"
+         ]
         },
         {
          "id": "dc.network.divider",
          "en": "Design voltage dividers and find an unknown resistance from measured values (Wheatstone bridge).",
-         "de": "Spannungsteiler auslegen und einen unbekannten Widerstand aus Messwerten bestimmen (Wheatstone-Brücke)."
+         "de": "Spannungsteiler auslegen und einen unbekannten Widerstand aus Messwerten bestimmen (Wheatstone-Brücke).",
+         "hub": [
+          "circuit-trainer:backwards"
+         ]
         }
        ]
       },
@@ -1336,7 +1486,10 @@
         {
          "id": "dc.source.meters",
          "en": "Place ammeters and voltmeters correctly, extend their ranges with shunt and series resistors, and account for their resistance.",
-         "de": "Ampere- und Voltmeter korrekt einsetzen, ihren Messbereich mit Neben- und Vorwiderständen erweitern und ihren Widerstand berücksichtigen."
+         "de": "Ampere- und Voltmeter korrekt einsetzen, ihren Messbereich mit Neben- und Vorwiderständen erweitern und ihren Widerstand berücksichtigen.",
+         "hub": [
+          "circuit-trainer:meters"
+         ]
         }
        ]
       },
@@ -1347,7 +1500,11 @@
         {
          "id": "dc.rc.curves",
          "en": "Sketch voltage and current while a capacitor charges or discharges and read the time constant τ = R·C.",
-         "de": "Spannung und Strom beim Laden oder Entladen eines Kondensators skizzieren und die Zeitkonstante τ = R·C ablesen."
+         "de": "Spannung und Strom beim Laden oder Entladen eines Kondensators skizzieren und die Zeitkonstante τ = R·C ablesen.",
+         "hub": [
+          "capacitors:sketch",
+          "capacitors:tau"
+         ]
         },
         {
          "id": "dc.rc.exponential",
@@ -1369,7 +1526,10 @@
         {
          "id": "mag.field.lines",
          "en": "Sketch the field lines of magnets, wires, loops and solenoids with the right-hand grip rule.",
-         "de": "Die Feldlinien von Magneten, Drähten, Leiterschleifen und Spulen mit der Rechte-Faust-Regel skizzieren."
+         "de": "Die Feldlinien von Magneten, Drähten, Leiterschleifen und Spulen mit der Rechte-Faust-Regel skizzieren.",
+         "hub": [
+          "magnetic-forces:lines"
+         ]
         },
         {
          "id": "mag.field.wire",
@@ -1395,12 +1555,19 @@
         {
          "id": "mag.lorentz.force",
          "en": "Find the direction and size F = q·v·B·sin θ of the force on a moving charge.",
-         "de": "Richtung und Betrag F = q·v·B·sin θ der Kraft auf eine bewegte Ladung bestimmen."
+         "de": "Richtung und Betrag F = q·v·B·sin θ der Kraft auf eine bewegte Ladung bestimmen.",
+         "hub": [
+          "magnetic-forces:charge"
+         ]
         },
         {
          "id": "mag.lorentz.circle",
          "en": "Relate the radius r = m·v/(q·B) and period of a circular path to mass, speed and charge, and explain why no work is done.",
-         "de": "Radius r = m·v/(q·B) und Periode einer Kreisbahn mit Masse, Geschwindigkeit und Ladung verknüpfen und erklären, warum keine Arbeit verrichtet wird."
+         "de": "Radius r = m·v/(q·B) und Periode einer Kreisbahn mit Masse, Geschwindigkeit und Ladung verknüpfen und erklären, warum keine Arbeit verrichtet wird.",
+         "hub": [
+          "charged-particles:radius",
+          "charged-particles:work"
+         ]
         },
         {
          "id": "mag.lorentz.devices",
@@ -1421,17 +1588,27 @@
         {
          "id": "mag.conductor.force",
          "en": "Find the direction and size F = I·L·B·sin θ of the force on a current-carrying wire.",
-         "de": "Richtung und Betrag F = I·L·B·sin θ der Kraft auf einen stromdurchflossenen Leiter bestimmen."
+         "de": "Richtung und Betrag F = I·L·B·sin θ der Kraft auf einen stromdurchflossenen Leiter bestimmen.",
+         "hub": [
+          "magnetic-forces:wire",
+          "magnetic-forces:error"
+         ]
         },
         {
          "id": "mag.conductor.parallel",
          "en": "Calculate the force between parallel currents and predict attraction or repulsion.",
-         "de": "Die Kraft zwischen parallelen Strömen berechnen und Anziehung oder Abstossung vorhersagen."
+         "de": "Die Kraft zwischen parallelen Strömen berechnen und Anziehung oder Abstossung vorhersagen.",
+         "hub": [
+          "magnetic-forces:pair"
+         ]
         },
         {
          "id": "mag.conductor.torque",
          "en": "Explain and calculate the torque on a coil in a field (motor, loudspeaker, meter).",
-         "de": "Das Drehmoment auf eine Spule im Magnetfeld erklären und berechnen (Motor, Lautsprecher, Messinstrument)."
+         "de": "Das Drehmoment auf eine Spule im Magnetfeld erklären und berechnen (Motor, Lautsprecher, Messinstrument).",
+         "hub": [
+          "magnetic-forces:coil"
+         ]
         }
        ]
       },
@@ -1442,7 +1619,10 @@
         {
          "id": "mag.hall.voltage",
          "en": "Find the Hall voltage and the speed passing crossed fields undeflected.",
-         "de": "Die Hallspannung bestimmen sowie die Geschwindigkeit, die gekreuzte Felder unabgelenkt durchquert."
+         "de": "Die Hallspannung bestimmen sowie die Geschwindigkeit, die gekreuzte Felder unabgelenkt durchquert.",
+         "hub": [
+          "charged-particles:crossed"
+         ]
         }
        ]
       }
@@ -1459,7 +1639,12 @@
         {
          "id": "ind.flux.faraday",
          "en": "Calculate the magnetic flux and the induced voltage as minus its rate of change, also from a graph.",
-         "de": "Den magnetischen Fluss und die induzierte Spannung als negative Änderungsrate berechnen, auch aus einem Diagramm."
+         "de": "Den magnetischen Fluss und die induzierte Spannung als negative Änderungsrate berechnen, auch aus einem Diagramm.",
+         "hub": [
+          "induction-match:flux",
+          "induction-match:slope",
+          "induction-match:change"
+         ]
         },
         {
          "id": "ind.flux.changingB",
@@ -1475,7 +1660,10 @@
         {
          "id": "ind.lenz.direction",
          "en": "Find the direction of an induced current with Lenz's rule and explain eddy current brakes.",
-         "de": "Die Richtung eines Induktionsstroms mit der Lenzschen Regel bestimmen und Wirbelstrombremsen erklären."
+         "de": "Die Richtung eines Induktionsstroms mit der Lenzschen Regel bestimmen und Wirbelstrombremsen erklären.",
+         "hub": [
+          "induction-match:lenz"
+         ]
         }
        ]
       },
@@ -1513,7 +1701,12 @@
         {
          "id": "ind.self.rl",
          "en": "Find currents in an RL circuit right after switching and long after, and use I(t) with τ = L/R.",
-         "de": "Ströme in einem RL-Kreis direkt nach dem Schalten und lange danach bestimmen und I(t) mit τ = L/R verwenden."
+         "de": "Ströme in einem RL-Kreis direkt nach dem Schalten und lange danach bestimmen und I(t) mit τ = L/R verwenden.",
+         "hub": [
+          "rl-switch:keep",
+          "rl-switch:after",
+          "rl-switch:steady"
+         ]
         }
        ]
       },
@@ -1573,7 +1766,11 @@
         {
          "id": "ac.reactance.elements",
          "en": "Sketch the reactances of a coil and a capacitor against frequency and state the phase shift in each element.",
-         "de": "Die Blindwiderstände von Spule und Kondensator gegen die Frequenz skizzieren und die Phasenverschiebung in jedem Bauteil angeben."
+         "de": "Die Blindwiderstände von Spule und Kondensator gegen die Frequenz skizzieren und die Phasenverschiebung in jedem Bauteil angeben.",
+         "hub": [
+          "impedance:elements",
+          "impedance:limits"
+         ]
         },
         {
          "id": "ac.reactance.phasors",
@@ -1589,7 +1786,10 @@
         {
          "id": "ac.rlc.resonance",
          "en": "Find the resonance frequency of an RLC circuit, the current there and the quality factor.",
-         "de": "Die Resonanzfrequenz eines RLC-Kreises, den Strom dort und die Güte bestimmen."
+         "de": "Die Resonanzfrequenz eines RLC-Kreises, den Strom dort und die Güte bestimmen.",
+         "hub": [
+          "impedance:resonance"
+         ]
         }
        ]
       },
@@ -1617,7 +1817,10 @@
         {
          "id": "em.lc.oscillator",
          "en": "Calculate the frequency of an LC oscillator and use the energy exchange between capacitor and coil.",
-         "de": "Die Frequenz eines LC-Schwingkreises berechnen und den Energieaustausch zwischen Kondensator und Spule nutzen."
+         "de": "Die Frequenz eines LC-Schwingkreises berechnen und den Energieaustausch zwischen Kondensator und Spule nutzen.",
+         "hub": [
+          "oscillations:lc"
+         ]
         }
        ]
       },
@@ -1628,17 +1831,26 @@
         {
          "id": "em.waves.relation",
          "en": "Relate wavelength, frequency and speed of electromagnetic waves, also in media.",
-         "de": "Wellenlänge, Frequenz und Geschwindigkeit elektromagnetischer Wellen verknüpfen, auch in Medien."
+         "de": "Wellenlänge, Frequenz und Geschwindigkeit elektromagnetischer Wellen verknüpfen, auch in Medien.",
+         "hub": [
+          "em-waves:speed"
+         ]
         },
         {
          "id": "em.waves.spectrum",
          "en": "Order the parts of the spectrum by wavelength, frequency and photon energy and name their uses.",
-         "de": "Die Bereiche des Spektrums nach Wellenlänge, Frequenz und Photonenenergie ordnen und ihre Anwendungen nennen."
+         "de": "Die Bereiche des Spektrums nach Wellenlänge, Frequenz und Photonenenergie ordnen und ihre Anwendungen nennen.",
+         "hub": [
+          "em-waves:spectrum"
+         ]
         },
         {
          "id": "em.waves.fields",
          "en": "Relate the directions of E, B and propagation and use E = c·B.",
-         "de": "Die Richtungen von E, B und Ausbreitung verknüpfen und E = c·B verwenden."
+         "de": "Die Richtungen von E, B und Ausbreitung verknüpfen und E = c·B verwenden.",
+         "hub": [
+          "em-waves:dirs"
+         ]
         },
         {
          "id": "em.waves.intensity",
@@ -1671,17 +1883,27 @@
         {
          "id": "osc.harmonic.equation",
          "en": "Describe a harmonic oscillation by x(t) = A·sin(ωt + φ), relate it to circular motion and read amplitude, period and phase.",
-         "de": "Eine harmonische Schwingung durch x(t) = A·sin(ωt + φ) beschreiben, mit der Kreisbewegung verknüpfen und Amplitude, Periode und Phase ablesen."
+         "de": "Eine harmonische Schwingung durch x(t) = A·sin(ωt + φ) beschreiben, mit der Kreisbewegung verknüpfen und Amplitude, Periode und Phase ablesen.",
+         "hub": [
+          "oscillations:circle",
+          "oscillations:harmonic"
+         ]
         },
         {
          "id": "osc.harmonic.extremes",
          "en": "Find velocity and acceleration in the cycle, with maxima Aω and Aω².",
-         "de": "Geschwindigkeit und Beschleunigung im Verlauf bestimmen, mit den Maxima Aω und Aω²."
+         "de": "Geschwindigkeit und Beschleunigung im Verlauf bestimmen, mit den Maxima Aω und Aω².",
+         "hub": [
+          "oscillations:extremes"
+         ]
         },
         {
          "id": "osc.harmonic.criterion",
          "en": "Show that a system oscillates harmonically from a restoring force proportional to the displacement, and read off ω.",
-         "de": "Zeigen, dass ein System harmonisch schwingt, weil die Rückstellkraft proportional zur Auslenkung ist, und ω ablesen."
+         "de": "Zeigen, dass ein System harmonisch schwingt, weil die Rückstellkraft proportional zur Auslenkung ist, und ω ablesen.",
+         "hub": [
+          "oscillations:harmonic"
+         ]
         }
        ]
       },
@@ -1784,7 +2006,10 @@
         {
          "id": "wave.basics.function",
          "en": "Read and construct the wave function y(x,t), and tell the motion of the wave from that of the medium.",
-         "de": "Die Wellenfunktion y(x,t) lesen und aufstellen und die Bewegung der Welle von der des Mediums unterscheiden."
+         "de": "Die Wellenfunktion y(x,t) lesen und aufstellen und die Bewegung der Welle von der des Mediums unterscheiden.",
+         "hub": [
+          "wave-propagation:medium"
+         ]
         }
        ]
       },
@@ -1811,7 +2036,10 @@
         {
          "id": "wave.superposition.interference",
          "en": "Add displacements of overlapping waves and find constructive and destructive interference from the path difference.",
-         "de": "Auslenkungen überlagerter Wellen addieren und konstruktive und destruktive Interferenz aus dem Gangunterschied bestimmen."
+         "de": "Auslenkungen überlagerter Wellen addieren und konstruktive und destruktive Interferenz aus dem Gangunterschied bestimmen.",
+         "hub": [
+          "wave-propagation:superpose"
+         ]
         }
        ]
       },
@@ -1822,7 +2050,10 @@
         {
          "id": "wave.standing.modes",
          "en": "Find the wavelengths and frequencies of standing waves on strings and in pipes with fixed or free ends.",
-         "de": "Wellenlängen und Frequenzen stehender Wellen auf Saiten und in Pfeifen mit festen oder freien Enden bestimmen."
+         "de": "Wellenlängen und Frequenzen stehender Wellen auf Saiten und in Pfeifen mit festen oder freien Enden bestimmen.",
+         "hub": [
+          "wave-propagation:standing"
+         ]
         }
        ]
       },
@@ -1854,12 +2085,18 @@
         {
          "id": "wave.reflection.ends",
          "en": "Predict the reflection of a pulse at a fixed and a free end.",
-         "de": "Die Reflexion eines Wellenbergs am festen und am losen Ende vorhersagen."
+         "de": "Die Reflexion eines Wellenbergs am festen und am losen Ende vorhersagen.",
+         "hub": [
+          "wave-propagation:reflect"
+         ]
         },
         {
          "id": "wave.reflection.huygens",
          "en": "Explain reflection, refraction and diffraction with Huygens' principle and apply the law of refraction to waves.",
-         "de": "Reflexion, Brechung und Beugung mit dem Huygensschen Prinzip erklären und das Brechungsgesetz auf Wellen anwenden."
+         "de": "Reflexion, Brechung und Beugung mit dem Huygensschen Prinzip erklären und das Brechungsgesetz auf Wellen anwenden.",
+         "hub": [
+          "interference:huygens"
+         ]
         }
        ]
       }
@@ -1962,7 +2199,11 @@
         {
          "id": "opt.interference.double",
          "en": "Find the maxima and minima of a double slit and how the pattern changes with spacing and wavelength.",
-         "de": "Maxima und Minima eines Doppelspalts bestimmen und wie sich das Muster mit Spaltabstand und Wellenlänge ändert."
+         "de": "Maxima und Minima eines Doppelspalts bestimmen und wie sich das Muster mit Spaltabstand und Wellenlänge ändert.",
+         "hub": [
+          "interference:maxima",
+          "interference:changes"
+         ]
         },
         {
          "id": "opt.interference.coherence",
@@ -1988,7 +2229,10 @@
         {
          "id": "opt.diffraction.grating",
          "en": "Use the grating equation d·sin α = k·λ to find wavelengths, orders and spectral spread.",
-         "de": "Die Gittergleichung d·sin α = k·λ nutzen, um Wellenlängen, Ordnungen und spektrale Aufspaltung zu bestimmen."
+         "de": "Die Gittergleichung d·sin α = k·λ nutzen, um Wellenlängen, Ordnungen und spektrale Aufspaltung zu bestimmen.",
+         "hub": [
+          "interference:maxima"
+         ]
         },
         {
          "id": "opt.diffraction.slit",
@@ -1998,7 +2242,10 @@
         {
          "id": "opt.diffraction.resolution",
          "en": "Relate the resolving power of eyes, telescopes and cameras to aperture and wavelength.",
-         "de": "Das Auflösungsvermögen von Auge, Teleskop und Kamera mit Öffnung und Wellenlänge verknüpfen."
+         "de": "Das Auflösungsvermögen von Auge, Teleskop und Kamera mit Öffnung und Wellenlänge verknüpfen.",
+         "hub": [
+          "interference:resolve"
+         ]
         }
        ]
       },
@@ -2113,7 +2360,10 @@
         {
          "id": "qm.photon.energy",
          "en": "Calculate photon energy and number of photons from power, wavelength and time.",
-         "de": "Photonenenergie und Photonenzahl aus Leistung, Wellenlänge und Zeit berechnen."
+         "de": "Photonenenergie und Photonenzahl aus Leistung, Wellenlänge und Zeit berechnen.",
+         "hub": [
+          "photons:einstein"
+         ]
         },
         {
          "id": "qm.photon.momentum",
@@ -2134,12 +2384,20 @@
         {
          "id": "qm.photoeffect.einstein",
          "en": "Apply h·f = φ + E_k,max with the stopping voltage, and find the threshold frequency and work function, also from a graph.",
-         "de": "h·f = φ + E_k,max mit der Gegenspannung anwenden und Grenzfrequenz und Austrittsarbeit bestimmen, auch aus einem Diagramm."
+         "de": "h·f = φ + E_k,max mit der Gegenspannung anwenden und Grenzfrequenz und Austrittsarbeit bestimmen, auch aus einem Diagramm.",
+         "hub": [
+          "photons:einstein",
+          "photons:threshold"
+         ]
         },
         {
          "id": "qm.photoeffect.wave",
          "en": "Explain which observations of the photoelectric effect the wave model cannot explain, and the role of brightness.",
-         "de": "Erklären, welche Beobachtungen des Photoeffekts das Wellenmodell nicht erklärt, und welche Rolle die Helligkeit spielt."
+         "de": "Erklären, welche Beobachtungen des Photoeffekts das Wellenmodell nicht erklärt, und welche Rolle die Helligkeit spielt.",
+         "hub": [
+          "photons:wave",
+          "photons:rate"
+         ]
         }
        ]
       },
@@ -2150,12 +2408,18 @@
         {
          "id": "qm.matter.debroglie",
          "en": "Calculate de Broglie wavelengths of particles from their speed, energy or accelerating voltage.",
-         "de": "De-Broglie-Wellenlängen von Teilchen aus Geschwindigkeit, Energie oder Beschleunigungsspannung berechnen."
+         "de": "De-Broglie-Wellenlängen von Teilchen aus Geschwindigkeit, Energie oder Beschleunigungsspannung berechnen.",
+         "hub": [
+          "matter-waves:debroglie"
+         ]
         },
         {
          "id": "qm.matter.diffraction",
          "en": "Use electron diffraction and double-slit experiments with particles to find wavelengths or lattice spacings.",
-         "de": "Elektronenbeugung und Doppelspaltversuche mit Teilchen verwenden, um Wellenlängen oder Gitterabstände zu bestimmen."
+         "de": "Elektronenbeugung und Doppelspaltversuche mit Teilchen verwenden, um Wellenlängen oder Gitterabstände zu bestimmen.",
+         "hub": [
+          "matter-waves:debroglie"
+         ]
         },
         {
          "id": "qm.matter.velocities",
@@ -2208,7 +2472,10 @@
         {
          "id": "qm.well.infinite",
          "en": "Find energies and wave functions of a particle in an infinite well, with E_n ∝ n²/L².",
-         "de": "Energien und Wellenfunktionen eines Teilchens im unendlich tiefen Potentialtopf bestimmen, mit E_n ∝ n²/L²."
+         "de": "Energien und Wellenfunktionen eines Teilchens im unendlich tiefen Potentialtopf bestimmen, mit E_n ∝ n²/L².",
+         "hub": [
+          "matter-waves:box"
+         ]
         },
         {
          "id": "qm.well.tunnel",
@@ -2224,7 +2491,10 @@
         {
          "id": "qm.schroedinger.psi",
          "en": "Interpret |ψ|² as a probability density, normalise a wave function and compute expectation values.",
-         "de": "|ψ|² als Wahrscheinlichkeitsdichte deuten, eine Wellenfunktion normieren und Erwartungswerte berechnen."
+         "de": "|ψ|² als Wahrscheinlichkeitsdichte deuten, eine Wellenfunktion normieren und Erwartungswerte berechnen.",
+         "hub": [
+          "matter-waves:psi"
+         ]
         },
         {
          "id": "qm.schroedinger.solve",
@@ -3453,7 +3723,7 @@
     "dc.current.charge",
     "meas.data.estimate"
    ],
-   "quality": 2,
+   "quality": 4,
    "difficulty": 2,
    "kind": "estimate",
    "sub2": [
@@ -3531,7 +3801,7 @@
    "objectives": [
     "dc.power.calc"
    ],
-   "quality": 2,
+   "quality": 4,
    "difficulty": 1,
    "kind": "calculate"
   },
@@ -4330,7 +4600,7 @@
     "qm.matter.diffraction",
     "qm.matter.debroglie"
    ],
-   "quality": 2,
+   "quality": 4,
    "difficulty": 2,
    "kind": "explain",
    "sub2": [
@@ -4782,7 +5052,7 @@
    "objectives": [
     "heat.mixing.temperature"
    ],
-   "quality": 2,
+   "quality": 4,
    "difficulty": 2,
    "kind": "calculate"
   },
@@ -5214,7 +5484,7 @@
     "ind.flux.faraday",
     "math.calc.derive"
    ],
-   "quality": 2,
+   "quality": 4,
    "difficulty": 6,
    "kind": "calculate",
    "sub2": [
@@ -5319,7 +5589,7 @@
     "math.vectors.ops",
     "es.coulomb.numeric"
    ],
-   "quality": 2,
+   "quality": 4,
    "difficulty": 5,
    "kind": "mixed",
    "sub2": [
@@ -9418,7 +9688,7 @@
    "objectives": [
     "fluid.pressure.def"
    ],
-   "quality": 2,
+   "quality": 4,
    "difficulty": 2,
    "kind": "calculate",
    "sub2": [
@@ -9541,7 +9811,7 @@
    "objectives": [
     "heat.radiation.wien"
    ],
-   "quality": 2,
+   "quality": 4,
    "difficulty": 2,
    "kind": "mixed"
   },
@@ -13347,7 +13617,7 @@
    "objectives": [
     "stat.equilibrium.both"
    ],
-   "quality": 2,
+   "quality": 4,
    "difficulty": 3,
    "kind": "calculate",
    "sub2": [
