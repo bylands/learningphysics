@@ -9,7 +9,8 @@ hub-data/categories-extra.json, merged over it: OVERLAY); a sheet saved before m
 subbranches of exercise.json, exercise_topics), which still match (on_topics). 2. Learning objectives: pool.json (build_pool.py, reviewed by hand) lists
 for every app (module of the hub) and objective the TeXercises exercises that practise it, best first;
 catalogue.json (Claude's reading of every exercise: its learning objectives of a larger list, its quality 1-5
-and its difficulty 1-6) adds a module per topic of its tree, its objectives' exercises the best quality first
+and its difficulty 1-6) adds a module per topic of its tree, its objectives' exercises the best quality first;
+an objective that restates one of the hub's is no topic's: its exercises join the hub's, after pool.json's
 (catalogue_pool; full_pool is both);
 of those on the topics, the teacher ticks objectives (objective_keys), and maybe the exercises on the
 topics that the pool links to none (loose_keys). 3. Balance: the share of concept questions (the task
@@ -471,15 +472,17 @@ def load_catalogue(path: Optional[Path] = None) -> Dict[str, object]:
     objectives: [{id, en, de}]}] one per topic of its tree that has objectives, in the tree's order (ids
     CAT_APP + the topic's slug; an objective's id is its catalogue id with "-" for "."), "of": objective id
     (catalogue's) -> (app, objective id), "exercises": TeXercises id (a string) -> {objectives (catalogue
-    ids), quality (1-5), difficulty (1-6), dup_of (the id of the exercise it copies, or None)}}; all empty if it
-    is missing or unreadable."""
+    ids), quality (1-5), difficulty (1-6), dup_of (the id of the exercise it copies, or None)}}, "hub": objective
+    id (catalogue's) -> [(app, objective id)] of the hub's (pool.json) it restates (its "hub": ["app:objective"]):
+    such an objective is no module's, its exercises join the hub's (full_pool); all empty if it is missing or
+    unreadable."""
     path = path or CATALOGUE
     stamp = _stamp(path)
     with _metas_guard:
         if _catalogue.get("stamp") == stamp:
             return _catalogue
     raw = _read_json(path, stamp)
-    apps, of = [], {}
+    apps, of, hub = [], {}, {}
     tree = raw.get("tree") if isinstance(raw.get("tree"), list) else []
     for area in tree:
         if not isinstance(area, dict):
@@ -491,7 +494,12 @@ def load_catalogue(path: Optional[Path] = None) -> Dict[str, object]:
             objs = []
             for sub in topic.get("subtopics") or []:
                 for o in (sub.get("objectives") or []) if isinstance(sub, dict) else []:
-                    if isinstance(o, dict) and isinstance(o.get("id"), str) and o["id"] not in of:
+                    if not isinstance(o, dict) or not isinstance(o.get("id"), str) or o["id"] in of or o["id"] in hub:
+                        continue
+                    links = [tuple(x.split(":", 1)) for x in _strs(o.get("hub")) if ":" in x]
+                    if links:
+                        hub[o["id"]] = links
+                    else:
                         oid = o["id"].replace(".", "-")[:40]
                         of[o["id"]] = (app, oid)
                         objs.append({"id": oid, "en": str(o.get("en") or oid), "de": str(o.get("de") or o.get("en") or oid)})
@@ -503,44 +511,60 @@ def load_catalogue(path: Optional[Path] = None) -> Dict[str, object]:
         if not isinstance(e, dict):
             continue
         q, d = e.get("quality"), e.get("difficulty")
-        exs[str(eid)] = {"objectives": [o for o in _strs(e.get("objectives")) if o in of],
+        exs[str(eid)] = {"objectives": [o for o in _strs(e.get("objectives")) if o in of or o in hub],
                          "quality": min(max(q, 1), 5) if isinstance(q, int) and not isinstance(q, bool) else None,
                          "difficulty": min(max(d, 1), 6) if isinstance(d, int) and not isinstance(d, bool) else None,
                          "dup_of": e["dup_of"] if isinstance(e.get("dup_of"), str) and e["dup_of"].isdigit() else None}
-    out = {"stamp": stamp, "apps": apps, "of": of, "exercises": exs}
+    out = {"stamp": stamp, "apps": apps, "of": of, "hub": hub, "exercises": exs}
     with _metas_guard:
         _catalogue.clear()
         _catalogue.update(out)
     return out
 
 
-def catalogue_pool(cat: Dict[str, Dict[str, object]]) -> Dict[str, object]:
+def catalogue_pool(cat: Dict[str, Dict[str, object]], hub: Optional[Dict[str, object]] = None) -> Dict[str, object]:
     """The modules of catalogue.json as the pool has its apps: {app: {"objectives": {objective: [keys]},
     "exercises": {key: {...}}}}, of the exercises there (cat: exercise_meta by key); an objective's
     exercises the best first: by quality (unknown as 3), then the sheet-friendly difficulty (nearest 2),
-    then the key."""
+    then the key. With hub (pool.json's apps), the exercises of an objective that restates one of the hub's
+    are added to that one, after its own, and to its app's exercises (hub is changed)."""
     cata = load_catalogue()
     by_id = {str(e["id"]): k for k, e in cat.items() if e.get("id") is not None}
+    added: Dict[Tuple[str, str], List[str]] = {}
     out: Dict[str, Dict[str, object]] = {a["id"]: {"objectives": {o["id"]: [] for o in a["objectives"]}, "exercises": {}} for a in cata["apps"]}
     for eid, e in cata["exercises"].items():
         key = by_id.get(eid)
         if key is None:
             continue
         m = cat[key]
+        meta = {"source": "catalogue", "title": m["title"], "lang": m["lang"], "difficulty": m["difficulty"],
+                "images": m["images"], "url": m["url"], "quality": e["quality"]}
         for o in e["objectives"]:
-            app, oid = cata["of"][o]
-            out[app]["objectives"][oid].append(key)
-            out[app]["exercises"][key] = {"source": "catalogue", "title": m["title"], "lang": m["lang"], "difficulty": m["difficulty"],
-                                          "images": m["images"], "url": m["url"], "quality": e["quality"]}
+            if o in cata["of"]:
+                app, oid = cata["of"][o]
+                out[app]["objectives"][oid].append(key)
+                out[app]["exercises"][key] = meta
+            for app, oid in cata["hub"].get(o, []) if hub is not None else []:
+                entry = hub.get(app)
+                objs = entry.get("objectives") if isinstance(entry, dict) else None
+                if isinstance(objs, dict) and isinstance(objs.get(oid), list):
+                    added.setdefault((app, oid), []).append(key)
+                    entry.setdefault("exercises", {}).setdefault(key, meta)
+    best = lambda k: (-(cat[k].get("quality") or 3), abs((cat[k].get("difficulty") or 2) - 2), k)
     for entry in out.values():
         for keys in entry["objectives"].values():
-            keys.sort(key=lambda k: (-(cat[k].get("quality") or 3), abs((cat[k].get("difficulty") or 2) - 2), k))
+            keys.sort(key=best)
+    for (app, oid), keys in added.items():
+        own = hub[app]["objectives"][oid]
+        own += [k for k in sorted(set(keys), key=best) if k not in own]
     return out
 
 
 def full_pool(cat: Dict[str, Dict[str, object]]) -> Dict[str, object]:
-    """pool.json (the hub's modules) and the modules of catalogue.json (catalogue_pool)."""
-    return {**load_pool(), **catalogue_pool(cat)}
+    """pool.json (the hub's modules, with the exercises of the catalogue's objectives that restate theirs) and
+    the modules of catalogue.json (catalogue_pool)."""
+    hub = load_pool()
+    return {**hub, **catalogue_pool(cat, hub)}
 
 
 def info(pool: Dict[str, object], key: str, apps: Optional[List[str]] = None) -> Optional[Tuple[str, Dict[str, object]]]:

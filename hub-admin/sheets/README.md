@@ -219,7 +219,9 @@ used and can be deleted.
   with care, 2 an error a student would notice, 1 unusable) and its **difficulty** 1–6 (the rule of
   `texercises-aufgaben/STYLE.md`). Sheets offers each topic of its tree as a module (`load_catalogue`,
   `catalogue_pool`: an objective's exercises the best quality first), next to the hub's modules of
-  `pool.json`, which stays as it is for the hub; its difficulty wins over TeXercises' for the balance,
+  `pool.json`, which stays as it is for the hub. The 77 objectives that restate one of the hub's (their
+  `"hub": ["app:objective"]`) are no topic's: their exercises join those hub objectives in Sheets, after
+  `pool.json`'s own (`full_pool`), so no objective is offered twice. Its difficulty wins over TeXercises' for the balance,
   and the editor shows the quality (Q1–Q5) on every exercise. It holds no exercise texts.
 - `sheets.py` (used by `../hubadmin.py`) reads what a sheet needs of the exercises (`exercise_meta`:
   language, type, difficulty, topics, image; kept while the files are unchanged), suggests the exercises
