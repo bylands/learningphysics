@@ -11854,13 +11854,12 @@
     "rel.dynamics.accelerator",
     "es.motion.accel"
    ],
-   "quality": 1,
-   "difficulty": 2,
+   "quality": 4,
+   "difficulty": 3,
    "kind": "calculate",
    "sub2": [
     "es.motion"
-   ],
-   "dup_of": "23754"
+   ]
   },
   "23754": {
    "sub": "rel.dynamics",
