@@ -1669,7 +1669,7 @@
     "stability": [
      "centre-of-mass-01-vier-bretter-an-einer-achse",
      "centre-of-mass-02-schraeg-aber-im-gleichgewicht",
-     "centre-of-mass-03-fehler-indifferent"
+     "centre-of-mass-03-fehlvorstellung-indifferent"
     ],
     "tipping": [
      "e24608-der-kipptest-eines-busses",
@@ -1726,9 +1726,9 @@
      "images": false,
      "url": ""
     },
-    "centre-of-mass-03-fehler-indifferent": {
+    "centre-of-mass-03-fehlvorstellung-indifferent": {
      "source": "drafts",
-     "title": "Fehler: indifferent?",
+     "title": "Fehlvorstellung: indifferent?",
      "lang": "de",
      "difficulty": 3,
      "images": false,
@@ -2108,8 +2108,8 @@
     ],
     "error": [
      "energy-conservation-14-fehler-in-der-bungee-tabelle",
-     "energy-conservation-15-fehler-nullniveau-beim-fallen-auf-die-feder",
-     "energy-conservation-16-fehler-federkatapult"
+     "energy-conservation-15-fehlvorstellung-nullniveau-beim-fallen-auf-die-feder",
+     "energy-conservation-16-fehlvorstellung-federkatapult"
     ]
    },
    "exercises": {
@@ -2377,17 +2377,17 @@
      "images": false,
      "url": ""
     },
-    "energy-conservation-15-fehler-nullniveau-beim-fallen-auf-die-feder": {
+    "energy-conservation-15-fehlvorstellung-nullniveau-beim-fallen-auf-die-feder": {
      "source": "drafts",
-     "title": "Fehler: Nullniveau beim Fallen auf die Feder",
+     "title": "Fehlvorstellung: Nullniveau beim Fallen auf die Feder",
      "lang": "de",
      "difficulty": 3,
      "images": false,
      "url": ""
     },
-    "energy-conservation-16-fehler-federkatapult": {
+    "energy-conservation-16-fehlvorstellung-federkatapult": {
      "source": "drafts",
-     "title": "Fehler: Federkatapult",
+     "title": "Fehlvorstellung: Federkatapult",
      "lang": "de",
      "difficulty": 2,
      "images": false,
@@ -2604,7 +2604,7 @@
     "normal": [
      "e24760-astronaut-auf-dem-mond",
      "e24747-normalkraft-ist-nicht-die-reaktionskraft",
-     "interaction-02-fehler-die-haengende-lampe"
+     "interaction-02-fehlvorstellung-die-haengende-lampe"
     ]
    },
    "exercises": {
@@ -2672,9 +2672,9 @@
      "images": false,
      "url": ""
     },
-    "interaction-02-fehler-die-haengende-lampe": {
+    "interaction-02-fehlvorstellung-die-haengende-lampe": {
      "source": "drafts",
-     "title": "Fehler: die hängende Lampe",
+     "title": "Fehlvorstellung: die hängende Lampe",
      "lang": "de",
      "difficulty": 2,
      "images": false,
@@ -2755,9 +2755,9 @@
      "e24723-inlineskaterin-am-hang"
     ],
     "error": [
-     "force-systems-15-fehler-schraeg-gezogen",
-     "force-systems-16-fehler-die-bewegungskraft",
-     "force-systems-17-fehler-seilkraft-gleich-gewichtskraft"
+     "force-systems-15-fehlvorstellung-schraeg-gezogen",
+     "force-systems-16-fehlvorstellung-die-bewegungskraft",
+     "force-systems-17-fehlvorstellung-seilkraft-gleich-gewichtskraft"
     ]
    },
    "exercises": {
@@ -3129,25 +3129,25 @@
      "images": false,
      "url": ""
     },
-    "force-systems-15-fehler-schraeg-gezogen": {
+    "force-systems-15-fehlvorstellung-schraeg-gezogen": {
      "source": "drafts",
-     "title": "Fehler: schräg gezogen",
+     "title": "Fehlvorstellung: schräg gezogen",
      "lang": "de",
      "difficulty": 3,
      "images": false,
      "url": ""
     },
-    "force-systems-16-fehler-die-bewegungskraft": {
+    "force-systems-16-fehlvorstellung-die-bewegungskraft": {
      "source": "drafts",
-     "title": "Fehler: die „Bewegungskraft“",
+     "title": "Fehlvorstellung: die „Bewegungskraft“",
      "lang": "de",
      "difficulty": 2,
      "images": false,
      "url": ""
     },
-    "force-systems-17-fehler-seilkraft-gleich-gewichtskraft": {
+    "force-systems-17-fehlvorstellung-seilkraft-gleich-gewichtskraft": {
      "source": "drafts",
-     "title": "Fehler: Seilkraft gleich Gewichtskraft",
+     "title": "Fehlvorstellung: Seilkraft gleich Gewichtskraft",
      "lang": "de",
      "difficulty": 4,
      "images": false,
@@ -3597,7 +3597,7 @@
     "sketch": [
      "e24888-st-und-vt-diagramme-zuordnen",
      "motion-areas-09-von-vt-zu-st",
-     "motion-areas-10-fehler-flaeche-unter-der-achse"
+     "motion-areas-10-fehlvorstellung-flaeche-unter-der-achse"
     ]
    },
    "exercises": {
@@ -3689,9 +3689,9 @@
      "images": false,
      "url": ""
     },
-    "motion-areas-10-fehler-flaeche-unter-der-achse": {
+    "motion-areas-10-fehlvorstellung-flaeche-unter-der-achse": {
      "source": "drafts",
-     "title": "Fehler: Fläche unter der Achse",
+     "title": "Fehlvorstellung: Fläche unter der Achse",
      "lang": "de",
      "difficulty": 4,
      "images": false,

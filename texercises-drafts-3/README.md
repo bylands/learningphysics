@@ -44,9 +44,8 @@ there (provisionally at once, then by Claude); confirm or change their subtopic 
 ## Worth checking in the preview
 
 - `type`: 0 for purely conceptual ones, 1 for calculations, 2 for both.
-- Address form: torque, force-concepts, interaction and force-systems use "du", as do
-  centre-of-mass-01/05 and energy-conservation-14; the other German ones use "Sie". Each exercise
-  is consistent on its own.
+- German exercises address the reader only through `\DuSie{du form}{Sie form}`; "find the error"
+  exercises are titled "Fehlvorstellung: …".
 - Very large or small results in photons-13/14 are boxed as a number times a power of ten, since
   `\XP` prints only SI prefixes.
 - The bulb, potential and field-line figures are TikZ drawn from computed data: check they read well

@@ -238,7 +238,7 @@ edit `pool.json`). ★ difficulty, 🖼 has an image (not in the export: a place
 - **stability**: Classify an equilibrium as stable, unstable or neutral from the position of the centre of mass.
   - Vier Bretter an einer Achse (de, ★★) `centre-of-mass-01-vier-bretter-an-einer-achse`
   - Schräg, aber im Gleichgewicht (de, ★★) `centre-of-mass-02-schraeg-aber-im-gleichgewicht`
-  - Fehler: indifferent? (de, ★★★) `centre-of-mass-03-fehler-indifferent`
+  - Fehlvorstellung: indifferent? (de, ★★★) `centre-of-mass-03-fehlvorstellung-indifferent`
 - **tipping**: Predict whether a body tips over by checking whether the line of action of its weight leaves the base.
   - Der Kipptest eines Busses (de, ★★★) `e24608-der-kipptest-eines-busses`
   - Welcher kippt auf der schiefen Ebene? (de, ★★★) `centre-of-mass-04-welcher-kippt-auf-der-schiefen-ebene`
@@ -326,8 +326,8 @@ edit `pool.json`). ★ difficulty, 🖼 has an image (not in the export: a place
   - Klotz an der entspannten Feder (de, ★★★) `energy-conservation-13-klotz-an-der-entspannten-feder`
 - **error**: Find the wrong entry in an energy table.
   - Fehler in der Bungee-Tabelle (de, ★★) `energy-conservation-14-fehler-in-der-bungee-tabelle`
-  - Fehler: Nullniveau beim Fallen auf die Feder (de, ★★★) `energy-conservation-15-fehler-nullniveau-beim-fallen-auf-die-feder`
-  - Fehler: Federkatapult (de, ★★) `energy-conservation-16-fehler-federkatapult`
+  - Fehlvorstellung: Nullniveau beim Fallen auf die Feder (de, ★★★) `energy-conservation-15-fehlvorstellung-nullniveau-beim-fallen-auf-die-feder`
+  - Fehlvorstellung: Federkatapult (de, ★★) `energy-conservation-16-fehlvorstellung-federkatapult`
 - *for the app as a whole:* Eine Seilschaukel über dem See `energy-conservation-07-seilschaukel`; Eine Steinschleuder `energy-conservation-08-steinschleuder`; Ein Trampolin `energy-conservation-10-trampolin`; Wasserbarometer `e19011-wasserbarometer-1`; John Deere 8400 `e18951-john-deere-8400`; Zusammenstoss `e18845-zusammenstoss`
 
 ## force-concepts
@@ -370,7 +370,7 @@ edit `pool.json`). ★ difficulty, 🖼 has an image (not in the export: a place
 - **normal**: Explain why the normal force is not the partner of the weight, and find a wrong pair in a list of force pairs.
   - Astronaut auf dem Mond (de, ★★) `e24760-astronaut-auf-dem-mond`
   - Normalkraft ist nicht die Reaktionskraft zur Gewichtskraft (de, ★★★) `e24747-normalkraft-ist-nicht-die-reaktionskraft`
-  - Fehler: die hängende Lampe (de, ★★) `interaction-02-fehler-die-haengende-lampe`
+  - Fehlvorstellung: die hängende Lampe (de, ★★) `interaction-02-fehlvorstellung-die-haengende-lampe`
 
 ## force-systems
 
@@ -439,9 +439,9 @@ edit `pool.json`). ★ difficulty, 🖼 has an image (not in the export: a place
   - Eine Fallschirmspringerin (de, ★★) `e24551-eine-fallschirmspringerin`
   - Inlineskaterin am Hang (de, ★★★) `e24723-inlineskaterin-am-hang`
 - **error**: Find the wrong step in a student’s free-body diagram and equations.
-  - Fehler: schräg gezogen (de, ★★★) `force-systems-15-fehler-schraeg-gezogen`
-  - Fehler: die „Bewegungskraft“ (de, ★★) `force-systems-16-fehler-die-bewegungskraft`
-  - Fehler: Seilkraft gleich Gewichtskraft (de, ★★★★) `force-systems-17-fehler-seilkraft-gleich-gewichtskraft`
+  - Fehlvorstellung: schräg gezogen (de, ★★★) `force-systems-15-fehlvorstellung-schraeg-gezogen`
+  - Fehlvorstellung: die „Bewegungskraft“ (de, ★★) `force-systems-16-fehlvorstellung-die-bewegungskraft`
+  - Fehlvorstellung: Seilkraft gleich Gewichtskraft (de, ★★★★) `force-systems-17-fehlvorstellung-seilkraft-gleich-gewichtskraft`
 - *for the app as a whole:* Senke `e18952-senke`
 
 ## induction-match
@@ -529,7 +529,7 @@ edit `pool.json`). ★ difficulty, 🖼 has an image (not in the export: a place
 - **sketch**: Sketch s(t) from v(t), and v(t) from a(t), and find the error in such a sketch.
   - s(t)- und v(t)-Diagramme zuordnen (de, ★★★) `e24888-st-und-vt-diagramme-zuordnen`
   - Von v(t) zu s(t) (de, ★★★) `motion-areas-09-von-vt-zu-st`
-  - Fehler: Fläche unter der Achse (de, ★★★★) `motion-areas-10-fehler-flaeche-unter-der-achse`
+  - Fehlvorstellung: Fläche unter der Achse (de, ★★★★) `motion-areas-10-fehlvorstellung-flaeche-unter-der-achse`
 
 ## oscillations
 
