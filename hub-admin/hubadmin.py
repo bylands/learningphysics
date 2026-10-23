@@ -3705,8 +3705,10 @@ h2.section { font-size: 1.15rem; margin: 28px 0 4px; }
 .topics > summary .note { font-weight: 400; margin-left: 6px; }
 .topicgrid { margin-top: 10px; font-size: 0.9rem; }
 .topicarea + .topicarea { margin-top: 18px; }
-.topicarea > h3 { display: flex; gap: 10px; align-items: baseline; margin: 0 0 8px; font-size: 1rem; }
-.topicarea > h3 .n { color: var(--muted); font-size: 0.82rem; font-weight: 400; font-variant-numeric: tabular-nums; }
+.topicarea > summary { cursor: pointer; margin: 0 0 8px; font-size: 1rem; font-weight: 600; }
+.topicarea:not([open]) > summary { margin-bottom: 0; }
+.topicarea > summary .n { margin-left: 10px; }
+.topicarea > summary .n { color: var(--muted); font-size: 0.82rem; font-weight: 400; font-variant-numeric: tabular-nums; }
 .topicmods { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 12px 20px; }
 .topicmod .head { display: flex; gap: 8px; align-items: baseline; border-bottom: 1px solid var(--line); padding-bottom: 2px; margin-bottom: 4px; }
 .topicmod .head strong { flex: 1 1 auto; }
@@ -4362,11 +4364,19 @@ SHEETS_JS = r"""
       a.mods.push(m);
     });
     areas.sort((a, b) => a.rank - b.rank);
+    // each area folds; the folded ones are remembered in this browser (open unless folded)
+    let folded = [];
+    try { folded = JSON.parse(localStorage.getItem('sheets-topic-areas-folded')) || []; } catch (e) { /* none */ }
     box.querySelector('.topicgrid').replaceChildren(...areas.map((a) => {
       const n = a.mods.reduce((s, m) => s + m.exercises, 0);
-      return el('section', { class: 'topicarea' },
-        el('h3', {}, a.name, el('span', { class: 'n' }, `${a.mods.length} module${a.mods.length === 1 ? '' : 's'} · ${n} ex.`)),
+      const d = el('details', { class: 'topicarea', open: !folded.includes(a.name) },
+        el('summary', {}, a.name, el('span', { class: 'n' }, `${a.mods.length} module${a.mods.length === 1 ? '' : 's'} · ${n} ex.`)),
         el('div', { class: 'topicmods' }, ...a.mods.map(card)));
+      d.addEventListener('toggle', () => {
+        folded = folded.filter((x) => x !== a.name).concat(d.open ? [] : [a.name]);
+        try { localStorage.setItem('sheets-topic-areas-folded', JSON.stringify(folded)); } catch (e) { /* none */ }
+      });
+      return d;
     }));
     if (!mods.length) box.querySelector('.topicgrid').replaceChildren(el('p', { class: 'note' }, 'The pool (sheets/pool.json) is empty.'));
   }
