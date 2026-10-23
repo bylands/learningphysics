@@ -2165,6 +2165,31 @@ class Service(unittest.TestCase):
         self.assertEqual(json.loads(self.req("/api/exercise-audit/export", cookie=boss)[2])["exercises"], [])
         self.assertIn("11", json.loads(self.req("/api/exercise-audit/feedback", cookie=boss)[2])["feedback"])
 
+    def test_exercise_audit_clean(self):
+        """The exercises reviewed without an issue: the report's reviewed_ids (kept: positive ints, each
+        once) in the uploaded export and not among its exercises, listed as "clean" with their images and
+        topics; their feedback is kept and exported like the others'; none without reviewed_ids."""
+        a, b = [k for k in S.load_pool()["coulomb"]["exercises"] if k.startswith("coulomb-")][:2]
+        boss = self.cookie_of("samuel.byland", "teacher pw")
+        export = self.drafts_zip(extra={a: (a, {"id": 4242, "title": "Clean one", "language": "GER"}), b: (b, {"id": 4343})})
+        self.assertEqual(self.req("/api/texercises", export, "application/zip", boss)[0], 200)
+        issue = [{"severity": "doubt", "issue": "?"}]
+        self.assertEqual(self.audit({"reviewed": 2, "exercises": [{"id": 4343, "issues": issue}]}, boss)[0], 200)
+        self.assertEqual(json.loads(self.req("/api/exercise-audit", cookie=boss)[2])["clean"], [])  # (no reviewed_ids)
+        st, d = self.audit({"reviewed": 2, "reviewed_ids": [4343, 4242, 4242, 9999, -1, True, "7"], "exercises": [{"id": 4343, "issues": issue}]}, boss)
+        self.assertEqual((st, d["reviewed"]), (200, 3))
+        got = json.loads(self.req("/api/exercise-audit", cookie=boss)[2])
+        self.assertEqual(got["report"]["reviewed_ids"], [4242, 4343, 9999])
+        self.assertEqual(got["clean"], [{"id": 4242, "key": a, "title": "Clean one", "lang": "GER", "url": f"/exercise/{a}/",
+                                         "collections": [], "issues": [], "ref": "4242"}])
+        self.assertEqual([e["id"] for e in got["report"]["exercises"]], [4343])
+        # its feedback: kept, and exported with the exercise
+        post = lambda path, body: self.req(path, json.dumps(body).encode(), "application/json", boss)
+        self.assertEqual(post("/api/exercise-audit/feedback", {"exercise": "4242", "comment": "fine"})[0], 200)
+        out = json.loads(self.req("/api/exercise-audit/export", cookie=boss)[2])["exercises"]
+        self.assertEqual([(e["id"], e["comment"], e["accepted"], e["not_accepted"]) for e in out], [(4242, "fine", [], [])])
+        self.assertEqual(self.admin.audit_exercise("4242")[1].name, a)  # (its TikZ editor finds it)
+
     def test_exercise_audit_tikz(self):
         """An image of a reviewed exercise replaced by TikZ: the exercise's images listed (by key, else by
         id), the figure drawn (the renderer mocked: drawn, pending, LaTeX's error), Claude's draft (a fake
