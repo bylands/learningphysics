@@ -1,4 +1,5 @@
 {
+  "id": 25172,
   "title": "Fehlvorstellung: die hängende Lampe",
   "note": "aus learningphysics.ch (Lernziel normal)",
   "language": "GER",
@@ -6,11 +7,10 @@
   "default_difficulty": 2,
   "default_points": 0,
   "tags": [
-    "actio gleich reactio",
+    "wechselwirkungsprinzip",
     "gewichtskraft",
     "learningphysics",
-    "seilkraft",
-    "wechselwirkungsprinzip"
+    "seilkraft"
   ],
   "subbranches": [
     "Dynamics"

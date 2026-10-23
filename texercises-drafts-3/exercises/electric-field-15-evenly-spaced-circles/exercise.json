@@ -1,4 +1,5 @@
 {
+  "id": 25156,
   "title": "Evenly Spaced Circles",
   "note": "from learningphysics.ch (objective electric-field:error)",
   "language": "ENG",
@@ -8,9 +9,9 @@
   "tags": [
     "electric field",
     "equipotential lines",
-    "potential",
+    "learningphysics",
     "point charge",
-    "learningphysics"
+    "potential"
   ],
   "subbranches": [
     "Electrostatics"

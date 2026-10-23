@@ -1,4 +1,5 @@
 {
+  "id": 25177,
   "title": "Senkrechter Wurf",
   "note": "aus learningphysics.ch (Lernziel area)",
   "language": "GER",
@@ -7,7 +8,6 @@
   "default_points": 0,
   "tags": [
     "fläche",
-    "kinematik",
     "learningphysics",
     "ortsänderung",
     "senkrechter wurf",

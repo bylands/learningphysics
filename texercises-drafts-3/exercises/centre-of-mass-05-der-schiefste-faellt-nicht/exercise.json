@@ -1,4 +1,5 @@
 {
+  "id": 25143,
   "title": "Der schiefste fällt nicht",
   "note": "aus learningphysics.ch (Lernziel tipping)",
   "language": "GER",
@@ -7,9 +8,9 @@
   "default_points": 0,
   "tags": [
     "kippen",
+    "learningphysics",
     "schwerpunkt",
-    "standfestigkeit",
-    "learningphysics"
+    "standfestigkeit"
   ],
   "subbranches": [
     "Lever"

@@ -1,4 +1,5 @@
 {
+  "id": 25178,
   "title": "Schneller heisst nicht weiter",
   "note": "aus learningphysics.ch (Lernziel farther)",
   "language": "GER",
@@ -7,7 +8,6 @@
   "default_points": 0,
   "tags": [
     "fläche",
-    "kinematik",
     "learningphysics",
     "ortsänderung",
     "v-t-diagramm",

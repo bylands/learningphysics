@@ -1,4 +1,5 @@
 {
+  "id": 25133,
   "title": "Ammeters around a Parallel Pair",
   "note": "from learningphysics.ch (objective bulb-brightness:current)",
   "language": "ENG",
@@ -7,14 +8,14 @@
   "default_points": 0,
   "tags": [
     "current",
+    "junction rule",
+    "learningphysics",
     "light bulb",
     "parallel",
-    "series",
-    "junction rule",
-    "learningphysics"
+    "series"
   ],
   "subbranches": [
-    "Circuits"
+    "Direct Current"
   ],
   "youtube": ""
 }

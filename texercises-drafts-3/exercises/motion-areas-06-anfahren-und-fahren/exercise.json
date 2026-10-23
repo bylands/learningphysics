@@ -1,4 +1,5 @@
 {
+  "id": 25181,
   "title": "Anfahren und fahren",
   "note": "aus learningphysics.ch (Lernziel mean)",
   "language": "GER",
@@ -7,7 +8,6 @@
   "default_points": 0,
   "tags": [
     "fläche",
-    "kinematik",
     "learningphysics",
     "mittlere geschwindigkeit",
     "v-t-diagramm"

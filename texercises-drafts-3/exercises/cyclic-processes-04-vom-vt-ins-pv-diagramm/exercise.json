@@ -1,4 +1,5 @@
 {
+  "id": 25147,
   "title": "Vom V(T)- ins p(V)-Diagramm",
   "note": "aus learningphysics.ch (Lernziel sketch)",
   "language": "GER",
@@ -10,10 +11,10 @@
     "isochor",
     "isotherm",
     "kreisprozess",
-    "p-v-diagramm",
-    "v-t-diagramm",
+    "learningphysics",
     "p-t-diagramm",
-    "learningphysics"
+    "p-v-diagramm",
+    "v-t-diagramm"
   ],
   "subbranches": [
     "Gas Laws"

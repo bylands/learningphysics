@@ -1,4 +1,5 @@
 {
+  "id": 25189,
   "title": "Drei Stroboskopbilder",
   "note": "aus learningphysics.ch (Lernziel uniform)",
   "language": "GER",
@@ -8,7 +9,6 @@
   "tags": [
     "gleichförmige bewegung",
     "gleichmässig beschleunigte bewegung",
-    "kinematik",
     "learningphysics",
     "stroboskop"
   ],

@@ -1,4 +1,5 @@
 {
+  "id": 25148,
   "title": "Gerade statt Hyperbel",
   "note": "aus learningphysics.ch (Lernziel error)",
   "language": "GER",
@@ -6,13 +7,13 @@
   "default_difficulty": 3,
   "default_points": 0,
   "tags": [
+    "fehler finden",
     "isobar",
     "isochor",
     "isotherm",
     "kreisprozess",
-    "p-v-diagramm",
-    "fehler finden",
-    "learningphysics"
+    "learningphysics",
+    "p-v-diagramm"
   ],
   "subbranches": [
     "Gas Laws"

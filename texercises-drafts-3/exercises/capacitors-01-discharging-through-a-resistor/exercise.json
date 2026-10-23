@@ -1,4 +1,5 @@
 {
+  "id": 25138,
   "title": "Discharging through a Resistor",
   "note": "from learningphysics.ch (objective capacitors:sketch)",
   "language": "ENG",
@@ -7,11 +8,11 @@
   "default_points": 0,
   "tags": [
     "capacitor",
-    "rc circuit",
     "discharging",
-    "time constant",
     "exponential decay",
-    "learningphysics"
+    "learningphysics",
+    "rc circuit",
+    "time constant"
   ],
   "subbranches": [
     "Direct Current"

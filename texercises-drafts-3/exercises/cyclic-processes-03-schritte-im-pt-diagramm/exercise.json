@@ -1,4 +1,5 @@
 {
+  "id": 25146,
   "title": "Schritte im p(T)-Diagramm",
   "note": "aus learningphysics.ch (Lernziel identify)",
   "language": "GER",
@@ -10,8 +11,8 @@
     "isochor",
     "isotherm",
     "kreisprozess",
-    "p-t-diagramm",
-    "learningphysics"
+    "learningphysics",
+    "p-t-diagramm"
   ],
   "subbranches": [
     "Gas Laws"

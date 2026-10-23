@@ -1,4 +1,5 @@
 {
+  "id": 25162,
   "title": "Fehlvorstellung: Nullniveau beim Fallen auf die Feder",
   "note": "aus learningphysics.ch (Lernziel error)",
   "language": "GER",
@@ -6,11 +7,11 @@
   "default_difficulty": 3,
   "default_points": 0,
   "tags": [
-    "energieerhaltungssatz",
+    "energieerhaltung",
     "energietabelle",
+    "learningphysics",
     "nullniveau",
-    "spannenergie",
-    "learningphysics"
+    "spannenergie"
   ],
   "subbranches": [
     "Work, Energy, Power"

@@ -1,4 +1,5 @@
 {
+  "id": 25153,
   "title": "Inside and Outside a Capacitor",
   "note": "from learningphysics.ch (objective electric-field:read)",
   "language": "ENG",
@@ -6,10 +7,10 @@
   "default_difficulty": 2,
   "default_points": 0,
   "tags": [
-    "electric field",
-    "field lines",
     "capacitor",
     "charged wire",
+    "electric field",
+    "field lines",
     "field strength",
     "learningphysics"
   ],

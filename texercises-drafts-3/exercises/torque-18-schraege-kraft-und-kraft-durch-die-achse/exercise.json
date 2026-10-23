@@ -1,4 +1,5 @@
 {
+  "id": 25205,
   "title": "Schräge Kraft und Kraft durch die Achse",
   "note": "aus learningphysics.ch (Lernziel rank)",
   "language": "GER",
@@ -8,9 +9,9 @@
   "tags": [
     "drehmoment",
     "hebelarm",
-    "wirkungslinie",
     "kraftzerlegung",
-    "learningphysics"
+    "learningphysics",
+    "wirkungslinie"
   ],
   "subbranches": [
     "Lever"

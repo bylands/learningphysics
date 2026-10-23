@@ -1,4 +1,5 @@
 {
+  "id": 25140,
   "title": "Schräg, aber im Gleichgewicht",
   "note": "aus learningphysics.ch (Lernziel stability)",
   "language": "GER",
@@ -7,9 +8,9 @@
   "default_points": 0,
   "tags": [
     "gleichgewicht",
+    "learningphysics",
     "schwerpunkt",
-    "stabilität",
-    "learningphysics"
+    "stabilität"
   ],
   "subbranches": [
     "Lever"

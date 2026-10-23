@@ -1,4 +1,5 @@
 {
+  "id": 25206,
   "title": "Gleiche Kraft, vier Richtungen",
   "note": "aus learningphysics.ch (Lernziel rank)",
   "language": "GER",
@@ -8,8 +9,8 @@
   "tags": [
     "drehmoment",
     "hebelarm",
-    "wirkungslinie",
-    "learningphysics"
+    "learningphysics",
+    "wirkungslinie"
   ],
   "subbranches": [
     "Lever"
