@@ -1,0 +1,20 @@
+{
+  "title": "Schritte im p(T)-Diagramm",
+  "note": "aus learningphysics.ch (Lernziel identify)",
+  "language": "GER",
+  "type": 0,
+  "default_difficulty": 3,
+  "default_points": 0,
+  "tags": [
+    "isobar",
+    "isochor",
+    "isotherm",
+    "kreisprozess",
+    "p-t-diagramm",
+    "learningphysics"
+  ],
+  "subbranches": [
+    "Gas Laws"
+  ],
+  "youtube": ""
+}

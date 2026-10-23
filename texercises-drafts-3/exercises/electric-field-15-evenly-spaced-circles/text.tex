@@ -1,0 +1,30 @@
+A student sketched the field lines and the equipotential lines of a point charge $Q = \QcO$ (the potential is zero far away). Her equipotentials are for the potentials $V_1 = \VaO$, $V_2 = \VbO$, $V_3 = \VcO$ and $V_4 = \VdO$, equal steps of \SI{240}{\V}. She drew them as evenly spaced circles with the radii \SI{2.50}{\cm}, \SI{5.00}{\cm}, \SI{7.50}{\cm} and \SI{10.0}{\cm}.
+
+\begin{center}
+\begin{tikzpicture}[>=Stealth]
+ \draw[blue!75!black, thick, ->] (0.23,0.10) -- (2.90,1.20);
+ \draw[blue!75!black, thick, ->] (0.10,0.23) -- (1.20,2.90);
+ \draw[blue!75!black, thick, ->] (-0.10,0.23) -- (-1.20,2.90);
+ \draw[blue!75!black, thick, ->] (-0.23,0.10) -- (-2.90,1.20);
+ \draw[blue!75!black, thick, ->] (-0.23,-0.10) -- (-2.90,-1.20);
+ \draw[blue!75!black, thick, ->] (-0.10,-0.23) -- (-1.20,-2.90);
+ \draw[blue!75!black, thick, ->] (0.10,-0.23) -- (1.20,-2.90);
+ \draw[blue!75!black, thick, ->] (0.23,-0.10) -- (2.90,-1.20);
+ \draw[orange!90!black, thick] (0,0) circle (0.700);
+ \node[fill=white, inner sep=1pt, text=orange!60!black] at (-0.122,0.689) {\scriptsize \SI{970}{\V}};
+ \draw[orange!90!black, thick] (0,0) circle (1.400);
+ \node[fill=white, inner sep=1pt, text=orange!60!black] at (1.147,0.803) {\scriptsize \SI{730}{\V}};
+ \draw[orange!90!black, thick] (0,0) circle (2.100);
+ \node[fill=white, inner sep=1pt, text=orange!60!black] at (1.973,-0.718) {\scriptsize \SI{490}{\V}};
+ \draw[orange!90!black, thick] (0,0) circle (2.800);
+ \node[fill=white, inner sep=1pt, text=orange!60!black] at (1.606,-2.294) {\scriptsize \SI{250}{\V}};
+ \fill[red!75!black] (0.00,0.00) circle (0.17); \node[white] at (0.00,0.00) {\scriptsize $+$};
+ \draw[|-|] (0,-3.44) -- (0.700,-3.44) node[midway, below] {\scriptsize \SI{2.50}{\cm}};
+\end{tikzpicture}
+\end{center}
+
+\begin{abcliste}
+\abc Which feature of the sketch is wrong? Explain without a calculation.
+\abc Calculate the right radii of the four equipotentials.
+\abc What are the potentials on the circles she drew at \rsbO\ and \rscO?
+\end{abcliste}

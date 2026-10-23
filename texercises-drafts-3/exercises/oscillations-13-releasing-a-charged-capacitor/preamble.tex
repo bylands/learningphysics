@@ -1,0 +1,9 @@
+\NewQty{Cp}{4.7}[\micro\farad][e-6][\farad]
+\NewQty{Uz}{12.6}[\volt]
+\NewQty{Li}{0.27}[\henry]
+
+\SolQty{Qz}[C\,U_0]{\CpX*\UzX}[\coulomb]
+\SolQty{om}[\frac{1}{\sqrt{L C}}]{1/sqrt(\LiX*\CpX)}[\radps]
+\SolQty{T}[2\pi\sqrt{L C}]{2*pi*sqrt(\LiX*\CpX)}[\second]
+\SolQty{tq}[\frac{T}{4}]{\TX/4}[\second]
+\SolQty{Ix}[\omega\,Q_0]{\omX*\QzX}[\ampere]

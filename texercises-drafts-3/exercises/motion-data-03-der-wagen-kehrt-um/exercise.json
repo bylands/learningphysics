@@ -1,0 +1,20 @@
+{
+  "title": "Der Wagen kehrt um",
+  "note": "aus learningphysics.ch (Lernziel convert)",
+  "language": "GER",
+  "type": 2,
+  "default_difficulty": 3,
+  "default_points": 0,
+  "tags": [
+    "gleichmässig beschleunigte bewegung",
+    "kinematik",
+    "learningphysics",
+    "s-t-diagramm",
+    "stroboskop",
+    "umkehrpunkt"
+  ],
+  "subbranches": [
+    "Kinematics"
+  ],
+  "youtube": ""
+}

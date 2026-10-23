@@ -1,0 +1,20 @@
+{
+  "title": "Magnetic Forces – exercises for the learning objectives",
+  "description": "Exercises for learning objectives of the learningphysics.ch app Magnetic Forces that had fewer than three exercises (objectives: error).",
+  "kind": "sheet",
+  "is_private": true,
+  "tags": [
+    "learningphysics"
+  ],
+  "items": [
+    {
+      "exercise": "magnetic-forces-10-the-electron-and-the-right-hand"
+    },
+    {
+      "exercise": "magnetic-forces-11-current-along-the-electrons"
+    },
+    {
+      "exercise": "magnetic-forces-12-the-sign-counted-twice"
+    }
+  ]
+}

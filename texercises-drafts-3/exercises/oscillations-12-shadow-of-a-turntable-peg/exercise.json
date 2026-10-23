@@ -1,0 +1,21 @@
+{
+  "title": "Shadow of a Turntable Peg",
+  "note": "from learningphysics.ch (objective circle)",
+  "language": "ENG",
+  "type": 1,
+  "default_difficulty": 3,
+  "default_points": 0,
+  "tags": [
+    "pointer",
+    "circular motion",
+    "simple harmonic motion",
+    "spring constant",
+    "maximum velocity",
+    "oscillation",
+    "learningphysics"
+  ],
+  "subbranches": [
+    "Harmonic Oscillations"
+  ],
+  "youtube": ""
+}

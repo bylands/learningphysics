@@ -1,0 +1,49 @@
+Eine Kiste 1 (\mEO) liegt auf einem glatten, waagrechten Tisch; die Reibung ist vernachlässigbar. Ein Seil führt von ihr über eine leichte Rolle an der Tischkante zu einer hängenden Kiste 2 (\mZO). Die Kisten werden losgelassen. \DuSie{Rechne}{Rechnen Sie} mit \gO. Gesucht sind die Beschleunigung und die Seilkraft. Lukas rechnet so:
+
+\begin{center}
+\begin{tikzpicture}[>=Stealth]
+ \fill[pattern=north east lines] (-0.5,-0.25) rectangle (4,0);
+ \draw[thick] (-0.5,0) -- (4,0) -- (4,-2.6);
+ \draw[fill=brown!30] (0.4,0) rectangle (1.6,0.8);
+ \node at (1,0.4) {1};
+ \draw[thick] (4,0) -- (4.3,0.3);
+ \draw[thick, fill=white] (4.3,0.3) circle (0.3);
+ \fill (4.3,0.3) circle (0.04);
+ \draw[thick] (1.6,0.6) -- (4.3,0.6);
+ \draw[thick] (4.6,0.3) -- (4.6,-1.2);
+ \draw[fill=brown!30] (4.25,-1.2) rectangle (4.95,-1.9);
+ \node at (4.6,-1.55) {2};
+ % student's free-body diagrams
+ \begin{scope}[shift={(7.2,0.2)}]
+  \draw[fill=brown!30] (-0.5,0) rectangle (0.5,0.7);
+  \node at (0,0.35) {1};
+  \draw[->, very thick] (-0.15,0.35) -- (-0.15,-0.9) node[left] {$\vec F_\mathrm{G1}$};
+  \draw[->, very thick] (0.15,0) -- (0.15,1.25) node[right] {$\vec F_\mathrm{N1}$};
+  \draw[->, very thick] (0.5,0.45) -- (1.35,0.45) node[right] {$\vec F_\mathrm{S}$};
+ \end{scope}
+ \begin{scope}[shift={(9.4,-0.9)}]
+  \draw[fill=brown!30] (-0.35,0) rectangle (0.35,0.7);
+  \node at (0,0.35) {2};
+  \draw[->, very thick] (0,0.7) -- (0,1.4) node[right] {$\vec F_\mathrm{S}$};
+  \draw[->, very thick] (0,0.35) -- (0,-0.6) node[right] {$\vec F_\mathrm{G2}$};
+ \end{scope}
+\end{tikzpicture}
+\end{center}
+
+\begin{enumerate}
+\item Kräfte (siehe Zeichnung): auf Kiste 1 Gewichtskraft, Normalkraft und Seilkraft; auf Kiste 2 Gewichtskraft und Seilkraft.
+\item Kiste 1, waagrecht (zur Rolle hin positiv): $F_\mathrm{S} = m_1\,a$.
+\item Kiste 2: Das Seil hält die Kiste, also ist $F_\mathrm{S} = m_2\,g = \FSP{0}{3}$.
+\item Aus 2 und 3: $a = \dfrac{m_2\,g}{m_1} = \aSP{0}{2}$.
+\end{enumerate}
+
+\begin{abcliste}
+\abc
+Welcher Schritt ist falsch? \DuSie{Begründe}{Begründen Sie}.
+
+\abc
+\DuSie{Stelle}{Stellen Sie} die richtige Gleichung auf und \DuSie{berechne}{berechnen Sie} die Beschleunigung der Kisten.
+
+\abc
+Wie gross ist die Seilkraft wirklich? \DuSie{Vergleiche}{Vergleichen Sie} sie mit der Gewichtskraft von Kiste 2.
+\end{abcliste}

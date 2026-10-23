@@ -1,0 +1,40 @@
+Das $V(T)$-Diagramm zeigt vier Linien für eine feste Menge eines idealen Gases. Jede Linie ist eine Isobare ($p$ konstant), eine Isochore ($V$ konstant) oder eine Isotherme ($T$ konstant). Die Achsen sind in Einheiten von $V_0$ und $T_0 = \frac{p_0V_0}{nR}$ beschriftet.
+
+\begin{center}
+\begin{tikzpicture}[x=0.65cm, y=0.65cm, >=Stealth, font=\small]
+ \draw[black!12] (0,0) grid[xstep=1, ystep=1] (8.001,8.001);
+ \draw[->] (0,0) -- (8.6,0) node[right] {$T$ in $T_0$};
+ \draw[->] (0,0) -- (0,8.6) node[above] {$V$ in $V_0$};
+ \node[below left] at (0,0) {\small 0};
+ \draw (1,0.08) -- (1,-0.08) node[below] {\small 1};
+ \draw (2,0.08) -- (2,-0.08) node[below] {\small 2};
+ \draw (3,0.08) -- (3,-0.08) node[below] {\small 3};
+ \draw (4,0.08) -- (4,-0.08) node[below] {\small 4};
+ \draw (5,0.08) -- (5,-0.08) node[below] {\small 5};
+ \draw (6,0.08) -- (6,-0.08) node[below] {\small 6};
+ \draw (7,0.08) -- (7,-0.08) node[below] {\small 7};
+ \draw (8,0.08) -- (8,-0.08) node[below] {\small 8};
+ \draw (0.08,1) -- (-0.08,1) node[left] {\small 1};
+ \draw (0.08,2) -- (-0.08,2) node[left] {\small 2};
+ \draw (0.08,3) -- (-0.08,3) node[left] {\small 3};
+ \draw (0.08,4) -- (-0.08,4) node[left] {\small 4};
+ \draw (0.08,5) -- (-0.08,5) node[left] {\small 5};
+ \draw (0.08,6) -- (-0.08,6) node[left] {\small 6};
+ \draw (0.08,7) -- (-0.08,7) node[left] {\small 7};
+ \draw (0.08,8) -- (-0.08,8) node[left] {\small 8};
+ \draw[very thick, blue] (0.3,5) -- (7.6,5);
+ \node[draw, circle, inner sep=1pt, font=\footnotesize, right] at (7.6,5) {1};
+ \draw[very thick, red] (0,0) -- (3.9,7.8);
+ \node[draw, circle, inner sep=1pt, font=\footnotesize, above right] at (3.9,7.8) {2};
+ \draw[very thick, teal] (6,0.3) -- (6,7.6);
+ \node[draw, circle, inner sep=1pt, font=\footnotesize, above] at (6,7.6) {3};
+ \draw[very thick, orange] (0,0) -- (8,4);
+ \node[draw, circle, inner sep=1pt, font=\footnotesize, right] at (8,4) {4};
+\end{tikzpicture}
+\end{center}
+
+\begin{abcliste}
+\abc Welche Linie ist welche? \DuSie{Begründe}{Begründen Sie}.
+\abc Zwei Linien sind von derselben Art. Auf welcher der beiden ist der Druck grösser? Wie gross ist er auf jeder der beiden, in Einheiten von $p_0$?
+\abc Welchen Wert hat die konstante Grösse auf den beiden anderen Linien?
+\end{abcliste}

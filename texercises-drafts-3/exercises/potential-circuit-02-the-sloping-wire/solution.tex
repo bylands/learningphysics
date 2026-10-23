@@ -1,0 +1,38 @@
+\begin{abcliste}
+\abc A point has only one potential, so a sketch around a closed loop must end where it started, at \SI{0}{\V}: the rises add up to the drops (loop rule). The sketch ends \SI{2}{\V} too low, so it drops somewhere by \SI{2}{\V} too much.
+
+\abc Check the steps one at a time. A\,$\to$\,B: a rise of \SI{10}{\V} across the battery from $-$ to $+$, right. B\,$\to$\,C: along a wire, flat, right. C\,$\to$\,D: a drop of \SI{4}{\V} across $L_1$, right. E\,$\to$\,F: a drop of \SI{6}{\V} across $L_2$, right. F\,$\to$\,A: flat, right.
+
+The wrong step is \result{\text{D}\to\text{E}}: along the wire from D to E the potential stays the same; the sketch drops by \SI{2}{\V} there. A connecting wire has (almost) no resistance, so there is no voltage across it, however long it is: all the voltage of the battery is used up in the lamps.
+
+\abc The right potentials:
+\begin{center}
+\begin{tabular}{l|ccccccc}
+ Point & A & B & C & D & E & F & A \\ \hline
+ Potential in \si{\V} & $0$ & $10$ & $10$ & $6$ & $\result{6}$ & $\result{0}$ & $\result{0}$ \\
+\end{tabular}
+
+\medskip
+\begin{tikzpicture}[>=Stealth]
+ \draw[black!15] (0,-0.56) grid[xstep=1.2, ystep=0.28] (7.20,2.80);
+ \draw[->] (0,-0.56) -- (0,3.14) node[above] {$\varphi$ in \si{\V}};
+ \draw (0,0) -- (7.50,0);
+ \node[left] at (0,-0.56) {\small $-2$};
+ \node[left] at (0,0.00) {\small $0$};
+ \node[left] at (0,0.56) {\small $2$};
+ \node[left] at (0,1.12) {\small $4$};
+ \node[left] at (0,1.68) {\small $6$};
+ \node[left] at (0,2.24) {\small $8$};
+ \node[left] at (0,2.80) {\small $10$};
+ \node[below] at (0.00,-0.58) {A};
+ \node[below] at (1.20,-0.58) {B};
+ \node[below] at (2.40,-0.58) {C};
+ \node[below] at (3.60,-0.58) {D};
+ \node[below] at (4.80,-0.58) {E};
+ \node[below] at (6.00,-0.58) {F};
+ \node[below] at (7.20,-0.58) {A};
+ \draw[very thick, blue] (0.00,0.00) -- (0.60,0.00) -- (0.60,2.80) -- (1.20,2.80) -- (2.40,2.80) -- (3.00,2.80) -- (3.00,1.68) -- (3.60,1.68) -- (4.80,1.68) -- (5.40,1.68) -- (5.40,0.00) -- (6.00,0.00) -- (7.20,0.00);
+\end{tikzpicture}
+\end{center}
+The rise of \SI{10}{\V} across the battery equals the drops $\SI{4}{\V} + \SI{6}{\V}$ across the lamps.
+\end{abcliste}

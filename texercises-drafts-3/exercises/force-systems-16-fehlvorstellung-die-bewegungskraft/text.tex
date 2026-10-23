@@ -1,0 +1,35 @@
+Jan gibt einer Kiste (\mKO) auf einem ebenen Boden einen Stoss. Sie löst sich mit \vNO\ von seiner Hand, gleitet weiter und bleibt schliesslich stehen. Die Gleitreibungszahl beträgt \muGO; \DuSie{rechne}{rechnen Sie} mit \gO. Jan untersucht die Kiste, während sie gleitet:
+
+\begin{center}
+\begin{tikzpicture}[>=Stealth]
+ \draw[->, thick, gray] (-2.4,1.3) -- (-1.3,1.3) node[right] {$\vec v$};
+ \draw[fill=brown!30] (-0.8,0) rectangle (0.8,1);
+ \draw[->, very thick] (-0.15,0.5) -- (-0.15,-1.6) node[left] {$\vec F_\mathrm{G}$};
+ \fill (-0.15,0.5) circle (0.05);
+ \draw[->, very thick] (0.15,0) -- (0.15,1.6) node[right] {$\vec F_\mathrm{N}$};
+ \fill (0.15,0) circle (0.05);
+ \draw[->, very thick] (-0.5,0) -- (-1.2,0) node[below left] {$\vec F_\mathrm{R}$};
+ \fill (-0.5,0) circle (0.05);
+ \draw[->, very thick] (0.8,0.5) -- (2.1,0.5) node[right] {$\vec F_\mathrm{B}$};
+ \fill (0.8,0.5) circle (0.05);
+\end{tikzpicture}
+\end{center}
+
+\begin{enumerate}
+\item Kräfte auf die Kiste (siehe Zeichnung): Gewichtskraft $F_\mathrm{G}$, Normalkraft $F_\mathrm{N}$, Gleitreibung $F_\mathrm{R}$ gegen die Bewegung und die Bewegungskraft $F_\mathrm{B}$, die die Kiste vorwärts treibt.
+\item Senkrecht: $F_\mathrm{N} - m\,g = 0$, also $F_\mathrm{N} = \FNP{0}{3}$.
+\item Gleitreibung: $F_\mathrm{R} = \mu\,F_\mathrm{N} = \FRP{0}{3}$.
+\item Entlang des Bodens (in Bewegungsrichtung positiv): $F_\mathrm{B} - F_\mathrm{R} = m\,a$.
+\item Die Bewegungskraft aus dem Stoss nimmt ab. Sobald sie kleiner ist als $F_\mathrm{R}$, bleibt die Kiste stehen.
+\end{enumerate}
+
+\begin{abcliste}
+\abc
+Welcher Schritt ist falsch? \DuSie{Begründe}{Begründen Sie}.
+
+\abc
+\DuSie{Stelle}{Stellen Sie} die Gleichung entlang des Bodens richtig auf und \DuSie{berechne}{berechnen Sie} die Beschleunigung der Kiste.
+
+\abc
+Wie weit gleitet die Kiste, nachdem sie Jans Hand verlassen hat?
+\end{abcliste}

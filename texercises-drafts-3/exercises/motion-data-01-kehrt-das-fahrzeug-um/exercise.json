@@ -1,0 +1,19 @@
+{
+  "title": "Kehrt das Fahrzeug um?",
+  "note": "aus learningphysics.ch (Lernziel convert)",
+  "language": "GER",
+  "type": 2,
+  "default_difficulty": 2,
+  "default_points": 0,
+  "tags": [
+    "diagramme",
+    "kinematik",
+    "learningphysics",
+    "messwerte",
+    "s-t-diagramm"
+  ],
+  "subbranches": [
+    "Kinematics"
+  ],
+  "youtube": ""
+}

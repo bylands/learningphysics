@@ -1,0 +1,21 @@
+{
+  "title": "Senkrechter Wurf",
+  "note": "aus learningphysics.ch (Lernziel area)",
+  "language": "GER",
+  "type": 1,
+  "default_difficulty": 3,
+  "default_points": 0,
+  "tags": [
+    "fläche",
+    "kinematik",
+    "learningphysics",
+    "ortsänderung",
+    "senkrechter wurf",
+    "v-t-diagramm",
+    "zurückgelegte strecke"
+  ],
+  "subbranches": [
+    "Kinematics"
+  ],
+  "youtube": ""
+}

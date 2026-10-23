@@ -1,0 +1,21 @@
+{
+  "title": "Releasing a Charged Capacitor",
+  "note": "from learningphysics.ch (objective lc)",
+  "language": "ENG",
+  "type": 2,
+  "default_difficulty": 3,
+  "default_points": 0,
+  "tags": [
+    "lc oscillator",
+    "capacitance",
+    "inductance",
+    "angular frequency",
+    "period",
+    "analogy",
+    "learningphysics"
+  ],
+  "subbranches": [
+    "Harmonic Oscillations"
+  ],
+  "youtube": ""
+}

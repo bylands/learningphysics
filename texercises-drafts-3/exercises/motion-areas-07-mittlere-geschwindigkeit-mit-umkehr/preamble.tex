@@ -1,0 +1,10 @@
+\NewQty{vNull}{4}[\mps]
+\NewQty{tOne}{4}[\s]
+\NewQty{tTwo}{6}[\s]
+\NewQty{tE}{8}[\s]
+
+\SolQty{dOne}[v_0\,t_1]{\vNullX*\tOneX}[\m]
+\SolQty{dTwo}[\frac{v_0+(-v_0)}{2}\,(t_2-t_1)]{0*(\tTwoX-\tOneX)}[\m]
+\SolQty{dThree}[-v_0\,(t_\mathrm{e}-t_2)]{-\vNullX*(\tEX-\tTwoX)}[\m]
+\SolQty{ds}[\Delta s_1+\Delta s_2+\Delta s_3]{\dOneX+\dTwoX+\dThreeX}[\m]
+\SolQty{vMean}[\frac{\Delta s}{t_\mathrm{e}}]{\dsX/\tEX}[\mps]

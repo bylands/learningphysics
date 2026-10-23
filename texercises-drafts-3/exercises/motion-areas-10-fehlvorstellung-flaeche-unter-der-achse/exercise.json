@@ -1,0 +1,21 @@
+{
+  "title": "Fehlvorstellung: Fläche unter der Achse",
+  "note": "aus learningphysics.ch (Lernziel sketch)",
+  "language": "GER",
+  "type": 0,
+  "default_difficulty": 4,
+  "default_points": 0,
+  "tags": [
+    "fehler finden",
+    "fläche",
+    "kinematik",
+    "learningphysics",
+    "s-t-diagramm",
+    "v-t-diagramm",
+    "vorzeichen"
+  ],
+  "subbranches": [
+    "Kinematics"
+  ],
+  "youtube": ""
+}

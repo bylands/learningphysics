@@ -1,0 +1,19 @@
+{
+  "title": "Fehlvorstellung: Seilkraft gleich Gewichtskraft",
+  "note": "aus learningphysics.ch (Lernziel error)",
+  "language": "GER",
+  "type": 2,
+  "default_difficulty": 4,
+  "default_points": 0,
+  "tags": [
+    "aktionsprinzip",
+    "learningphysics",
+    "newtonsche gesetze",
+    "seilkraft",
+    "umlenkrolle"
+  ],
+  "subbranches": [
+    "Dynamics"
+  ],
+  "youtube": ""
+}

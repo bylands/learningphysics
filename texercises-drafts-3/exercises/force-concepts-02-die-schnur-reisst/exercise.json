@@ -1,0 +1,19 @@
+{
+  "title": "Die Schnur reisst",
+  "note": "aus learningphysics.ch (Lernziel first)",
+  "language": "GER",
+  "type": 0,
+  "default_difficulty": 2,
+  "default_points": 0,
+  "tags": [
+    "kreisbewegung",
+    "learningphysics",
+    "newtonsche gesetze",
+    "trägheitsgesetz",
+    "zentripetalkraft"
+  ],
+  "subbranches": [
+    "Dynamics"
+  ],
+  "youtube": ""
+}

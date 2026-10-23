@@ -1,0 +1,19 @@
+{
+  "title": "An Upright Step Meets an Inverted Ramp",
+  "note": "from learningphysics.ch (objective superpose)",
+  "language": "ENG",
+  "type": 2,
+  "default_difficulty": 3,
+  "default_points": 0,
+  "tags": [
+    "superposition",
+    "pulse",
+    "propagation",
+    "rope",
+    "learningphysics"
+  ],
+  "subbranches": [
+    "Mechanical Waves"
+  ],
+  "youtube": ""
+}

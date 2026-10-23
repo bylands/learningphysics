@@ -1,0 +1,51 @@
+\begin{abcliste}
+\abc The figure shows the field lines of a charged plate capacitor, seen from the side, and five points: P close to the positive plate, Q in the middle, R close to the negative plate, S just beyond the edge of the plates and T outside, above the capacitor. Rank the field strength at the five points.
+
+\begin{center}
+\begin{tikzpicture}[>=Stealth]
+ \fill[red!60!black] (-1.60,0.80) rectangle (1.60,0.90);
+ \fill[blue!60!black] (-1.60,-0.90) rectangle (1.60,-0.80);
+\draw[blue!75!black, thick] plot[smooth] coordinates {(-1.28,0.80) (-1.28,0.00) (-1.28,-0.80)};
+\draw[blue!75!black, thick, -{Stealth[length=1.7mm, width=1.4mm]}] (-1.280,-0.030) -- (-1.280,-0.130);
+\draw[blue!75!black, thick] plot[smooth] coordinates {(-0.96,0.80) (-0.96,0.00) (-0.96,-0.80)};
+\draw[blue!75!black, thick, -{Stealth[length=1.7mm, width=1.4mm]}] (-0.960,-0.030) -- (-0.960,-0.130);
+\draw[blue!75!black, thick] plot[smooth] coordinates {(-0.64,0.80) (-0.64,0.00) (-0.64,-0.80)};
+\draw[blue!75!black, thick, -{Stealth[length=1.7mm, width=1.4mm]}] (-0.640,-0.030) -- (-0.640,-0.130);
+\draw[blue!75!black, thick] plot[smooth] coordinates {(-0.32,0.80) (-0.32,0.00) (-0.32,-0.80)};
+\draw[blue!75!black, thick, -{Stealth[length=1.7mm, width=1.4mm]}] (-0.320,-0.030) -- (-0.320,-0.130);
+\draw[blue!75!black, thick] plot[smooth] coordinates {(0.00,0.80) (0.00,0.00) (0.00,-0.80)};
+\draw[blue!75!black, thick, -{Stealth[length=1.7mm, width=1.4mm]}] (0.000,-0.030) -- (0.000,-0.130);
+\draw[blue!75!black, thick] plot[smooth] coordinates {(0.32,0.80) (0.32,0.00) (0.32,-0.80)};
+\draw[blue!75!black, thick, -{Stealth[length=1.7mm, width=1.4mm]}] (0.320,-0.030) -- (0.320,-0.130);
+\draw[blue!75!black, thick] plot[smooth] coordinates {(0.64,0.80) (0.64,0.00) (0.64,-0.80)};
+\draw[blue!75!black, thick, -{Stealth[length=1.7mm, width=1.4mm]}] (0.640,-0.030) -- (0.640,-0.130);
+\draw[blue!75!black, thick] plot[smooth] coordinates {(0.96,0.80) (0.96,0.00) (0.96,-0.80)};
+\draw[blue!75!black, thick, -{Stealth[length=1.7mm, width=1.4mm]}] (0.960,-0.030) -- (0.960,-0.130);
+\draw[blue!75!black, thick] plot[smooth] coordinates {(1.28,0.80) (1.28,0.00) (1.28,-0.80)};
+\draw[blue!75!black, thick, -{Stealth[length=1.7mm, width=1.4mm]}] (1.280,-0.030) -- (1.280,-0.130);
+\draw[blue!75!black, thick] plot[smooth] coordinates {(-1.57,0.80) (-1.63,0.64) (-1.69,0.48) (-1.73,0.32) (-1.76,0.16) (-1.77,0.00) (-1.76,-0.16) (-1.73,-0.32) (-1.69,-0.48) (-1.63,-0.64) (-1.57,-0.80)};
+\draw[blue!75!black, thick, -{Stealth[length=1.7mm, width=1.4mm]}] (-1.768,-0.033) -- (-1.762,-0.133);
+\draw[blue!75!black, thick] plot[smooth] coordinates {(-1.57,0.80) (-1.70,0.64) (-1.83,0.48) (-1.92,0.32) (-1.99,0.16) (-2.01,0.00) (-1.99,-0.16) (-1.92,-0.32) (-1.83,-0.48) (-1.70,-0.64) (-1.57,-0.80)};
+\draw[blue!75!black, thick, -{Stealth[length=1.7mm, width=1.4mm]}] (-2.005,-0.043) -- (-1.992,-0.142);
+\draw[blue!75!black, thick] plot[smooth] coordinates {(1.57,0.80) (1.63,0.64) (1.69,0.48) (1.73,0.32) (1.76,0.16) (1.77,0.00) (1.76,-0.16) (1.73,-0.32) (1.69,-0.48) (1.63,-0.64) (1.57,-0.80)};
+\draw[blue!75!black, thick, -{Stealth[length=1.7mm, width=1.4mm]}] (1.768,-0.033) -- (1.762,-0.133);
+\draw[blue!75!black, thick] plot[smooth] coordinates {(1.57,0.80) (1.70,0.64) (1.83,0.48) (1.92,0.32) (1.99,0.16) (2.01,0.00) (1.99,-0.16) (1.92,-0.32) (1.83,-0.48) (1.70,-0.64) (1.57,-0.80)};
+\draw[blue!75!black, thick, -{Stealth[length=1.7mm, width=1.4mm]}] (2.005,-0.043) -- (1.992,-0.142);
+ \node at (-1.20,1.04) {\scriptsize $+$};
+ \node at (-1.20,-1.06) {\scriptsize $-$};
+ \node at (-0.40,1.04) {\scriptsize $+$};
+ \node at (-0.40,-1.06) {\scriptsize $-$};
+ \node at (0.40,1.04) {\scriptsize $+$};
+ \node at (0.40,-1.06) {\scriptsize $-$};
+ \node at (1.20,1.04) {\scriptsize $+$};
+ \node at (1.20,-1.06) {\scriptsize $-$};
+ \fill (-0.48,0.64) circle (1.6pt); \node[right] at (-0.48,0.64) {\small P};
+ \fill (0.16,0.00) circle (1.6pt); \node[right] at (0.16,0.00) {\small Q};
+ \fill (-0.80,-0.64) circle (1.6pt); \node[right] at (-0.80,-0.64) {\small R};
+ \fill (1.96,-0.12) circle (1.6pt); \node[right] at (1.96,-0.12) {\small S};
+ \fill (0.48,1.60) circle (1.6pt); \node[right] at (0.48,1.60) {\small T};
+\end{tikzpicture}
+\end{center}
+
+\abc A long straight wire is evenly charged. The field is measured at a distance of \SI{2}{\cm} and of \SI{4}{\cm} from the wire. By what factor is the field at \SI{4}{\cm} weaker than at \SI{2}{\cm}? Explain with the field lines.
+\end{abcliste}

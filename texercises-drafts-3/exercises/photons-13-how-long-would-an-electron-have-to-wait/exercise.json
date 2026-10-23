@@ -1,0 +1,21 @@
+{
+  "title": "How Long Would an Electron Have to Wait?",
+  "note": "from learningphysics.ch (objective wave)",
+  "language": "ENG",
+  "type": 2,
+  "default_difficulty": 3,
+  "default_points": 0,
+  "tags": [
+    "photoelectric effect",
+    "photon",
+    "wave model",
+    "intensity",
+    "work function",
+    "photon energy",
+    "learningphysics"
+  ],
+  "subbranches": [
+    "quantum physics"
+  ],
+  "youtube": ""
+}

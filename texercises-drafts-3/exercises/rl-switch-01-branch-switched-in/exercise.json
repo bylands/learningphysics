@@ -1,0 +1,21 @@
+{
+  "title": "Branch Switched In",
+  "note": "from learningphysics.ch (objective rl-switch:after)",
+  "language": "ENG",
+  "type": 1,
+  "default_difficulty": 4,
+  "default_points": 0,
+  "tags": [
+    "inductance",
+    "inductor",
+    "rl circuit",
+    "switching",
+    "kirchhoff's rules",
+    "induced emf",
+    "learningphysics"
+  ],
+  "subbranches": [
+    "Magnetism"
+  ],
+  "youtube": ""
+}

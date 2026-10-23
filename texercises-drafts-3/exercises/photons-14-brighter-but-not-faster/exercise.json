@@ -1,0 +1,21 @@
+{
+  "title": "Brighter, but Not Faster",
+  "note": "from learningphysics.ch (objective wave)",
+  "language": "ENG",
+  "type": 2,
+  "default_difficulty": 2,
+  "default_points": 0,
+  "tags": [
+    "photoelectric effect",
+    "photon",
+    "wave model",
+    "stopping voltage",
+    "saturation current",
+    "intensity",
+    "learningphysics"
+  ],
+  "subbranches": [
+    "quantum physics"
+  ],
+  "youtube": ""
+}

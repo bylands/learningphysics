@@ -1,0 +1,40 @@
+\begin{abcliste}
+\abc
+Von $0$ bis $t_1$ wirkt eine konstante Kraft, also ist die Beschleunigung konstant (zweites Newtonsches Gesetz): Die Geschwindigkeit steigt gleichmässig, eine steigende Gerade. Nach $t_1$ wirkt keine horizontale Kraft mehr (Gewichtskraft und Normalkraft heben sich auf, keine Reibung): Nach dem ersten Newtonschen Gesetz bleibt die Geschwindigkeit konstant, eine waagrechte Linie.
+\begin{center}
+\begin{tikzpicture}[>=Stealth, xscale=0.8, yscale=1.6]
+ \draw[->] (0,0) -- (8.4,0) node[right] {$t$ in \si{\second}};
+ \draw[->] (0,0) -- (0,1.75) node[above] {$v$ in \si{\mps}};
+ \foreach \x in {1,...,8} \draw (\x,0.03) -- (\x,-0.03) node[below] {\small \x};
+ \foreach \y in {0.5,1.0,1.5} \draw (0.08,\y) -- (-0.08,\y) node[left] {\small \y};
+ \draw[ultra thick] (0,0) -- (3.6,1.38) -- (7.5,1.38);
+ \draw[dashed] (3.6,0) -- (3.6,1.38);
+ \node[below] at (3.6,-0.18) {$t_1$};
+ \draw[dashed] (7.5,0) -- (7.5,1.38);
+ \node[below] at (7.5,-0.18) {$t_2$};
+\end{tikzpicture}
+\end{center}
+
+\abc
+Ab $t_1$ bleibt die Geschwindigkeit gleich:
+\[
+ v(t_2) = v_1 = \result{\vEO}
+\]
+Der Weg ist die Fläche unter dem Graphen, ein Dreieck und ein Rechteck:
+\begin{align}
+ s &= \sZF \\
+   &= \frac12\cdot\vE\cdot\tE+\vE\cdot(\tZ-\tE) \\
+   &= \sZ \approx \result{\sZP{0}{2}}
+\end{align}
+
+\abc
+Die Beschleunigung von $0$ bis $t_1$ ist $a = v_1/t_1 = \aWP{0}{2}$, und die Kraft
+\begin{align}
+ F &= m\,a = \FPF \\
+   &= \mW\cdot\frac{\vE}{\tE} \\
+   &= \FP \approx \result{\FPP{0}{2}}
+\end{align}
+
+\abc
+Lea irrt sich. Der Propeller hat dem Wagen keinen „Schwung“ als Kraftvorrat mitgegeben, der sich danach aufbraucht. Eine Kraft ändert die Geschwindigkeit; sie ist nicht nötig, um eine Geschwindigkeit zu erhalten. Nach $t_1$ wirkt keine horizontale Kraft, also \result{\text{fährt der Wagen mit konstanter Geschwindigkeit weiter}}. Langsamer würde er nur, wenn eine Kraft gegen die Bewegung wirkt, etwa Reibung oder Luftwiderstand, und die sind hier vernachlässigbar.
+\end{abcliste}

@@ -1,0 +1,29 @@
+{
+  "title": "Energieerhaltung – Aufgaben zu den Lernzielen",
+  "description": "Aufgaben für Lernziele der App Energieerhaltung von learningphysics.ch, die noch weniger als drei Aufgaben hatten (Lernziele: error, path, turn).",
+  "kind": "sheet",
+  "is_private": true,
+  "tags": [
+    "learningphysics"
+  ],
+  "items": [
+    {
+      "exercise": "energy-conservation-11-heben-oder-rampe"
+    },
+    {
+      "exercise": "energy-conservation-12-wo-bleibt-die-energie-des-schlittens"
+    },
+    {
+      "exercise": "energy-conservation-13-klotz-an-der-entspannten-feder"
+    },
+    {
+      "exercise": "energy-conservation-14-fehler-in-der-bungee-tabelle"
+    },
+    {
+      "exercise": "energy-conservation-15-fehlvorstellung-nullniveau-beim-fallen-auf-die-feder"
+    },
+    {
+      "exercise": "energy-conservation-16-fehlvorstellung-federkatapult"
+    }
+  ]
+}

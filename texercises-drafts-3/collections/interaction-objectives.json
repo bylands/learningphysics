@@ -1,0 +1,17 @@
+{
+  "title": "Wechselwirkung – Aufgaben zu den Lernzielen",
+  "description": "Aufgaben für Lernziele der App Wechselwirkung von learningphysics.ch, die noch weniger als drei Aufgaben hatten (Lernziele: equal, normal).",
+  "kind": "sheet",
+  "is_private": true,
+  "tags": [
+    "learningphysics"
+  ],
+  "items": [
+    {
+      "exercise": "interaction-01-lastwagen-und-auto"
+    },
+    {
+      "exercise": "interaction-02-fehlvorstellung-die-haengende-lampe"
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+A battery with $V = \VbO$ feeds a resistor $R_1 = \RaO$ and then two parallel branches: a resistor $R_2 = \RbO$ in series with an inductor $L = \LcO$, and a resistor $R_3 = \RcO$ behind a switch S. The battery and the inductor have no resistance of their own. The switch has been open for a long time; at $t = 0$ it is closed. The arrows show the positive direction of the currents.
+
+\begin{center}
+\begin{circuitikz}[scale=0.9, transform shape]
+ \draw (0,0) to[battery1, invert, l=$V$] (0,4) to[R, l=$R_1$, i>^=$I_1$] (3,4) -- (6.5,4);
+ \node at (0.4,2.25) {$+$}; \node at (0.4,1.75) {$-$};
+ \draw (4,4) to[R, l_=$R_2$, i>^=$I_2$] (4,2) to[L, l_=$L$] (4,0);
+ \draw (6.5,4) to[R, l=$R_3$, i>_=$I_3$] (6.5,2) to[nos, l=S] (6.5,0) -- (0,0);
+ \fill (4,4) circle (2pt) (4,0) circle (2pt);
+\end{circuitikz}
+\end{center}
+
+\begin{abcliste}
+\abc What current flows through the inductor before $t = 0$?
+\abc Find the currents $I_1$, $I_2$ and $I_3$ and the voltage $V_L$ across the inductor (in the direction of its arrow) immediately after S is closed. How large is the emf induced in the inductor?
+\abc At what rate does the inductor current change at this moment? Does it grow or fall?
+\end{abcliste}

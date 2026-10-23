@@ -1,0 +1,26 @@
+{
+  "title": "Bulb Brightness – exercises for the learning objectives",
+  "description": "Exercises for learning objectives of the learningphysics.ch app Bulb Brightness that had fewer than three exercises (objectives: change, current, power).",
+  "kind": "sheet",
+  "is_private": true,
+  "tags": [
+    "learningphysics"
+  ],
+  "items": [
+    {
+      "exercise": "bulb-brightness-01-ammeters-around-a-parallel-pair"
+    },
+    {
+      "exercise": "bulb-brightness-02-two-batteries-one-bulb-and-a-pair"
+    },
+    {
+      "exercise": "bulb-brightness-03-a-battery-the-wrong-way-round"
+    },
+    {
+      "exercise": "bulb-brightness-04-opening-a-branch-switch"
+    },
+    {
+      "exercise": "bulb-brightness-05-a-wire-across-the-middle-bulb"
+    }
+  ]
+}

@@ -1,0 +1,19 @@
+Four identical bulbs A, B, C and D are connected to an ideal battery: A, then B and C in parallel, then D. Five ammeters 1 to 5 measure the current at the places shown. Ammeter 1 reads \IaO.
+
+\begin{center}
+\begin{circuitikz}[scale=0.9, transform shape]
+ \draw (0,0) to[battery1, invert] (0,4)
+   to[rmeter, t=1] (2,4) to[lamp, l=$A$] (4,4) to[rmeter, t=2] (6,4) -- (8.5,4);
+ \draw (6,4) to[lamp, l_=$B$] (6,2) to[rmeter, t=3] (6,0);
+ \draw (8.5,4) to[lamp, l=$C$] (8.5,2) to[rmeter, t=4] (8.5,0);
+ \draw (8.5,0) -- (6,0) to[lamp, l=$D$] (4,0) to[rmeter, t=5] (2,0) -- (0,0);
+ \node at (-0.4,2.25) {$+$};
+ \node at (-0.4,1.75) {$-$};
+ \fill (6,4) circle (2pt) (6,0) circle (2pt);
+\end{circuitikz}
+\end{center}
+
+\begin{abcliste}
+\abc What do the ammeters 2, 3, 4 and 5 read?
+\abc Is bulb D brighter than bulb A, equally bright, or less bright? Give a reason.
+\end{abcliste}

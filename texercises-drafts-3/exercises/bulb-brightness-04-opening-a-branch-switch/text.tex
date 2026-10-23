@@ -1,0 +1,16 @@
+Three identical bulbs are connected to an ideal battery: bulb A in series with the bulbs B and C in parallel. A switch S sits in the branch of C. At first S is closed, and all three bulbs light.
+
+\begin{center}
+\begin{circuitikz}[scale=0.9, transform shape]
+ \draw (0,0) to[battery1, invert] (0,4) to[lamp, l=$A$] (3,4) -- (6,4);
+ \node at (-0.4,2.25) {$+$}; \node at (-0.4,1.75) {$-$};
+ \draw (4,4) to[lamp, l_=$B$] (4,0);
+ \draw (6,4) -- (6,3.6);
+ \draw (6,3.6) node[ocirc] {} -- (6,2.9) node[ocirc] {};
+ \node[right] at (6.1,3.25) {S};
+ \draw (6,2.9) -- (6,2.5) to[lamp, l=$C$] (6,0) -- (0,0);
+ \fill (4,4) circle (2pt) (4,0) circle (2pt);
+\end{circuitikz}
+\end{center}
+
+Now S is opened. Does each of the bulbs A, B and C get brighter, stay the same, get dimmer, or go off? Explain with the voltages across the bulbs.

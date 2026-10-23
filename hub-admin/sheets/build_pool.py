@@ -204,10 +204,10 @@ def exercises(export):
 
 
 def draft_apps():
-    """draft exercise key -> app, from the drafts' collections (<app>-problems, <app>-more)."""
+    """draft exercise key -> app, from the drafts' collections (<app>-problems, <app>-more, <app>-objectives)."""
     owner = {}
     for f in glob.glob(os.path.join(ROOT, 'texercises-drafts*', 'collections', '*.json')):
-        app = re.sub(r'-(problems|more)$', '', os.path.basename(f)[:-5])
+        app = re.sub(r'-(problems|more|objectives)$', '', os.path.basename(f)[:-5])
         app = {'energy-conservation': 'coe'}.get(app, app)
         for it in json.load(open(f, encoding='utf-8')).get('items', []):
             if it.get('exercise'):

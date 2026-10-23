@@ -1,0 +1,10 @@
+\NewQty{Uo}{11.6}[\V]
+\NewQty{Res}{3.9}[\kilo\ohm][e3][\ohm]
+\NewQty{Cap}{47}[\micro\farad][e-6][\farad]
+\NewQty{Ua}{3.2}[\V]
+
+\SolQty{tc}[R\,C]{\ResX*\CapX}[\s]
+\SolQty{Io}[\frac{\Delta V_0}{R}]{\UoX/\ResX}[\A]
+\SolQty{Ia}[\frac{\Delta V_C}{R}]{\UaX/\ResX}[\A]
+\SolQty{Uw}[\Delta V_0-\Delta V_C]{\UoX-\UaX}[\V]
+\SolQty{ta}[R\,C\,\ln\frac{\Delta V_0}{\Delta V_C}]{\ResX*\CapX*ln(\UoX/\UaX)}[\s]

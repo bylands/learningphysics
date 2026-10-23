@@ -1,0 +1,9 @@
+\NewQty{mK}{12.7}[\kg]
+\NewQty{vN}{2.85}[\mps]
+\NewQty{muG}{0.31}
+\NewQty{g}{9.81}[\mpss]
+
+\SolQty{FN}[m\,g]{\mKX*\gX}[\newton]
+\SolQty{FR}[\mu\,m\,g]{\muGX*\FNX}[\newton]
+\SolQty{aK}[\frac{F_\mathrm{R}}{m}]{\FRX/\mKX}[\mpss]
+\SolQty{sK}[\frac{v_0^2}{2\,\mu\,g}]{\vNX^2/(2*\aKX)}[\meter]

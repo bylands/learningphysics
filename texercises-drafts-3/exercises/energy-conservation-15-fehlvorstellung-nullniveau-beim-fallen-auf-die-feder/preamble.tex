@@ -1,0 +1,11 @@
+\NewQty{mB}{0.245}[\kg]
+\NewQty{hB}{1.35}[\meter]
+\NewQty{kB}{2850}[\Npm]
+\NewQty{g}{9.81}[\mpss]
+
+\SolQty{sB}[\frac{m\,g+\sqrt{(m\,g)^2+2\,k\,m\,g\,h}}{k}]{(\mBX*\gX+sqrt((\mBX*\gX)^2+2*\kBX*\mBX*\gX*\hBX))/\kBX}[\meter]
+\SolQty{Ew}[m\,g\,h]{\mBX*\gX*\hBX}[\joule]
+\SolQty{Ea}[m\,g\,(h+s)]{\mBX*\gX*(\hBX+\sBX)}[\joule]
+\SolQty{Eb}[m\,g\,s]{\mBX*\gX*\sBX}[\joule]
+\SolQty{Ec}[\frac{1}{2}\,k\,s^2]{0.5*\kBX*\sBX^2}[\joule]
+\SolQty{vb}[\sqrt{2\,g\,h}]{sqrt(2*\gX*\hBX)}[\mps]

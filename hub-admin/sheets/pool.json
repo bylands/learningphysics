@@ -5,13 +5,18 @@
    "objectives": {
     "current": [
      "e19627-junctions",
-     "e22714-currents-and-voltages-in-a-circuit"
+     "e22714-currents-and-voltages-in-a-circuit",
+     "bulb-brightness-01-ammeters-around-a-parallel-pair"
     ],
     "power": [
-     "e22725-brightness"
+     "e22725-brightness",
+     "bulb-brightness-02-two-batteries-one-bulb-and-a-pair",
+     "bulb-brightness-03-a-battery-the-wrong-way-round"
     ],
     "change": [
-     "e22725-brightness"
+     "e22725-brightness",
+     "bulb-brightness-04-opening-a-branch-switch",
+     "bulb-brightness-05-a-wire-across-the-middle-bulb"
     ]
    },
    "exercises": {
@@ -142,6 +147,46 @@
      "difficulty": 2,
      "images": false,
      "url": "/exercise/current-as-derivative/"
+    },
+    "bulb-brightness-01-ammeters-around-a-parallel-pair": {
+     "source": "drafts",
+     "title": "Ammeters around a Parallel Pair",
+     "lang": "en",
+     "difficulty": 2,
+     "images": false,
+     "url": ""
+    },
+    "bulb-brightness-02-two-batteries-one-bulb-and-a-pair": {
+     "source": "drafts",
+     "title": "Two Batteries, One Bulb and a Pair",
+     "lang": "en",
+     "difficulty": 3,
+     "images": false,
+     "url": ""
+    },
+    "bulb-brightness-03-a-battery-the-wrong-way-round": {
+     "source": "drafts",
+     "title": "A Battery the Wrong Way Round",
+     "lang": "en",
+     "difficulty": 3,
+     "images": false,
+     "url": ""
+    },
+    "bulb-brightness-04-opening-a-branch-switch": {
+     "source": "drafts",
+     "title": "Opening a Branch Switch",
+     "lang": "en",
+     "difficulty": 3,
+     "images": false,
+     "url": ""
+    },
+    "bulb-brightness-05-a-wire-across-the-middle-bulb": {
+     "source": "drafts",
+     "title": "A Wire across the Middle Bulb",
+     "lang": "en",
+     "difficulty": 2,
+     "images": false,
+     "url": ""
     }
    }
   },
@@ -545,7 +590,11 @@
      "e24445-multi-branch-circuit",
      "e22714-currents-and-voltages-in-a-circuit"
     ],
-    "error": []
+    "error": [
+     "potential-circuit-01-a-lamp-that-raises-the-potential",
+     "potential-circuit-02-the-sloping-wire",
+     "potential-circuit-03-two-batteries-against-each-other"
+    ]
    },
    "exercises": {
     "e24444-opposing-batteries": {
@@ -651,6 +700,30 @@
      "difficulty": 4,
      "images": true,
      "url": "/exercise/resistor-tetrahedron/"
+    },
+    "potential-circuit-01-a-lamp-that-raises-the-potential": {
+     "source": "drafts",
+     "title": "A Lamp that Raises the Potential",
+     "lang": "en",
+     "difficulty": 3,
+     "images": false,
+     "url": ""
+    },
+    "potential-circuit-02-the-sloping-wire": {
+     "source": "drafts",
+     "title": "The Sloping Wire",
+     "lang": "en",
+     "difficulty": 3,
+     "images": false,
+     "url": ""
+    },
+    "potential-circuit-03-two-batteries-against-each-other": {
+     "source": "drafts",
+     "title": "Two Batteries against Each Other",
+     "lang": "en",
+     "difficulty": 4,
+     "images": false,
+     "url": ""
     }
    }
   },
@@ -668,7 +741,8 @@
     ],
     "sketch": [
      "e19006-rc-glied-im-gleich-und-wechselstromkreis",
-     "e19023-rc-kreis-2"
+     "e19023-rc-kreis-2",
+     "capacitors-01-discharging-through-a-resistor"
     ],
     "tau": [
      "e19063-capacitor-voltage-while-discharging",
@@ -832,6 +906,14 @@
      "difficulty": 3,
      "images": true,
      "url": "/exercise/partially-filled-capacitor-1/"
+    },
+    "capacitors-01-discharging-through-a-resistor": {
+     "source": "drafts",
+     "title": "Discharging through a Resistor",
+     "lang": "en",
+     "difficulty": 3,
+     "images": false,
+     "url": ""
     }
    }
   },
@@ -1093,11 +1175,13 @@
     ],
     "after": [
      "e19314-voltage-peak",
-     "e19343-advanced-rl-circuit"
+     "e19343-advanced-rl-circuit",
+     "rl-switch-01-branch-switched-in"
     ],
     "steady": [
      "e19309-making-and-breaking-current",
-     "e19343-advanced-rl-circuit"
+     "e19343-advanced-rl-circuit",
+     "rl-switch-02-bridge-removed"
     ]
    },
    "exercises": {
@@ -1204,6 +1288,22 @@
      "difficulty": 4,
      "images": false,
      "url": "/exercise/self-induced-emf-in-rl-circuit/"
+    },
+    "rl-switch-01-branch-switched-in": {
+     "source": "drafts",
+     "title": "Branch Switched In",
+     "lang": "en",
+     "difficulty": 4,
+     "images": false,
+     "url": ""
+    },
+    "rl-switch-02-bridge-removed": {
+     "source": "drafts",
+     "title": "Bridge Removed",
+     "lang": "en",
+     "difficulty": 3,
+     "images": false,
+     "url": ""
     }
    }
   },
@@ -1224,7 +1324,11 @@
      "e25088-eine-seilwinde",
      "e25090-ein-kranausleger"
     ],
-    "rank": [],
+    "rank": [
+     "torque-17-drei-kraefte-auf-einer-platte-ordnen",
+     "torque-18-schraege-kraft-und-kraft-durch-die-achse",
+     "torque-19-gleiche-kraft-vier-richtungen"
+    ],
     "weight": [
      "torque-12-schubkarre",
      "torque-07-einkaufstasche",
@@ -1528,6 +1632,30 @@
      "difficulty": 3,
      "images": false,
      "url": "/exercise/ein-kranausleger/"
+    },
+    "torque-17-drei-kraefte-auf-einer-platte-ordnen": {
+     "source": "drafts",
+     "title": "Drei Kräfte auf einer Platte ordnen",
+     "lang": "de",
+     "difficulty": 2,
+     "images": false,
+     "url": ""
+    },
+    "torque-18-schraege-kraft-und-kraft-durch-die-achse": {
+     "source": "drafts",
+     "title": "Schräge Kraft und Kraft durch die Achse",
+     "lang": "de",
+     "difficulty": 4,
+     "images": false,
+     "url": ""
+    },
+    "torque-19-gleiche-kraft-vier-richtungen": {
+     "source": "drafts",
+     "title": "Gleiche Kraft, vier Richtungen",
+     "lang": "de",
+     "difficulty": 2,
+     "images": false,
+     "url": ""
     }
    }
   },
@@ -1538,9 +1666,15 @@
      "e24666-schwerpunkt-dreier-massen-am-stab",
      "e24663-schwerpunkt-eines-l-profils"
     ],
-    "stability": [],
+    "stability": [
+     "centre-of-mass-01-vier-bretter-an-einer-achse",
+     "centre-of-mass-02-schraeg-aber-im-gleichgewicht",
+     "centre-of-mass-03-fehlvorstellung-indifferent"
+    ],
     "tipping": [
-     "e24608-der-kipptest-eines-busses"
+     "e24608-der-kipptest-eines-busses",
+     "centre-of-mass-04-welcher-kippt-auf-der-schiefen-ebene",
+     "centre-of-mass-05-der-schiefste-faellt-nicht"
     ]
    },
    "exercises": {
@@ -1575,6 +1709,46 @@
      "difficulty": 3,
      "images": false,
      "url": "/exercise/der-kipptest-eines-busses/"
+    },
+    "centre-of-mass-01-vier-bretter-an-einer-achse": {
+     "source": "drafts",
+     "title": "Vier Bretter an einer Achse",
+     "lang": "de",
+     "difficulty": 2,
+     "images": false,
+     "url": ""
+    },
+    "centre-of-mass-02-schraeg-aber-im-gleichgewicht": {
+     "source": "drafts",
+     "title": "Schräg, aber im Gleichgewicht",
+     "lang": "de",
+     "difficulty": 2,
+     "images": false,
+     "url": ""
+    },
+    "centre-of-mass-03-fehlvorstellung-indifferent": {
+     "source": "drafts",
+     "title": "Fehlvorstellung: indifferent?",
+     "lang": "de",
+     "difficulty": 3,
+     "images": false,
+     "url": ""
+    },
+    "centre-of-mass-04-welcher-kippt-auf-der-schiefen-ebene": {
+     "source": "drafts",
+     "title": "Welcher kippt auf der schiefen Ebene?",
+     "lang": "de",
+     "difficulty": 3,
+     "images": false,
+     "url": ""
+    },
+    "centre-of-mass-05-der-schiefste-faellt-nicht": {
+     "source": "drafts",
+     "title": "Der schiefste fällt nicht",
+     "lang": "de",
+     "difficulty": 3,
+     "images": false,
+     "url": ""
     }
    }
   },
@@ -1923,13 +2097,20 @@
      "e24541-eine-seilschaukel-uber-dem-see"
     ],
     "path": [
-     "energy-conservation-06-skispringen"
+     "energy-conservation-06-skispringen",
+     "energy-conservation-11-heben-oder-rampe",
+     "energy-conservation-12-wo-bleibt-die-energie-des-schlittens"
     ],
     "turn": [
      "e24544-ein-trampolin",
-     "e24652-umkehrpunkte-des-federpendels"
+     "e24652-umkehrpunkte-des-federpendels",
+     "energy-conservation-13-klotz-an-der-entspannten-feder"
     ],
-    "error": []
+    "error": [
+     "energy-conservation-14-fehler-in-der-bungee-tabelle",
+     "energy-conservation-15-fehlvorstellung-nullniveau-beim-fallen-auf-die-feder",
+     "energy-conservation-16-fehlvorstellung-federkatapult"
+    ]
    },
    "exercises": {
     "energy-conservation-01-crashtest": {
@@ -2163,13 +2344,63 @@
      "difficulty": 3,
      "images": false,
      "url": "/exercise/angestossenes-fadenpendel/"
+    },
+    "energy-conservation-11-heben-oder-rampe": {
+     "source": "drafts",
+     "title": "Heben oder Rampe?",
+     "lang": "de",
+     "difficulty": 2,
+     "images": false,
+     "url": ""
+    },
+    "energy-conservation-12-wo-bleibt-die-energie-des-schlittens": {
+     "source": "drafts",
+     "title": "Wo bleibt die Energie des Schlittens?",
+     "lang": "de",
+     "difficulty": 2,
+     "images": false,
+     "url": ""
+    },
+    "energy-conservation-13-klotz-an-der-entspannten-feder": {
+     "source": "drafts",
+     "title": "Klotz an der entspannten Feder",
+     "lang": "de",
+     "difficulty": 3,
+     "images": false,
+     "url": ""
+    },
+    "energy-conservation-14-fehler-in-der-bungee-tabelle": {
+     "source": "drafts",
+     "title": "Fehler in der Bungee-Tabelle",
+     "lang": "de",
+     "difficulty": 2,
+     "images": false,
+     "url": ""
+    },
+    "energy-conservation-15-fehlvorstellung-nullniveau-beim-fallen-auf-die-feder": {
+     "source": "drafts",
+     "title": "Fehlvorstellung: Nullniveau beim Fallen auf die Feder",
+     "lang": "de",
+     "difficulty": 3,
+     "images": false,
+     "url": ""
+    },
+    "energy-conservation-16-fehlvorstellung-federkatapult": {
+     "source": "drafts",
+     "title": "Fehlvorstellung: Federkatapult",
+     "lang": "de",
+     "difficulty": 2,
+     "images": false,
+     "url": ""
     }
    }
   },
   "force-concepts": {
    "objectives": {
     "first": [
-     "force-concepts-01-vier-kugeln-vom-tisch"
+     "force-concepts-01-vier-kugeln-vom-tisch",
+     "force-concepts-02-die-schnur-reisst",
+     "force-concepts-03-propeller-aus"
     ],
     "balanced": [
      "e24721-fallende-kartonrolle",
@@ -2339,6 +2570,22 @@
      "difficulty": 3,
      "images": false,
      "url": "/exercise/snowboarderin-in-senke-und-buckel/"
+    },
+    "force-concepts-02-die-schnur-reisst": {
+     "source": "drafts",
+     "title": "Die Schnur reisst",
+     "lang": "de",
+     "difficulty": 2,
+     "images": false,
+     "url": ""
+    },
+    "force-concepts-03-propeller-aus": {
+     "source": "drafts",
+     "title": "Propeller aus",
+     "lang": "de",
+     "difficulty": 2,
+     "images": false,
+     "url": ""
     }
    }
   },
@@ -2346,7 +2593,8 @@
    "objectives": {
     "equal": [
      "e17318-copper-cube",
-     "e24756-kraftgesetz-von-professor-siebenschlau"
+     "e24756-kraftgesetz-von-professor-siebenschlau",
+     "interaction-01-lastwagen-und-auto"
     ],
     "partner": [
      "e24755-gegen-eine-wand-drucken",
@@ -2355,7 +2603,8 @@
     ],
     "normal": [
      "e24760-astronaut-auf-dem-mond",
-     "e24747-normalkraft-ist-nicht-die-reaktionskraft"
+     "e24747-normalkraft-ist-nicht-die-reaktionskraft",
+     "interaction-02-fehlvorstellung-die-haengende-lampe"
     ]
    },
    "exercises": {
@@ -2414,6 +2663,22 @@
      "difficulty": 3,
      "images": false,
      "url": "/exercise/kraftgesetz-von-professor-siebenschlau/"
+    },
+    "interaction-01-lastwagen-und-auto": {
+     "source": "drafts",
+     "title": "Lastwagen und Auto",
+     "lang": "de",
+     "difficulty": 2,
+     "images": false,
+     "url": ""
+    },
+    "interaction-02-fehlvorstellung-die-haengende-lampe": {
+     "source": "drafts",
+     "title": "Fehlvorstellung: die hängende Lampe",
+     "lang": "de",
+     "difficulty": 2,
+     "images": false,
+     "url": ""
     }
    }
   },
@@ -2478,7 +2743,9 @@
      "e24764-zwei-verbundene-holzklotze"
     ],
     "spring": [
-     "force-systems-07-fallschirmspringerin"
+     "force-systems-07-fallschirmspringerin",
+     "force-systems-13-kiste-auf-der-feder",
+     "force-systems-14-feder-an-der-wand"
     ],
     "drag": [
      "force-systems-07-fallschirmspringerin",
@@ -2487,7 +2754,11 @@
      "e24551-eine-fallschirmspringerin",
      "e24723-inlineskaterin-am-hang"
     ],
-    "error": []
+    "error": [
+     "force-systems-15-fehlvorstellung-schraeg-gezogen",
+     "force-systems-16-fehlvorstellung-die-bewegungskraft",
+     "force-systems-17-fehlvorstellung-seilkraft-gleich-gewichtskraft"
+    ]
    },
    "exercises": {
     "force-systems-02-hafenkran": {
@@ -2841,6 +3112,46 @@
      "difficulty": 2,
      "images": false,
      "url": "/exercise/reissende-schnur/"
+    },
+    "force-systems-13-kiste-auf-der-feder": {
+     "source": "drafts",
+     "title": "Kiste auf der Feder",
+     "lang": "de",
+     "difficulty": 2,
+     "images": false,
+     "url": ""
+    },
+    "force-systems-14-feder-an-der-wand": {
+     "source": "drafts",
+     "title": "Feder an der Wand",
+     "lang": "de",
+     "difficulty": 3,
+     "images": false,
+     "url": ""
+    },
+    "force-systems-15-fehlvorstellung-schraeg-gezogen": {
+     "source": "drafts",
+     "title": "Fehlvorstellung: schräg gezogen",
+     "lang": "de",
+     "difficulty": 3,
+     "images": false,
+     "url": ""
+    },
+    "force-systems-16-fehlvorstellung-die-bewegungskraft": {
+     "source": "drafts",
+     "title": "Fehlvorstellung: die „Bewegungskraft“",
+     "lang": "de",
+     "difficulty": 2,
+     "images": false,
+     "url": ""
+    },
+    "force-systems-17-fehlvorstellung-seilkraft-gleich-gewichtskraft": {
+     "source": "drafts",
+     "title": "Fehlvorstellung: Seilkraft gleich Gewichtskraft",
+     "lang": "de",
+     "difficulty": 4,
+     "images": false,
+     "url": ""
     }
    }
   },
@@ -3082,10 +3393,15 @@
      "e24880-messtabelle-welche-bewegung-ist-beschleu",
      "e24881-anfangsgeschwindigkeit-aus-sekundenstrec"
     ],
-    "convert": [],
+    "convert": [
+     "motion-data-01-kehrt-das-fahrzeug-um",
+     "motion-data-02-vom-stroboskopbild-zu-st",
+     "motion-data-03-der-wagen-kehrt-um"
+    ],
     "uniform": [
      "e24885-beschleunigte-bewegung-im-diagramm-nachw",
-     "e24880-messtabelle-welche-bewegung-ist-beschleu"
+     "e24880-messtabelle-welche-bewegung-ist-beschleu",
+     "motion-data-04-drei-stroboskopbilder"
     ]
    },
    "exercises": {
@@ -3128,6 +3444,38 @@
      "difficulty": 3,
      "images": false,
      "url": "/exercise/anfangsgeschwindigkeit-aus-sekundenstrecken/"
+    },
+    "motion-data-01-kehrt-das-fahrzeug-um": {
+     "source": "drafts",
+     "title": "Kehrt das Fahrzeug um?",
+     "lang": "de",
+     "difficulty": 2,
+     "images": false,
+     "url": ""
+    },
+    "motion-data-02-vom-stroboskopbild-zu-st": {
+     "source": "drafts",
+     "title": "Vom Stroboskopbild zu s(t)",
+     "lang": "de",
+     "difficulty": 2,
+     "images": false,
+     "url": ""
+    },
+    "motion-data-03-der-wagen-kehrt-um": {
+     "source": "drafts",
+     "title": "Der Wagen kehrt um",
+     "lang": "de",
+     "difficulty": 3,
+     "images": false,
+     "url": ""
+    },
+    "motion-data-04-drei-stroboskopbilder": {
+     "source": "drafts",
+     "title": "Drei Stroboskopbilder",
+     "lang": "de",
+     "difficulty": 2,
+     "images": false,
+     "url": ""
     }
    }
   },
@@ -3140,10 +3488,13 @@
     ],
     "negative": [
      "e24864-gleichformige-bewegung-in-diagrammen",
-     "e24888-st-und-vt-diagramme-zuordnen"
+     "e24888-st-und-vt-diagramme-zuordnen",
+     "motion-graphs-01-unter-der-achse-aber-vorwaerts"
     ],
     "sketch": [
-     "e24888-st-und-vt-diagramme-zuordnen"
+     "e24888-st-und-vt-diagramme-zuordnen",
+     "motion-graphs-02-von-vt-zu-at",
+     "motion-graphs-03-fehler-in-der-vt-skizze"
     ],
     "uniform": [
      "e24864-gleichformige-bewegung-in-diagrammen",
@@ -3199,18 +3550,54 @@
      "difficulty": 1,
      "images": true,
      "url": "/exercise/beschleunigung-im-vt-diagramm/"
+    },
+    "motion-graphs-01-unter-der-achse-aber-vorwaerts": {
+     "source": "drafts",
+     "title": "Unter der Achse, aber vorwärts",
+     "lang": "de",
+     "difficulty": 2,
+     "images": false,
+     "url": ""
+    },
+    "motion-graphs-02-von-vt-zu-at": {
+     "source": "drafts",
+     "title": "Von v(t) zu a(t)",
+     "lang": "de",
+     "difficulty": 3,
+     "images": false,
+     "url": ""
+    },
+    "motion-graphs-03-fehler-in-der-vt-skizze": {
+     "source": "drafts",
+     "title": "Fehler in der v(t)-Skizze",
+     "lang": "de",
+     "difficulty": 4,
+     "images": false,
+     "url": ""
     }
    }
   },
   "motion-areas": {
    "objectives": {
     "area": [
-     "e18962-beschleunigung-und-strecke-im-vt-diagram"
+     "e18962-beschleunigung-und-strecke-im-vt-diagram",
+     "motion-areas-01-vor-und-zurueck",
+     "motion-areas-02-senkrechter-wurf"
     ],
-    "farther": [],
-    "mean": [],
+    "farther": [
+     "motion-areas-03-schneller-heisst-nicht-weiter",
+     "motion-areas-04-zurueck-am-start",
+     "motion-areas-05-unter-der-achse"
+    ],
+    "mean": [
+     "motion-areas-06-anfahren-und-fahren",
+     "motion-areas-07-mittlere-geschwindigkeit-mit-umkehr",
+     "motion-areas-08-velofahrt"
+    ],
     "sketch": [
-     "e24888-st-und-vt-diagramme-zuordnen"
+     "e24888-st-und-vt-diagramme-zuordnen",
+     "motion-areas-09-von-vt-zu-st",
+     "motion-areas-10-fehlvorstellung-flaeche-unter-der-achse"
     ]
    },
    "exercises": {
@@ -3229,13 +3616,95 @@
      "difficulty": 1,
      "images": true,
      "url": "/exercise/beschleunigung-und-strecke-im-vt-diagramm/"
+    },
+    "motion-areas-01-vor-und-zurueck": {
+     "source": "drafts",
+     "title": "Vor und zurück",
+     "lang": "de",
+     "difficulty": 4,
+     "images": false,
+     "url": ""
+    },
+    "motion-areas-02-senkrechter-wurf": {
+     "source": "drafts",
+     "title": "Senkrechter Wurf",
+     "lang": "de",
+     "difficulty": 3,
+     "images": false,
+     "url": ""
+    },
+    "motion-areas-03-schneller-heisst-nicht-weiter": {
+     "source": "drafts",
+     "title": "Schneller heisst nicht weiter",
+     "lang": "de",
+     "difficulty": 3,
+     "images": false,
+     "url": ""
+    },
+    "motion-areas-04-zurueck-am-start": {
+     "source": "drafts",
+     "title": "Zurück am Start",
+     "lang": "de",
+     "difficulty": 3,
+     "images": false,
+     "url": ""
+    },
+    "motion-areas-05-unter-der-achse": {
+     "source": "drafts",
+     "title": "Unter der Achse",
+     "lang": "de",
+     "difficulty": 2,
+     "images": false,
+     "url": ""
+    },
+    "motion-areas-06-anfahren-und-fahren": {
+     "source": "drafts",
+     "title": "Anfahren und fahren",
+     "lang": "de",
+     "difficulty": 3,
+     "images": false,
+     "url": ""
+    },
+    "motion-areas-07-mittlere-geschwindigkeit-mit-umkehr": {
+     "source": "drafts",
+     "title": "Mittlere Geschwindigkeit mit Umkehr",
+     "lang": "de",
+     "difficulty": 4,
+     "images": false,
+     "url": ""
+    },
+    "motion-areas-08-velofahrt": {
+     "source": "drafts",
+     "title": "Velofahrt",
+     "lang": "de",
+     "difficulty": 3,
+     "images": false,
+     "url": ""
+    },
+    "motion-areas-09-von-vt-zu-st": {
+     "source": "drafts",
+     "title": "Von v(t) zu s(t)",
+     "lang": "de",
+     "difficulty": 3,
+     "images": false,
+     "url": ""
+    },
+    "motion-areas-10-fehlvorstellung-flaeche-unter-der-achse": {
+     "source": "drafts",
+     "title": "Fehlvorstellung: Fläche unter der Achse",
+     "lang": "de",
+     "difficulty": 4,
+     "images": false,
+     "url": ""
     }
    }
   },
   "oscillations": {
    "objectives": {
     "circle": [
-     "e24590-the-tide-in-a-harbour"
+     "e24590-the-tide-in-a-harbour",
+     "oscillations-11-which-shadow-is-it",
+     "oscillations-12-shadow-of-a-turntable-peg"
     ],
     "harmonic": [
      "oscillations-01-tuning-fork",
@@ -3264,7 +3733,9 @@
      "e24590-the-tide-in-a-harbour"
     ],
     "lc": [
-     "e19904-resonance-for-mechanical-oscillator"
+     "e19904-resonance-for-mechanical-oscillator",
+     "oscillations-13-releasing-a-charged-capacitor",
+     "oscillations-14-retuning-a-radio"
     ]
    },
    "exercises": {
@@ -3451,6 +3922,38 @@
      "difficulty": 3,
      "images": false,
      "url": "/exercise/the-tide-in-a-harbour/"
+    },
+    "oscillations-11-which-shadow-is-it": {
+     "source": "drafts",
+     "title": "Which Shadow Is It?",
+     "lang": "en",
+     "difficulty": 2,
+     "images": false,
+     "url": ""
+    },
+    "oscillations-12-shadow-of-a-turntable-peg": {
+     "source": "drafts",
+     "title": "Shadow of a Turntable Peg",
+     "lang": "en",
+     "difficulty": 3,
+     "images": false,
+     "url": ""
+    },
+    "oscillations-13-releasing-a-charged-capacitor": {
+     "source": "drafts",
+     "title": "Releasing a Charged Capacitor",
+     "lang": "en",
+     "difficulty": 3,
+     "images": false,
+     "url": ""
+    },
+    "oscillations-14-retuning-a-radio": {
+     "source": "drafts",
+     "title": "Retuning a Radio",
+     "lang": "en",
+     "difficulty": 2,
+     "images": false,
+     "url": ""
     }
    }
   },
@@ -3462,12 +3965,21 @@
      "e24943-zustande-im-heissluftmotor",
      "e24990-kreisprozess-mit-luft"
     ],
-    "identify": [],
+    "identify": [
+     "cyclic-processes-01-welche-linie-ist-welche",
+     "cyclic-processes-02-zwei-isothermen-im-pv-diagramm",
+     "cyclic-processes-03-schritte-im-pt-diagramm"
+    ],
     "sketch": [
      "e24943-zustande-im-heissluftmotor",
-     "e24990-kreisprozess-mit-luft"
+     "e24990-kreisprozess-mit-luft",
+     "cyclic-processes-04-vom-vt-ins-pv-diagramm"
     ],
-    "error": []
+    "error": [
+     "cyclic-processes-05-gerade-statt-hyperbel",
+     "cyclic-processes-06-faktor-umgekehrt-im-pt-diagramm",
+     "cyclic-processes-07-achsen-nur-umbeschriftet"
+    ]
    },
    "exercises": {
     "e24935-kompression-und-erhitzung-eines-mols": {
@@ -3509,6 +4021,62 @@
      "difficulty": 1,
      "images": false,
      "url": "/exercise/gasflasche-3/"
+    },
+    "cyclic-processes-01-welche-linie-ist-welche": {
+     "source": "drafts",
+     "title": "Welche Linie ist welche?",
+     "lang": "de",
+     "difficulty": 2,
+     "images": false,
+     "url": ""
+    },
+    "cyclic-processes-02-zwei-isothermen-im-pv-diagramm": {
+     "source": "drafts",
+     "title": "Zwei Isothermen im p(V)-Diagramm",
+     "lang": "de",
+     "difficulty": 2,
+     "images": false,
+     "url": ""
+    },
+    "cyclic-processes-03-schritte-im-pt-diagramm": {
+     "source": "drafts",
+     "title": "Schritte im p(T)-Diagramm",
+     "lang": "de",
+     "difficulty": 3,
+     "images": false,
+     "url": ""
+    },
+    "cyclic-processes-04-vom-vt-ins-pv-diagramm": {
+     "source": "drafts",
+     "title": "Vom V(T)- ins p(V)-Diagramm",
+     "lang": "de",
+     "difficulty": 4,
+     "images": false,
+     "url": ""
+    },
+    "cyclic-processes-05-gerade-statt-hyperbel": {
+     "source": "drafts",
+     "title": "Gerade statt Hyperbel",
+     "lang": "de",
+     "difficulty": 3,
+     "images": false,
+     "url": ""
+    },
+    "cyclic-processes-06-faktor-umgekehrt-im-pt-diagramm": {
+     "source": "drafts",
+     "title": "Faktor umgekehrt im p(T)-Diagramm",
+     "lang": "de",
+     "difficulty": 4,
+     "images": false,
+     "url": ""
+    },
+    "cyclic-processes-07-achsen-nur-umbeschriftet": {
+     "source": "drafts",
+     "title": "Achsen nur umbeschriftet",
+     "lang": "de",
+     "difficulty": 4,
+     "images": false,
+     "url": ""
     }
    }
   },
@@ -3533,7 +4101,8 @@
     ],
     "superpose": [
      "e20055-triangle-superposition",
-     "e24613-two-pulses-on-a-slinky"
+     "e24613-two-pulses-on-a-slinky",
+     "wave-propagation-07-an-upright-step-meets-an-inverted-ramp"
     ],
     "standing": [
      "e23218-organ-pipe",
@@ -3704,6 +4273,14 @@
      "difficulty": 3,
      "images": false,
      "url": "/exercise/two-pulses-on-a-slinky/"
+    },
+    "wave-propagation-07-an-upright-step-meets-an-inverted-ramp": {
+     "source": "drafts",
+     "title": "An Upright Step Meets an Inverted Ramp",
+     "lang": "en",
+     "difficulty": 3,
+     "images": false,
+     "url": ""
     }
    }
   },
@@ -3959,10 +4536,13 @@
    "objectives": {
     "sketch": [
      "e22848-field-line-image-for-an-electric-dipole",
-     "e17315-field-line-images"
+     "e17315-field-line-images",
+     "electric-field-10-charge-above-a-metal-plate"
     ],
     "read": [
-     "e17336-electric-field-lines"
+     "e17336-electric-field-lines",
+     "electric-field-11-hidden-signs",
+     "electric-field-12-inside-and-outside-a-capacitor"
     ],
     "dipole": [
      "electric-field-07-bent-jet-of-water",
@@ -3971,9 +4551,14 @@
     ],
     "equi": [
      "e23028-equipotentials-in-field-of-electric-dipo",
-     "e17488-equipotentials-of-two-positive-point-cha"
+     "e17488-equipotentials-of-two-positive-point-cha",
+     "electric-field-13-field-lines-from-equipotentials"
     ],
-    "error": []
+    "error": [
+     "electric-field-14-circles-that-cross",
+     "electric-field-15-evenly-spaced-circles",
+     "electric-field-16-crossing-lines-of-a-dipole"
+    ]
    },
    "exercises": {
     "e22848-field-line-image-for-an-electric-dipole": {
@@ -4095,6 +4680,62 @@
      "difficulty": 4,
      "images": false,
      "url": "/exercise/dipole-in-field-of-charged-wire/"
+    },
+    "electric-field-10-charge-above-a-metal-plate": {
+     "source": "drafts",
+     "title": "Charge above a Metal Plate",
+     "lang": "en",
+     "difficulty": 3,
+     "images": false,
+     "url": ""
+    },
+    "electric-field-11-hidden-signs": {
+     "source": "drafts",
+     "title": "Hidden Signs",
+     "lang": "en",
+     "difficulty": 3,
+     "images": false,
+     "url": ""
+    },
+    "electric-field-12-inside-and-outside-a-capacitor": {
+     "source": "drafts",
+     "title": "Inside and Outside a Capacitor",
+     "lang": "en",
+     "difficulty": 2,
+     "images": false,
+     "url": ""
+    },
+    "electric-field-13-field-lines-from-equipotentials": {
+     "source": "drafts",
+     "title": "Field Lines from Equipotentials",
+     "lang": "en",
+     "difficulty": 3,
+     "images": false,
+     "url": ""
+    },
+    "electric-field-14-circles-that-cross": {
+     "source": "drafts",
+     "title": "Circles that Cross",
+     "lang": "en",
+     "difficulty": 3,
+     "images": false,
+     "url": ""
+    },
+    "electric-field-15-evenly-spaced-circles": {
+     "source": "drafts",
+     "title": "Evenly Spaced Circles",
+     "lang": "en",
+     "difficulty": 4,
+     "images": false,
+     "url": ""
+    },
+    "electric-field-16-crossing-lines-of-a-dipole": {
+     "source": "drafts",
+     "title": "Crossing Lines of a Dipole",
+     "lang": "en",
+     "difficulty": 2,
+     "images": false,
+     "url": ""
     }
    }
   },
@@ -4353,7 +4994,11 @@
      "e24576-a-short-circuit-between-two-cables",
      "e25071-two-moving-charges"
     ],
-    "error": []
+    "error": [
+     "magnetic-forces-10-the-electron-and-the-right-hand",
+     "magnetic-forces-11-current-along-the-electrons",
+     "magnetic-forces-12-the-sign-counted-twice"
+    ]
    },
    "exercises": {
     "e23383-current-in-magnetic-field": {
@@ -4555,6 +5200,30 @@
      "difficulty": 3,
      "images": false,
      "url": "/exercise/cosmic-rays-and-the-earths-field/"
+    },
+    "magnetic-forces-10-the-electron-and-the-right-hand": {
+     "source": "drafts",
+     "title": "The Electron and the Right Hand",
+     "lang": "en",
+     "difficulty": 3,
+     "images": false,
+     "url": ""
+    },
+    "magnetic-forces-11-current-along-the-electrons": {
+     "source": "drafts",
+     "title": "Current along the Electrons",
+     "lang": "en",
+     "difficulty": 3,
+     "images": false,
+     "url": ""
+    },
+    "magnetic-forces-12-the-sign-counted-twice": {
+     "source": "drafts",
+     "title": "The Sign Counted Twice",
+     "lang": "en",
+     "difficulty": 4,
+     "images": false,
+     "url": ""
     }
    }
   },
@@ -5154,7 +5823,9 @@
   "photons": {
    "objectives": {
     "wave": [
-     "e24593-sunburn-but-not-from-a-heater"
+     "e24593-sunburn-but-not-from-a-heater",
+     "photons-13-how-long-would-an-electron-have-to-wait",
+     "photons-14-brighter-but-not-faster"
     ],
     "einstein": [
      "e22043-bremsspektrum",
@@ -5431,6 +6102,22 @@
      "difficulty": 2,
      "images": false,
      "url": "/exercise/photons-from-a-remote-control/"
+    },
+    "photons-13-how-long-would-an-electron-have-to-wait": {
+     "source": "drafts",
+     "title": "How Long Would an Electron Have to Wait?",
+     "lang": "en",
+     "difficulty": 3,
+     "images": false,
+     "url": ""
+    },
+    "photons-14-brighter-but-not-faster": {
+     "source": "drafts",
+     "title": "Brighter, but Not Faster",
+     "lang": "en",
+     "difficulty": 2,
+     "images": false,
+     "url": ""
     }
    }
   },

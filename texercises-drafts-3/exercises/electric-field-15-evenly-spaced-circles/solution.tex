@@ -1,0 +1,42 @@
+\begin{abcliste}
+\abc The field lines (radial, pointing outwards) and the circles are right, but \result{\text{the spacing of the circles}} is wrong. For equal steps of potential, the equipotentials are closer together where the field is stronger. The field of a point charge gets weaker outwards, $E = k\,\frac{Q}{r^2}$, so the circles must get further and further apart outwards.
+
+\abc Round a point charge $V = \frac{Q}{4\pi\varepsilon_0\,r}$, so $r = \frac{Q}{4\pi\varepsilon_0\,V}$:
+\begin{align}
+ r_1 &= \raF = \frac{\Qc}{4\pi\cdot\nceps\cdot\Va} = \ra \approx \result{\raP{-2}{3}} \\
+ r_2 &= \rbF = \frac{\Qc}{4\pi\cdot\nceps\cdot\Vb} = \rb \approx \result{\rbP{-2}{3}} \\
+ r_3 &= \rcF = \frac{\Qc}{4\pi\cdot\nceps\cdot\Vc} = \rc \approx \result{\rcP{-2}{3}} \\
+ r_4 &= \rdF = \frac{\Qc}{4\pi\cdot\nceps\cdot\Vd} = \rd \approx \result{\rdP{-2}{3}}
+\end{align}
+Only the inner circle is right. The gaps grow from about \SI{0.8}{\cm} to \SI{1.6}{\cm} and \SI{4.8}{\cm}.
+
+\begin{center}
+\begin{tikzpicture}[>=Stealth]
+ \draw[blue!75!black, thick, ->] (0.23,0.10) -- (2.82,1.17);
+ \draw[blue!75!black, thick, ->] (0.10,0.23) -- (1.17,2.82);
+ \draw[blue!75!black, thick, ->] (-0.10,0.23) -- (-1.17,2.82);
+ \draw[blue!75!black, thick, ->] (-0.23,0.10) -- (-2.82,1.17);
+ \draw[blue!75!black, thick, ->] (-0.23,-0.10) -- (-2.82,-1.17);
+ \draw[blue!75!black, thick, ->] (-0.10,-0.23) -- (-1.17,-2.82);
+ \draw[blue!75!black, thick, ->] (0.10,-0.23) -- (1.17,-2.82);
+ \draw[blue!75!black, thick, ->] (0.23,-0.10) -- (2.82,-1.17);
+ \draw[orange!90!black, thick] (0,0) circle (0.700);
+ \node[fill=white, inner sep=1pt, text=orange!60!black] at (-0.122,0.690) {\scriptsize \SI{970}{\V}};
+ \draw[orange!90!black, thick] (0,0) circle (0.931);
+ \node[fill=white, inner sep=1pt, text=orange!60!black] at (0.762,0.534) {\scriptsize \SI{730}{\V}};
+ \draw[orange!90!black, thick] (0,0) circle (1.387);
+ \node[fill=white, inner sep=1pt, text=orange!60!black] at (1.303,-0.474) {\scriptsize \SI{490}{\V}};
+ \draw[orange!90!black, thick] (0,0) circle (2.718);
+ \node[fill=white, inner sep=1pt, text=orange!60!black] at (1.559,-2.226) {\scriptsize \SI{250}{\V}};
+ \fill[red!75!black] (0.00,0.00) circle (0.17); \node[white] at (0.00,0.00) {\scriptsize $+$};
+ \draw[|-|] (0,-3.35) -- (0.700,-3.35) node[midway, below] {\scriptsize \SI{2.50}{\cm}};
+\end{tikzpicture}
+\end{center}
+
+\abc
+\begin{align}
+ V(\SI{5.00}{\cm}) &= \VsbF = \frac{\Qc}{4\pi\cdot\nceps\cdot\rsb} = \Vsb \approx \result{\VsbP{0}{3}} \\
+ V(\SI{7.50}{\cm}) &= \VscF = \frac{\Qc}{4\pi\cdot\nceps\cdot\rsc} = \Vsc \approx \result{\VscP{0}{3}}
+\end{align}
+At twice the distance of the inner circle the potential is already down to half of \VaO, not to \VbO.
+\end{abcliste}

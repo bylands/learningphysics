@@ -1,0 +1,21 @@
+{
+  "title": "Bridge Removed",
+  "note": "from learningphysics.ch (objective rl-switch:steady)",
+  "language": "ENG",
+  "type": 1,
+  "default_difficulty": 3,
+  "default_points": 0,
+  "tags": [
+    "inductance",
+    "inductor",
+    "rl circuit",
+    "switching",
+    "kirchhoff's rules",
+    "steady state",
+    "learningphysics"
+  ],
+  "subbranches": [
+    "Magnetism"
+  ],
+  "youtube": ""
+}

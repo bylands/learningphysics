@@ -1,0 +1,19 @@
+{
+  "title": "Fehlvorstellung: indifferent?",
+  "note": "aus learningphysics.ch (Lernziel stability)",
+  "language": "GER",
+  "type": 2,
+  "default_difficulty": 3,
+  "default_points": 0,
+  "tags": [
+    "gleichgewicht",
+    "schwerpunkt",
+    "stabilität",
+    "drehmoment",
+    "learningphysics"
+  ],
+  "subbranches": [
+    "Lever"
+  ],
+  "youtube": ""
+}

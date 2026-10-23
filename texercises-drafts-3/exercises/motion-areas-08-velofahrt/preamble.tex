@@ -1,0 +1,11 @@
+\NewQty{vMax}{7.6}[\mps]
+\NewQty{tOne}{9.5}[\s]
+\NewQty{tTwo}{21}[\s]
+\NewQty{tThree}{6.8}[\s]
+
+\SolQty{dOne}[\frac{1}{2}\,v_\mathrm{max}\,t_1]{0.5*\vMaxX*\tOneX}[\m]
+\SolQty{dTwo}[v_\mathrm{max}\,t_2]{\vMaxX*\tTwoX}[\m]
+\SolQty{dThree}[\frac{1}{2}\,v_\mathrm{max}\,t_3]{0.5*\vMaxX*\tThreeX}[\m]
+\SolQty{ds}[\Delta s_1+\Delta s_2+\Delta s_3]{\dOneX+\dTwoX+\dThreeX}[\m]
+\SolQty{tTot}[t_1+t_2+t_3]{\tOneX+\tTwoX+\tThreeX}[\s]
+\SolQty{vMean}[\frac{\Delta s}{t_\mathrm{tot}}]{\dsX/\tTotX}[\mps]

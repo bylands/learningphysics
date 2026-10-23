@@ -1,0 +1,67 @@
+\begin{abcliste}
+\abc The time constant and the current right after the switch is closed are
+\begin{align}
+ \tau &= \tcF = \Res\cdot\Cap = \tc \approx \result{\tcP{0}{2}} \\
+ I_0 &= \IoF = \frac{\Uo}{\Res} = \Io \approx \result{\IoP{-3}{2}}
+\end{align}
+\begin{itemize}
+\item $\Delta V_C$: the charge on the plates cannot vanish at once, so the voltage does not jump. It starts at $\Delta V_0 = \UoO$ and decays exponentially, $\Delta V_C = \Delta V_0\,e^{-t/\tau}$: steepest at the start, down to 37\,\% after $\tau$, almost zero after $5\tau$.
+\item $\Delta V_R$: the resistor is connected straight across the capacitor, so $\Delta V_R = \Delta V_C$ at every moment once the switch is closed. Before $t = 0$ it is zero; at $t = 0$ it jumps to $\Delta V_0$ and then follows the same curve.
+\item $I = \Delta V_R/R$: zero before $t = 0$, a jump to $I_0$, then the same exponential decay.
+\end{itemize}
+
+\begin{center}
+\begin{tikzpicture}[>=Stealth, xscale=2.6, yscale=0.1897]
+ \draw[->] (-0.15,0) -- (1.12,0) node[right] {$t$ in \si{\s}};
+ \draw[->] (0,0) -- (0,13.688) node[above] {$\Delta V_C$ in \si{\V}};
+ \foreach \x in {0.5,1.0} \draw (\x,0.348) -- (\x,-0.348) node[below] {\small \x};
+ \foreach \y in {4,8,12} \draw (0.015,\y) -- (-0.015,\y) node[left] {\small \y};
+ \draw[very thick, blue] (-0.12,11.6) -- (0,11.6);
+ \draw[very thick, blue, domain=0:1, samples=80, smooth] plot (\x, {11.6*exp(-\x/0.1833)});
+ \draw[dotted] (0.1833,0) -- (0.1833,4.267) -- (0,4.267);
+ \node[below] at (0.1833,-1.856) {$\tau$};
+\end{tikzpicture}
+\quad
+\begin{tikzpicture}[>=Stealth, xscale=2.6, yscale=0.1897]
+ \draw[->] (-0.15,0) -- (1.12,0) node[right] {$t$ in \si{\s}};
+ \draw[->] (0,0) -- (0,13.688) node[above] {$\Delta V_R$ in \si{\V}};
+ \foreach \x in {0.5,1.0} \draw (\x,0.348) -- (\x,-0.348) node[below] {\small \x};
+ \foreach \y in {4,8,12} \draw (0.015,\y) -- (-0.015,\y) node[left] {\small \y};
+ \draw[very thick, blue] (-0.12,0) -- (0,0) -- (0,11.6);
+ \draw[very thick, blue, domain=0:1, samples=80, smooth] plot (\x, {11.6*exp(-\x/0.1833)});
+ \draw[dotted] (0.1833,0) -- (0.1833,4.267) -- (0,4.267);
+ \node[below] at (0.1833,-1.856) {$\tau$};
+\end{tikzpicture}
+\quad
+\begin{tikzpicture}[>=Stealth, xscale=2.6, yscale=0.7407]
+ \draw[->] (-0.15,0) -- (1.12,0) node[right] {$t$ in \si{\s}};
+ \draw[->] (0,0) -- (0,3.505) node[above] {$I$ in \si{\milli\A}};
+ \foreach \x in {0.5,1.0} \draw (\x,0.089) -- (\x,-0.089) node[below] {\small \x};
+ \foreach \y in {1,2,3} \draw (0.015,\y) -- (-0.015,\y) node[left] {\small \y};
+ \draw[very thick, blue] (-0.12,0) -- (0,0) -- (0,2.974);
+ \draw[very thick, blue, domain=0:1, samples=80, smooth] plot (\x, {2.974*exp(-\x/0.1833)});
+ \draw[dotted] (0.1833,0) -- (0.1833,1.094) -- (0,1.094);
+ \node[below] at (0.1833,-0.475) {$\tau$};
+\end{tikzpicture}
+\end{center}
+(Through the resistor the current flows the other way than while the capacitor was being charged.)
+
+\abc The resistor is connected straight across the capacitor, so
+\begin{align}
+ \Delta V_R &= \Delta V_C = \result{\UaO}
+\end{align}
+and the current is
+\begin{align}
+ I &= \IaF = \frac{\Ua}{\Res} = \Ia \approx \result{\IaP{-3}{2}}
+\end{align}
+
+\abc There is no battery in the circuit: the capacitor itself drives the current, and the only loop is capacitor and resistor. The loop rule gives $\Delta V_R = \Delta V_C$. The rule $\Delta V_R = \Delta V_0 - \Delta V_C$ (here $\UwP{0}{2}$) belongs to charging, where a battery with $\Delta V_0$ is in the loop.
+
+$I = \Delta V_0/R = \IoP{-3}{2}$ is the current at $t = 0$ only. As the charge flows off, $\Delta V_C$ and with it the current decrease: at this moment the current is $\Delta V_C/R$.
+
+\abc From $\Delta V_C = \Delta V_0\,e^{-t/\tau}$:
+\begin{align}
+ t &= \taF = \Res\cdot\Cap\cdot\ln\frac{\Uo}{\Ua} = \ta \approx \result{\taP{0}{2}}
+\end{align}
+That is about $1.3\,\tau$.
+\end{abcliste}

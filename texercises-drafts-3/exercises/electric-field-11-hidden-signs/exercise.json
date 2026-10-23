@@ -1,0 +1,19 @@
+{
+  "title": "Hidden Signs",
+  "note": "from learningphysics.ch (objective electric-field:read)",
+  "language": "ENG",
+  "type": 0,
+  "default_difficulty": 3,
+  "default_points": 0,
+  "tags": [
+    "electric field",
+    "field lines",
+    "point charge",
+    "field strength",
+    "learningphysics"
+  ],
+  "subbranches": [
+    "Electrostatics"
+  ],
+  "youtube": ""
+}

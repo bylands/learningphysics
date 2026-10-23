@@ -1,0 +1,19 @@
+{
+  "title": "Anfahren und fahren",
+  "note": "aus learningphysics.ch (Lernziel mean)",
+  "language": "GER",
+  "type": 2,
+  "default_difficulty": 3,
+  "default_points": 0,
+  "tags": [
+    "fläche",
+    "kinematik",
+    "learningphysics",
+    "mittlere geschwindigkeit",
+    "v-t-diagramm"
+  ],
+  "subbranches": [
+    "Kinematics"
+  ],
+  "youtube": ""
+}

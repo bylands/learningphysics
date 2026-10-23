@@ -1,0 +1,21 @@
+{
+  "title": "Achsen nur umbeschriftet",
+  "note": "aus learningphysics.ch (Lernziel error)",
+  "language": "GER",
+  "type": 0,
+  "default_difficulty": 4,
+  "default_points": 0,
+  "tags": [
+    "isobar",
+    "isochor",
+    "kreisprozess",
+    "p-v-diagramm",
+    "v-t-diagramm",
+    "fehler finden",
+    "learningphysics"
+  ],
+  "subbranches": [
+    "Gas Laws"
+  ],
+  "youtube": ""
+}

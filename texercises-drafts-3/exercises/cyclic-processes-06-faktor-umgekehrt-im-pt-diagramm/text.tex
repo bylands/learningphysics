@@ -1,0 +1,51 @@
+Eine feste Menge eines idealen Gases ist im Zustand A bei $p_A = p_0$, $V_A = 2\,V_0$ und $T_A = 2\,T_0$. Es durchläuft folgenden Kreisprozess:
+\begin{itemize}
+\item A $\to$ B: isochor, bis sich der Druck verdreifacht hat;
+\item B $\to$ C: isotherme Kompression auf das halbe Volumen;
+\item C $\to$ D: isochor, bis der Druck auf einen Drittel gesunken ist;
+\item D $\to$ A: isotherm zurück in den Anfangszustand.
+\end{itemize}
+Die Achsen sind in Einheiten von $p_0$, $V_0$ und $T_0 = \frac{p_0V_0}{nR}$ beschriftet; damit ist $T/T_0 = (p/p_0)\cdot(V/V_0)$. Ein Schüler skizziert den Prozess im $p(T)$-Diagramm:
+
+\begin{center}
+\begin{tikzpicture}[x=0.75cm, y=0.75cm, >=Stealth, font=\small]
+ \draw[black!12] (0,0) grid[xstep=1, ystep=1] (7.001,7.001);
+ \draw[->] (0,0) -- (7.6,0) node[right] {$T$ in $T_0$};
+ \draw[->] (0,0) -- (0,7.6) node[above] {$p$ in $p_0$};
+ \node[below left] at (0,0) {\small 0};
+ \draw (1,0.08) -- (1,-0.08) node[below] {\small 1};
+ \draw (2,0.08) -- (2,-0.08) node[below] {\small 2};
+ \draw (3,0.08) -- (3,-0.08) node[below] {\small 3};
+ \draw (4,0.08) -- (4,-0.08) node[below] {\small 4};
+ \draw (5,0.08) -- (5,-0.08) node[below] {\small 5};
+ \draw (6,0.08) -- (6,-0.08) node[below] {\small 6};
+ \draw (7,0.08) -- (7,-0.08) node[below] {\small 7};
+ \draw (0.08,1) -- (-0.08,1) node[left] {\small 1};
+ \draw (0.08,2) -- (-0.08,2) node[left] {\small 2};
+ \draw (0.08,3) -- (-0.08,3) node[left] {\small 3};
+ \draw (0.08,4) -- (-0.08,4) node[left] {\small 4};
+ \draw (0.08,5) -- (-0.08,5) node[left] {\small 5};
+ \draw (0.08,6) -- (-0.08,6) node[left] {\small 6};
+ \draw (0.08,7) -- (-0.08,7) node[left] {\small 7};
+ \draw[black!12] (0,0) grid[xstep=1, ystep=0.5] (7.001,7.001);
+ \draw[very thick, blue] (2,1) -- (6,3);
+ \draw[-{Stealth[length=2.6mm]}, blue] (4.191,2.096) -- (4.209,2.104);
+ \draw[very thick, blue] (6,3) -- (6,1.5);
+ \draw[-{Stealth[length=2.6mm]}, blue] (6,2.185) -- (6,2.165);
+ \draw[very thick, blue] (6,1.5) -- (2,0.5);
+ \draw[-{Stealth[length=2.6mm]}, blue] (3.81,0.952) -- (3.79,0.948);
+ \draw[very thick, blue] (2,0.5) -- (2,1);
+ \draw[-{Stealth[length=2.6mm]}, blue] (2,0.765) -- (2,0.785);
+ \fill[black] (2,1) circle (2pt) node[above left] {$A$};
+ \fill[black] (6,3) circle (2pt) node[above right] {$B$};
+ \fill[black] (6,1.5) circle (2pt) node[right] {$C$};
+ \fill[black] (2,0.5) circle (2pt) node[below left] {$D$};
+\end{tikzpicture}
+\end{center}
+
+\begin{abcliste}
+\abc \DuSie{Bestimme}{Bestimmen Sie} $p$, $V$ und $T$ in den Zuständen A bis D. Schliesst sich der Kreisprozess?
+\abc In der Skizze ist ein Schritt falsch. Welcher? Ist die Art des Prozesses falsch, seine Form im Diagramm oder der Faktor?
+\abc Die Schritte C $\to$ D und D $\to$ A haben in der Skizze die richtige Form. Warum liegen C und D trotzdem falsch?
+\abc \DuSie{Skizziere}{Skizzieren Sie} das richtige $p(T)$-Diagramm.
+\end{abcliste}

@@ -1,0 +1,11 @@
+\NewQty{mK}{2.64}[\kg]
+\NewQty{kF}{185}[\newton\per\meter]
+\NewQty{dx}{14.5}[\cm][e-2][\meter]
+\NewQty{muG}{0.27}
+\NewQty{g}{9.81}[\mpss]
+
+\SolQty{FF}[k\,\Delta x]{\kFX*\dxX}[\newton]
+\SolQty{FN}[m\,g]{\mKX*\gX}[\newton]
+\SolQty{FR}[\mu\,m\,g]{\muGX*\mKX*\gX}[\newton]
+\SolQty{aK}[\frac{k\,\Delta x-\mu\,m\,g}{m}]{(\FFX-\FRX)/\mKX}[\mpss]
+\SolQty{xn}[\frac{\mu\,m\,g}{k}]{\FRX/\kFX}[\meter]

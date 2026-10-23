@@ -1,0 +1,19 @@
+{
+  "title": "Welcher kippt auf der schiefen Ebene?",
+  "note": "aus learningphysics.ch (Lernziel tipping)",
+  "language": "GER",
+  "type": 2,
+  "default_difficulty": 3,
+  "default_points": 0,
+  "tags": [
+    "kippen",
+    "schiefe ebene",
+    "schwerpunkt",
+    "standfestigkeit",
+    "learningphysics"
+  ],
+  "subbranches": [
+    "Lever"
+  ],
+  "youtube": ""
+}

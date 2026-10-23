@@ -1,0 +1,26 @@
+{
+  "title": "Kräfte an Körpern – Aufgaben zu den Lernzielen",
+  "description": "Aufgaben für Lernziele der App Kräfte an Körpern von learningphysics.ch, die noch weniger als drei Aufgaben hatten (Lernziele: error, spring).",
+  "kind": "sheet",
+  "is_private": true,
+  "tags": [
+    "learningphysics"
+  ],
+  "items": [
+    {
+      "exercise": "force-systems-13-kiste-auf-der-feder"
+    },
+    {
+      "exercise": "force-systems-14-feder-an-der-wand"
+    },
+    {
+      "exercise": "force-systems-15-fehlvorstellung-schraeg-gezogen"
+    },
+    {
+      "exercise": "force-systems-16-fehlvorstellung-die-bewegungskraft"
+    },
+    {
+      "exercise": "force-systems-17-fehlvorstellung-seilkraft-gleich-gewichtskraft"
+    }
+  ]
+}

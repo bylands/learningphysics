@@ -1,0 +1,20 @@
+{
+  "title": "Welche Linie ist welche?",
+  "note": "aus learningphysics.ch (Lernziel identify)",
+  "language": "GER",
+  "type": 0,
+  "default_difficulty": 2,
+  "default_points": 0,
+  "tags": [
+    "isobar",
+    "isochor",
+    "isotherm",
+    "v-t-diagramm",
+    "zustandsgleichung",
+    "learningphysics"
+  ],
+  "subbranches": [
+    "Gas Laws"
+  ],
+  "youtube": ""
+}

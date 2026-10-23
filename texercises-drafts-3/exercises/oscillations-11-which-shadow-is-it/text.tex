@@ -1,0 +1,71 @@
+A pointer of length \AO\ turns anticlockwise about its fixed end at a frequency of \fO, two turns per second. At $t = 0$ it points to the right. A small body is always at the same height as the tip of the pointer: it moves up and down along the vertical axis, $y$ being its height above the centre.
+
+\begin{center}
+\begin{tikzpicture}[>=Stealth, font=\small]
+ \draw[->] (-2,0) -- (2.2,0);
+ \draw[->] (0,-2) -- (0,2.2);
+ \draw[black!40] (0,0) circle (1.5);
+ \draw[->, very thick, red] (0,0) -- (1.5,0);
+ \fill (0,0) circle (1.5pt);
+ \draw[->, thick] (40:1.9) arc (40:85:1.9) node[pos=0.4, above right] {$\omega$};
+ \draw[dashed, black!50] (1.5,0) -- (3.2,0);
+ \draw (3.2,-1.8) -- (3.2,1.8) node[above] {$y$};
+ \fill[blue] (3.05,-0.12) rectangle (3.35,0.12);
+ \node[right] at (3.4,0) {body};
+ \node[below] at (0.75,0) {$A$};
+\end{tikzpicture}
+\end{center}
+
+\begin{abcliste}
+\abc Give the amplitude $A$, the angular frequency $\omega$ and the period $T$ of the body's motion.
+\abc Which graph shows the displacement $y(t)$ of the body?
+
+\begin{minipage}{0.48\textwidth}
+\centering (a)\\[2pt]
+\begin{tikzpicture}[xscale=5.5, yscale=0.42, >=Stealth, font=\footnotesize]
+ \draw[black!15] (0,-3) grid[xstep=0.125, ystep=1] (1,3);
+ \draw[->] (0,0) -- (1.08,0) node[right] {$t$ in \si{\second}};
+ \draw[->] (0,-3.4) -- (0,3.8) node[above] {$y$ in \si{\cm}};
+ \foreach \xt in {0.25,0.5,0.75,1} {\draw (\xt,0.15) -- (\xt,-0.15); \node[below] at (\xt,-3) {\xt};}
+ \foreach \yt in {-3,3} \draw (0.012,\yt) -- (-0.012,\yt) node[left] {\yt};
+ \draw[very thick, blue, domain=0:1, samples=161, smooth] plot (\x, {-3*sin(720*\x)});
+\end{tikzpicture}
+\end{minipage}\hfill
+\begin{minipage}{0.48\textwidth}
+\centering (b)\\[2pt]
+\begin{tikzpicture}[xscale=5.5, yscale=0.42, >=Stealth, font=\footnotesize]
+ \draw[black!15] (0,-3) grid[xstep=0.125, ystep=1] (1,3);
+ \draw[->] (0,0) -- (1.08,0) node[right] {$t$ in \si{\second}};
+ \draw[->] (0,-3.4) -- (0,3.8) node[above] {$y$ in \si{\cm}};
+ \foreach \xt in {0.25,0.5,0.75,1} {\draw (\xt,0.15) -- (\xt,-0.15); \node[below] at (\xt,-3) {\xt};}
+ \foreach \yt in {-3,3} \draw (0.012,\yt) -- (-0.012,\yt) node[left] {\yt};
+ \draw[very thick, blue, domain=0:1, samples=161, smooth] plot (\x, {3*cos(720*\x)});
+\end{tikzpicture}
+\end{minipage}
+
+\medskip
+\begin{minipage}{0.48\textwidth}
+\centering (c)\\[2pt]
+\begin{tikzpicture}[xscale=5.5, yscale=0.42, >=Stealth, font=\footnotesize]
+ \draw[black!15] (0,-3) grid[xstep=0.125, ystep=1] (1,3);
+ \draw[->] (0,0) -- (1.08,0) node[right] {$t$ in \si{\second}};
+ \draw[->] (0,-3.4) -- (0,3.8) node[above] {$y$ in \si{\cm}};
+ \foreach \xt in {0.25,0.5,0.75,1} {\draw (\xt,0.15) -- (\xt,-0.15); \node[below] at (\xt,-3) {\xt};}
+ \foreach \yt in {-3,3} \draw (0.012,\yt) -- (-0.012,\yt) node[left] {\yt};
+ \draw[very thick, blue, domain=0:1, samples=161, smooth] plot (\x, {3*sin(720*\x)});
+\end{tikzpicture}
+\end{minipage}\hfill
+\begin{minipage}{0.48\textwidth}
+\centering (d)\\[2pt]
+\begin{tikzpicture}[xscale=5.5, yscale=0.42, >=Stealth, font=\footnotesize]
+ \draw[black!15] (0,-3) grid[xstep=0.125, ystep=1] (1,3);
+ \draw[->] (0,0) -- (1.08,0) node[right] {$t$ in \si{\second}};
+ \draw[->] (0,-3.4) -- (0,3.8) node[above] {$y$ in \si{\cm}};
+ \foreach \xt in {0.25,0.5,0.75,1} {\draw (\xt,0.15) -- (\xt,-0.15); \node[below] at (\xt,-3) {\xt};}
+ \foreach \yt in {-3,3} \draw (0.012,\yt) -- (-0.012,\yt) node[left] {\yt};
+ \draw[very thick, blue, domain=0:1, samples=161, smooth] plot (\x, {-3*cos(720*\x)});
+\end{tikzpicture}
+\end{minipage}
+
+\abc For each of the three wrong graphs: which mistake leads to it?
+\end{abcliste}

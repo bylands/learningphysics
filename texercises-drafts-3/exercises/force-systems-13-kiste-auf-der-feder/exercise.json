@@ -1,0 +1,19 @@
+{
+  "title": "Kiste auf der Feder",
+  "note": "aus learningphysics.ch (Lernziel spring)",
+  "language": "GER",
+  "type": 2,
+  "default_difficulty": 2,
+  "default_points": 0,
+  "tags": [
+    "federkonstante",
+    "federkraft",
+    "hookesches gesetz",
+    "kräftegleichgewicht",
+    "learningphysics"
+  ],
+  "subbranches": [
+    "Dynamics"
+  ],
+  "youtube": ""
+}

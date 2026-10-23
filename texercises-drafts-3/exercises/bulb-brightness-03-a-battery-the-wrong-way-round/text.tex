@@ -1,0 +1,22 @@
+All batteries are ideal and identical, and so are all bulbs. Three batteries are connected in series, but the top one is the wrong way round. They drive bulb A in parallel with the bulbs B and C in series (left). The reference circuit is one bulb $L_0$ connected to one battery (right).
+
+\begin{center}
+\begin{circuitikz}[scale=0.9, transform shape]
+ \draw (0,0) -- (0,0.3) to[battery1, invert] (0,1.6) to[battery1, invert] (0,2.9) to[battery1] (0,4.2) -- (0,4.4) -- (5.5,4.4);
+ \node at (-0.4,1.2) {$+$}; \node at (-0.4,0.7) {$-$};
+ \node at (-0.4,2.5) {$+$}; \node at (-0.4,2.0) {$-$};
+ \node at (-0.4,3.3) {$+$}; \node at (-0.4,3.8) {$-$};
+ \draw (3,4.4) to[lamp, l_=$A$] (3,0);
+ \draw (5.5,4.4) to[lamp, l=$B$] (5.5,2.2) to[lamp, l=$C$] (5.5,0) -- (0,0);
+ \fill (3,4.4) circle (2pt) (3,0) circle (2pt);
+ \draw (8,0.7) to[battery1, invert] (8,3.7) -- (10,3.7) to[lamp, l=$L_0$] (10,0.7) -- (8,0.7);
+ \node at (7.6,2.45) {$+$}; \node at (7.6,1.95) {$-$};
+ \node[below] at (9,0.5) {reference};
+\end{circuitikz}
+\end{center}
+
+\begin{abcliste}
+\abc What voltage do the three batteries give together, in units of the voltage $\Delta V_0$ of one battery?
+\abc Is each of the bulbs A, B and C brighter than $L_0$, equally bright, or less bright? Rank all four bulbs.
+\abc A student says: ``There are three batteries, so A is three times as bright as $L_0$.'' What is wrong with this?
+\end{abcliste}

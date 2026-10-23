@@ -1,0 +1,23 @@
+Eine Kiste (\mKO) liegt auf dem Boden und ist mit einer waagrechten Feder (Federkonstante \kFO) an einer Wand befestigt. Man zieht die Kiste von der Wand weg, bis die Feder um \dxO\ gedehnt ist, und lässt sie los. Die Kiste gleitet zur Wand hin; die Gleitreibungszahl zwischen Kiste und Boden beträgt \muGO. \DuSie{Rechne}{Rechnen Sie} mit \gO.
+
+\begin{center}
+\begin{tikzpicture}
+ \fill[pattern=north east lines] (-0.25,0) rectangle (0,1.6);
+ \draw[thick] (0,0) -- (0,1.6);
+ \draw[thick] (0,0) -- (5.5,0);
+ \foreach \x in {0.2,0.5,...,5.4} \draw (\x,0) -- ++(-0.15,-0.15);
+ \draw[thick, decorate, decoration={coil, aspect=0, segment length=5pt, amplitude=5pt}] (0,0.5) -- (3,0.5);
+ \draw[fill=brown!30] (3,0) rectangle (4.2,0.9);
+\end{tikzpicture}
+\end{center}
+
+\begin{abcliste}
+\abc
+\DuSie{Zeichne}{Zeichnen Sie} die Kräfte auf die Kiste kurz nach dem Loslassen ein, wenn sie schon gleitet und die Feder noch um \dxO\ gedehnt ist.
+
+\abc
+Wie gross ist die Beschleunigung der Kiste in diesem Moment?
+
+\abc
+Bei welcher Dehnung der Feder ist die Beschleunigung der zur Wand hin gleitenden Kiste null?
+\end{abcliste}
