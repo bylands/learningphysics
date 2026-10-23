@@ -8,6 +8,9 @@ and mathematics it needs, near-duplicates; load_categories, topic_tree), and "no
 hub-data/categories-extra.json, merged over it: OVERLAY); a sheet saved before may name TeXercises topics (the
 subbranches of exercise.json, exercise_topics), which still match (on_topics). 2. Learning objectives: pool.json (build_pool.py, reviewed by hand) lists
 for every app (module of the hub) and objective the TeXercises exercises that practise it, best first;
+catalogue.json (Claude's reading of every exercise: its learning objectives of a larger list, its quality 1-5
+and its difficulty 1-6) adds a module per topic of its tree, its objectives' exercises the best quality first
+(catalogue_pool; full_pool is both);
 of those on the topics, the teacher ticks objectives (objective_keys), and maybe the exercises on the
 topics that the pool links to none (loose_keys). 3. Balance: the share of concept questions (the task
 kind of categories.json: concept and explain; graph is "Both", it counts for whichever the sheet lacks;
@@ -20,7 +23,8 @@ start if the sheet has fewer exercises than objectives, the slots left that are 
 questions, problems or a difficulty go only to objectives that have one);
 of an objective's exercises it takes one in the sheet's language first, then the one that brings the sheet nearest to its aims (aims:
 the concept questions and the difficulty it lacks most), then one not too similar (TOO_SIMILAR) to those already
-chosen, then one without image, then the pool's order; never one that is a near-duplicate (near_dup: flagged
+chosen, then the best quality, then one without image, then the pool's order (one of quality WEAK or less only
+when no better one fits); never one that is a near-duplicate (near_dup: flagged
 so in categories.json) of one chosen, nor one flagged broken. Similarity alone never excludes an exercise:
 many exercises of the same type score 0.9 to 1 (for example simple uniform-motion problems), so it only orders.
 What the topics and objectives cannot give is said (notes: "only 2 concept questions on these topics and objectives").
@@ -266,14 +270,15 @@ def _category(eid: Optional[int], difficulty: Optional[int], cats: Dict[str, obj
 
 def exercise_meta(folder: Path) -> Dict[str, object]:
     """What a sheet needs of an exercise: {title, id (TeXercises', or None), lang (en, de), difficulty
-    (None if not given), type, kind, band, topics (TeXercises'), images, url}, and, if categories.json
+    (catalogue.json's, else TeXercises'; None if neither gives one), type, kind, band, topics
+    (TeXercises'), images, url, quality (catalogue.json's 1-5, or None)}, and, if categories.json
     knows it, {area, topic, subtopic: {id, label}, secondary: [subtopic ids], task (its task kind), flag
     ("dup:<id>", "broken" or None), features (for similarity)}; the kind then by its task kind. Read from
     its exercise.json (and text.tex: does it use a gallery image?), kept while the files are unchanged."""
-    cats = load_categories()
+    cats, cata = load_categories(), load_catalogue()
     try:
         stamp = ((folder / "exercise.json").stat().st_mtime_ns,
-                 (folder / "text.tex").stat().st_mtime_ns if (folder / "text.tex").is_file() else 0, cats["stamp"])
+                 (folder / "text.tex").stat().st_mtime_ns if (folder / "text.tex").is_file() else 0, cats["stamp"], cata["stamp"])
     except OSError:
         stamp = (0, 0, None)
     with _metas_guard:
@@ -300,10 +305,17 @@ def exercise_meta(folder: Path) -> Dict[str, object]:
            "images": "#image_path:" in text, "url": url if isinstance(url, str) and re.fullmatch(r"/exercise/[A-Za-z0-9_-]+/?", url) else None}
     eid = meta.get("id") if isinstance(meta.get("id"), int) and not isinstance(meta.get("id"), bool) else None
     out = {"title": out["title"], "id": eid, **{k: v for k, v in out.items() if k != "title"}}
+    read = cata["exercises"].get(str(eid)) if eid is not None else None  # catalogue.json: its quality, and its difficulty wins
+    out["quality"] = read["quality"] if read else None
+    if read and read["difficulty"] is not None:
+        diff = read["difficulty"]
+        out["difficulty"], out["band"] = diff, band(diff)
     more = _category(eid, diff, cats)
     if more:
         out.update(more)
         out["kind"] = task_kind(more["task"])
+    if read and read["dup_of"] and not out.get("flag"):  # a copy catalogue.json found: never on one sheet with it
+        out["flag"] = f"dup:{read['dup_of']}"
     with _metas_guard:
         _metas[str(folder)] = (stamp, out)
     return out
@@ -442,6 +454,95 @@ def similar(key: str, cat: Dict[str, Dict[str, object]], limit: int = 5, skip=()
     return [(k, round(v, 2)) for k, v in near if k not in skip][:limit]
 
 
+# ---------------------------------------------------------------------- catalogue.json
+CATALOGUE = HERE / "catalogue.json"
+CAT_APP = "c-"  # the modules of catalogue.json: one per topic of its tree ("c-forces"), next to the hub's apps
+WEAK = 2  # an exercise of this quality or less comes only when no better one fits
+_catalogue: Dict[str, object] = {}
+
+
+def _slug(text: str) -> str:
+    return re.sub(r"[^a-z0-9]+", "-", unicodedata.normalize("NFKD", text).encode("ascii", "ignore").decode().lower()).strip("-")[:36]
+
+
+def load_catalogue(path: Optional[Path] = None) -> Dict[str, object]:
+    """catalogue.json (Claude's reading of every exercise: its learning objectives, quality and
+    difficulty), read once (again when it changes): {"stamp", "apps": [{id, name, de, area, area_de,
+    objectives: [{id, en, de}]}] one per topic of its tree that has objectives, in the tree's order (ids
+    CAT_APP + the topic's slug; an objective's id is its catalogue id with "-" for "."), "of": objective id
+    (catalogue's) -> (app, objective id), "exercises": TeXercises id (a string) -> {objectives (catalogue
+    ids), quality (1-5), difficulty (1-6), dup_of (the id of the exercise it copies, or None)}}; all empty if it
+    is missing or unreadable."""
+    path = path or CATALOGUE
+    stamp = _stamp(path)
+    with _metas_guard:
+        if _catalogue.get("stamp") == stamp:
+            return _catalogue
+    raw = _read_json(path, stamp)
+    apps, of = [], {}
+    tree = raw.get("tree") if isinstance(raw.get("tree"), list) else []
+    for area in tree:
+        if not isinstance(area, dict):
+            continue
+        for topic in area.get("topics") or []:
+            if not isinstance(topic, dict) or not isinstance(topic.get("en"), str):
+                continue
+            app = CAT_APP + _slug(topic["en"])
+            objs = []
+            for sub in topic.get("subtopics") or []:
+                for o in (sub.get("objectives") or []) if isinstance(sub, dict) else []:
+                    if isinstance(o, dict) and isinstance(o.get("id"), str) and o["id"] not in of:
+                        oid = o["id"].replace(".", "-")[:40]
+                        of[o["id"]] = (app, oid)
+                        objs.append({"id": oid, "en": str(o.get("en") or oid), "de": str(o.get("de") or o.get("en") or oid)})
+            if objs and app not in {a["id"] for a in apps}:
+                apps.append({"id": app, "name": topic["en"], "de": str(topic.get("de") or topic["en"]),
+                             "area": str(area.get("en") or ""), "area_de": str(area.get("de") or area.get("en") or ""), "objectives": objs})
+    exs = {}
+    for eid, e in (raw.get("exercises") or {}).items() if isinstance(raw.get("exercises"), dict) else []:
+        if not isinstance(e, dict):
+            continue
+        q, d = e.get("quality"), e.get("difficulty")
+        exs[str(eid)] = {"objectives": [o for o in _strs(e.get("objectives")) if o in of],
+                         "quality": min(max(q, 1), 5) if isinstance(q, int) and not isinstance(q, bool) else None,
+                         "difficulty": min(max(d, 1), 6) if isinstance(d, int) and not isinstance(d, bool) else None,
+                         "dup_of": e["dup_of"] if isinstance(e.get("dup_of"), str) and e["dup_of"].isdigit() else None}
+    out = {"stamp": stamp, "apps": apps, "of": of, "exercises": exs}
+    with _metas_guard:
+        _catalogue.clear()
+        _catalogue.update(out)
+    return out
+
+
+def catalogue_pool(cat: Dict[str, Dict[str, object]]) -> Dict[str, object]:
+    """The modules of catalogue.json as the pool has its apps: {app: {"objectives": {objective: [keys]},
+    "exercises": {key: {...}}}}, of the exercises there (cat: exercise_meta by key); an objective's
+    exercises the best first: by quality (unknown as 3), then the sheet-friendly difficulty (nearest 2),
+    then the key."""
+    cata = load_catalogue()
+    by_id = {str(e["id"]): k for k, e in cat.items() if e.get("id") is not None}
+    out: Dict[str, Dict[str, object]] = {a["id"]: {"objectives": {o["id"]: [] for o in a["objectives"]}, "exercises": {}} for a in cata["apps"]}
+    for eid, e in cata["exercises"].items():
+        key = by_id.get(eid)
+        if key is None:
+            continue
+        m = cat[key]
+        for o in e["objectives"]:
+            app, oid = cata["of"][o]
+            out[app]["objectives"][oid].append(key)
+            out[app]["exercises"][key] = {"source": "catalogue", "title": m["title"], "lang": m["lang"], "difficulty": m["difficulty"],
+                                          "images": m["images"], "url": m["url"], "quality": e["quality"]}
+    for entry in out.values():
+        for keys in entry["objectives"].values():
+            keys.sort(key=lambda k: (-(cat[k].get("quality") or 3), abs((cat[k].get("difficulty") or 2) - 2), k))
+    return out
+
+
+def full_pool(cat: Dict[str, Dict[str, object]]) -> Dict[str, object]:
+    """pool.json (the hub's modules) and the modules of catalogue.json (catalogue_pool)."""
+    return {**load_pool(), **catalogue_pool(cat)}
+
+
 def info(pool: Dict[str, object], key: str, apps: Optional[List[str]] = None) -> Optional[Tuple[str, Dict[str, object]]]:
     """(app, the pool's entry) of an exercise: of the first of apps (the sheet's modules) that has it, else
     of any app; None if the pool does not know it."""
@@ -566,6 +667,10 @@ def suggest(bks: List[Tuple[Tuple[Optional[str], Optional[str]], List[str]]], ca
         """Too similar to one chosen (another as fitting comes first)."""
         return any(sim(k, c) >= TOO_SIMILAR for c in chosen)
 
+    def weak(k: str) -> bool:
+        """Of quality WEAK or less (catalogue.json): only when no better one fits."""
+        return (cat[k].get("quality") or 3) <= WEAK
+
     def need(k: str) -> int:
         e = cat[k]
         side = max(want[CONCEPT] - got[CONCEPT], want[PROBLEM] - got[PROBLEM]) if e["kind"] == BOTH else want[e["kind"]] - got[e["kind"]]
@@ -598,7 +703,8 @@ def suggest(bks: List[Tuple[Tuple[Optional[str], Optional[str]], List[str]]], ca
             free = [k for k in keys if k not in taken and all(t(k) for t in tests) and not clash(k)]
             if not free:
                 continue
-            k = min(free, key=lambda k: (cat[k]["lang"] != lang, -need(k), crowded(k), bool(cat[k]["images"]), keys.index(k)))
+            k = min(free, key=lambda k: (cat[k]["lang"] != lang, weak(k), -need(k), crowded(k), -(cat[k].get("quality") or 3),
+                                         bool(cat[k]["images"]), keys.index(k)))
             e = cat[k]
             side = e["kind"]
             if side == BOTH:  # for whichever the sheet lacks more (concept questions on a tie)
@@ -668,7 +774,7 @@ def alternatives(key: str, sheet: List[str], bks: List[Tuple[object, List[str]]]
     def rank(k: str):
         c = cat[k]
         same = c["kind"] == e["kind"] or BOTH in (c["kind"], e["kind"])
-        return (c["lang"] != lang, -sims[k], not same, abs(c["band"] - e["band"]), bool(c["images"]), -order[k][0], order[k][1], k)
+        return (c["lang"] != lang, (c.get("quality") or 3) <= WEAK, -sims[k], not same, abs(c["band"] - e["band"]), bool(c["images"]), -order[k][0], order[k][1], k)
     return sorted(order, key=rank)[:limit]
 
 
@@ -688,11 +794,22 @@ OTHER_AREA = ("Other", "Weitere")
 
 
 def area_of(app: str) -> Tuple[int, str, str]:
-    """(rank, English, German name) of the area of a module (AREAS; "Other" last)."""
+    """(rank, English, German name) of the area of a module (AREAS; a topic of catalogue.json by its area,
+    after them those AREAS does not name; "Other" last)."""
     for n, (en, de, ids) in enumerate(AREAS):
         if app in ids:
             return n, en, de
-    return len(AREAS), *OTHER_AREA
+    if app.startswith(CAT_APP):
+        areas: List[Tuple[str, str]] = []
+        for a in load_catalogue()["apps"]:
+            if (a["area"], a["area_de"]) not in areas:
+                areas.append((a["area"], a["area_de"]))
+            if a["id"] == app:
+                for n, (en, de, _) in enumerate(AREAS):
+                    if en.lower() == a["area"].lower():
+                        return n, en, de
+                return len(AREAS) + 1 + areas.index((a["area"], a["area_de"])), a["area"], a["area_de"]
+    return len(AREAS) + 100, *OTHER_AREA
 
 
 def coverage(pool: Dict[str, object], apps: List[Dict[str, object]], have) -> List[Dict[str, object]]:

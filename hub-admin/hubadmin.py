@@ -222,7 +222,8 @@ DRAFT_KEEP = 3600  # s: Claude's draft of a figure is kept this long for the edi
 # exercise sheets: their ids, the secret of a shared one's online version (in its address), limits
 SHEET_ID = re.compile(r"[0-9a-f]{12}")
 SHEET_TOKEN = re.compile(r"[A-Za-z0-9_-]{32}")
-MAX_SHEETS, MAX_MODULES, MAX_SHEET_EXERCISES, MAX_SHEET_TOPICS = 200, 40, 40, 160  # (topics: all subtopics of categories.json can be ticked)
+MAX_SHEETS, MAX_MODULES, MAX_SHEET_EXERCISES, MAX_SHEET_TOPICS = 200, 80, 40, 160  # (topics: all subtopics of categories.json can be ticked;
+# modules: the hub's apps and the topics of catalogue.json)
 SHEET_BALANCE = {"concept": 30, "easy": 30, "medium": 50, "hard": 20}  # in % (sheets.BALANCE)
 FETCH_RETRY = 600  # s: a gallery image TeXercises did not give is asked for again after this
 FETCH_FAILED = ".fetch-failed.json"  # in the images' folder: the fetches that failed
@@ -978,9 +979,10 @@ class Admin:
     def sheet_apps(self, sheetlib=None, have=None) -> List[Dict[str, object]]:
         """The modules a sheet can have: the hub's apps in the standard order, each with its learning
         objectives ({id, en, de}, from objectives.json next to the hub page) and the number of its
-        exercises in the pool that are there."""
+        exercises in the pool that are there; then the topics of catalogue.json (sheets.load_catalogue:
+        its larger list of objectives), in its tree's order."""
         known = read_config(self.hub.parent / "objectives.json")
-        pool = sheetlib.load_pool() if sheetlib else {}
+        pool = sheetlib.full_pool(sheetlib.catalog(have or {})) if sheetlib else {}
         out = []
         for a in self.standard_apps():
             entry = known.get(a["id"]) if isinstance(known, dict) else None
@@ -991,6 +993,9 @@ class Admin:
                 objs = [{"id": o, "en": o, "de": o} for o in pool[a["id"]].get("objectives", {}) if OBJECTIVE.fullmatch(o)]
             n = len([k for k in pool.get(a["id"], {}).get("exercises", {}) if have is None or k in have])
             out.append({"id": a["id"], "name": a["name"], **({"de": a["de"]} if a.get("de") else {}), "objectives": objs, "exercises": n})
+        for a in sheetlib.load_catalogue()["apps"] if sheetlib else []:
+            n = len([k for k in pool.get(a["id"], {}).get("exercises", {}) if have is None or k in have])
+            out.append({"id": a["id"], "name": a["name"], "de": a["de"], "objectives": a["objectives"], "exercises": n})
         return out
 
     def read_sheets(self) -> Dict[str, Dict[str, object]]:
@@ -1004,7 +1009,7 @@ class Admin:
         if sheetlib is None:
             raise ValueError("exercise sheets are not installed")
         have = sheetlib.available(self.texercises)
-        return sheetlib, sheetlib.load_pool(), have, self.sheet_apps(sheetlib, have)
+        return sheetlib, sheetlib.full_pool(sheetlib.catalog(have)), have, self.sheet_apps(sheetlib, have)
 
     def sheets_state(self) -> Dict[str, object]:
         sheetlib = sheets_module()
@@ -1015,7 +1020,7 @@ class Admin:
                                    "updated": s.get("updated", 0), "shared": bool(s.get("token"))} for i, s in sheets.items()),
                                  key=lambda x: -x["updated"])
         state["apps"] = self.sheet_apps(sheetlib, have)
-        state["topics"] = sheetlib.coverage(sheetlib.load_pool(), state["apps"], have) if sheetlib else []
+        state["topics"] = sheetlib.coverage(sheetlib.full_pool(sheetlib.catalog(have)), state["apps"], have) if sheetlib else []
         state["subjects"] = sheetlib.topic_counts(have) if sheetlib else []  # the TeXercises topics of the exercises there (sheets saved before)
         state["tree"] = sheetlib.topic_tree(have) if sheetlib else {"areas": [], "new": {"id": "_new", "exercises": 0, "concept": 0, "both": 0}}
         figs = sheets_module("figures")
@@ -1069,6 +1074,7 @@ class Admin:
                           "images": bool(e.get("images")), "app": found[0] if found else None, "available": k in have,
                           "topics": e.get("topics") or [], "objectives": tied.get(k, []),
                           "subtopic": e.get("subtopic"), "area": e.get("area"), "topic": e.get("topic"), "task": e.get("task"), "flag": e.get("flag"),
+                          "quality": e.get("quality"),
                           "url": TEXERCISES + url if isinstance(url, str) and re.fullmatch(r"/exercise/[A-Za-z0-9_-]+/?", url) else None}
         on = list(dict.fromkeys(k for _, ks in bks for k in ks))
         available = {x: sum(cat[k]["kind"] == x for k in on) for x in (sheetlib.CONCEPT, sheetlib.BOTH, sheetlib.PROBLEM)}
@@ -1337,9 +1343,10 @@ class Admin:
         sheetlib = sheets_module()
         if sheetlib is None:
             return "error", "exercise sheets are not installed"
-        pool = sheetlib.load_pool()
+        have = sheetlib.available(self.texercises)
+        pool = sheetlib.full_pool(sheetlib.catalog(have))
         title = str(s.get("title") or "")
-        return sheetlib.request_pdf(title, self.sheet_chosen(s, sheetlib, pool, sheetlib.available(self.texercises)), self.app_names(), self.texercises,
+        return sheetlib.request_pdf(title, self.sheet_chosen(s, sheetlib, pool, have), self.app_names(), self.texercises,
                                     self.sheet_cache, "both" if solutions else "exercises", self.sheet_opts(s, sheetlib),
                                     self.sheet_images)
 
@@ -1350,7 +1357,8 @@ class Admin:
         if not found or sheetlib is None:
             return None
         sid, s = found
-        pool, have = sheetlib.load_pool(), sheetlib.available(self.texercises)
+        have = sheetlib.available(self.texercises)
+        pool = sheetlib.full_pool(sheetlib.catalog(have))
         names = self.app_names()
         media = SheetMedia(self, f"/admin/sheet/s/{token}/")
         exercises = []
@@ -1364,7 +1372,10 @@ class Admin:
         return online_page(s, exercises, self.sheet_opts(s, sheetlib))
 
     def app_names(self) -> Dict[str, str]:
-        return {a["id"]: str(a.get("name") or a["id"]) for a in self.apps()}
+        """The name of every module: the hub's apps, and the topics of catalogue.json."""
+        sheetlib = sheets_module()
+        cata = {a["id"]: a["name"] for a in sheetlib.load_catalogue()["apps"]} if sheetlib else {}
+        return {**cata, **{a["id"]: str(a.get("name") or a["id"]) for a in self.apps()}}
 
     def store_texercises(self, data: bytes) -> Dict[str, int]:
         sheetlib = sheets_module()
@@ -4303,13 +4314,16 @@ SHEETS_JS = r"""
   const where = (d) => (d.subtopic ? [el('span', { class: 'subtopic', title: `${d.area} › ${d.topic}` }, d.subtopic.label)]
     : (d.topics || []).map((t) => el('span', { class: 'chip topic', title: 'Its topic on TeXercises (not yet categorised)' }, t)));
   let refused = new Set(); // exercises with an image TeXercises refused FETCH_TRIES times (from the image list)
+  const QUALITY = { 5: 'ready for a sheet', 4: 'good, minor flaws', 3: 'usable with care', 2: 'has an error: suggested only when nothing better fits', 1: 'unusable' };
   function chips(k) {
     const d = det(k);
     return el('span', { class: 'chips' },
       d.lang ? el('span', { class: 'chip' }, d.lang === 'de' ? 'DE' : 'EN') : '',
       d.kind ? el('span', { class: `chip kind-${d.kind}`, title: kindTip(d) }, KINDS[d.kind]) : '',
-      d.band ? el('span', { class: 'chip', title: d.difficulty ? `difficulty ${d.difficulty} on TeXercises` : 'no difficulty on TeXercises: counts as medium' },
+      d.band ? el('span', { class: 'chip', title: d.difficulty ? `difficulty ${d.difficulty} of 6 (catalogue.json, else TeXercises)` : 'no difficulty on TeXercises: counts as medium' },
         `${'★'.repeat(Math.min(d.difficulty || 0, 5))} ${BANDS[d.band]}`.trim()) : '',
+      d.quality ? el('span', { class: `chip${d.quality <= 2 ? ' bad' : d.quality === 3 ? ' warn' : ' quiet'}`,
+        title: `Quality ${d.quality} of 5 (catalogue.json): ${QUALITY[d.quality]}` }, `Q${d.quality}`) : '',
       refused.has(k) ? el('span', { class: 'chip bad', title: 'TeXercises refused its image three times: download it there and upload it under Images' }, 'image refused')
         : d.images ? el('span', { class: 'chip warn', title: 'Has an image: TeXercises does not export it; upload or fetch it under Images' }, 'image') : '',
       d.available === false ? el('span', { class: 'chip bad', title: 'Not in the uploaded export: left out of the PDF and the online version' }, 'missing') : '',
