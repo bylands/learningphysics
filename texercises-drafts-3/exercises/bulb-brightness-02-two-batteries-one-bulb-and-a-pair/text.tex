@@ -1,0 +1,21 @@
+All batteries are ideal and identical, and so are all bulbs. Two batteries in series drive bulb A in series with the pair of bulbs B and C in parallel (left). The reference circuit is one bulb $L_0$ connected to one battery (right).
+
+\begin{center}
+\begin{circuitikz}[scale=0.9, transform shape]
+ \draw (0,0) -- (0,0.4) to[battery1, invert] (0,2) to[battery1, invert] (0,3.6) -- (0,4)
+   to[lamp, l=$A$] (3,4) -- (5.5,4);
+ \draw (3.8,4) to[lamp, l_=$B$] (3.8,0);
+ \draw (5.5,4) to[lamp, l=$C$] (5.5,0) -- (0,0);
+ \fill (3.8,4) circle (2pt) (3.8,0) circle (2pt);
+ \node at (-0.4,1.45) {$+$};
+ \node at (-0.4,3.05) {$+$};
+ \draw (8,0.5) to[battery1, invert] (8,3.5) -- (10,3.5) to[lamp, l=$L_0$] (10,0.5) -- (8,0.5);
+ \node at (-0.4,0.95) {$-$};
+ \node at (-0.4,2.55) {$-$};
+ \node at (7.6,2.25) {$+$};
+ \node at (7.6,1.75) {$-$};
+ \node[below] at (9,0.3) {reference};
+\end{circuitikz}
+\end{center}
+
+Rank the bulbs A, B, C and the reference bulb $L_0$ by their brightness. Compare the voltage across each bulb and the current through it with those of $L_0$, and use $P = \Delta V\cdot I$.

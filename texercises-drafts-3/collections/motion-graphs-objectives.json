@@ -1,0 +1,20 @@
+{
+  "title": "Bewegungsdiagramme – Aufgaben zu den Lernzielen",
+  "description": "Aufgaben für Lernziele der App Bewegungsdiagramme von learningphysics.ch, die noch weniger als drei Aufgaben hatten (Lernziele: negative, sketch).",
+  "kind": "sheet",
+  "is_private": true,
+  "tags": [
+    "learningphysics"
+  ],
+  "items": [
+    {
+      "exercise": "motion-graphs-01-unter-der-achse-aber-vorwaerts"
+    },
+    {
+      "exercise": "motion-graphs-02-von-vt-zu-at"
+    },
+    {
+      "exercise": "motion-graphs-03-fehler-in-der-vt-skizze"
+    }
+  ]
+}

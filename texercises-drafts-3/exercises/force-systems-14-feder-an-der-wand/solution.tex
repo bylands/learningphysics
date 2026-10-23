@@ -1,0 +1,38 @@
+\begin{abcliste}
+\abc
+Senkrecht wirken die Gewichtskraft $\vec F_\mathrm{G}$ und die Normalkraft $\vec F_\mathrm{N}$ des Bodens. Die Feder ist gedehnt, also zieht sie die Kiste zurück zu ihrer entspannten Länge, zur Wand hin ($\vec F_\mathrm{F}$). Die Kiste gleitet zur Wand hin, also wirkt die Gleitreibung $\vec F_\mathrm{R}$ in die Gegenrichtung, von der Wand weg.
+\begin{center}
+\begin{tikzpicture}[>=Stealth]
+ \draw[fill=brown!30] (-0.6,0) rectangle (0.6,0.9);
+ \draw[->, very thick] (-0.15,0.45) -- (-0.15,-1.3) node[left] {$\vec F_\mathrm{G}$};
+ \fill (-0.15,0.45) circle (0.05);
+ \draw[->, very thick] (0.15,0) -- (0.15,1.75) node[right] {$\vec F_\mathrm{N}$};
+ \fill (0.15,0) circle (0.05);
+ \draw[->, very thick] (-0.6,0.5) -- (-2.6,0.5) node[left] {$\vec F_\mathrm{F}$};
+ \fill (-0.6,0.5) circle (0.05);
+ \draw[->, very thick] (0.4,0) -- (0.92,0) node[below right] {$\vec F_\mathrm{R}$};
+ \fill (0.4,0) circle (0.05);
+\end{tikzpicture}
+\end{center}
+
+\abc
+Senkrecht heben sich die Kräfte auf: $F_\mathrm{N} = m\,g$. Die Kräfte:
+\begin{align}
+ F_\mathrm{F} &= \FFF = \kF\cdot\dx = \FF \\
+ F_\mathrm{R} &= \FRF = \muG\cdot\mK\cdot\g = \FR
+\end{align}
+Waagrecht (zur Wand hin positiv): $F_\mathrm{F} - F_\mathrm{R} = m\,a$, also
+\begin{align}
+ a &= \aKF \\
+   &= \frac{\FF-\FR}{\mK} \\
+   &= \aK \approx \result{\aKP{0}{2}}
+\end{align}
+zur Wand hin. (Achtung: Die Dehnung muss in Metern eingesetzt werden, $\dxO = \dx$.)
+
+\abc
+Die Beschleunigung ist null, wenn die Federkraft gerade so gross ist wie die Gleitreibung: $k\,\Delta x_0 = \mu\,m\,g$.
+\begin{align}
+ \Delta x_0 &= \xnF = \frac{\FR}{\kF} = \xn \approx \result{\xnP{-2}{2}}
+\end{align}
+Dort ist die Kiste am schnellsten; danach bremst die Reibung stärker, als die Feder zieht.
+\end{abcliste}

@@ -8,10 +8,15 @@ edit `pool.json`). ★ difficulty, 🖼 has an image (not in the export: a place
 - **current**: Explain that the current is the same before and after a bulb or a group of bulbs: it is not used up.
   - Junctions (en, ★) `e19627-junctions`
   - Currents and Voltages in a Circuit (en, ★★ 🖼) `e22714-currents-and-voltages-in-a-circuit`
+  - Ammeters around a Parallel Pair (en, ★★) `bulb-brightness-01-ammeters-around-a-parallel-pair`
 - **power**: Rank the brightness of bulbs by their power ΔV · I.
   - Brightness (en, ★★ 🖼) `e22725-brightness`
+  - Two Batteries, One Bulb and a Pair (en, ★★★) `bulb-brightness-02-two-batteries-one-bulb-and-a-pair`
+  - A Battery the Wrong Way Round (en, ★★★) `bulb-brightness-03-a-battery-the-wrong-way-round`
 - **change**: Predict how the brightness changes when a bulb is added, removed or short-circuited, in series or in parallel.
   - Brightness (en, ★★ 🖼) `e22725-brightness`
+  - Opening a Branch Switch (en, ★★★) `bulb-brightness-04-opening-a-branch-switch`
+  - A Wire across the Middle Bulb (en, ★★) `bulb-brightness-05-a-wire-across-the-middle-bulb`
 - *for the app as a whole:* Battery `e22499-battery`; Electric Current `e19626-electric-current`; Electric Motor `e18134-electric-motor`; Household Electricity `e18078-household-electricity`; Ions and Electron Beams `e24447-ions-and-electron-beams`; Light Bulb `e18080-light-bulb-1`; Light Bulb `e22500-light-bulb`; Power of Light Bulbs `e22504-power-of-light-bulbs-1`; Rechargeable Battery `e18079-rechargeable-battery`; Rechargeable Battery `e22501-rechargeable-battery-1`; Which Way? `e24446-which-way`; Current Increase `e18091-current-increase`; Current as Derivative `e19625-current-as-derivative`
 
 ## circuit-trainer
@@ -93,7 +98,9 @@ edit `pool.json`). ★ difficulty, 🖼 has an image (not in the export: a place
   - Multi-Branch Circuit (en, ★★) `e24445-multi-branch-circuit`
   - Currents and Voltages in a Circuit (en, ★★ 🖼) `e22714-currents-and-voltages-in-a-circuit`
 - **error**: Find the wrong step in a sketch of the potential around a circuit.
-  - (none found)
+  - A Lamp that Raises the Potential (en, ★★★) `potential-circuit-01-a-lamp-that-raises-the-potential`
+  - The Sloping Wire (en, ★★★) `potential-circuit-02-the-sloping-wire`
+  - Two Batteries against Each Other (en, ★★★★) `potential-circuit-03-two-batteries-against-each-other`
 - *for the app as a whole:* Power of Light Bulbs `e19631-power-of-light-bulbs`; Old and New Batteries `e24450-old-and-new-batteries`; Three Light Bulbs `e22505-three-light-bulbs`
 
 ## capacitors
@@ -110,6 +117,7 @@ edit `pool.json`). ★ difficulty, 🖼 has an image (not in the export: a place
 - **sketch**: Sketch the voltages and the current against time while a capacitor charges or discharges, and find them at a moment with the loop rule.
   - RC-Glied im Gleich- und Wechselstromkreis (de, ★★★★) `e19006-rc-glied-im-gleich-und-wechselstromkreis`
   - RC-Kreis (de, ★★★★) `e19023-rc-kreis-2`
+  - Discharging through a Resistor (en, ★★★) `capacitors-01-discharging-through-a-resistor`
 - **tau**: Read the time constant τ = R·C or the half-life from a graph, and predict what a change of R or C does.
   - Capacitor Voltage while Discharging (en, ★) `e19063-capacitor-voltage-while-discharging`
   - Half-Life and Time Constant (en, ★) `e19053-half-life-and-time-constant`
@@ -164,9 +172,11 @@ edit `pool.json`). ★ difficulty, 🖼 has an image (not in the export: a place
 - **after**: Find the currents right after a switch closes or opens: the inductor current is kept, the others follow from Kirchhoff’s rules.
   - Voltage Peak (en, ★★) `e19314-voltage-peak`
   - Advanced RL Circuit (en, ★★★★ 🖼) `e19343-advanced-rl-circuit`
+  - Branch Switched In (en, ★★★★) `rl-switch-01-branch-switched-in`
 - **steady**: Find the steady currents long after a switch was set: the inductor then acts like a wire.
   - Making and Breaking Current (en, ★★★ 🖼) `e19309-making-and-breaking-current`
   - Advanced RL Circuit (en, ★★★★ 🖼) `e19343-advanced-rl-circuit`
+  - Bridge Removed (en, ★★★) `rl-switch-02-bridge-removed`
 - *for the app as a whole:* Energy stored in magnetic coil `e23795-energy-stored-in-magnetic-coil`; Inductivity of a Coil `e19305-inductivity-of-a-coil`; Magnetic energy density `e23796-magnetic-energy-density`; Breaking Current `e19307-breaking-current`; Compact Muon Solenoid `e19320-compact-muon-solenoid`; Electric and Magnetic Energy `e19321-electric-and-magnetic-energy`; Energy Density `e19322-energy-density`; Self-Induced EMF `e19306-self-induced-emf`; Self-induced emf for linear decrease `e23794-self-induced-emf-for-linear-decrease`
 
 ## torque
@@ -186,7 +196,9 @@ edit `pool.json`). ★ difficulty, 🖼 has an image (not in the export: a place
   - Eine Seilwinde (de, ★★) `e25088-eine-seilwinde`
   - Ein Kranausleger (de, ★★★) `e25090-ein-kranausleger`
 - **rank**: Rank the torques of forces drawn to scale.
-  - (none found)
+  - Drei Kräfte auf einer Platte ordnen (de, ★★) `torque-17-drei-kraefte-auf-einer-platte-ordnen`
+  - Schräge Kraft und Kraft durch die Achse (de, ★★★★) `torque-18-schraege-kraft-und-kraft-durch-die-achse`
+  - Gleiche Kraft, vier Richtungen (de, ★★) `torque-19-gleiche-kraft-vier-richtungen`
 - **weight**: Place the weight of a body at its centre of mass.
   - Eine Schubkarre (de, ★★) `torque-12-schubkarre`
   - Eine Einkaufstasche halten (de, ★★★) `torque-07-einkaufstasche`
@@ -224,9 +236,13 @@ edit `pool.json`). ★ difficulty, 🖼 has an image (not in the export: a place
   - Schwerpunkt dreier Massen am Stab (de, ★★) `e24666-schwerpunkt-dreier-massen-am-stab`
   - Schwerpunkt eines L-Profils (de, ★★) `e24663-schwerpunkt-eines-l-profils`
 - **stability**: Classify an equilibrium as stable, unstable or neutral from the position of the centre of mass.
-  - (none found)
+  - Vier Bretter an einer Achse (de, ★★) `centre-of-mass-01-vier-bretter-an-einer-achse`
+  - Schräg, aber im Gleichgewicht (de, ★★) `centre-of-mass-02-schraeg-aber-im-gleichgewicht`
+  - Fehler: indifferent? (de, ★★★) `centre-of-mass-03-fehler-indifferent`
 - **tipping**: Predict whether a body tips over by checking whether the line of action of its weight leaves the base.
   - Der Kipptest eines Busses (de, ★★★) `e24608-der-kipptest-eines-busses`
+  - Welcher kippt auf der schiefen Ebene? (de, ★★★) `centre-of-mass-04-welcher-kippt-auf-der-schiefen-ebene`
+  - Der schiefste fällt nicht (de, ★★★) `centre-of-mass-05-der-schiefste-faellt-nicht`
 
 ## coulomb
 
@@ -302,17 +318,24 @@ edit `pool.json`). ★ difficulty, 🖼 has an image (not in the export: a place
   - Eine Seilschaukel über dem See (de, ★★★) `e24541-eine-seilschaukel-uber-dem-see`
 - **path**: Explain why lifting work does not depend on the path, and where the work done by friction goes.
   - Skispringen (de, ★★★) `energy-conservation-06-skispringen`
+  - Heben oder Rampe? (de, ★★) `energy-conservation-11-heben-oder-rampe`
+  - Wo bleibt die Energie des Schlittens? (de, ★★) `energy-conservation-12-wo-bleibt-die-energie-des-schlittens`
 - **turn**: Tell the turning point of a bungee jump or a spring (v = 0) from its equilibrium position (largest speed).
   - Ein Trampolin (de, ★★★) `e24544-ein-trampolin`
   - Umkehrpunkte des Federpendels (de, ★★★★) `e24652-umkehrpunkte-des-federpendels`
+  - Klotz an der entspannten Feder (de, ★★★) `energy-conservation-13-klotz-an-der-entspannten-feder`
 - **error**: Find the wrong entry in an energy table.
-  - (none found)
+  - Fehler in der Bungee-Tabelle (de, ★★) `energy-conservation-14-fehler-in-der-bungee-tabelle`
+  - Fehler: Nullniveau beim Fallen auf die Feder (de, ★★★) `energy-conservation-15-fehler-nullniveau-beim-fallen-auf-die-feder`
+  - Fehler: Federkatapult (de, ★★) `energy-conservation-16-fehler-federkatapult`
 - *for the app as a whole:* Eine Seilschaukel über dem See `energy-conservation-07-seilschaukel`; Eine Steinschleuder `energy-conservation-08-steinschleuder`; Ein Trampolin `energy-conservation-10-trampolin`; Wasserbarometer `e19011-wasserbarometer-1`; John Deere 8400 `e18951-john-deere-8400`; Zusammenstoss `e18845-zusammenstoss`
 
 ## force-concepts
 
 - **first**: Predict the motion of a body on which no net force acts: it stays at rest or moves on in a straight line at constant velocity.
   - Vier Kugeln vom Tisch (de, ★★★) `force-concepts-01-vier-kugeln-vom-tisch`
+  - Die Schnur reisst (de, ★★) `force-concepts-02-die-schnur-reisst`
+  - Propeller aus (de, ★★) `force-concepts-03-propeller-aus`
 - **balanced**: Explain why balanced forces do not mean that a body is at rest: it may just as well move at constant velocity.
   - Fallende Kartonrolle (de, ★) `e24721-fallende-kartonrolle`
   - Antriebskraft beim Velofahren (de, ★★) `e24709-antriebskraft-beim-velofahren`
@@ -339,6 +362,7 @@ edit `pool.json`). ★ difficulty, 🖼 has an image (not in the export: a place
 - **equal**: State that the two forces of an interaction are equally large and opposite and act on different bodies, whatever their masses, charges or motion.
   - Copper Cube (en, ★) `e17318-copper-cube`
   - Kraftgesetz von Professor Siebenschlau (de, ★★★) `e24756-kraftgesetz-von-professor-siebenschlau`
+  - Lastwagen und Auto (de, ★★) `interaction-01-lastwagen-und-auto`
 - **partner**: Identify the partner of each force in a situation, such as mosquito and windscreen, nucleus and electron, or ice dancer and Earth.
   - Gegen eine Wand drücken (de, ★★) `e24755-gegen-eine-wand-drucken`
   - Gewichtheber mit Hantel (de, ★★★) `e24752-gewichtheber-mit-hantel`
@@ -346,6 +370,7 @@ edit `pool.json`). ★ difficulty, 🖼 has an image (not in the export: a place
 - **normal**: Explain why the normal force is not the partner of the weight, and find a wrong pair in a list of force pairs.
   - Astronaut auf dem Mond (de, ★★) `e24760-astronaut-auf-dem-mond`
   - Normalkraft ist nicht die Reaktionskraft zur Gewichtskraft (de, ★★★) `e24747-normalkraft-ist-nicht-die-reaktionskraft`
+  - Fehler: die hängende Lampe (de, ★★) `interaction-02-fehler-die-haengende-lampe`
 
 ## force-systems
 
@@ -405,6 +430,8 @@ edit `pool.json`). ★ difficulty, 🖼 has an image (not in the export: a place
   - Zwei verbundene Holzklötze (de, ★★★) `e24764-zwei-verbundene-holzklotze`
 - **spring**: Draw the spring force where the spring is attached, back towards its relaxed length (a stretched spring pulls, a compressed one pushes), find it with F = k Δx and use it in Newton’s second law.
   - Eine Fallschirmspringerin (de, ★★★) `force-systems-07-fallschirmspringerin`
+  - Kiste auf der Feder (de, ★★) `force-systems-13-kiste-auf-der-feder`
+  - Feder an der Wand (de, ★★★) `force-systems-14-feder-an-der-wand`
 - **drag**: Draw air resistance against the velocity (not the acceleration), knowing that it grows with speed, and use it in Newton’s second law: at terminal velocity it balances the weight.
   - Eine Fallschirmspringerin (de, ★★★) `force-systems-07-fallschirmspringerin`
   - Luftwiderstand (de, ★★★) `e18963-luftwiderstand`
@@ -412,7 +439,9 @@ edit `pool.json`). ★ difficulty, 🖼 has an image (not in the export: a place
   - Eine Fallschirmspringerin (de, ★★) `e24551-eine-fallschirmspringerin`
   - Inlineskaterin am Hang (de, ★★★) `e24723-inlineskaterin-am-hang`
 - **error**: Find the wrong step in a student’s free-body diagram and equations.
-  - (none found)
+  - Fehler: schräg gezogen (de, ★★★) `force-systems-15-fehler-schraeg-gezogen`
+  - Fehler: die „Bewegungskraft“ (de, ★★) `force-systems-16-fehler-die-bewegungskraft`
+  - Fehler: Seilkraft gleich Gewichtskraft (de, ★★★★) `force-systems-17-fehler-seilkraft-gleich-gewichtskraft`
 - *for the app as a whole:* Senke `e18952-senke`
 
 ## induction-match
@@ -455,10 +484,13 @@ edit `pool.json`). ★ difficulty, 🖼 has an image (not in the export: a place
   - Messtabelle: welche Bewegung ist beschleunigt? (de, ★★) `e24880-messtabelle-welche-bewegung-ist-beschleu`
   - Anfangsgeschwindigkeit aus Sekundenstrecken (de, ★★★) `e24881-anfangsgeschwindigkeit-aus-sekundenstrec`
 - **convert**: Turn a value table or a stroboscope picture into the s(t) graph of the motion.
-  - (none found)
+  - Kehrt das Fahrzeug um? (de, ★★) `motion-data-01-kehrt-das-fahrzeug-um`
+  - Vom Stroboskopbild zu s(t) (de, ★★) `motion-data-02-vom-stroboskopbild-zu-st`
+  - Der Wagen kehrt um (de, ★★★) `motion-data-03-der-wagen-kehrt-um`
 - **uniform**: Decide from the changes of position in equal time steps whether a motion is uniform or uniformly accelerated.
   - Beschleunigte Bewegung im Diagramm nachweisen (de, ★★) `e24885-beschleunigte-bewegung-im-diagramm-nachw`
   - Messtabelle: welche Bewegung ist beschleunigt? (de, ★★) `e24880-messtabelle-welche-bewegung-ist-beschleu`
+  - Drei Stroboskopbilder (de, ★★) `motion-data-04-drei-stroboskopbilder`
 
 ## motion-graphs
 
@@ -469,8 +501,11 @@ edit `pool.json`). ★ difficulty, 🖼 has an image (not in the export: a place
 - **negative**: Recognise a negative velocity in a falling s(t) graph or in decreasing positions in a value table.
   - Gleichförmige Bewegung in Diagrammen (de, ★) `e24864-gleichformige-bewegung-in-diagrammen`
   - s(t)- und v(t)-Diagramme zuordnen (de, ★★★) `e24888-st-und-vt-diagramme-zuordnen`
+  - Unter der Achse, aber vorwärts (de, ★★) `motion-graphs-01-unter-der-achse-aber-vorwaerts`
 - **sketch**: Sketch v(t) from s(t), and a(t) from v(t), and find the error in such a sketch.
   - s(t)- und v(t)-Diagramme zuordnen (de, ★★★) `e24888-st-und-vt-diagramme-zuordnen`
+  - Von v(t) zu a(t) (de, ★★★) `motion-graphs-02-von-vt-zu-at`
+  - Fehler in der v(t)-Skizze (de, ★★★★) `motion-graphs-03-fehler-in-der-vt-skizze`
 - **uniform**: Recognise a uniform acceleration as a straight line in v(t) and as a parabola in s(t).
   - Gleichförmige Bewegung in Diagrammen (de, ★) `e24864-gleichformige-bewegung-in-diagrammen`
   - Beschleunigte Bewegung im Diagramm nachweisen (de, ★★) `e24885-beschleunigte-bewegung-im-diagramm-nachw`
@@ -481,17 +516,27 @@ edit `pool.json`). ★ difficulty, 🖼 has an image (not in the export: a place
 
 - **area**: Find the displacement as the area under v(t), counting the area below the t axis as negative.
   - Beschleunigung und Strecke im v(t)-Diagramm (de, ★ 🖼) `e18962-beschleunigung-und-strecke-im-vt-diagram`
+  - Vor und zurück (de, ★★★★) `motion-areas-01-vor-und-zurueck`
+  - Senkrechter Wurf (de, ★★★) `motion-areas-02-senkrechter-wurf`
 - **farther**: Decide from v(t) graphs which body is farther from its start at a given time.
-  - (none found)
+  - Schneller heisst nicht weiter (de, ★★★) `motion-areas-03-schneller-heisst-nicht-weiter`
+  - Zurück am Start (de, ★★★) `motion-areas-04-zurueck-am-start`
+  - Unter der Achse (de, ★★) `motion-areas-05-unter-der-achse`
 - **mean**: Determine the mean velocity from a v(t) graph.
-  - (none found)
+  - Anfahren und fahren (de, ★★★) `motion-areas-06-anfahren-und-fahren`
+  - Mittlere Geschwindigkeit mit Umkehr (de, ★★★★) `motion-areas-07-mittlere-geschwindigkeit-mit-umkehr`
+  - Velofahrt (de, ★★★) `motion-areas-08-velofahrt`
 - **sketch**: Sketch s(t) from v(t), and v(t) from a(t), and find the error in such a sketch.
   - s(t)- und v(t)-Diagramme zuordnen (de, ★★★) `e24888-st-und-vt-diagramme-zuordnen`
+  - Von v(t) zu s(t) (de, ★★★) `motion-areas-09-von-vt-zu-st`
+  - Fehler: Fläche unter der Achse (de, ★★★★) `motion-areas-10-fehler-flaeche-unter-der-achse`
 
 ## oscillations
 
 - **circle**: Describe a simple harmonic motion as the projection of a uniform circular motion: the radius is the amplitude, the angular velocity is ω, one turn is one period.
   - The Tide in a Harbour (en, ★★★) `e24590-the-tide-in-a-harbour`
+  - Which Shadow Is It? (en, ★★) `oscillations-11-which-shadow-is-it`
+  - Shadow of a Turntable Peg (en, ★★★) `oscillations-12-shadow-of-a-turntable-peg`
 - **harmonic**: Decide whether a system oscillates harmonically by checking that its acceleration is proportional and opposite to its displacement, and read off ω.
   - A Tuning Fork (en, ★★) `oscillations-01-tuning-fork`
   - A Baby Bouncer (en, ★★★) `oscillations-05-baby-bouncer`
@@ -518,6 +563,8 @@ edit `pool.json`). ★ difficulty, 🖼 has an image (not in the export: a place
   - The Tide in a Harbour (en, ★★★) `e24590-the-tide-in-a-harbour`
 - **lc**: Recognise the LC circuit as the same equation with other quantities: the charge for the displacement, the current for the velocity, L for the mass and 1/C for the spring constant.
   - Resonance for Mechanical Oscillator (en, ★★) `e19904-resonance-for-mechanical-oscillator`
+  - Releasing a Charged Capacitor (en, ★★★) `oscillations-13-releasing-a-charged-capacitor`
+  - Retuning a Radio (en, ★★) `oscillations-14-retuning-a-radio`
 - *for the app as a whole:* Speed Bump `e19791-speed-bump`; Characteristic Equation `e19788-characteristic-equation`
 
 ## cyclic-processes
@@ -528,12 +575,17 @@ edit `pool.json`). ★ difficulty, 🖼 has an image (not in the export: a place
   - Zustände im Heissluftmotor (de, ★★★) `e24943-zustande-im-heissluftmotor`
   - Kreisprozess mit Luft (de, ★★★★) `e24990-kreisprozess-mit-luft`
 - **identify**: Identify isobaric, isochoric and isothermal processes in p(V), p(T) and V(T) diagrams, using pV ∝ T.
-  - (none found)
+  - Welche Linie ist welche? (de, ★★) `cyclic-processes-01-welche-linie-ist-welche`
+  - Zwei Isothermen im p(V)-Diagramm (de, ★★) `cyclic-processes-02-zwei-isothermen-im-pv-diagramm`
+  - Schritte im p(T)-Diagramm (de, ★★★) `cyclic-processes-03-schritte-im-pt-diagramm`
 - **sketch**: Sketch a cycle from a description and transfer it from one diagram to another.
   - Zustände im Heissluftmotor (de, ★★★) `e24943-zustande-im-heissluftmotor`
   - Kreisprozess mit Luft (de, ★★★★) `e24990-kreisprozess-mit-luft`
+  - Vom V(T)- ins p(V)-Diagramm (de, ★★★★) `cyclic-processes-04-vom-vt-ins-pv-diagramm`
 - **error**: Find the error in a sketch of a cycle.
-  - (none found)
+  - Gerade statt Hyperbel (de, ★★★) `cyclic-processes-05-gerade-statt-hyperbel`
+  - Faktor umgekehrt im p(T)-Diagramm (de, ★★★★) `cyclic-processes-06-faktor-umgekehrt-im-pt-diagramm`
+  - Achsen nur umbeschriftet (de, ★★★★) `cyclic-processes-07-achsen-nur-umbeschriftet`
 - *for the app as a whole:* Gasflasche `e18846-gasflasche-3`
 
 ## wave-propagation
@@ -556,6 +608,7 @@ edit `pool.json`). ★ difficulty, 🖼 has an image (not in the export: a place
 - **superpose**: Add the displacements of two overlapping crests point by point.
   - Triangle Superposition (en, ★ 🖼) `e20055-triangle-superposition`
   - Two Pulses on a Slinky (en, ★★★) `e24613-two-pulses-on-a-slinky`
+  - An Upright Step Meets an Inverted Ramp (en, ★★★) `wave-propagation-07-an-upright-step-meets-an-inverted-ramp`
 - **standing**: Locate the nodes and antinodes of a standing wave on a rope: nodes λ/2 apart, a node at a fixed end, an antinode at a free end.
   - Organ pipe (en, ★) `e23218-organ-pipe`
   - Guitar String (en, ★★) `e20014-guitar-string-1`
@@ -604,8 +657,11 @@ edit `pool.json`). ★ difficulty, 🖼 has an image (not in the export: a place
 - **sketch**: Sketch the field lines of point charges, of a charged wire, of a plate capacitor (a uniform field) and of plates and point charges together.
   - Field Line Image for an Electric Dipole (en, ★) `e22848-field-line-image-for-an-electric-dipole`
   - Field Line Images (en, ★ 🖼) `e17315-field-line-images`
+  - Charge above a Metal Plate (en, ★★★) `electric-field-10-charge-above-a-metal-plate`
 - **read**: Read the direction and the relative strength of a field from its field lines.
   - Electric Field Lines (en, ★ 🖼) `e17336-electric-field-lines`
+  - Hidden Signs (en, ★★★) `electric-field-11-hidden-signs`
+  - Inside and Outside a Capacitor (en, ★★) `electric-field-12-inside-and-outside-a-capacitor`
 - **dipole**: Determine the force and the torque on a dipole in a uniform field.
   - A Jet of Water and a Charged Rod (en, ★★★) `electric-field-07-bent-jet-of-water`
   - Force and Torque on Dipole (en, ★★ 🖼) `e22905-force-and-torque-on-dipole`
@@ -613,8 +669,11 @@ edit `pool.json`). ★ difficulty, 🖼 has an image (not in the export: a place
 - **equi**: Sketch equipotential lines at right angles to the field lines.
   - Equipotentials in field of electric dipole (en, ★) `e23028-equipotentials-in-field-of-electric-dipo`
   - Equipotentials of Two Positive Point Charges (en, ★) `e17488-equipotentials-of-two-positive-point-cha`
+  - Field Lines from Equipotentials (en, ★★★) `electric-field-13-field-lines-from-equipotentials`
 - **error**: Find the error in a sketch of field lines and equipotentials: lines that cross, equipotentials not at right angles to the field lines or wrongly spaced.
-  - (none found)
+  - Circles that Cross (en, ★★★) `electric-field-14-circles-that-cross`
+  - Evenly Spaced Circles (en, ★★★★) `electric-field-15-evenly-spaced-circles`
+  - Crossing Lines of a Dipole (en, ★★) `electric-field-16-crossing-lines-of-a-dipole`
 - *for the app as a whole:* A Laser Printer `electric-field-06-laser-printer`; By What Factor? `electric-field-08-by-what-factor`; Lightning Strikes a Car `electric-field-04-lightning-strikes-a-car`; Under a Thundercloud `electric-field-03-thundercloud`; An Electrostatic Precipitator `electric-field-05-electrostatic-precipitator`; Millikan's Oil Drop `electric-field-01-millikan-oil-drop`; Two Capacitors Compared `electric-field-09-two-capacitors`
 
 ## electric-potential
@@ -685,7 +744,9 @@ edit `pool.json`). ★ difficulty, 🖼 has an image (not in the export: a place
   - A Short Circuit between Two Cables (en, ★★) `e24576-a-short-circuit-between-two-cables`
   - Two Moving Charges (en, ★★★★) `e25071-two-moving-charges`
 - **error**: Find the wrong step in a student’s hand rule: the wrong hand, or the sign of the charge ignored.
-  - (none found)
+  - The Electron and the Right Hand (en, ★★★) `magnetic-forces-10-the-electron-and-the-right-hand`
+  - Current along the Electrons (en, ★★★) `magnetic-forces-11-current-along-the-electrons`
+  - The Sign Counted Twice (en, ★★★★) `magnetic-forces-12-the-sign-counted-twice`
 - *for the app as a whole:* Loudspeaker `e23384-loudspeaker`
 
 ## charged-particles
@@ -769,6 +830,8 @@ edit `pool.json`). ★ difficulty, 🖼 has an image (not in the export: a place
 
 - **wave**: Name the observations of the photoelectric effect that the wave model cannot explain: the threshold frequency, and a kinetic energy that does not depend on the brightness.
   - Sunburn, but not from a Heater (en, ★★) `e24593-sunburn-but-not-from-a-heater`
+  - How Long Would an Electron Have to Wait? (en, ★★★) `photons-13-how-long-would-an-electron-have-to-wait`
+  - Brighter, but Not Faster (en, ★★) `photons-14-brighter-but-not-faster`
 - **einstein**: Apply E = h·f and the energy balance h·f = φ + E_k,max, with E_k,max measured by the stopping voltage.
   - Bremsspektrum (de, ★) `e22043-bremsspektrum`
   - Charakteristische Röntgenlinien (de, ★) `e22041-charakteristische-rontgenlinien`

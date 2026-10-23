@@ -1,0 +1,54 @@
+\begin{abcliste}
+\abc A $\to$ B $\result{\text{isobar}}$ (Expansion), B $\to$ C $\result{\text{isochor}}$ (Druck halbiert), C $\to$ D $\result{\text{isobar}}$ (Kompression), D $\to$ A $\result{\text{isochor}}$ (Druck verdoppelt). Mit $T/T_0 = (p/p_0)\cdot(V/V_0)$:
+\begin{center}
+\begin{tabular}{lcccc}
+ & A & B & C & D \\ \hline
+ $p$ in $p_0$ & 2 & 2 & 1 & 1 \\
+ $V$ in $V_0$ & 1 & 3 & 3 & 1 \\
+ $T$ in $T_0$ & $\result{2}$ & $\result{6}$ & $\result{3}$ & $\result{1}$
+\end{tabular}
+\end{center}
+
+\abc Beim Umbeschriften wurde die Form einfach $\result{\text{kopiert}}$:
+\begin{itemize}
+\item Die Punkte liegen falsch: Auf der neuen waagrechten Achse steht jetzt $T$, aufgetragen sind aber die Werte von $V$. A zum Beispiel liegt bei $T = 2\,T_0$, $V = V_0$, nicht bei $(T_0, 2\,V_0)$.
+\item Die Formen sind falsch: Im $V(T)$-Diagramm ist eine waagrechte Linie eine Isochore. Die isobaren Schritte A $\to$ B und C $\to$ D müssen aber Geraden durch den Ursprung sein ($V \propto T$), die isochoren B $\to$ C und D $\to$ A waagrecht statt senkrecht.
+\item Der Drehsinn ist falsch: Der Schüler übernimmt den Uhrzeigersinn, im $V(T)$-Diagramm läuft der Prozess aber $\result{\text{im Gegenuhrzeigersinn}}$ (siehe c).
+\end{itemize}
+
+\abc A $\to$ B auf der Geraden $V = \frac{T}{2}$ (für $p = 2\,p_0$), B $\to$ C waagrecht bei $V = 3\,V_0$, C $\to$ D auf der Geraden $V = T$ (für $p = p_0$), D $\to$ A waagrecht bei $V = V_0$:
+\begin{center}
+\begin{tikzpicture}[x=0.9cm, y=0.9cm, >=Stealth, font=\small]
+ \draw[black!12] (0,0) grid[xstep=1, ystep=1] (7.001,4.001);
+ \draw[->] (0,0) -- (7.6,0) node[right] {$T$ in $T_0$};
+ \draw[->] (0,0) -- (0,4.6) node[above] {$V$ in $V_0$};
+ \node[below left] at (0,0) {\small 0};
+ \draw (1,0.08) -- (1,-0.08) node[below] {\small 1};
+ \draw (2,0.08) -- (2,-0.08) node[below] {\small 2};
+ \draw (3,0.08) -- (3,-0.08) node[below] {\small 3};
+ \draw (4,0.08) -- (4,-0.08) node[below] {\small 4};
+ \draw (5,0.08) -- (5,-0.08) node[below] {\small 5};
+ \draw (6,0.08) -- (6,-0.08) node[below] {\small 6};
+ \draw (7,0.08) -- (7,-0.08) node[below] {\small 7};
+ \draw (0.08,1) -- (-0.08,1) node[left] {\small 1};
+ \draw (0.08,2) -- (-0.08,2) node[left] {\small 2};
+ \draw (0.08,3) -- (-0.08,3) node[left] {\small 3};
+ \draw (0.08,4) -- (-0.08,4) node[left] {\small 4};
+ \draw[black!30, dashed] (0,0) -- (2,1);
+ \draw[black!30, dashed] (0,0) -- (1,1);
+ \draw[very thick, blue] (2,1) -- (6,3);
+ \draw[-{Stealth[length=2.6mm]}, blue] (4.191,2.096) -- (4.209,2.104);
+ \draw[very thick, blue] (6,3) -- (3,3);
+ \draw[-{Stealth[length=2.6mm]}, blue] (4.36,3) -- (4.34,3);
+ \draw[very thick, blue] (3,3) -- (1,1);
+ \draw[-{Stealth[length=2.6mm]}, blue] (1.907,1.907) -- (1.893,1.893);
+ \draw[very thick, blue] (1,1) -- (2,1);
+ \draw[-{Stealth[length=2.6mm]}, blue] (1.54,1) -- (1.56,1);
+ \fill[black] (2,1) circle (2pt) node[below right] {$A$};
+ \fill[black] (6,3) circle (2pt) node[above right] {$B$};
+ \fill[black] (3,3) circle (2pt) node[above left] {$C$};
+ \fill[black] (1,1) circle (2pt) node[above left] {$D$};
+\end{tikzpicture}
+\end{center}
+Im $p(V)$-Diagramm läuft der Prozess im Uhrzeigersinn, im $V(T)$-Diagramm $\result{\text{im Gegenuhrzeigersinn}}$.
+\end{abcliste}

@@ -1,0 +1,32 @@
+{
+  "title": "Kreisprozesse – Aufgaben zu den Lernzielen",
+  "description": "Aufgaben für Lernziele der App Kreisprozesse von learningphysics.ch, die noch weniger als drei Aufgaben hatten (Lernziele: error, identify, sketch).",
+  "kind": "sheet",
+  "is_private": true,
+  "tags": [
+    "learningphysics"
+  ],
+  "items": [
+    {
+      "exercise": "cyclic-processes-01-welche-linie-ist-welche"
+    },
+    {
+      "exercise": "cyclic-processes-02-zwei-isothermen-im-pv-diagramm"
+    },
+    {
+      "exercise": "cyclic-processes-03-schritte-im-pt-diagramm"
+    },
+    {
+      "exercise": "cyclic-processes-04-vom-vt-ins-pv-diagramm"
+    },
+    {
+      "exercise": "cyclic-processes-05-gerade-statt-hyperbel"
+    },
+    {
+      "exercise": "cyclic-processes-06-faktor-umgekehrt-im-pt-diagramm"
+    },
+    {
+      "exercise": "cyclic-processes-07-achsen-nur-umbeschriftet"
+    }
+  ]
+}

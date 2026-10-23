@@ -1,0 +1,30 @@
+Ein Stein ist mit einer Schnur an einem Pfosten festgebunden und gleitet auf glattem Eis im Kreis um den Pfosten, von oben gesehen im Gegenuhrzeigersinn. Im Punkt P reisst die Schnur. Die Reibung ist vernachlässigbar.
+
+\begin{center}
+\begin{tikzpicture}[>=Stealth, scale=0.9]
+ \draw[thin, dashed] (0,0) circle (2);
+ \draw[->, thin] (60:2.35) arc (60:120:2.35);
+ \fill (0,0) circle (0.08);
+ \node[above right] at (0,0) {Pfosten};
+ \draw[thick] (0,0) -- (0,-1.55);
+ \draw[thick] (0,-1.55) -- (0.08,-1.7);
+ % paths after P
+ \draw[very thick] (0,-2) .. controls (1.2,-2) and (2.2,-2.4) .. (2.6,-3.4) node[below] {A};
+ \draw[very thick] (0,-2) -- (3.4,-2) node[right] {B};
+ \draw[very thick] plot[domain=-90:15, samples=40] ({(2+0.0075*(\x+90))*cos(\x)}, {(2+0.0075*(\x+90))*sin(\x)}) node[right] {C};
+ \draw[very thick] (0,-2) -- (0,-3.6) node[below] {D};
+ \fill[gray] (0,-2) circle (0.14);
+ \node[below left] at (-0.1,-2.05) {P};
+\end{tikzpicture}
+\end{center}
+
+\begin{abcliste}
+\abc
+Auf welcher der Bahnen A bis D bewegt sich der Stein (von oben gesehen), nachdem die Schnur gerissen ist? Begründe.
+
+\abc
+Welche horizontalen Kräfte wirken auf den Stein nach P?
+
+\abc
+Wozu braucht es die Schnur vor P? Was ändert sich nach P an der Geschwindigkeit des Steins (Betrag und Richtung)?
+\end{abcliste}

@@ -1,0 +1,31 @@
+\begin{abcliste}
+\abc Before $t = 0$ the currents have been constant for a long time, so no emf is induced: the inductor acts like a wire. The branch with S is open, so the current flows through $R_1$, $R_2$ and $L$ only:
+\begin{align}
+ I_L &= \IlF = \frac{\Vb}{\Ra+\Rb} = \Il \approx \result{\IlP{-3}{3}}
+\end{align}
+
+\abc The current through an inductor cannot jump: right after switching it keeps its value,
+\begin{align}
+ I_2 &= I_L = \result{\IlP{-3}{3}}
+\end{align}
+The other currents follow from Kirchhoff's rules. Junction rule: $I_1 = I_2 + I_3$. Loop rule through the battery, $R_1$ and $R_3$ (the closed switch has no voltage): $V = R_1\,I_1 + R_3\,I_3 = R_1\,(I_L + I_3) + R_3\,I_3$. Solved for $I_3$:
+\begin{align}
+ I_3 &= \IcF = \frac{\Vb-\Ra\cdot\Il}{\Ra+\Rc} = \Ic \approx \result{\IcP{-3}{3}} \\
+ I_1 &= \IaF = \Il+\Ic = \Ia \approx \result{\IaP{-3}{3}}
+\end{align}
+The voltage across the two branches is the voltage across $R_3$:
+\begin{align}
+ U &= \UbF = \Rc\cdot\Ic = \Ub
+\end{align}
+In the inductor branch, $U = R_2\,I_L + V_L$, so
+\begin{align}
+ V_L &= \VLF = \Ub-\Rb\cdot\Il = \VL \approx \result{\VLP{0}{3}}
+\end{align}
+The induced emf is $\mathcal{E}_i = -V_L$, its size $|\mathcal{E}_i| \approx \result{\emfP{0}{3}}$. Before switching, the inductor branch had the voltage $R_2\,I_L = \SI{10.9}{\V}$; the new branch $R_3$ pulls the voltage across the branches down at once to $U \approx \UbP{0}{3}$, but not the inductor current.
+
+\abc
+\begin{align}
+ \frac{\Delta I_L}{\Delta t} &= \rateF = \frac{\VL}{\Lc} = \rate \approx \result{\rateP{0}{2}}
+\end{align}
+The inductor current falls (towards its new steady value), and the emf acts along the arrow, against this fall (Lenz's rule). The inductance decides only how fast the current changes; it does not change the values right after switching.
+\end{abcliste}

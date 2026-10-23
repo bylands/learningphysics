@@ -1,0 +1,19 @@
+{
+  "title": "Feder an der Wand",
+  "note": "aus learningphysics.ch (Lernziel spring)",
+  "language": "GER",
+  "type": 1,
+  "default_difficulty": 3,
+  "default_points": 0,
+  "tags": [
+    "aktionsprinzip",
+    "federkraft",
+    "gleitreibung",
+    "learningphysics",
+    "newtonsche gesetze"
+  ],
+  "subbranches": [
+    "Dynamics"
+  ],
+  "youtube": ""
+}

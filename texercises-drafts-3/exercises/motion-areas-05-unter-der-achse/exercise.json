@@ -1,0 +1,20 @@
+{
+  "title": "Unter der Achse",
+  "note": "aus learningphysics.ch (Lernziel farther)",
+  "language": "GER",
+  "type": 2,
+  "default_difficulty": 2,
+  "default_points": 0,
+  "tags": [
+    "fläche",
+    "kinematik",
+    "learningphysics",
+    "ortsänderung",
+    "v-t-diagramm",
+    "vorzeichen"
+  ],
+  "subbranches": [
+    "Kinematics"
+  ],
+  "youtube": ""
+}

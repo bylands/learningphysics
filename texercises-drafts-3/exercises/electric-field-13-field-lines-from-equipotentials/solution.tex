@@ -1,0 +1,45 @@
+\begin{abcliste}
+\abc Field lines cross the equipotentials at right angles and point from high to low potential. Here the equipotentials are arcs of circles round a point on the left, so the field lines run radially away from that point, \result{\text{outwards, to the right}}, from \SI{8}{\V} towards \SI{0}{\V}.
+
+\abc The steps of potential are all the same, \SI{2}{\V}. Where the equipotentials are closest, the potential changes fastest with the distance, $E \approx \frac{\Delta V}{\Delta s}$: the field is strongest \result{\text{on the left}}, between \SI{8}{\V} and \SI{6}{\V}, where the field lines are also closest together.
+
+\begin{center}
+\begin{tikzpicture}
+ \draw[black!30] (0.00,-1.92) rectangle (3.84,1.92);
+ \begin{scope}
+ \clip (0.00,-1.92) rectangle (3.84,1.92);
+ \draw[orange!90!black, thick] (-0.96,0.00) circle (1.280);
+ \draw[orange!90!black, thick] (-0.96,0.00) circle (1.558);
+ \draw[orange!90!black, thick] (-0.96,0.00) circle (1.991);
+ \draw[orange!90!black, thick] (-0.96,0.00) circle (2.757);
+ \draw[orange!90!black, thick] (-0.96,0.00) circle (4.480);
+\draw[blue!75!black, thick] plot[smooth] coordinates {(-0.42,-0.59) (3.32,-4.76)};
+\draw[blue!75!black, thick, -{Stealth[length=1.7mm, width=1.4mm]}] (0.134,-1.208) -- (0.201,-1.283);
+\draw[blue!75!black, thick] plot[smooth] coordinates {(-0.28,-0.42) (4.47,-3.39)};
+\draw[blue!75!black, thick, -{Stealth[length=1.7mm, width=1.4mm]}] (0.424,-0.860) -- (0.509,-0.913);
+\draw[blue!75!black, thick] plot[smooth] coordinates {(-0.19,-0.22) (5.19,-1.76)};
+\draw[blue!75!black, thick, -{Stealth[length=1.7mm, width=1.4mm]}] (0.607,-0.448) -- (0.703,-0.476);
+\draw[blue!75!black, thick] plot[smooth] coordinates {(-0.19,0.22) (5.19,1.76)};
+\draw[blue!75!black, thick, -{Stealth[length=1.7mm, width=1.4mm]}] (0.607,0.448) -- (0.703,0.476);
+\draw[blue!75!black, thick] plot[smooth] coordinates {(-0.28,0.42) (4.47,3.39)};
+\draw[blue!75!black, thick, -{Stealth[length=1.7mm, width=1.4mm]}] (0.424,0.860) -- (0.509,0.913);
+\draw[blue!75!black, thick] plot[smooth] coordinates {(-0.42,0.59) (3.32,4.76)};
+\draw[blue!75!black, thick, -{Stealth[length=1.7mm, width=1.4mm]}] (0.134,1.208) -- (0.201,1.283);
+ \end{scope}
+ \node[above right, inner sep=1.5pt, text=orange!60!black] at (0.32,0) {\scriptsize \SI{8}{\V}};
+ \node[below right, inner sep=1.5pt, text=orange!60!black] at (0.60,0) {\scriptsize \SI{6}{\V}};
+ \node[above right, inner sep=1.5pt, text=orange!60!black] at (1.03,0) {\scriptsize \SI{4}{\V}};
+ \node[below right, inner sep=1.5pt, text=orange!60!black] at (1.80,0) {\scriptsize \SI{2}{\V}};
+ \node[above right, inner sep=1.5pt, text=orange!60!black] at (3.52,0) {\scriptsize \SI{0}{\V}};
+ \draw[red!80!black, very thick] (0.34,-0.58) circle (0.2);
+ \node[red!80!black, below right, fill=white, inner sep=1pt] at (0.46,-0.70) {\small strongest};
+\end{tikzpicture}
+\end{center}
+
+\abc
+\begin{itemize}
+\item (1): the lines are at right angles to the equipotentials, but the arrows point from low to high potential. The field points the other way, towards lower potential.
+\item (2): these lines run along the equipotentials. Field lines cross them at right angles: along an equipotential the field does no work on a charge.
+\item (3): parallel straight lines cross the curved equipotentials at an angle, not at right angles (except on the middle line).
+\end{itemize}
+\end{abcliste}

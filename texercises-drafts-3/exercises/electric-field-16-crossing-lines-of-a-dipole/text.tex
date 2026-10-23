@@ -1,0 +1,68 @@
+A student sketched the field lines of a positive charge $+q$ and a negative charge $-q$ (a dipole).
+
+\begin{center}
+\begin{tikzpicture}
+ \draw[black!30] (-2.40,-1.76) rectangle (2.40,1.76);
+ \begin{scope}
+ \clip (-2.40,-1.76) rectangle (2.40,1.76);
+\draw[blue!75!black, thick] plot[smooth] coordinates {(-0.67,0.04) (3.06,1.04) (6.93,2.07)};
+\draw[blue!75!black, thick, -{Stealth[length=1.7mm, width=1.4mm]}] (-0.023,0.214) -- (0.074,0.239);
+\draw[blue!75!black, thick] plot[smooth] coordinates {(-0.70,0.10) (2.03,2.83) (4.86,5.66)};
+\draw[blue!75!black, thick, -{Stealth[length=1.7mm, width=1.4mm]}] (-0.226,0.574) -- (-0.156,0.644);
+\draw[blue!75!black, thick] plot[smooth] coordinates {(-0.76,0.13) (0.24,3.86) (1.27,7.73)};
+\draw[blue!75!black, thick, -{Stealth[length=1.7mm, width=1.4mm]}] (-0.586,0.777) -- (-0.561,0.874);
+\draw[blue!75!black, thick] plot[smooth] coordinates {(-0.84,0.13) (-1.84,3.86) (-2.87,7.73)};
+\draw[blue!75!black, thick, -{Stealth[length=1.7mm, width=1.4mm]}] (-1.014,0.777) -- (-1.039,0.874);
+\draw[blue!75!black, thick] plot[smooth] coordinates {(-0.90,0.10) (-3.63,2.83) (-6.46,5.66)};
+\draw[blue!75!black, thick, -{Stealth[length=1.7mm, width=1.4mm]}] (-1.374,0.574) -- (-1.444,0.644);
+\draw[blue!75!black, thick] plot[smooth] coordinates {(-0.93,0.04) (-4.66,1.04) (-8.53,2.07)};
+\draw[blue!75!black, thick, -{Stealth[length=1.7mm, width=1.4mm]}] (-1.577,0.214) -- (-1.674,0.239);
+\draw[blue!75!black, thick] plot[smooth] coordinates {(-0.93,-0.04) (-4.66,-1.04) (-8.53,-2.07)};
+\draw[blue!75!black, thick, -{Stealth[length=1.7mm, width=1.4mm]}] (-1.577,-0.214) -- (-1.674,-0.239);
+\draw[blue!75!black, thick] plot[smooth] coordinates {(-0.90,-0.10) (-3.63,-2.83) (-6.46,-5.66)};
+\draw[blue!75!black, thick, -{Stealth[length=1.7mm, width=1.4mm]}] (-1.374,-0.574) -- (-1.444,-0.644);
+\draw[blue!75!black, thick] plot[smooth] coordinates {(-0.84,-0.13) (-1.84,-3.86) (-2.87,-7.73)};
+\draw[blue!75!black, thick, -{Stealth[length=1.7mm, width=1.4mm]}] (-1.014,-0.777) -- (-1.039,-0.874);
+\draw[blue!75!black, thick] plot[smooth] coordinates {(-0.76,-0.13) (0.24,-3.86) (1.27,-7.73)};
+\draw[blue!75!black, thick, -{Stealth[length=1.7mm, width=1.4mm]}] (-0.586,-0.777) -- (-0.561,-0.874);
+\draw[blue!75!black, thick] plot[smooth] coordinates {(-0.70,-0.10) (2.03,-2.83) (4.86,-5.66)};
+\draw[blue!75!black, thick, -{Stealth[length=1.7mm, width=1.4mm]}] (-0.226,-0.574) -- (-0.156,-0.644);
+\draw[blue!75!black, thick] plot[smooth] coordinates {(-0.67,-0.04) (3.06,-1.04) (6.93,-2.07)};
+\draw[blue!75!black, thick, -{Stealth[length=1.7mm, width=1.4mm]}] (-0.023,-0.214) -- (0.074,-0.239);
+\draw[blue!75!black, thick] plot[smooth] coordinates {(8.53,2.07) (4.66,1.04) (0.93,0.04)};
+\draw[blue!75!black, thick, -{Stealth[length=1.7mm, width=1.4mm]}] (1.674,0.239) -- (1.577,0.214);
+\draw[blue!75!black, thick] plot[smooth] coordinates {(6.46,5.66) (3.63,2.83) (0.90,0.10)};
+\draw[blue!75!black, thick, -{Stealth[length=1.7mm, width=1.4mm]}] (1.444,0.644) -- (1.374,0.574);
+\draw[blue!75!black, thick] plot[smooth] coordinates {(2.87,7.73) (1.84,3.86) (0.84,0.13)};
+\draw[blue!75!black, thick, -{Stealth[length=1.7mm, width=1.4mm]}] (1.039,0.874) -- (1.014,0.777);
+\draw[blue!75!black, thick] plot[smooth] coordinates {(-1.27,7.73) (-0.24,3.86) (0.76,0.13)};
+\draw[blue!75!black, thick, -{Stealth[length=1.7mm, width=1.4mm]}] (0.561,0.874) -- (0.586,0.777);
+\draw[blue!75!black, thick] plot[smooth] coordinates {(-4.86,5.66) (-2.03,2.83) (0.70,0.10)};
+\draw[blue!75!black, thick, -{Stealth[length=1.7mm, width=1.4mm]}] (0.156,0.644) -- (0.226,0.574);
+\draw[blue!75!black, thick] plot[smooth] coordinates {(-6.93,2.07) (-3.06,1.04) (0.67,0.04)};
+\draw[blue!75!black, thick, -{Stealth[length=1.7mm, width=1.4mm]}] (-0.074,0.239) -- (0.023,0.214);
+\draw[blue!75!black, thick] plot[smooth] coordinates {(-6.93,-2.07) (-3.06,-1.04) (0.67,-0.04)};
+\draw[blue!75!black, thick, -{Stealth[length=1.7mm, width=1.4mm]}] (-0.074,-0.239) -- (0.023,-0.214);
+\draw[blue!75!black, thick] plot[smooth] coordinates {(-4.86,-5.66) (-2.03,-2.83) (0.70,-0.10)};
+\draw[blue!75!black, thick, -{Stealth[length=1.7mm, width=1.4mm]}] (0.156,-0.644) -- (0.226,-0.574);
+\draw[blue!75!black, thick] plot[smooth] coordinates {(-1.27,-7.73) (-0.24,-3.86) (0.76,-0.13)};
+\draw[blue!75!black, thick, -{Stealth[length=1.7mm, width=1.4mm]}] (0.561,-0.874) -- (0.586,-0.777);
+\draw[blue!75!black, thick] plot[smooth] coordinates {(2.87,-7.73) (1.84,-3.86) (0.84,-0.13)};
+\draw[blue!75!black, thick, -{Stealth[length=1.7mm, width=1.4mm]}] (1.039,-0.874) -- (1.014,-0.777);
+\draw[blue!75!black, thick] plot[smooth] coordinates {(6.46,-5.66) (3.63,-2.83) (0.90,-0.10)};
+\draw[blue!75!black, thick, -{Stealth[length=1.7mm, width=1.4mm]}] (1.444,-0.644) -- (1.374,-0.574);
+\draw[blue!75!black, thick] plot[smooth] coordinates {(8.53,-2.07) (4.66,-1.04) (0.93,-0.04)};
+\draw[blue!75!black, thick, -{Stealth[length=1.7mm, width=1.4mm]}] (1.674,-0.239) -- (1.577,-0.214);
+ \end{scope}
+ \fill[red!75!black] (-0.80,0.00) circle (0.17); \node[white] at (-0.80,0.00) {\scriptsize $+$};
+ \node[below=0.12cm, fill=white, inner sep=1pt, fill opacity=0.8, text opacity=1] at (-0.80,0.00) {\small $+q$};
+ \fill[blue!60!black] (0.80,0.00) circle (0.17); \node[white] at (0.80,0.00) {\scriptsize $-$};
+ \node[below=0.12cm, fill=white, inner sep=1pt, fill opacity=0.8, text opacity=1] at (0.80,0.00) {\small $-q$};
+\end{tikzpicture}
+\end{center}
+
+\begin{abcliste}
+\abc Which feature of the sketch is wrong? What did the student do?
+\abc Why can two field lines never cross?
+\abc Sketch the field lines correctly.
+\end{abcliste}

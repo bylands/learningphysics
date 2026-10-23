@@ -1,0 +1,66 @@
+Eine feste Menge eines idealen Gases durchläuft den Kreisprozess im $p(V)$-Diagramm links. Die Achsen sind in Einheiten von $p_0$, $V_0$ und $T_0 = \frac{p_0V_0}{nR}$ beschriftet; damit ist $T/T_0 = (p/p_0)\cdot(V/V_0)$. Ein Schüler soll ihn in ein $V(T)$-Diagramm übertragen. Er zeichnet dasselbe Rechteck und beschriftet nur die Achsen um (rechts).
+
+\begin{minipage}{0.48\textwidth}
+\begin{center}
+\begin{tikzpicture}[x=0.9cm, y=0.9cm, >=Stealth, font=\small]
+ \draw[black!12] (0,0) grid[xstep=1, ystep=1] (4.001,3.001);
+ \draw[->] (0,0) -- (4.6,0) node[right] {$V$ in $V_0$};
+ \draw[->] (0,0) -- (0,3.6) node[above] {$p$ in $p_0$};
+ \node[below left] at (0,0) {\small 0};
+ \draw (1,0.08) -- (1,-0.08) node[below] {\small 1};
+ \draw (2,0.08) -- (2,-0.08) node[below] {\small 2};
+ \draw (3,0.08) -- (3,-0.08) node[below] {\small 3};
+ \draw (4,0.08) -- (4,-0.08) node[below] {\small 4};
+ \draw (0.08,1) -- (-0.08,1) node[left] {\small 1};
+ \draw (0.08,2) -- (-0.08,2) node[left] {\small 2};
+ \draw (0.08,3) -- (-0.08,3) node[left] {\small 3};
+ \draw[very thick, blue] (1,2) -- (3,2);
+ \draw[-{Stealth[length=2.6mm]}, blue] (2.09,2) -- (2.11,2);
+ \draw[very thick, blue] (3,2) -- (3,1);
+ \draw[-{Stealth[length=2.6mm]}, blue] (3,1.46) -- (3,1.44);
+ \draw[very thick, blue] (3,1) -- (1,1);
+ \draw[-{Stealth[length=2.6mm]}, blue] (1.91,1) -- (1.89,1);
+ \draw[very thick, blue] (1,1) -- (1,2);
+ \draw[-{Stealth[length=2.6mm]}, blue] (1,1.54) -- (1,1.56);
+ \fill[black] (1,2) circle (2pt) node[above left] {$A$};
+ \fill[black] (3,2) circle (2pt) node[above right] {$B$};
+ \fill[black] (3,1) circle (2pt) node[below right] {$C$};
+ \fill[black] (1,1) circle (2pt) node[below left] {$D$};
+\end{tikzpicture}
+\end{center}
+\end{minipage}\hfill
+\begin{minipage}{0.48\textwidth}
+\begin{center}
+\begin{tikzpicture}[x=0.9cm, y=0.9cm, >=Stealth, font=\small]
+ \draw[black!12] (0,0) grid[xstep=1, ystep=1] (4.001,3.001);
+ \draw[->] (0,0) -- (4.6,0) node[right] {$T$ in $T_0$};
+ \draw[->] (0,0) -- (0,3.6) node[above] {$V$ in $V_0$};
+ \node[below left] at (0,0) {\small 0};
+ \draw (1,0.08) -- (1,-0.08) node[below] {\small 1};
+ \draw (2,0.08) -- (2,-0.08) node[below] {\small 2};
+ \draw (3,0.08) -- (3,-0.08) node[below] {\small 3};
+ \draw (4,0.08) -- (4,-0.08) node[below] {\small 4};
+ \draw (0.08,1) -- (-0.08,1) node[left] {\small 1};
+ \draw (0.08,2) -- (-0.08,2) node[left] {\small 2};
+ \draw (0.08,3) -- (-0.08,3) node[left] {\small 3};
+ \draw[very thick, blue] (1,2) -- (3,2);
+ \draw[-{Stealth[length=2.6mm]}, blue] (2.09,2) -- (2.11,2);
+ \draw[very thick, blue] (3,2) -- (3,1);
+ \draw[-{Stealth[length=2.6mm]}, blue] (3,1.46) -- (3,1.44);
+ \draw[very thick, blue] (3,1) -- (1,1);
+ \draw[-{Stealth[length=2.6mm]}, blue] (1.91,1) -- (1.89,1);
+ \draw[very thick, blue] (1,1) -- (1,2);
+ \draw[-{Stealth[length=2.6mm]}, blue] (1,1.54) -- (1,1.56);
+ \fill[black] (1,2) circle (2pt) node[above left] {$A$};
+ \fill[black] (3,2) circle (2pt) node[above right] {$B$};
+ \fill[black] (3,1) circle (2pt) node[below right] {$C$};
+ \fill[black] (1,1) circle (2pt) node[below left] {$D$};
+\end{tikzpicture}
+\end{center}
+\end{minipage}
+
+\begin{abcliste}
+\abc Benennen Sie die vier Schritte und bestimmen Sie die Temperatur in A, B, C und D.
+\abc Erklären Sie, was an der Skizze des Schülers falsch ist. Nennen Sie mindestens zwei Fehler.
+\abc Zeichnen Sie das richtige $V(T)$-Diagramm mit Pfeilen. In welchem Drehsinn wird der Kreisprozess dort durchlaufen?
+\end{abcliste}

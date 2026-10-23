@@ -1,0 +1,10 @@
+\NewQty{vNull}{2}[\mps]
+\NewQty{tOne}{3}[\s]
+\NewQty{tTwo}{5}[\s]
+\NewQty{tE}{7}[\s]
+
+\SolQty{sOne}[v_0\,t_1]{\vNullX*\tOneX}[\m]
+\SolQty{tTurn}[\frac{t_1+t_2}{2}]{(\tOneX+\tTwoX)/2}[\s]
+\SolQty{sMax}[s_1+\frac{1}{2}\,v_0\,(t_\mathrm{U}-t_1)]{\sOneX+0.5*\vNullX*(\tTurnX-\tOneX)}[\m]
+\SolQty{sTwo}[s_1]{\sOneX}[\m]
+\SolQty{sEnd}[s_2-v_0\,(t_\mathrm{e}-t_2)]{\sTwoX-\vNullX*(\tEX-\tTwoX)}[\m]

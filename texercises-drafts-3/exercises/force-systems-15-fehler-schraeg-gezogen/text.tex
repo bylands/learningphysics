@@ -1,0 +1,36 @@
+Eine Kiste (\mKO) wird mit einem Seil über einen rauen, ebenen Boden gezogen. Das Seil zieht mit \FZO\ unter dem Winkel \alO\ gegen die Waagrechte. Die Gleitreibungszahl beträgt \muGO; rechne mit \gO. Gesucht ist die Beschleunigung der Kiste. Nora rechnet so:
+
+\begin{center}
+\begin{tikzpicture}[>=Stealth]
+ \draw[fill=brown!30] (-0.8,0) rectangle (0.8,1);
+ \draw[->, very thick] (-0.15,0.5) -- (-0.15,-1.6) node[left] {$\vec F_\mathrm{G}$};
+ \fill (-0.15,0.5) circle (0.05);
+ \draw[->, very thick] (0.15,0) -- (0.15,1.6) node[right] {$\vec F_\mathrm{N}$};
+ \fill (0.15,0) circle (0.05);
+ \draw[->, very thick] (-0.5,0) -- (-1.3,0) node[below left] {$\vec F_\mathrm{R}$};
+ \fill (-0.5,0) circle (0.05);
+ \draw[->, very thick] (0.8,0.5) -- (2.13,1.19) node[right] {$\vec F$};
+ \fill (0.8,0.5) circle (0.05);
+ \draw[dashed] (0.8,0.5) -- (2.2,0.5);
+ \draw (1.4,0.5) arc (0:27.5:0.6);
+ \node at (1.65,0.65) {$\alpha$};
+\end{tikzpicture}
+\end{center}
+
+\begin{enumerate}
+\item Kräfte auf die Kiste (siehe Zeichnung): Gewichtskraft, Normalkraft, Gleitreibung, Zugkraft.
+\item Senkrecht ruht die Kiste: $F_\mathrm{N} - m\,g = 0$, also $F_\mathrm{N} = m\,g = \NSP{0}{3}$.
+\item Gleitreibung: $F_\mathrm{R} = \mu\,F_\mathrm{N} = \RSP{0}{3}$.
+\item Waagrecht (in Zugrichtung positiv): $F\cos\alpha - F_\mathrm{R} = m\,a$, also $a = \aSP{0}{2}$.
+\end{enumerate}
+
+\begin{abcliste}
+\abc
+Welcher Schritt ist falsch? Begründe.
+
+\abc
+Berechne die Normalkraft richtig.
+
+\abc
+Wie gross ist die Beschleunigung der Kiste wirklich?
+\end{abcliste}

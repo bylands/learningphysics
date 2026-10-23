@@ -1,0 +1,26 @@
+{
+  "title": "Schwerpunkt – Aufgaben zu den Lernzielen",
+  "description": "Aufgaben für Lernziele der App Schwerpunkt von learningphysics.ch, die noch weniger als drei Aufgaben hatten (Lernziele: stability, tipping).",
+  "kind": "sheet",
+  "is_private": true,
+  "tags": [
+    "learningphysics"
+  ],
+  "items": [
+    {
+      "exercise": "centre-of-mass-01-vier-bretter-an-einer-achse"
+    },
+    {
+      "exercise": "centre-of-mass-02-schraeg-aber-im-gleichgewicht"
+    },
+    {
+      "exercise": "centre-of-mass-03-fehler-indifferent"
+    },
+    {
+      "exercise": "centre-of-mass-04-welcher-kippt-auf-der-schiefen-ebene"
+    },
+    {
+      "exercise": "centre-of-mass-05-der-schiefste-faellt-nicht"
+    }
+  ]
+}

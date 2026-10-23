@@ -1,0 +1,41 @@
+{
+  "title": "Flächen unter v(t) – Aufgaben zu den Lernzielen",
+  "description": "Aufgaben für Lernziele der App Flächen unter v(t) von learningphysics.ch, die noch weniger als drei Aufgaben hatten (Lernziele: area, farther, mean, sketch).",
+  "kind": "sheet",
+  "is_private": true,
+  "tags": [
+    "learningphysics"
+  ],
+  "items": [
+    {
+      "exercise": "motion-areas-01-vor-und-zurueck"
+    },
+    {
+      "exercise": "motion-areas-02-senkrechter-wurf"
+    },
+    {
+      "exercise": "motion-areas-03-schneller-heisst-nicht-weiter"
+    },
+    {
+      "exercise": "motion-areas-04-zurueck-am-start"
+    },
+    {
+      "exercise": "motion-areas-05-unter-der-achse"
+    },
+    {
+      "exercise": "motion-areas-06-anfahren-und-fahren"
+    },
+    {
+      "exercise": "motion-areas-07-mittlere-geschwindigkeit-mit-umkehr"
+    },
+    {
+      "exercise": "motion-areas-08-velofahrt"
+    },
+    {
+      "exercise": "motion-areas-09-von-vt-zu-st"
+    },
+    {
+      "exercise": "motion-areas-10-fehler-flaeche-unter-der-achse"
+    }
+  ]
+}

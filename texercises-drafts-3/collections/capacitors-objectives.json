@@ -1,0 +1,14 @@
+{
+  "title": "Capacitors – exercises for the learning objectives",
+  "description": "Exercises for learning objectives of the learningphysics.ch app Capacitors that had fewer than three exercises (objectives: sketch).",
+  "kind": "sheet",
+  "is_private": true,
+  "tags": [
+    "learningphysics"
+  ],
+  "items": [
+    {
+      "exercise": "capacitors-01-discharging-through-a-resistor"
+    }
+  ]
+}

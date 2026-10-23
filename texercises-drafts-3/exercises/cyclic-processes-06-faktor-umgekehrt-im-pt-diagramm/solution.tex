@@ -1,0 +1,54 @@
+\begin{abcliste}
+\abc Isochor ändern sich $p$ und $T$ um denselben Faktor, isotherm ändert sich $p$ um den Kehrwert des Faktors von $V$:
+\begin{center}
+\begin{tabular}{lcccc}
+ & A & B & C & D \\ \hline
+ $p$ in $p_0$ & 1 & 3 & 6 & 2 \\
+ $V$ in $V_0$ & 2 & 2 & 1 & 1 \\
+ $T$ in $T_0$ & 2 & 6 & 6 & 2
+\end{tabular}
+\end{center}
+D hat dieselbe Temperatur wie A, $T = 2\,T_0$: Der letzte Schritt (isotherme Expansion von $V_0$ auf $2\,V_0$, $p$ halbiert sich) führt $\result{\text{genau zurück nach A}}$.
+
+\abc Falsch ist $\result{\text{B} \to \text{C}}$. Art und Form stimmen: Isotherm ist im $p(T)$-Diagramm eine senkrechte Linie. Aber der $\result{\text{Faktor ist umgekehrt}}$: Bei der Kompression auf das halbe Volumen verdoppelt sich der Druck (von $3\,p_0$ auf $6\,p_0$); in der Skizze halbiert er sich auf $1.5\,p_0$, als ob sich das Gas auf das doppelte Volumen ausdehnen würde.
+
+\abc Die folgenden Schritte sind richtig gezeichnet, aber vom falschen Punkt C aus: Der Schüler hat $p$ wieder durch 3 geteilt und ist dann isotherm zu A zurück. Sein C liegt bei $V = \frac{6}{1.5}\,V_0 = 4\,V_0$ statt bei $V_0$; die Isochore C $\to$ D liegt darum auf der falschen Geraden durch den Ursprung (Steigung $\frac14$ statt 1), und D liegt bei $0.5\,p_0$ statt bei $2\,p_0$. $\result{\text{Der Fehler setzt sich fort.}}$ Dass D $\to$ A trotzdem in A endet, liegt daran, dass der falsche Schritt isotherm ist: Die Temperaturen aller Punkte stimmen, falsch sind nur Druck und Volumen von C und D. In der Skizze verdoppelt sich der Druck darum von D nach A, statt sich zu halbieren.
+
+\abc Im richtigen Diagramm liegen A $\to$ B (bei $V = 2\,V_0$, Steigung $\frac12$) und C $\to$ D (bei $V = V_0$, Steigung 1) auf zwei Geraden durch den Ursprung:
+\begin{center}
+\begin{tikzpicture}[x=0.75cm, y=0.75cm, >=Stealth, font=\small]
+ \draw[black!12] (0,0) grid[xstep=1, ystep=1] (7.001,7.001);
+ \draw[->] (0,0) -- (7.6,0) node[right] {$T$ in $T_0$};
+ \draw[->] (0,0) -- (0,7.6) node[above] {$p$ in $p_0$};
+ \node[below left] at (0,0) {\small 0};
+ \draw (1,0.08) -- (1,-0.08) node[below] {\small 1};
+ \draw (2,0.08) -- (2,-0.08) node[below] {\small 2};
+ \draw (3,0.08) -- (3,-0.08) node[below] {\small 3};
+ \draw (4,0.08) -- (4,-0.08) node[below] {\small 4};
+ \draw (5,0.08) -- (5,-0.08) node[below] {\small 5};
+ \draw (6,0.08) -- (6,-0.08) node[below] {\small 6};
+ \draw (7,0.08) -- (7,-0.08) node[below] {\small 7};
+ \draw (0.08,1) -- (-0.08,1) node[left] {\small 1};
+ \draw (0.08,2) -- (-0.08,2) node[left] {\small 2};
+ \draw (0.08,3) -- (-0.08,3) node[left] {\small 3};
+ \draw (0.08,4) -- (-0.08,4) node[left] {\small 4};
+ \draw (0.08,5) -- (-0.08,5) node[left] {\small 5};
+ \draw (0.08,6) -- (-0.08,6) node[left] {\small 6};
+ \draw (0.08,7) -- (-0.08,7) node[left] {\small 7};
+ \draw[black!30, dashed] (0,0) -- (2,1);
+ \draw[black!30, dashed] (0,0) -- (2,2);
+ \draw[very thick, blue] (2,1) -- (6,3);
+ \draw[-{Stealth[length=2.6mm]}, blue] (4.191,2.096) -- (4.209,2.104);
+ \draw[very thick, blue] (6,3) -- (6,6);
+ \draw[-{Stealth[length=2.6mm]}, blue] (6,4.64) -- (6,4.66);
+ \draw[very thick, blue] (6,6) -- (2,2);
+ \draw[-{Stealth[length=2.6mm]}, blue] (3.807,3.807) -- (3.793,3.793);
+ \draw[very thick, blue] (2,2) -- (2,1);
+ \draw[-{Stealth[length=2.6mm]}, blue] (2,1.46) -- (2,1.44);
+ \fill[black] (2,1) circle (2pt) node[below right] {$A$};
+ \fill[black] (6,3) circle (2pt) node[below right] {$B$};
+ \fill[black] (6,6) circle (2pt) node[above right] {$C$};
+ \fill[black] (2,2) circle (2pt) node[above left] {$D$};
+\end{tikzpicture}
+\end{center}
+\end{abcliste}

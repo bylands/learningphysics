@@ -1,0 +1,23 @@
+{
+  "title": "Oscillations – exercises for the learning objectives",
+  "description": "Exercises for learning objectives of the learningphysics.ch app Oscillations that had fewer than three exercises (objectives: circle, lc).",
+  "kind": "sheet",
+  "is_private": true,
+  "tags": [
+    "learningphysics"
+  ],
+  "items": [
+    {
+      "exercise": "oscillations-11-which-shadow-is-it"
+    },
+    {
+      "exercise": "oscillations-12-shadow-of-a-turntable-peg"
+    },
+    {
+      "exercise": "oscillations-13-releasing-a-charged-capacitor"
+    },
+    {
+      "exercise": "oscillations-14-retuning-a-radio"
+    }
+  ]
+}

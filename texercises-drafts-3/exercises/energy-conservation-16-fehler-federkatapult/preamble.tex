@@ -1,0 +1,10 @@
+\NewQty{kK}{385}[\Npm]
+\NewQty{sK}{6.4}[\cm][e-2][\meter]
+\NewQty{mK}{0.152}[\kg]
+
+\SolQty{Ea}[\frac{1}{2}\,k\,s^2]{0.5*\kKX*\sKX^2}[\joule]
+\SolQty{Eeb}[\frac{1}{2}\,k\,\left(\frac{s}{2}\right)^2]{0.5*\kKX*(\sKX/2)^2}[\joule]
+\SolQty{Ekb}[\frac{1}{2}\,k\,s^2-\frac{1}{2}\,k\,\left(\frac{s}{2}\right)^2]{0.5*\kKX*\sKX^2-0.5*\kKX*(\sKX/2)^2}[\joule]
+\SolQty{vc}[s\,\sqrt{\frac{k}{m}}]{\sKX*sqrt(\kKX/\mKX)}[\mps]
+\SolQty{vb}[\sqrt{\frac{2\,E_\mathrm{kin,2}}{m}}]{sqrt(2*\EkbX/\mKX)}[\mps]
+\SolQty{Fw}[\frac{1}{2}\,k\,s]{0.5*\kKX*\sKX}[\newton]

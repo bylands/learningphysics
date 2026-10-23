@@ -1,0 +1,21 @@
+{
+  "title": "Which Shadow Is It?",
+  "note": "from learningphysics.ch (objective circle)",
+  "language": "ENG",
+  "type": 2,
+  "default_difficulty": 2,
+  "default_points": 0,
+  "tags": [
+    "pointer",
+    "phasor",
+    "graph",
+    "simple harmonic motion",
+    "oscillation",
+    "angular frequency",
+    "learningphysics"
+  ],
+  "subbranches": [
+    "Harmonic Oscillations"
+  ],
+  "youtube": ""
+}

@@ -1,0 +1,19 @@
+{
+  "title": "Field Lines from Equipotentials",
+  "note": "from learningphysics.ch (objective electric-field:equi)",
+  "language": "ENG",
+  "type": 0,
+  "default_difficulty": 3,
+  "default_points": 0,
+  "tags": [
+    "electric field",
+    "field lines",
+    "equipotential lines",
+    "potential",
+    "learningphysics"
+  ],
+  "subbranches": [
+    "Electrostatics"
+  ],
+  "youtube": ""
+}

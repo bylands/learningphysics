@@ -1,0 +1,27 @@
+In a straight wire the electrons drift to the left. The wire lies in a magnetic field that points up the page.
+
+\begin{center}
+\begin{tikzpicture}[>=Stealth]
+ \foreach \x in {0.3,1.3,...,5.3} \draw[->, gray, thick] (\x,-1.3) -- (\x,1.3);
+ \node[gray, above] at (5.3,1.3) {$\vec B$};
+ \fill[gray!25] (-0.3,-0.2) rectangle (6,0.2);
+ \draw (-0.3,-0.2) -- (6,-0.2) (-0.3,0.2) -- (6,0.2);
+ \foreach \x in {1.8,3.8} {
+  \fill[blue!60!black] (\x,0) circle (0.15); \node[white] at (\x,0) {\tiny $-$};
+  \draw[->, very thick] (\x-0.2,0.45) -- (\x-1.0,0.45);}
+ \node[above] at (1.4,0.45) {$\vec v_\mathrm{d}$};
+\end{tikzpicture}
+\end{center}
+
+Luca finds the direction of the magnetic force on the wire in four steps:
+\begin{itemize}
+\item[1.] The electrons move to the left, so the current flows to the left too.
+\item[2.] For a current, the right hand: thumb along the current, to the left.
+\item[3.] Index finger along the field, up the page.
+\item[4.] The middle finger points into the page: that is the force.
+\end{itemize}
+
+\begin{abcliste}
+\abc One step is wrong. Which one, and why?
+\abc In which direction does the magnetic force on the wire point?
+\end{abcliste}

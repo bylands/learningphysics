@@ -54,7 +54,7 @@ send --include=hubadmin.py --exclude='*' hub-admin/ "${TARGET}hub-admin/" | sed 
 # the exercise sheets of the admin panel (hub-admin/sheets/README.md): the engine, the pool and the topic categories, and the
 # drafts of this repository as exercises (the teacher's TeXercises exercises are uploaded in the panel)
 send --include='*.py' --include='*.sty' --include=pool.json --include=categories.json --exclude='*' hub-admin/sheets/ "${TARGET}hub-admin/sheets/" | sed "s|^|hub-admin/sheets/|"
-for d in texercises-drafts texercises-drafts-2; do
+for d in texercises-drafts texercises-drafts-2 texercises-drafts-3; do
   # (rsync creates only the last folder of a target: drafts/, then exercises/ in it)
   send "$d/exercises" "${TARGET}hub-admin/sheets/drafts/" | sed "s|^|hub-admin/sheets/drafts/|"
 done

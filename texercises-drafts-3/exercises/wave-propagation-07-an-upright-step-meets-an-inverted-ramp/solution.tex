@@ -1,0 +1,43 @@
+\begin{abcliste}
+\abc Each pulse keeps its shape and moves by
+\begin{align}
+ s &= \sF = \vw\times\ta = \result{\sP{0}{2}}
+\end{align}
+The step then lies between $x = \SI{3.0}{\m}$ and \SI{4.5}{\m} (\SI{2}{\cm} from 3.0 to \SI{4.0}{\m}, \SI{4}{\cm} from 4.0 to \SI{4.5}{\m}). The inverted ramp lies between $x = \SI{3.0}{\m}$ and \SI{5.0}{\m}; there its displacement is $y_2 = -\SI{2}{\cm\per\m}\cdot(x - \SI{3}{\m})$. They overlap between 3.0 and \SI{4.5}{\m}.
+
+\abc Where the pulses overlap, the displacements add: $y = y_1 + y_2$.
+\begin{center}
+\begin{tabular}{lcccc}
+ $x$ in \si{\m} & 3.5 & 4.25 & 4.75 & 5.5 \\ \hline
+ $y_1$ in \si{\cm} & 2 & 4 & 0 & 0 \\
+ $y_2$ in \si{\cm} & $-1$ & $-2.5$ & $-3.5$ & 0 \\
+ $y$ in \si{\cm} & $\result{1}$ & $\result{1.5}$ & $\result{-3.5}$ & $\result{0}$
+\end{tabular}
+\end{center}
+The rope (blue; the two pulses dashed):
+\begin{center}
+\begin{tikzpicture}[>=Stealth, x=0.95cm, y=0.22cm, font=\footnotesize]
+ \draw[black!15] (0,-5) grid[xstep=0.5, ystep=1] (8,7);
+ \draw[->] (0,0) -- (8.5,0) node[right] {$x$ in \si{\m}};
+ \draw[->] (0,-5.5) -- (0,8) node[above] {$y$ in \si{\cm}};
+ \foreach \x in {1,...,8} \node[below] at (\x,-5) {\x};
+ \draw (0.06,-4) -- (-0.06,-4) node[left] {-4};
+ \draw (0.06,-2) -- (-0.06,-2) node[left] {-2};
+ \draw (0.06,2) -- (-0.06,2) node[left] {2};
+ \draw (0.06,4) -- (-0.06,4) node[left] {4};
+ \draw (0.06,6) -- (-0.06,6) node[left] {6};
+ \draw[thick, dashed, orange] (0,0) -- (3,0) -- (3,2) -- (4,2) -- (4,4) -- (4.5,4) -- (4.5,0) -- (8,0);
+ \draw[thick, dashed, teal] (0,0) -- (3,0) -- (5,-4) -- (5,0) -- (8,0);
+ \draw[very thick, blue] (0,0) -- (3,0) -- (3,2) -- (4,0) -- (4,2) -- (4.5,1) -- (4.5,-3) -- (5,-4) -- (5,0) -- (8,0);
+
+ \node[right, fill=white, inner sep=1pt] at (5.6,6) {$t = \SI{2.5}{\s}$};
+\end{tikzpicture}
+\end{center}
+
+\abc
+\begin{itemize}
+\item (i): Where the pulses overlap, only the $\result{\text{larger of the two displacements}}$ is drawn, not their sum (between 3 and \SI{4.5}{\m} the step is drawn unchanged).
+\item (ii): The pulses are drawn in the right places, but $\result{\text{not added}}$: where they overlap, the rope has only one displacement, the sum of both.
+\item (iii): The displacements are $\result{\text{subtracted}}$, $y_1 - y_2$: the inverted ramp is turned upright and then added. At \SI{4.25}{\m} this gives \SI{6.5}{\cm} instead of \SI{1.5}{\cm}.
+\end{itemize}
+\end{abcliste}

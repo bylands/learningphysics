@@ -1,0 +1,23 @@
+\begin{abcliste}
+\abc A long time after switching the currents are constant, so no emf is induced: the inductor acts like a wire. The closed switch bridges $R_1$: the current takes the switch, and $R_1$ carries \result{\SI{0}{\A}}. Both branches have the full battery voltage $V$:
+\begin{align}
+ I_2 &= \IlcF = \frac{\Vb}{\Rb} = \Ilc \approx \result{\IlcP{-3}{3}} \\
+ I_3 &= \IccF = \frac{\Vb}{\Rc} = \Icc \approx \result{\IccP{-3}{3}} \\
+ I &= \IacF = \Ilc+\Icc = \Iac \approx \result{\IacP{-3}{3}}
+\end{align}
+
+\abc With S open, $R_1$ is back in the circuit, in series with the two branches. Long after opening, the inductor again acts like a wire, so the branches are just $R_2$ and $R_3$ in parallel:
+\begin{align}
+ R_{23} &= \RpF = \frac{\Rb\cdot\Rc}{\Rb+\Rc} = \Rp \\
+ I &= \IaoF = \frac{\Vb}{\Ra+\Rp} = \Iao \approx \result{\IaoP{-3}{3}}
+\end{align}
+The voltage across the branches is what $R_1$ leaves of the battery voltage (loop rule):
+\begin{align}
+ U &= \UoF = \Vb-\Ra\cdot\Iao = \Uo \\
+ I_2 &= \IloF = \frac{\Uo}{\Rb} = \Ilo \approx \result{\IloP{-3}{3}} \\
+ I_3 &= \IcoF = \frac{\Uo}{\Rc} = \Ico \approx \result{\IcoP{-3}{3}}
+\end{align}
+Check with the junction rule: $I_2 + I_3 = I$.
+
+\abc The inductance only matters while the current through the inductor changes: the induced emf is $-L\,\frac{\Delta I}{\Delta t}$. In a steady state the currents are constant, there is no emf, and an inductor without resistance acts like a wire. $L$ decides how fast the currents go from the values of (a) to those of (b), not what these values are. (Right after opening, the inductor still carries $\IlcP{-3}{3}$; this current then falls to $\IloP{-3}{3}$.)
+\end{abcliste}

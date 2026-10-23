@@ -1,0 +1,43 @@
+Das $p(T)$-Diagramm zeigt einen Kreisprozess einer festen Menge eines idealen Gases in vier Schritten. Die Gerade von C nach D zielt auf den Ursprung (gestrichelt), jene von D nach A nicht. Die Achsen sind in Einheiten von $p_0$, $V_0$ und $T_0 = \frac{p_0V_0}{nR}$ beschriftet; damit ist $T/T_0 = (p/p_0)\cdot(V/V_0)$.
+
+\begin{center}
+\begin{tikzpicture}[x=0.75cm, y=0.75cm, >=Stealth, font=\small]
+ \draw[black!12] (0,0) grid[xstep=1, ystep=1] (7.001,7.001);
+ \draw[->] (0,0) -- (7.6,0) node[right] {$T$ in $T_0$};
+ \draw[->] (0,0) -- (0,7.6) node[above] {$p$ in $p_0$};
+ \node[below left] at (0,0) {\small 0};
+ \draw (1,0.08) -- (1,-0.08) node[below] {\small 1};
+ \draw (2,0.08) -- (2,-0.08) node[below] {\small 2};
+ \draw (3,0.08) -- (3,-0.08) node[below] {\small 3};
+ \draw (4,0.08) -- (4,-0.08) node[below] {\small 4};
+ \draw (5,0.08) -- (5,-0.08) node[below] {\small 5};
+ \draw (6,0.08) -- (6,-0.08) node[below] {\small 6};
+ \draw (7,0.08) -- (7,-0.08) node[below] {\small 7};
+ \draw (0.08,1) -- (-0.08,1) node[left] {\small 1};
+ \draw (0.08,2) -- (-0.08,2) node[left] {\small 2};
+ \draw (0.08,3) -- (-0.08,3) node[left] {\small 3};
+ \draw (0.08,4) -- (-0.08,4) node[left] {\small 4};
+ \draw (0.08,5) -- (-0.08,5) node[left] {\small 5};
+ \draw (0.08,6) -- (-0.08,6) node[left] {\small 6};
+ \draw (0.08,7) -- (-0.08,7) node[left] {\small 7};
+ \draw[black!30, dashed] (0,0) -- (2,2);
+ \draw[very thick, blue] (4,1) -- (2,1);
+ \draw[-{Stealth[length=2.6mm]}, blue] (2.91,1) -- (2.89,1);
+ \draw[very thick, blue] (2,1) -- (2,2);
+ \draw[-{Stealth[length=2.6mm]}, blue] (2,1.54) -- (2,1.56);
+ \draw[very thick, blue] (2,2) -- (6,6);
+ \draw[-{Stealth[length=2.6mm]}, blue] (4.193,4.193) -- (4.207,4.207);
+ \draw[very thick, blue] (6,6) -- (4,1);
+ \draw[-{Stealth[length=2.6mm]}, blue] (4.904,3.259) -- (4.896,3.241);
+ \fill[black] (4,1) circle (2pt) node[below right] {$A$};
+ \fill[black] (2,1) circle (2pt) node[below left] {$B$};
+ \fill[black] (2,2) circle (2pt) node[above left] {$C$};
+ \fill[black] (6,6) circle (2pt) node[above right] {$D$};
+\end{tikzpicture}
+\end{center}
+
+\begin{abcliste}
+\abc Benennen Sie die Schritte A $\to$ B, B $\to$ C und C $\to$ D.
+\abc Um welchen Faktor ändert sich das Volumen in jedem dieser drei Schritte?
+\abc Der Schritt D $\to$ A ist weder isobar noch isochor noch isotherm. Wird das Gas dabei komprimiert oder dehnt es sich aus? Um welchen Faktor ändert sich sein Volumen?
+\end{abcliste}

@@ -1,0 +1,32 @@
+{
+  "title": "Electric Field – exercises for the learning objectives",
+  "description": "Exercises for learning objectives of the learningphysics.ch app Electric Field that had fewer than three exercises (objectives: equi, error, read, sketch).",
+  "kind": "sheet",
+  "is_private": true,
+  "tags": [
+    "learningphysics"
+  ],
+  "items": [
+    {
+      "exercise": "electric-field-10-charge-above-a-metal-plate"
+    },
+    {
+      "exercise": "electric-field-11-hidden-signs"
+    },
+    {
+      "exercise": "electric-field-12-inside-and-outside-a-capacitor"
+    },
+    {
+      "exercise": "electric-field-13-field-lines-from-equipotentials"
+    },
+    {
+      "exercise": "electric-field-14-circles-that-cross"
+    },
+    {
+      "exercise": "electric-field-15-evenly-spaced-circles"
+    },
+    {
+      "exercise": "electric-field-16-crossing-lines-of-a-dipole"
+    }
+  ]
+}

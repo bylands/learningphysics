@@ -1,0 +1,35 @@
+Das $V(T)$-Diagramm zeigt einen Kreisprozess einer festen Menge eines idealen Gases: Von A geht es auf einer Geraden durch den Ursprung nach B, dann senkrecht hinunter nach C und waagrecht zurück nach A. Die Achsen sind in Einheiten von $p_0$, $V_0$ und $T_0 = \frac{p_0V_0}{nR}$ beschriftet; damit ist $T/T_0 = (p/p_0)\cdot(V/V_0)$.
+
+\begin{center}
+\begin{tikzpicture}[x=1cm, y=1cm, >=Stealth, font=\small]
+ \draw[black!12] (0,0) grid[xstep=1, ystep=1] (4.001,4.001);
+ \draw[->] (0,0) -- (4.6,0) node[right] {$T$ in $T_0$};
+ \draw[->] (0,0) -- (0,4.6) node[above] {$V$ in $V_0$};
+ \node[below left] at (0,0) {\small 0};
+ \draw (1,0.08) -- (1,-0.08) node[below] {\small 1};
+ \draw (2,0.08) -- (2,-0.08) node[below] {\small 2};
+ \draw (3,0.08) -- (3,-0.08) node[below] {\small 3};
+ \draw (4,0.08) -- (4,-0.08) node[below] {\small 4};
+ \draw (0.08,1) -- (-0.08,1) node[left] {\small 1};
+ \draw (0.08,2) -- (-0.08,2) node[left] {\small 2};
+ \draw (0.08,3) -- (-0.08,3) node[left] {\small 3};
+ \draw (0.08,4) -- (-0.08,4) node[left] {\small 4};
+ \draw[black!30, dashed] (0,0) -- (1,1);
+ \draw[very thick, blue] (1,1) -- (3,3);
+ \draw[-{Stealth[length=2.6mm]}, blue] (2.093,2.093) -- (2.107,2.107);
+ \draw[very thick, blue] (3,3) -- (3,1);
+ \draw[-{Stealth[length=2.6mm]}, blue] (3,1.91) -- (3,1.89);
+ \draw[very thick, blue] (3,1) -- (1,1);
+ \draw[-{Stealth[length=2.6mm]}, blue] (1.91,1) -- (1.89,1);
+ \fill[black] (1,1) circle (2pt) node[above left] {$A$};
+ \fill[black] (3,3) circle (2pt) node[above left] {$B$};
+ \fill[black] (3,1) circle (2pt) node[below right] {$C$};
+\end{tikzpicture}
+\end{center}
+
+\begin{abcliste}
+\abc Benennen Sie die drei Schritte und bestimmen Sie den Druck in A, B und C.
+\abc Skizzieren Sie den Kreisprozess in einem $p(V)$-Diagramm, mit Pfeilen für die Richtung.
+\abc Skizzieren Sie ihn ebenso in einem $p(T)$-Diagramm.
+\abc Ein Mitschüler zeichnet im $p(V)$-Diagramm einfach dasselbe Dreieck mit anders beschrifteten Achsen. Woran sieht man sofort, dass das nicht stimmen kann?
+\end{abcliste}

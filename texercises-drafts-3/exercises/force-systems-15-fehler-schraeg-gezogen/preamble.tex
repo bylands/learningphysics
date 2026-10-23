@@ -1,0 +1,14 @@
+\NewQty{mK}{34.5}[\kg]
+\NewQty{FZ}{162}[\newton]
+\NewQty{al}{27.5}[\degree]
+\NewQty{muG}{0.36}
+\NewQty{g}{9.81}[\mpss]
+
+\SolQty{Fx}[F\cos\alpha]{\FZX*cosd(\alX)}[\newton]
+\SolQty{Fy}[F\sin\alpha]{\FZX*sind(\alX)}[\newton]
+\SolQty{NS}[m\,g]{\mKX*\gX}[\newton]
+\SolQty{RS}[\mu\,m\,g]{\muGX*\NSX}[\newton]
+\SolQty{aS}[\frac{F\cos\alpha-\mu\,m\,g}{m}]{(\FxX-\RSX)/\mKX}[\mpss]
+\SolQty{FN}[m\,g-F\sin\alpha]{\mKX*\gX-\FyX}[\newton]
+\SolQty{FR}[\mu\,(m\,g-F\sin\alpha)]{\muGX*\FNX}[\newton]
+\SolQty{aK}[\frac{F\cos\alpha-\mu\,(m\,g-F\sin\alpha)}{m}]{(\FxX-\FRX)/\mKX}[\mpss]

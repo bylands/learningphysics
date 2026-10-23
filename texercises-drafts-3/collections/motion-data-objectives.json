@@ -1,0 +1,23 @@
+{
+  "title": "Bewegungen messen – Aufgaben zu den Lernzielen",
+  "description": "Aufgaben für Lernziele der App Bewegungen messen von learningphysics.ch, die noch weniger als drei Aufgaben hatten (Lernziele: convert, uniform).",
+  "kind": "sheet",
+  "is_private": true,
+  "tags": [
+    "learningphysics"
+  ],
+  "items": [
+    {
+      "exercise": "motion-data-01-kehrt-das-fahrzeug-um"
+    },
+    {
+      "exercise": "motion-data-02-vom-stroboskopbild-zu-st"
+    },
+    {
+      "exercise": "motion-data-03-der-wagen-kehrt-um"
+    },
+    {
+      "exercise": "motion-data-04-drei-stroboskopbilder"
+    }
+  ]
+}

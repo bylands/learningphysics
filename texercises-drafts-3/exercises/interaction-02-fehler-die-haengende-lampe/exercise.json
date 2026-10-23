@@ -1,0 +1,19 @@
+{
+  "title": "Fehler: die hängende Lampe",
+  "note": "aus learningphysics.ch (Lernziel normal)",
+  "language": "GER",
+  "type": 2,
+  "default_difficulty": 2,
+  "default_points": 0,
+  "tags": [
+    "actio gleich reactio",
+    "gewichtskraft",
+    "learningphysics",
+    "seilkraft",
+    "wechselwirkungsprinzip"
+  ],
+  "subbranches": [
+    "Dynamics"
+  ],
+  "youtube": ""
+}

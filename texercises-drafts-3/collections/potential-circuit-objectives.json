@@ -1,0 +1,20 @@
+{
+  "title": "Potential around a Circuit – exercises for the learning objectives",
+  "description": "Exercises for learning objectives of the learningphysics.ch app Potential around a Circuit that had fewer than three exercises (objectives: error).",
+  "kind": "sheet",
+  "is_private": true,
+  "tags": [
+    "learningphysics"
+  ],
+  "items": [
+    {
+      "exercise": "potential-circuit-01-a-lamp-that-raises-the-potential"
+    },
+    {
+      "exercise": "potential-circuit-02-the-sloping-wire"
+    },
+    {
+      "exercise": "potential-circuit-03-two-batteries-against-each-other"
+    }
+  ]
+}

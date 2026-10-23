@@ -1,0 +1,60 @@
+A \SI{9}{\V} battery drives a current $I$ through two lamps $L_1$ and $L_2$. The voltage across $L_1$ is \SI{6}{\V}, across $L_2$ \SI{3}{\V}. The potential is measured from the negative terminal of the battery at A: $\varphi_A = \SI{0}{\V}$.
+
+\begin{center}
+\begin{circuitikz}[scale=0.9, transform shape]
+ \draw (0,0) to[battery1, invert, l={\SI{9}{\V}}] (0,3.2);
+ \node at (0.40,1.85) {$+$}; \node at (0.40,1.35) {$-$};
+ \draw (0,3.2) to[short, i={$I$}] (3.0,3.2);
+ \draw (3.0,3.2) to[lamp, l={$L_1$: \SI{6}{\V}}] (6.0,3.2);
+ \draw (6.0,3.2) to[short] (6.0,0);
+ \draw (6.0,0) to[lamp, l={$L_2$: \SI{3}{\V}}] (3.0,0);
+ \draw (3.0,0) to[short] (0,0);
+ \fill (0,0) circle (2pt); \node[below left] at (0,0) {A};
+ \fill (0,3.2) circle (2pt); \node[above left] at (0,3.2) {B};
+ \fill (3.0,3.2) circle (2pt); \node[above] at (3.0,3.2) {C};
+ \fill (6.0,3.2) circle (2pt); \node[above right] at (6.0,3.2) {D};
+ \fill (6.0,0) circle (2pt); \node[below right] at (6.0,0) {E};
+ \fill (3.0,0) circle (2pt); \node[below] at (3.0,0) {F};
+\end{circuitikz}
+\end{center}
+
+A student sketched the potential around the loop, from A in the direction of the current:
+
+\begin{center}
+\begin{tabular}{l|ccccccc}
+ Point & A & B & C & D & E & F & A \\ \hline
+ Potential in \si{\V} & $0$ & $9$ & $9$ & $3$ & $3$ & $6$ & $6$ \\
+\end{tabular}
+
+\medskip
+\begin{tikzpicture}[>=Stealth]
+ \draw[black!15] (0,0.00) grid[xstep=1.2, ystep=0.28] (7.20,2.80);
+ \draw[->] (0,0.00) -- (0,3.14) node[above] {$\varphi$ in \si{\V}};
+ \draw (0,0) -- (7.50,0);
+ \node[left] at (0,0.00) {\small $0$};
+ \node[left] at (0,0.28) {\small $1$};
+ \node[left] at (0,0.56) {\small $2$};
+ \node[left] at (0,0.84) {\small $3$};
+ \node[left] at (0,1.12) {\small $4$};
+ \node[left] at (0,1.40) {\small $5$};
+ \node[left] at (0,1.68) {\small $6$};
+ \node[left] at (0,1.96) {\small $7$};
+ \node[left] at (0,2.24) {\small $8$};
+ \node[left] at (0,2.52) {\small $9$};
+ \node[left] at (0,2.80) {\small $10$};
+ \node[below] at (0.00,-0.02) {A};
+ \node[below] at (1.20,-0.02) {B};
+ \node[below] at (2.40,-0.02) {C};
+ \node[below] at (3.60,-0.02) {D};
+ \node[below] at (4.80,-0.02) {E};
+ \node[below] at (6.00,-0.02) {F};
+ \node[below] at (7.20,-0.02) {A};
+ \draw[very thick, red!70!black] (0.00,0.00) -- (0.60,0.00) -- (0.60,2.52) -- (1.20,2.52) -- (2.40,2.52) -- (3.00,2.52) -- (3.00,0.84) -- (3.60,0.84) -- (4.80,0.84) -- (5.40,0.84) -- (5.40,1.68) -- (6.00,1.68) -- (7.20,1.68);
+\end{tikzpicture}
+\end{center}
+
+\begin{abcliste}
+\abc How can you tell at once that the sketch must be wrong?
+\abc One step of the sketch is wrong. Which one, and what is wrong with it?
+\abc Give the right potentials at the points A to F and sketch them.
+\end{abcliste}

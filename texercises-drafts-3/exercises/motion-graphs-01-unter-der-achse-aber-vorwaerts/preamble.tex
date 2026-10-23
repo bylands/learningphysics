@@ -1,0 +1,10 @@
+\NewQty{sNull}{6}[\m]
+\NewQty{sOne}{-2}[\m]
+\NewQty{sEnd}{4}[\m]
+\NewQty{tOne}{4}[\s]
+\NewQty{tTwo}{6}[\s]
+\NewQty{tEnd}{10}[\s]
+
+\SolQty{vOne}[\frac{s_1-s_0}{t_1}]{(\sOneX-\sNullX)/\tOneX}[\mps]
+\SolQty{vThree}[\frac{s_3-s_2}{t_3-t_2}]{(\sEndX-\sOneX)/(\tEndX-\tTwoX)}[\mps]
+\SolQty{tZero}[t_2+\frac{-s_2}{v_3}]{\tTwoX-\sOneX/\vThreeX}[\s]

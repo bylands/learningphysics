@@ -1,0 +1,15 @@
+A capacitor with $C = \CapO$ has been charged to $\Delta V_0 = \UoO$. At $t = 0$ the switch S is closed, and the capacitor discharges through a resistor with $R = \ResO$.
+
+\begin{center}
+\begin{circuitikz}[scale=0.9, transform shape]
+ \draw (0,0) to[C, l=$C$] (0,3) -- (1,3) to[nos, l=S] (3,3) -- (4,3) to[R, l=$R$] (4,0) -- (0,0);
+ \node at (0.4,1.72) {$+$}; \node at (0.4,1.28) {$-$};
+\end{circuitikz}
+\end{center}
+
+\begin{abcliste}
+\abc Sketch the voltage $\Delta V_C$ across the capacitor, the voltage $\Delta V_R$ across the resistor and the current $I$ against time, from shortly before $t = 0$ to a few time constants. Mark the values at $t = 0$ and the time constant.
+\abc At some moment the capacitor has $\Delta V_C = \UaO$. What are $\Delta V_R$ and the current $I$ at this moment?
+\abc Two students answer (b) with $\Delta V_R = \Delta V_0 - \Delta V_C$ and with $I = \Delta V_0/R$. Why are both answers wrong?
+\abc How long after closing the switch does the capacitor reach $\Delta V_C = \UaO$?
+\end{abcliste}

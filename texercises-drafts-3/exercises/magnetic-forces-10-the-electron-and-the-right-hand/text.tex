@@ -1,0 +1,26 @@
+An electron moves to the right through a magnetic field that points into the page.
+
+\begin{center}
+\begin{tikzpicture}[>=Stealth]
+ \foreach \x in {0,1,...,5} \foreach \y in {0,1,2} {
+  \draw[gray] (\x,\y) circle (0.13);
+  \draw[gray] (\x-0.09,\y-0.09) -- (\x+0.09,\y+0.09) (\x-0.09,\y+0.09) -- (\x+0.09,\y-0.09);}
+ \node[gray, right] at (5.2,2) {$\vec B$};
+ \fill[blue!60!black] (1.5,1.5) circle (0.17); \node[white] at (1.5,1.5) {\scriptsize $-$};
+ \node[fill=white, inner sep=1pt] at (1.5,1.15) {\small e$^-$};
+ \draw[->, very thick] (1.75,1.5) -- (3.2,1.5) node[above right, fill=white, inner sep=1pt] {$\vec v$};
+\end{tikzpicture}
+\end{center}
+
+Mia finds the direction of the magnetic force on the electron in four steps:
+\begin{itemize}
+\item[1.] The electron moves to the right: the right hand, as for any charge.
+\item[2.] Thumb along the velocity, to the right.
+\item[3.] Index finger along the field, into the page.
+\item[4.] The middle finger points up the page: that is the force.
+\end{itemize}
+
+\begin{abcliste}
+\abc One step is wrong. Which one, and why?
+\abc In which direction does the magnetic force on the electron point?
+\end{abcliste}

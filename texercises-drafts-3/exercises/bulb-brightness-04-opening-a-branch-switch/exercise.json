@@ -1,0 +1,21 @@
+{
+  "title": "Opening a Branch Switch",
+  "note": "from learningphysics.ch (objective bulb-brightness:change)",
+  "language": "ENG",
+  "type": 0,
+  "default_difficulty": 3,
+  "default_points": 0,
+  "tags": [
+    "light bulb",
+    "brightness",
+    "switch",
+    "series",
+    "parallel",
+    "voltage divider",
+    "learningphysics"
+  ],
+  "subbranches": [
+    "Circuits"
+  ],
+  "youtube": ""
+}

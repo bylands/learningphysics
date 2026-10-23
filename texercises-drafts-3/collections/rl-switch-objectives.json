@@ -1,0 +1,17 @@
+{
+  "title": "RL Switch – exercises for the learning objectives",
+  "description": "Exercises for learning objectives of the learningphysics.ch app RL Switch that had fewer than three exercises (objectives: after, steady).",
+  "kind": "sheet",
+  "is_private": true,
+  "tags": [
+    "learningphysics"
+  ],
+  "items": [
+    {
+      "exercise": "rl-switch-01-branch-switched-in"
+    },
+    {
+      "exercise": "rl-switch-02-bridge-removed"
+    }
+  ]
+}

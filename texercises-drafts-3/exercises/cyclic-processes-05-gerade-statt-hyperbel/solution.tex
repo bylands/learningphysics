@@ -1,0 +1,58 @@
+\begin{abcliste}
+\abc Isochor verdreifacht sich mit dem Druck auch die Temperatur; isotherm geht das dreifache Volumen mit einem Drittel des Drucks einher. Mit $T/T_0 = (p/p_0)\cdot(V/V_0)$:
+\begin{center}
+\begin{tabular}{lccc}
+ & A & B & C \\ \hline
+ $p$ in $p_0$ & 2 & 6 & 2 \\
+ $V$ in $V_0$ & 2 & 2 & 6 \\
+ $T$ in $T_0$ & 4 & 12 & 12
+\end{tabular}
+\end{center}
+C hat denselben Druck wie A, also führt der letzte Schritt tatsächlich isobar zurück. Die drei Eckpunkte der Skizze $\result{\text{stimmen}}$.
+
+\abc Der Schritt $\result{\text{B} \to \text{C}}$ ist als Gerade gezeichnet. Auf einer Isotherme ist $pV$ konstant, hier $pV = 12\,p_0V_0$. Im Mittelpunkt $M$ der Geraden ist aber
+\begin{align}
+ p_M V_M &= 4\,p_0\cdot 4\,V_0 = 16\,p_0V_0 & T_M &= 16\,T_0 \neq 12\,T_0
+\end{align}
+Auf der geraden Linie würde die Temperatur also zuerst auf $16\,T_0$ steigen und dann wieder auf $12\,T_0$ sinken: Das ist $\result{\text{keine Isotherme}}$.
+
+\abc Isotherm ist $p = \frac{12\,p_0V_0}{V}$, eine Hyperbel, die unterhalb der Geraden liegt:
+\begin{align}
+ V &= 3\,V_0: \ p = \result{4\,p_0} & V &= 4\,V_0: \ p = \result{3\,p_0} & V &= 5\,V_0: \ p = \result{2.4\,p_0}
+\end{align}
+\begin{center}
+\begin{tikzpicture}[x=0.75cm, y=0.75cm, >=Stealth, font=\small]
+ \draw[black!12] (0,0) grid[xstep=1, ystep=1] (7.001,7.001);
+ \draw[->] (0,0) -- (7.6,0) node[right] {$V$ in $V_0$};
+ \draw[->] (0,0) -- (0,7.6) node[above] {$p$ in $p_0$};
+ \node[below left] at (0,0) {\small 0};
+ \draw (1,0.08) -- (1,-0.08) node[below] {\small 1};
+ \draw (2,0.08) -- (2,-0.08) node[below] {\small 2};
+ \draw (3,0.08) -- (3,-0.08) node[below] {\small 3};
+ \draw (4,0.08) -- (4,-0.08) node[below] {\small 4};
+ \draw (5,0.08) -- (5,-0.08) node[below] {\small 5};
+ \draw (6,0.08) -- (6,-0.08) node[below] {\small 6};
+ \draw (7,0.08) -- (7,-0.08) node[below] {\small 7};
+ \draw (0.08,1) -- (-0.08,1) node[left] {\small 1};
+ \draw (0.08,2) -- (-0.08,2) node[left] {\small 2};
+ \draw (0.08,3) -- (-0.08,3) node[left] {\small 3};
+ \draw (0.08,4) -- (-0.08,4) node[left] {\small 4};
+ \draw (0.08,5) -- (-0.08,5) node[left] {\small 5};
+ \draw (0.08,6) -- (-0.08,6) node[left] {\small 6};
+ \draw (0.08,7) -- (-0.08,7) node[left] {\small 7};
+ \draw[thick, red, dashed] (2,6) -- (6,2);
+ \draw[very thick, blue] (2,2) -- (2,6);
+ \draw[-{Stealth[length=2.6mm]}, blue] (2,4.19) -- (2,4.21);
+ \draw[very thick, blue, domain=2:6, samples=60, smooth] plot (\x, {12/\x});
+ \draw[-{Stealth[length=2.6mm]}, blue] (3.457,3.471) -- (3.471,3.457);
+ \draw[very thick, blue] (6,2) -- (2,2);
+ \draw[-{Stealth[length=2.6mm]}, blue] (3.81,2) -- (3.79,2);
+ \fill[black] (2,2) circle (2pt) node[below left] {$A$};
+ \fill[black] (2,6) circle (2pt) node[above right] {$B$};
+ \fill[black] (6,2) circle (2pt) node[above right] {$C$};
+ \fill[red] (4,4) circle (2pt) node[above right] {$M$};
+ \fill[blue] (4,3) circle (2pt) node[below left] {$M'$};
+\end{tikzpicture}
+\end{center}
+Bei $V = 4\,V_0$ liegt der richtige Punkt $M'$ also bei $3\,p_0$, nicht bei $4\,p_0$.
+\end{abcliste}

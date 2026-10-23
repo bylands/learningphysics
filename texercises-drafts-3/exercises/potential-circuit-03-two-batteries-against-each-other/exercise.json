@@ -1,0 +1,20 @@
+{
+  "title": "Two Batteries against Each Other",
+  "note": "from learningphysics.ch (objective potential-circuit:error)",
+  "language": "ENG",
+  "type": 0,
+  "default_difficulty": 4,
+  "default_points": 0,
+  "tags": [
+    "potential",
+    "potential difference",
+    "circuit",
+    "loop rule",
+    "battery",
+    "learningphysics"
+  ],
+  "subbranches": [
+    "Electrodynamics"
+  ],
+  "youtube": ""
+}

@@ -1,0 +1,73 @@
+Two pulses run towards each other on a long rope, both at \vwO. The diagram shows the rope at $t = 0$: on the left an upright pulse shaped like a step (\SI{2}{\cm} high over \SI{1}{\m}, then \SI{4}{\cm} high over \SI{0.5}{\m}), running to the right; on the right an inverted ramp (from $0$ down to \SI{-4}{\cm} over \SI{2}{\m}), running to the left.
+
+\begin{center}
+\begin{tikzpicture}[>=Stealth, x=0.95cm, y=0.22cm, font=\footnotesize]
+ \draw[black!15] (0,-5) grid[xstep=0.5, ystep=1] (8,5);
+ \draw[->] (0,0) -- (8.5,0) node[right] {$x$ in \si{\m}};
+ \draw[->] (0,-5.5) -- (0,6) node[above] {$y$ in \si{\cm}};
+ \foreach \x in {1,...,8} \node[below] at (\x,-5) {\x};
+ \draw (0.06,-4) -- (-0.06,-4) node[left] {-4};
+ \draw (0.06,-2) -- (-0.06,-2) node[left] {-2};
+ \draw (0.06,2) -- (-0.06,2) node[left] {2};
+ \draw (0.06,4) -- (-0.06,4) node[left] {4};
+ \draw[very thick, blue] (0,0) -- (0.5,0) -- (0.5,2) -- (1.5,2) -- (1.5,4) -- (2,4) -- (2,0) -- (5.5,0) -- (7.5,-4) -- (7.5,0) -- (8,0);
+ \draw[->, thick] (0.8,5.2) -- (1.8,5.2); \draw[->, thick] (7.2,-5.2) -- (6.2,-5.2);
+ \node[right, fill=white, inner sep=1pt] at (5.6,4) {$t = 0$};
+\end{tikzpicture}
+\end{center}
+
+\begin{abcliste}
+\abc Where is each pulse at $t = \taO$?
+\abc Find the displacement of the rope at $t = \taO$ at $x = \SI{3.5}{\m}$, \SI{4.25}{\m}, \SI{4.75}{\m} and \SI{5.5}{\m}, and sketch the rope at that moment.
+\abc Three students sketched the rope at $t = \taO$. Name the mistake in each sketch.
+
+\begin{center}
+(i)\\ \begin{tikzpicture}[>=Stealth, x=0.95cm, y=0.22cm, font=\footnotesize]
+ \draw[black!15] (0,-5) grid[xstep=0.5, ystep=1] (8,7);
+ \draw[->] (0,0) -- (8.5,0) node[right] {$x$ in \si{\m}};
+ \draw[->] (0,-5.5) -- (0,8) node[above] {$y$ in \si{\cm}};
+ \foreach \x in {1,...,8} \node[below] at (\x,-5) {\x};
+ \draw (0.06,-4) -- (-0.06,-4) node[left] {-4};
+ \draw (0.06,-2) -- (-0.06,-2) node[left] {-2};
+ \draw (0.06,2) -- (-0.06,2) node[left] {2};
+ \draw (0.06,4) -- (-0.06,4) node[left] {4};
+ \draw (0.06,6) -- (-0.06,6) node[left] {6};
+ \draw[very thick, blue] (0,0) -- (3,0) -- (3,2) -- (4,2) -- (4,4) -- (4.5,4) -- (4.5,-3) -- (5,-4) -- (5,0) -- (8,0);
+
+ \node[right, fill=white, inner sep=1pt] at (5.6,6) {$t = \SI{2.5}{\s}$};
+\end{tikzpicture}
+
+\medskip
+(ii)\\ \begin{tikzpicture}[>=Stealth, x=0.95cm, y=0.22cm, font=\footnotesize]
+ \draw[black!15] (0,-5) grid[xstep=0.5, ystep=1] (8,7);
+ \draw[->] (0,0) -- (8.5,0) node[right] {$x$ in \si{\m}};
+ \draw[->] (0,-5.5) -- (0,8) node[above] {$y$ in \si{\cm}};
+ \foreach \x in {1,...,8} \node[below] at (\x,-5) {\x};
+ \draw (0.06,-4) -- (-0.06,-4) node[left] {-4};
+ \draw (0.06,-2) -- (-0.06,-2) node[left] {-2};
+ \draw (0.06,2) -- (-0.06,2) node[left] {2};
+ \draw (0.06,4) -- (-0.06,4) node[left] {4};
+ \draw (0.06,6) -- (-0.06,6) node[left] {6};
+ \draw[very thick, blue] (0,0) -- (3,0) -- (3,2) -- (4,2) -- (4,4) -- (4.5,4) -- (4.5,0) -- (8,0);
+ \draw[very thick, blue] (0,0) -- (3,0) -- (5,-4) -- (5,0) -- (8,0);
+
+ \node[right, fill=white, inner sep=1pt] at (5.6,6) {$t = \SI{2.5}{\s}$};
+\end{tikzpicture}
+
+\medskip
+(iii)\\ \begin{tikzpicture}[>=Stealth, x=0.95cm, y=0.22cm, font=\footnotesize]
+ \draw[black!15] (0,-5) grid[xstep=0.5, ystep=1] (8,7);
+ \draw[->] (0,0) -- (8.5,0) node[right] {$x$ in \si{\m}};
+ \draw[->] (0,-5.5) -- (0,8) node[above] {$y$ in \si{\cm}};
+ \foreach \x in {1,...,8} \node[below] at (\x,-5) {\x};
+ \draw (0.06,-4) -- (-0.06,-4) node[left] {-4};
+ \draw (0.06,-2) -- (-0.06,-2) node[left] {-2};
+ \draw (0.06,2) -- (-0.06,2) node[left] {2};
+ \draw (0.06,4) -- (-0.06,4) node[left] {4};
+ \draw (0.06,6) -- (-0.06,6) node[left] {6};
+ \draw[very thick, blue] (0,0) -- (3,0) -- (3,2) -- (4,4) -- (4,6) -- (4.5,7) -- (4.5,3) -- (5,4) -- (5,0) -- (8,0);
+
+ \node[right, fill=white, inner sep=1pt] at (5.6,6) {$t = \SI{2.5}{\s}$};
+\end{tikzpicture}
+\end{center}
+\end{abcliste}

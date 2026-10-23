@@ -1,0 +1,28 @@
+\begin{abcliste}
+\abc
+Auf die Kiste wirken die Gewichtskraft $\vec F_\mathrm{G}$ nach unten und die Federkraft $\vec F_\mathrm{F}$ nach oben. Die Feder ist gestaucht und drückt zurück zu ihrer entspannten Länge, also \result{\text{nach oben}}. Da die Kiste ruht, sind die beiden Kräfte gleich gross.
+\begin{center}
+\begin{tikzpicture}[>=Stealth]
+ \draw[fill=brown!30] (-0.6,0) rectangle (0.6,0.8);
+ \draw[->, very thick] (-0.15,0.4) -- (-0.15,-1.1) node[left] {$\vec F_\mathrm{G}$};
+ \fill (-0.15,0.4) circle (0.05);
+ \draw[->, very thick] (0.15,0) -- (0.15,1.5) node[right] {$\vec F_\mathrm{F}$};
+ \fill (0.15,0) circle (0.05);
+\end{tikzpicture}
+\end{center}
+
+\abc
+Gleichgewicht: $F_\mathrm{F} = k\,\Delta x = m\,g$, also
+\begin{align}
+ k &= \kFF \\
+   &= \frac{\mK\cdot\g}{\dx} \\
+   &= \kF \approx \result{\kFP{0}{3}}
+\end{align}
+
+\abc
+Wieder ruht die Kiste, und wieder muss die Feder die Gewichtskraft $m\,g = \FGP{0}{3}$ tragen. Die Feder wird also gleich stark verformt, diesmal gedehnt:
+\begin{align}
+ \Delta x' &= \dxsF = \dxs \approx \result{\dxsP{-2}{3}}
+\end{align}
+Die gedehnte Feder zieht zurück zu ihrer entspannten Länge, also zieht sie die Kiste \result{\text{nach oben}}. In beiden Fällen zeigt die Federkraft auf die Kiste nach oben; einmal drückt die gestauchte Feder von unten, einmal zieht die gedehnte Feder von oben.
+\end{abcliste}
