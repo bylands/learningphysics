@@ -29,19 +29,29 @@ jobs:
         run: shared/sync.sh --check
       - name: Learning objectives of the hub page up to date
         run: node hub/build-objectives.js --check
-      # in parallel, one per core; each test's output is printed whole when it ends
+      # in parallel, one per core; each test's output is printed whole when it ends. The slowest tests
+      # start first (electric-field's exercise check alone takes over a minute), so that they do not
+      # start last and hold up the job alone; a name in SLOW that no longer exists is just skipped.
       - name: Tests of the apps
         run: |
-          ls */test/check-*.js | xargs -P "$(nproc)" -n 1 sh -c '
+          SLOW='electric-field/test/check-exercises.js magnetic-forces/test/check-exercises.js bulb-brightness/test/check-generator.js bulb-brightness/test/check-predict.js oscillations/test/check-generator.js'
+          { for f in $SLOW; do [ -f "$f" ] && echo "$f"; done; ls */test/check-*.js | grep -vxF -f <(printf '%s\n' $SLOW); } |
+          xargs -P "$(nproc)" -n 1 sh -c '
             out=$(node "$1" 2>&1); s=$?
             printf "::group::%s\n%s\n::endgroup::\n" "$1" "$out"
             [ $s -eq 0 ] || echo "::error::$1 failed"
             exit $s' _
+
+  # its own job, so that it runs at the same time as the tests of the apps
+  test-admin:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
       - name: Tests of the admin panel
         run: python3 hub-admin/test_hubadmin.py
 
   deploy:
-    needs: test
+    needs: [test, test-admin]
     # not in forks: they have no deploy key
     if: github.repository == 'bylands/texercises' || github.repository == 'bylands/learningphysics'
     runs-on: ubuntu-latest
@@ -58,5 +68,7 @@ jobs:
       - name: Deploy
         env:
           DEPLOY_TARGET: 'tpdeploy@179.237.97.105:'
-          RSYNC_RSH: 'ssh -i ~/.ssh/deploy -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes'
+          # deploy.sh runs one rsync per folder: the first one opens the SSH connection and the others
+          # reuse it (ControlMaster) instead of each logging in again
+          RSYNC_RSH: 'ssh -i ~/.ssh/deploy -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -o ControlMaster=auto -o ControlPath=~/.ssh/cm-%C -o ControlPersist=120'
         run: ./deploy.sh
