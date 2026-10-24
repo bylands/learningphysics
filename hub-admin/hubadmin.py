@@ -26,7 +26,8 @@ cards in its order, shows their tags, and lets visitors filter by tag. This serv
                          [fingerprints]}}; POST {"exercise": ref, "comment"} | {"exercise": ref, "accept":
                          {"fp", "on"}} (hub-data/exercise-audit-feedback.json, kept by exercise id and issue
                          fingerprint, so a new report keeps it); /export: the exercises with an accepted fix,
-                         a comment or a TikZ figure, as JSON to download, for Claude to work on. The GET of
+                         a comment or a TikZ figure not exported since it last changed, as JSON to download, for
+                         Claude to work on (each marked exported; ?all=1: those exported before too). The GET of
                          /admin/api/exercise-audit also gives "images" ({ref: [{"name", "url", "pdf"}]}: the
                          gallery images of the report's exercises in the export), "figures" (LaTeX draws) and
                          "claude" ("" or why Claude cannot be asked), and "clean": the exercises reviewed
@@ -1677,7 +1678,11 @@ class Admin:
                     figs[tikz["image"]] = {"code": tikz["code"], "use": tikz.get("use") or was.get("use") or "tikz", "updated": int(time.time())}
                 if len(figs) > MAX_AUDIT_TIKZ_IMAGES:
                     raise ValueError(f"at most {MAX_AUDIT_TIKZ_IMAGES} TikZ figures per exercise")
-            entry = {"comment": comment, "accepted": accepted, "tikz": figs, "updated": int(time.time())}
+            # (updated grows with each change, so one made in the second of an export is exported again)
+            entry = {"comment": comment, "accepted": accepted, "tikz": figs,
+                     "updated": max(int(time.time()), int(entry.get("updated") or 0) + 1)}
+            if isinstance((every.get(ref) or {}).get("exported"), int):
+                entry["exported"] = every[ref]["exported"]  # (the version last exported)
             if comment or accepted or figs:
                 if ref not in every and len(every) >= MAX_AUDIT_FEEDBACK:
                     raise ValueError(f"feedback on at most {MAX_AUDIT_FEEDBACK} exercises")
@@ -1687,25 +1692,33 @@ class Admin:
             write_config(self.audit_feedback_file, {"exercises": every}, 0o600)
         return {"exercise": ref, **entry}
 
-    def audit_export(self) -> Dict[str, object]:
+    def audit_export(self, again: bool = False) -> Dict[str, object]:
         """The review's feedback for Claude to work on: every exercise of the report with an accepted fix,
         a comment or a TikZ replacement of an image, its accepted issues, the others, the comment and the
-        TikZ ("tikz": [{"image", "code", "use": "tikz" (replace the image) or "original" (keep it)}])."""
+        TikZ ("tikz": [{"image", "code", "use": "tikz" (replace the image) or "original" (keep it)}]); only
+        those not exported since their feedback last changed (again: those too), each then marked exported
+        ("exported": the version of its feedback, its "updated")."""
         report = self.audit_all(self.audit()) or {"exercises": []}
-        feedback = self.audit_feedback()
-        out = []
-        for e in report["exercises"]:
-            f = feedback.get(e["ref"]) or {}
-            on = set(f.get("accepted") or [])
-            fields = ("severity", "category", "where", "issue", "fix")
-            accepted = [{k: i.get(k, "") for k in fields} for i in e.get("issues", []) if i["fp"] in on]
-            tikz = [{"image": n, "code": t["code"], "use": t.get("use") or "tikz"} for n, t in (f.get("tikz") or {}).items() if isinstance(t, dict) and t.get("code")]
-            if not accepted and not f.get("comment") and not tikz:
-                continue
-            out.append({"id": e.get("id"), "key": e.get("key", ""), "title": e.get("title", ""), "lang": e.get("lang", ""),
-                        "url": TEXERCISES + e["url"] if e.get("url") else "", "collections": e.get("collections", []),
-                        "accepted": accepted, "not_accepted": [{k: i.get(k, "") for k in fields} for i in e.get("issues", []) if i["fp"] not in on],
-                        "comment": f.get("comment", ""), "tikz": tikz})
+        with self.audit_lock:
+            feedback = self.audit_feedback()
+            out = []
+            for e in report["exercises"]:
+                f = feedback.get(e["ref"]) or {}
+                on = set(f.get("accepted") or [])
+                fields = ("severity", "category", "where", "issue", "fix")
+                accepted = [{k: i.get(k, "") for k in fields} for i in e.get("issues", []) if i["fp"] in on]
+                tikz = [{"image": n, "code": t["code"], "use": t.get("use") or "tikz"} for n, t in (f.get("tikz") or {}).items() if isinstance(t, dict) and t.get("code")]
+                if not accepted and not f.get("comment") and not tikz:
+                    continue
+                if not again and audit_exported(f):
+                    continue
+                out.append({"id": e.get("id"), "key": e.get("key", ""), "title": e.get("title", ""), "lang": e.get("lang", ""),
+                            "url": TEXERCISES + e["url"] if e.get("url") else "", "collections": e.get("collections", []),
+                            "accepted": accepted, "not_accepted": [{k: i.get(k, "") for k in fields} for i in e.get("issues", []) if i["fp"] not in on],
+                            "comment": f.get("comment", ""), "tikz": tikz})
+                f["exported"] = int(f.get("updated") or 0)
+            if out:
+                write_config(self.audit_feedback_file, {"exercises": feedback}, 0o600)
         return {"generated": report.get("generated", ""), "source": report.get("source", ""),
                 "exported": time.strftime("%Y-%m-%d"), "exercises": out}
 
@@ -2429,6 +2442,11 @@ def audit_ref(e: Dict[str, object]) -> str:
     is made anew), or "key:<key>" for one without."""
     eid = e.get("id")
     return str(eid) if isinstance(eid, int) and not isinstance(eid, bool) else "key:" + re.sub(r"[^A-Za-z0-9_-]", "-", str(e.get("key") or ""))[:160]
+
+
+def audit_exported(f: Dict[str, object]) -> bool:
+    """An exercise's feedback exported to Claude since it last changed."""
+    return isinstance(f.get("exported"), int) and f["exported"] >= int(f.get("updated") or 0)
 
 
 def audit_fingerprint(issue: Dict[str, object]) -> str:
@@ -3339,7 +3357,8 @@ def make_handler(admin: Admin):
                 elif path.endswith("/feedback"):
                     self.json(200, {"feedback": admin.audit_feedback()})
                 else:
-                    self.send(200, json.dumps(admin.audit_export(), ensure_ascii=False, indent=1), "application/json; charset=utf-8",
+                    again = (parse_qs(self.path.split("?", 1)[1] if "?" in self.path else "").get("all") or [""])[0] == "1"
+                    self.send(200, json.dumps(admin.audit_export(again), ensure_ascii=False, indent=1), "application/json; charset=utf-8",
                               {"Content-Disposition": f'attachment; filename="exercise-review-feedback-{time.strftime("%Y-%m-%d")}.json"'})
             elif path == "/api/categories-extra":
                 if not self.is_super():
@@ -4158,6 +4177,7 @@ h2.section { font-size: 1.15rem; margin: 28px 0 4px; }
 .audit .tools-line input[type=file] { width: auto; max-width: 100%; font-size: 0.85rem; }
 .audit .rv-line { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 4px 12px; }
 .audit a.export { display: inline-block; background: var(--accent); color: var(--accent-ink); border-radius: 6px; padding: 4px 12px; font-weight: 600; font-size: 0.9rem; text-decoration: none; margin: 0 0 8px; }
+.audit a.again { font-size: 0.85rem; margin: 0 0 8px 10px; }
 .audit a.export.off { background: var(--card); color: var(--muted); border: 1px solid var(--line); pointer-events: none; font-weight: 400; }
 .audit .ihead { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 0; }
 .audit label.accept { margin-left: auto; display: inline-flex; align-items: center; gap: 5px; font-size: 0.85rem; cursor: pointer; padding-left: 10px; }
@@ -5446,8 +5466,10 @@ SHEETS_JS = r"""
 // categories.json knows by area and topic (a select; the server's d.topics: {areas, of: ref → [area, topic]}).
 // The superuser's feedback on it (/admin/api/exercise-audit/feedback, kept by exercise id and issue
 // fingerprint, so a regenerated report keeps it): per issue "Accept fix", per exercise a comment (saved
-// as it is typed); the exercises marked so (or not yet) are a filter, and "Export for Claude" downloads
-// them (/admin/api/exercise-audit/export) with their accepted and other issues and the comment.
+// as it is typed); the exercises marked so (to export, exported, or not yet) are a filter, and "Export for
+// Claude" downloads those not exported since their feedback last changed (/admin/api/exercise-audit/export,
+// which marks them exported) with their accepted and other issues and the comment; "Export all again"
+// (?all=1) the exported ones too.
 // An exercise that uses gallery images (the server's d.images: ref → [{name, url, pdf}], of the uploaded
 // export) lists them, each with "Replace with TikZ": an editor with the original, the TikZ code and its
 // drawing (…/tikz/preview: drawn by LaTeX on the server with the exercise's solver part, asked again
@@ -5469,7 +5491,7 @@ SHEETS_JS = r"""
   let report = null, sevOn = '', catOn = '', collOn = '', topOn = '', markOn = '', imgOn = '', query = '', shown = PAGE, loaded = false;
   let clean = [], cleanOn = false; // the exercises reviewed without an issue; listed instead of those with issues
   let topics = { areas: [], of: {} }; // categories.json: the areas and topics of the report's exercises
-  let feedback = {}; // ref → { comment, accepted: [fp], tikz: { image: { code } } }
+  let feedback = {}; // ref → { comment, accepted: [fp], tikz: { image: { code } }, updated, exported }
   let images = {}, noClaude = '', canDraw = false; // the exercises' gallery images; why Claude cannot draft; LaTeX draws figures
   let counted = () => {}; // (draw's: the numbers of the marked exercises, after a change)
   const NONE = '\u0000none'; // collOn: the exercises in no collection
@@ -5513,12 +5535,15 @@ SHEETS_JS = r"""
   const tikzOf = (e) => fbOf(e).tikz || {};
   const acceptedIn = (e) => e.issues.filter((i) => fbOf(e).accepted.includes(i.fp));
   const marked = (e) => !!(fbOf(e).comment || acceptedIn(e).length || Object.keys(tikzOf(e)).length);
+  // (exported to Claude since its feedback last changed: not exported again)
+  const exported = (e) => marked(e) && Number.isInteger(fbOf(e).exported) && fbOf(e).exported >= (fbOf(e).updated || 0);
+  const markOf = (e) => (!marked(e) ? 'no' : exported(e) ? 'done' : 'yes');
   async function send(e, change) {
     const r = await fetch('/admin/api/exercise-audit/feedback', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ exercise: e.ref, ...change }) });
     const d = await r.json().catch(() => ({}));
     if (!r.ok) throw new Error(d.error || r.statusText);
-    feedback[e.ref] = { comment: d.comment, accepted: d.accepted, tikz: d.tikz || {} };
+    feedback[e.ref] = { comment: d.comment, accepted: d.accepted, tikz: d.tikz || {}, updated: d.updated, exported: d.exported };
     counted();
   }
   async function call(path, data) {
@@ -5703,7 +5728,7 @@ SHEETS_JS = r"""
     comment.addEventListener('blur', save);
     return el('li', { class: `ex s-${issues.length ? issues[0].severity : 'clean'}` },
       el('h3', {}, title),
-      el('div', { class: 'id' }, [e.id ? `id ${e.id}` : '', e.key, e.lang, collsOf(e).join(', ')].filter(Boolean).join(' · ')),
+      el('div', { class: 'id' }, [e.id ? `id ${e.id}` : '', e.key, e.lang, collsOf(e).join(', '), exported(e) ? 'exported for Claude' : ''].filter(Boolean).join(' · ')),
       !issues.length ? el('p', { class: 'clean' }, 'No issues found.') : el('ul', {}, issues.map((i) => el('li', {},
         el('div', { class: 'ihead' }, el('span', { class: `sev s-${i.severity}` }, SEV[i.severity]),
           el('span', { class: 'where' }, [i.category, WHERE[i.where] || i.where].filter(Boolean).join(' · ')), accept(i)),
@@ -5736,15 +5761,24 @@ SHEETS_JS = r"""
     const issueRow = el('div', { class: 'row' }), sevRow = el('div', { class: 'row' }), catRow = el('div', { class: 'row' }), markRow = el('div', { class: 'row' }), imgRow = el('div', { class: 'row' });
     const hasImg = (e) => !!(images[e.ref] || []).length;  // (gallery images, as the export shows them)
     const IMG = { yes: 'With images', no: 'Without' };
-    const exportLink = el('a', { class: 'export', href: '/admin/api/exercise-audit/export', download: '' });
-    const MARK = { yes: 'Accepted, commented or TikZ', no: 'Not yet' };
+    // the export marks the exercises exported: their feedback asked for again a moment later
+    const refetch = () => setTimeout(async () => {
+      try { feedback = (await call('/admin/api/exercise-audit/feedback')).feedback || {}; fill(); } catch (err) { /* (as before) */ }
+    }, 1500);
+    const exportLink = el('a', { class: 'export', href: '/admin/api/exercise-audit/export', download: '', onclick: refetch });
+    const againLink = el('a', { class: 'again', href: '/admin/api/exercise-audit/export?all=1', download: '', onclick: refetch });
+    const MARK = { yes: 'To export', done: 'Exported', no: 'Not yet' };
     counted = () => {
-      const k = all.filter(marked).length, out = flagged.filter(marked).length + clean.filter(marked).length;
+      const k = (m) => all.filter((e) => markOf(e) === m).length, every = [...flagged, ...clean];
+      const out = every.filter((e) => markOf(e) === 'yes').length, done = every.filter((e) => markOf(e) === 'done').length;
       markRow.replaceChildren(el('span', { class: 'what' }, 'Marked'), chip('All', all.length, !markOn, pick(() => { markOn = ''; })),
-        ...Object.entries(MARK).map(([m, label]) => chip(label, m === 'yes' ? k : all.length - k, markOn === m, pick(() => { markOn = markOn === m ? '' : m; }))));
+        ...Object.entries(MARK).map(([m, label]) => chip(label, k(m), markOn === m, pick(() => { markOn = markOn === m ? '' : m; }))));
       exportLink.textContent = `Export for Claude (${out})`;
-      exportLink.title = out ? `The ${out} exercises with an accepted fix, a comment or TikZ, as JSON` : 'Accept a fix, write a comment or save a TikZ figure first';
+      exportLink.title = out ? `The ${out} exercises with an accepted fix, a comment or TikZ not exported yet, as JSON`
+        : done ? 'All marked exercises are exported: change one to export it again' : 'Accept a fix, write a comment or save a TikZ figure first';
       exportLink.classList.toggle('off', !out);
+      againLink.textContent = `Export all again (${out + done})`;
+      againLink.hidden = !done;
     };
     // the collections, by name, each with its exercises with issues (as the chips: of the whole report)
     const colls = new Map();
@@ -5794,7 +5828,7 @@ SHEETS_JS = r"""
       const rows = [];
       all.forEach((e) => {
         if (collOn && (collOn === NONE ? collsOf(e).length : !collsOf(e).includes(collOn))) return;
-        if (markOn && marked(e) !== (markOn === 'yes')) return;
+        if (markOn && markOf(e) !== markOn) return;
         if (imgOn && hasImg(e) !== (imgOn === 'yes')) return;
         if (!onTopic(e)) return;
         const head = fold([e.title, e.id, e.key, e.lang, ...collsOf(e)].join(' '));
@@ -5821,7 +5855,7 @@ SHEETS_JS = r"""
         colls.size ? el('div', { class: 'row' }, el('span', { class: 'what' }, 'Collection'), collSel) : '',
         topics.areas.length ? el('div', { class: 'row' }, el('span', { class: 'what' }, 'Topic'), topSel) : '',
         markRow, imgRow, el('div', { class: 'row' }, el('span', { class: 'what' }, 'Search'), search)),
-      el('div', { class: 'rv-line' }, info, exportLink), list, el('div', { class: 'tools-line' }, more));
+      el('div', { class: 'rv-line' }, info, exportLink, againLink), list, el('div', { class: 'tools-line' }, more));
     const replace = el('details', { class: 'replace' }, el('summary', {}, 'Replace the exercise review report'), upload('Replace report'));
     if (replaceBox) replaceBox.replaceChildren(replace); else body.append(replace);
     fill();
