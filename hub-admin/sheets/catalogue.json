@@ -1202,6 +1202,11 @@
          ]
         },
         {
+         "id": "es.field.analogy",
+         "en": "Explain the electric field by analogy with the gravitational field (E = F/q like g = F/m) and use E = F/q in both directions: the field from a force, the force from a field.",
+         "de": "Das elektrische Feld in Analogie zum Gravitationsfeld erklären (E = F/q wie g = F/m) und E = F/q in beide Richtungen anwenden: das Feld aus einer Kraft, die Kraft aus einem Feld."
+        },
+        {
          "id": "es.field.superposition",
          "en": "Add the fields of several point charges component-wise and find where the net field is zero.",
          "de": "Die Felder mehrerer Punktladungen komponentenweise addieren und den Ort bestimmen, an dem das Gesamtfeld null ist."
@@ -1271,6 +1276,11 @@
          ]
         },
         {
+         "id": "es.uniform.work",
+         "en": "Calculate the work W = q·E·d that a uniform field does on a charge, independent of the path, and relate it to the change in potential energy.",
+         "de": "Die Arbeit W = q·E·d berechnen, die ein homogenes Feld an einer Ladung verrichtet, unabhängig vom Weg, und sie mit der Änderung der potenziellen Energie verknüpfen."
+        },
+        {
          "id": "es.uniform.forces",
          "en": "Find the forces on charged bodies in a uniform field, e.g. Millikan's experiment.",
          "de": "Kräfte auf geladene Körper im homogenen Feld bestimmen, z. B. im Millikan-Versuch."
@@ -1317,6 +1327,11 @@
          "hub": [
           "charged-particles:accel"
          ]
+        },
+        {
+         "id": "es.motion.devices",
+         "en": "Explain how a cathode-ray tube, an electron gun or a linear accelerator uses electric fields to accelerate charged particles.",
+         "de": "Erklären, wie eine Kathodenstrahlröhre, eine Elektronenkanone oder ein Linearbeschleuniger geladene Teilchen mit elektrischen Feldern beschleunigt."
         },
         {
          "id": "es.motion.deflection",
@@ -2976,7 +2991,8 @@
    "sub": "es.coulomb",
    "objectives": [
     "es.coulomb.calc",
-    "grav.law.force"
+    "grav.law.force",
+    "es.field.analogy"
    ],
    "quality": 4,
    "difficulty": 2,
@@ -3224,7 +3240,8 @@
   "17470": {
    "sub": "es.potential",
    "objectives": [
-    "es.potential.concepts"
+    "es.potential.concepts",
+    "es.uniform.work"
    ],
    "quality": 4,
    "difficulty": 1,
@@ -3234,7 +3251,8 @@
    "sub": "es.potential",
    "objectives": [
     "es.potential.concepts",
-    "en.work.kinds"
+    "en.work.kinds",
+    "es.field.analogy"
    ],
    "quality": 5,
    "difficulty": 2,
@@ -3272,7 +3290,8 @@
    "sub": "es.motion",
    "objectives": [
     "es.motion.accel",
-    "rel.dynamics.accelerator"
+    "rel.dynamics.accelerator",
+    "es.motion.devices"
    ],
    "quality": 4,
    "difficulty": 2,
@@ -3359,7 +3378,8 @@
    "sub": "es.motion",
    "objectives": [
     "es.motion.accel",
-    "es.potential.concepts"
+    "es.potential.concepts",
+    "es.motion.devices"
    ],
    "quality": 5,
    "difficulty": 3,
@@ -3371,7 +3391,8 @@
   "17515": {
    "sub": "es.motion",
    "objectives": [
-    "es.motion.accel"
+    "es.motion.accel",
+    "es.motion.devices"
    ],
    "quality": 4,
    "difficulty": 2,
@@ -3425,7 +3446,8 @@
    "sub": "es.uniform",
    "objectives": [
     "es.potential.energy",
-    "es.uniform.plates"
+    "es.uniform.plates",
+    "es.uniform.work"
    ],
    "quality": 5,
    "difficulty": 2,
@@ -10225,7 +10247,8 @@
   "22846": {
    "sub": "es.field",
    "objectives": [
-    "es.field.point"
+    "es.field.point",
+    "es.field.analogy"
    ],
    "quality": 5,
    "difficulty": 2,
@@ -10588,7 +10611,8 @@
    "sub": "es.uniform",
    "objectives": [
     "es.uniform.forces",
-    "en.work.kinds"
+    "en.work.kinds",
+    "es.uniform.work"
    ],
    "quality": 3,
    "difficulty": 2,
@@ -10601,7 +10625,8 @@
    "sub": "es.potential",
    "objectives": [
     "es.potential.concepts",
-    "es.potential.energy"
+    "es.potential.energy",
+    "es.uniform.work"
    ],
    "quality": 4,
    "difficulty": 2,
@@ -12679,7 +12704,8 @@
    "sub": "es.motion",
    "objectives": [
     "es.motion.accel",
-    "rel.dynamics.accelerator"
+    "rel.dynamics.accelerator",
+    "es.motion.devices"
    ],
    "quality": 5,
    "difficulty": 2,
