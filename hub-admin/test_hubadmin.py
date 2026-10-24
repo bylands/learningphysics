@@ -468,6 +468,11 @@ class Sheets(unittest.TestCase):
         self.assertEqual([(m["area"], m["area_de"], m["area_rank"]) for m in got],
                          [("Modern Physics", "Moderne Physik", 4), ("Mechanics", "Mechanik", 0), ("Electricity and Magnetism", "Elektrizität und Magnetismus", 2)])
         self.assertEqual(S.area_of("no-such-app"), (len(S.AREAS) + 100, "Other", "Weitere"))
+        # the totals count an exercise once, also when several modules have it (here f2 in both)
+        POOL["photons"]["exercises"]["f2"] = ex()
+        got = S.coverage(POOL, apps, set())
+        self.assertEqual(sum(m["exercises"] for m in got), 13)
+        self.assertEqual(S.coverage_totals(POOL, got), {"exercises": 12, "areas": {"Modern Physics": 4, "Mechanics": 0, "Electricity and Magnetism": 9}})
 
     # categories.json in small: two areas (Optics without exercises there), x2 a near-duplicate of x1 (flagged)
     CATS = {"tree": {"Mechanics": {"Kinematics": {"kin.a": "Uniform motion", "kin.b": "Free fall"}, "Forces": {"dyn.a": "Newton's laws"}},

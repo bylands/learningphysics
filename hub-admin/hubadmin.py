@@ -1020,7 +1020,9 @@ class Admin:
                                    "updated": s.get("updated", 0), "shared": bool(s.get("token"))} for i, s in sheets.items()),
                                  key=lambda x: -x["updated"])
         state["apps"] = self.sheet_apps(sheetlib, have)
-        state["topics"] = sheetlib.coverage(sheetlib.full_pool(sheetlib.catalog(have)), state["apps"], have) if sheetlib else []
+        pool = sheetlib.full_pool(sheetlib.catalog(have)) if sheetlib else {}
+        state["topics"] = sheetlib.coverage(pool, state["apps"], have) if sheetlib else []
+        state["topic_totals"] = sheetlib.coverage_totals(pool, state["topics"]) if sheetlib else {"exercises": 0, "areas": {}}
         state["subjects"] = sheetlib.topic_counts(have) if sheetlib else []  # the TeXercises topics of the exercises there (sheets saved before)
         state["tree"] = sheetlib.topic_tree(have) if sheetlib else {"areas": [], "new": {"id": "_new", "exercises": 0, "concept": 0, "both": 0}}
         figs = sheets_module("figures")
@@ -4359,7 +4361,8 @@ SHEETS_JS = r"""
   }
   function renderTopics() {
     const box = $('#sheets-topics'), mods = st.topics || [];
-    const n = mods.reduce((s, m) => s + m.exercises, 0), objs = mods.flatMap((m) => m.objectives), empty = objs.filter((o) => !o.exercises).length;
+    // different exercises: one in several modules (it practises objectives of each) counts once
+    const totals = st.topic_totals || {}, n = totals.exercises != null ? totals.exercises : mods.reduce((s, m) => s + m.exercises, 0), objs = mods.flatMap((m) => m.objectives), empty = objs.filter((o) => !o.exercises).length;
     box.querySelector('summary .note').textContent = `${mods.filter((m) => m.exercises).length} of ${mods.length} modules · ${n} exercises · `
       + (empty ? `${empty} of ${objs.length} learning objectives without an exercise` : `every one of the ${objs.length} learning objectives has exercises`);
     const card = (m) => el('div', { class: `topicmod${m.exercises ? '' : ' zero'}` },
@@ -4382,7 +4385,7 @@ SHEETS_JS = r"""
     let folded = [];
     try { folded = JSON.parse(localStorage.getItem('sheets-topic-areas-folded')) || []; } catch (e) { /* none */ }
     box.querySelector('.topicgrid').replaceChildren(...areas.map((a) => {
-      const n = a.mods.reduce((s, m) => s + m.exercises, 0);
+      const n = (totals.areas || {})[a.name] != null ? totals.areas[a.name] : a.mods.reduce((s, m) => s + m.exercises, 0);
       const d = el('details', { class: 'topicarea', open: !folded.includes(a.name) },
         el('summary', {}, a.name, el('span', { class: 'n' }, `${a.mods.length} module${a.mods.length === 1 ? '' : 's'} · ${n} ex.`)),
         el('div', { class: 'topicmods' }, ...a.mods.map(card)));
