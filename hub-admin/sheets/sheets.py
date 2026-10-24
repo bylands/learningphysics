@@ -867,6 +867,19 @@ def coverage(pool: Dict[str, object], apps: List[Dict[str, object]], have) -> Li
     return out
 
 
+def coverage_totals(pool: Dict[str, object], rows: List[Dict[str, object]]) -> Dict[str, object]:
+    """How many different exercises the modules of coverage (rows) have, in all and per area ("Other" for
+    none): an exercise in several modules (it practises objectives of each) counts once, where the
+    modules' own numbers count it in each."""
+    every, areas = set(), {}
+    for m in rows:
+        entry = pool.get(m["id"]) if isinstance(pool.get(m["id"]), dict) else {}
+        exs = entry.get("exercises") if isinstance(entry.get("exercises"), dict) else {}
+        every.update(exs)
+        areas.setdefault(m.get("area") or "Other", set()).update(exs)
+    return {"exercises": len(every), "areas": {a: len(keys) for a, keys in areas.items()}}
+
+
 def collection(title: str, chosen: List[Tuple[str, str]], names: Dict[str, str]) -> Dict[str, object]:
     """The collection build_sheet.py reads: the exercises, a section where the app changes."""
     items, containers, last = [], [], None
