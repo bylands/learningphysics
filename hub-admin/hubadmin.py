@@ -69,6 +69,13 @@ cards in its order, shows their tags, and lets visitors filter by tag. This serv
                          &keys=a,b[&gallery=<name>]: an image of the TeXercises gallery that these
                          exercises use, or a .zip of them, kept under a name made of the exercise's
                          title and id (hub-data/sheet-images/)
+    /admin/api/lessons   GET  the lesson plans (hub-data/lesson-plans.json): topics and learning objectives
+    /admin/api/lessons/<id> GET  a lesson plan, with its sheets
+                         POST {"action": "save", "lesson": ...} | {"action": "sheets", "split": "one" |
+                              "module", "count": n} (new sheets from it, exercises suggested) | {"action":
+                              "delete" | "duplicate" | "share" | "unshare"}; /admin/api/lessons/new {"lesson": ...}
+    /admin/lesson/s/<secret>  a shared lesson plan's page for the students: its topics and objectives with
+                         the apps, its shared sheets and exercises on TeXercises (whoever has its link)
     /admin/api/objective GET ?app=a&id=o  the exercises the pool links to a module's learning objective
                          (id empty: those of the module as a whole), for the topics section of the Sheets tab
     /admin/api/images    GET ?keys=a,b  the gallery images these exercises use, and which are there
@@ -585,6 +592,8 @@ class Admin:
         self.fetch_lock = threading.Lock()
         self.sheet_figures = config.parent / "sheet-figures"  # the TikZ figures as SVG (figures.py)
         self.sheets_lock = threading.Lock()
+        self.lessons_file = config.parent / "lesson-plans.json"  # the lesson plans (with the secrets of their student pages)
+        self.lessons_lock = threading.Lock()
         self.own = own
         self.audit_file = config.parent / "exercise-audit.json"  # the exercises' review, in the Sheets tab (the superuser's)
         self.audit_feedback_file = config.parent / "exercise-audit-feedback.json"  # what the superuser accepted and wrote on it
@@ -1189,6 +1198,182 @@ class Admin:
             if isinstance(t, str) and hmac.compare_digest(t, token):
                 return sid, s
         return None
+
+    # ------------------------------------------------------------------ lesson plans
+    def read_lessons(self) -> Dict[str, Dict[str, object]]:
+        data = read_config(self.lessons_file)
+        plans = data.get("plans") if isinstance(data, dict) else None
+        return {i: p for i, p in plans.items() if SHEET_ID.fullmatch(i) and isinstance(p, dict)} if isinstance(plans, dict) else {}
+
+    def change_lessons(self, change) -> object:
+        """Read, change and write the lesson plans under the lock: change(plans) returns the answer."""
+        with self.lessons_lock:
+            plans = self.read_lessons()
+            out = change(plans)
+            write_config(self.lessons_file, {"plans": plans}, 0o600)
+            return out
+
+    def lesson_draft(self, raw: object) -> Dict[str, object]:
+        """A lesson plan as the editor sends it, cleaned (ValueError: why it cannot be): {"title", "lang",
+        "topics": [subtopic ids of categories.json], "modules": [{"id", "objectives": [ids]}]}, as a sheet
+        has them (normalize_sheet)."""
+        sheetlib, pool, have, apps = self.sheet_context()
+        clean = normalize_sheet({**raw, "exercises": []} if isinstance(raw, dict) else {}, apps, pool, have=have)
+        return {k: clean[k] for k in ("title", "lang", "topics", "modules")}
+
+    def lessons_state(self) -> List[Dict[str, object]]:
+        """The lesson plans, the last changed first: {id, title, lang, modules, objectives, sheets, shared, updated}."""
+        sheets = self.read_sheets()
+        return sorted(({"id": i, "title": p.get("title", ""), "lang": p.get("lang", "en"), "modules": len(p.get("modules", [])),
+                        "objectives": sum(len(m.get("objectives", [])) for m in p.get("modules", []) if isinstance(m, dict)),
+                        "sheets": len([x for x in p.get("sheets", []) if x in sheets]), "shared": bool(p.get("token")),
+                        "updated": p.get("updated", 0)} for i, p in self.read_lessons().items()), key=lambda x: -x["updated"])
+
+    def lesson_full(self, lid: str) -> Optional[Dict[str, object]]:
+        """A lesson plan with its sheets that still exist ({id, title, exercises, shared}), or None."""
+        p = self.read_lessons().get(lid)
+        if p is None:
+            return None
+        sheets = self.read_sheets()
+        return {"id": lid, "title": p.get("title", ""), "lang": p.get("lang", "en"), "topics": p.get("topics", []),
+                "modules": p.get("modules", []), "token": p.get("token"),
+                "sheets": [{"id": sid, "title": sheets[sid].get("title", ""), "exercises": len(sheets[sid].get("exercises", [])),
+                            "shared": bool(sheets[sid].get("token"))} for sid in p.get("sheets", []) if sid in sheets]}
+
+    def save_lesson(self, lid: Optional[str], raw: object) -> str:
+        """Create (lid None) or save a lesson plan; its id. ValueError: why not; KeyError: no such plan."""
+        clean = self.lesson_draft(raw)
+        now = int(time.time())
+
+        def change(plans):
+            nonlocal lid
+            if lid is None:
+                if len(plans) >= MAX_SHEETS:
+                    raise ValueError(f"at most {MAX_SHEETS} lesson plans")
+                lid = secrets.token_hex(6)
+                plans[lid] = {"created": now, "token": None, "sheets": []}
+            elif lid not in plans:
+                raise KeyError(lid)
+            old = plans[lid]
+            plans[lid] = {**clean, "sheets": old.get("sheets", []), "created": old.get("created", now), "updated": now, "token": old.get("token")}
+            return lid
+        return self.change_lessons(change)
+
+    def lesson_action(self, lid: str, action: object) -> Dict[str, object]:
+        """delete (its sheets stay), duplicate (without its sheets), share (a new link for the students:
+        the old one stops working) or unshare. KeyError: no plan."""
+        def change(plans):
+            if lid not in plans:
+                raise KeyError(lid)
+            if action == "delete":
+                del plans[lid]
+                return {"deleted": lid}
+            if action == "duplicate":
+                if len(plans) >= MAX_SHEETS:
+                    raise ValueError(f"at most {MAX_SHEETS} lesson plans")
+                new, now = secrets.token_hex(6), int(time.time())
+                title = str(plans[lid].get("title") or "")
+                plans[new] = {**plans[lid], "title": (title + (" (Kopie)" if plans[lid].get("lang") == "de" else " (copy)"))[:MAX_TITLE],
+                              "sheets": [], "created": now, "updated": now, "token": None}
+                return {"id": new}
+            if action == "share":
+                plans[lid]["token"] = secrets.token_urlsafe(24)
+                return {"token": plans[lid]["token"]}
+            if action == "unshare":
+                plans[lid]["token"] = None
+                return {"token": None}
+            raise ValueError("action: save, delete, duplicate, share, unshare or sheets")
+        return self.change_lessons(change)
+
+    def lesson_sheets(self, lid: str, split: object, count: Optional[int] = None) -> Dict[str, object]:
+        """New exercise sheets from a lesson plan, their exercises suggested (as the sheet editor's Suggest
+        does) and saved, and the plan's list of sheets: one sheet with all of its modules (split "one") or
+        one per module ("module", titled "<plan> · <module>"). A plan without topics takes all of them (its
+        objectives choose the exercises). {"sheets": [ids]}; KeyError: no plan; ValueError: why not."""
+        p = self.read_lessons().get(lid)
+        if p is None:
+            raise KeyError(lid)
+        if split not in ("one", "module"):
+            raise ValueError("split: one or module")
+        modules = [m for m in p.get("modules", []) if isinstance(m, dict)]
+        if not modules:
+            raise ValueError("the lesson plan has no learning objectives yet")
+        sheetlib, pool, have, apps = self.sheet_context()
+        topics = p.get("topics") or [x["id"] for a in sheetlib.topic_tree(have)["areas"] for t in a["topics"] for x in t["subtopics"]] + [sheetlib.NEW]
+        names = self.app_names()
+        title = str(p.get("title") or "")
+        ids = []
+        for group in ([modules] if split == "one" else [[m] for m in modules]):
+            name = title if split == "one" else f"{title} · {names.get(group[0]['id'], group[0]['id'])}" if title else names.get(group[0]["id"], group[0]["id"])
+            draft = self.draft({"title": name[:MAX_TITLE], "lang": p.get("lang", "en"), "topics": topics[:MAX_SHEET_TOPICS],
+                                "modules": group, "loose": False, "balance": dict(SHEET_BALANCE)})
+            draft["exercises"] = self.plan(draft, suggest=True, count=count)["exercises"]
+            ids.append(self.save_sheet(None, draft))
+
+        def change(plans):
+            if lid in plans:
+                plans[lid]["sheets"] = list(dict.fromkeys([*plans[lid].get("sheets", []), *ids]))
+            return {"sheets": ids}
+        return self.change_lessons(change)
+
+    def lesson_by_token(self, token: str) -> Optional[Tuple[str, Dict[str, object]]]:
+        if not SHEET_TOKEN.fullmatch(token or ""):
+            return None
+        for lid, p in self.read_lessons().items():
+            t = p.get("token")
+            if isinstance(t, str) and hmac.compare_digest(t, token):
+                return lid, p
+        return None
+
+    def lesson_page(self, token: str) -> Optional[str]:
+        """A shared lesson plan's page for the students, or None: its topics, and per module its learning
+        objectives, each with the app (a hub module), the plan's shared sheets that have it, and its best
+        exercises on TeXercises."""
+        found = self.lesson_by_token(token)
+        sheetlib = sheets_module()
+        if not found or sheetlib is None:
+            return None
+        _, p = found
+        de = p.get("lang") == "de"
+        have = sheetlib.available(self.texercises)
+        pool = sheetlib.full_pool(sheetlib.catalog(have))
+        apps = {a["id"]: a for a in self.sheet_apps(sheetlib, have)}
+        hub = {a["id"] for a in self.apps()}
+        flat = sheetlib.load_categories()["flat"]
+        sheets = self.read_sheets()
+        shared = [(sid, sheets[sid]) for sid in p.get("sheets", []) if sid in sheets and sheets[sid].get("token")]
+        topics: Dict[str, Dict[str, List[str]]] = {}
+        for t in p.get("topics", []):
+            if t in flat:
+                area, topic, label = flat[t]
+                topics.setdefault(area, {}).setdefault(topic, []).append(label)
+        modules = []
+        for m in p.get("modules", []):
+            app = apps.get(m.get("id")) if isinstance(m, dict) else None
+            if app is None:
+                continue
+            entry = pool.get(app["id"]) if isinstance(pool.get(app["id"]), dict) else {}
+            objs = []
+            for o in app.get("objectives", []):
+                if o["id"] not in m.get("objectives", []):
+                    continue
+                keys = [k for k in (entry.get("objectives") or {}).get(o["id"], []) if isinstance(k, str)]
+                exs = []
+                for k in dict.fromkeys(keys):
+                    e = (entry.get("exercises") or {}).get(k) or {}
+                    meta = sheetlib.exercise_meta(have[k]) if k in have else {}
+                    url = meta.get("url") or e.get("url")
+                    if url:
+                        exs.append({"title": str(meta.get("title") or e.get("title") or k), "url": "https://texercises.com" + str(url),
+                                    "other": (meta.get("lang") or e.get("lang")) not in (None, p.get("lang", "en"))})
+                exs = sorted(exs, key=lambda x: x.pop("other"))[:5]  # (the plan's language first, else the pool's order)
+                on = [(sid, s) for sid, s in shared if any(x.get("id") == app["id"] and o["id"] in x.get("objectives", []) for x in s.get("modules", []) if isinstance(x, dict))]
+                objs.append({"text": o["de"] if de else o["en"], "sheets": on, "exercises": exs})
+            area = sheetlib.area_of(app["id"])
+            modules.append({"id": app["id"], "name": str(app.get("de") if de and app.get("de") else app["name"]),
+                            "area": area[2] if de else area[1], "rank": area[0], "app": app["id"] in hub, "objectives": objs})
+        modules.sort(key=lambda m: m["rank"])
+        return lesson_page(p, topics, modules, shared)
 
     def preview(self, keys: List[str]) -> Dict[str, object]:
         """The exercises as HTML (text and solution), for the editor's preview; only those there."""
@@ -2828,6 +3013,52 @@ def make_handler(admin: Admin):
             except OSError:
                 self.json(500, {"error": "could not write the sheets"})
 
+        def lessons_get(self, path: str) -> None:
+            """/api/lessons: the lesson plans; /api/lessons/<id>: one (the superuser)."""
+            if not self.is_super():
+                self.json(403, {"error": "login"})
+                return
+            if path == "/api/lessons":
+                self.json(200, {"lessons": admin.lessons_state()})
+                return
+            lid = path[len("/api/lessons/"):]
+            full = admin.lesson_full(lid) if SHEET_ID.fullmatch(lid) else None
+            if full is None:
+                self.json(404, {"error": "no such lesson plan"})
+            else:
+                self.json(200, full)
+
+        def lessons_post(self, path: str) -> None:
+            """/api/lessons/new {"lesson": ...}: a new lesson plan; /api/lessons/<id> {"action": "save",
+            "lesson": ...}, {"action": "sheets", "split": "one" | "module", "count": n} (new sheets from it)
+            or {"action": "delete" | "duplicate" | "share" | "unshare"} (the superuser)."""
+            if not self.is_super():
+                self.json(403, {"error": "login"})
+                return
+            body = self.json_body()
+            if body is None:
+                return
+            lid = path[len("/api/lessons/"):]
+            try:
+                if lid == "new":
+                    self.json(200, admin.lesson_full(admin.save_lesson(None, body.get("lesson"))))
+                elif not SHEET_ID.fullmatch(lid):
+                    self.json(404, {"error": "no such lesson plan"})
+                elif body.get("action") == "save":
+                    self.json(200, admin.lesson_full(admin.save_lesson(lid, body.get("lesson"))))
+                elif body.get("action") == "sheets":
+                    count = body.get("count")
+                    count = count if isinstance(count, int) and not isinstance(count, bool) and 1 <= count <= MAX_SHEET_EXERCISES else None
+                    self.json(200, admin.lesson_sheets(lid, body.get("split"), count))
+                else:
+                    self.json(200, admin.lesson_action(lid, body.get("action")))
+            except KeyError:
+                self.json(404, {"error": "no such lesson plan"})
+            except ValueError as e:
+                self.json(400, {"error": str(e)})
+            except OSError:
+                self.json(500, {"error": "could not write the lesson plans"})
+
         def teachers_post(self) -> None:
             """/api/teachers (the superuser): {"action": "create", "id", "user", "first", "last", "school"}
             (the answer has the first password, shown once), {"action": "reset", "id"} (a new password),
@@ -3062,6 +3293,18 @@ def make_handler(admin: Admin):
                 self.send(200, ONLINE_JS, "text/javascript; charset=utf-8")
             elif path == "/static/online.css":
                 self.send(200, ONLINE_CSS, "text/css; charset=utf-8")
+            elif path == "/static/lesson.css":
+                self.send(200, LESSON_CSS, "text/css; charset=utf-8")
+            elif path == "/static/lessons.js":
+                self.send(200, LESSONS_JS, "text/javascript; charset=utf-8")
+            elif path.startswith("/lesson/s/"):
+                html = admin.lesson_page(path[len("/lesson/s/"):])
+                if html is None:
+                    self.send(404, page("Lesson plan", '<p class="lead">There is no lesson plan at this address (any more).</p>'))
+                else:
+                    self.send(200, html, headers={"Referrer-Policy": "no-referrer"})
+            elif path == "/api/lessons" or path.startswith("/api/lessons/"):
+                self.lessons_get(path)
             elif path.startswith("/sheet/"):
                 self.sheet_route(path[len("/sheet/"):])
             elif path in ("/api/sheets", "/api/preview", "/api/images", "/api/objective") or path.startswith("/api/sheets/"):
@@ -3154,6 +3397,8 @@ def make_handler(admin: Admin):
                 self.account_post()
             elif path == "/api/plan" or path.startswith("/api/sheets/"):
                 self.sheets_post(path)
+            elif path.startswith("/api/lessons/"):
+                self.lessons_post(path)
             elif path == "/api/exercise-audit":
                 self.audit_post()
             elif path in ("/api/exercise-audit/feedback", "/api/exercise-audit/tikz/preview", "/api/exercise-audit/tikz/draft"):
@@ -3269,7 +3514,7 @@ def page(title: str, body: str, script: bool = False, refresh: int = 0) -> str:
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
   <link rel="stylesheet" href="/admin/static/admin.css">
-  {'<link rel="stylesheet" href="/katex/katex.min.css"><script defer src="/katex/katex.min.js"></script><script defer src="/admin/static/drag.js"></script><script defer src="/admin/static/admin.js"></script><script defer src="/admin/static/sets.js"></script><script defer src="/admin/static/sheets.js"></script><script defer src="/admin/static/accounts.js"></script><script defer src="/admin/static/games.js"></script>' if script else ''}
+  {'<link rel="stylesheet" href="/katex/katex.min.css"><script defer src="/katex/katex.min.js"></script><script defer src="/admin/static/drag.js"></script><script defer src="/admin/static/admin.js"></script><script defer src="/admin/static/sets.js"></script><script defer src="/admin/static/sheets.js"></script><script defer src="/admin/static/lessons.js"></script><script defer src="/admin/static/accounts.js"></script><script defer src="/admin/static/games.js"></script>' if script else ''}
 </head>
 <body>
   <header class="wrap">
@@ -3339,6 +3584,86 @@ def online_page(sheet: Dict[str, object], exercises: List[Dict[str, object]], op
 </html>"""
 
 
+def lesson_page(plan: Dict[str, object], topics: Dict[str, Dict[str, List[str]]], modules: List[Dict[str, object]],
+                sheets: List[Tuple[str, Dict[str, object]]]) -> str:
+    """A shared lesson plan's page for the students (Admin.lesson_page): its topics (area -> topic ->
+    subtopics), its exercise sheets (the shared ones: their online versions), and per area and module the
+    learning objectives, each with the app, the sheets that have it and its exercises on TeXercises.
+    modules: [{"id", "name", "area", "app": a hub module (it has a page), "objectives": [{"text", "sheets":
+    [(id, sheet)], "exercises": [{"title", "url"}]}]}]."""
+    de = plan.get("lang") == "de"
+    t = (lambda d, e: d) if de else (lambda d, e: e)
+    title = str(plan.get("title") or t("Lernplan", "Lesson plan"))
+    sheet_link = lambda s: f'<a href="/admin/sheet/s/{escape(str(s.get("token")))}">{escape(str(s.get("title") or t("Übungsblatt", "Exercise sheet")))}</a>'
+    parts = []
+    if topics:
+        parts.append(f'<section><h2>{t("Themen", "Topics")}</h2><ul class="topics">'
+                     + "".join(f'<li><b>{escape(area)}</b><ul>'
+                               + "".join(f'<li>{escape(topic)}: {escape(", ".join(subs))}</li>' for topic, subs in tops.items())
+                               + '</ul></li>' for area, tops in topics.items()) + '</ul></section>')
+    if sheets:
+        parts.append(f'<section><h2>{t("Übungsblätter", "Exercise sheets")}</h2><ul class="sheets">'
+                     + "".join(f'<li>{sheet_link(s)}</li>' for _, s in sheets) + '</ul></section>')
+    area = None
+    goals = []
+    for m in modules:
+        if m["area"] != area:
+            area = m["area"]
+            goals.append(f'<h3 class="area">{escape(area)}</h3>')
+        head = (f'<h4>{escape(m["name"])}' + (f' <a class="app" href="/{escape(m["id"])}/">{t("Zur App", "Open the app")} ↗</a>' if m["app"] else "") + '</h4>')
+        rows = []
+        for o in m["objectives"]:
+            links = ([f'<p class="links"><span class="kind">{t("Blätter", "Sheets")}</span> ' + " · ".join(sheet_link(s) for _, s in o["sheets"]) + '</p>'] if o["sheets"] else []) \
+                + ([f'<p class="links"><span class="kind">TeXercises</span> ' + " · ".join(f'<a href="{escape(x["url"])}" rel="noopener">{escape(x["title"])} ↗</a>' for x in o["exercises"]) + '</p>'] if o["exercises"] else [])
+            rows.append(f'<li><p>{escape(o["text"])}</p>{"".join(links)}</li>')
+        goals.append(f'<div class="module">{head}' + (f'<ol class="goals">{"".join(rows)}</ol>' if rows else
+                     f'<p class="note">{t("Das ganze Modul.", "The whole module.")}</p>') + '</div>')
+    if goals:
+        parts.append(f'<section><h2>{t("Lernziele", "Learning objectives")}</h2>{"".join(goals)}</section>')
+    empty = f'<p class="note">{t("Dieser Lernplan ist noch leer.", "This lesson plan is still empty.")}</p>'
+    return f"""<!doctype html>
+<html lang="{'de' if de else 'en'}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>{escape(title)}</title>
+  <link rel="icon" href="/favicon.ico" sizes="48x48">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/admin/static/lesson.css">
+</head>
+<body>
+  <main class="lesson">
+    <p class="site"><a href="/">learningphysics.ch</a></p>
+    <h1>{escape(title)}</h1>
+    {"".join(parts) or empty}
+  </main>
+</body>
+</html>"""
+
+
+LESSON_CSS = """
+:root { --ink: #1d2433; --muted: #5d6677; --line: #dde2ea; --accent: #2c5d9e; --bg: #fbfcfd; --card: #fff; }
+@media (prefers-color-scheme: dark) { :root { --ink: #e6e9ef; --muted: #a2abbb; --line: #333b49; --accent: #8db4ea; --bg: #141820; --card: #1b2029; } }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }
+.lesson { max-width: 820px; margin: 0 auto; padding: 24px 16px 48px; }
+.site { margin: 0; font-size: 0.85rem; } .site a { color: var(--muted); text-decoration: none; }
+h1 { margin: 4px 0 20px; font-size: 1.7rem; line-height: 1.2; }
+h2 { margin: 28px 0 10px; font-size: 1.2rem; border-bottom: 1px solid var(--line); padding-bottom: 4px; }
+h3.area { margin: 20px 0 6px; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); }
+h4 { margin: 0 0 6px; font-size: 1.05rem; display: flex; flex-wrap: wrap; gap: 4px 12px; align-items: baseline; }
+a { color: var(--accent); }
+.app { font-size: 0.85rem; font-weight: 400; }
+.module { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 12px 16px; margin: 0 0 10px; }
+.goals { margin: 0; padding-left: 22px; } .goals > li { margin: 6px 0; } .goals p { margin: 0; }
+.goals p.links { margin: 2px 0 0; font-size: 0.88rem; }
+.kind { color: var(--muted); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.04em; margin-right: 6px; }
+.topics, .sheets { margin: 0; padding-left: 20px; } .topics ul { padding-left: 18px; color: var(--muted); }
+.note { color: var(--muted); }
+"""
+
+
 def back_to(path: str) -> str:
     """Where to go after logging in (the crossword generator, the quiz or the game that sent the
     teacher here, ?next=/crosswords/): a path of this site only, else ""."""
@@ -3366,7 +3691,7 @@ def panel_page(teacher: str = SUPER, superuser: bool = True, user: str = "") -> 
     who = escape(f"{user} ({teacher})" if user and user != teacher else teacher)
     tabs = ('<a href="#quizzes" data-view="quizzes">Quizzes</a><a href="#games" data-view="games">Games</a>'
             '<a href="#sets" data-view="sets">Sets</a>'
-            + ('<a href="#sheets" data-view="sheets">Sheets</a><a href="#apps" data-view="apps">Apps &amp; tags</a>'
+            + ('<a href="#sheets" data-view="sheets">Sheets</a><a href="#lessons" data-view="lessons">Lesson plans</a><a href="#apps" data-view="apps">Apps &amp; tags</a>'
                '<a href="#teachers" data-view="teachers">Teachers</a>' if superuser else '')
             + '<a href="#account" data-view="account">Account</a>')
     return page("Admin", f"""
@@ -3443,6 +3768,7 @@ SUPER_SECTIONS = """
         <span id="sheet-status" class="status" aria-live="polite"></span>
       </div>
       <div id="sheet-list" class="setlist"></div>
+      <div id="sheet-from"></div>
       <div id="sheet-edit"></div>
       <details id="sheets-topics" class="card topics"><summary>Topics covered by the exercise pool <span class="note">Loading…</span></summary><div class="topicgrid"></div></details>
       <details id="sheets-new" class="card audit newex"><summary>New exercises <span class="only">only you see this</span> <span class="note">Loading…</span></summary><div class="newex-body"></div></details>
@@ -3450,6 +3776,15 @@ SUPER_SECTIONS = """
       <p class="lead">Exercise sheets from your TeXercises exercises: choose modules and their learning objectives, let the panel suggest a balanced sheet, replace or reorder its exercises, and preview them. Then download it as a PDF (with or without the solutions) or share an online version with your students: a secret link that works without logging in and shows no solutions.</p>
       <div id="sheets-state" class="sheetstate"><p class="note">Loading…</p></div>
       <div id="sheets-audit-replace" class="sheetstate"></div>
+    </section>
+    <section id="view-lessons" hidden>
+      <p class="lead">A lesson plan is a unit of teaching: its topics and subtopics and the learning objectives it covers. Make exercise sheets from it (they open in the Sheets tab), and share a page with your students: the topics and objectives, each with the app, the plan's shared sheets and exercises on TeXercises, at a secret link that works without logging in.</p>
+      <div class="bar">
+        <button type="button" id="lesson-save" class="primary" disabled>Save</button>
+        <span id="lesson-status" class="status" aria-live="polite"></span>
+      </div>
+      <div id="lesson-list" class="setlist"></div>
+      <div id="lesson-edit"><p class="note">Loading…</p></div>
     </section>""" + TEACHERS_SECTION
 
 COMMON_SECTIONS = """
@@ -3978,6 +4313,23 @@ h2.section { font-size: 1.15rem; margin: 28px 0 4px; }
 .sheet .links { display: flex; flex-wrap: wrap; gap: 6px 18px; font-weight: 600; margin: 0 0 4px; }
 .sheet .links a, .share a { color: var(--accent); }
 .share { margin-top: 10px; }
+.lessonplan .tree details > summary { list-style: none; cursor: pointer; }
+.lessonplan .tree details > summary::-webkit-details-marker { display: none; }
+.lessonplan .tree details > summary::before { content: "▸"; display: inline-block; width: 14px; color: var(--muted); }
+.lessonplan .tree details[open] > summary::before { content: "▾"; }
+.lessonplan .tree details > summary .check { display: inline-flex; }
+.lessonplan .check { display: inline-flex; gap: 6px; align-items: flex-start; cursor: pointer; }
+.lessonplan .check input { width: auto; margin-top: 5px; accent-color: var(--accent); }
+.lessonplan .check .n { color: var(--muted); font-size: 0.8rem; font-variant-numeric: tabular-nums; margin-top: 2px; }
+.lessonplan .tree li.zero .check .n { color: var(--bad); }
+.lessonobjs h4 { margin: 14px 0 4px; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); }
+.lessonobjs input[type=search] { width: 100%; max-width: 420px; margin: 6px 0; }
+.lessonsheets { margin: 0 0 8px; padding-left: 20px; }
+.lessonsheets a, #sheet-from a { color: var(--accent); }
+.makesheets { flex-wrap: wrap; align-items: center; }
+.makesheets .count { width: 90px; }
+.makesheets .inline { display: inline-flex; gap: 6px; align-items: center; }
+#sheet-from .card { margin: 0 0 14px; }
 .share .url { word-break: break-all; }
 .share .addapp { margin-top: 6px; }
 @media (max-width: 720px) { .teacherform { grid-template-columns: 1fr 1fr; } .teacherform .wide { grid-column: 1 / 2; } .teacher .fields { grid-template-columns: 1fr 1fr; } }
@@ -4462,7 +4814,43 @@ SHEETS_JS = r"""
     $('#sheet-list').replaceChildren(
       ...st.sheets.map((s) => el('button', { type: 'button', 'aria-pressed': String(!!cur && cur.id === s.id), onclick: () => open(s.id) },
         s.title || '(no title)', el('span', { class: 'title' }, `${s.exercises} ex.${s.shared ? ' · shared' : ''}`))),
-      el('button', { type: 'button', class: 'new', onclick: () => fresh() }, '+ New sheet'));
+      el('button', { type: 'button', class: 'new', onclick: () => fresh() }, '+ New sheet'),
+      el('button', { type: 'button', class: 'new', 'aria-expanded': String(fromOpen), onclick: () => { fromOpen = !fromOpen; renderList(); renderFrom(); } }, '+ From a lesson plan'));
+  }
+  // new sheets from a lesson plan (the Lesson plans tab): one, or one per module, their exercises
+  // suggested; the first opens
+  let fromOpen = false;
+  async function renderFrom() {
+    const box = $('#sheet-from');
+    if (!fromOpen) { box.replaceChildren(); return; }
+    box.replaceChildren(el('div', { class: 'card' }, el('p', { class: 'note' }, 'Loading the lesson plans…')));
+    let plans = [];
+    try { plans = (await api('/admin/api/lessons')).lessons; } catch (e) { box.replaceChildren(el('p', { class: 'status bad' }, `Could not load the lesson plans: ${e.message}`)); return; }
+    if (!fromOpen) return;
+    if (!plans.length) {
+      box.replaceChildren(el('div', { class: 'card' }, el('p', { class: 'note' }, 'No lesson plans yet: make one in the ', el('a', { href: '#lessons' }, 'Lesson plans'), ' tab.')));
+      return;
+    }
+    const which = el('select', { 'aria-label': 'Lesson plan' }, ...plans.map((x) => el('option', { value: x.id }, `${x.title || '(no title)'} (${x.objectives} objectives)`)));
+    const split = el('select', { 'aria-label': 'How many sheets' }, el('option', { value: 'one' }, 'One sheet with all modules'), el('option', { value: 'module' }, 'One sheet per module'));
+    const n = el('input', { type: 'number', min: '1', max: String(st.max), placeholder: 'default', 'aria-label': 'Exercises per sheet', class: 'count' });
+    const go = el('button', { type: 'button', class: 'primary' }, 'Make sheets');
+    go.addEventListener('click', async () => {
+      if (!leave()) return;
+      go.disabled = true;
+      status('Making the sheets…');
+      try {
+        const d = await api(`/admin/api/lessons/${which.value}`, { action: 'sheets', split: split.value, count: Number(n.value) || undefined });
+        fromOpen = false; dirty = false;
+        await load(true);
+        renderFrom();
+        window.dispatchEvent(new CustomEvent('lessons-changed'));
+        if (d.sheets.length) await open(d.sheets[0]);
+        status(`Made ${d.sheets.length} sheet${d.sheets.length === 1 ? '' : 's'} from the lesson plan${d.sheets.length > 1 ? ': this is the first' : ''}.`, 'ok');
+      } catch (e) { status(`No sheets made: ${e.message}`, 'bad'); go.disabled = false; }
+    });
+    box.replaceChildren(el('div', { class: 'card' }, el('div', { class: 'addapp makesheets' }, which, split, el('label', { class: 'inline' }, 'Exercises per sheet ', n), go),
+      el('p', { class: 'note' }, 'The sheets get the plan’s topics and learning objectives, and suggested exercises (a plan without topics: all of them). The plan lists them.')));
   }
 
   // ---------------------------------------------------------------- the editor
@@ -5004,6 +5392,7 @@ SHEETS_JS = r"""
       const full = await api(cur.id ? `/admin/api/sheets/${cur.id}` : '/admin/api/sheets/new', cur.id ? { action: 'save', sheet: body() } : { sheet: body() });
       apply(full);
       await load(true);
+      window.dispatchEvent(new CustomEvent('lessons-changed')); // (a lesson plan lists its sheets)
       status('Saved.', 'ok');
     } catch (e) {
       $('#sheet-save').disabled = false;
@@ -5018,6 +5407,7 @@ SHEETS_JS = r"""
       else if (action === 'duplicate') { const keep = dirty; dirty = false; await load(true); if (!keep) { await open(d.id); status('Duplicated: this is the copy.', 'ok'); return; } }
       else { cur.token = d.token; status(d.token ? 'The link is ready.' : 'Not shared any more.', 'ok'); }
       await load(true);
+      window.dispatchEvent(new CustomEvent('lessons-changed'));
     } catch (e) { status(`Error: ${e.message}`, 'bad'); }
   }
   async function load(keep) {
@@ -5037,6 +5427,11 @@ SHEETS_JS = r"""
   try { topics.open = localStorage.getItem('sheets-topics') === '1'; } catch (e) { /* none */ }
   topics.addEventListener('toggle', () => { try { localStorage.setItem('sheets-topics', topics.open ? '1' : '0'); } catch (e) { /* none */ } });
   window.addEventListener('admin-view', (e) => show(e.detail));
+  // a sheet opened from a lesson plan (lessons.js); sheets made there
+  window.addEventListener('sheets-open', async (e) => {
+    try { if (!loaded) await load(); else await load(true); if (!cur || cur.id !== e.detail) await open(e.detail); } catch (err) { status(`Could not open the sheet: ${err.message}`, 'bad'); }
+  });
+  window.addEventListener('sheets-changed', () => { if (loaded) load(true).catch(() => {}); });
   show(location.hash.slice(1));
 })();
 
@@ -5639,6 +6034,269 @@ ONLINE_JS = r"""
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
 })();
 """
+
+LESSONS_JS = r"""
+// The lesson plans (#lessons): a plan is { title, lang, topics: [subtopic ids of categories.json],
+// modules: [{ id, objectives: [ids ticked] }] }, as a sheet has its steps 1 and 2, saved on Save. Its
+// topics and objectives are chosen from the trees the Sheets tab has (/admin/api/sheets: st.tree and
+// st.topics, with how many exercises each has). From a saved plan the server makes exercise sheets
+// (one, or one per module, their exercises suggested) and lists them with the plan; a secret link
+// (/admin/lesson/s/<secret>) shows the students its topics and objectives with the apps, the plan's
+// shared sheets and exercises on TeXercises.
+(function () {
+  'use strict';
+  const $ = (s) => document.querySelector(s);
+  if (!$('#view-lessons')) return;
+  const LANGS = { en: 'English', de: 'German' };
+  let st = null, lessons = [], cur = null, dirty = false, loaded = false, filter = '';
+  const openTree = new Set(), openMods = new Set();
+  function el(tag, attrs, ...kids) {
+    const e = document.createElement(tag);
+    Object.entries(attrs || {}).forEach(([k, v]) => {
+      if (v === false || v == null) return;
+      if (k === 'class') e.className = v; else if (k.startsWith('on')) e.addEventListener(k.slice(2), v); else e.setAttribute(k, v === true ? '' : v);
+    });
+    kids.forEach((k) => { if (k !== '' && k != null) e.append(k); });
+    return e;
+  }
+  const status = (text, cls) => { const s = $('#lesson-status'); s.textContent = text; s.className = `status ${cls || ''}`; };
+  async function api(url, body) {
+    const r = await fetch(url, body === undefined ? { credentials: 'same-origin' }
+      : { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+    if (r.status === 403) { location.reload(); throw new Error('logged out'); }
+    const d = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(d.error || r.statusText);
+    return d;
+  }
+  function changed() { dirty = true; $('#lesson-save').disabled = false; status('Unsaved changes'); }
+  const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`;
+  // a checkbox for several ids: ticked if all are, mixed if some are
+  function box(ids, on, set, label, n) {
+    const some = ids.filter((i) => on(i)).length;
+    const c = el('input', { type: 'checkbox', checked: ids.length > 0 && some === ids.length });
+    c.indeterminate = some > 0 && some < ids.length;
+    c.addEventListener('change', () => { set(ids, c.checked); changed(); render(); });
+    return el('label', { class: 'check' }, c, el('span', {}, label), n != null ? el('span', { class: 'n' }, String(n)) : '');
+  }
+  function fold(key, summary, body) {
+    const d = el('details', { open: openTree.has(key) }, el('summary', {}, summary), body);
+    d.addEventListener('toggle', () => { if (d.open) openTree.add(key); else openTree.delete(key); });
+    return d;
+  }
+
+  // ---------------------------------------------------------------- the list
+  function renderList() {
+    $('#lesson-list').replaceChildren(
+      ...lessons.map((p) => el('button', { type: 'button', 'aria-pressed': String(!!cur && cur.id === p.id), onclick: () => open(p.id) },
+        p.title || '(no title)', el('span', { class: 'title' }, `${plural(p.objectives, 'objective', 'objectives')} · ${plural(p.sheets, 'sheet', 'sheets')}${p.shared ? ' · shared' : ''}`))),
+      el('button', { type: 'button', class: 'new', onclick: () => fresh() }, '+ New lesson plan'));
+  }
+
+  // ---------------------------------------------------------------- the editor
+  function render() {
+    renderList();
+    const edit = $('#lesson-edit');
+    if (!cur) {
+      edit.replaceChildren(el('p', { class: 'empty' }, lessons.length ? 'Choose a lesson plan to edit it, or make a new one.' : 'No lesson plans yet: make one with New lesson plan.'));
+      return;
+    }
+    const title = el('input', { type: 'text', value: cur.title, maxlength: '80', placeholder: 'e.g. Electrostatics · 9 lessons · 3a' });
+    title.addEventListener('input', () => { cur.title = title.value; changed(); });
+    const lang = el('select', { 'aria-label': 'Language' }, ...Object.entries(LANGS).map(([k, t]) => el('option', { value: k, selected: cur.lang === k }, t)));
+    lang.addEventListener('change', () => { cur.lang = lang.value; changed(); });
+    edit.replaceChildren(el('div', { class: 'card sheet lessonplan' },
+      el('div', { class: 'setform' },
+        el('label', { class: 'field' }, el('span', {}, 'Title'), title),
+        el('label', { class: 'field' }, el('span', {}, 'Language (of the student page and the sheets)'), lang)),
+      cur.id ? el('div', { class: 'setactions' },
+        el('button', { type: 'button', onclick: () => act('duplicate') }, 'Duplicate'),
+        el('button', { type: 'button', class: 'danger', onclick: () => act('delete') }, 'Delete lesson plan')) : '',
+      el('h3', {}, el('span', { class: 'step' }, '1'), 'Topics and subtopics'), topicsStep(),
+      el('h3', {}, el('span', { class: 'step' }, '2'), 'Learning objectives'), objectivesStep(),
+      el('h3', {}, el('span', { class: 'step' }, '3'), 'Exercise sheets'), sheetsStep(),
+      el('h3', {}, el('span', { class: 'step' }, '4'), 'Page for the students'), shareStep()));
+  }
+
+  // step 1: the topic tree of categories.json (areas → topics → subtopics), folded; ticking an area or a
+  // topic ticks its subtopics
+  function topicsStep() {
+    const tree = (st && st.tree) || { areas: [], new: { id: '_new', exercises: 0 } };
+    if (!tree.areas.length && !tree.new.exercises) return el('p', { class: 'note' }, 'No topics yet: upload a TeXercises export in the Sheets tab.');
+    const on = (i) => cur.topics.includes(i);
+    const set = (ids, value) => { cur.topics = cur.topics.filter((t) => !ids.includes(t)).concat(value ? ids : []); };
+    const n = cur.topics.length;
+    return el('div', {},
+      el('p', { class: 'note' }, n ? `${plural(n, 'subtopic', 'subtopics')} chosen.` : 'None chosen: sheets made from the plan take exercises of every topic, chosen by their learning objectives.'),
+      el('ul', { class: 'tree' }, ...tree.areas.map((a) => {
+        const ids = a.topics.flatMap((t) => t.subtopics.map((x) => x.id));
+        return el('li', {}, fold(`a:${a.name}`, box(ids, on, set, a.name, a.exercises),
+          el('ul', {}, ...a.topics.map((t) => {
+            const tids = t.subtopics.map((x) => x.id);
+            return el('li', {}, fold(`t:${a.name}/${t.name}`, box(tids, on, set, t.name, t.exercises),
+              el('ul', {}, ...t.subtopics.map((x) => el('li', {}, box([x.id], on, set, x.label, x.exercises))))));
+          }))));
+      }), tree.new.exercises ? el('li', {}, box([tree.new.id], on, set, 'Not yet categorised', tree.new.exercises)) : ''));
+  }
+
+  // step 2: per area and module (st.topics, the pool's modules with how many exercises each objective
+  // has) the learning objectives; a module is in the plan with the objectives ticked (one without
+  // objectives: as a whole); a filter narrows the list
+  const mod = (id) => cur.modules.find((m) => m.id === id);
+  function objectivesStep() {
+    const mods = (st && st.topics) || [];
+    const q = filter.trim().toLowerCase();
+    const match = (m, o) => !q || m.name.toLowerCase().includes(q) || (o && o.en.toLowerCase().includes(q));
+    const find = el('input', { type: 'search', value: filter, placeholder: 'Filter: a module or a word of an objective', 'aria-label': 'Filter the learning objectives' });
+    find.addEventListener('input', () => { filter = find.value; const at = find.selectionStart; render(); const f = $('#lesson-edit input[type=search]'); if (f) { f.focus(); f.setSelectionRange(at, at); } });
+    const areas = [];
+    mods.forEach((m) => {
+      if (!match(m) && !m.objectives.some((o) => match(m, o))) return;
+      const name = m.area || 'Other';
+      let a = areas.find((x) => x.name === name);
+      if (!a) areas.push(a = { name, rank: m.area_rank == null ? 99 : m.area_rank, mods: [] });
+      a.mods.push(m);
+    });
+    areas.sort((a, b) => a.rank - b.rank);
+    const chosen = cur.modules.reduce((s, m) => s + m.objectives.length, 0);
+    const card = (m) => {
+      const ids = m.objectives.map((o) => o.id);
+      const on = (i) => !!mod(m.id) && mod(m.id).objectives.includes(i);
+      const set = (list, value) => {
+        const have = mod(m.id) ? mod(m.id).objectives : [];
+        const next = ids.filter((i) => (list.includes(i) ? value : have.includes(i)));
+        cur.modules = cur.modules.filter((x) => x.id !== m.id);
+        if (next.length || (!ids.length && value)) cur.modules.push({ id: m.id, objectives: next });
+      };
+      const head = ids.length ? box(ids, on, set, m.name, m.exercises)
+        : box([m.id], () => !!mod(m.id), (l, v) => { cur.modules = cur.modules.filter((x) => x.id !== m.id); if (v) cur.modules.push({ id: m.id, objectives: [] }); }, `${m.name} (no objectives: the whole module)`, m.exercises);
+      if (!ids.length) return el('li', {}, head);
+      const d = el('details', { open: openMods.has(m.id) || !!q || !!mod(m.id) }, el('summary', {}, head),
+        el('ul', {}, ...m.objectives.filter((o) => match(m, o)).map((o) => el('li', { class: o.exercises ? '' : 'zero' }, box([o.id], on, set, o.en, o.exercises)))));
+      d.addEventListener('toggle', () => { if (d.open) openMods.add(m.id); else openMods.delete(m.id); });
+      return el('li', {}, d);
+    };
+    return el('div', { class: 'lessonobjs' },
+      el('p', { class: 'note' }, `${plural(chosen, 'objective', 'objectives')} in ${plural(cur.modules.length, 'module', 'modules')} chosen. The numbers: exercises in the pool.`),
+      find,
+      ...areas.map((a) => el('div', {}, el('h4', {}, a.name), el('ul', { class: 'tree' }, ...a.mods.map(card)))),
+      areas.length ? '' : el('p', { class: 'note' }, 'Nothing matches.'));
+  }
+
+  // step 3: the sheets made from the plan (opened in the Sheets tab), and new ones
+  function sheetsStep() {
+    const list = cur.sheets.length ? el('ul', { class: 'lessonsheets' }, ...cur.sheets.map((s) => el('li', {},
+      el('a', { href: '#sheets', onclick: (e) => { e.preventDefault(); openSheet(s.id); } }, s.title || '(no title)'),
+      el('span', { class: 'note' }, ` ${plural(s.exercises, 'exercise', 'exercises')}${s.shared ? ' · shared (on the student page)' : ' · not shared (not on the student page)'}`))))
+      : el('p', { class: 'note' }, 'No sheets from this plan yet.');
+    if (!cur.id || dirty) return el('div', {}, list, el('p', { class: 'note' }, 'Save the plan to make sheets from it.'));
+    const split = el('select', { 'aria-label': 'How many sheets' }, el('option', { value: 'one' }, 'One sheet with all modules'), el('option', { value: 'module' }, 'One sheet per module'));
+    const count = el('input', { type: 'number', min: '1', max: String((st && st.max) || 40), placeholder: 'default', 'aria-label': 'Exercises per sheet', class: 'count' });
+    const go = el('button', { type: 'button', onclick: () => makeSheets(split.value, Number(count.value) || undefined, go) }, 'Make sheets');
+    return el('div', {}, list, el('div', { class: 'addapp makesheets' }, split, el('label', { class: 'inline' }, 'Exercises per sheet ', count), go),
+      el('p', { class: 'note' }, 'The new sheets get the plan’s topics and objectives and suggested exercises; change them in the Sheets tab. Share a sheet there to put it on the student page.'));
+  }
+  function openSheet(id) {
+    location.hash = 'sheets';
+    window.dispatchEvent(new CustomEvent('sheets-open', { detail: id })); // sheets.js opens it
+  }
+  async function makeSheets(split, count, button) {
+    button.disabled = true;
+    status('Making the sheets…');
+    try {
+      const d = await api(`/admin/api/lessons/${cur.id}`, { action: 'sheets', split, count });
+      await reopen();
+      window.dispatchEvent(new CustomEvent('sheets-changed'));
+      status(`Made ${plural(d.sheets.length, 'sheet', 'sheets')}.`, 'ok');
+    } catch (e) { status(`No sheets made: ${e.message}`, 'bad'); }
+    button.disabled = false;
+  }
+
+  // step 4: the secret link for the students
+  function shareStep() {
+    if (!cur.id) return el('p', { class: 'note' }, 'Save the plan first.');
+    if (cur.token) {
+      const url = `${location.origin}/admin/lesson/s/${cur.token}`;
+      const copied = el('span', { class: 'status' });
+      return el('div', { class: 'share' }, el('p', { class: 'note' }, 'Its topics and learning objectives, each with the app, the plan’s shared sheets and exercises on TeXercises. No login needed.'),
+        el('p', {}, el('a', { class: 'url', href: url, target: '_blank', rel: 'noopener' }, url)),
+        el('div', { class: 'addapp' },
+          el('button', { type: 'button', onclick: () => navigator.clipboard.writeText(url).then(() => { copied.textContent = 'Copied.'; }, () => { copied.textContent = 'Copy it from above.'; }) }, 'Copy link'),
+          el('button', { type: 'button', onclick: () => { if (confirm('Stop sharing? The link stops working.')) act('unshare'); } }, 'Stop sharing'), copied));
+    }
+    return el('div', { class: 'share' }, el('span', { class: 'note' }, 'A page for your students: a secret link, no login needed. '),
+      el('button', { type: 'button', onclick: () => act('share') }, 'Create a link'));
+  }
+
+  // ---------------------------------------------------------------- loading and saving
+  const body = () => ({ title: cur.title.trim(), lang: cur.lang, topics: cur.topics, modules: cur.modules });
+  function apply(full) {
+    cur = { id: full.id, title: full.title || '', lang: full.lang || 'en', topics: full.topics || [], modules: full.modules || [], sheets: full.sheets || [], token: full.token || null };
+    dirty = false;
+    $('#lesson-save').disabled = true;
+  }
+  function leave() { return !dirty || confirm('Discard the unsaved changes of this lesson plan?'); }
+  async function open(id) {
+    if (!leave()) return;
+    if (cur && cur.id === id) { cur = null; dirty = false; $('#lesson-save').disabled = true; status(''); render(); return; }
+    try { apply(await api(`/admin/api/lessons/${id}`)); status(''); openTree.clear(); openMods.clear(); render(); } catch (e) { status(`Could not open the lesson plan: ${e.message}`, 'bad'); }
+  }
+  async function reopen() { if (cur && cur.id) apply(await api(`/admin/api/lessons/${cur.id}`)); await load(true); }
+  function fresh() {
+    if (!leave()) return;
+    cur = { id: null, title: '', lang: 'en', topics: [], modules: [], sheets: [], token: null };
+    openTree.clear(); openMods.clear();
+    changed();
+    render();
+    const t = $('#lesson-edit input[type=text]');
+    if (t) t.focus();
+  }
+  async function save() {
+    if (!cur) return;
+    $('#lesson-save').disabled = true;
+    status('Saving…');
+    try {
+      apply(await api(cur.id ? `/admin/api/lessons/${cur.id}` : '/admin/api/lessons/new', cur.id ? { action: 'save', lesson: body() } : { lesson: body() }));
+      await load(true);
+      status('Saved.', 'ok');
+    } catch (e) {
+      $('#lesson-save').disabled = false;
+      status(`Not saved: ${e.message}`, 'bad');
+    }
+  }
+  async function act(action) {
+    if (action === 'delete' && !confirm(`Delete the lesson plan “${cur.title || '(no title)'}”? Its sheets stay; its student page stops working.`)) return;
+    try {
+      const d = await api(`/admin/api/lessons/${cur.id}`, { action });
+      if (action === 'delete') { cur = null; dirty = false; $('#lesson-save').disabled = true; status('Deleted.', 'ok'); }
+      else if (action === 'duplicate') { const keep = dirty; dirty = false; await load(true); if (!keep) { await open(d.id); status('Duplicated: this is the copy (without the sheets).', 'ok'); return; } }
+      else { cur.token = d.token; status(d.token ? 'The link is ready.' : 'Not shared any more.', 'ok'); }
+      await load(true);
+    } catch (e) { status(`Error: ${e.message}`, 'bad'); }
+  }
+  async function load(keep) {
+    const [s, l] = await Promise.all([st && keep ? Promise.resolve(st) : api('/admin/api/sheets'), api('/admin/api/lessons')]);
+    st = s;
+    lessons = l.lessons;
+    loaded = true;
+    render();
+  }
+
+  $('#lesson-save').addEventListener('click', save);
+  window.addEventListener('beforeunload', (e) => { if (dirty) { e.preventDefault(); e.returnValue = ''; } });
+  const show = (v) => { if (v === 'lessons' && !loaded) load().catch(() => status('Could not load the lesson plans.', 'bad')); };
+  window.addEventListener('admin-view', (e) => show(e.detail));
+  // sheets made, saved or shared in the Sheets tab: the plan's list of sheets anew (its unsaved changes kept)
+  window.addEventListener('lessons-changed', async () => {
+    if (!loaded) return;
+    try {
+      if (cur && cur.id) { const full = await api(`/admin/api/lessons/${cur.id}`); if (dirty) cur.sheets = full.sheets; else apply(full); }
+      await load(true);
+    } catch (e) { /* shown when opened again */ }
+  });
+  show(location.hash.slice(1));
+})();
+"""
+
 
 SETS_JS = r"""
 // The sets of the admin panel, and the switch between its views (#quizzes, the first, and #games:

@@ -28,6 +28,7 @@ uploaded since categories.json: provisional labels of the nearest exercise, the 
 teacher's labels never overwritten), Claude's labels from a fake API (checked, refusals and errors
 handled), what is said without the anthropic package or key, and the endpoints the superuser's only.
 """
+import html
 import io
 import zipfile
 import hashlib
@@ -1944,6 +1945,72 @@ class Service(unittest.TestCase):
         self.assertIn(b"/katex/katex.min.js", body)
         self.assertEqual(self.req("/static/sheets.js")[0], 200)
         self.assertEqual(self.req("/static/online.js")[0], 200)
+
+    def test_lessons(self):
+        (Path(self.dir.name) / "objectives.json").write_text((ROOT / "hub" / "objectives.json").read_text())
+        pool = S.load_pool()
+        drafts = [k for k in pool["coulomb"]["exercises"] if k.startswith("coulomb-")] + \
+                 [k for k in pool["photons"]["exercises"] if k.startswith("photons-")]
+        j = lambda o: json.dumps(o).encode()
+        js = "application/json"
+        # nothing without the login, but a shared plan's page
+        self.assertEqual(self.req("/api/lessons")[0], 403)
+        self.assertEqual(self.req("/api/lessons/0123456789ab")[0], 403)
+        self.assertEqual(self.req("/api/lessons/new", j({"lesson": {}}), js)[0], 403)
+        self.assertEqual(self.req("/lesson/s/" + "x" * 32)[0], 404)
+        st, headers, _ = self.login()
+        cookie = headers["Set-Cookie"].split(";")[0]
+        self.assertEqual(self.req("/api/texercises", self.drafts_zip(*drafts), "application/zip", cookie)[0], 200)
+        self.assertEqual(json.loads(self.req("/api/lessons", cookie=cookie)[2]), {"lessons": []})
+        # a plan: topics and objectives as a sheet has them (an unknown module is refused)
+        self.assertEqual(self.req("/api/lessons/new", j({"lesson": {"modules": [{"id": "nope"}]}}), js, cookie)[0], 400)
+        sub, (area, topic, label) = next(iter(S.load_categories()["flat"].items()))
+        lesson = {"title": "Elektrostatik", "lang": "de", "topics": [sub, "_new"],  # (the drafts: not yet categorised)
+                  "modules": [{"id": "photons", "objectives": ["einstein"]}, {"id": "coulomb", "objectives": ["vector", "direction", "nope"]}]}
+        st, _, body = self.req("/api/lessons/new", j({"lesson": lesson}), js, cookie)
+        self.assertEqual(st, 200)
+        full = json.loads(body)
+        lid = full["id"]
+        self.assertEqual((full["title"], full["lang"], full["sheets"], full["token"]), ("Elektrostatik", "de", [], None))
+        self.assertEqual(full["modules"], [{"id": "coulomb", "objectives": ["direction", "vector"]}, {"id": "photons", "objectives": ["einstein"]}])
+        listed = json.loads(self.req("/api/lessons", cookie=cookie)[2])["lessons"]
+        self.assertEqual([(x["id"], x["modules"], x["objectives"], x["sheets"], x["shared"]) for x in listed], [(lid, 2, 3, 0, False)])
+        # sheets from it: one per module, titled after it, exercises suggested; the plan lists them
+        self.assertEqual(self.req(f"/api/lessons/{lid}", j({"action": "sheets", "split": "two"}), js, cookie)[0], 400)
+        st, _, body = self.req(f"/api/lessons/{lid}", j({"action": "sheets", "split": "module", "count": 3}), js, cookie)
+        self.assertEqual(st, 200)
+        made = json.loads(body)["sheets"]
+        self.assertEqual(len(made), 2)
+        sheets = [json.loads(self.req(f"/api/sheets/{sid}", cookie=cookie)[2]) for sid in made]
+        self.assertEqual([x["title"] for x in sheets], ["Elektrostatik · Point Charges", "Elektrostatik · Photoelectric Effect"])
+        self.assertEqual([x["modules"] for x in sheets], [[{"id": "coulomb", "objectives": ["direction", "vector"]}], [{"id": "photons", "objectives": ["einstein"]}]])
+        self.assertTrue(0 < len(sheets[0]["exercises"]) <= 3)
+        self.assertTrue(set(sheets[0]["exercises"]) <= set(pool["coulomb"]["exercises"]) | set(drafts))
+        full = json.loads(self.req(f"/api/lessons/{lid}", cookie=cookie)[2])
+        self.assertEqual([x["id"] for x in full["sheets"]], made)
+        # the students' page: the objectives (in German), the app, the shared sheets only, exercises on TeXercises
+        token = json.loads(self.req(f"/api/lessons/{lid}", j({"action": "share"}), js, cookie)[2])["token"]
+        self.req(f"/api/sheets/{made[0]}", j({"action": "share"}), js, cookie)
+        st, _, body = self.req(f"/lesson/s/{token}")
+        page = body.decode()
+        self.assertEqual(st, 200)
+        objs = json.loads((ROOT / "hub" / "objectives.json").read_text())
+        self.assertIn(html.escape(next(o["de"] for o in objs["coulomb"]["objectives"] if o["id"] == "vector")), page)
+        self.assertNotIn(html.escape(next(o["de"] for o in objs["coulomb"]["objectives"] if o["id"] == "factor")), page)
+        self.assertIn('href="/coulomb/"', page)
+        self.assertIn("Elektrostatik · Point Charges", page)
+        self.assertNotIn("Elektrostatik · Photoelectric Effect", page)  # (not shared)
+        self.assertEqual(page.count("/admin/sheet/s/"), 1 + page.count("Blätter</span>"))
+        self.assertIn("Lernziele", page)
+        self.assertIn(f"<li><b>{html.escape(area)}</b><ul><li>{html.escape(topic)}: {html.escape(label)}</li>", page)  # its topics
+        # unshared, deleted: the page is gone, the sheets stay
+        self.req(f"/api/lessons/{lid}", j({"action": "unshare"}), js, cookie)
+        self.assertEqual(self.req(f"/lesson/s/{token}")[0], 404)
+        dup = json.loads(self.req(f"/api/lessons/{lid}", j({"action": "duplicate"}), js, cookie)[2])["id"]
+        self.assertEqual(json.loads(self.req(f"/api/lessons/{dup}", cookie=cookie)[2])["sheets"], [])
+        self.req(f"/api/lessons/{lid}", j({"action": "delete"}), js, cookie)
+        self.assertEqual(self.req(f"/api/lessons/{lid}", cookie=cookie)[0], 404)
+        self.assertEqual(self.req(f"/api/sheets/{made[0]}", cookie=cookie)[0], 200)
 
     def test_old_sheet(self):
         # a sheet saved before the topics (modules and objectives only) opens, suggests and is shared as before

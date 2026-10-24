@@ -8,6 +8,17 @@ objective the exercises that practise it; an objective without any shows a red 0
 exercises tied to none of its objectives are counted as the module as a whole. Then, folded too, the
 **exercise review** (below), and last the state of the server and the upload of a TeXercises export.
 
+The **Lesson plans** tab (logged in) keeps units of teaching, in `hub-data/lesson-plans.json` (not
+served): a title, a language, topics and subtopics of `categories.json` and learning objectives per
+module, chosen as a sheet's steps 1 and 2 (`normalize_sheet`), from all modules of the topics section
+(with how many exercises each objective has; a filter narrows the list). From a saved plan, **Make
+sheets** (in the plan, or **+ From a lesson plan** in the Sheets tab) makes one sheet with all of its
+modules or one per module, its exercises suggested as **Suggest** does (a plan without topics takes all
+of them); the plan lists its sheets, which open in the Sheets tab. A plan can be shared with the
+students at a secret link (`/admin/lesson/s/<secret>`, no login): its topics, then per area and module
+the objectives, each with the app (a hub module), the plan's sheets that are shared and have it (their
+online versions), and up to five of its exercises on TeXercises (the plan's language first).
+
 A sheet is independent of the sets: a title, a language (English or German), its topics, learning
 objectives and balance, and its exercises in order, kept in `hub-data/exercise-sheets.json` (not
 served). The editor makes it in three steps (`sheets.py` on the server):
