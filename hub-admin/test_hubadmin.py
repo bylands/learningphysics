@@ -2288,21 +2288,29 @@ class Service(unittest.TestCase):
         self.assertEqual((first["id"], first["url"], first["collections"], first["comment"]), (11, "https://texercises.com/exercise/a/", ["Optik"], "Bitte auch b) prüfen"))
         self.assertEqual(first["accepted"], [issue("error", "wrong sign")])
         self.assertEqual(first["not_accepted"], [issue("warning", "unit missing")])
+        # exported: not again until its feedback changes (?all=1: all the same)
+        fb = json.loads(self.req("/api/exercise-audit/feedback", cookie=boss)[2])["feedback"]
+        self.assertTrue(all(fb[r]["exported"] == fb[r]["updated"] for r in ("11", "key:draft-b")))
+        self.assertEqual(json.loads(self.req("/api/exercise-audit/export", cookie=boss)[2])["exercises"], [])
+        self.assertEqual(len(json.loads(self.req("/api/exercise-audit/export?all=1", cookie=boss)[2])["exercises"]), 2)
+        changed = json.loads(post({"exercise": "key:draft-b", "comment": "ok, and c)"})[2])
+        self.assertGreater(changed["updated"], changed["exported"])  # (also in the second of the export)
+        self.assertEqual([e["key"] for e in json.loads(self.req("/api/exercise-audit/export", cookie=boss)[2])["exercises"]], ["draft-b"])
         # a regenerated report: the same issue (another fix) is still accepted, a gone one is kept but not exported
         report["exercises"][0]["issues"] = [issue("error", "wrong sign", "a better fix"), issue("doubt", "new one")]
         report["exercises"][1]["issues"] = [issue("doubt", "something else")]
         self.assertEqual(self.audit(report, boss)[0], 200)
-        out = json.loads(self.req("/api/exercise-audit/export", cookie=boss)[2])
+        out = json.loads(self.req("/api/exercise-audit/export?all=1", cookie=boss)[2])
         first = out["exercises"][0]
         self.assertEqual(first["accepted"], [issue("error", "wrong sign", "a better fix")])
         self.assertEqual([i["issue"] for i in first["not_accepted"]], ["new one"])
         post({"exercise": "11", "accept": {"fp": fp[1], "on": True}})  # (an issue no longer in the report)
-        self.assertEqual(len(json.loads(self.req("/api/exercise-audit/export", cookie=boss)[2])["exercises"][0]["accepted"]), 1)
+        self.assertEqual(len(json.loads(self.req("/api/exercise-audit/export?all=1", cookie=boss)[2])["exercises"][0]["accepted"]), 1)
         self.assertIn(fp[1], json.loads(self.req("/api/exercise-audit/feedback", cookie=boss)[2])["feedback"]["11"]["accepted"])
         # an exercise no longer in the report: kept, not exported
         report["exercises"] = report["exercises"][2:]
         self.audit(report, boss)
-        self.assertEqual(json.loads(self.req("/api/exercise-audit/export", cookie=boss)[2])["exercises"], [])
+        self.assertEqual(json.loads(self.req("/api/exercise-audit/export?all=1", cookie=boss)[2])["exercises"], [])
         self.assertIn("11", json.loads(self.req("/api/exercise-audit/feedback", cookie=boss)[2])["feedback"])
 
     def test_exercise_audit_clean(self):
