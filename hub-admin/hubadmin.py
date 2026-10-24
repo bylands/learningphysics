@@ -69,6 +69,8 @@ cards in its order, shows their tags, and lets visitors filter by tag. This serv
                          &keys=a,b[&gallery=<name>]: an image of the TeXercises gallery that these
                          exercises use, or a .zip of them, kept under a name made of the exercise's
                          title and id (hub-data/sheet-images/)
+    /admin/api/objective GET ?app=a&id=o  the exercises the pool links to a module's learning objective
+                         (id empty: those of the module as a whole), for the topics section of the Sheets tab
     /admin/api/images    GET ?keys=a,b  the gallery images these exercises use, and which are there
                          POST {"name": ..., "keys": [...]} /admin/api/images/fetch: fetch one from TeXercises
     /admin/sheet/<id>.pdf, /admin/sheet/<id>-solutions.pdf   the saved sheet's PDF, made when first
@@ -997,6 +999,32 @@ class Admin:
             n = len([k for k in pool.get(a["id"], {}).get("exercises", {}) if have is None or k in have])
             out.append({"id": a["id"], "name": a["name"], "de": a["de"], "objectives": a["objectives"], "exercises": n})
         return out
+
+    def objective_exercises(self, app: str, oid: str) -> Dict[str, object]:
+        """The exercises the pool links to a learning objective of a module (oid "": those of the module
+        as a whole, of none of its objectives), in the pool's order (the best first): {"exercises": [{key,
+        title, lang, difficulty, url, source, there: in the uploaded export or the drafts}]}."""
+        sheetlib, pool, have, _ = self.sheet_context()
+        entry = pool.get(app) if isinstance(pool.get(app), dict) else None
+        if entry is None:
+            raise ValueError("no such module")
+        exs = entry.get("exercises") if isinstance(entry.get("exercises"), dict) else {}
+        objs = entry.get("objectives") if isinstance(entry.get("objectives"), dict) else {}
+        if oid:
+            if not isinstance(objs.get(oid), list):
+                raise ValueError("no such learning objective")
+            keys = [k for k in objs[oid] if isinstance(k, str)]
+        else:
+            tied = {k for ks in objs.values() if isinstance(ks, list) for k in ks}
+            keys = [k for k in exs if k not in tied]
+        out = []
+        for k in dict.fromkeys(keys):
+            e = exs.get(k) if isinstance(exs.get(k), dict) else {}
+            m = sheetlib.exercise_meta(have[k]) if k in have else {}
+            out.append({"key": k, "title": str(m.get("title") or e.get("title") or k), "lang": m.get("lang") or e.get("lang"),
+                        "difficulty": m.get("difficulty") or e.get("difficulty"), "url": m.get("url") or e.get("url"),
+                        "source": e.get("source"), "there": k in have})
+        return {"exercises": out}
 
     def read_sheets(self) -> Dict[str, Dict[str, object]]:
         data = read_config(self.sheets_file)
@@ -2751,6 +2779,9 @@ def make_handler(admin: Admin):
             try:
                 if path == "/api/sheets":
                     self.json(200, admin.sheets_state())
+                elif path == "/api/objective":
+                    query = parse_qs(self.path.partition("?")[2])
+                    self.json(200, admin.objective_exercises((query.get("app") or [""])[0], (query.get("id") or [""])[0]))
                 elif path in ("/api/preview", "/api/images"):
                     query = parse_qs(self.path.partition("?")[2])
                     keys = [k for k in (query.get("keys") or [""])[0].split(",") if k]
@@ -3033,7 +3064,7 @@ def make_handler(admin: Admin):
                 self.send(200, ONLINE_CSS, "text/css; charset=utf-8")
             elif path.startswith("/sheet/"):
                 self.sheet_route(path[len("/sheet/"):])
-            elif path in ("/api/sheets", "/api/preview", "/api/images") or path.startswith("/api/sheets/"):
+            elif path in ("/api/sheets", "/api/preview", "/api/images", "/api/objective") or path.startswith("/api/sheets/"):
                 self.sheets_get(path)
             elif path.startswith("/static/fonts/"):
                 f = font_file(path[len("/static/fonts/"):])
@@ -3727,9 +3758,16 @@ h2.section { font-size: 1.15rem; margin: 28px 0 4px; }
 .topicmod .head strong { flex: 1 1 auto; }
 .topicmod .n { color: var(--muted); font-size: 0.82rem; white-space: nowrap; font-variant-numeric: tabular-nums; }
 .topicmod ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 1px; }
-.topicmod li { display: flex; gap: 8px; justify-content: space-between; line-height: 1.35; }
-.topicmod li.zero, .topicmod.zero .head { color: var(--muted); }
-.topicmod li.zero .n { color: var(--bad); font-weight: 600; }
+.topicmod li { line-height: 1.35; }
+.topicmod li > .row { display: flex; gap: 8px; justify-content: space-between; width: 100%; padding: 0; border: 0; background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+.topicmod li > .row:hover > span:first-child { text-decoration: underline; }
+.topicmod li > .row[aria-expanded="true"] { font-weight: 600; }
+.topicmod ul.general { margin-top: 4px; font-size: 0.8rem; color: var(--muted); }
+.topicmod .exlist { margin: 2px 0 6px; padding-left: 18px; font-size: 0.85rem; display: grid; gap: 2px; }
+.topicmod .exlist li { display: flex; flex-wrap: wrap; gap: 0 8px; justify-content: space-between; }
+.topicmod .exlist li.gone { color: var(--muted); }
+.topicmod li.zero > .row, .topicmod.zero .head { color: var(--muted); }
+.topicmod li.zero > .row .n { color: var(--bad); font-weight: 600; }
 .topicmod .note { margin: 4px 0 0; font-size: 0.8rem; }
 .tpchips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
 .tpchips button { border-radius: 999px; padding: 2px 11px; font-size: 0.88rem; }
@@ -4365,13 +4403,36 @@ SHEETS_JS = r"""
     const totals = st.topic_totals || {}, n = totals.exercises != null ? totals.exercises : mods.reduce((s, m) => s + m.exercises, 0), objs = mods.flatMap((m) => m.objectives), empty = objs.filter((o) => !o.exercises).length;
     box.querySelector('summary .note').textContent = `${mods.filter((m) => m.exercises).length} of ${mods.length} modules · ${n} exercises · `
       + (empty ? `${empty} of ${objs.length} learning objectives without an exercise` : `every one of the ${objs.length} learning objectives has exercises`);
+    // an objective (id '': the module as a whole) opens to its exercises, asked of the server the first time
+    const objective = (m, id, label, count, title) => {
+      const list = el('ol', { class: 'exlist', hidden: true });
+      let asked = false;
+      const open = () => {
+        list.hidden = !list.hidden;
+        row.setAttribute('aria-expanded', String(!list.hidden));
+        if (asked || list.hidden) return;
+        asked = true;
+        list.replaceChildren(el('li', { class: 'note' }, 'Loading…'));
+        api(`/admin/api/objective?app=${encodeURIComponent(m.id)}&id=${encodeURIComponent(id)}`).then((d) => {
+          list.replaceChildren(...(d.exercises.length ? d.exercises.map((x) => el('li', { class: x.there ? '' : 'gone' },
+            x.url ? el('a', { href: `https://texercises.com${x.url}`, target: '_blank', rel: 'noopener' }, `${x.title} ↗`) : x.title,
+            el('span', { class: 'n' }, [x.lang, x.difficulty && `difficulty ${x.difficulty}`, x.source === 'drafts' && 'draft', !x.there && 'not there'].filter(Boolean).join(' · '))))
+            : [el('li', { class: 'note' }, 'No exercises.')]));
+        }).catch((e) => { asked = false; list.replaceChildren(el('li', { class: 'note' }, `Could not load them: ${e.message}`)); });
+      };
+      const row = el('button', { type: 'button', class: 'row', 'aria-expanded': 'false', title: title || null, onclick: open },
+        el('span', {}, label), id ? el('span', { class: 'n' }, String(count)) : '');
+      return el('li', { class: !id || count ? '' : 'zero' }, row, list);
+    };
     const card = (m) => el('div', { class: `topicmod${m.exercises ? '' : ' zero'}` },
       el('div', { class: 'head' }, el('strong', {}, m.name),
         el('span', { class: 'n', title: `${m.exercises} exercises in the pool, ${m.there} of them in the uploaded export or the drafts` },
           `${m.exercises} ex.` + (m.there < m.exercises ? ` (${m.there} there)` : ''))),
-      m.objectives.length ? el('ul', {}, ...m.objectives.map((o) => el('li', { class: o.exercises ? '' : 'zero', title: `${o.exercises} exercises practise it, ${o.there} of them there` },
-        el('span', {}, o.en), el('span', { class: 'n' }, String(o.exercises))))) : el('p', { class: 'note' }, 'No learning objectives: its exercises count for the module as a whole.'),
-      m.general && m.objectives.length ? el('p', { class: 'note' }, `${m.general} for the module as a whole (no objective)`) : '');
+      m.objectives.length ? el('ul', {}, ...m.objectives.map((o) => objective(m, o.id, o.en, o.exercises,
+        `${o.exercises} exercises practise it, ${o.there} of them there`))) : '',
+      m.objectives.length ? (m.general ? el('ul', { class: 'general' }, objective(m, '', `${m.general} for the module as a whole (no objective)`, 0, '')) : '')
+        : m.exercises ? el('ul', { class: 'general' }, objective(m, '', 'No learning objectives: its exercises count for the module as a whole.', 0, ''))
+          : el('p', { class: 'note' }, 'No learning objectives: its exercises count for the module as a whole.'));
     // grouped by area (Mechanics, …: sheets.py AREAS), the hub's order within an area
     const areas = [];
     mods.forEach((m) => {
