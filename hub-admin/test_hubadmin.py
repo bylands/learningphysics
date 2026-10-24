@@ -1765,7 +1765,7 @@ class Service(unittest.TestCase):
         self.assertGreater(len(drafts), 6)
         j = lambda o: json.dumps(o).encode()
         # nothing about sheets without the login (only a shared sheet's online version, below)
-        for path in ("/api/sheets", "/api/sheets/0123456789ab", "/api/preview?keys=" + drafts[0], "/sheet/0123456789ab.pdf",
+        for path in ("/api/sheets", "/api/sheets/0123456789ab", "/api/preview?keys=" + drafts[0], "/api/objective?app=coulomb&id=vector", "/sheet/0123456789ab.pdf",
                      "/sheet/0123456789ab-solutions.pdf"):
             self.assertEqual(self.req(path)[0], 403, path)
         for path in ("/api/plan", "/api/sheets/new", "/api/sheets/0123456789ab"):
@@ -1781,6 +1781,18 @@ class Service(unittest.TestCase):
         coulomb = next(a for a in state["apps"] if a["id"] == "coulomb")
         self.assertEqual([o["id"] for o in coulomb["objectives"]], ["direction", "factor", "vector", "field"])
         self.assertTrue(coulomb["objectives"][0]["de"])
+        # an objective's exercises (the topics section), in the pool's order; those of no objective with id ""
+        st, _, body = self.req("/api/objective?app=coulomb&id=vector", cookie=cookie)
+        got = json.loads(body)["exercises"]
+        self.assertEqual((st, [x["key"] for x in got]), (200, list(dict.fromkeys(pool["coulomb"]["objectives"]["vector"]))))
+        self.assertEqual([x["there"] for x in got], [x["key"] in drafts for x in got])
+        mine = next(x for x in got if x["there"])
+        self.assertEqual((mine["title"], mine["source"]), (S.exercise_meta(next(ROOT.glob(f"texercises-drafts*/exercises/{mine['key']}")))["title"], "drafts"))
+        tied = {k for ks in pool["coulomb"]["objectives"].values() for k in ks}
+        st, _, body = self.req("/api/objective?app=coulomb&id=", cookie=cookie)
+        self.assertEqual([x["key"] for x in json.loads(body)["exercises"]], [k for k in pool["coulomb"]["exercises"] if k not in tied])
+        self.assertEqual(self.req("/api/objective?app=coulomb&id=nope", cookie=cookie)[0], 400)
+        self.assertEqual(self.req("/api/objective?app=nope&id=vector", cookie=cookie)[0], 400)
         # the TeXercises topics of the exercises there (for the editor), and of each exercise in a plan
         meta = lambda k: S.exercise_meta(next(ROOT.glob(f"texercises-drafts*/exercises/{k}")))
         topics = {t for k in drafts for t in meta(k)["topics"]}
