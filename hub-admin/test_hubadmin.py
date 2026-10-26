@@ -4,7 +4,7 @@ Checks the reading of the hub page, the cleaning of a configuration and of sets 
 objectives, and those saved before there were objectives), the names a set
 may have (and that no app or set clashes with a service nginx passes on), the atomic write, the password (in the crossword app's format) and sessions, and the
 service end to end: login, rate limit, the API with and without a session, and that saves reach
-apps.json and sets.json. The exercise sheets: the kind (concept question or problem) and difficulty
+apps.json and sets.json (and the courses that group the sets, courses.json). The exercise sheets: the kind (concept question or problem) and difficulty
 of an exercise from its TeXercises type and default difficulty, the learning objectives on a sheet's
 topics and the exercises in none, what a sheet suggests (every objective covered, the language,
 exercises without image, the balance of concept questions and of difficulties, and what cannot be
@@ -118,6 +118,20 @@ class Unit(unittest.TestCase):
         self.assertEqual(H.normalize_sets({"sets": {"coe": {}, "ok": {}}}, apps, strict=False), {"sets": {"ok": {"title": "", "apps": []}}})
         with self.assertRaises(ValueError):
             H.normalize_sets({"sets": {f"s{i}": {} for i in range(H.MAX_SETS + 1)}}, apps)
+
+    def test_normalize_courses(self):
+        names = ["3a", "4b", "5c"]
+        out = H.normalize_courses([
+            {"title": " Physik <b>3a</b> ", "sets": ["5c", "3a", "gone", "3a"]},
+            {"title": "Grundlagen", "sets": ["3a", "4b"]},  # 3a: already in the first
+            {"title": "Leer"},
+        ], names)
+        self.assertEqual(out, [{"title": "Physik b3a/b", "sets": ["3a", "5c"]}, {"title": "Grundlagen", "sets": ["4b"]}, {"title": "Leer", "sets": []}])
+        self.assertEqual(H.normalize_courses(None, names), [])
+        for bad in ([{"title": " "}], [{"title": "A"}, {"title": "A"}], [{"title": f"c{i}"} for i in range(H.MAX_COURSES + 1)]):
+            with self.assertRaises(ValueError):
+                H.normalize_courses(bad, names)
+        self.assertEqual(H.normalize_courses([{"title": ""}, {"title": "A"}, {"title": "A"}, "junk"], names, strict=False), [{"title": "A", "sets": []}])
 
     def test_set_objectives(self):
         # with the app's objectives known (objectives.json): in its order, unknown ones dropped,
@@ -1710,6 +1724,25 @@ class Service(unittest.TestCase):
             self.assertEqual(st, 400, name)
             self.assertIn(why, json.loads(body)["error"])
         self.assertEqual(json.loads(self.sets.read_text()), on_disk)
+        # courses group the sets, in courses.json (not served: only this service reads it)
+        self.assertEqual(json.loads(self.req("/api/sets", cookie=cookie)[2])["courses"], [])
+        two = {"sets": {**new["sets"], "4b": {"title": "", "apps": []}}, "courses": [{"title": "Physik 3a", "sets": ["3a-elektro", "gone"]}, {"title": "Leer", "sets": []}]}
+        st, _, body = self.req("/api/sets", json.dumps(two).encode(), "application/json", cookie)
+        self.assertEqual(json.loads(body)["courses"], [{"title": "Physik 3a", "sets": ["3a-elektro"]}, {"title": "Leer", "sets": []}])
+        courses = Path(self.sets).parent / "courses.json"
+        self.assertEqual(json.loads(courses.read_text()), {"courses": {"bys": json.loads(body)["courses"]}})
+        self.assertEqual(courses.stat().st_mode & 0o777, 0o600)
+        self.assertEqual(json.loads(self.sets.read_text())["sets"]["bys/3a-elektro"], new["sets"]["3a-elektro"])  # the sets as before
+        self.assertEqual(json.loads(self.req("/api/sets", cookie=cookie)[2])["courses"], json.loads(body)["courses"])
+        # without courses (a panel loaded before): they stay, without the sets that are gone
+        st, _, body = self.req("/api/sets", json.dumps({"sets": {"4b": {}}}).encode(), "application/json", cookie)
+        self.assertEqual(json.loads(body)["courses"], [{"title": "Physik 3a", "sets": []}, {"title": "Leer", "sets": []}])
+        st, _, body = self.req("/api/sets", json.dumps({"sets": {}, "courses": [{"title": "A"}, {"title": "A"}]}).encode(), "application/json", cookie)
+        self.assertEqual(st, 400)
+        self.assertIn("two courses", json.loads(body)["error"])
+        self.assertIn("bys/4b", json.loads(self.sets.read_text())["sets"])  # nothing written
+        self.req("/api/sets", json.dumps({"sets": {}, "courses": []}).encode(), "application/json", cookie)
+        self.assertEqual(json.loads(courses.read_text()), {"courses": {}})
         # deleting every set
         st, _, body = self.req("/api/sets", b'{"sets": {}}', "application/json", cookie)
         self.assertEqual(json.loads(self.sets.read_text()), {"default": "bys", "sets": {}})
@@ -2606,10 +2639,13 @@ class Service(unittest.TestCase):
         # a session cannot be moved to another teacher
         forged = anna.replace("hub_admin=abc.", "hub_admin=bys.")
         self.assertEqual(self.req("/api/sets", cookie=forged)[0], 403)
-        # deleted: the account and its sets
+        # deleted: the account, its sets and its courses
+        self.req("/api/sets", json.dumps({"sets": {"3a": {}}, "courses": [{"title": "Physik", "sets": ["3a"]}]}).encode(), "application/json", anna)
+        self.assertEqual(json.loads((self.sets.parent / "courses.json").read_text()), {"courses": {"abc": [{"title": "Physik", "sets": ["3a"]}]}})
         st, d = self.teachers({"action": "delete", "id": "abc"}, boss)
         self.assertEqual(d["teachers"], [])
         self.assertEqual(json.loads(self.sets.read_text())["sets"], {})
+        self.assertEqual(json.loads((self.sets.parent / "courses.json").read_text()), {"courses": {}})
         self.assertEqual(self.req("/api/sets", cookie=anna)[0], 403)
         self.assertEqual(self.req("/static/accounts.js")[0], 200)
 

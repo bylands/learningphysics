@@ -56,8 +56,8 @@ cards in its order, shows their tags, and lets visitors filter by tag. This serv
     /admin/api/config    GET  the apps of the hub page with their order and tags
                          POST {"order": [id, ...], "tags": {id: [key, ...]},
                                "labels": {key: {"en": name, "de": name}}}      saves apps.json
-    /admin/api/sets      GET  the apps with their modes, and the sets
-                         POST {"sets": {name: set}}                          saves sets.json
+    /admin/api/sets      GET  the apps with their modes, the sets and the courses that group them
+                         POST {"sets": {name: set}, "courses"?: [course]}    saves sets.json (and courses.json)
     /admin/api/sheets    GET  the exercise sheets, the state (LaTeX, exercises) and the modules to choose
     /admin/api/sheets/<id> GET  a sheet, with what the editor shows of its exercises
                          POST {"action": "save", "sheet": ...} | {"action": "delete" | "duplicate" |
@@ -211,6 +211,7 @@ MAX_TAG_LEN = 32
 MODES = ("tutor", "practice", "check")
 OLD_MODES = {"arcade": "check", "real": "practice"}  # in sets saved before: what they are now
 MAX_SETS, MAX_TITLE = 100, 80
+MAX_COURSES = 50  # per teacher
 MAX_EXAMPLES, MAX_STAGES, MAX_OBJECTIVES = 100, 300, 50  # per app in a set
 # names a set cannot have, besides the apps and what is in the web root: the services and paths
 # nginx serves itself, and some kept free
@@ -513,6 +514,34 @@ def normalize_sets(data: object, apps: List[Dict[str, object]], taken=lambda nam
     return {"sets": out}
 
 
+def normalize_courses(data: object, names: List[str], strict: bool = True) -> List[Dict[str, object]]:
+    """[{"title": ..., "sets": [name, ...]}]: the courses that group a teacher's sets in the panel,
+    in their order; titles cleaned (at most MAX_TITLE), each once; sets of the given names, each in
+    one course at most (the first), in the order of names. A course without a title, or two with
+    the same, is an error (ValueError) if strict, else it is dropped; at most MAX_COURSES."""
+    courses_in = data if isinstance(data, list) else []
+    if strict and len(courses_in) > MAX_COURSES:
+        raise ValueError(f"at most {MAX_COURSES} courses")
+    out: List[Dict[str, object]] = []
+    placed: set = set()
+    for raw in courses_in:
+        raw = raw if isinstance(raw, dict) else {}
+        title = clean_text(raw.get("title"), MAX_TITLE)
+        problem = ("a course needs a name" if not title else
+                   f"two courses are called “{title}”" if any(c["title"] == title for c in out) else None)
+        if problem:
+            if strict:
+                raise ValueError(problem)
+            continue
+        want = raw.get("sets") if isinstance(raw.get("sets"), list) else []
+        mine = [n for n in names if n in want and n not in placed]
+        placed.update(mine)
+        out.append({"title": title, "sets": mine})
+        if len(out) >= MAX_COURSES:
+            break
+    return out
+
+
 def clean_text(text: object, limit: int) -> str:
     """Text as stored: no control characters or angle brackets, spaces collapsed, at most limit."""
     if not isinstance(text, str):
@@ -576,6 +605,7 @@ class Admin:
                  crosswords_url: str = "") -> None:
         self.password_file, self.hub, self.config = password_file, hub, config
         self.sets = sets or config.parent / "sets.json"
+        self.courses_file = self.sets.parent / "courses.json"  # the courses that group each teacher's sets (not served)
         self.failures: Dict[str, List[float]] = {}
         # the teacher accounts besides the superuser (with their password hashes: not readable by others)
         self.super, self.super_user = superuser, super_user
@@ -853,6 +883,9 @@ class Admin:
             sets = self.read_all_sets()
             sets.pop(teacher, None)
             self.write_all_sets(sets)
+            courses = self.read_all_courses()
+            if courses.pop(teacher, None) is not None:
+                self.write_all_courses(courses)
             return {"deleted": teacher}
         return self.change_teachers(change)
 
@@ -940,6 +973,16 @@ class Admin:
         order = [self.super] + sorted(t for t in sets if t != self.super)
         write_config(self.sets, {"default": self.super, "sets": {f"{t}/{n}": s for t in order for n, s in sets.get(t, {}).items()}})
 
+    def read_all_courses(self) -> Dict[str, object]:
+        """{teacher: [course]} as courses.json has them (unchecked)."""
+        data = read_config(self.courses_file)
+        found = data.get("courses") if isinstance(data, dict) and isinstance(data.get("courses"), dict) else {}
+        return {t: c for t, c in found.items() if isinstance(c, list)}
+
+    def write_all_courses(self, courses: Dict[str, object]) -> None:
+        """courses.json: {"courses": {teacher: [course]}}, without teachers who have none."""
+        write_config(self.courses_file, {"courses": {t: c for t, c in sorted(courses.items()) if c}}, 0o600)
+
     def crossword_at(self, teacher: str, name: str) -> bool:
         """Whether the teacher has a crossword at learningphysics.ch/<teacher>/<name> (the crossword
         generator's short links share the addresses with the sets); if it can't be asked, no."""
@@ -961,19 +1004,24 @@ class Admin:
                 self.write_all_sets(self.read_all_sets())
 
     def current_sets(self, teacher: Optional[str] = None) -> Dict[str, object]:
-        """The apps, and the sets of a teacher (the superuser's without one) by their names."""
+        """The apps, and the sets of a teacher (the superuser's without one) by their names, with the
+        courses that group them."""
         teacher = teacher or self.super
         apps = self.standard_apps()
-        own = self.read_all_sets().get(teacher, {})
-        return {"apps": apps, "teacher": teacher, **normalize_sets({"sets": own}, apps, self.taken, strict=False)}
+        own = normalize_sets({"sets": self.read_all_sets().get(teacher, {})}, apps, self.taken, strict=False)
+        courses = normalize_courses(self.read_all_courses().get(teacher), list(own["sets"]), strict=False)
+        return {"apps": apps, "teacher": teacher, **own, "courses": courses}
 
     def save_sets(self, data: object, teacher: Optional[str] = None) -> Dict[str, object]:
-        """A teacher's sets (the superuser's without one), replacing theirs; the others' stay."""
+        """A teacher's sets (the superuser's without one), replacing theirs; the others' stay. With
+        "courses", their courses too (else the courses stay, without the sets that are gone)."""
         teacher = teacher or self.super
         apps = self.standard_apps()
         if not apps:
             raise ValueError("the hub page lists no apps")
         sets = normalize_sets(data, apps, self.taken)
+        given = isinstance(data, dict) and "courses" in data
+        courses = normalize_courses(data["courses"], list(sets["sets"])) if given else None
         before = self.read_all_sets().get(teacher, {})
         for name in sets["sets"]:
             if name not in before and self.crossword_at(teacher, name):
@@ -984,8 +1032,14 @@ class Admin:
             every = self.read_all_sets()
             every[teacher] = sets["sets"]
             self.write_all_sets(every)
+            all_courses = self.read_all_courses()
+            if courses is None:
+                courses = normalize_courses(all_courses.get(teacher), list(sets["sets"]), strict=False)
+            if courses != all_courses.get(teacher, []):
+                all_courses[teacher] = courses
+                self.write_all_courses(all_courses)
         self.note(teacher, "sets_saved")
-        return {"apps": apps, "teacher": teacher, **sets}
+        return {"apps": apps, "teacher": teacher, **sets, "courses": courses}
 
     # ------------------------------------------------------------------ exercise sheets
     def sheet_apps(self, sheetlib=None, have=None) -> List[Dict[str, object]]:
@@ -3808,12 +3862,12 @@ SUPER_SECTIONS = """
 
 COMMON_SECTIONS = """
     <section id="view-sets" hidden>
-      <p class="lead">A set is a selection of apps for a class, opened at learningphysics.ch/<span class="prefix"></span><i>name</i>: the apps you choose, in your order, and in each the modes (tutor, practice, check) and the learning objectives. With some objectives chosen, the app shows only their worked examples, offers only their practice topics, and its check asks only them. The apps stay open to everyone at their usual addresses: a set is a view, not a lock.</p>
+      <p class="lead">A set is a selection of apps for a class, opened at learningphysics.ch/<span class="prefix"></span><i>name</i>: the apps you choose, in your order, and in each the modes (tutor, practice, check) and the learning objectives. With some objectives chosen, the app shows only their worked examples, offers only their practice topics, and its check asks only them. The apps stay open to everyone at their usual addresses: a set is a view, not a lock. Courses group your sets here in the panel; students don't see them.</p>
       <div class="bar">
         <button type="button" id="sets-save" class="primary" disabled>Save</button>
         <span id="sets-status" class="status" aria-live="polite"></span>
       </div>
-      <div id="set-list" class="setlist"></div>
+      <div id="set-list"></div>
       <div id="set-edit"></div>
     </section>
     <section id="view-quizzes">
@@ -4068,6 +4122,13 @@ h2.section { font-size: 1.15rem; margin: 28px 0 4px; }
 .setlist button[aria-pressed="true"] { border-color: var(--accent); outline: 2px solid var(--accent); }
 .setlist .title { color: var(--muted); margin-left: 6px; font-size: 0.9rem; }
 .setlist .new { border-style: dashed; }
+#set-list .course { margin: 0 0 6px; }
+#set-list .course .setlist { margin-bottom: 10px; }
+.coursehead { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; margin: 0 0 8px; }
+.coursehead input { width: auto; flex: 0 1 22em; font-weight: 600; }
+.coursehead input.bad { border-color: var(--bad); }
+.coursehead h3 { font-size: 1rem; margin: 0; padding: 7px 0; }
+.coursehead .danger { color: var(--bad); }
 .setform { display: grid; grid-template-columns: 1fr 2fr; gap: 0 14px; }
 .setform .field { margin: 0 0 10px; }
 .setform input.bad { border-color: var(--bad); }
@@ -6343,13 +6404,15 @@ SETS_JS = r"""
 // examples and practice topics (its outline), come from the app itself, loaded with ?outline=1 in a
 // hidden frame that posts them here. An app of a set saved before there were objectives may list
 // worked examples (tutor: indices) and practice stages (practice: keys) instead: they stay until
-// objectives are chosen for it.
+// objectives are chosen for it. Courses ({ title }, in their order) group the sets in the list, only
+// here in the panel: a set is in one course at most (s.course, the course itself while editing;
+// saved as the names of its sets), the others are under No course.
 (function () {
   'use strict';
   const $ = (s) => document.querySelector(s);
   const MODES = { tutor: 'Tutor', practice: 'Practice', check: 'Check' };
   const KEY = /^[a-z0-9][a-z0-9-]{0,39}$/, MAX_TITLE = 80;
-  let apps = [], sets = [], sel = -1, dirty = false, loaded = false;
+  let apps = [], sets = [], courses = [], sel = -1, dirty = false, loaded = false;
   // a set's address: learningphysics.ch/<teacher>/<name> (the teacher logged in)
   const teacher = ($('.who') || { dataset: {} }).dataset.teacher || '';
   const path = (name) => (teacher ? `${teacher}/${name}` : name);
@@ -6390,9 +6453,17 @@ SETS_JS = r"""
     if (sets.some((s, j) => j !== i && s.name === n)) return `Two sets are called “${n}”.`;
     return '';
   }
+  // why a course's name cannot be, or ''
+  function courseProblem(c) {
+    const t = c.title.trim();
+    if (!t) return 'A course needs a name.';
+    if (courses.some((d) => d !== c && d.title.trim() === t)) return `Two courses are called “${t}”.`;
+    return '';
+  }
+  const anyProblem = () => sets.map((_, i) => problem(i)).find(Boolean) || courses.map(courseProblem).find(Boolean);
   function changed() {
     dirty = true;
-    const bad = sets.map((_, i) => problem(i)).find(Boolean);
+    const bad = anyProblem();
     $('#sets-save').disabled = !!bad;
     status(bad || 'Unsaved changes', bad ? 'bad' : '');
   }
@@ -6414,11 +6485,54 @@ SETS_JS = r"""
   }
 
   // ---------------------------------------------------------------- the list and the editor
+  const setButton = (s) => {
+    const i = sets.indexOf(s);
+    return el('button', { type: 'button', 'data-i': String(i), 'aria-pressed': String(i === sel), onclick: () => { sel = i; render(); } },
+      s.name || '(no name)', s.title ? el('span', { class: 'title' }, s.title) : '');
+  };
+  // the list: the sets by course (each with its name to edit and Delete), then those in none
+  function renderGroups(focus) {
+    const newSet = el('button', { type: 'button', class: 'new', onclick: () => add() }, '+ New set');
+    const newCourse = el('button', { type: 'button', class: 'new', onclick: () => addCourse() }, '+ New course');
+    if (!courses.length) {
+      $('#set-list').replaceChildren(el('div', { class: 'setlist' }, ...sets.map(setButton), newSet, newCourse));
+      return;
+    }
+    let named = null; // the name of a new course, to type
+    const groups = courses.map((c, k) => {
+      const title = el('input', { type: 'text', value: c.title, maxlength: String(MAX_TITLE), autocomplete: 'off', 'aria-label': 'Name of the course', placeholder: 'Name of the course', class: courseProblem(c) ? 'bad' : '' });
+      title.addEventListener('input', () => {
+        c.title = title.value;
+        courses.forEach((d, j) => { const t = $('#set-list').querySelectorAll('.coursehead input')[j]; if (t) t.classList.toggle('bad', !!courseProblem(d)); });
+        changed();
+        renderCourseChoice();
+      });
+      const mine = sets.filter((s) => s.course === c);
+      if (focus && focus.course === c) named = title;
+      return el('div', { class: 'course' },
+        el('div', { class: 'coursehead' }, title,
+          el('span', { class: 'note' }, `${mine.length} set${mine.length === 1 ? '' : 's'}`),
+          el('button', { type: 'button', class: 'danger', onclick: () => removeCourse(k) }, 'Delete course')),
+        el('div', { class: 'setlist' }, ...mine.map(setButton),
+          mine.length ? '' : el('span', { class: 'note' }, 'No sets yet: choose this course in a set’s editor.')));
+    });
+    const rest = sets.filter((s) => !s.course);
+    $('#set-list').replaceChildren(...groups,
+      el('div', { class: 'course' },
+        el('div', { class: 'coursehead' }, el('h3', {}, 'No course')),
+        el('div', { class: 'setlist' }, ...rest.map(setButton), newSet, newCourse)));
+    if (named) { named.focus(); named.select(); }
+  }
+  // the editor's choice of a course, its names as typed
+  function renderCourseChoice() {
+    const pick = $('#set-course');
+    if (!pick || !sets[sel]) return;
+    pick.replaceChildren(...courseOptions(sets[sel]));
+  }
+  const courseOptions = (s) => [el('option', { value: '', selected: !s.course }, 'No course'),
+    ...courses.map((c, k) => el('option', { value: String(k), selected: s.course === c }, c.title.trim() || '(no name)'))];
   function render(focus) {
-    $('#set-list').replaceChildren(
-      ...sets.map((s, i) => el('button', { type: 'button', 'aria-pressed': String(i === sel), onclick: () => { sel = i; render(); } },
-        s.name || '(no name)', s.title ? el('span', { class: 'title' }, s.title) : '')),
-      el('button', { type: 'button', class: 'new', onclick: () => add() }, '+ New set'));
+    renderGroups(focus);
     const box = $('#set-edit');
     if (sel < 0 || !sets[sel]) {
       box.replaceChildren(el('p', { class: 'empty' }, sets.length ? 'Choose a set to edit it, or make a new one.' : 'No sets yet: make one with New set.'));
@@ -6446,6 +6560,12 @@ SETS_JS = r"""
     const names = el('select', { 'aria-label': 'Language of the names of the apps and learning objectives' },
       ...Object.entries(NAMES).map(([k, t]) => el('option', { value: k, selected: s.names === k }, t)));
     names.addEventListener('change', () => setNames(s, names.value));
+    const course = el('select', { id: 'set-course' }, ...courseOptions(s));
+    course.addEventListener('change', () => {
+      if (course.value) s.course = courses[+course.value]; else delete s.course;
+      changed();
+      renderGroups();
+    });
     // the apps not in the set, in the standard order; first the one after the app last added
     const unused = apps.filter((a) => !s.apps.some((x) => x.id === a.id));
     const last = apps.findIndex((a) => a.id === (added.get(s) || (s.apps.length ? s.apps[s.apps.length - 1].id : null)));
@@ -6456,7 +6576,8 @@ SETS_JS = r"""
         el('label', { class: 'field' }, el('span', {}, 'Name (the address)'), name),
         el('label', { class: 'field' }, el('span', {}, 'Title on the set’s page (optional)'), title),
         el('label', { class: 'field' }, el('span', {}, 'Language'), lang),
-        el('label', { class: 'field', title: 'Only here, in the panel: the language of the names of the apps, learning objectives and topics' }, el('span', {}, 'Names in'), names)),
+        el('label', { class: 'field', title: 'Only here, in the panel: the language of the names of the apps, learning objectives and topics' }, el('span', {}, 'Names in'), names),
+        courses.length ? el('label', { class: 'field', title: 'Only here, in the panel: the course whose sets this one is listed with' }, el('span', {}, 'Course'), course) : ''),
       el('div', { class: 'setactions' },
         s.saved && s.saved === s.name ? el('a', { href: `/${path(s.name)}`, target: '_blank', rel: 'noopener', id: 'set-url' }, `learningphysics.ch/${path(s.name)} ↗`) : el('span', { class: 'note', id: 'set-url' }, `learningphysics.ch/${path(s.name)}`),
         el('button', { type: 'button', onclick: () => duplicate(i) }, 'Duplicate'),
@@ -6477,8 +6598,9 @@ SETS_JS = r"""
   }
   // only the buttons of the list (typing in the editor keeps its focus)
   function renderList() {
-    $('#set-list').querySelectorAll('button[aria-pressed]').forEach((b, i) => {
-      b.replaceChildren(sets[i].name || '(no name)', sets[i].title ? el('span', { class: 'title' }, sets[i].title) : '');
+    $('#set-list').querySelectorAll('button[aria-pressed]').forEach((b) => {
+      const s = sets[+b.dataset.i];
+      b.replaceChildren(s.name || '(no name)', s.title ? el('span', { class: 'title' }, s.title) : '');
     });
   }
 
@@ -6569,15 +6691,16 @@ SETS_JS = r"""
     return `${base}${n > 1 ? `-${n}` : ''}`;
   }
   function add() {
-    sets.push({ name: fresh('neues-set'), title: '', apps: [], saved: null, names: 'en' });
+    sets.push({ name: fresh('neues-set'), title: '', apps: [], saved: null, names: 'en', ...(sets[sel] && sets[sel].course ? { course: sets[sel].course } : {}) });
     sel = sets.length - 1;
     changed();
     render({ name: true });
   }
   function duplicate(i) {
-    const copy = JSON.parse(JSON.stringify(sets[i]));
+    const copy = JSON.parse(JSON.stringify({ ...sets[i], course: null }));
     copy.name = fresh(`${sets[i].name}-kopie`.slice(0, 34));
     copy.saved = null;
+    if (sets[i].course) copy.course = sets[i].course; else delete copy.course;
     sets.splice(i + 1, 0, copy);
     sel = i + 1;
     changed();
@@ -6591,10 +6714,34 @@ SETS_JS = r"""
     render();
   }
 
+  // ---------------------------------------------------------------- courses
+  function addCourse() {
+    let n = 1;
+    while (courses.some((c) => c.title.trim() === `New course${n > 1 ? ` ${n}` : ''}`)) n++;
+    const c = { title: `New course${n > 1 ? ` ${n}` : ''}` };
+    courses.push(c);
+    changed();
+    render({ course: c });
+  }
+  // its sets stay, under No course
+  function removeCourse(k) {
+    const c = courses[k], n = sets.filter((s) => s.course === c).length;
+    if (n && !confirm(`Delete the course “${c.title.trim()}”? Its ${n === 1 ? 'set stays' : `${n} sets stay`}, under No course.`)) return;
+    sets.forEach((s) => { if (s.course === c) delete s.course; });
+    courses.splice(k, 1);
+    changed();
+    render();
+  }
+
   function apply(data, keepSel) {
     const before = sel >= 0 && sets[sel] ? sets[sel].name : null;
     apps = data.apps || [];
-    sets = Object.entries(data.sets || {}).map(([name, s]) => ({ name, title: s.title || '', ...(s.lang ? { lang: s.lang } : {}), apps: s.apps || [], saved: name, names: namesOf(name, s.lang) }));
+    courses = (data.courses || []).map((c) => ({ title: c.title, sets: c.sets || [] }));
+    sets = Object.entries(data.sets || {}).map(([name, s]) => {
+      const course = courses.find((c) => c.sets.includes(name));
+      return { name, title: s.title || '', ...(s.lang ? { lang: s.lang } : {}), apps: s.apps || [], saved: name, names: namesOf(name, s.lang), ...(course ? { course } : {}) };
+    });
+    courses.forEach((c) => { delete c.sets; });
     sel = keepSel && before ? sets.findIndex((s) => s.name === before) : sets.length ? 0 : -1;
     if (sel < 0 && sets.length) sel = 0;
     dirty = false;
@@ -6608,12 +6755,15 @@ SETS_JS = r"""
     loaded = true;
   }
   async function save() {
-    const bad = sets.map((_, i) => problem(i)).find(Boolean);
+    const bad = anyProblem();
     if (bad) { status(bad, 'bad'); return; }
     $('#sets-save').disabled = true;
     status('Saving…');
     try {
-      const body = { sets: Object.fromEntries(sets.map((s) => [s.name, { title: s.title.trim(), ...(s.lang ? { lang: s.lang } : {}), apps: s.apps }])) };
+      const body = {
+        sets: Object.fromEntries(sets.map((s) => [s.name, { title: s.title.trim(), ...(s.lang ? { lang: s.lang } : {}), apps: s.apps }])),
+        courses: courses.map((c) => ({ title: c.title.trim(), sets: sets.filter((s) => s.course === c).map((s) => s.name) })),
+      };
       const r = await fetch('/admin/api/sets', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
       if (r.status === 403) { status('Logged out: log in again (your changes are lost on reload)', 'bad'); $('#sets-save').disabled = false; return; }
       if (!r.ok) throw new Error((await r.json().catch(() => ({}))).error || r.statusText);
