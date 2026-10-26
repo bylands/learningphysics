@@ -3862,7 +3862,7 @@ SUPER_SECTIONS = """
 
 COMMON_SECTIONS = """
     <section id="view-sets" hidden>
-      <p class="lead">A set is a selection of apps for a class, opened at learningphysics.ch/<span class="prefix"></span><i>name</i>: the apps you choose, in your order, and in each the modes (tutor, practice, check) and the learning objectives. With some objectives chosen, the app shows only their worked examples, offers only their practice topics, and its check asks only them. The apps stay open to everyone at their usual addresses: a set is a view, not a lock. Courses group your sets here in the panel; students don't see them.</p>
+      <p class="lead">A set is a selection of apps for a class, opened at learningphysics.ch/<span class="prefix"></span><i>name</i>: the apps you choose, in your order, and in each the modes (tutor, practice, check) and the learning objectives. With some objectives chosen, the app shows only their worked examples, offers only their practice topics, and its check asks only them. The apps stay open to everyone at their usual addresses: a set is a view, not a lock. Courses group your sets here in the panel, in the order you give them (▾ folds one); students don't see them.</p>
       <div class="bar">
         <button type="button" id="sets-save" class="primary" disabled>Save</button>
         <span id="sets-status" class="status" aria-live="polite"></span>
@@ -4124,6 +4124,15 @@ h2.section { font-size: 1.15rem; margin: 28px 0 4px; }
 .setlist .new { border-style: dashed; }
 #set-list .course { margin: 0 0 6px; }
 #set-list .course .setlist { margin-bottom: 10px; }
+#set-list ol.courses { list-style: none; margin: 0; padding: 0; }
+#set-list li.course { border: 1px solid transparent; border-radius: 8px; }
+#set-list li.course.moved { border-color: var(--accent); }
+#set-list li.course.dragging { background: var(--bg); padding: 0 6px; }
+#set-list li.course.folded .coursehead { margin-bottom: 4px; }
+#set-list .setlist[hidden] { display: none; }
+.coursehead .move { flex-direction: row; align-items: center; }
+.coursehead .drag { padding: 0 2px; }
+.coursehead .fold { padding: 2px 9px; min-width: 2.2em; }
 .coursehead { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; margin: 0 0 8px; }
 .coursehead input { width: auto; flex: 0 1 22em; font-weight: 600; }
 .coursehead input.bad { border-color: var(--bad); }
@@ -6406,7 +6415,8 @@ SETS_JS = r"""
 // worked examples (tutor: indices) and practice stages (practice: keys) instead: they stay until
 // objectives are chosen for it. Courses ({ title }, in their order) group the sets in the list, only
 // here in the panel: a set is in one course at most (s.course, the course itself while editing;
-// saved as the names of its sets), the others are under No course.
+// saved as the names of its sets), the others are under No course. The courses move (arrows, or
+// dragged; their order is saved) and fold (c.folded, remembered in this browser, not saved).
 (function () {
   'use strict';
   const $ = (s) => document.querySelector(s);
@@ -6490,7 +6500,22 @@ SETS_JS = r"""
     return el('button', { type: 'button', 'data-i': String(i), 'aria-pressed': String(i === sel), onclick: () => { sel = i; render(); } },
       s.name || '(no name)', s.title ? el('span', { class: 'title' }, s.title) : '');
   };
-  // the list: the sets by course (each with its name to edit and Delete), then those in none
+  // the courses folded in the list, remembered in this browser by their names (open unless folded)
+  const foldKey = `admin-courses-folded:${teacher}`;
+  function readFolded() {
+    try { return JSON.parse(localStorage.getItem(foldKey)) || []; } catch (e) { return []; }
+  }
+  function writeFolded() {
+    try { localStorage.setItem(foldKey, JSON.stringify(courses.filter((c) => c.folded).map((c) => c.title.trim()))); } catch (e) { /* storage unavailable */ }
+  }
+  function moveCourse(from, to, focus) {
+    courses.splice(to, 0, courses.splice(from, 1)[0]);
+    changed();
+    renderGroups(focus);
+    renderCourseChoice();
+  }
+  // the list: the sets by course (each with its name to edit, folding, moving and Delete), then those
+  // in none
   function renderGroups(focus) {
     const newSet = el('button', { type: 'button', class: 'new', onclick: () => add() }, '+ New set');
     const newCourse = el('button', { type: 'button', class: 'new', onclick: () => addCourse() }, '+ New course');
@@ -6498,30 +6523,48 @@ SETS_JS = r"""
       $('#set-list').replaceChildren(el('div', { class: 'setlist' }, ...sets.map(setButton), newSet, newCourse));
       return;
     }
-    let named = null; // the name of a new course, to type
+    let named = null, later = null; // the name of a new course, to type; what to focus after
     const groups = courses.map((c, k) => {
       const title = el('input', { type: 'text', value: c.title, maxlength: String(MAX_TITLE), autocomplete: 'off', 'aria-label': 'Name of the course', placeholder: 'Name of the course', class: courseProblem(c) ? 'bad' : '' });
       title.addEventListener('input', () => {
         c.title = title.value;
         courses.forEach((d, j) => { const t = $('#set-list').querySelectorAll('.coursehead input')[j]; if (t) t.classList.toggle('bad', !!courseProblem(d)); });
+        if (c.folded) writeFolded();
         changed();
         renderCourseChoice();
       });
       const mine = sets.filter((s) => s.course === c);
       if (focus && focus.course === c) named = title;
-      return el('div', { class: 'course' },
-        el('div', { class: 'coursehead' }, title,
+      const name = c.title.trim() || 'the course';
+      const list = el('div', { class: 'setlist', id: `course-sets-${k}`, ...(c.folded ? { hidden: '' } : {}) }, ...mine.map(setButton),
+        mine.length ? '' : el('span', { class: 'note' }, 'No sets yet: choose this course in a set’s editor.'));
+      const fold = el('button', { type: 'button', class: 'fold', 'aria-expanded': String(!c.folded), 'aria-controls': list.id, 'aria-label': `${c.folded ? 'Show' : 'Hide'} the sets of ${name}`, title: c.folded ? 'Show its sets' : 'Hide its sets' }, c.folded ? '▸' : '▾');
+      fold.addEventListener('click', () => { c.folded = !c.folded; writeFolded(); renderGroups({ fold: c }); });
+      const li = el('li', { class: `course${c.folded ? ' folded' : ''}${focus && focus.dropped === c ? ' moved' : ''}` },
+        el('div', { class: 'coursehead' },
+          el('div', { class: 'move' },
+            el('button', { type: 'button', 'aria-label': `Move ${name} up`, disabled: k === 0, onclick: () => moveCourse(k, k - 1, { up: c }) }, '↑'),
+            AdminDrag.handle((from, to) => moveCourse(from, to, { dropped: courses[from] })),
+            el('button', { type: 'button', 'aria-label': `Move ${name} down`, disabled: k === courses.length - 1, onclick: () => moveCourse(k, k + 1, { down: c }) }, '↓')),
+          fold, title,
           el('span', { class: 'note' }, `${mine.length} set${mine.length === 1 ? '' : 's'}`),
           el('button', { type: 'button', class: 'danger', onclick: () => removeCourse(k) }, 'Delete course')),
-        el('div', { class: 'setlist' }, ...mine.map(setButton),
-          mine.length ? '' : el('span', { class: 'note' }, 'No sets yet: choose this course in a set’s editor.')));
+        list);
+      // after a move by its arrows, or folding: the focus stays on the button
+      if (focus && (focus.up === c || focus.down === c)) {
+        const b = li.querySelectorAll('.move button')[focus.up === c ? 0 : 1];
+        later = () => { (b.disabled ? li.querySelector('.move button:not(:disabled)') : b).focus(); };
+      }
+      if (focus && focus.fold === c) later = () => fold.focus();
+      return li;
     });
     const rest = sets.filter((s) => !s.course);
-    $('#set-list').replaceChildren(...groups,
+    $('#set-list').replaceChildren(el('ol', { class: 'courses' }, ...groups),
       el('div', { class: 'course' },
         el('div', { class: 'coursehead' }, el('h3', {}, 'No course')),
         el('div', { class: 'setlist' }, ...rest.map(setButton), newSet, newCourse)));
     if (named) { named.focus(); named.select(); }
+    if (later) later();
   }
   // the editor's choice of a course, its names as typed
   function renderCourseChoice() {
@@ -6736,7 +6779,8 @@ SETS_JS = r"""
   function apply(data, keepSel) {
     const before = sel >= 0 && sets[sel] ? sets[sel].name : null;
     apps = data.apps || [];
-    courses = (data.courses || []).map((c) => ({ title: c.title, sets: c.sets || [] }));
+    const folded = readFolded();
+    courses = (data.courses || []).map((c) => ({ title: c.title, sets: c.sets || [], ...(folded.includes(c.title) ? { folded: true } : {}) }));
     sets = Object.entries(data.sets || {}).map(([name, s]) => {
       const course = courses.find((c) => c.sets.includes(name));
       return { name, title: s.title || '', ...(s.lang ? { lang: s.lang } : {}), apps: s.apps || [], saved: name, names: namesOf(name, s.lang), ...(course ? { course } : {}) };
