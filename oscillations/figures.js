@@ -14,6 +14,8 @@
 //                             w.kind 'spring': a body hanging on a spring, the equilibrium and ±A
 //                             marked, held from below until let go (or at rest at the equilibrium,
 //                             w.push), with its velocity and acceleration as arrows (w.arrows);
+//                             'table': a block on a table, pulled sideways by a horizontal spring
+//                             from a wall, y to the right, held by a stop until let go;
 //                             'track': a body on a vertical track, at the height y of the axis
 //                             w.axis, held until let go; 'pointer': the pointer and its body
 // Each returns an SVG in a <div class="fig">.
@@ -106,8 +108,35 @@
     }
     return out;
   }
+  // On the table: the wall at the left, the table top at TY, the equilibrium at TX, ±A TR px to
+  // either side; v and a as arrows above the block.
+  const TX = 100, TR = 46, TY = 150;
+  // a spring lying from x0 to x1 at the height y
+  function hspring(x0, x1, y, n = 7, w = 7) {
+    const end = 4, step = (x1 - x0 - 2 * end) / n;
+    let d = `M${f(x0)} ${f(y)}h${end}`;
+    for (let k = 0; k < n; k++) d += `l${f(step / 4)} ${-w}l${f(step / 2)} ${2 * w}l${f(step / 4)} ${-w}`;
+    return path(`${d}h${end}`, 'tb-spring');
+  }
+  function tablePose(s, amp, arrows) {
+    const x = TX + TR * Math.max(-1.3, Math.min(1.3, s.y / amp.y)), top = TY - 26;
+    let h = '';
+    for (let k = 14; k < CW - 4; k += 8) h += `M${k} ${TY + 9}l7 -8`;
+    for (let k = TY - 52; k < TY; k += 8) h += `M4 ${k + 8}l7 -8`;
+    const level = (u, name) => line(TX + u * TR, top - 10, TX + u * TR, TY + 14, 'tb-ghost') + text(TX + u * TR, TY + 30, name, 'tb-axis');
+    let out = path(`M11 ${TY - 52}V${TY}H${CW - 4}`, 'tb-ground') + path(h, 'tb-hatch') + level(-1, `−${it('A')}`) + level(0, '0') + level(1, it('A')) +
+      hspring(11, x - 15, TY - 13) + `<rect class="osc-body" x="${f(x - 15)}" y="${top}" width="30" height="26" rx="2"/>`;
+    // the stop that holds it, on its right
+    if (s.held) out += `<rect class="tb-metal" x="${f(x + 15)}" y="${top - 6}" width="5" height="32" rx="1"/>`;
+    for (const [q, yy, cls] of [['v', top - 40, 'v'], ['a', top - 16, 'a']]) {
+      const k = s[q] / amp[q], len = 40 * Math.abs(k);
+      if (arrows && Number.isFinite(k) && len >= 9) out += root.Fig.force([x, yy], [k > 0 ? 1 : -1, 0], len, it(q), [k > 0 ? 6 : -6, -6], cls);
+    }
+    return out + text(CW - 8, TY + 52, `${it('y')} →`, 'tb-axis', 'end');
+  }
   function watchScene(w) {
     const label = { spring: L('A body on a spring, its displacement y from the equilibrium', 'Ein Körper an einer Feder, seine Auslenkung y aus der Gleichgewichtslage'),
+      table: L('A block on a table on a horizontal spring, its displacement y from the equilibrium', 'Ein Klotz auf einem Tisch an einer waagrechten Feder, seine Auslenkung y aus der Gleichgewichtslage'),
       track: L('A body on a vertical track, at the height y', 'Ein Körper auf einer senkrechten Schiene, auf der Höhe y'),
       pointer: L('The turning pointer and the body at the height of its tip', 'Der drehende Zeiger und der Körper auf der Höhe seiner Spitze') }[w.kind];
     const [W, H] = w.kind === 'pointer' ? [330, 226] : [CW, CH];
@@ -118,6 +147,7 @@
     const level = (y, name) => line(bx - 32, py(y), bx + 32, py(y), 'tb-ghost') + text(30, py(y) + 5, name, 'tb-axis', 'end');
     function pose(s) {
       if (w.kind === 'pointer') return pointerBody(s.ph, { angle: s.held }); // before it turns, its angle φ₀
+      if (w.kind === 'table') return tablePose(s, w.amp, w.arrows);
       const y = py(s.y);
       if (w.kind === 'track') {
         return `<rect class="tb-metal" x="${bx - 3}" y="${cy - span - 12}" width="6" height="${2 * span + 24}" rx="2"/>` + level(0, '0') +

@@ -2,9 +2,10 @@
 // "S2 Charakteristische Differentialgleichung". Each is a topic of practice (see topics.js) with
 // its stages: first exercises like the example, then variations with new ideas (types: the
 // exercise types of scenarios.js). An example gives its parameters p, or a seed for them, and
-// may go on with more exercises of its topic (more: [{ scenario, p }]). Five end with a frame
-// to watch the run of one of their exercises (watch: its index, 0 the example itself, 1 the first
-// of more; see generator.js), and two of these runs have a page of their own (page: its folder).
+// may go on with more exercises of its topic (more: [{ scenario, p }]). Five have a frame to
+// watch the run of one of their exercises, right after it (watch: its index, 0 the example
+// itself, 1 the first of more; see generator.js), and two of these runs have a page of their own
+// (page: its folder).
 // The last two, on damped oscillations, are the types of damping.js.
 (function (root) {
   'use strict';
