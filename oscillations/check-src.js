@@ -22,6 +22,12 @@
     { id: 'lc', kinds: ['lc-eq', 'lc-scale'], tutor: 4, topic: 4,
       name: () => L('Recognise the LC circuit as the same equation with other quantities: the charge for the displacement, the current for the velocity, L for the mass and 1/C for the spring constant.',
         'Den Schwingkreis als dieselbe Gleichung mit anderen Grössen erkennen: die Ladung für die Auslenkung, den Strom für die Geschwindigkeit, L für die Masse und 1/C für die Federkonstante.') },
+    { id: 'damped', kinds: ['damp-match', 'damp-back', 'damp-error', 'damp-eq'], tutor: 5, topic: 5,
+      name: () => L('Recognise a damped oscillation in its graph and its equation: the period stays the same while the amplitude shrinks; a term proportional to the velocity, against it, makes the amplitude decay exponentially, a constant friction force linearly.',
+        'Eine gedämpfte Schwingung an ihrem Graphen und ihrer Gleichung erkennen: Die Periode bleibt gleich, während die Amplitude schrumpft; ein Term proportional zur Geschwindigkeit, gegen sie gerichtet, lässt die Amplitude exponentiell abklingen, eine konstante Reibungskraft linear.') },
+    { id: 'decay', kinds: ['decay-read', 'decay-eq', 'decay-energy', 'decay-regime'], tutor: 6, topic: 6,
+      name: () => L('Describe how fast a damped oscillation dies away: read δ and ω₀ off its equation, find δ and τ = 1/δ from two peaks, use E ∝ A², and tell weak, critical and strong damping apart.',
+        'Beschreiben, wie schnell eine gedämpfte Schwingung abklingt: δ und ω₀ aus ihrer Gleichung ablesen, δ und τ = 1/δ aus zwei Spitzen bestimmen, E ∝ A² anwenden und schwache Dämpfung, aperiodischen Grenzfall und starke Dämpfung unterscheiden.') },
   ];
 
   // The idea behind each wrong-answer flag.
@@ -32,6 +38,9 @@
     square: 'square', flip: 'square',
     turn: 'circle', proj: 'circle', start: 'circle',
     map: 'lc', lcphase: 'lcphase',
+    envelope: 'envelope', diff: 'envelope', grow: 'dampterm', antidamp: 'dampterm', noty: 'dampterm', nodamp: 'dampterm', dampterm: 'dampterm', norest: 'restore',
+    dshape: 'dshape', noln: 'decayln', log10: 'decayln', per: 'decayln', half: 'decayln', two: 'twodelta', mass: 'twodelta', root: 'period',
+    same: 'energy', sqrt: 'energy', add: 'energy', halfamp: 'energy', lin: 'energy', regime: 'regime',
   };
   const concepts = () => ({
     period: L('ω, ω² and T mixed up', 'ω, ω² und T verwechselt'),
@@ -46,6 +55,14 @@
     circle: L('the displacement as the shadow of the pointer on the vertical axis, turning the way it turns', 'die Auslenkung als Schatten des Zeigers auf der vertikalen Achse, in seinem Drehsinn'),
     lc: L('which quantity of the LC circuit plays which role (1/C, not C, for the spring constant)', 'welche Grösse des Schwingkreises welche Rolle spielt (1/C, nicht C, für die Federkonstante)'),
     lcphase: L('charge and current a quarter of a period apart', 'Ladung und Strom um eine Viertelperiode verschoben'),
+    dshape: L('a damped oscillation keeps its period, starts at rest and oscillates about the equilibrium', 'eine gedämpfte Schwingung behält ihre Periode, beginnt in Ruhe und schwingt um die Gleichgewichtslage'),
+    envelope: L('damping ∝ v: the amplitude shrinks by equal factors; friction: by equal steps', 'Dämpfung ∝ v: Die Amplitude schrumpft um gleiche Faktoren; Reibung: um gleiche Beträge'),
+    dampterm: L('the damping term: proportional to ẏ and against the motion', 'der Dämpfungsterm: proportional zu ẏ und gegen die Bewegung'),
+    restore: L('an oscillation needs a restoring force (and inertia)', 'eine Schwingung braucht eine rücktreibende Kraft (und Trägheit)'),
+    decayln: L('δ from the ratio of two peaks: the logarithm and the time between them', 'δ aus dem Verhältnis zweier Spitzen: der Logarithmus und die Zeit zwischen ihnen'),
+    twodelta: L('the damping term is 2δ·ẏ: δ is half its factor', 'der Dämpfungsterm ist 2δ·ẏ: δ ist die Hälfte seines Faktors'),
+    energy: L('the energy goes with the square of the amplitude', 'die Energie geht mit dem Quadrat der Amplitude'),
+    regime: L('weak, critical and strong damping', 'schwache Dämpfung, aperiodischer Grenzfall und starke Dämpfung'),
   });
 
   function question(kind, seed) {

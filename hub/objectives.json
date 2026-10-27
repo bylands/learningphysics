@@ -431,6 +431,16 @@
     "id": "lc",
     "en": "Recognise the LC circuit as the same equation with other quantities: the charge for the displacement, the current for the velocity, L for the mass and 1/C for the spring constant.",
     "de": "Den Schwingkreis als dieselbe Gleichung mit anderen Grössen erkennen: die Ladung für die Auslenkung, den Strom für die Geschwindigkeit, L für die Masse und 1/C für die Federkonstante."
+   },
+   {
+    "id": "damped",
+    "en": "Recognise a damped oscillation in its graph and its equation: the period stays the same while the amplitude shrinks; a term proportional to the velocity, against it, makes the amplitude decay exponentially, a constant friction force linearly.",
+    "de": "Eine gedämpfte Schwingung an ihrem Graphen und ihrer Gleichung erkennen: Die Periode bleibt gleich, während die Amplitude schrumpft; ein Term proportional zur Geschwindigkeit, gegen sie gerichtet, lässt die Amplitude exponentiell abklingen, eine konstante Reibungskraft linear."
+   },
+   {
+    "id": "decay",
+    "en": "Describe how fast a damped oscillation dies away: read δ and ω₀ off its equation, find δ and τ = 1/δ from two peaks, use E ∝ A², and tell weak, critical and strong damping apart.",
+    "de": "Beschreiben, wie schnell eine gedämpfte Schwingung abklingt: δ und ω₀ aus ihrer Gleichung ablesen, δ und τ = 1/δ aus zwei Spitzen bestimmen, E ∝ A² anwenden und schwache Dämpfung, aperiodischen Grenzfall und starke Dämpfung unterscheiden."
    }
   ]
  },

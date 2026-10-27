@@ -11,10 +11,11 @@
 //   point −A), so that right answers are rings marked ✓, the point asked for and the right graph
 //   or equation are ✓, and every wrong choice is ✗ somewhere;
 // - the scene has one switch with its hit area and draws without NaN or undefined.
+// The damped runs of damping.js are checked in check-damping.js.
 'use strict';
 
 const Lang = require('../lang.js');
-require('../core.js'); require('../equations.js'); require('../plot.js'); require('../scenarios.js'); require('../generator.js'); require('../lessons.js');
+require('../core.js'); require('../equations.js'); require('../plot.js'); require('../scenarios.js'); require('../damping.js'); require('../generator.js'); require('../lessons.js');
 global.window = globalThis; require('../figkit.js'); require('../figures.js');
 const { OC, Equations: Eq, Scenarios, Osc, Lessons, Figures } = globalThis;
 
@@ -108,10 +109,13 @@ function verifyMarks(ex, w, tag) {
   });
 }
 
+// the types of damping.js, whose runs are damped (checked in check-damping.js)
+const DAMPED = (id) => /^(damp|decay)-/.test(id);
 const WATCHED = ['circle', 'match-1', 'match-2', 'match-back', 'points', 'vmax', 'back-w', 'back-A'];
 for (const lang of ['en', 'de']) {
   Lang.set(lang);
   for (const scn of Osc.SCENARIOS) {
+    if (DAMPED(scn.id)) continue; // their runs: check-damping.js
     let n = 0;
     for (let seed = 1; seed <= SAMPLES; seed++) {
       const ex = Osc.practiceOf(scn.id, seed), tag = `${lang} ${scn.id} ${seed}`;
@@ -127,6 +131,7 @@ for (const lang of ['en', 'de']) {
   }
   // the worked examples
   Lessons.EXAMPLES.forEach((e, i) => {
+    if (DAMPED(e.scenario)) return;
     const t = Osc.tutorial(e);
     if (e.watch == null) { if (t.watch) fail(`example ${i + 1}: a run without watch`); return; }
     const w = t.watch(), last = t.frames[t.frames.length - 1];
@@ -135,7 +140,7 @@ for (const lang of ['en', 'de']) {
     if (w.marks(() => null).length) fail(`example ${i + 1}: marks without answers`);
   });
 }
-if (Lessons.EXAMPLES.filter((e) => e.watch != null).length !== 3) fail('not three worked examples to watch');
+if (Lessons.EXAMPLES.filter((e) => e.watch != null && !DAMPED(e.scenario)).length !== 3) fail('not three worked examples to watch');
 
 if (failures) { console.error(`\n${failures} failures`); process.exit(1); }
 console.log('Watching OK');

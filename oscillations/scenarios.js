@@ -270,7 +270,7 @@
       const wrong = shuffle(r, formsOf((f) => !f.shm && f.level <= 2));
       const seen = new Set(), list = [];
       for (const f of wrong) if (!seen.has(f.mistake) && list.length < 3) { seen.add(f.mistake); list.push(f); }
-      const y = pick(r, Eq.VARS.filter((x) => x !== '\\varphi')), c = pick(r, Eq.CONSTS);
+      const y = pick(r, Eq.VARS.filter((x) => x !== '\\varphi')), c = pick(r, Eq.CONSTS.filter((k) => ![right, ...list].some((f) => f.noConst === k)));
       const eqs = shuffle(r, [right, ...list]).map((f) => ({ form: f.id, y, c, note: 'dot' }));
       return { eqs, P: Eq.numbers(r) };
     },
@@ -294,15 +294,15 @@
   };
 
   // ================================================================ 2 equation and graph
-  // Qualitative only: equations with letters (ω, γ, k, g all positive) and graphs without
+  // Qualitative only: equations with letters (ω, δ, k, g all positive) and graphs without
   // numbers. The body starts displaced (y(0) > 0), at rest. Each kind: its TeX and the motion
   // drawn (numbers only for the drawing).
   const Y0 = 2;
   const N = { w2: 1, G: 0.3, k: 0.35, g: 4 }; // the numbers of the drawings
   const NKINDS = {
     shm: { tex: (y) => `\\ddot ${y} = -\\omega^2\\cdot ${y}`, motion: () => ({ order: 2, acc: (y) => -N.w2 * y }) },
-    damp: { tex: (y) => `\\ddot ${y} + \\gamma\\cdot\\dot ${y} + \\omega^2\\cdot ${y} = 0`, motion: () => ({ order: 2, acc: (y, v) => -N.G * v - N.w2 * y }) },
-    anti: { tex: (y) => `\\ddot ${y} - \\gamma\\cdot\\dot ${y} + \\omega^2\\cdot ${y} = 0`, motion: () => ({ order: 2, acc: (y, v) => N.G * v - N.w2 * y }) },
+    damp: { tex: (y) => `\\ddot ${y} + 2\\delta\\cdot\\dot ${y} + \\omega^2\\cdot ${y} = 0`, motion: () => ({ order: 2, acc: (y, v) => -N.G * v - N.w2 * y }) },
+    anti: { tex: (y) => `\\ddot ${y} - 2\\delta\\cdot\\dot ${y} + \\omega^2\\cdot ${y} = 0`, motion: () => ({ order: 2, acc: (y, v) => N.G * v - N.w2 * y }) },
     plus: { tex: (y) => `\\ddot ${y} = k^2\\cdot ${y}`, motion: () => ({ order: 2, acc: (y) => N.k * N.k * y }) },
     first: { tex: (y) => `\\dot ${y} = -k\\cdot ${y}`, motion: () => ({ order: 1, rate: (y) => -N.k * y }) },
     const: { tex: (y) => `\\ddot ${y} = -g`, motion: () => ({ order: 2, acc: () => -N.g / 10 }) },
@@ -313,13 +313,13 @@
   function graphWhy(k, right) {
     const W = {
       shm: right === 'damp' ? L('Here the amplitude stays the same. But the term with ẏ damps the oscillation: the amplitude dies away.', 'Hier bleibt die Amplitude gleich. Der Term mit ẏ dämpft die Schwingung aber: Die Amplitude klingt ab.')
-        : right === 'anti' ? L('Here the amplitude stays the same. But with −γ·ẏ the oscillation is driven: the amplitude grows.', 'Hier bleibt die Amplitude gleich. Mit −γ·ẏ wird die Schwingung aber angetrieben: Die Amplitude wächst.')
+        : right === 'anti' ? L('Here the amplitude stays the same. But with −2δ·ẏ the oscillation is driven: the amplitude grows.', 'Hier bleibt die Amplitude gleich. Mit −2δ·ẏ wird die Schwingung aber angetrieben: Die Amplitude wächst.')
           : right === 'shift' ? L('This one oscillates around 0. The constant g shifts the equilibrium to g/ω², so the body oscillates around it.', 'Diese schwingt um 0. Die Konstante g verschiebt die Gleichgewichtslage nach g/ω², der Körper schwingt also um sie.')
             : right === 'plus' ? L('An oscillation needs a minus sign: ÿ = −ω²·y. With a plus sign, there is no restoring force: the body runs away.', 'Eine Schwingung braucht ein Minuszeichen: ÿ = −ω²·y. Mit Pluszeichen gibt es keine rücktreibende Kraft: Der Körper läuft davon.')
               : right === 'first' ? L('An oscillation needs the second derivative. With ẏ = −k·y, the body creeps towards 0 and never turns back.', 'Eine Schwingung braucht die zweite Ableitung. Mit ẏ = −k·y kriecht der Körper gegen 0 und kehrt nie um.')
                 : L('A constant acceleration gives no oscillation: the graph is a parabola.', 'Eine konstante Beschleunigung gibt keine Schwingung: Der Graph ist eine Parabel.'),
-      damp: L('The amplitude of this one dies away: that needs a term +γ·ẏ (damping).', 'Bei dieser klingt die Amplitude ab: Das braucht einen Term +γ·ẏ (Dämpfung).'),
-      anti: L('The amplitude of this one grows: that would be −γ·ẏ, a damping term with the wrong sign.', 'Bei dieser wächst die Amplitude: Das wäre −γ·ẏ, ein Dämpfungsterm mit dem falschen Vorzeichen.'),
+      damp: L('The amplitude of this one dies away: that needs a term +2δ·ẏ (damping).', 'Bei dieser klingt die Amplitude ab: Das braucht einen Term +2δ·ẏ (Dämpfung).'),
+      anti: L('The amplitude of this one grows: that would be −2δ·ẏ, a damping term with the wrong sign.', 'Bei dieser wächst die Amplitude: Das wäre −2δ·ẏ, ein Dämpfungsterm mit dem falschen Vorzeichen.'),
       plus: L('This one runs away exponentially: that would be ÿ = +k²·y, without a restoring force.', 'Diese läuft exponentiell davon: Das wäre ÿ = +k²·y, ohne rücktreibende Kraft.'),
       first: L('This one creeps towards 0 without turning back: that would be ẏ = −k·y, with the first derivative only.', 'Diese kriecht gegen 0, ohne umzukehren: Das wäre ẏ = −k·y, nur mit der ersten Ableitung.'),
       const: L('This is a parabola: a constant acceleration, ÿ = −g.', 'Das ist eine Parabel: eine konstante Beschleunigung, ÿ = −g.'),
@@ -363,8 +363,8 @@
   }
   const KIND_TEXT = () => ({
     shm: L('ÿ = −ω²·y: the acceleration points back to 0 and grows with the displacement: an SHM around 0, with a constant amplitude.', 'ÿ = −ω²·y: Die Beschleunigung zeigt zu 0 zurück und wächst mit der Auslenkung: eine harmonische Schwingung um 0, mit konstanter Amplitude.'),
-    damp: L('ÿ = −ω²·y with a term +γ·ẏ that brakes the motion like friction: a damped oscillation, its amplitude dies away.', 'ÿ = −ω²·y mit einem Term +γ·ẏ, der die Bewegung wie Reibung bremst: eine gedämpfte Schwingung, ihre Amplitude klingt ab.'),
-    anti: L('ÿ = −ω²·y with a term −γ·ẏ that pushes in the direction of motion: the oscillation is driven, its amplitude grows.', 'ÿ = −ω²·y mit einem Term −γ·ẏ, der in Bewegungsrichtung wirkt: Die Schwingung wird angetrieben, ihre Amplitude wächst.'),
+    damp: L('ÿ = −ω²·y with a term +2δ·ẏ that brakes the motion like friction: a damped oscillation, its amplitude dies away.', 'ÿ = −ω²·y mit einem Term +2δ·ẏ, der die Bewegung wie Reibung bremst: eine gedämpfte Schwingung, ihre Amplitude klingt ab.'),
+    anti: L('ÿ = −ω²·y with a term −2δ·ẏ that pushes in the direction of motion: the oscillation is driven, its amplitude grows.', 'ÿ = −ω²·y mit einem Term −2δ·ẏ, der in Bewegungsrichtung wirkt: Die Schwingung wird angetrieben, ihre Amplitude wächst.'),
     shift: L('ÿ = −ω²·y plus a constant g: the acceleration is 0 at y = g/ω², not at 0. An SHM around this shifted equilibrium.', 'ÿ = −ω²·y plus eine Konstante g: Die Beschleunigung ist 0 bei y = g/ω², nicht bei 0. Eine harmonische Schwingung um diese verschobene Gleichgewichtslage.'),
     plus: L('ÿ = +k²·y: the acceleration points away from 0, the more the farther: the body runs away exponentially.', 'ÿ = +k²·y: Die Beschleunigung zeigt von 0 weg, umso stärker, je weiter: Der Körper läuft exponentiell davon.'),
     first: L('ẏ = −k·y: the velocity is proportional to the displacement; the body creeps towards 0 (exponentially) and never turns back.', 'ẏ = −k·y: Die Geschwindigkeit ist proportional zur Auslenkung; der Körper kriecht (exponentiell) gegen 0 und kehrt nie um.'),
@@ -375,8 +375,8 @@
   function matchHints(p) {
     const y = p.y, Q = {
       shm: L(`The right-hand side is $-\\omega^2\\cdot ${y}$ and nothing else: where is the acceleration zero, and is there a term that brakes or drives the motion?`, `Rechts steht $-\\omega^2\\cdot ${y}$ und sonst nichts: Wo ist die Beschleunigung null, und gibt es einen Term, der die Bewegung bremst oder antreibt?`),
-      damp: L(`Besides $\\omega^2\\cdot ${y}$ there is the term $+\\gamma\\cdot\\dot ${y}$. Solved for $\\ddot ${y}$, does it act with the velocity or against it?`, `Neben $\\omega^2\\cdot ${y}$ gibt es den Term $+\\gamma\\cdot\\dot ${y}$. Nach $\\ddot ${y}$ aufgelöst: Wirkt er mit der Geschwindigkeit oder gegen sie?`),
-      anti: L(`Besides $\\omega^2\\cdot ${y}$ there is the term $-\\gamma\\cdot\\dot ${y}$. Solved for $\\ddot ${y}$, does it act with the velocity or against it?`, `Neben $\\omega^2\\cdot ${y}$ gibt es den Term $-\\gamma\\cdot\\dot ${y}$. Nach $\\ddot ${y}$ aufgelöst: Wirkt er mit der Geschwindigkeit oder gegen sie?`),
+      damp: L(`Besides $\\omega^2\\cdot ${y}$ there is the term $+2\\delta\\cdot\\dot ${y}$. Solved for $\\ddot ${y}$, does it act with the velocity or against it?`, `Neben $\\omega^2\\cdot ${y}$ gibt es den Term $+2\\delta\\cdot\\dot ${y}$. Nach $\\ddot ${y}$ aufgelöst: Wirkt er mit der Geschwindigkeit oder gegen sie?`),
+      anti: L(`Besides $\\omega^2\\cdot ${y}$ there is the term $-2\\delta\\cdot\\dot ${y}$. Solved for $\\ddot ${y}$, does it act with the velocity or against it?`, `Neben $\\omega^2\\cdot ${y}$ gibt es den Term $-2\\delta\\cdot\\dot ${y}$. Nach $\\ddot ${y}$ aufgelöst: Wirkt er mit der Geschwindigkeit oder gegen sie?`),
       plus: L(`The right-hand side is $+k^2\\cdot ${y}$. For ${y} > 0, which way does the acceleration point: towards 0 or away from it?`, `Rechts steht $+k^2\\cdot ${y}$. Für ${y} > 0: Wohin zeigt die Beschleunigung, zu 0 hin oder von 0 weg?`),
       first: L(`Only the first derivative $\\dot ${y}$ appears: the equation fixes the velocity, not the acceleration. What is the velocity while ${y} > 0, and what happens to it as ${y} gets smaller?`, `Nur die erste Ableitung $\\dot ${y}$ kommt vor: Die Gleichung legt die Geschwindigkeit fest, nicht die Beschleunigung. Wie ist die Geschwindigkeit, solange ${y} > 0, und was geschieht mit ihr, wenn ${y} kleiner wird?`),
       const: L(`The right-hand side is $-g$, without $${y}$: does the acceleration depend on where the body is?`, `Rechts steht $-g$, ohne $${y}$: Hängt die Beschleunigung davon ab, wo der Körper ist?`),
@@ -432,8 +432,8 @@
       const y = p.y, TERM = {
         shm: L(`$\\ddot ${y} = -\\omega^2\\cdot ${y}$ alone: nothing brakes or drives, the acceleration is zero at ${y} = 0`, `$\\ddot ${y} = -\\omega^2\\cdot ${y}$ allein: Nichts bremst oder treibt an, die Beschleunigung ist null bei ${y} = 0`),
         unshift: L(`$\\ddot ${y} = -\\omega^2\\cdot ${y}$ alone: the acceleration is zero at ${y} = 0`, `$\\ddot ${y} = -\\omega^2\\cdot ${y}$ allein: Die Beschleunigung ist null bei ${y} = 0`),
-        damp: L(`$+\\gamma\\cdot\\dot ${y}$ on the left: solved for $\\ddot ${y}$, it acts against the velocity, like friction`, `$+\\gamma\\cdot\\dot ${y}$ links: Nach $\\ddot ${y}$ aufgelöst wirkt er gegen die Geschwindigkeit, wie Reibung`),
-        anti: L(`$-\\gamma\\cdot\\dot ${y}$ on the left: solved for $\\ddot ${y}$, it acts with the velocity`, `$-\\gamma\\cdot\\dot ${y}$ links: Nach $\\ddot ${y}$ aufgelöst wirkt er mit der Geschwindigkeit`),
+        damp: L(`$+2\\delta\\cdot\\dot ${y}$ on the left: solved for $\\ddot ${y}$, it acts against the velocity, like friction`, `$+2\\delta\\cdot\\dot ${y}$ links: Nach $\\ddot ${y}$ aufgelöst wirkt er gegen die Geschwindigkeit, wie Reibung`),
+        anti: L(`$-2\\delta\\cdot\\dot ${y}$ on the left: solved for $\\ddot ${y}$, it acts with the velocity`, `$-2\\delta\\cdot\\dot ${y}$ links: Nach $\\ddot ${y}$ aufgelöst wirkt er mit der Geschwindigkeit`),
         plus: L(`$+k^2\\cdot ${y}$: the acceleration points away from 0`, `$+k^2\\cdot ${y}$: Die Beschleunigung zeigt von 0 weg`),
         first: L(`only $\\dot ${y}$: the velocity, not the acceleration, follows ${y}`, `nur $\\dot ${y}$: Die Geschwindigkeit, nicht die Beschleunigung, folgt ${y}`),
         shift: L(`the constant $+g$: the acceleration is zero at $${y} = g/\\omega^2$, not at 0`, `die Konstante $+g$: Die Beschleunigung ist null bei $${y} = g/\\omega^2$, nicht bei 0`),
@@ -776,9 +776,15 @@
   // ('y', 'v' or 'a': the curve), t, y (in the unit of the graph), ok (a choice: right or not; a
   // number: null, the app judges it as in the feedback), say (html: what the answer was) }, at a
   // time from 0 to t1 (later ones at t1).
+  // A damped body (damping.js) gives instead fn(t) → { y, v, a } after the release and amp (the
+  // sizes of its graphs), with kind 'spring' (or 'track' and a curve, as above).
   function oscWatch(o) {
     const w = { arrows: o.panels.length > 1, ...o };
-    if (o.curve) {
+    if (o.fn) {
+      // a damped body (damping.js): at rest at y = fn(0).y before it is let go
+      const y0 = o.fn(0).y;
+      w.at = (t) => (t < 0 ? { y: y0, v: 0, a: 0 } : o.fn(t));
+    } else if (o.curve) {
       const pts = o.curve, dt = pts[1][0] - pts[0][0];
       const yAt = (t) => { const k = Math.min(pts.length - 2, Math.floor(t / dt)), u = Math.min(1, (t - pts[k][0]) / dt); return pts[k][1] + u * (pts[k + 1][1] - pts[k][1]); };
       w.at = (t) => ({ y: t < 0 ? pts[0][1] : yAt(t), v: null, a: null });
@@ -843,6 +849,6 @@
 
   const SCENARIOS = [circle, pickShm, shm1, shm2, shm3, match1, match2, matchBack, points, vmax, backW, backA, lcEq, lcScale];
 
-  root.Scenarios = { SCENARIOS, NKINDS, curveOf, Y0, AXIS, xGraph, CIRCLE, oscWatch };
+  root.Scenarios = { SCENARIOS, NKINDS, curveOf, Y0, AXIS, xGraph, CIRCLE, oscWatch, curveMarks, numMark };
   if (typeof module !== 'undefined') module.exports = root.Scenarios;
 })(typeof window !== 'undefined' ? window : globalThis);
