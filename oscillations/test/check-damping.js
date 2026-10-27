@@ -147,6 +147,7 @@ for (const lang of ['en', 'de']) {
         const f = w.fn;
         if (!near(f(0).y, ex.p.A0) || !near(f(ex.p.n * ex.p.T).y, ex.p.An, 1e-9)) fail(`${tag}: the peaks P and Q`);
       }
+      if (id === 'damp-error' && w.kind !== (ex.p.sys === 'table' ? 'table' : 'spring')) fail(`${tag}: a ${w.kind} scene for the ${ex.p.sys}`);
       if (id === 'decay-regime' && !!w !== ['crit', 'over', 'fast'].includes(ex.p.ask)) fail(`${tag}: a run for ${ex.p.ask}`);
       if (w) { verifyRun(ex, w, tag); runs++; }
     }
