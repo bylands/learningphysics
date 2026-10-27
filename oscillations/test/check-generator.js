@@ -16,9 +16,9 @@
 'use strict';
 
 const Lang = require('../lang.js');
-require('../core.js'); require('../equations.js'); require('../plot.js'); require('../scenarios.js'); require('../generator.js'); require('../lessons.js');
+require('../core.js'); require('../equations.js'); require('../plot.js'); require('../scenarios.js'); require('../damping.js'); require('../generator.js'); require('../lessons.js');
 global.window = globalThis; require('../figkit.js'); require('../figures.js'); require('../check-src.js');
-const { OC, Equations: Eq, Scenarios, Osc, Lessons, Plot, CheckSource } = globalThis;
+const { OC, Equations: Eq, Scenarios, Osc, Lessons, Plot, CheckSource, Damping } = globalThis;
 
 let failures = 0, checked = 0, questions = 0;
 const fail = (msg) => { failures++; if (failures < 400) console.log('  FAIL ' + msg); };
@@ -91,7 +91,7 @@ const LAWS = {
     const curves = g.options.map((o) => clip(Scenarios.curveOf(o[0])));
     for (let i = 0; i < 4; i++) for (let j = i + 1; j < 4; j++) if (Plot.alike(curves[i], curves[j], Scenarios.AXIS.hi - Scenarios.AXIS.lo)) fail(`${ex.scenario}: graphs alike`);
     // qualitative: no numbers in the equation, none on the axes but the 0
-    if (/\d/.test(Scenarios.NKINDS[p.given].tex(p.y).replace(/\^2|\^3| = 0$/g, ''))) fail(`${ex.scenario}: a number in the equation`);
+    if (/\d/.test(Scenarios.NKINDS[p.given].tex(p.y).replace(/\^2|\^3|2\\delta| = 0$/g, ''))) fail(`${ex.scenario}: a number in the equation`);
     if (g.options.some((o) => (o[1].match(/class="tick"[^>]*>([^<]*)</g) || []).some((t) => !/>0</.test(t)))) fail(`${ex.scenario}: numbers on the axes`);
   },
   back: (p, ex) => { const e = val(ex, 'eq'); if (e.value !== p.given || e.options.length !== 4 || new Set(e.options.map((o) => o[1])).size !== 4) fail('match-back: equations'); },
@@ -121,6 +121,33 @@ const LAWS = {
     const f = val(ex, 'ans'), right = f.options.find((o) => o[0] === 'right');
     const want = { y: /charge|Ladung/, v: /current|Strom/, m: /\$L\$/, D: /1\/C/, w: /\\omega = \\frac\{1\}\{\\sqrt\{L\\,C\}\}/, T: /T = 2\\pi\\sqrt\{L\\,C\}/, whenQ: /^(zero|null)$/, whenI: /^(zero|null)$/ }[p.ask];
     if (f.options.length !== 4 || !right || !want.test(right[1])) fail(`lc-eq ${p.ask}: ${right && right[1]}`);
+  },
+  // damped oscillations (damping.js; its physics in check-damping.js)
+  dmatch: (p, ex) => { const g = val(ex, 'graph'); if (g.value !== p.given || g.options.length !== 4 || !g.options.every((o) => Damping.DK[o[0]])) fail('damp-match: graphs'); },
+  dback: (p, ex) => { const e = val(ex, 'eq'); if (e.value !== p.given || e.options.length !== 4 || new Set(e.options.map((o) => o[1])).size !== 4) fail('damp-back: formulas'); },
+  derror: (p, ex) => { const f = val(ex, 'feat'); if (f.value !== Damping.FEAT_OF[p.flaw] || f.options.length !== 4) fail(`damp-error: ${p.flaw}`); },
+  deq: (p, ex) => {
+    const w = val(ex, 'which'), t = val(ex, 'term'), right = w.options.find((o) => o[0] === 'right');
+    if (w.options.length !== 4 || !right || t.after !== 'which' || t.value !== 'damp') fail('damp-eq: fields');
+    // the damped one has the damping term; no wrong one is damped as well
+    if (!/\\dot|\\operatorname\{sgn\}/.test(right[1])) fail('damp-eq: the right equation has no damping term');
+    if (p.wrong.includes('shift') && p.set !== 'mD') fail('damp-eq: friction outside the spring');
+  },
+  dread: (p, ex) => {
+    const d = si(val(ex, 'delta')), tau = si(val(ex, 'tau')), want = Math.log(p.A0 / p.An) / (p.n * p.T);
+    if (!close(d, want, 1e-9) || !close(tau, 1 / want, 1e-9)) fail(`decay-read: δ = ${d}, τ = ${tau}`);
+  },
+  deqnum: (p, ex) => {
+    const n = p.set === 'norm' ? [p.w0, p.d] : p.set === 'mD' ? [Math.sqrt(p.D / p.m), p.b / (2 * p.m)] : [1 / Math.sqrt(p.L * p.C), p.R / (2 * p.L)];
+    if (!close(si(val(ex, 'w0')), n[0], 1e-9) || !close(si(val(ex, 'delta')), n[1], 1e-9) || !close(si(val(ex, 'tau')), 1 / n[1], 1e-9) || n[1] > n[0] / 4) fail(`decay-eq ${p.set}`);
+  },
+  denergy: (p, ex) => {
+    const e = val(ex, 'e'), x = p.x, want = { left: x * x, loss: 1 - (1 - x) ** 2, halve: Math.log(0.5) / (2 * Math.log(1 - x)) }[p.ask];
+    if (!close(si(e), want, 1e-9)) fail(`decay-energy ${p.ask}`);
+  },
+  dregime: (p, ex) => {
+    const r = val(ex, 'reg'), want = p.ask === 'lc' ? (p.R < 2 * Math.sqrt(p.L / p.C) ? 'weak' : 'over') : p.ask === 'over' ? 'over' : 'crit';
+    if (r.value !== want || r.options.length !== 4) fail(`decay-regime ${p.ask}`);
   },
   lcscale: (p, ex) => {
     const f = val(ex, 'fac'), LC = p.what === 'both' ? p.k * p.k : p.k, x = 1 / Math.sqrt(LC);

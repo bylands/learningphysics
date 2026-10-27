@@ -9,7 +9,8 @@
 //     else: mistake (see MISTAKES),
 //     motion(P): { order: 2, acc(y, v, t) } | { order: 1, rate(y, t) } | { sol(t) }, for the
 //     graphs and the tests }
-// with P the numbers of the constants: { c, A, m, D, g, gamma, B, C1, C2, phi }.
+// with P the numbers of the constants: { c, A, m, D, g, gamma, B, C1, C2, phi } (gamma: the factor 2δ
+// of a damping term).
 (function (root) {
   'use strict';
 
@@ -141,10 +142,10 @@
     { id: 'tsq', kind: 'sol', level: 1, shm: false, mistake: 'tsq', tex: (s) => `${s.Yt} = A\\cdot\\cos(${s.c}\\cdot t^2)`, motion: (P) => ({ sol: (t) => P.A * cos(P.c * t * t) }) },
     { id: 'const', kind: 'ode', level: 2, shm: false, mistake: 'const', tex: (s) => `${s.D2} = -${s.c}^2`, motion: (P) => ({ order: 2, acc: () => -P.c * P.c }) },
     { id: 'amp', kind: 'sol', level: 2, shm: false, mistake: 'amp', tex: (s) => `${s.Yt} = A\\cdot t\\cdot\\cos(${s.c}\\cdot t)`, motion: (P) => ({ sol: (t) => P.A * t * cos(P.c * t) }) },
-    { id: 'damp', kind: 'ode', level: 2, shm: false, mistake: 'damp', tex: (s) => `${s.D2} + \\gamma\\cdot ${s.D1} + ${s.c}^2\\cdot ${s.Y} = 0`, motion: (P) => ({ order: 2, acc: (y, v) => -P.gamma * v - P.c * P.c * y }) },
+    { id: 'damp', kind: 'ode', level: 2, shm: false, mistake: 'damp', noConst: '\\delta', tex: (s) => `${s.D2} + 2\\delta\\cdot ${s.D1} + ${s.c}^2\\cdot ${s.Y} = 0`, motion: (P) => ({ order: 2, acc: (y, v) => -P.gamma * v - P.c * P.c * y }) },
     { id: 'plusinv', kind: 'ode', level: 2, shm: false, mistake: 'sign', tex: (s) => `${s.Y} - ${s.c}^2\\cdot ${s.D2} = 0`, motion: (P) => ({ order: 2, acc: (y) => y / (P.c * P.c) }) },
     { id: 'cube', kind: 'ode', level: 3, shm: false, mistake: 'power', tex: (s) => `${s.D2} = -${s.c}^2\\cdot ${s.Yp(3)}`, motion: (P) => ({ order: 2, acc: (y) => -P.c * P.c * y * y * y }) },
-    { id: 'expamp', kind: 'sol', level: 3, shm: false, mistake: 'amp', tex: (s) => `${s.Yt} = A\\cdot e^{-\\gamma t}\\cdot\\cos(${s.c}\\cdot t)`, motion: (P) => ({ sol: (t) => P.A * exp(-P.gamma * t) * cos(P.c * t) }) },
+    { id: 'expamp', kind: 'sol', level: 3, shm: false, mistake: 'amp', noConst: '\\delta', tex: (s) => `${s.Yt} = A\\cdot e^{-\\delta t}\\cdot\\cos(${s.c}\\cdot t)`, motion: (P) => ({ sol: (t) => P.A * exp(-P.gamma * t) * cos(P.c * t) }) },
   ];
   const byId = (id) => FORMS.find((f) => f.id === id);
 
@@ -152,7 +153,7 @@
   function make(r, form) {
     const f = typeof form === 'string' ? byId(form) : form;
     const y = pick(r, VARS.filter((v) => v !== f.noVar));
-    const c = pick(r, CONSTS);
+    const c = pick(r, CONSTS.filter((k) => k !== f.noConst));
     const note = f.kind === 'ode' && r() < 0.35 ? 'leib' : 'dot';
     return { form: f.id, y, c, note };
   }

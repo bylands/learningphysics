@@ -2,9 +2,10 @@
 // "S2 Charakteristische Differentialgleichung". Each is a topic of practice (see topics.js) with
 // its stages: first exercises like the example, then variations with new ideas (types: the
 // exercise types of scenarios.js). An example gives its parameters p, or a seed for them, and
-// may go on with more exercises of its topic (more: [{ scenario, p }]). Three end with a frame
+// may go on with more exercises of its topic (more: [{ scenario, p }]). Five end with a frame
 // to watch the run of one of their exercises (watch: its index, 0 the example itself, 1 the first
 // of more; see generator.js), and two of these runs have a page of their own (page: its folder).
+// The last two, on damped oscillations, are the types of damping.js.
 (function (root) {
   'use strict';
 
@@ -46,6 +47,20 @@
       practice: [{ types: ['lc-eq'] }, { en: 'changing L and C', de: 'L und C ändern', types: ['lc-scale'] }],
       name: { en: 'The LC circuit', de: 'Der Schwingkreis' },
       idea: { en: 'In an LC circuit the charge obeys L·Q̈ = −Q/C: the equation of a body on a spring, m·ÿ = −D·y, with Q for y, the current I for v, L for m and 1/C for D. So ω = 1/√(LC), and the current is zero when the charge is largest.', de: 'In einem Schwingkreis gehorcht die Ladung L·Q̈ = −Q/C: der Gleichung eines Körpers an einer Feder, m·ÿ = −D·y, mit Q für y, dem Strom I für v, L für m und 1/C für D. Also ist ω = 1/√(LC), und der Strom ist null, wenn die Ladung am grössten ist.' },
+    },
+    {
+      scenario: 'damp-match', p: { given: 'exp', y: 'y', kinds: ['lin', 'exp', 'chirp', 'grow'] }, watch: 0,
+      more: [{ scenario: 'damp-error', p: { sys: 'water', flaw: 'shorter', feats: ['decay', 'period', 'start', 'end'] } }],
+      practice: [{ types: ['damp-match'] }, { en: 'from the graph to the formula', de: 'vom Graphen zur Formel', types: ['damp-back'] }, { en: 'find the error', de: 'Finde den Fehler', types: ['damp-error'] }, { en: 'the equation of motion', de: 'die Bewegungsgleichung', types: ['damp-eq'] }],
+      name: { en: 'Damped oscillations', de: 'Gedämpfte Schwingungen' },
+      idea: { en: 'A damped oscillation keeps its period; only its amplitude shrinks. Damping proportional to the velocity (water, a resistor), the term 2δ·ẏ in ÿ + 2δ·ẏ + ω₀²·y = 0, makes the maxima shrink by the same factor every period: y = A·e^(−δt)·cos(ωt). A constant friction force makes them shrink by the same step, until the body sticks.', de: 'Eine gedämpfte Schwingung behält ihre Periode; nur ihre Amplitude schrumpft. Eine Dämpfung proportional zur Geschwindigkeit (Wasser, ein Widerstand), der Term 2δ·ẏ in ÿ + 2δ·ẏ + ω₀²·y = 0, lässt die Maxima in jeder Periode um denselben Faktor schrumpfen: y = A·e^(−δt)·cos(ωt). Eine konstante Reibungskraft lässt sie um denselben Betrag schrumpfen, bis der Körper haften bleibt.' },
+    },
+    {
+      scenario: 'decay-read', p: { T: 1.6, n: 3, A0: 0.08, An: 0.034 }, watch: 0,
+      more: [{ scenario: 'decay-regime', p: { ask: 'lc', L: 9e-3, C: 150e-9, R: 100, kinds: ['none', 'weak', 'crit', 'over'] } }],
+      practice: [{ types: ['decay-read'] }, { en: 'from the equation', de: 'aus der Gleichung', types: ['decay-eq'] }, { en: 'amplitude and energy', de: 'Amplitude und Energie', types: ['decay-energy'] }, { en: 'weak, critical, strong', de: 'schwach, Grenzfall, stark', types: ['decay-regime'] }],
+      name: { en: 'How fast does it die away?', de: 'Wie schnell klingt sie ab?' },
+      idea: { en: 'In ÿ + 2δ·ẏ + ω₀²·y = 0 the amplitude falls as A₀·e^(−δt): from two peaks a time t apart, δ = ln(A₁/A₂)/t, and the time constant is τ = 1/δ. The energy goes with A², so it falls twice as fast. At δ = ω₀ (critical damping; in an LC circuit at R = 2√(L/C)) the body just no longer overshoots and returns fastest; with stronger damping it creeps back slowly.', de: 'In ÿ + 2δ·ẏ + ω₀²·y = 0 fällt die Amplitude wie A₀·e^(−δt): Aus zwei Spitzen im zeitlichen Abstand t ist δ = ln(A₁/A₂)/t, und die Zeitkonstante ist τ = 1/δ. Die Energie geht mit A², fällt also doppelt so schnell. Bei δ = ω₀ (aperiodischer Grenzfall; im Schwingkreis bei R = 2√(L/C)) schwingt der Körper gerade nicht mehr über und kehrt am schnellsten zurück; bei stärkerer Dämpfung kriecht er langsam zurück.' },
     },
   ];
 
