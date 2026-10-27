@@ -335,7 +335,7 @@
   const lessons = () => window.Lessons.EXAMPLES.map((e, i) => ({
     name: e.name[OC.getLang()], idea: e.idea[OC.getLang()], also: topics.also(i), frames: () => tutorial(e).frames,
   }));
-  // the last frame of an example with a run to watch (tutorial(lesson).watch, generator.js)
+  // the frame of an example with a run to watch (tutorial(lesson).watch, generator.js)
   function watchInTutor() {
     if (tutorPlayer) tutorPlayer.stop();
     tutorPlayer = null;

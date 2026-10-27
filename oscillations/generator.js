@@ -85,7 +85,7 @@
 
   // The tutor: the task with what is wanted, then the steps of the solution; then the same for
   // each further exercise of the example (lesson.more). With lesson.watch (the index of one of
-  // these exercises), a last frame to watch its run (app.js): tutorial(lesson).watch(); with
+  // these exercises), a frame right after it to watch its run (app.js): tutorial(lesson).watch(); with
   // lesson.page, the frame links to the run on a page of its own (watch-page.js).
   // a choice of graphs or pictures: its options, read-only, so that the task can be read
   const pics = (ex) => ex.fields.filter((f) => f.type === 'choice' && f.pics && !f.after)
@@ -106,6 +106,9 @@
       'Lass den Zeiger drehen und schau zu, wie der Körper der Höhe seiner Spitze folgt: Eine Umdrehung ist eine Periode, und der Graph von y(t) ist ein Kosinus, zeitlich verschoben um die Anfangsphase.'),
     track: () => L('Let the body go and watch it move as the equation says, while its graph is drawn.',
       'Lass den Körper los und schau zu, wie er sich gemäss der Gleichung bewegt, während sein Graph entsteht.'),
+
+    damped: () => L('Let the body go and watch: it keeps its period, while its swings get smaller and smaller.',
+      'Lass den Körper los und schau zu: Er behält seine Periode, während seine Schwingungen immer kleiner werden.'),
   };
   function tutorial(lesson) {
     const all = [lesson, ...(lesson.more || [])], parts = all.map(framesOf);
@@ -116,8 +119,11 @@
     const one = all[lesson.watch], scn = byId(one.scenario), watch = () => exercise(scn, one.p || make(scn, rng(one.seed))).watch();
     // with lesson.page, a link to the run on a page of its own (watch-page.js)
     const page = lesson.page ? `<p class="note"><a href="${lesson.page}/" target="_blank" rel="noopener">${L('Open it on a page of its own ↗', 'Auf einer eigenen Seite öffnen ↗')}</a></p>` : '';
-    const frame = { text: `<p class="step-rule">${L('Watch it happen', 'Zuschauen')}</p><p>${WATCH_TEXT[watch().kind]()}</p>${page}`, figure: '<div class="pw-host osw-host"></div>' };
-    return { frames: [...parts.flat(), frame], watch };
+    const w = watch(), say = WATCH_TEXT[w.fn ? 'damped' : w.kind];
+    const frame = { text: `<p class="step-rule">${L('Watch it happen', 'Zuschauen')}</p><p>${say()}</p>${page}`, figure: '<div class="pw-host osw-host"></div>' };
+    // right after the exercise it belongs to
+    parts[lesson.watch].push(frame);
+    return { frames: parts.flat(), watch };
   }
 
   root.Osc = { SCENARIOS, practiceOf, quiz, tutorial, exercise, byId, WATCH_TEXT };

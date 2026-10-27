@@ -760,7 +760,7 @@
   // ================================================================ watching
   // Once an exercise is solved or its solution shown (and in the last frame of three worked
   // examples), the student lets the body go and watches it move (app.js, play.js; the scene is
-  // Figures.watchScene): oscWatch(o), o = { kind ('spring': a body on a spring; 'pointer': the
+  // Figures.watchScene): oscWatch(o), o = { kind ('spring': a body on a spring; 'table': a block on a horizontal one; 'pointer': the
   // turning pointer and its body; 'track': a body on a track, moving by an equation), and either
   // A, w, phi (spring, pointer: y = A·cos(ωt − φ₀) once let go, at rest at y = A·cos φ₀ before;
   // push: at rest at the equilibrium and pushed upwards at t = 0, φ₀ = π/2), or given and curve [[t, y]]
@@ -780,7 +780,7 @@
   // they are), pts: [{ q, t, y (in the unit of the graph), label (svg text) }], chain (true: joined
   // by a dashed line) }, its points from 0 to t1.
   // A damped body (damping.js) gives instead fn(t) → { y, v, a } after the release and amp (the
-  // sizes of its graphs), with kind 'spring' (or 'track' and a curve, as above).
+  // sizes of its graphs), with kind 'spring' or 'table' (or 'track' and a curve, as above).
   function oscWatch(o) {
     const w = { arrows: o.panels.length > 1, ...o };
     if (o.fn) {

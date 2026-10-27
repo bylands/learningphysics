@@ -267,7 +267,7 @@
       step(L('The right graph', 'Der richtige Graph'), p$(L('The dashed graph shows the motion as it really is.', 'Der gestrichelte Graph zeigt die Bewegung, wie sie wirklich ist.')), ['right']),
     ],
     figure: (p, v, view) => eGraph(p, view),
-    watch: (p) => oscWatch({ kind: 'spring', fn: RIGHT[p.sys], amp: { y: 1, v: W0, a: W0 * W0 }, t1: E_END, unit: 'T', panels: ['y'], marks: () => [], keyOf: peakKeys }),
+    watch: (p) => oscWatch({ kind: p.sys === 'table' ? 'table' : 'spring', fn: RIGHT[p.sys], amp: { y: 1, v: W0, a: W0 * W0 }, t1: E_END, unit: 'T', panels: ['y'], marks: () => [], keyOf: peakKeys }),
   };
 
   // ================================================================ 6 the equation of motion
