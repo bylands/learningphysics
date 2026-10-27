@@ -288,8 +288,9 @@
   // Once the exercise is solved or its solution shown (and in the last frame of each worked
   // example), the student flips the switch in the figure and watches every current run from its
   // value before switching, through the jump at t = 0, to its value long after (play.js), on a
-  // small I(t) graph with the values read off at the time of the slider; rings at t = 0 are the
-  // values the student entered.
+  // small I(t) graph with the values read off at the time of the slider; rings mark the values
+  // right after switching (t = 0⁺), the ones the exercise asks for, named below the graph with
+  // the values before and the student's answers (✓, ✗).
   let player = null, tutorPlayer = null, tutorEx = null;
   const symHtml = (sym) => sym.replace(/^([A-Za-z])_\{(.+)\}$/, '<i>$1</i><sub>$2</sub>');
   const num = (x, d = 1) => (Math.abs(x) < 0.5 * Math.pow(10, -d) ? 0 : x).toFixed(d).replace('-', '−');
@@ -308,13 +309,14 @@
   });
 
   // The graph at time t: each current as a line up to t (before switching flat, the jump at t = 0),
-  // a line at t with a dot on each curve, and the predictions as rings at t = 0.
-  function graph(e, run, t, preds) {
+  // a line at t with a dot on each curve, and once switched, a ring at each value right after
+  // switching (t = 0⁺; the rows below the graph name them, by colour).
+  function graph(e, run, t) {
     const W = 320, H = 190, ml = 48, mr = 12, mt = 22, mb = 28;
     const cur = currentsOf(e), T = run.T, t0 = -0.15 * T;
     const ts = Array.from({ length: 161 }, (_, k) => (k * T) / 160);
     const vals = cur.map((c) => [c.value(run.at(-1)), ...ts.map((x) => c.value(run.at(x)))]);
-    let lo = Math.min(0, ...vals.flat(), ...preds.filter((p) => p != null)), hi = Math.max(0, ...vals.flat(), ...preds.filter((p) => p != null));
+    let lo = Math.min(0, ...vals.flat()), hi = Math.max(0, ...vals.flat());
     if (hi - lo < 1e-9) hi = lo + 1;
     const step = niceStep(hi - lo, 4);
     lo = Math.floor(lo / step - 1e-9) * step; hi = Math.ceil(hi / step + 1e-9) * step;
@@ -337,7 +339,11 @@
       svg += `<path class="curve s${k}" d="${d}"/>`;
     });
     if (t > t0) svg += `<line class="now" x1="${f1(X(until))}" x2="${f1(X(until))}" y1="${mt}" y2="${H - mb}"/>`;
-    cur.forEach((c, k) => { if (t >= 0 && preds[k] != null) svg += `<circle class="pred s${k}" cx="${f1(X(0))}" cy="${f1(Y(preds[k]))}" r="6"/>`; });
+    // the values right after switching
+    if (t >= 0) {
+      svg += `<text class="klab" x="${f1(X(0))}" y="${mt - 6}" text-anchor="middle"><tspan class="it">t</tspan> = 0⁺</text>`;
+      cur.forEach((c, k) => { svg += `<circle class="kpt s${k}" cx="${f1(X(0))}" cy="${f1(Y(vals[k][1]))}" r="4.5"/>`; });
+    }
     cur.forEach((c, k) => { svg += `<circle class="dot s${k}" cx="${f1(X(until))}" cy="${f1(Y(c.value(run.at(until))))}" r="4"/>`; });
     return `${svg}</svg>`;
   }
@@ -369,19 +375,23 @@
         }
         const side = scene.querySelector('.rlw-side');
         if (lock) { side.innerHTML = `<p class="note rlw-wait">${L('The graph of the currents appears here once you have solved the exercise or looked at the solution.', 'Der Graph der Ströme erscheint hier, sobald du die Aufgabe gelöst oder die Lösung angeschaut hast.')}</p>`; return; }
-        const run = e.curves(), preds = prediction(), a = run.at(Math.min(s.t, run.T)), a0 = run.at(0);
+        const run = e.curves(), preds = prediction(), a = run.at(Math.min(s.t, run.T)), a0 = run.at(0), before = run.at(-1);
         const rows = cur.map((c, k) => {
-          const p = preds[k], ok = p != null && near(p, c.value(a0));
-          const mark = s.after && p != null ? ` <span class="pred ${ok ? 'ok' : 'bad'}">${ok ? '✓' : '✗'} ${L('your answer', 'deine Antwort')} (<i>t</i> = 0⁺): ${num(p)}</span>` : '';
-          return `<li><span class="key s${k}" aria-hidden="true"></span>${symHtml(c.f.sym)} = ${num(c.value(a))} mA${mark}</li>`;
+          const p = preds[k], ok = p != null && near(p, c.value(a0)), v0 = c.value(a0), vb = c.value(before);
+          // right after switching: as before (a coil keeps its current), or a jump
+          const coil = c.f.key !== 'IR1' && e.circuit.branches[Number(c.f.key.slice(1))].L;
+          const same = Math.abs(v0 - vb) <= 1e-6 * Math.max(1, Math.abs(vb));
+          const how = same ? (coil ? L('as before: the coil keeps its current', 'wie vorher: Die Spule hält ihren Strom') : L('as before', 'wie vorher')) : L(`before: ${num(vb)} mA`, `vorher: ${num(vb)} mA`);
+          const key = s.after ? `<span class="keyrow"><span class="kmark" aria-hidden="true"></span><i>t</i> = 0⁺: ${num(v0)} mA (${how})</span>` : '';
+          const mark = s.after && p != null ? ` <span class="pred ${ok ? 'ok' : 'bad'}">${ok ? '✓' : '✗'} ${L('your answer', 'deine Antwort')}: ${num(p)}</span>` : '';
+          return `<li><span class="key s${k}" aria-hidden="true"></span>${symHtml(c.f.sym)} = ${num(c.value(a))} mA${key || mark ? `<div class="rlw-more">${key}${mark}</div>` : ''}</li>`;
         });
-        side.innerHTML = graph(e, run, s.t, preds) + `<ul class="rlw-read">${rows.join('')}</ul>`;
+        side.innerHTML = graph(e, run, s.t) + `<ul class="rlw-read">${rows.join('')}</ul>`;
       },
       texts: () => ({
         switch: L(`Switch S: ${what}`, `Schalter S: ${what}`),
         ready: L(`Click the switch S to ${what} it, and watch the currents.`, `Klicke auf den Schalter S, um ihn zu ${what}, und schau den Strömen zu.`),
-        again: o.preds ? L('Rings at t = 0: your answers. Click the switch again to go back, or ▶ to watch once more.', 'Ringe bei t = 0: deine Antworten. Klicke nochmals auf den Schalter, um zurückzugehen, oder ▶, um nochmals zuzuschauen.')
-          : L('Click the switch again to go back, or ▶ to watch once more.', 'Klicke nochmals auf den Schalter, um zurückzugehen, oder ▶, um nochmals zuzuschauen.'),
+        again: L('Rings: the currents right after switching (t = 0⁺). Click the switch again to go back, or ▶ to watch once more.', 'Ringe: die Ströme unmittelbar nach dem Schalten (t = 0⁺). Klicke nochmals auf den Schalter, um zurückzugehen, oder ▶, um nochmals zuzuschauen.'),
         time: (t) => `t = ${timeText(t, e.curves().T)}`,
       }),
     });

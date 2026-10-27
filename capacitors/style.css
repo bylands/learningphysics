@@ -123,7 +123,8 @@ svg.tgraph g.rd .rd-tan { stroke: var(--vol); }
 
 /* predict, then watch (play.js): the circuit with the switch S and, once unlocked, the graph of
    the voltages and the current, drawn up to the time of the slider, with the values read off
-   beside it; rings are the student's answers (✓ on the curve, ✗ off it) */
+   beside it; rings mark the moments that mean something in the exercise (named below the graph),
+   and the student's answers are listed there (✓ on the curve, ✗ off it) */
 :root { --s0: #2a78d6; --s1: #eb6834; --s2: #1baf7a; }
 @media (prefers-color-scheme: dark) { :root { --s0: #3987e5; --s1: #d95926; --s2: #199e70; } }
 .capw-host { flex: 1 1 100%; min-width: 0; }
@@ -143,9 +144,10 @@ svg.capw-plot { display: block; width: 100%; height: auto; }
 .capw-plot .curve { fill: none; stroke-width: 2; stroke-linejoin: round; }
 .capw-plot .ghost { fill: none; stroke: var(--ghost); stroke-width: 1.6; stroke-dasharray: 5 4; }
 .capw-plot .dot { stroke: var(--card); stroke-width: 2; }
-.capw-plot .pred { fill: none; stroke-width: 2; stroke-dasharray: 2 2; }
-.capw-plot .mk { font: 700 12px system-ui, sans-serif; }
-.capw-plot .mk.ok { fill: var(--ok); } .capw-plot .mk.bad { fill: var(--bad); }
+.capw-plot .kpt { fill: var(--card); stroke-width: 2; }
+.capw-plot .kline { stroke: var(--muted); stroke-width: 1; stroke-dasharray: 2 3; }
+.capw-plot text.klab { font: 600 11px system-ui, sans-serif; stroke: var(--card); stroke-width: 3; paint-order: stroke; }
+.capw-plot .klab.s0 { fill: var(--s0); } .capw-plot .klab.s1 { fill: var(--s1); } .capw-plot .klab.s2 { fill: var(--s2); }
 .capw-plot .s0 { stroke: var(--s0); } .capw-plot .dot.s0 { fill: var(--s0); stroke: var(--card); }
 .capw-plot .s1 { stroke: var(--s1); } .capw-plot .dot.s1 { fill: var(--s1); stroke: var(--card); }
 .capw-plot .s2 { stroke: var(--s2); } .capw-plot .dot.s2 { fill: var(--s2); stroke: var(--card); }
@@ -155,5 +157,7 @@ svg.capw-plot { display: block; width: 100%; height: auto; }
 .capw-read .key.s0 { background: var(--s0); } .capw-read .key.s1 { background: var(--s1); } .capw-read .key.s2 { background: var(--s2); }
 .capw-read .key.ghost { height: 0; border-top: 2px dashed var(--ghost); border-radius: 0; }
 .capw-read .ghost-note { color: var(--muted); font-size: 0.85rem; }
+.capw-read .keyrow { font-size: 0.85rem; color: var(--muted); }
+.capw-read .kmark { display: inline-block; width: 7px; height: 7px; border: 2px solid var(--muted); border-radius: 50%; vertical-align: -1px; margin-right: 6px; }
 .capw-read .pred { font-size: 0.85rem; }
 .capw-read .pred.ok { color: var(--ok); } .capw-read .pred.bad { color: var(--bad); }

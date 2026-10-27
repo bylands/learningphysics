@@ -362,8 +362,9 @@
         const side = el.querySelector('.ifw-side');
         if (lock) { side.innerHTML = `<p class="note ifw-wait">${L('The pattern on the screen appears here once you have solved the exercise or looked at the solution.', 'Das Muster auf dem Schirm erscheint hier, sobald du die Aufgabe gelöst oder die Lösung angeschaut hast.')}</p>`; return; }
         const marks = (o.marks ? o.marks() : []).map((m) => ({ ...m, ok: okOf(m) })).filter((m) => s.after && t >= scene.full(m.y) - 1e-9);
-        const rows = marks.map((m) => `<li class="pred ${m.ok ? 'ok' : 'bad'}">${m.ok ? '✓' : '✗'} ${m.say}</li>`);
-        side.innerHTML = scene.graph(s.t, marks) + (rows.length ? `<ul class="ifw-read">${rows.join('')}</ul>` : '') + `<p class="note ifw-scale">${scale()}</p>`;
+        const keys = w.keys().filter((k) => s.after && t >= scene.full(k.y) - 1e-9);
+        const rows = [...keys.map((k) => `<li class="keyrow"><span class="kmark" aria-hidden="true"></span>${k.say}</li>`), ...marks.map((m) => `<li class="pred ${m.ok ? 'ok' : 'bad'}">${m.ok ? '✓' : '✗'} ${m.say}</li>`)];
+        side.innerHTML = scene.graph(s.t, keys) + (rows.length ? `<ul class="ifw-read">${rows.join('')}</ul>` : '') + `<p class="note ifw-scale">${scale()}</p>`;
       },
       texts: () => ({
         switch: sound ? L('The loudspeaker S₂: switch it on', 'Der Lautsprecher S₂: einschalten') : w.kind === 'grating' ? L('The grating: light all its slits', 'Das Gitter: alle Spalte beleuchten') : L('The slit S₂: open it', 'Der Spalt S₂: öffnen'),
@@ -371,7 +372,7 @@
         ready: sound ? L('Click the loudspeaker S₂ to switch it on, and watch where the sound gets loud and where quiet.', 'Klicke auf den Lautsprecher S₂, um ihn einzuschalten, und schau zu, wo der Schall laut und wo er leise wird.')
           : w.kind === 'grating' ? L('Click the grating to widen the beam onto all its slits, and watch the maxima form.', 'Klicke auf das Gitter, um den Strahl auf alle Spalte aufzuweiten, und schau zu, wie die Maxima entstehen.')
             : L('Click the slit S₂ to open it, and watch the fringes form on the screen.', 'Klicke auf den Spalt S₂, um ihn zu öffnen, und schau zu, wie die Streifen auf dem Schirm entstehen.'),
-        again: (o.marks ? L('Rings: your answers (✓ right, ✗ not). ', 'Ringe: deine Antworten (✓ richtig, ✗ nicht). ') : '') +
+        again: (w.keys().length ? L('Rings: the places named below the graph. ', 'Ringe: die Stellen, die unter dem Graphen genannt sind. ') : '') +
           L(`Click ${what} again to go back, or ▶ to watch once more.`, `Klicke nochmals auf ${what}, um zurückzugehen, oder ▶, um nochmals zuzuschauen.`),
         time: T ? (t) => (sound ? `t = ${fmt(t * T * 1e3)} ms` : `t = ${fmt(t * T * 1e9)} ns`) : null,
       }),

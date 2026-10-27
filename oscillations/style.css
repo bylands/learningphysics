@@ -89,7 +89,8 @@ span.result { background: var(--ok-bg); border-radius: 3px; padding: 0.05em 0.25
 
 /* predict, then watch (play.js): the scene (the body on its spring or track, or the pointer) and,
    once unlocked, the graph of y (and v and a) drawn up to the time of the slider, with the values
-   read off below it; rings are the student's answers (✓ right, ✗ not) */
+   read off below it; rings mark the points that mean something in the exercise (named below the
+   graph, where the student's answers are listed too: ✓ right, ✗ not) */
 :root { --q-v: #1f5fd6; --q-a: #7b2fbf; }
 @media (prefers-color-scheme: dark) { :root { --q-v: #74a7ff; --q-a: #d29bff; } }
 .osw-host { flex: 1 1 100%; min-width: 0; }
@@ -108,9 +109,9 @@ svg.osw-plot { display: block; width: 100%; height: auto; }
 .osw-plot .qname { font: 13px var(--serif); }
 .osw-plot .wcurve { fill: none; stroke-width: 2; stroke-linejoin: round; }
 .osw-plot .dot { stroke: var(--card); stroke-width: 2; }
-.osw-plot .pred { fill: none; stroke-width: 2; stroke-dasharray: 2 2; }
-.osw-plot .mk { font: 700 12px system-ui, sans-serif; }
-.osw-plot .mk.ok { fill: var(--ok); } .osw-plot .mk.bad { fill: var(--bad); }
+.osw-plot .kpt { fill: var(--card); stroke-width: 2; }
+.osw-plot .kchain { fill: none; stroke: var(--muted); stroke-width: 1.2; stroke-dasharray: 4 3; }
+.osw-plot text.klab { font: 600 11px system-ui, sans-serif; stroke: var(--card); stroke-width: 3; paint-order: stroke; }
 .osw-plot .q-y { stroke: var(--q-y); } .osw-plot .q-v { stroke: var(--q-v); } .osw-plot .q-a { stroke: var(--q-a); }
 .osw-plot .n-y { fill: var(--q-y); } .osw-plot .n-v { fill: var(--q-v); } .osw-plot .n-a { fill: var(--q-a); }
 .osw-plot .dot.q-y { fill: var(--q-y); } .osw-plot .dot.q-v { fill: var(--q-v); } .osw-plot .dot.q-a { fill: var(--q-a); }
@@ -118,6 +119,9 @@ svg.osw-plot { display: block; width: 100%; height: auto; }
 .osw-read li { margin: 2px 0; }
 .osw-read .key { display: inline-block; width: 14px; height: 3px; border-radius: 2px; vertical-align: middle; margin-right: 6px; }
 .osw-read .key.q-y { background: var(--q-y); } .osw-read .key.q-v { background: var(--q-v); } .osw-read .key.q-a { background: var(--q-a); }
+.osw-read .keyrow { font-size: 0.85rem; color: var(--muted); }
+.osw-read .kmark { display: inline-block; width: 7px; height: 7px; border: 2px solid var(--muted); border-radius: 50%; vertical-align: -1px; margin-right: 6px; }
+.osw-read .kdash { display: inline-block; width: 14px; height: 0; border-top: 2px dashed var(--muted); vertical-align: middle; margin-right: 6px; }
 .osw-read .pred { font-size: 0.85rem; }
 .osw-read .pred.ok { color: var(--ok); } .osw-read .pred.bad { color: var(--bad); }
 .osw-scale { margin: 4px 0 0; font-size: 0.85rem; }

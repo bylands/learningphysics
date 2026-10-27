@@ -19,7 +19,7 @@
   const Plot = root.Plot || require('./plot.js');
   const Sc = root.Scenarios || require('./scenarios.js');
   const { L, pick, shuffle, q, tq, tnum, sig, rng, inUnit, speedUnit } = OC;
-  const { oscWatch, curveMarks, numMark } = Sc;
+  const { oscWatch, curveMarks, numMark, kpt, peakKeys } = Sc;
 
   const PI2 = 2 * Math.PI;
   const step = (rule, html, show = []) => ({ text: `<p class="step-rule">${rule}</p>${html}`, show });
@@ -143,7 +143,8 @@
   // lies on it
   function dWatch(p, key) {
     return oscWatch({ kind: 'track', given: p.given, curve: dCurve(p.given, 1000), axis: AX, t1: T_END, unit: '', panels: ['y'], name: p.y,
-      marks: (w, get) => { const k = get(key); return DK[k] && p.kinds.includes(k) ? curveMarks(w, key, DK[k].f, [0.5, 2, 4.5], 0.04 * (AX.hi - AX.lo), key === 'graph' ? yourGraph() : L('the motion of your formula', 'die Bewegung deiner Formel')) : []; } });
+      marks: (w, get) => { const k = get(key); return DK[k] && p.kinds.includes(k) ? curveMarks(w, key, DK[k].f, [0.5, 2, 4.5], 0.04 * (AX.hi - AX.lo), key === 'graph' ? yourGraph() : L('the motion of your formula', 'die Bewegung deiner Formel')) : []; },
+      keyOf: peakKeys });
   }
   const dampMatch = {
     id: 'damp-match', difficulty: 2, kind: 'dmatch',
@@ -266,7 +267,7 @@
       step(L('The right graph', 'Der richtige Graph'), p$(L('The dashed graph shows the motion as it really is.', 'Der gestrichelte Graph zeigt die Bewegung, wie sie wirklich ist.')), ['right']),
     ],
     figure: (p, v, view) => eGraph(p, view),
-    watch: (p) => oscWatch({ kind: 'spring', fn: RIGHT[p.sys], amp: { y: 1, v: W0, a: W0 * W0 }, t1: E_END, unit: 'T', panels: ['y'], marks: () => [] }),
+    watch: (p) => oscWatch({ kind: 'spring', fn: RIGHT[p.sys], amp: { y: 1, v: W0, a: W0 * W0 }, t1: E_END, unit: 'T', panels: ['y'], marks: () => [], keyOf: peakKeys }),
   };
 
   // ================================================================ 6 the equation of motion
@@ -414,7 +415,10 @@
     watch: (p) => {
       const m = readMotion(p), tEnd = (p.n + 1) * p.T;
       return oscWatch({ kind: 'spring', fn: readFn(p), amp: { y: p.A0, v: p.A0 * m.w0, a: p.A0 * m.w0 * m.w0 }, t1: tEnd, unit: 's', panels: ['y'], units: { y: 'cm', v: speedUnit(p.A0 * m.w0), a: 'm/s²' },
-        marks: (w, get) => { const x = get('delta'); return typeof x !== 'number' || !(x > 0) ? [] : [numMark('delta', 'y', p.n * p.T, inUnit(p.A0 * Math.exp(-x * p.n * p.T), 'cm'), `${yourAnswer()}: <i>δ</i> = ${OC.num(x)} s⁻¹, ${L('the peak at Q', 'die Spitze bei Q')}`)]; } });
+        marks: (w, get) => { const x = get('delta'); return typeof x !== 'number' || !(x > 0) ? [] : [numMark('delta', 'y', p.n * p.T, inUnit(p.A0 * Math.exp(-x * p.n * p.T), 'cm'), `${yourAnswer()}: <i>δ</i> = ${OC.num(x)} s⁻¹, ${L('the peak at Q', 'die Spitze bei Q')}`)]; },
+        // the peaks P and Q of the exercise's graph
+        keyOf: (w) => [{ say: L(`the peaks P and Q, ${p.n} periods apart: the amplitude falls from ${OC.num(p.A0 * 100)} cm to ${OC.num(p.An * 100)} cm`, `die Spitzen P und Q, ${p.n} Perioden auseinander: Die Amplitude fällt von ${OC.num(p.A0 * 100)} cm auf ${OC.num(p.An * 100)} cm`),
+          pts: [kpt(w, 'y', 0, 'P'), kpt(w, 'y', p.n * p.T, 'Q')] }] });
     },
   };
 
@@ -607,7 +611,8 @@
     },
     figure: (p, v, view) => (view.show && view.show.has('graph') ? fig(regGraph(regRight(p))) : ''),
     watch: (p) => (['crit', 'over', 'fast'].includes(p.ask) ? oscWatch({ kind: 'spring', fn: regFn(regRight(p)), amp: { y: 1, v: PI2, a: PI2 * PI2 }, t1: R_END, unit: 'T', panels: ['y'],
-      marks: (w, get) => { const k = get('reg'); return REG_D[k] != null && p.kinds.includes(k) ? curveMarks(w, 'reg', (t) => regFn(k)(t).y, [0.25, 0.6, 1.5], 0.06, yourGraph()) : []; } }) : null),
+      marks: (w, get) => { const k = get('reg'); return REG_D[k] != null && p.kinds.includes(k) ? curveMarks(w, 'reg', (t) => regFn(k)(t).y, [0.25, 0.6, 1.5], 0.06, yourGraph()) : []; },
+      keyOf: peakKeys }) : null),
   };
 
   root.Damping = { viscous, dry, dryTurns, DK, dCurve, AX, T_END, RIGHT, sketch, FEAT_OF, SET };

@@ -2,8 +2,10 @@
 // exercise with a run is solved or its solution shown (and in the last frame of three worked
 // examples), the student lets the body go (or sets the pointer turning) and watches it move
 // (play.js): the scene (Figures.watchScene) beside a small graph of y (and of v and a) drawn up to
-// the time of the slider, a dot on each curve and, with numbers, the values read off below it; the
-// student's answers are rings (✓ right, ✗ not), shown once the run has reached their time. A run
+// the time of the slider, a dot on each curve and, with numbers, the values read off below it. The
+// points that mean something in the exercise (turning points, the fastest moment, one period, the
+// peaks P and Q: w.keys()) are rings on the curves, named below the graph, shown once the run has
+// reached them; the student's answers are listed there too (✓ right, ✗ not). A run
 // with numbers lasts SECONDS, in slow motion or time lapse: the note under the graph says how much.
 // Used by app.js and by the standalone pages turning-pointer/ and fastest-strongest/ (the runs of two worked examples).
 //   OscWatch.mount(host, w, o)   the player (Play.create) of the run w in the element host
@@ -29,10 +31,10 @@
   const inGraph = (w, q, x) => (w.units ? OC.inUnit(x, w.units[q]) : x);
 
   // The graph at time t: y (and v and a) up to t, the line of t with a dot on each curve, and the
-  // marks reached; o.extrema: lines where the curves have their maxima and minima; o.hoverAt: the
+  // key points reached (a chain of them joined by a dashed line); o.extrema: lines where the curves have their maxima and minima; o.hoverAt: the
   // time under the cursor (a line through every panel), or null.
   const GW = 330, GML = 46, GMR = 14;
-  function graph(w, t, marks, o = {}) {
+  function graph(w, t, keys, o = {}) {
     const W = GW, ml = GML, mr = GMR, t0 = -0.15 * w.t1, T1 = w.t1, n = w.panels.length, ph = n === 1 ? 150 : 62, gap = 26;
     const panels = w.panels.map((q, i) => ({ q, top: 26 + i * (ph + gap), h: ph }));
     const bottom = panels[n - 1].top + ph, H = bottom + 34;
@@ -49,13 +51,12 @@
       }
     }
     panels.forEach((pn) => {
-      const q = pn.q, mine = marks.filter((m) => m.q === q).map((m) => Math.abs(m.y));
-      // the axis: that of the exercise's graphs (a track), else symmetric around 0, with room for
-      // the answers (up to 2.2 times the largest size)
+      const q = pn.q;
+      // the axis: that of the exercise's graphs (a track), else symmetric around 0
       let lo, hi;
       if (w.axis) ({ lo, hi } = w.axis);
       else {
-        const base = inGraph(w, q, w.amp[q]), top = Math.min(2.2 * base, Math.max(base, ...mine));
+        const base = inGraph(w, q, w.amp[q]), top = base;
         hi = w.units ? niceTop(1.04 * top) : 1.3 * top;
         lo = -hi;
       }
@@ -97,10 +98,22 @@
       svg += `<line class="hover" x1="${x}" x2="${x}" y1="${panels[0].top - 4}" y2="${bottom + 4}"/>`;
       if (w.unit === 's') svg += `<text class="tick hover-t" x="${x}" y="${panels[0].top - 8}" text-anchor="${o.hoverAt > 0.7 * T1 ? 'end' : 'start'}">t = ${fix(o.hoverAt, T1 < 2 ? 2 : 1)} s</text>`;
     }
-    // the answers reached, then a dot on each curve
-    marks.forEach((m) => {
-      const pn = panels.find((x) => x.q === m.q), cx = X(m.t), cy = pn.Y(m.y);
-      svg += `<circle class="pred q-${m.q}" cx="${f1(cx)}" cy="${f1(cy)}" r="6"/><text class="mk ${m.ok ? 'ok' : 'bad'}" x="${f1(Math.min(W - 6, cx + 8))}" y="${f1(cy - 7)}">${m.ok ? '✓' : '✗'}</text>`;
+    // the key points reached: rings with their labels (moved down where they would cover another
+    // one), a chain joined by a dashed line; then a dot on each curve
+    const placed = [];
+    keys.forEach((k) => {
+      const pts = k.pts.filter((m) => t >= 0 && t >= m.t - 1e-9 && panels.some((x) => x.q === m.q));
+      const at = (m) => [X(m.t), panels.find((x) => x.q === m.q).Y(m.y)];
+      if (k.chain && pts.length > 1) svg += `<path class="kchain" d="${pts.map((m, i) => `${i ? 'L' : 'M'}${at(m).map(f1).join(' ')}`).join('')}"/>`;
+      pts.forEach((m) => {
+        const [cx, cy] = at(m), right = cx < W - mr - 40;
+        svg += `<circle class="kpt q-${m.q}" cx="${f1(cx)}" cy="${f1(cy)}" r="4.5"/>`;
+        if (!m.label) return;
+        let ly = cy - 7;
+        while (placed.some((p) => Math.abs(p.x - cx) < 40 && Math.abs(p.y - ly) < 12)) ly += 12;
+        placed.push({ x: cx, y: ly });
+        svg += `<text class="klab n-${m.q}" x="${f1(cx + (right ? 7 : -7))}" y="${f1(ly)}" text-anchor="${right ? 'start' : 'end'}">${m.label}</text>`;
+      });
     });
     panels.forEach((pn) => { svg += `<circle class="dot q-${pn.q}" cx="${f1(X(until))}" cy="${f1(pn.Y(inGraph(w, pn.q, w.at(until)[pn.q])))}" r="4"/>`; });
     return `${svg}</svg>`;
@@ -126,6 +139,9 @@
     };
     // with o.hover: the time under the cursor in the graph (null when it is elsewhere)
     const view = { ...o, hoverAt: null };
+    // the key points (w.keys), made once in each language
+    let keyLang = null, keyList = [];
+    const keysNow = () => { if (keyLang !== OC.getLang()) { keyLang = OC.getLang(); keyList = w.keys ? w.keys() : []; } return keyList; };
     const player = window.Play.create(host, {
       t0: -0.15 * w.t1, t1: w.t1,
       get seconds() { return seconds(); }, // read on every frame: the speed may change while it plays
@@ -143,6 +159,7 @@
         if (lock) { side.innerHTML = `<p class="note osw-wait">${L('The graph of the motion appears here once you have solved the exercise or looked at the solution.', 'Der Graph der Bewegung erscheint hier, sobald du die Aufgabe gelöst oder die Lösung angeschaut hast.')}</p>`; return; }
         const at = w.at(Math.min(s.t, w.t1));
         const marks = (o.marks ? o.marks() : []).map((m) => ({ ...m, ok: okOf(m) })).filter((m) => s.after && s.t >= m.t - 1e-9);
+        const keys = keysNow().filter((k) => s.after && k.pts.some((m) => s.t >= m.t - 1e-9));
         const rows = [];
         if (w.units) {
           w.panels.forEach((q) => {
@@ -150,10 +167,11 @@
             rows.push(`<li><span class="key q-${q}" aria-hidden="true"></span><i>${q}</i> = ${fix(x, Math.max(0, 2 - Math.floor(Math.log10(big))))} ${OC.UNITS[w.units[q]][1]}</li>`);
           });
         }
-        // one line per answer (a graph: ✓ only if every ring is)
+        keys.forEach((k) => rows.push(`<li class="keyrow"><span class="${k.chain ? 'kdash' : 'kmark'}" aria-hidden="true"></span>${k.say}</li>`));
+        // one line per answer (a graph: ✓ only if it lies on the motion at every time checked)
         const says = [...new Set(marks.map((m) => m.say))];
         says.forEach((say) => { const ok = marks.filter((m) => m.say === say).every((m) => m.ok); rows.push(`<li class="pred ${ok ? 'ok' : 'bad'}">${ok ? '✓' : '✗'} ${say}</li>`); });
-        side.innerHTML = graph(w, s.t, marks, view) + `<ul class="osw-read">${rows.join('')}</ul>` + (scale() ? `<p class="note osw-scale">${scale()}</p>` : '');
+        side.innerHTML = graph(w, s.t, keys, view) + `<ul class="osw-read">${rows.join('')}</ul>` + (scale() ? `<p class="note osw-scale">${scale()}</p>` : '');
       },
       texts: () => ({
         switch: w.kind === 'pointer' ? L('The pointer: set it turning', 'Der Zeiger: drehen lassen') : w.push ? L('The body: push it', 'Der Körper: anstossen') : L('The body: let it go', 'Der Körper: loslassen'),
@@ -162,7 +180,7 @@
           : w.push ? L('Click the body to give it a push upwards, and watch it oscillate.', 'Klicke auf den Körper, um ihn nach oben anzustossen, und schau zu, wie er schwingt.')
             : w.kind === 'track' ? L('Click the body to let it go, and watch it move as the equation says.', 'Klicke auf den Körper, um ihn loszulassen, und schau zu, wie er sich gemäss der Gleichung bewegt.')
               : L('Click the body to let it go, and watch it oscillate.', 'Klicke auf den Körper, um ihn loszulassen, und schau zu, wie er schwingt.'),
-        again: (o.marks ? L('Rings: your answers (✓ right, ✗ not). ', 'Ringe: deine Antworten (✓ richtig, ✗ nicht). ') : '') +
+        again: (keysNow().length ? L('Rings: the points named below the graph. ', 'Ringe: die Punkte, die unter dem Graphen genannt sind. ') : '') +
           L(`Click ${body} again to go back, or ▶ to watch once more.`, `Klicke nochmals auf ${body}, um zurückzugehen, oder ▶, um nochmals zuzuschauen.`),
         time: w.unit === 's' ? (t) => `t = ${fix(t, w.t1 < 2 ? 2 : 1)} s` : w.unit === 'T' ? (t) => `t = ${fix(t, 2)} T` : null,
       }),

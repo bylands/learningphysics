@@ -19,8 +19,9 @@
 //                            sources seen from above with the screen below, their light as its
 //                            average brightness in a canvas (paint(canvas, t)), spreading from the
 //                            sources switched on at t = 0; the second source (the grating) the switch
-//                            to flip (data-pw-switch, with a hit area); and graph(t, marks), the
-//                            intensity along the screen with the student's answers as rings. Also
+//                            to flip (data-pw-switch, with a hit area); and graph(t, keys), the
+//                            intensity along the screen with the places that mean something in the
+//                            exercise (w.keys: the bright fringe asked for, P) as rings. Also
 //                            { frame, t1 (the end of the run), full(y) (when the pattern at y on the
 //                            screen is complete), level(x, y, t) (the brightness drawn), over(t) (the
 //                            wave fronts), at(y) (the place of y on the screen), geo, zoom (how many
@@ -314,8 +315,8 @@
     }
 
     // the graph: the intensity along the screen at the time t (the sources arrived there), the
-    // ticks, P, and the answers (marks) where the pattern is complete
-    function graph(t, marks) {
+    // ticks, P, and the key places (keys) where the pattern is complete, with their labels
+    function graph(t, keys) {
       const base = 112, top = 14, H = 150, X = (y) => CX + (y / w.Y) * WH, Yp = (I) => base - I * (base - top);
       let g = path(`M${CX - WH - 8} ${base}H${CX + WH + 12}`, 'if-axis-solid') + path(`M${CX} ${base + 4}V${top - 4}`, 'if-axis');
       g += text(CX + 6, top + 2, it('I'), 'tb-axis', 'start') + text(CX, base + 16, '0', 'tb-cap');
@@ -329,10 +330,11 @@
         d += `${d ? 'L' : 'M'}${f(X(y))} ${f(Yp(w.I(y, t > 0 ? arrived(px, py, t) : () => false)))}`;
       }
       g += path(d, 'if-curve');
-      marks.forEach((m) => {
+      keys.forEach((m) => {
         if (t < full(m.y) - 1e-9) return;
         const x = X(m.y), y = Yp(w.I(m.y));
-        g += `<circle class="ifw-pred" cx="${f(x)}" cy="${f(y)}" r="6"/><text class="ifw-mk ${m.ok ? 'ok' : 'bad'}" x="${f(Math.min(WW - 8, x + 8))}" y="${f(Math.max(10, y - 7))}">${m.ok ? '✓' : '✗'}</text>`;
+        g += `<circle class="ifw-key" cx="${f(x)}" cy="${f(y)}" r="4.5"/>`;
+        if (m.label) g += `<text class="ifw-klab" x="${f(Math.min(WW - 8, x + 8))}" y="${f(Math.max(10, y - 6))}" text-anchor="start">${m.label}</text>`;
       });
       return `<svg class="tb ifw-plot" viewBox="0 0 ${WW} ${H}" role="img" aria-label="${L('The intensity along the screen', 'Die Intensität entlang des Schirms')}">${g}</svg>`;
     }

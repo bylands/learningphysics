@@ -12,8 +12,10 @@
 // - Kirchhoff's voltage rule holds along the curve: charging U₀ = U_R + U_C, discharging (no
 //   battery) U_R = U_C; and Ohm's law I = U_R/R;
 // - the answers of the exercise lie on the curve (loop: U_R, I, U_C at the moment asked; the
-//   half-life, two half-lives, τ), so that the right answers are marked ✓ as rings, and wrong
+//   half-life, two half-lives, τ), so that the right answers are listed with ✓, and wrong
 //   choices of a graph are marked ✗ somewhere;
+// - the moments marked (keys: the jump, the time constant, the half-life, the moment asked) lie
+//   on their curves, inside the run, with a label and words;
 // - the circuit to watch is drawn before and after in the same frame, with one switch to flip.
 'use strict';
 
@@ -52,6 +54,19 @@ function verifyRun(w, tag) {
   const box = (s) => s.match(/viewBox="([^"]+)"/)[1];
   if (figs.length !== 2 || box(figs[0]) !== box(figs[1])) fail(`${tag}: watch figures not in the same frame`);
   figs.forEach((s) => { if ((s.match(/data-pw-switch/g) || []).length !== 1 || /NaN|undefined/.test(s)) fail(`${tag}: watch figure`); });
+}
+
+// the key moments: on their curves, inside the run, named
+function verifyKeys(w, tag) {
+  const keys = w.keys();
+  if (!keys.length) fail(`${tag}: no key moments`);
+  for (const k of keys) {
+    if (!(k.t >= 0 && k.t <= w.T) || typeof k.say !== 'string' || /undefined|NaN/.test(k.say) || !k.pts.length) fail(`${tag}: key ${JSON.stringify(k)}`);
+    for (const m of k.pts) {
+      if (!/^(UC|UR|I)$/.test(m.q) || !near(m.y, w.at(k.t)[m.q]) || typeof m.label !== 'string' || /undefined|NaN/.test(m.label)) fail(`${tag}: key point ${JSON.stringify(m)}`);
+    }
+  }
+  return keys;
 }
 
 // the right answers, entered: every mark on the curve (choices ok, numbers at the curve's value)
@@ -112,6 +127,10 @@ for (const lang of ['en', 'de']) {
       if (/^(curve|loop|read)/.test(type) && w.charge !== !!ex.p.charge && !(type.startsWith('loop') && w.charge === (type === 'loop'))) fail(`${tag}: charging or discharging`);
       verifyRun(w, tag);
       verifyMarks(ex, w, tag);
+      const keys = verifyKeys(w, tag);
+      // the half-life at ΔV₀/2, the time constant at 63 % or 37 %
+      if (type === 'read-half' && !near(keys[0].pts[0].y, ex.p.U0 / 2, 1e-6)) fail(`${tag}: the half-life not at U0/2`);
+      if (type === 'read-tau' && !near(keys[0].pts[0].y, ex.p.U0 * (ex.p.charge ? 1 - E(-1) : E(-1)), 1e-6)) fail(`${tag}: τ not at 63 % or 37 %`);
       // the answers of a loop exercise are the values at the moment asked
       if (type.startsWith('loop')) {
         const m = w.marks((k) => ex.fields.find((f) => f.key === k).value)[0], a = w.at(m.t);
@@ -126,6 +145,7 @@ for (const lang of ['en', 'de']) {
     if (!e.watch) return;
     const w = G.rcWatch(e.watch());
     verifyRun(w, `${lang} example ${i + 1}`);
+    verifyKeys(w, `${lang} example ${i + 1}`);
     if (w.marks(() => null).length) fail(`example ${i + 1}: marks without answers`);
   });
 }
