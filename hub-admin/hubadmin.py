@@ -5461,8 +5461,10 @@ SHEETS_JS = r"""
   }
   function leave() { return !dirty || confirm('Discard the unsaved changes of this sheet?'); }
   async function open(id) {
-    if (cur && cur.id === id) return;  // (its button again: the sheet stays open)
     if (!leave()) return;
+    if (cur && cur.id === id) {  // (its button again: the sheet closes)
+      cur = null; plan = null; dirty = false; $('#sheet-save').disabled = true; status(''); render(); return;
+    }
     try { apply(await api(`/admin/api/sheets/${id}`)); status(''); showPreview = false; render(); } catch (e) { status(`Could not open the sheet: ${e.message}`, 'bad'); }
   }
   function fresh() {
@@ -6342,8 +6344,8 @@ LESSONS_JS = r"""
   }
   function leave() { return !dirty || confirm('Discard the unsaved changes of this lesson plan?'); }
   async function open(id) {
-    if (cur && cur.id === id) return;  // (its button again: the lesson plan stays open)
     if (!leave()) return;
+    if (cur && cur.id === id) { cur = null; dirty = false; $('#lesson-save').disabled = true; status(''); render(); return; }
     try { apply(await api(`/admin/api/lessons/${id}`)); status(''); openTree.clear(); openMods.clear(); render(); } catch (e) { status(`Could not open the lesson plan: ${e.message}`, 'bad'); }
   }
   async function reopen() { if (cur && cur.id) apply(await api(`/admin/api/lessons/${cur.id}`)); await load(true); }
