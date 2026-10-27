@@ -768,14 +768,17 @@
   // run: two periods, or the time of the exercise's graphs), unit ('s': numbers in SI, shown in
   // units { y, v, a }; 'T': times in periods, y in units of A, no numbers; '': no numbers at
   // all), panels (['y'], or ['y', 'v', 'a'] with the arrows of v and a in the scene), name (the
-  // letter of y), marks(w, get) }.
+  // letter of y), marks(w, get), keyOf(w) }.
   // It returns o with at(t) → { y, v, a, ph (the pointer's angle from the horizontal, π/2 + ωt − φ₀) } (before t = 0 at rest, a = 0:
   // the support holds the body; at t = 0 the acceleration jumps, or with a push the velocity),
   // amp { y, v, a } (the largest sizes) and marks(get): get(key) is the answer of a field (a
   // number in its unit, NaN if none, or the option chosen, null if none); each mark is { key, q
   // ('y', 'v' or 'a': the curve), t, y (in the unit of the graph), ok (a choice: right or not; a
   // number: null, the app judges it as in the feedback), say (html: what the answer was) }, at a
-  // time from 0 to t1 (later ones at t1).
+  // time from 0 to t1 (later ones at t1); they are listed below the graph. keys() → the points
+  // that mean something in the exercise (keyOf(w)), marked on the curves: each { say (html: what
+  // they are), pts: [{ q, t, y (in the unit of the graph), label (svg text) }], chain (true: joined
+  // by a dashed line) }, its points from 0 to t1.
   // A damped body (damping.js) gives instead fn(t) → { y, v, a } after the release and amp (the
   // sizes of its graphs), with kind 'spring' or 'table' (or 'track' and a curve, as above).
   function oscWatch(o) {
@@ -797,7 +800,19 @@
       w.amp = { y: A, v: A * om, a: A * om * om };
     }
     w.marks = (get) => (o.marks ? o.marks(w, get) : []).filter((m) => Number.isFinite(m.t) && m.t >= 0 && Number.isFinite(m.y)).map((m) => ({ ...m, t: Math.min(m.t, w.t1) }));
+    w.keys = () => (o.keyOf ? o.keyOf(w) : []).map((k) => ({ ...k, pts: k.pts.filter((m) => m.t >= -1e-9 && m.t <= w.t1 + 1e-9 && Number.isFinite(m.y)) })).filter((k) => k.pts.length);
     return w;
+  }
+  // a key point: the curve q at t, in the unit of the graph
+  const kpt = (w, q, t, label = '') => { const x = w.at(t)[q]; return { q, t, y: w.units ? inUnit(x, w.units[q]) : x, label }; };
+  // the upper turning points of a motion that turns back at least twice, joined by a dashed line:
+  // how the amplitude changes (none for a motion that does not oscillate)
+  function peakKeys(w) {
+    const n = 1200, ts = Array.from({ length: n + 1 }, (z, k) => (k * w.t1) / n), ys = ts.map((t) => w.at(t).y), at = [];
+    for (let k = 1; k < n; k++) if (ys[k] > ys[k - 1] && ys[k] >= ys[k + 1]) at.push(k);
+    if (at.length && ys[0] >= ys[1]) at.unshift(0);
+    if (at.length < 2) return [];
+    return [{ chain: true, say: L('the upper turning points (dashed): how the amplitude changes', 'die oberen Umkehrpunkte (gestrichelt): wie sich die Amplitude ändert'), pts: at.map((k) => kpt(w, 'y', ts[k])) }];
   }
   const yourAnswer = () => L('your answer', 'deine Antwort');
   const yourGraph = () => L('your graph', 'dein Graph');
@@ -815,18 +830,28 @@
     return out.sort((a, b) => a.t - b.t);
   }
   // the kinematics: a body on a spring let go from y = A, y = A·cos(ωt), for two periods
-  const kinWatch = (p, panels, marks) => oscWatch({ kind: 'spring', A: p.A, w: p.w, phi: 0, t1: (2 * PI2) / p.w, unit: 's', panels,
-    units: { y: unitOfA(p.A), v: speedUnit(p.A * p.w), a: 'm/s²' }, marks });
+  const kinWatch = (p, panels, marks, keyOf) => oscWatch({ kind: 'spring', A: p.A, w: p.w, phi: 0, t1: (2 * PI2) / p.w, unit: 's', panels,
+    units: { y: unitOfA(p.A), v: speedUnit(p.A * p.w), a: 'm/s²' }, marks, keyOf });
   // the motion of an equation, finer than the graphs (the same for the same kind)
   const FINE = {};
   const fineCurve = (kind) => (FINE[kind] = FINE[kind] || Eq.trace(NKINDS[kind].motion(), T_END, 960, Y0));
   const matchWatch = (p, key, axis) => oscWatch({ kind: 'track', given: p.given, curve: fineCurve(p.given), axis, t1: T_END, unit: '', panels: ['y'], name: p.y,
-    marks: (w, get) => { const k = get(key); if (!k || !NKINDS[k] || !p.kinds.includes(k)) return []; const c = matchWatch({ ...p, given: k }, key, axis); return curveMarks(w, key, (t) => c.at(t).y, [Math.PI, 2.5 * Math.PI, 5 * Math.PI], 0.04 * (w.axis.hi - w.axis.lo), key === 'eq' ? L('the motion of your equation', 'die Bewegung deiner Gleichung') : yourGraph()); } });
+    marks: (w, get) => { const k = get(key); if (!k || !NKINDS[k] || !p.kinds.includes(k)) return []; const c = matchWatch({ ...p, given: k }, key, axis); return curveMarks(w, key, (t) => c.at(t).y, [Math.PI, 2.5 * Math.PI, 5 * Math.PI], 0.04 * (w.axis.hi - w.axis.lo), key === 'eq' ? L('the motion of your equation', 'die Bewegung deiner Gleichung') : yourGraph()); },
+    keyOf: peakKeys });
   circle.watch = (p) => {
     const phi = (p.k * Math.PI) / 4;
     return oscWatch({ kind: 'pointer', A: 1, w: PI2, phi, t1: 2, unit: 'T', panels: ['y'],
-      marks: (w, get) => { const k = get('graph'); return CIRCLE[k] && p.kinds.includes(k) ? curveMarks(w, 'graph', (u) => CIRCLE[k](u, phi), [0.25, 0.75, 1.5], 0.08, yourGraph()) : []; } });
+      marks: (w, get) => { const k = get('graph'); return CIRCLE[k] && p.kinds.includes(k) ? curveMarks(w, 'graph', (u) => CIRCLE[k](u, phi), [0.25, 0.75, 1.5], 0.08, yourGraph()) : []; },
+      keyOf: circleKeys });
   };
+  // the turning pointer (phase w.phi): the start, and the first time it points straight up
+  function circleKeys(w) {
+    const up = (((w.phi / w.w) % w.T) + w.T) % w.T, out = [];
+    const top = { say: L('the upper turning point: the pointer points straight up, <i>y</i> = <i>A</i>', 'der obere Umkehrpunkt: Der Zeiger zeigt senkrecht nach oben, <i>y</i> = <i>A</i>'), pts: [kpt(w, 'y', up, 'A')] };
+    if (up > 1e-6) out.push({ say: L('the start, <i>t</i> = 0: the height of the tip where the pointer starts', 'der Start, <i>t</i> = 0: die Höhe der Spitze, wo der Zeiger startet'), pts: [kpt(w, 'y', 0, L('start', 'Start'))] });
+    else top.say = L('the start, <i>t</i> = 0: the pointer points straight up, <i>y</i> = <i>A</i>, an upper turning point', 'der Start, <i>t</i> = 0: Der Zeiger zeigt senkrecht nach oben, <i>y</i> = <i>A</i>, ein oberer Umkehrpunkt');
+    return [...out, top];
+  }
   match1.watch = (p) => matchWatch(p, 'graph', axisOf(p.kinds));
   match2.watch = (p) => matchWatch(p, 'graph', axisOf(p.kinds));
   matchBack.watch = (p) => matchWatch(p, 'eq', axisOf([p.given]));
@@ -835,20 +860,35 @@
     marks: (w, get) => {
       const i = PTS.indexOf(get('pt'));
       return i < 0 ? [] : [{ key: 'pt', q: 'y', t: p.us[i], y: Math.sin(PI2 * p.us[i]), ok: ASK[p.ask].ok(p.us[i]), say: L(`your point ${PTS[i]}`, `dein Punkt ${PTS[i]}`) }];
+    },
+    // the point asked for, and v and a there
+    keyOf: (w) => {
+      const i = p.us.findIndex(ASK[p.ask].ok), u = p.us[i];
+      return i < 0 ? [] : [{ say: L(`At ${PTS[i]} the body is ${stateAt(u)}.`, `In ${PTS[i]} ist der Körper ${stateAt(u)}.`), pts: [kpt(w, 'y', u, PTS[i]), kpt(w, 'v', u), kpt(w, 'a', u)] }];
     } });
   // v̂ where v = +v̂ (at 3T/4), â where a = +â (at T/2); ω as the period, where y is back at A; A at
   // the lower turning point
   const hat = (s) => `<i>${s}&#770;</i>`;
   const omegaMark = (p) => (x) => numMark('w', 'y', PI2 / x, inUnit(p.A, unitOfA(p.A)), `${yourAnswer()}: <i>ω</i> = ${OC.num(x)} s⁻¹, ${L('one period', 'eine Periode')} <i>T</i> = 2π/<i>ω</i> = ${OC.num(PI2 / x)} s`);
   const amaxMark = (p) => (x) => numMark('amax', 'a', Math.PI / p.w, x, `${yourAnswer()}: ${hat('a')} = ${OC.num(x)} m/s²`);
+  // the points marked: the fastest moment (through the equilibrium, upwards), the largest
+  // acceleration (at the lower turning point), one period, the lower turning point
+  const uName = (u) => OC.UNITS[u][1];
+  const vKey = (p) => (w) => ({ say: L(`fastest, ${hat('v')} = <i>A</i>·<i>ω</i> = ${OC.num(inUnit(p.A * p.w, w.units.v))} ${uName(w.units.v)}: through the equilibrium`, `am schnellsten, ${hat('v')} = <i>A</i>·<i>ω</i> = ${OC.num(inUnit(p.A * p.w, w.units.v))} ${uName(w.units.v)}: durch die Gleichgewichtslage`),
+    pts: [kpt(w, 'v', (1.5 * Math.PI) / p.w, 'v̂'), kpt(w, 'y', (1.5 * Math.PI) / p.w)] });
+  const aKey = (p) => (w) => ({ say: L(`the largest acceleration, ${hat('a')} = <i>A</i>·<i>ω</i>² = ${OC.num(p.A * p.w * p.w)} m/s²: at the lower turning point`, `die grösste Beschleunigung, ${hat('a')} = <i>A</i>·<i>ω</i>² = ${OC.num(p.A * p.w * p.w)} m/s²: am unteren Umkehrpunkt`),
+    pts: [kpt(w, 'a', Math.PI / p.w, 'â'), kpt(w, 'y', Math.PI / p.w)] });
+  const tKey = (p) => (w) => ({ say: L(`one period, <i>T</i> = 2π/<i>ω</i> = ${OC.num(PI2 / p.w)} s: <i>y</i> back at <i>A</i>`, `eine Periode, <i>T</i> = 2π/<i>ω</i> = ${OC.num(PI2 / p.w)} s: <i>y</i> wieder bei <i>A</i>`), pts: [kpt(w, 'y', PI2 / p.w, 'T')] });
+  const lowKey = (p) => (w) => ({ say: L(`the lower turning point: <i>y</i> = −<i>A</i> = −${OC.num(inUnit(p.A, w.units.y))} ${uName(w.units.y)}`, `der untere Umkehrpunkt: <i>y</i> = −<i>A</i> = −${OC.num(inUnit(p.A, w.units.y))} ${uName(w.units.y)}`), pts: [kpt(w, 'y', Math.PI / p.w, '−A')] });
+  const keysOf = (...fs) => (w) => fs.map((f) => f(w));
   vmax.watch = (p) => kinWatch(p, ['y', 'v', 'a'], (w, get) => [
-    numMark('vmax', 'v', (1.5 * Math.PI) / p.w, get('vmax'), `${yourAnswer()}: ${hat('v')} = ${OC.num(get('vmax'))} ${speedUnit(p.A * p.w)}`), amaxMark(p)(get('amax'))]);
-  backW.watch = (p) => kinWatch(p, ['y', 'v', 'a'], (w, get) => [omegaMark(p)(get('w')), amaxMark(p)(get('amax'))]);
+    numMark('vmax', 'v', (1.5 * Math.PI) / p.w, get('vmax'), `${yourAnswer()}: ${hat('v')} = ${OC.num(get('vmax'))} ${speedUnit(p.A * p.w)}`), amaxMark(p)(get('amax'))], keysOf(vKey(p), aKey(p)));
+  backW.watch = (p) => kinWatch(p, ['y', 'v', 'a'], (w, get) => [omegaMark(p)(get('w')), amaxMark(p)(get('amax'))], keysOf(tKey(p), aKey(p)));
   backA.watch = (p) => kinWatch(p, ['y', 'v', 'a'], (w, get) => [omegaMark(p)(get('w')),
-    numMark('A', 'y', Math.PI / p.w, -get('A'), `${yourAnswer()}: <i>A</i> = ${OC.num(get('A'))} ${unitOfA(p.A)}`)]);
+    numMark('A', 'y', Math.PI / p.w, -get('A'), `${yourAnswer()}: <i>A</i> = ${OC.num(get('A'))} ${unitOfA(p.A)}`)], keysOf(tKey(p), lowKey(p)));
 
   const SCENARIOS = [circle, pickShm, shm1, shm2, shm3, match1, match2, matchBack, points, vmax, backW, backA, lcEq, lcScale];
 
-  root.Scenarios = { SCENARIOS, NKINDS, curveOf, Y0, AXIS, xGraph, CIRCLE, oscWatch, curveMarks, numMark };
+  root.Scenarios = { SCENARIOS, NKINDS, curveOf, Y0, AXIS, xGraph, CIRCLE, oscWatch, curveMarks, numMark, kpt, peakKeys };
   if (typeof module !== 'undefined') module.exports = root.Scenarios;
 })(typeof window !== 'undefined' ? window : globalThis);

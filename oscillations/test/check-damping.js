@@ -134,6 +134,24 @@ function verifyRun(ex, w, tag) {
     if (m && Math.abs(OC.inUnit(w.at(m.t)[m.q], w.units[m.q]) - m.y) < 0.05 * Math.abs(m.y)) fail(`${tag}: a wrong ${f.key} on the curve`);
   });
 }
+// the key points: on the curve, named; P and Q at the peaks of the exercise; upper turning points
+// (v = 0, a maximum of y) where the body oscillates
+function verifyKeys(ex, w, tag) {
+  const keys = w.keys();
+  for (const k of keys) {
+    if (typeof k.say !== 'string' || /undefined|NaN/.test(k.say) || !k.pts.length) fail(`${tag}: key ${JSON.stringify(k)}`);
+    for (const m of k.pts) {
+      const y = w.units ? OC.inUnit(w.at(m.t)[m.q], w.units[m.q]) : w.at(m.t)[m.q];
+      if (m.t < 0 || m.t > w.t1 + 1e-9 || !near(m.y, y) || typeof m.label !== 'string') fail(`${tag}: key point ${JSON.stringify(m)}`);
+      if (k.chain) { const d = w.t1 / 1200; if (w.at(Math.max(0, m.t - d)).y > w.at(m.t).y + 1e-12 || w.at(m.t + d).y > w.at(m.t).y + 1e-12) fail(`${tag}: a turning point not at a maximum`); }
+    }
+  }
+  if (ex.scenario === 'decay-read' || ex.id === 'decay-read') {
+    const pq = keys[0] && keys[0].pts.map((m) => m.label).join('');
+    if (pq !== 'PQ' || !near(keys[0].pts[1].t, ex.p.n * ex.p.T)) fail(`${tag}: the peaks P and Q`);
+  }
+  if (/^damp-(match|back)$/.test(ex.scenario || ex.id) && !keys.length && ['lin', 'exp', 'grow'].includes(ex.p.given)) fail(`${tag}: no turning points`);
+}
 const RUNS = { 'damp-match': true, 'damp-back': true, 'damp-error': true, 'decay-read': true, 'decay-regime': null, 'damp-eq': false, 'decay-eq': false, 'decay-energy': false };
 let runs = 0;
 for (const lang of ['en', 'de']) {
@@ -149,7 +167,7 @@ for (const lang of ['en', 'de']) {
       }
       if (id === 'damp-error' && w.kind !== (ex.p.sys === 'table' ? 'table' : 'spring')) fail(`${tag}: a ${w.kind} scene for the ${ex.p.sys}`);
       if (id === 'decay-regime' && !!w !== ['crit', 'over', 'fast'].includes(ex.p.ask)) fail(`${tag}: a run for ${ex.p.ask}`);
-      if (w) { verifyRun(ex, w, tag); runs++; }
+      if (w) { verifyRun(ex, w, tag); verifyKeys(ex, w, tag); runs++; }
     }
   }
   // the worked examples on damping and their runs

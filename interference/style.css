@@ -87,10 +87,11 @@ svg.tb .ifw-front { fill: none; stroke: #ffffff; stroke-opacity: 0.55; stroke-wi
 svg.tb .ifw-p { fill: #ffffff; stroke: var(--if-screen); stroke-width: 1.5; }
 svg.tb .ifw-plabel { fill: #ffffff; paint-order: stroke; stroke: var(--if-screen); stroke-width: 3px; }
 svg.tb .ifw-pline { fill: none; stroke: var(--muted); stroke-width: 1; stroke-dasharray: 3 3; }
-svg.tb .ifw-pred { fill: none; stroke: var(--ink); stroke-width: 2; stroke-dasharray: 2 2; }
-svg.tb .ifw-mk { font: 700 12px system-ui, sans-serif; }
-svg.tb .ifw-mk.ok { fill: var(--ok); } svg.tb .ifw-mk.bad { fill: var(--bad); }
+svg.tb .ifw-key { fill: var(--card); stroke: var(--ink); stroke-width: 2; }
+svg.tb .ifw-klab { font: 600 11px system-ui, sans-serif; fill: var(--ink); paint-order: stroke; stroke: var(--card); stroke-width: 3px; }
 .ifw-read { list-style: none; margin: 4px 0 0; padding: 0; font-size: 0.85rem; }
 .ifw-read li { margin: 2px 0; }
+.ifw-read .keyrow { color: var(--muted); }
+.ifw-read .kmark { display: inline-block; width: 7px; height: 7px; border: 2px solid var(--muted); border-radius: 50%; vertical-align: -1px; margin-right: 6px; }
 .ifw-read .pred.ok { color: var(--ok); } .ifw-read .pred.bad { color: var(--bad); }
 .ifw-scale { margin: 4px 0 0; font-size: 0.85rem; }

@@ -10,6 +10,10 @@
 // - the answers of the exercise lie on the curves (v̂, â, the period 2π/ω, the lower turning
 //   point −A), so that right answers are rings marked ✓, the point asked for and the right graph
 //   or equation are ✓, and every wrong choice is ✗ somewhere;
+// - the points marked (keys) lie on their curves, inside the run, are named, and are what they
+//   say: turning points where v = 0, the fastest moment where |v| = Aω, the largest acceleration
+//   where a = Aω², one period where y is back at A, the point asked for; a run that oscillates
+//   marks its turning points, one that does not marks none;
 // - the scene has one switch with its hit area and draws without NaN or undefined.
 // The damped runs of damping.js are checked in check-damping.js.
 'use strict';
@@ -79,6 +83,30 @@ function verifyExercise(ex, w, tag) {
   }
 }
 
+// the key points: on their curves, inside the run, named
+function verifyKeys(w, tag) {
+  const keys = w.keys();
+  for (const k of keys) {
+    if (typeof k.say !== 'string' || /undefined|NaN/.test(k.say) || !k.pts.length) fail(`${tag}: key ${JSON.stringify(k)}`);
+    for (const m of k.pts) {
+      const y = w.units ? OC.inUnit(w.at(m.t)[m.q], w.units[m.q]) : w.at(m.t)[m.q];
+      if (!w.panels.includes(m.q) || m.t < 0 || m.t > w.t1 + 1e-9 || !near(m.y, y) || typeof m.label !== 'string' || /undefined|NaN/.test(m.label)) fail(`${tag}: key point ${JSON.stringify(m)}`);
+    }
+  }
+  return keys;
+}
+// what the key points of an exercise are
+function verifyExerciseKeys(ex, w, tag) {
+  const keys = verifyKeys(w, tag), id = ex.scenario || ex.id || '', p = ex.p, pts = keys.flatMap((k) => k.pts);
+  const vAt = (t) => w.at(t).v;
+  if (w.T && pts.some((m) => /^(A|−A)$/.test(m.label) && Math.abs(vAt(m.t)) > 1e-6 * w.amp.v)) fail(`${tag}: a turning point where the body moves`);
+  const vk = pts.find((m) => m.label === 'v̂'), ak = pts.find((m) => m.label === 'â'), tk = pts.find((m) => m.label === 'T');
+  if (vk && !near(Math.abs(w.at(vk.t).v), w.amp.v, 1e-9)) fail(`${tag}: v̂ not at the fastest moment`);
+  if (ak && !near(w.at(ak.t).a, w.amp.a, 1e-9)) fail(`${tag}: â not at the largest acceleration`);
+  if (tk && !near(w.at(tk.t).y, w.at(0).y, 1e-9)) fail(`${tag}: one period not back at the start`);
+  return keys;
+}
+
 // the right answers entered: every ring right (numbers on their curve)
 function verifyMarks(ex, w, tag) {
   const right = (key) => { const f = ex.fields.find((x) => x.key === key); return f ? f.value : null; };
@@ -126,6 +154,11 @@ for (const lang of ['en', 'de']) {
       verifyRun(w, tag);
       verifyExercise(ex, w, tag);
       verifyMarks(ex, w, tag);
+      const keys = verifyExerciseKeys(ex, w, tag);
+      if (!keys.length && !/^match/.test(scn.id)) fail(`${tag}: no key points`);
+      // a track: turning points only where the motion oscillates
+      if (/^match/.test(scn.id) && keys.length !== (['shm', 'damp', 'anti', 'shift', 'unshift'].includes(w.given) ? 1 : 0)) fail(`${tag}: turning points of ${w.given}: ${keys.length}`);
+      if (scn.id === 'points' && keys[0].pts[0].label !== ex.fields.find((f) => f.key === 'pt').value) fail(`${tag}: the point marked`);
     }
     if (n) console.log(`${lang} ${scn.id}: ${n} runs`);
   }
@@ -137,6 +170,7 @@ for (const lang of ['en', 'de']) {
     const w = t.watch(), last = t.frames[t.frames.length - 1];
     if (!/pw-host/.test(last.figure) || /undefined/.test(last.text)) fail(`${lang} example ${i + 1}: the frame to watch`);
     verifyRun(w, `${lang} example ${i + 1}`);
+    verifyExerciseKeys({}, w, `${lang} example ${i + 1}`);
     if (w.marks(() => null).length) fail(`example ${i + 1}: marks without answers`);
   });
 }

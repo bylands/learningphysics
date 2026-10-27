@@ -12,6 +12,8 @@
 //   shows the full pattern; the middle of the screen is reached at t ≈ 1;
 // - the right answers are rings marked ✓ (a number: on a bright fringe, or at P), every wrong
 //   choice is ✗, a wrong number lies elsewhere, and no answer gives no ring;
+// - the places marked (keys) are those of the exercise: P, the bright fringe asked for (a
+//   maximum, I = 1), the first and the highest order; named, on the screen shown;
 // - the scene has one switch with its hit area, and draws without NaN or undefined.
 'use strict';
 
@@ -112,6 +114,19 @@ function verifyMarks(ex, w, tag) {
   });
 }
 
+// the key places: on the screen shown, named; a fringe asked for is a maximum
+function verifyKeys(ex, w, tag) {
+  const keys = w.keys();
+  if (!keys.length) fail(`${tag}: no key places`);
+  for (const k of keys) {
+    if (Math.abs(k.y) > w.Y + 1e-9 || typeof k.say !== 'string' || BAD.test(k.say) || typeof k.label !== 'string' || BAD.test(k.label)) fail(`${tag}: key ${JSON.stringify(k)}`);
+  }
+  if (ex.scenario === 'path' || ex.id === 'path') { if (!near(keys[0].y, ex.p.m) || keys[0].y !== w.P) fail(`${tag}: P not marked`); }
+  else keys.forEach((k) => { if (!near(w.I(k.y), 1, 1e-6)) fail(`${tag}: ${k.y} not a maximum (I = ${w.I(k.y)})`); });
+  const sc = Figures.watchScene(w), g = sc.graph(sc.t1, keys);
+  if ((g.match(/class="ifw-key"/g) || []).length !== keys.length || BAD.test(g)) fail(`${tag}: the key places drawn`);
+}
+
 const WATCHED = ['path', 'ds-pos', 'ds-lam', 'grating', 'grating-max'];
 for (const lang of ['en', 'de']) {
   Lang.set(lang);
@@ -126,6 +141,7 @@ for (const lang of ['en', 'de']) {
       verifyRun(w, tag);
       verifyPattern(ex, w, tag);
       verifyMarks(ex, w, tag);
+      verifyKeys(ex, w, tag);
     }
     if (n) console.log(`${lang} ${scn.id}: ${n} runs`);
   }
