@@ -45,7 +45,7 @@ const LAWS = {
     const rk = val(ex, 'rk').value;
     p.keys.forEach((key, i) => { const want = 1 + F.filter((x) => x > F[i] + 1e-9).length; if (rk['ABCD'[i]] !== want) fail(`rank ${key}`); });
   },
-  // the force of charge 1 given: Coulomb's law scaled to it
+  // the force of charge A given: Coulomb's law scaled to it
   right: (p, ex) => {
     const F1 = net(p.t, [0, 0], [{ q: p.q1, p: [p.x1, 0] }]), F2 = net(p.t, [0, 0], [{ q: p.q2, p: [0, p.y2] }]), s = p.F1 / Math.hypot(...F1), F = [s * (F1[0] + F2[0]), s * (F1[1] + F2[1])];
     if (!close(si(val(ex, 'F2')), s * Math.hypot(...F2), 1e-9)) fail('right F2');

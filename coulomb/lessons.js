@@ -12,7 +12,7 @@
       scenario: 'pair-dir', p: { a: [0, 0], b: [1, 1], qa: 3e-6, qb: -1e-6 },
       practice: [{ types: ['pair-dir'] }, { en: 'with numbers: Coulomb’s law', de: 'mit Zahlen: Coulombgesetz', types: ['pair'] }],
       name: { en: 'Two charges', de: 'Zwei Ladungen' },
-      idea: { en: 'The force lies on the line through the two charges: like charges repel, unlike charges attract. Both charges feel a force of the same size, F = k |q₁| |q₂|/r², in opposite directions, however different the charges.', de: 'Die Kraft liegt auf der Geraden durch die beiden Ladungen: Gleichnamige Ladungen stossen sich ab, ungleichnamige ziehen sich an. Beide Ladungen spüren eine gleich grosse Kraft, F = k |q₁| |q₂|/r², in entgegengesetzte Richtungen, wie verschieden die Ladungen auch sind.' },
+      idea: { en: 'The force lies on the line through the two charges: like charges repel, unlike charges attract. Both charges feel a force of the same size, F = k |q<sub>A</sub>| |q<sub>B</sub>|/r², in opposite directions, however different the charges.', de: 'Die Kraft liegt auf der Geraden durch die beiden Ladungen: Gleichnamige Ladungen stossen sich ab, ungleichnamige ziehen sich an. Beide Ladungen spüren eine gleich grosse Kraft, F = k |q<sub>A</sub>| |q<sub>B</sub>|/r², in entgegengesetzte Richtungen, wie verschieden die Ladungen auch sind.' },
     },
     {
       scenario: 'factor', p: { what: 'r', n: 2, a: 1, b: 1, s1: 1, s2: 1 },

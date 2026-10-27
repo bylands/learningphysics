@@ -46,16 +46,16 @@ function forces(id, p) {
   }
   if (id.startsWith('which')) {
     const t = p.pts[0], Fs = p.pts.slice(1).map((x) => force(t.s, t.c, x.s, x.c));
-    return [...Fs.map((F) => ({ kind: 'Fi', F })), { kind: 'F', F: sum(Fs), net: true }];
+    return [...Fs.map((F, i) => ({ kind: `F${'ABCD'[i]}`, F })), { kind: 'F', F: sum(Fs), net: true }];
   }
   if (id.startsWith('right')) {
     const F1 = force(p.t, [0, 0], p.q1, [p.x1, 0]), F2 = force(p.t, [0, 0], p.q2, [0, p.y2]);
-    return [{ kind: 'F1', F: F1 }, { kind: 'F2', F: F2 }, { kind: 'F', F: sum([F1, F2]), net: true }];
+    return [{ kind: 'FA', F: F1 }, { kind: 'FB', F: F2 }, { kind: 'F', F: sum([F1, F2]), net: true }];
   }
-  // moved slightly: by a quarter of d (as drawn), the line upright if vert
+  // moved slightly: by a quarter of d (as drawn), the line upright if vert; A on the left, B on the right
   const at = rot({ E: [0.25, 0], W: [-0.25, 0], N: [0, 0.25], S: [0, -0.25] }[p.dir], p.vert);
   const Fs = [[-1, 0], [1, 0]].map((c) => force(p.sm, at, p.so, rot(c, p.vert)));
-  return [...Fs.map((F) => ({ kind: 'Fi', F })), { kind: 'F', F: sum(Fs), net: true }];
+  return [...Fs.map((F, i) => ({ kind: `F${'AB'[i]}`, F })), { kind: 'F', F: sum(Fs), net: true }];
 }
 const deg = (F) => ((((Math.atan2(F[1], F[0]) * 180) / Math.PI) % 360) + 360) % 360;
 const gap = (a, b) => { const d = Math.abs((((a - b) % 360) + 360) % 360); return Math.min(d, 360 - d); };
