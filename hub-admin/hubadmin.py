@@ -6501,9 +6501,10 @@ SETS_JS = r"""
   }
 
   // ---------------------------------------------------------------- the list and the editor
+  // (its button again: the set closes, as a sheet does)
   const setButton = (s) => {
     const i = sets.indexOf(s);
-    return el('button', { type: 'button', 'data-i': String(i), 'aria-pressed': String(i === sel), onclick: () => { sel = i; render(); } },
+    return el('button', { type: 'button', 'data-i': String(i), 'aria-pressed': String(i === sel), onclick: () => { sel = i === sel ? -1 : i; render(); } },
       s.name || '(no name)', s.title ? el('span', { class: 'title' }, s.title) : '');
   };
   // the courses folded in the list, remembered in this browser by their names (open unless folded)
@@ -6804,6 +6805,7 @@ SETS_JS = r"""
     courses.forEach((c) => { delete c.sets; });
     sel = keepSel && before ? sets.findIndex((s) => s.name === before) : sets.length ? 0 : -1;
     if (sel < 0 && sets.length) sel = 0;
+    if (keepSel && !before) sel = -1; // (saved with none open: none stays open)
     dirty = false;
     $('#sets-save').disabled = true;
     render();
