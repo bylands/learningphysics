@@ -155,8 +155,10 @@ for (const lang of ['en', 'de']) {
   // the worked examples on damping and their runs
   Lessons.EXAMPLES.forEach((e, i) => {
     if (!/^(damp|decay)-/.test(e.scenario)) return;
-    const t = Osc.tutorial(e), last = t.frames[t.frames.length - 1];
-    if (!t.watch || !/pw-host/.test(last.figure)) { fail(`example ${i + 1}: no run`); return; }
+    const t = Osc.tutorial(e), at = t.frames.findIndex((fr) => /pw-host/.test(fr.figure));
+    if (!t.watch || at < 0) { fail(`example ${i + 1}: no run`); return; }
+    // the run of the example itself right after its frames, before the next exercise starts
+    if (!/step-rule/.test(t.frames[at + 1] ? t.frames[at + 1].text : '') || !/(Another exercise|Eine weitere Aufgabe)/.test(t.frames[at + 1].text)) fail(`${lang} example ${i + 1}: the run not before the next exercise`);
     const w = t.watch();
     if (w.marks(() => null).length) fail(`example ${i + 1}: marks without answers`);
     verifyRun(Osc.exercise(Osc.byId(e.scenario), e.p), w, `${lang} example ${i + 1}`);
