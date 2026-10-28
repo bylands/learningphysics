@@ -51,13 +51,33 @@
   // The graph at time t: y (and v and a) up to t, the line of t with a dot on each curve, and the
   // key points reached (a chain of them joined by a dashed line); o.other: a wrong graph { f },
   // drawn dotted in the panel of y up to t; o.extrema: lines where the curves have their maxima and minima; o.hoverAt: the
-  // time under the cursor (a line through every panel), or null.
+  // time read (under the pointer, or tapped): a line through every panel, a dot on each curve and a label with t and the
+  // values there (with numbers, or in periods and amplitudes), or null.
   const GW = 330, GML = 46, GMR = 14;
-  function graph(w, t, keys, o = {}) {
-    const W = GW, ml = GML, mr = GMR, t0 = -0.15 * w.t1, T1 = w.t1, n = w.panels.length, ph = n === 1 ? 150 : 62, gap = 26;
+  // the layout of the graph: the panels, their bottom, the time at the left edge and X(t) in svg units (and back, t(X))
+  function frame(w) {
+    const t0 = -0.15 * w.t1, n = w.panels.length, ph = n === 1 ? 150 : 62, gap = 26, span = GW - GML - GMR;
     const panels = w.panels.map((q, i) => ({ q, top: 26 + i * (ph + gap), h: ph }));
-    const bottom = panels[n - 1].top + ph, H = bottom + 34;
-    const X = (x) => ml + ((x - t0) / (T1 - t0)) * (W - ml - mr), f1 = (x) => x.toFixed(1);
+    return { t0, ph, panels, bottom: panels[n - 1].top + ph, X: (x) => GML + ((x - t0) / (w.t1 - t0)) * span, t: (X) => t0 + ((X - GML) / span) * (w.t1 - t0) };
+  }
+  // the decimals of a reading: about a hundredth of the time axis (of the amplitude)
+  const tDec = (w) => (w.unit === 'T' ? 2 : Math.max(0, 2 - Math.floor(Math.log10(w.t1))));
+  const vDec = (big) => Math.max(0, 2 - Math.floor(Math.log10(Math.max(big, 1e-9))));
+  // the lines of the label of a reading at time x: t, then the value of each panel
+  function readLines(w, x) {
+    const at = w.at(x), name = (q) => (q === 'y' ? w.name || 'y' : q);
+    const lines = [{ text: `t = ${fix(x, tDec(w))}${w.unit === 's' ? ' s' : ' T'}` }];
+    w.panels.forEach((q) => {
+      if (at[q] == null) return;
+      const value = w.units ? `${fix(inGraph(w, q, at[q]), vDec(Math.abs(inGraph(w, q, w.amp[q]))))} ${OC.UNITS[w.units[q]][1]}`
+        : `${fix(at[q] / w.amp[q], 2)} ${q === 'y' ? 'A' : `${q}\u0302`}`;
+      lines.push({ q, name: name(q), value });
+    });
+    return lines;
+  }
+  function graph(w, t, keys, o = {}) {
+    const W = GW, ml = GML, mr = GMR, T1 = w.t1, fr = frame(w), { t0, ph, panels, bottom, X } = fr;
+    const H = bottom + 34, f1 = (x) => x.toFixed(1);
     const ts = Array.from({ length: 241 }, (_, k) => (k * T1) / 240), until = Math.min(t, T1);
     let svg = `<svg class="osw-plot" viewBox="0 0 ${W} ${H}" role="img" aria-label="${OC.L('The motion against time', 'Die Bewegung gegen die Zeit')}">`;
     // with o.extrema, a line through every panel where y, v or a is largest or smallest: every
@@ -117,11 +137,22 @@
       for (let k = 0; k <= T1 + 1e-9; k++) svg += `<text class="tick" x="${f1(X(k))}" y="${bottom + 15}" text-anchor="middle">${k === 0 ? '0' : `${k === 1 ? '' : k}<tspan class="it">T</tspan>`}</text>`;
     }
     svg += `<text class="tick" x="${W - mr}" y="${bottom + 30}" text-anchor="end"><tspan class="it">t</tspan>${w.unit === 's' ? ' in s' : ''}</text>`;
-    // the time under the cursor
+    // the reading: a line through the panels, a dot on each curve, the label beside the line (left of it in the right part)
     if (o.hoverAt != null) {
-      const x = f1(X(o.hoverAt));
-      svg += `<line class="hover" x1="${x}" x2="${x}" y1="${panels[0].top - 4}" y2="${bottom + 4}"/>`;
-      if (w.unit === 's') svg += `<text class="tick hover-t" x="${x}" y="${panels[0].top - 8}" text-anchor="${o.hoverAt > 0.7 * T1 ? 'end' : 'start'}">t = ${fix(o.hoverAt, T1 < 2 ? 2 : 1)} s</text>`;
+      const x = X(o.hoverAt), lines = readLines(w, o.hoverAt), at = w.at(o.hoverAt);
+      svg += `<g class="wread" aria-hidden="true"><line class="hover" x1="${f1(x)}" x2="${f1(x)}" y1="${panels[0].top - 4}" y2="${bottom + 4}"/>`;
+      panels.forEach((pn) => {
+        const v = at[pn.q] == null ? null : inGraph(w, pn.q, at[pn.q]);
+        if (v != null && pn.shown(v)) svg += `<circle class="rdot q-${pn.q}" cx="${f1(x)}" cy="${f1(pn.Y(v))}" r="3.5"/>`;
+      });
+      const lineH = 14, bw = 12 + 6.4 * Math.max(...lines.map((l) => (l.q ? `${l.name} = ${l.value}` : l.text).length)), bh = 8 + lineH * lines.length;
+      const bx = x + 8 + bw <= W - 2 ? x + 8 : Math.max(2, x - 8 - bw), by = panels[0].top - 2;
+      svg += `<rect class="rbox" x="${f1(bx)}" y="${by}" width="${f1(bw)}" height="${bh}" rx="4"/>`;
+      lines.forEach((l, i) => {
+        const y = by + 15 + i * lineH;
+        svg += `<text class="rtext" x="${f1(bx + 6)}" y="${y}">${l.q ? `<tspan class="it n-${l.q}">${l.name}</tspan> = ${l.value}` : `<tspan class="it">t</tspan>${l.text.slice(1)}`}</text>`;
+      });
+      svg += '</g>';
     }
     // the key points reached: rings with their labels (moved down where they would cover another
     // one), a chain joined by a dashed line; then a dot on each curve
@@ -151,8 +182,8 @@
   // answer, play.js), marks() → the student's answers (w.marks), other() → a wrong graph (w.other),
   // ok(mark) → whether a number answered is right (as in the feedback), after() once the scene is
   // drawn anew (e.g. to mark wide figures scrollable), slow() → true for slow motion (SLOW times
-  // slower), extrema (lines through the graphs at their maxima and minima), hover (a line through
-  // the graphs where the cursor is) }; all optional.
+  // slower), extrema (lines through the graphs at their maxima and minima) }; all optional. The graph
+  // can be read (with shared/reader.js on the page): t and the values at the pointer.
   function mountWatch(host, w, o = {}) {
     let shown = null, scene = null;
     const L = OC.L;
@@ -166,8 +197,9 @@
       const rate = w.t1 / seconds(), factor = rate < 1 ? 1 / rate : rate, fx = OC.num(OC.sig(factor, 2));
       return w.unit !== 's' ? '' : factor < 1.1 ? L('In real time.', 'In Echtzeit.') : rate < 1 ? L(`Slow motion: ${fx} times slower than in reality.`, `Zeitlupe: ${fx}-mal langsamer als in Wirklichkeit.`) : L(`Time lapse: ${fx} times faster than in reality.`, `Zeitraffer: ${fx}-mal schneller als in Wirklichkeit.`);
     };
-    // with o.hover: the time under the cursor in the graph (null when it is elsewhere)
+    // view.hoverAt: the time read in the graph (null: none)
     const view = { ...o, hoverAt: null };
+    let now = -Infinity; // the time of the run shown
     // the key points (w.keys), made once in each language
     let keyLang = null, keyList = [];
     const keysNow = () => { if (keyLang !== OC.getLang()) { keyLang = OC.getLang(); keyList = w.keys ? w.keys() : []; } return keyList; };
@@ -188,6 +220,9 @@
         const side = el.querySelector('.osw-side');
         if (lock) { side.innerHTML = `<p class="note osw-wait">${o.check ? L('The graph of the motion appears here once your answer is checked: ▶ checks it too.', 'Der Graph der Bewegung erscheint hier, sobald deine Antwort geprüft ist: ▶ prüft sie auch.') : L('The graph of the motion appears here once you have solved the exercise or looked at the solution.', 'Der Graph der Bewegung erscheint hier, sobald du die Aufgabe gelöst oder die Lösung angeschaut hast.')}</p>`; return; }
         const at = w.at(Math.min(s.t, w.t1));
+        now = s.t;
+        // a reading beyond the curves drawn (the run started again) goes
+        if (view.hoverAt != null && view.hoverAt > s.t) view.hoverAt = null;
         const marks = (o.marks ? o.marks() : []).map((m) => ({ ...m, ok: okOf(m) })).filter((m) => s.after && s.t >= m.t - 1e-9);
         const keys = keysNow().filter((k) => s.after && k.pts.some((m) => s.t >= m.t - 1e-9));
         const other = s.after && o.other ? o.other() : null;
@@ -203,7 +238,7 @@
         // one line per answer (a graph: ✓ only if it lies on the motion at every time checked)
         const says = [...new Set(marks.map((m) => m.say))];
         says.forEach((say) => { const ok = marks.filter((m) => m.say === say).every((m) => m.ok); rows.push(`<li class="pred ${ok ? 'ok' : 'bad'}">${ok ? '✓' : '✗'} ${say}</li>`); });
-        side.innerHTML = graph(w, s.t, keys, { ...view, other }) + `<ul class="osw-read">${rows.join('')}</ul>` + (scale() ? `<p class="note osw-scale">${scale()}</p>` : '');
+        side.innerHTML = graph(w, s.t, keys, { ...view, other }).replace('<svg class="osw-plot"', `<svg class="osw-plot${view.hoverAt != null ? ' rd-reading' : ''}"`) + `<ul class="osw-read">${rows.join('')}</ul>` + (scale() ? `<p class="note osw-scale">${scale()}</p>` : '');
       },
       texts: () => ({
         switch: w.kind === 'pointer' ? L('The pointer: set it turning', 'Der Zeiger: drehen lassen') : w.push ? L('The body: push it', 'Der Körper: anstossen') : L('The body: let it go', 'Der Körper: loslassen'),
@@ -218,22 +253,26 @@
         time: w.unit === 's' ? (t) => `t = ${fix(t, w.t1 < 2 ? 2 : 1)} s` : w.unit === 'T' ? (t) => `t = ${fix(t, 2)} T` : null,
       }),
     });
-    if (o.hover) {
-      const t0 = -0.15 * w.t1;
-      const move = (evt) => {
-        const svg = evt.target.closest && evt.target.closest('svg.osw-plot');
-        let at = null;
-        if (svg && svg.getScreenCTM()) {
-          const pt = svg.createSVGPoint();
-          pt.x = evt.clientX; pt.y = evt.clientY;
-          const x = pt.matrixTransform(svg.getScreenCTM().inverse()).x;
-          if (x >= GML && x <= GW - GMR) at = t0 + ((x - GML) / (GW - GML - GMR)) * (w.t1 - t0);
-        }
-        if (at !== view.hoverAt) { view.hoverAt = at; player.refresh(); }
-      };
-      // assigned, not added: a page that mounts a new run in the same host replaces them
-      host.onpointermove = move;
-      host.onpointerleave = () => { if (view.hoverAt != null) { view.hoverAt = null; player.refresh(); } };
+    // the reading (shared/reader.js): the pointer over the graph (a mouse or pen hovering; a finger taps, then drags, and
+    // the graph stops scrolling the page until a tap elsewhere) reads t and the values, as far as the curves are drawn;
+    // a run without numbers or periods on its time axis (a track) has none
+    if (root.Reader && (w.unit === 's' || w.unit === 'T')) {
+      const fr = frame(w), plot = () => host.querySelector('svg.osw-plot');
+      root.Reader.attach(host, {
+        svg: plot,
+        pick(ux, uy) {
+          if (!plot() || ux < GML || ux > GW - GMR || uy < fr.panels[0].top - 6 || uy > fr.bottom + 6) return null;
+          const t = Math.min(fr.t(ux), Math.min(now, w.t1));
+          return t >= fr.t0 ? { t } : null;
+        },
+        show(r) {
+          const at = r ? r.t : null;
+          if (at !== view.hoverAt) { view.hoverAt = at; player.refresh(); }
+          const s = plot();
+          if (s) s.classList.toggle('rd-reading', at != null);
+          return null;
+        },
+      });
     }
     return player;
   }

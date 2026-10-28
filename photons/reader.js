@@ -8,7 +8,7 @@
 //                      pointer (capacitors)
 //   tangent            the tangent to the curve there, ending at a level it heads for (capacitors)
 //   pins               a click or tap without moving, or Enter, pins the point (impedance)
-// Used by photons, capacitors and impedance.
+// Used by photons, capacitors, impedance and oscillations.
 //
 // 1. A figure from a few attributes, no script: an <svg> with
 //   data-read="L R B T"         the plot area in user units of the svg (left, right, bottom, top)

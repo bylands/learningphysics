@@ -54,10 +54,9 @@
 
   let player = null;
   const slow = () => $('#slow').getAttribute('aria-pressed') === 'true';
-  // with <body data-extrema>, lines where the curves have their maxima and minima, and one where
-  // the cursor is
+  // with <body data-extrema>, lines where the curves have their maxima and minima
   const lines = 'extrema' in document.body.dataset;
-  const mount = () => window.OscWatch.mount($('#watch'), w, { slow, extrema: lines, hover: lines });
+  const mount = () => window.OscWatch.mount($('#watch'), w, { slow, extrema: lines });
   function show() {
     const name = lesson.name[OC.getLang()];
     document.title = `${name} · ${ui().app}`;
