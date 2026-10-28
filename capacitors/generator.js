@@ -542,7 +542,7 @@
         solution: curveSteps(q, p.charge),
         results: L('the exponential curve', 'die Exponentialkurve'),
         ask: ASK[q](),
-        watch: () => rcWatch({ charge: p.charge, U0: 1, I0: 1, tau: 1, unit: 'τ', norm: true, marks: graphMarks(q, p.charge), keys: curveKeys(q, p.charge) }),
+        watch: () => rcWatch({ charge: p.charge, U0: 1, I0: 1, tau: 1, unit: 'τ', norm: true, marks: graphMarks(q, p.charge), other: graphOther(q, p.charge), keys: curveKeys(q, p.charge) }),
       };
     },
     check: ['graph'],
@@ -794,7 +794,7 @@
   // watching the new charging (τ × kR·kC, I₀ × 1/kR) beside the first one (grey), in units of the
   // first τ, U₀ and I₀
   // marked: the new time constant, and the new current right after closing
-  const changeWatch = (c, marks) => rcWatch({ charge: true, U0: 1, I0: 1 / c.kR, tau: c.kR * c.kC, unit: 'τ', norm: true, ghost: { tau: 1, I0: 1 }, marks,
+  const changeWatch = (c, marks, other) => rcWatch({ charge: true, U0: 1, I0: 1 / c.kR, tau: c.kR * c.kC, unit: 'τ', norm: true, ghost: { tau: 1, I0: 1 }, marks, other,
     keys: (w) => {
       const k = c.kR * c.kC, kt = k === 1 ? 'τ' : `${{ 0.5: '½', 0.25: '¼' }[k] || k}τ`;
       return [keyAt(w, 0, ['I'], L('I₀ new', 'I₀ neu'), L(`right after closing: the current Δ<i>V</i><sub>0</sub>/<i>R</i>, ${factor(1 / c.kR)} compared with the first charging`, `unmittelbar nach dem Schliessen: der Strom <i>U</i><sub>0</sub>/<i>R</i>, ${factor(1 / c.kR)} verglichen mit dem ersten Laden`)),
@@ -886,16 +886,19 @@
         solution: changeSteps(c, k),
         results: L(`τ ${factor(k)}, the same final voltage ΔV₀`, `τ ${factor(k)}, dieselbe Endspannung U₀`),
         ask: L('Which graph shows the new charging?', 'Welcher Graph zeigt das neue Laden?'),
-        // the chosen graph (τ × k', final voltage × m') at its τ and at the end
-        watch: () => changeWatch(c, (w, get) => {
-          const km = { ok: [k, 1], inv: [1 / k, 1], lvl: [k, m], lvl1: [1, m] }[get('graph')];
-          if (!km) return [];
-          const [k1, m1] = km;
-          return [[k1, L(`at <i>t</i> = ${tH(w, k1)}`, `bei <i>t</i> = ${tH(w, k1)}`)], [w.T, L('at the end', 'am Schluss')]].map(([t, when]) => {
-            const y = m1 * (1 - E(-t / k1));
-            return { key: 'graph', q: 'UC', t, y, ok: Math.abs(y - w.at(t).UC) <= 0.04, say: `${yourGraph()} ${when}: ${yH(w, 'UC', y)}` };
-          });
-        }),
+        // the chosen graph (τ × k', final voltage × m') at its τ and at the end; drawn if wrong
+        watch: () => {
+          const km = (get) => ({ ok: [k, 1], inv: [1 / k, 1], lvl: [k, m], lvl1: [1, m] }[get('graph')]);
+          const curve = ([k1, m1]) => (t) => m1 * (1 - E(-t / k1));
+          return changeWatch(c, (w, get) => {
+            const kk = km(get);
+            if (!kk) return [];
+            return [[kk[0], L(`at <i>t</i> = ${tH(w, kk[0])}`, `bei <i>t</i> = ${tH(w, kk[0])}`)], [w.T, L('at the end', 'am Schluss')]].map(([t, when]) => {
+              const y = curve(kk)(t);
+              return { key: 'graph', q: 'UC', t, y, ok: Math.abs(y - w.at(t).UC) <= 0.04, say: `${yourGraph()} ${when}: ${yH(w, 'UC', y)}` };
+            });
+          }, (w, get) => { const kk = km(get); return kk && { key: 'graph', q: 'UC', f: curve(kk), say: yourGraph() }; });
+        },
       };
     },
     check: ['graph'],
@@ -909,8 +912,9 @@
   // shown), tau, unit ('s' or 'ms'; 'τ': times in units of τ), norm (values in units of U₀ and
   // I₀), R, U0l (labels in the circuit), ghost { tau, I0 } (the first charging, drawn grey: R or C
   // changed), keep (the figure of the exercise stays, the circuit to watch below it: a graph to
-  // read), marks(run, get) (the student's answers, see below), keys(run) (the points that mean
-  // something in the exercise, see below) }.
+  // read), marks(run, get) (the student's answers, see below), other(run, get) (a graph chosen:
+  // { key, q, f (t → y), say }, drawn dotted in the same diagram where its marks say it is wrong),
+  // keys(run) (the points that mean something in the exercise, see below) }.
   // It returns o with T (5τ, or five of the first τ if longer), at(t) → { UC, UR, I }, ghostAt(t),
   // figures() → [before, after] and marks(get). Before t = 0 the switch is open: no current, U_C
   // as before (0 while charging, U₀ while discharging). After: U_C = U₀(1 − e^(−t/τ)) or
@@ -936,17 +940,25 @@
     const w = { ...o, T, at: run(o.tau, o.I0), ghostAt: o.ghost ? run(o.ghost.tau, o.ghost.I0) : null };
     w.figures = () => Fg.rcWatch(o.charge ? 'charge' : 'discharge', { R: o.R, U0: o.U0l });
     w.marks = (get) => (o.marks ? o.marks(w, get) : []).filter((m) => Number.isFinite(m.t) && Number.isFinite(m.y));
+    w.other = (get) => {
+      const c = o.other ? o.other(w, get) : null;
+      return c && w.marks(get).some((m) => m.key === c.key && !m.ok) ? c : null;
+    };
     w.keys = () => (o.keys || plainKeys)(w).filter((m) => Number.isFinite(m.t) && m.t >= 0 && m.t <= T + 1e-9);
     return w;
   }
   // a time and a value for the texts: 1.4 s, 0.63 ΔV₀
   const tH = (w, t) => (w.unit === 'τ' ? `${num(t)}&#8202;<i>τ</i>` : `${num(t)} ${w.unit}`);
   const yH = (w, q, y) => (w.norm ? `${num(y)}&#8202;${q === 'I' ? '<i>I</i><sub>0</sub>' : Vh('0')}` : `${num(y)} ${q === 'I' ? 'mA' : 'V'}`);
-  // a choice of graphs: the chosen one at t = 0⁺, at τ and at the end (5τ)
-  const graphMarks = (q, charge) => (w, get) => {
+  // a choice of graphs: the chosen one (t → y, or null), and its values at t = 0⁺, at τ and at the end (5τ)
+  const chosenCurve = (q, charge, get) => {
     const v = get('graph'), c = v != null && LISTS[q](charge).find((x) => x.id === v);
-    if (!c) return [];
-    const at = (t) => (c.f ? c.f(t) : interp(c.pts, t)), key = { U: 'UC', I: 'I', R: 'UR' }[q];
+    return c ? (t) => (t < 0 ? NaN : c.f ? c.f(t) : interp(c.pts, t)) : null;
+  };
+  const graphOther = (q, charge) => (w, get) => { const f = chosenCurve(q, charge, get); return f && { key: 'graph', q: { U: 'UC', I: 'I', R: 'UR' }[q], f, say: yourGraph() }; };
+  const graphMarks = (q, charge) => (w, get) => {
+    const at = chosenCurve(q, charge, get), key = { U: 'UC', I: 'I', R: 'UR' }[q];
+    if (!at) return [];
     return [[1e-9, '0⁺'], [1, '<i>τ</i>'], [5, '5&#8202;<i>τ</i>']].map(([t, when]) => {
       const y = at(t);
       return { key: 'graph', q: key, t, y, ok: Math.abs(y - w.at(t)[key]) <= 0.04, say: L(`${yourGraph()} at <i>t</i> = ${when}: ${yH(w, key, y)}`, `${yourGraph()} bei <i>t</i> = ${when}: ${yH(w, key, y)}`) };

@@ -5,7 +5,8 @@
 // the time of the slider, a dot on each curve and, with numbers, the values read off below it. The
 // points that mean something in the exercise (turning points, the fastest moment, one period, the
 // peaks P and Q: w.keys()) are rings on the curves, named below the graph, shown once the run has
-// reached them; the student's answers are listed there too (✓ right, ✗ not). A run
+// reached them; the student's answers are listed there too (✓ right, ✗ not), and a wrong graph
+// chosen (or the sketch of a find-the-error exercise: w.other) is drawn dotted in the same diagram. A run
 // with numbers lasts SECONDS, in slow motion or time lapse: the note under the graph says how much.
 // Used by app.js and by the standalone pages turning-pointer/ and fastest-strongest/ (the runs of two worked examples).
 //   OscWatch.mount(host, w, o)   the player (Play.create) of the run w in the element host
@@ -31,7 +32,8 @@
   const inGraph = (w, q, x) => (w.units ? OC.inUnit(x, w.units[q]) : x);
 
   // The graph at time t: y (and v and a) up to t, the line of t with a dot on each curve, and the
-  // key points reached (a chain of them joined by a dashed line); o.extrema: lines where the curves have their maxima and minima; o.hoverAt: the
+  // key points reached (a chain of them joined by a dashed line); o.other: a wrong graph { f },
+  // drawn dotted in the panel of y up to t; o.extrema: lines where the curves have their maxima and minima; o.hoverAt: the
   // time under the cursor (a line through every panel), or null.
   const GW = 330, GML = 46, GMR = 14;
   function graph(w, t, keys, o = {}) {
@@ -81,6 +83,11 @@
         ts.filter((x) => x <= until).forEach((x) => { d += `L${f1(X(x))} ${f1(Y(val(x)))}`; });
         d += `L${f1(X(until))} ${f1(Y(val(until)))}`;
       }
+      // a wrong graph (o.other) under the motion, from the release to t
+      if (o.other && q === 'y' && until >= 0) {
+        const at = (x) => `${f1(X(x))} ${f1(Y(o.other.f(x)))}`;
+        svg += `<path class="wother" d="M${[...ts.filter((x) => x <= until), until].map(at).join('L')}"/><circle class="odot" cx="${f1(X(until))}" cy="${f1(Y(o.other.f(until)))}" r="3.5"/>`;
+      }
       svg += `<path class="wcurve q-${q}" d="${d}"/>`;
       if (t > t0) svg += `<line class="now" x1="${f1(X(until))}" x2="${f1(X(until))}" y1="${pn.top - 4}" y2="${pn.top + pn.h + 4}"/>`;
     });
@@ -119,7 +126,8 @@
     return `${svg}</svg>`;
   }
 
-  // The player of the run w in host. o: { locked(), marks() → the student's answers (w.marks),
+  // The player of the run w in host. o: { locked(), check() (▶ while locked: the app checks the
+  // answer, play.js), marks() → the student's answers (w.marks), other() → a wrong graph (w.other),
   // ok(mark) → whether a number answered is right (as in the feedback), after() once the scene is
   // drawn anew (e.g. to mark wide figures scrollable), slow() → true for slow motion (SLOW times
   // slower), extrema (lines through the graphs at their maxima and minima), hover (a line through
@@ -146,6 +154,7 @@
       t0: -0.15 * w.t1, t1: w.t1,
       get seconds() { return seconds(); }, // read on every frame: the speed may change while it plays
       locked: o.locked,
+      check: o.check,
       render(el, s) {
         const lock = !!(o.locked && o.locked()), key = `${lock}|${OC.getLang()}`;
         if (key !== shown) {
@@ -156,10 +165,11 @@
         }
         el.querySelector('.osw-pose').innerHTML = scene.pose({ ...w.at(Math.min(s.t, w.t1)), held: !s.after && !w.push });
         const side = el.querySelector('.osw-side');
-        if (lock) { side.innerHTML = `<p class="note osw-wait">${L('The graph of the motion appears here once you have solved the exercise or looked at the solution.', 'Der Graph der Bewegung erscheint hier, sobald du die Aufgabe gelöst oder die Lösung angeschaut hast.')}</p>`; return; }
+        if (lock) { side.innerHTML = `<p class="note osw-wait">${o.check ? L('The graph of the motion appears here once your answer is checked: ▶ checks it too.', 'Der Graph der Bewegung erscheint hier, sobald deine Antwort geprüft ist: ▶ prüft sie auch.') : L('The graph of the motion appears here once you have solved the exercise or looked at the solution.', 'Der Graph der Bewegung erscheint hier, sobald du die Aufgabe gelöst oder die Lösung angeschaut hast.')}</p>`; return; }
         const at = w.at(Math.min(s.t, w.t1));
         const marks = (o.marks ? o.marks() : []).map((m) => ({ ...m, ok: okOf(m) })).filter((m) => s.after && s.t >= m.t - 1e-9);
         const keys = keysNow().filter((k) => s.after && k.pts.some((m) => s.t >= m.t - 1e-9));
+        const other = s.after && o.other ? o.other() : null;
         const rows = [];
         if (w.units) {
           w.panels.forEach((q) => {
@@ -167,15 +177,17 @@
             rows.push(`<li><span class="key q-${q}" aria-hidden="true"></span><i>${q}</i> = ${fix(x, Math.max(0, 2 - Math.floor(Math.log10(big))))} ${OC.UNITS[w.units[q]][1]}</li>`);
           });
         }
+        if (other) rows.push(`<li class="otherrow"><span class="kother" aria-hidden="true"></span>${OC.L('dotted', 'punktiert')}: ${other.say}</li>`);
         keys.forEach((k) => rows.push(`<li class="keyrow"><span class="${k.chain ? 'kdash' : 'kmark'}" aria-hidden="true"></span>${k.say}</li>`));
         // one line per answer (a graph: ✓ only if it lies on the motion at every time checked)
         const says = [...new Set(marks.map((m) => m.say))];
         says.forEach((say) => { const ok = marks.filter((m) => m.say === say).every((m) => m.ok); rows.push(`<li class="pred ${ok ? 'ok' : 'bad'}">${ok ? '✓' : '✗'} ${say}</li>`); });
-        side.innerHTML = graph(w, s.t, keys, view) + `<ul class="osw-read">${rows.join('')}</ul>` + (scale() ? `<p class="note osw-scale">${scale()}</p>` : '');
+        side.innerHTML = graph(w, s.t, keys, { ...view, other }) + `<ul class="osw-read">${rows.join('')}</ul>` + (scale() ? `<p class="note osw-scale">${scale()}</p>` : '');
       },
       texts: () => ({
         switch: w.kind === 'pointer' ? L('The pointer: set it turning', 'Der Zeiger: drehen lassen') : w.push ? L('The body: push it', 'Der Körper: anstossen') : L('The body: let it go', 'Der Körper: loslassen'),
-        locked: L(`Check your answer first: you can start ${body} once you have solved the exercise or looked at the solution.`, `Prüfe zuerst deine Antwort: Du kannst ${body} starten, sobald du die Aufgabe gelöst oder die Lösung angeschaut hast.`),
+        locked: o.check ? L(`Give your answer first: ▶ or a click on ${body} checks it, and then you can watch.`, `Gib zuerst deine Antwort ein: ▶ oder ein Klick auf ${body} prüft sie, dann kannst du zuschauen.`)
+          : L(`Check your answer first: you can start ${body} once you have solved the exercise or looked at the solution.`, `Prüfe zuerst deine Antwort: Du kannst ${body} starten, sobald du die Aufgabe gelöst oder die Lösung angeschaut hast.`),
         ready: w.kind === 'pointer' ? L('Click the pointer to set it turning, and watch the body follow the height of its tip.', 'Klicke auf den Zeiger, damit er sich dreht, und schau zu, wie der Körper der Höhe seiner Spitze folgt.')
           : w.push ? L('Click the body to give it a push upwards, and watch it oscillate.', 'Klicke auf den Körper, um ihn nach oben anzustossen, und schau zu, wie er schwingt.')
             : w.kind === 'track' ? L('Click the body to let it go, and watch it move as the equation says.', 'Klicke auf den Körper, um ihn loszulassen, und schau zu, wie er sich gemäss der Gleichung bewegt.')

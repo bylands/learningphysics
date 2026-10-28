@@ -768,7 +768,7 @@
   // run: two periods, or the time of the exercise's graphs), unit ('s': numbers in SI, shown in
   // units { y, v, a }; 'T': times in periods, y in units of A, no numbers; '': no numbers at
   // all), panels (['y'], or ['y', 'v', 'a'] with the arrows of v and a in the scene), name (the
-  // letter of y), marks(w, get), keyOf(w) }.
+  // letter of y), marks(w, get), keyOf(w), other(w, get) }.
   // It returns o with at(t) → { y, v, a, ph (the pointer's angle from the horizontal, π/2 + ωt − φ₀) } (before t = 0 at rest, a = 0:
   // the support holds the body; at t = 0 the acceleration jumps, or with a push the velocity),
   // amp { y, v, a } (the largest sizes) and marks(get): get(key) is the answer of a field (a
@@ -778,7 +778,10 @@
   // time from 0 to t1 (later ones at t1); they are listed below the graph. keys() → the points
   // that mean something in the exercise (keyOf(w)), marked on the curves: each { say (html: what
   // they are), pts: [{ q, t, y (in the unit of the graph), label (svg text) }], chain (true: joined
-  // by a dashed line) }, its points from 0 to t1.
+  // by a dashed line) }, its points from 0 to t1. other(get) → a wrong graph drawn in the same
+  // diagram, or null: o.other(w, get) gives { key, f (t → y in the unit of the graph), say (html),
+  // always (true: drawn whatever the answer, e.g. a sketch to find the error in) }; without always,
+  // it is drawn only where the marks of its key say the answer is wrong (a graph chosen).
   // A damped body (damping.js) gives instead fn(t) → { y, v, a } after the release and amp (the
   // sizes of its graphs), with kind 'spring' or 'table' (or 'track' and a curve, as above).
   function oscWatch(o) {
@@ -800,6 +803,10 @@
       w.amp = { y: A, v: A * om, a: A * om * om };
     }
     w.marks = (get) => (o.marks ? o.marks(w, get) : []).filter((m) => Number.isFinite(m.t) && m.t >= 0 && Number.isFinite(m.y)).map((m) => ({ ...m, t: Math.min(m.t, w.t1) }));
+    w.other = (get) => {
+      const c = o.other ? o.other(w, get) : null;
+      return c && (c.always || w.marks(get).some((m) => m.key === c.key && !m.ok)) ? c : null;
+    };
     w.keys = () => (o.keyOf ? o.keyOf(w) : []).map((k) => ({ ...k, pts: k.pts.filter((m) => m.t >= -1e-9 && m.t <= w.t1 + 1e-9 && Number.isFinite(m.y)) })).filter((k) => k.pts.length);
     return w;
   }
@@ -836,12 +843,21 @@
   const FINE = {};
   const fineCurve = (kind) => (FINE[kind] = FINE[kind] || Eq.trace(NKINDS[kind].motion(), T_END, 960, Y0));
   const matchWatch = (p, key, axis) => oscWatch({ kind: 'track', given: p.given, curve: fineCurve(p.given), axis, t1: T_END, unit: '', panels: ['y'], name: p.y,
-    marks: (w, get) => { const k = get(key); if (!k || !NKINDS[k] || !p.kinds.includes(k)) return []; const c = matchWatch({ ...p, given: k }, key, axis); return curveMarks(w, key, (t) => c.at(t).y, [Math.PI, 2.5 * Math.PI, 5 * Math.PI], 0.04 * (w.axis.hi - w.axis.lo), key === 'eq' ? L('the motion of your equation', 'die Bewegung deiner Gleichung') : yourGraph()); },
+    marks: (w, get) => { const f = matchOf(p, key, axis, get); return f ? curveMarks(w, key, f, [Math.PI, 2.5 * Math.PI, 5 * Math.PI], 0.04 * (w.axis.hi - w.axis.lo), key === 'eq' ? L('the motion of your equation', 'die Bewegung deiner Gleichung') : yourGraph()) : []; },
+    other: (w, get) => { const f = matchOf(p, key, axis, get); return f && { key, f, say: key === 'eq' ? L('the motion of your equation', 'die Bewegung deiner Gleichung') : yourGraph() }; },
     keyOf: peakKeys });
+  // the motion of the equation or graph chosen (t → y), or null
+  function matchOf(p, key, axis, get) {
+    const k = get(key);
+    if (!k || !NKINDS[k] || !p.kinds.includes(k)) return null;
+    const c = matchWatch({ ...p, given: k }, key, axis);
+    return (t) => c.at(t).y;
+  }
   circle.watch = (p) => {
     const phi = (p.k * Math.PI) / 4;
     return oscWatch({ kind: 'pointer', A: 1, w: PI2, phi, t1: 2, unit: 'T', panels: ['y'],
       marks: (w, get) => { const k = get('graph'); return CIRCLE[k] && p.kinds.includes(k) ? curveMarks(w, 'graph', (u) => CIRCLE[k](u, phi), [0.25, 0.75, 1.5], 0.08, yourGraph()) : []; },
+      other: (w, get) => { const k = get('graph'); return CIRCLE[k] && p.kinds.includes(k) ? { key: 'graph', f: (u) => CIRCLE[k](u, phi), say: yourGraph() } : null; },
       keyOf: circleKeys });
   };
   // the turning pointer (phase w.phi): the start, and the first time it points straight up

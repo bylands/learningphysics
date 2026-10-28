@@ -9,7 +9,8 @@
 // - on a track the body follows the motion of the given equation (the graph of the exercise);
 // - the answers of the exercise lie on the curves (v̂, â, the period 2π/ω, the lower turning
 //   point −A), so that right answers are rings marked ✓, the point asked for and the right graph
-//   or equation are ✓, and every wrong choice is ✗ somewhere;
+//   or equation are ✓, and every wrong choice is ✗ somewhere; a wrong graph or equation chosen
+//   is drawn in the diagram (w.other, finite from 0 to t1), the right one is not;
 // - the points marked (keys) lie on their curves, inside the run, are named, and are what they
 //   say: turning points where v = 0, the fastest moment where |v| = Aω, the largest acceleration
 //   where a = Aω², one period where y is back at A, the point asked for; a run that oscillates
@@ -126,7 +127,13 @@ function verifyMarks(ex, w, tag) {
   ex.fields.filter((f) => f.type === 'choice').forEach((f) => {
     f.options.filter((o) => o[0] !== f.value).forEach((o) => {
       if (!w.marks((k) => (k === f.key ? o[0] : null)).some((m) => m.ok === false)) fail(`${tag}: the wrong choice ${o[0]} marked right`);
+      const c = w.other((k) => (k === f.key ? o[0] : null));
+      if (/^(match|circle)/.test(ex.scenario || '') || (c && c.key === f.key)) {
+        if (!c || c.key !== f.key || typeof c.say !== 'string') fail(`${tag}: the wrong graph ${o[0]} not drawn`);
+        else for (let k = 0; k <= 50; k++) if (!Number.isFinite(c.f((k * w.t1) / 50))) { fail(`${tag}: the wrong graph ${o[0]} at ${(k * w.t1) / 50}`); break; }
+      }
     });
+    if (w.other((k) => (k === f.key ? f.value : null))) fail(`${tag}: the right ${f.key} drawn as wrong`);
   });
   // a wrong number: off the curve
   ex.fields.filter((f) => f.type === 'num').forEach((f) => {
