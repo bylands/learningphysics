@@ -7,6 +7,9 @@
 //                           tLabel: the label of the time axis (SVG), by default "t in s";
 //                           bare: no numbers, no grid (a qualitative graph), points: [[t, y, name,
 //                           below]] (named points) }
+//                           A graph with numbers can be read (shared/reader.js): the pointer, a tap
+//                           or the arrow keys show t and the value of the first curve there, a
+//                           click pins up to three such points (to compare periods or peaks).
 //   Plot.niceAxis(values)   an axis with room for the values and 0
 //   Plot.alike(a, b, span)  two curves (same times) nowhere more than 6 % of span apart
 //   Plot.plain(tex)         a variable's TeX as plain text (\xi → ξ)
@@ -31,6 +34,22 @@
   const tStepOf = (T) => STEPS.find((x) => T / x <= 10) || 1000;
 
   const alike = (a, b, span) => Math.max(...a.map((p, i) => Math.abs(p[1] - b[i][1]))) < 0.06 * span;
+
+  // the attributes of shared/reader.js for a graph with numbers: t and the value of the curve at
+  // the pointer, rounded to about a hundredth of each axis
+  const pStep = (span) => 10 ** (Math.floor(Math.log10(span)) - 2);
+  const sig4 = (v) => Number(v.toPrecision(4));
+  function readable(c, o, x, y, T, { lo, hi }) {
+    // as far as the curve is drawn: up to where it leaves the axis
+    const all = c ? c.pts : [], out = all.findIndex(([, v]) => !(v >= lo - 0.04 * (hi - lo) && v <= hi + 0.04 * (hi - lo)));
+    const pts = out < 0 ? all : all.slice(0, out);
+    if (pts.length < 2) return '';
+    const tEnd = Math.min(T, pts[pts.length - 1][0]);
+    const name = String(o.name || 'y').replace(/[*_]/g, '');
+    return ` data-read="${x(0)} ${x(tEnd)} ${y(lo)} ${y(hi)}" data-val="0 ${tEnd} ${lo} ${hi}" data-read-mode="curve"` +
+      ` data-read-curve="${pts.map(([t, v]) => `${sig4(t)},${sig4(v)}`).join(' ')}" data-read-pins="3" tabindex="0"` +
+      ` data-xn="*t*" data-xu="s" data-xp="${pStep(T)}" data-yn="*${name}*" data-yu="${o.unit || ''}" data-yp="${pStep(hi - lo)}"`;
+  }
 
   const GW = 360, GH = 210, GL = 46, GR = 30, GT = 28, GB = 36;
   function graph(curves, o = {}) {
@@ -62,7 +81,7 @@
     for (const [t, v] of o.dots || []) s += `<circle class="tdot" cx="${x(t)}" cy="${y(v)}" r="3.6"/>`;
     // named points: a dot and its letter beside it (above a crest, below a trough)
     for (const [t, v, name, below] of o.points || []) s += `<circle class="tdot" cx="${x(t)}" cy="${y(v)}" r="4"/><text class="pname" x="${f1(x(t) + 7)}" y="${f1(y(v) + (below ? 17 : -8))}">${name}</text>`;
-    return `<svg class="ygraph" viewBox="0 0 ${GW} ${GH}" role="img" aria-label="${o.label || ''}"><g class="qc-${o.q || 'y'}">${s}</g></svg>`;
+    return `<svg class="ygraph" viewBox="0 0 ${GW} ${GH}" role="img" aria-label="${o.label || ''}"${o.bare ? '' : readable(curves[0], o, x, y, T, axis)}><g class="qc-${o.q || 'y'}">${s}</g></svg>`;
   }
 
   root.Plot = { graph, niceAxis, alike, plain, tStepOf };

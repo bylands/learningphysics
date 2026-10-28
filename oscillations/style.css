@@ -101,7 +101,13 @@ span.result { background: var(--ok-bg); border-radius: 3px; padding: 0.05em 0.25
 svg.osw-plot { display: block; width: 100%; height: auto; }
 .osw-plot .ext { stroke: var(--muted); stroke-width: 1; stroke-dasharray: 1 3; opacity: 0.8; }
 .osw-plot .hover { stroke: var(--ink); stroke-width: 1; stroke-dasharray: 4 3; opacity: 0.8; }
-.osw-plot .hover-t { fill: var(--ink); }
+/* the reading of the graph (watch.js): dots on the curves, a label with t and the values */
+.osw-plot .wread { pointer-events: none; }
+.osw-plot .rdot { fill: var(--card); stroke-width: 2; }
+.osw-plot .rbox { fill: var(--card); stroke: var(--accent); stroke-width: 1; opacity: 0.94; }
+.osw-plot text.rtext { font: 12px system-ui, sans-serif; fill: var(--ink); font-variant-numeric: tabular-nums; }
+svg.osw-plot { cursor: crosshair; }
+svg.osw-plot.rd-reading { touch-action: none; }
 .osw-plot .release { stroke: var(--muted); stroke-width: 1; stroke-dasharray: 3 3; }
 .osw-plot .now { stroke: var(--ink); stroke-width: 1; opacity: 0.45; }
 .osw-plot .tick { font-size: 11px; }
