@@ -121,9 +121,28 @@
   // ---------------------------------------------------------------- graphs
   const W = 340, H = 210, ML = 50, MR = 26, MT = 26, MB = 34;
   const f1 = (x) => Math.round(x * 10) / 10;
+  // the path d through the points [t, v] (svg coordinates by x, y), broken where v leaves [a, b]:
+  // a curve ends at the edge of the graph and comes back in there, not along the edge
+  function trace(pts, x, y, a, b) {
+    const at = (t, v) => `${x(t)},${y(v)}`, inside = (v) => v >= a && v <= b;
+    let d = '';
+    pts.forEach(([t, v], i) => {
+      const p = pts[i - 1];
+      if (!p || !Number.isFinite(p[1]) || !Number.isFinite(v)) { if (inside(v)) d += `M${at(t, v)}`; return; }
+      if (inside(p[1]) && inside(v)) { d += ` L${at(t, v)}`; return; }
+      // where the segment crosses the edges, in order
+      const cuts = [a, b].filter((e) => (p[1] - e) * (v - e) < 0).map((e) => [p[0] + ((e - p[1]) / (v - p[1])) * (t - p[0]), e]).sort((m, n) => m[0] - n[0]);
+      if (inside(p[1])) cuts.forEach((c) => { d += ` L${at(...c)}`; });
+      else if (inside(v)) d += `${cuts.length ? `M${at(...cuts[0])} L` : 'M'}${at(t, v)}`;
+      else if (cuts.length === 2) d += `M${at(...cuts[0])} L${at(...cuts[1])}`;
+    });
+    return d;
+  }
   function graph(o) {
     const T = o.tEnd, Y = o.yMax, PW = W - ML - MR, PH = H - MT - MB;
-    const x = (t) => f1(ML + (t / T) * PW), y = (v) => f1(MT + PH - (Math.max(-0.05 * Y, Math.min(1.08 * Y, v)) / Y) * PH);
+    // the curves may go a little beyond the axis, then they break off
+    const a = -0.05 * Y, b = 1.08 * Y, shown = (v) => v >= a && v <= b;
+    const x = (t) => f1(ML + (t / T) * PW), y = (v) => f1(MT + PH - (Math.max(a, Math.min(b, v)) / Y) * PH);
     let s = '';
     if (!o.bare) {
       // half steps light, whole steps darker
@@ -146,10 +165,10 @@
     s += `<text class="axl" x="${W - 4}" y="${H - 6}" text-anchor="end"><tspan class="it">t</tspan>${o.tUnit ? ` in ${o.tUnit}` : ''}</text>`;
     for (const c of o.curves) {
       const pts = c.pts || Array.from({ length: 121 }, (_, k) => { const t = (k / 120) * T; return [t, c.f(t)]; });
-      s += `<path class="curve${c.cls ? ` ${c.cls}` : ''}" d="M${pts.map(([t, v]) => `${x(t)},${y(v)}`).join(' L')}"/>`;
+      s += `<path class="curve${c.cls ? ` ${c.cls}` : ''}" d="${trace(pts, x, y, a, b)}"/>`;
     }
     for (const [[t0, v0], [t1, v1]] of o.lines || []) s += `<line class="tan" x1="${x(t0)}" y1="${y(v0)}" x2="${x(t1)}" y2="${y(v1)}"/>`;
-    for (const [t, v] of o.dots || []) s += `<circle class="tdot" cx="${x(t)}" cy="${y(v)}" r="4"/>`;
+    for (const [t, v] of (o.dots || []).filter(([, v]) => shown(v))) s += `<circle class="tdot" cx="${x(t)}" cy="${y(v)}" r="4"/>`;
     const read = o.read ? readAttrs(o.read, T, Y, o.tStep, o.tUnit || '', i || '') : '';
     return `<svg class="tgraph${o.bare ? ' bare' : ''}" viewBox="0 0 ${W} ${H}" role="img"${read} aria-label="${o.label || L('A graph against time', 'Ein Graph gegen die Zeit')}">${s}</svg>`;
   }

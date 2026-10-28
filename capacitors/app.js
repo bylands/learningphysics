@@ -362,6 +362,24 @@
     return f.type === 'num' ? (empty(f, v) ? NaN : parse(v)) : v;
   }
 
+  // the path d through the points [t, v] (svg coordinates by X, Y), broken where v leaves [a, b]:
+  // a curve ends at the edge of the graph and comes back in there, not along the edge
+  function trace(pts, X, Y, a, b) {
+    const f1 = (x) => x.toFixed(1), at = (t, v) => `${f1(X(t))} ${f1(Y(v))}`, inside = (v) => v >= a && v <= b;
+    let d = '';
+    pts.forEach(([t, v], i) => {
+      const p = pts[i - 1];
+      if (!p || !Number.isFinite(p[1]) || !Number.isFinite(v)) { if (inside(v)) d += `M${at(t, v)}`; return; }
+      if (inside(p[1]) && inside(v)) { d += `L${at(t, v)}`; return; }
+      // where the segment crosses the edges, in order
+      const cuts = [a, b].filter((e) => (p[1] - e) * (v - e) < 0).map((e) => [p[0] + ((e - p[1]) / (v - p[1])) * (t - p[0]), e]).sort((m, n) => m[0] - n[0]);
+      if (inside(p[1])) cuts.forEach((c) => { d += `L${at(...c)}`; });
+      else if (inside(v)) d += `${cuts.length ? `M${at(...cuts[0])}L` : 'M'}${at(t, v)}`;
+      else if (cuts.length === 2) d += `M${at(...cuts[0])}L${at(...cuts[1])}`;
+    });
+    return d;
+  }
+
   // The graph at time t: the voltages (and below, the current) up to t, the line of t with a dot
   // on each curve, the first charging grey (R or C changed), a wrong graph chosen (other: { q, f },
   // dashed) and the key moments reached.
@@ -378,8 +396,11 @@
       const base = pn.id === 'I' ? Math.max(w.I0, w.ghost ? w.ghost.I0 : 0) : w.U0;
       const hi = base;
       const step = w.norm ? (hi > 1.6 ? 1 : 0.5) : valueStep(hi), top = Math.ceil(hi / step - 1e-9) * step;
-      const Y = (y) => pn.top + pn.h - (Math.max(-0.04 * top, Math.min(1.08 * top, y)) / top) * pn.h;
+      // the curves may go a little beyond the axis, then they break off
+      const a = -0.04 * top, b = 1.08 * top;
+      const Y = (y) => pn.top + pn.h - (Math.max(a, Math.min(b, y)) / top) * pn.h;
       pn.Y = Y;
+      pn.shown = (y) => y >= a && y <= b;
       for (let k = 0; k * step <= top + 1e-9; k++) {
         const y = k * step, unitLabel = pn.id === 'I' ? '<tspan class="it">I</tspan><tspan class="sub" dy="3">0</tspan>' : vS('0');
         const lab = !w.norm ? nf(y, decimals(step)) : y === 0 ? '0' : Math.abs(y - Math.round(y)) > 1e-9 ? '' : `${y === 1 ? '' : y}${unitLabel}`;
@@ -392,21 +413,19 @@
       // the first charging (grey)
       if (w.ghostAt) {
         pn.qs.filter((q) => q !== 'UR').forEach((q) => {
-          svg += `<path class="ghost" d="M${f1(X(t0))} ${f1(Y(w.ghostAt(-1)[q]))}L${f1(X(0))} ${f1(Y(w.ghostAt(-1)[q]))}${ts.map((x) => `L${f1(X(x))} ${f1(Y(w.ghostAt(x)[q]))}`).join('')}"/>`;
+          svg += `<path class="ghost" d="${trace([[t0, w.ghostAt(-1)[q]], [0, w.ghostAt(-1)[q]], ...ts.map((x) => [x, w.ghostAt(x)[q]])], X, Y, a, b)}"/>`;
         });
       }
       // a wrong graph chosen, under the motion, from the switching to t
+      const run = until >= 0 ? [...ts.filter((x) => x <= until), until] : [];
       if (other && pn.qs.includes(other.q) && until >= 0) {
-        const at = (x) => `${f1(X(x))} ${f1(Y(other.f(x)))}`;
-        svg += `<path class="other" d="M${[...ts.filter((x) => x <= until), until].map(at).join('L')}"/><circle class="odot" cx="${f1(X(until))}" cy="${f1(Y(other.f(until)))}" r="3.5"/>`;
+        const end = other.f(until);
+        svg += `<path class="other" d="${trace(run.map((x) => [x, other.f(x)]), X, Y, a, b)}"/>`;
+        if (pn.shown(end)) svg += `<circle class="odot" cx="${f1(X(until))}" cy="${f1(Y(end))}" r="3.5"/>`;
       }
       pn.qs.forEach((q) => {
         const v0 = w.at(-1)[q];
-        let d = `M${f1(X(t0))} ${f1(Y(v0))}L${f1(X(Math.min(0, until)))} ${f1(Y(v0))}`;
-        if (until >= 0) {
-          ts.filter((x) => x <= until).forEach((x) => { d += `L${f1(X(x))} ${f1(Y(w.at(x)[q]))}`; });
-          d += `L${f1(X(until))} ${f1(Y(w.at(until)[q]))}`;
-        }
+        const d = trace([[t0, v0], [Math.min(0, until), v0], ...run.map((x) => [x, w.at(x)[q]])], X, Y, a, b);
         svg += `<path class="curve ${SER[q]}" d="${d}"/>`;
       });
       if (t > t0) svg += `<line class="now" x1="${f1(X(until))}" x2="${f1(X(until))}" y1="${pn.top - 4}" y2="${pn.top + pn.h}"/>`;
@@ -420,6 +439,7 @@
     const placed = [];
     keys.forEach((k) => k.pts.forEach((m) => {
       const pn = panels.find((x) => x.id === panelOf(m.q)), q = pn.qs.includes(m.q) ? m.q : 'UC';
+      if (!pn.shown(m.y)) return;
       const cx = X(Math.max(0, Math.min(T, k.t))), cy = pn.Y(m.y), right = cx < W - mr - 44;
       let ly = cy - 7;
       while (placed.some((p) => Math.abs(p.x - cx) < 44 && Math.abs(p.y - ly) < 12)) ly += 12;
@@ -427,7 +447,7 @@
       svg += `<line class="kline" x1="${f1(cx)}" x2="${f1(cx)}" y1="${f1(cy)}" y2="${pn.top + pn.h}"/><circle class="kpt ${SER[q]}" cx="${f1(cx)}" cy="${f1(cy)}" r="4.5"/>`;
       if (m.label) svg += `<text class="klab ${SER[q]}" x="${f1(cx + (right ? 7 : -7))}" y="${f1(ly)}" text-anchor="${right ? 'start' : 'end'}">${m.label}</text>`;
     }));
-    panels.forEach((pn) => pn.qs.forEach((q) => { svg += `<circle class="dot ${SER[q]}" cx="${f1(X(until))}" cy="${f1(pn.Y(w.at(until)[q]))}" r="4"/>`; }));
+    panels.forEach((pn) => pn.qs.forEach((q) => { const v = w.at(until)[q]; if (pn.shown(v)) svg += `<circle class="dot ${SER[q]}" cx="${f1(X(until))}" cy="${f1(pn.Y(v))}" r="4"/>`; }));
     return `${svg}</svg>`;
   }
 
