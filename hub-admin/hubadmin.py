@@ -17,7 +17,8 @@ cards in its order, shows their tags, and lets visitors filter by tag. This serv
     /admin/api/server    GET  the server's statistics (the superuser only, the Server tab): the machine (load, CPU,
                          memory, disk, uptime), this service (its uptime, memory, requests since start, the
                          crossword generator reachable), hub-data's size and the usage (accounts, sets, sheets,
-                         lesson plans, exercises, games running) with the latest activity; see server_stats
+                         lesson plans, exercises, games running) with the latest activity, and the system
+                         packages not up to date (apt, checked hourly in the background; see apt_updates)
     /admin/api/password  POST {"current", "new"}    a teacher's own new password
     /admin/api/account   POST {"user", "first", "last", "school"}  a teacher's own details
     /admin/api/me        GET  the teacher logged in (the crossword generator and the quiz ask it, with the cookie)
@@ -167,6 +168,7 @@ import platform
 import re
 import secrets
 import shutil
+import subprocess
 import sys
 import tempfile
 import threading
@@ -260,6 +262,8 @@ SEEN_EVERY = 3600  # s: a teacher's last visit (for the statistics) is written a
 ACTIVE_DAYS = 30  # a teacher seen within these days counts as active (the statistics)
 MAX_WALK = 200000  # files: hub-data's size is counted up to this many (the server's statistics)
 RECENT = 10  # the latest events in the server's statistics
+UPDATES_EVERY = 3600  # s: how often the system packages are checked for updates (apt_updates)
+LISTS_STALE = 7  # days: apt's package lists older than this are a warning of their own
 # what an account says of its teacher, with the longest each may be
 PROFILE = {"first": 60, "last": 60, "school": 100}
 MIN_PASSWORD, MAX_PASSWORD = 8, 200
@@ -696,6 +700,52 @@ def system_stats(data: Path) -> Dict[str, object]:
             "disk": disk}
 
 
+APT_INST = re.compile(r"Inst (\S+) (?:\[([^\]]*)\] )?\((\S+) (.*)\)")
+
+
+def apt_lists_time() -> Optional[float]:
+    """When apt's package lists were last refreshed (apt update): its stamp, else the newest list."""
+    stamp = _mtime(Path("/var/lib/apt/periodic/update-success-stamp"))
+    if stamp:
+        return stamp
+    times = [t for t in (_mtime(Path(e.path)) for e in _entries(Path("/var/lib/apt/lists")) if e.name.endswith(("Packages", "Release", "InRelease"))) if t]
+    return max(times, default=None)
+
+
+def apt_updates(run=subprocess.run) -> Dict[str, object]:
+    """The system packages not up to date, as apt sees them now (a simulation, no root needed, nothing
+    changed): {"packages": [{"name", "from", "to", "security"}], "security": n, "lists": when apt's
+    lists were refreshed, "reboot": the packages that want a reboot (/run/reboot-required) or None,
+    "error": "" or why apt could not be asked}. Only as fresh as the lists: the server's own apt
+    timers (or apt update) refresh them."""
+    reboot = None
+    if Path("/run/reboot-required").exists() or Path("/var/run/reboot-required").exists():
+        reboot = sorted(set(_read("/run/reboot-required.pkgs").split() or _read("/var/run/reboot-required.pkgs").split()))
+    out: Dict[str, object] = {"packages": [], "security": 0, "lists": apt_lists_time(), "reboot": reboot, "error": ""}
+    try:
+        r = run(["apt-get", "-s", "-o", "Debug::NoLocking=1", "dist-upgrade"], capture_output=True, text=True, timeout=120,
+                env={**os.environ, "LC_ALL": "C", "LANG": "C"})
+    except FileNotFoundError:
+        out["error"] = "apt-get is not on this server"
+        return out
+    except (OSError, subprocess.SubprocessError) as e:
+        out["error"] = f"apt-get failed: {e}"[:200]
+        return out
+    if r.returncode != 0:
+        said = (r.stderr or r.stdout or "").strip().splitlines()
+        out["error"] = f"apt-get failed: {said[-1] if said else f'exit {r.returncode}'}"[:200]
+        return out
+    for line in r.stdout.splitlines():
+        m = APT_INST.match(line)
+        if m:
+            origin = m.group(4)
+            out["packages"].append({"name": m.group(1), "from": m.group(2) or "", "to": m.group(3),
+                                    "security": "-security" in origin or "Debian-Security" in origin})
+    out["security"] = sum(1 for x in out["packages"] if x["security"])
+    out["packages"].sort(key=lambda x: (not x["security"], x["name"]))
+    return out
+
+
 def folder_size(folder: Path, limit: int = MAX_WALK) -> Tuple[int, int, bool]:
     """(bytes, files, complete) of a folder and its subfolders, counting at most limit files."""
     size = files = 0
@@ -772,6 +822,9 @@ class Admin:
         self.started = time.time()  # (the server's statistics: since when, and the answers given since)
         self.served: Dict[str, int] = {"2xx": 0, "3xx": 0, "4xx": 0, "5xx": 0}
         self.served_lock = threading.Lock()
+        self.updates: Dict[str, object] = {}  # the last check for package updates ({"checked", ...}: apt_updates)
+        self.updates_running = False
+        self.updates_lock = threading.Lock()
         self.categoriser = Categoriser(self)  # the exercises uploaded since categories.json, categorised
 
     def stored_hash(self, teacher: Optional[str] = None) -> str:
@@ -982,7 +1035,30 @@ class Admin:
                           "courses": sum(len(c) for c in self.read_all_courses().values()),
                           "lessons": len(lessons), "lessons_shared": sum(1 for p in lessons.values() if p.get("token")),
                           "exercises": exercises, "games": self.allin.counts(), "quizzes": self.zero.counts()},
-                "recent": sorted(events, key=lambda e: -e["when"])[:RECENT]}
+                "recent": sorted(events, key=lambda e: -e["when"])[:RECENT], "updates": self.package_updates()}
+
+    def package_updates(self, check=None) -> Dict[str, object]:
+        """The last check for package updates, with "stale_days" (apt's lists older than LISTS_STALE
+        days: 0 if not) and "pending" while one runs; a new one starts in the background when the
+        last is older than UPDATES_EVERY (it takes a few seconds: the page asks again)."""
+        with self.updates_lock:
+            last = dict(self.updates)
+            due = not self.updates_running and time.time() - float(last.get("checked") or 0) > UPDATES_EVERY
+            if due:
+                self.updates_running = True
+
+        def work():
+            try:
+                found = {**(check or apt_updates)(), "checked": int(time.time())}
+            except Exception as e:  # (never the panel's error)
+                found = {"packages": [], "security": 0, "lists": None, "reboot": None, "error": str(e)[:200], "checked": int(time.time())}
+            with self.updates_lock:
+                self.updates, self.updates_running = found, False
+        if due:
+            threading.Thread(target=work, daemon=True).start()
+        lists = last.get("lists")
+        stale = int((time.time() - lists) // 86400) if lists and time.time() - lists > LISTS_STALE * 86400 else 0
+        return {**last, "stale_days": stale, "pending": not last}
 
     @staticmethod
     def probe(url: str, timeout: float = 1.5) -> Dict[str, object]:
@@ -4012,6 +4088,8 @@ SERVER_SECTION = """
       <h2 class="section">Machine</h2>
       <div id="server-system" class="stattiles"></div>
       <div id="server-meters" class="meters"></div>
+      <h2 class="section">Updates</h2>
+      <div id="server-updates"></div>
       <h2 class="section">Admin service</h2>
       <div id="server-service" class="stattiles"></div>
       <p id="server-about" class="note"></p>
@@ -4341,6 +4419,13 @@ h2.section { font-size: 1.15rem; margin: 28px 0 4px; }
 .stattable .dot.bad { background: var(--bad); }
 .stattiles .card.bad strong { color: var(--bad); }
 #server-usage { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
+.updates.warn { border-color: var(--bad); }
+.updates.warn > strong { color: var(--bad); }
+.updates.ok > strong { color: var(--ok); }
+.updates p { margin: 4px 0 0; }
+.updates ul { margin: 8px 0 0; padding-left: 20px; columns: 2 240px; font-size: 0.9rem; }
+.updates li.security { color: var(--bad); }
+.updates code { font-size: 0.85rem; }
 .meters { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; margin: 0 0 12px; }
 .meters .card { padding: 12px 14px; }
 .meters .head { display: flex; justify-content: space-between; gap: 8px; font-size: 0.9rem; }
@@ -7373,6 +7458,25 @@ SERVER_JS = r"""
       el('div', { class: 'head' }, el('span', {}, label), el('strong', {}, text)),
       el('meter', { min: '0', max: String(total), low: String(total * (high || 0.8) * 0.85), high: String(total * (high || 0.8)), optimum: '0', value: String(used), 'aria-label': `${label}: ${text}` }));
   }
+  // the package updates: a warning when some are pending (security ones first), a reboot is wanted or apt's lists are old
+  function updates(u) {
+    if (!u || u.pending) return el('div', { class: 'card updates' }, el('span', { class: 'note' }, 'Checking the packages for updates…'));
+    const n = u.packages.length, warns = [];
+    if (u.error) warns.push(`Could not check: ${u.error}`);
+    if (u.reboot) warns.push(`A reboot is needed${u.reboot.length ? ` (for ${u.reboot.join(', ')})` : ''}.`);
+    if (u.stale_days) warns.push(`apt's package lists were last refreshed ${u.stale_days} days ago: the check may miss updates (sudo apt update).`);
+    const head = n ? `${plural(n, 'package')} not up to date${u.security ? `, ${u.security} of them security update${u.security === 1 ? '' : 's'}` : ''}`
+      : u.error ? 'Updates unknown' : 'All packages up to date';
+    const bad = n > 0 || warns.length > 0;
+    const shown = u.packages.slice(0, 40);
+    return el('div', { class: `card updates ${bad ? 'warn' : 'ok'}`, role: bad ? 'alert' : null },
+      el('strong', {}, `${bad ? '⚠ ' : '✓ '}${head}`),
+      ...warns.map((w) => el('p', {}, w)),
+      n ? el('p', { class: 'note' }, 'Install them on the server with sudo apt upgrade (or wait for unattended-upgrades, if it runs).') : '',
+      shown.length ? el('ul', {}, ...shown.map((x) => el('li', { class: x.security ? 'security' : null }, el('code', {}, x.name), ` ${x.from ? `${x.from} → ` : ''}${x.to}${x.security ? ' (security)' : ''}`))) : '',
+      n > shown.length ? el('p', { class: 'note' }, `…and ${n - shown.length} more.`) : '',
+      el('p', { class: 'note' }, `Checked ${u.checked ? ago(u.checked) : '—'}, hourly${u.lists ? ` · package lists of ${when(u.lists)}` : ''}.`));
+  }
   const WHAT = { visit: 'was in the panel', sets: 'changed their sets', sheet: 'saved the sheet', lesson: 'saved the lesson plan' };
 
   function render(d) {
@@ -7391,6 +7495,8 @@ SERVER_JS = r"""
     }
     if (sys.disk) meters.push(meter('Disk (hub-data)', sys.disk.used, sys.disk.total, `${bytes(sys.disk.free)} free of ${bytes(sys.disk.total)}`, 0.9));
     $('#server-meters').replaceChildren(...meters);
+
+    $('#server-updates').replaceChildren(updates(d.updates));
 
     const errors = svc.served['5xx'], cw = svc.crosswords;
     $('#server-service').replaceChildren(
@@ -7432,7 +7538,9 @@ SERVER_JS = r"""
       const r = await fetch('/admin/api/server', { credentials: 'same-origin' });
       if (r.status === 403) { location.reload(); return; }
       if (!r.ok) throw new Error(r.statusText);
-      render(await r.json());
+      const d = await r.json();
+      render(d);
+      if (d.updates && d.updates.pending) setTimeout(() => { if (open()) load(); }, 4000); // (the check takes a few seconds)
     } catch (e) {
       status('Could not load the statistics.', 'bad');
     } finally { busy = false; }
