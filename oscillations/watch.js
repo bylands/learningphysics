@@ -30,6 +30,23 @@
   const decimals = (s) => { let d = 0; while (d < 6 && Math.abs(s * 10 ** d - Math.round(s * 10 ** d)) > 1e-6) d++; return d; };
   // a value of the run in the unit of its graph
   const inGraph = (w, q, x) => (w.units ? OC.inUnit(x, w.units[q]) : x);
+  // the path d through the points [t, v] (svg coordinates by X, Y), broken where v leaves [a, b]:
+  // a curve ends at the edge of the graph and comes back in there, not along the edge
+  function trace(pts, X, Y, a, b) {
+    const f1 = (x) => x.toFixed(1), at = (t, v) => `${f1(X(t))} ${f1(Y(v))}`, inside = (v) => v >= a && v <= b;
+    let d = '';
+    pts.forEach(([t, v], i) => {
+      const p = pts[i - 1];
+      if (!p || !Number.isFinite(p[1]) || !Number.isFinite(v)) { if (inside(v)) d += `M${at(t, v)}`; return; }
+      if (inside(p[1]) && inside(v)) { d += `L${at(t, v)}`; return; }
+      // where the segment crosses the edges, in order
+      const cuts = [a, b].filter((e) => (p[1] - e) * (v - e) < 0).map((e) => [p[0] + ((e - p[1]) / (v - p[1])) * (t - p[0]), e]).sort((m, n) => m[0] - n[0]);
+      if (inside(p[1])) cuts.forEach((c) => { d += `L${at(...c)}`; });
+      else if (inside(v)) d += `${cuts.length ? `M${at(...cuts[0])}L` : 'M'}${at(t, v)}`;
+      else if (cuts.length === 2) d += `M${at(...cuts[0])}L${at(...cuts[1])}`;
+    });
+    return d;
+  }
 
   // The graph at time t: y (and v and a) up to t, the line of t with a dot on each curve, and the
   // key points reached (a chain of them joined by a dashed line); o.other: a wrong graph { f },
@@ -82,8 +99,11 @@
         hi = w.units ? niceTop(1.04 * top) : 1.3 * top;
         lo = -hi;
       }
-      const Y = (y) => pn.top + ((hi - Math.max(lo - 0.04 * (hi - lo), Math.min(hi + 0.04 * (hi - lo), y))) / (hi - lo)) * pn.h;
+      // the curves may go a little beyond the axis, then they break off
+      const a = lo - 0.04 * (hi - lo), b = hi + 0.04 * (hi - lo);
+      const Y = (y) => pn.top + ((hi - Math.max(a, Math.min(b, y))) / (hi - lo)) * pn.h;
       pn.Y = Y;
+      pn.shown = (y) => y >= a && y <= b;
       // the grid, 0 and the labels: numbers, or ±A (±v̂, ±â) without
       svg += `<line class="grid" x1="${ml}" x2="${W - mr}" y1="${f1(Y(hi))}" y2="${f1(Y(hi))}"/><line class="grid" x1="${ml}" x2="${W - mr}" y1="${f1(Y(lo))}" y2="${f1(Y(lo))}"/>`;
       svg += `<line class="ax" x1="${ml}" x2="${W - mr}" y1="${f1(Y(0))}" y2="${f1(Y(0))}"/><text class="tick" x="${ml - 5}" y="${f1(Y(0) + 4)}" text-anchor="end">0</text>`;
@@ -98,15 +118,13 @@
       // the release
       svg += `<line class="release" x1="${f1(X(0))}" x2="${f1(X(0))}" y1="${pn.top - 4}" y2="${pn.top + pn.h + 4}"/>`;
       const val = (x) => inGraph(w, q, w.at(x)[q]), v0 = val(-1);
-      let d = `M${f1(X(t0))} ${f1(Y(v0))}L${f1(X(Math.min(0, until)))} ${f1(Y(v0))}`;
-      if (until >= 0) {
-        ts.filter((x) => x <= until).forEach((x) => { d += `L${f1(X(x))} ${f1(Y(val(x)))}`; });
-        d += `L${f1(X(until))} ${f1(Y(val(until)))}`;
-      }
+      const run = until >= 0 ? [...ts.filter((x) => x <= until), until] : [];
+      const d = trace([[t0, v0], [Math.min(0, until), v0], ...run.map((x) => [x, val(x)])], X, Y, a, b);
       // a wrong graph (o.other) under the motion, from the release to t
       if (o.other && q === 'y' && until >= 0) {
-        const at = (x) => `${f1(X(x))} ${f1(Y(o.other.f(x)))}`;
-        svg += `<path class="wother" d="M${[...ts.filter((x) => x <= until), until].map(at).join('L')}"/><circle class="odot" cx="${f1(X(until))}" cy="${f1(Y(o.other.f(until)))}" r="3.5"/>`;
+        const end = o.other.f(until);
+        svg += `<path class="wother" d="${trace(run.map((x) => [x, o.other.f(x)]), X, Y, a, b)}"/>`;
+        if (pn.shown(end)) svg += `<circle class="odot" cx="${f1(X(until))}" cy="${f1(Y(end))}" r="3.5"/>`;
       }
       svg += `<path class="wcurve q-${q}" d="${d}"/>`;
       if (t > t0) svg += `<line class="now" x1="${f1(X(until))}" x2="${f1(X(until))}" y1="${pn.top - 4}" y2="${pn.top + pn.h + 4}"/>`;
@@ -137,7 +155,7 @@
     // one), a chain joined by a dashed line; then a dot on each curve
     const placed = [];
     keys.forEach((k) => {
-      const pts = k.pts.filter((m) => t >= 0 && t >= m.t - 1e-9 && panels.some((x) => x.q === m.q));
+      const pts = k.pts.filter((m) => t >= 0 && t >= m.t - 1e-9 && panels.some((x) => x.q === m.q && x.shown(m.y)));
       const at = (m) => [X(m.t), panels.find((x) => x.q === m.q).Y(m.y)];
       if (k.chain && pts.length > 1) svg += `<path class="kchain" d="${pts.map((m, i) => `${i ? 'L' : 'M'}${at(m).map(f1).join(' ')}`).join('')}"/>`;
       pts.forEach((m) => {
@@ -150,7 +168,10 @@
         svg += `<text class="klab n-${m.q}" x="${f1(cx + (right ? 7 : -7))}" y="${f1(ly)}" text-anchor="${right ? 'start' : 'end'}">${m.label}</text>`;
       });
     });
-    panels.forEach((pn) => { svg += `<circle class="dot q-${pn.q}" cx="${f1(X(until))}" cy="${f1(pn.Y(inGraph(w, pn.q, w.at(until)[pn.q])))}" r="4"/>`; });
+    panels.forEach((pn) => {
+      const v = inGraph(w, pn.q, w.at(until)[pn.q]);
+      if (pn.shown(v)) svg += `<circle class="dot q-${pn.q}" cx="${f1(X(until))}" cy="${f1(pn.Y(v))}" r="4"/>`;
+    });
     return `${svg}</svg>`;
   }
 
