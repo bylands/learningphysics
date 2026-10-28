@@ -153,7 +153,7 @@
     solve: (p) => ({ graph: p.given }),
     traps: [],
     fields: (p) => [choice('graph', L('Which graph shows the motion?', 'Welcher Graph zeigt die Bewegung?'), p.kinds.map((k) => [k, dGraph(k, p.y), k === p.given ? '' : graphWhy(k, p.given), k === p.given ? null : DFLAG[k], k === p.given ? '' : graphNudge(k)]), { pics: true })],
-    text: (p) => L(`A body moves according to the formula below (the constants are positive). Which graph shows its displacement ${p.y}(t)?`, `Ein Körper bewegt sich gemäss der Formel unten (die Konstanten sind positiv). Welcher Graph zeigt seine Auslenkung ${p.y}(t)?`),
+    text: (p) => L(`A body moves according to the formula shown (the constants are positive). Which graph shows its displacement ${p.y}(t)?`, `Ein Körper bewegt sich gemäss der angegebenen Formel (die Konstanten sind positiv). Welcher Graph zeigt seine Auslenkung ${p.y}(t)?`),
     hints: (p) => dHints(p.y),
     steps: (p) => [
       step(L('The amplitude and the period', 'Die Amplitude und die Periode'), p$(KIND_TEXT()[p.given] || FORMULA_DOES()[p.given])),
@@ -255,7 +255,7 @@
     solve: (p) => ({ feat: FEAT_OF[p.flaw] }),
     traps: [],
     fields: (p) => [choice('feat', L('Which feature of the sketch is wrong?', 'Welches Merkmal der Skizze ist falsch?'), p.feats.map((f) => [f, FEAT_NAME()[f], f === FEAT_OF[p.flaw] ? '' : `${L('Not this:', 'Nicht das:')} ${FINE(p.sys)[f]}`, f === FEAT_OF[p.flaw] ? null : 'dshape']), { stack: true })],
-    text: (p) => `${sysText(p.sys)} ${L('A student sketched its displacement y(t) (below). One feature of the sketch is wrong. Which one?', 'Eine Schülerin hat seine Auslenkung y(t) skizziert (unten). Ein Merkmal der Skizze ist falsch. Welches?')}`,
+    text: (p) => `${sysText(p.sys)} ${L('A student sketched its displacement y(t) (see the sketch). One feature of the sketch is wrong. Which one?', 'Eine Schülerin hat seine Auslenkung y(t) skizziert (siehe Skizze). Ein Merkmal der Skizze ist falsch. Welches?')}`,
     hints: (p) => [
       RULES(p.sys),
       L('Check the sketch feature by feature: the spacing of the maxima, how they shrink, the line it oscillates about, the start at t = 0 and the end.', 'Prüfe die Skizze Merkmal für Merkmal: den Abstand der Maxima, wie sie schrumpfen, die Linie, um die er schwingt, den Anfang bei t = 0 und das Ende.'),
