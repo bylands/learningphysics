@@ -402,12 +402,12 @@
       solve: (p) => ({ graph: p.given }),
       traps: [],
       fields: (p) => [choice('graph', L('Which graph shows the motion?', 'Welcher Graph zeigt die Bewegung?'), p.kinds.map((k) => [k, qGraph(k, p.y, axisOf(p.kinds)), k === p.given ? '' : graphWhy(k, p.given), k === p.given ? null : FLAG[k], k === p.given ? '' : graphNudge(k, p.given)]), { pics: true })],
-      text: (p) => L(`A body moves according to the equation below (the constants are positive). At the start it is displaced to ${p.y} > 0 and at rest. Which graph shows its motion?`,
-        `Ein Körper bewegt sich gemäss der Gleichung unten (die Konstanten sind positiv). Am Anfang ist er nach ${p.y} > 0 ausgelenkt und in Ruhe. Welcher Graph zeigt seine Bewegung?`),
+      text: (p) => L(`A body moves according to the equation shown (the constants are positive). At the start it is displaced to ${p.y} > 0 and at rest. Which graph shows its motion?`,
+        `Ein Körper bewegt sich gemäss der angegebenen Gleichung (die Konstanten sind positiv). Am Anfang ist er nach ${p.y} > 0 ausgelenkt und in Ruhe. Welcher Graph zeigt seine Bewegung?`),
       hints: (p) => matchHints(p),
       steps: (p) => [
         step(L('The form of the equation', 'Die Form der Gleichung'), p$(KIND_TEXT()[p.given])),
-        step(L('The graph', 'Der Graph'), p$(L('So the graph is this one:', 'Der Graph ist also dieser:')), ['graph']),
+        step(L('The graph', 'Der Graph'), p$(L('So the graph is the one shown above.', 'Der Graph ist also der oben gezeigte.')), ['graph']),
       ],
       figure: (p, v, view) => box(NKINDS[p.given].tex(p.y)) + (view.show && view.show.has('graph') ? `<div class="fig">${qGraph(p.given, p.y, axisOf(p.kinds))}</div>` : ''),
     };

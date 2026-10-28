@@ -326,7 +326,7 @@
     ],
     steps(p, v) {
       const out = [step(L('The lever arm', 'Der Hebelarm'),
-        `<p>${L('The lever arm of a force is the distance from the axis D to its line of action: the perpendicular from D onto the extended arrow. It meets the line of action at a right angle and need not end where the force acts. Check each arm in the sketch:', 'Der Hebelarm einer Kraft ist der Abstand der Drehachse D von ihrer Wirkungslinie: das Lot von D auf den verlängerten Pfeil. Er trifft die Wirkungslinie rechtwinklig und muss nicht dort enden, wo die Kraft angreift. Prüfe jeden Arm in der Skizze:')}</p>`)];
+        `<p>${L('The lever arm of a force is the distance from the axis D to its line of action: the perpendicular from D onto the extended arrow. It meets the line of action at a right angle and need not end where the force acts. Check each arm in the sketch, one force at a time.', 'Der Hebelarm einer Kraft ist der Abstand der Drehachse D von ihrer Wirkungslinie: das Lot von D auf den verlängerten Pfeil. Er trifft die Wirkungslinie rechtwinklig und muss nicht dort enden, wo die Kraft angreift. Prüfe jeden Arm in der Skizze, eine Kraft nach der anderen.')}</p>`)];
       p.forces.forEach((f, i) => {
         const k = i + 1, d = armOf(f).d, M = Math.abs(v.M[i]);
         const body = i === p.wrong
