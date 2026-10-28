@@ -2696,12 +2696,14 @@ class Service(unittest.TestCase):
         (self.admin.texercises / "ex1").mkdir(parents=True)
         (self.admin.texercises / "ex1" / "meta.json").write_text("{}")
         self.admin.crosswords_url = ""  # (no crossword generator in the test)
+        self.admin.updates = {"checked": time.time(), "packages": [], "security": 0, "lists": None, "reboot": None, "error": ""}  # (apt not asked)
         self.admin.allin.open("bys")
         self.admin.allin.open("abc", preview=True)  # a preview is not a game running
         st, _, body = self.req("/api/server", cookie=boss)
         self.assertEqual(st, 200)
         d = json.loads(body)
-        self.assertEqual(set(d), {"time", "system", "service", "data", "usage", "recent"})
+        self.assertEqual(set(d), {"time", "system", "service", "data", "usage", "recent", "updates"})
+        self.assertEqual((d["updates"]["pending"], d["updates"]["packages"], d["updates"]["stale_days"]), (False, [], 0))
         self.assertGreaterEqual(d["system"]["cpus"], 1)
         if Path("/proc/meminfo").exists():
             self.assertGreater(d["system"]["memory"]["total"], 0)
@@ -2728,6 +2730,45 @@ class Service(unittest.TestCase):
         st, headers, _ = self.req("/static/server.js")
         self.assertEqual(st, 200)
         self.assertTrue(headers["Content-Type"].startswith("text/javascript"))
+
+    def test_package_updates(self):
+        out = "\n".join([
+            "Reading package lists...",
+            "Inst libssl3 [3.0.2-0ubuntu1.10] (3.0.2-0ubuntu1.12 Ubuntu:22.04/jammy-updates, Ubuntu:22.04/jammy-security [amd64])",
+            "Inst nginx [1.18.0-6ubuntu14.3] (1.18.0-6ubuntu14.4 Ubuntu:22.04/jammy-updates [amd64]) []",
+            "Inst tzdata (2024a-0ubuntu0.22.04 Ubuntu:22.04/jammy-updates [all])",
+            "Conf libssl3 (3.0.2-0ubuntu1.12 Ubuntu:22.04/jammy-updates [amd64])"])
+        calls = []
+
+        def run(cmd, **kw):
+            calls.append(cmd)
+            return subprocess.CompletedProcess(cmd, 0, out, "")
+        found = H.apt_updates(run)
+        self.assertEqual(calls[0][:2], ["apt-get", "-s"])  # a simulation only
+        self.assertEqual([(x["name"], x["from"], x["to"], x["security"]) for x in found["packages"]],
+                         [("libssl3", "3.0.2-0ubuntu1.10", "3.0.2-0ubuntu1.12", True), ("nginx", "1.18.0-6ubuntu14.3", "1.18.0-6ubuntu14.4", False),
+                          ("tzdata", "", "2024a-0ubuntu0.22.04", False)])
+        self.assertEqual((found["security"], found["error"]), (1, ""))
+        self.assertIn("could not", H.apt_updates(lambda cmd, **kw: subprocess.CompletedProcess(cmd, 100, "", "E: could not open lock")).get("error"))
+
+        def missing(cmd, **kw):
+            raise FileNotFoundError(cmd[0])
+        self.assertEqual(H.apt_updates(missing)["error"], "apt-get is not on this server")
+        # checked in the background, then kept for UPDATES_EVERY; old package lists are a warning
+        done = threading.Event()
+
+        def check():
+            done.set()
+            return {"packages": [{"name": "nginx", "from": "1", "to": "2", "security": False}], "security": 0,
+                    "lists": time.time() - 10 * 86400, "reboot": None, "error": ""}
+        self.assertTrue(self.admin.package_updates(check)["pending"])
+        self.assertTrue(done.wait(5))
+        for _ in range(50):
+            if not self.admin.updates_running:
+                break
+            time.sleep(0.05)
+        u = self.admin.package_updates(lambda: self.fail("asked again too soon"))
+        self.assertEqual((u["pending"], len(u["packages"]), u["stale_days"]), (False, 1, 10))
 
     def test_me_and_crosswords(self):
         st, headers, _ = self.req("/login", b"user=samuel.byland&password=teacher pw", "application/x-www-form-urlencoded")
