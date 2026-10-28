@@ -5,7 +5,9 @@
 // closed or opened, a bulb unscrewed), played as an animation with ▶/❚❚ and a time slider, built
 // on the players of Energy Conservation and Wave Propagation. The student first answers (the
 // prediction); the app keeps the switch locked until the answer is checked and solved, or the
-// solution shown, so that watching never gives the answer away; then the student flips the switch
+// solution shown, so that watching never gives the answer away (or, with o.check, until the answer
+// is checked, right or wrong: ▶ or the switch checks it, and the app marks a wrong one in the
+// run); then the student flips the switch
 // and watches what really happens, compared with the prediction (the app marks it).
 // Scene time t runs from t0 < 0 (before switching, the state the student predicts from) through 0
 // (the moment of switching) to t1 (the end state, long after). The app draws the scene; the player
@@ -24,6 +26,10 @@
 //                     button (Space, Enter), says whether it is locked, and keeps its focus when
 //                     the scene is redrawn
 //     locked()        true while the student has not committed a prediction (default false)
+//     check()         optional: ▶ or the switch pressed while locked checks the student's answer
+//                     (the app counts it as a try, like its Check button); if the player is
+//                     unlocked afterwards (the answer was checked, right or wrong), the run plays
+//                     at once, else the note says why not. With check, ▶ stays enabled while locked
 //     texts()         { locked: why the switch is locked, ready: what to do (e.g. "Click the
 //                     switch S to close it."), switch: the switch's label for screen readers, again
 //                     (after switching: e.g. "Click the switch again to watch once more."), time:
@@ -85,14 +91,19 @@
 
   // ---------------------------------------------------------------- the player
   const TX = {
-    en: { play: 'Play', pause: 'Pause', time: 'Time', locked: 'Check your answer first: the switch unlocks once you have solved the exercise or looked at the solution.' },
-    de: { play: 'Abspielen', pause: 'Anhalten', time: 'Zeit', locked: 'Prüfe zuerst deine Antwort: Der Schalter wird freigegeben, sobald du die Aufgabe gelöst oder die Lösung angeschaut hast.' },
+    en: { play: 'Play', pause: 'Pause', time: 'Time', locked: 'Check your answer first: the switch unlocks once you have solved the exercise or looked at the solution.',
+      checkPlay: 'Check and play', answer: 'Give your answer first: ▶ checks it and then plays the run.' },
+    de: { play: 'Abspielen', pause: 'Anhalten', time: 'Zeit', locked: 'Prüfe zuerst deine Antwort: Der Schalter wird freigegeben, sobald du die Aufgabe gelöst oder die Lösung angeschaut hast.',
+      checkPlay: 'Prüfen und abspielen', answer: 'Gib zuerst deine Antwort ein: ▶ prüft sie und spielt dann den Ablauf ab.' },
   };
   const tx = () => TX[root.Lang && root.Lang.get() === 'de' ? 'de' : 'en'];
 
   function create(host, o) {
     const reduced = () => !!o.instant || isReduced(root.matchMedia && root.matchMedia.bind(root));
     const locked = () => !!(o.locked && o.locked());
+    // with o.check, pressing ▶ or the switch while locked checks the answer first: true if the
+    // player is unlocked now
+    const checked = () => { if (!o.check) return false; o.check(); return !locked(); };
     const texts = () => ({ ...(o.texts ? o.texts() : {}) });
     host.innerHTML = '<div class="pw"><div class="pw-scene"></div><div class="pw-bar">' +
       '<button type="button" class="pw-play">▶</button>' +
@@ -114,12 +125,12 @@
       });
       box.classList.toggle('pw-locked', lock);
       box.classList.toggle('pw-ready', !lock && s.t < 0);
-      btn.disabled = lock;
+      btn.disabled = lock && !o.check;
       slider.disabled = lock;
       btn.textContent = s.playing ? '❚❚' : '▶';
-      btn.setAttribute('aria-label', s.playing ? tx().pause : tx().play);
+      btn.setAttribute('aria-label', s.playing ? tx().pause : lock && o.check ? tx().checkPlay : tx().play);
       slider.setAttribute('aria-label', tx().time);
-      note.textContent = lock ? (warned ? t.locked || tx().locked : '') : s.t < 0 ? t.ready || '' : t.again || '';
+      note.textContent = lock ? (warned ? t.locked || (o.check ? tx().answer : tx().locked) : '') : s.t < 0 ? t.ready || '' : t.again || '';
     }
     function draw() {
       const had = document.activeElement && scene.contains(document.activeElement) && document.activeElement.hasAttribute('data-pw-switch');
@@ -151,7 +162,8 @@
       if (s.playing && !stopped) raf = requestAnimationFrame(frame);
     }
     const doFlip = () => {
-      if (locked()) { warned = true; decorate(); return; }
+      if (locked() && !checked()) { warned = true; decorate(); return; }
+      warned = false;
       set(flip(s, o, reduced(), false));
     };
 
@@ -161,7 +173,11 @@
       evt.preventDefault();
       doFlip();
     });
-    btn.addEventListener('click', () => set(press(s, o, reduced(), locked())));
+    btn.addEventListener('click', () => {
+      if (locked() && !checked()) { warned = true; decorate(); return; }
+      warned = false;
+      set(press(s, o, reduced(), false));
+    });
     slider.addEventListener('input', () => set(seek(s, slider.value, o, locked())));
     draw();
 

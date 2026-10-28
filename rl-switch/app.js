@@ -133,7 +133,7 @@
   function open(exercise) {
     finish(); // the student moves on
     ex = exercise;
-    st = { tries: 0, hints: 0, solved: false, revealed: false, checked: false };
+    st = { tries: 0, hints: 0, solved: false, revealed: false, checked: false, watched: false };
     const hash = `#${ex.id}`;
     if (location.hash !== hash) history.replaceState(null, '', hash);
     render();
@@ -166,7 +166,7 @@
     $('#prompt').innerHTML = ex.text;
     if (player) player.stop();
     player = mountWatch($('#figure'), ex, {
-      locked: () => !(st && (st.solved || st.revealed)),
+      locked: () => !(st && (st.solved || st.revealed || st.watched)), check: checkByPlay,
       preds: () => ex.fields.map((f) => { const el = $(`#in-${f.key}`); return el && el.value.trim() ? parse(el.value) : NaN; }),
     });
     $('#fields').innerHTML = ex.fields.map((f) => `
@@ -235,8 +235,9 @@
     st.checked = true;
     if (r === null) { showStatus('fill'); return; }
     st.tries++;
+    st.checkedAs = answers();
     if (r) {
-      if (!st.solved && !st.revealed) {
+      if (!st.solved && !st.revealed && !st.watched) {
         const s = stored('rl-score', { solved: 0, clean: 0 });
         s.solved++;
         if (st.tries === 1 && st.hints === 0) s.clean++;
@@ -251,6 +252,16 @@
     } else showStatus('bad');
     updateButtons();
     if (player) player.refresh(); // solved: the switch unlocks
+  }
+  // the answers as entered, to tell whether they have been checked as they are
+  const answers = () => JSON.stringify(ex.fields.map((f) => $(`#in-${f.key}`).value));
+  // ▶ or the switch pressed before the run is unlocked (play.js): a check like the button (the same
+  // answers checked again are no new try); once checked, right or wrong, the run can be watched,
+  // a wrong answer marked in it. Watched before it was solved, it no longer counts for the score.
+  function checkByPlay() {
+    if (!ex || !st || st.solved || st.revealed) return;
+    if (st.checkedAs !== answers() || !st.status) check({ preventDefault() {} });
+    if (st.status === 'ok' || st.status === 'bad') { st.watched = true; if (player) player.refresh(); }
   }
 
   function showHints() {
@@ -348,7 +359,8 @@
     return `${svg}</svg>`;
   }
 
-  // The player of exercise e in host. o: { locked(), preds() → the values entered for the currents
+  // The player of exercise e in host. o: { locked(), check() (▶ or the switch while locked: the app
+  // checks the answers, play.js), preds() → the values entered for the currents
   // (mA, NaN if none), tutor: true in a worked example }.
   function mountWatch(host, e, o = {}) {
     let shown = null;
@@ -363,6 +375,7 @@
     return window.Play.create(host, {
       t0: -0.15 * e.curves().T, t1: e.curves().T, seconds: 3,
       locked: o.locked,
+      check: o.check,
       render(scene, s) {
         const lock = !!(o.locked && o.locked()), key = `${s.after}|${lock}|${Lang.get()}`;
         if (key !== shown) {
@@ -374,7 +387,7 @@
           markScrollable();
         }
         const side = scene.querySelector('.rlw-side');
-        if (lock) { side.innerHTML = `<p class="note rlw-wait">${L('The graph of the currents appears here once you have solved the exercise or looked at the solution.', 'Der Graph der Ströme erscheint hier, sobald du die Aufgabe gelöst oder die Lösung angeschaut hast.')}</p>`; return; }
+        if (lock) { side.innerHTML = `<p class="note rlw-wait">${o.check ? L('The graph of the currents appears here once your answers are checked: ▶ or the switch checks them too.', 'Der Graph der Ströme erscheint hier, sobald deine Antworten geprüft sind: ▶ oder der Schalter prüft sie auch.') : L('The graph of the currents appears here once you have solved the exercise or looked at the solution.', 'Der Graph der Ströme erscheint hier, sobald du die Aufgabe gelöst oder die Lösung angeschaut hast.')}</p>`; return; }
         const run = e.curves(), preds = prediction(), a = run.at(Math.min(s.t, run.T)), a0 = run.at(0), before = run.at(-1);
         const rows = cur.map((c, k) => {
           const p = preds[k], ok = p != null && near(p, c.value(a0)), v0 = c.value(a0), vb = c.value(before);

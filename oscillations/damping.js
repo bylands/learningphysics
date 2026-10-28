@@ -143,8 +143,10 @@
   // lies on it
   function dWatch(p, key) {
     return oscWatch({ kind: 'track', given: p.given, curve: dCurve(p.given, 1000), axis: AX, t1: T_END, unit: '', panels: ['y'], name: p.y,
-      marks: (w, get) => { const k = get(key); return DK[k] && p.kinds.includes(k) ? curveMarks(w, key, DK[k].f, [0.5, 2, 4.5], 0.04 * (AX.hi - AX.lo), key === 'graph' ? yourGraph() : L('the motion of your formula', 'die Bewegung deiner Formel')) : []; },
+      marks: (w, get) => { const k = get(key); return DK[k] && p.kinds.includes(k) ? curveMarks(w, key, DK[k].f, [0.5, 2, 4.5], 0.04 * (AX.hi - AX.lo), say()) : []; },
+      other: (w, get) => { const k = get(key); return DK[k] && p.kinds.includes(k) ? { key, f: DK[k].f, say: say() } : null; },
       keyOf: peakKeys });
+    function say() { return key === 'graph' ? yourGraph() : L('the motion of your formula', 'die Bewegung deiner Formel'); }
   }
   const dampMatch = {
     id: 'damp-match', difficulty: 2, kind: 'dmatch',
@@ -191,8 +193,9 @@
   const FEATS = ['period', 'decay', 'centre', 'start', 'end'];
   const FLAWS = { water: ['shorter', 'longer', 'grows', 'shift', 'kink', 'stops'], table: ['shorter', 'longer', 'grows', 'shift', 'kink', 'never'] };
   const FEAT_OF = { shorter: 'period', longer: 'period', grows: 'decay', shift: 'centre', kink: 'start', stops: 'end', never: 'end' };
-  // the sketch: the right motion, changed by the flaw (null: the right one)
-  function sketch(sys, flaw) {
+  // the sketch: the right motion, changed by the flaw (null: the right one); sketchFn: as t → y
+  const sketch = (sys, flaw) => sample(sketchFn(sys, flaw), E_END, 360);
+  function sketchFn(sys, flaw) {
     const y = (t) => RIGHT[sys](t).y;
     const f = {
       shorter: (t) => y(t + 0.08 * t * t),
@@ -203,7 +206,7 @@
       stops: (t) => y(Math.min(t, 2.5)),
       never: (t) => RIGHT.water(t).y,
     }[flaw];
-    return sample(f || y, E_END, 360);
+    return f || y;
   }
   const eGraph = (p, view) => {
     const curves = [{ pts: sketch(p.sys, p.flaw) }];
@@ -267,7 +270,9 @@
       step(L('The right graph', 'Der richtige Graph'), p$(L('The dashed graph shows the motion as it really is.', 'Der gestrichelte Graph zeigt die Bewegung, wie sie wirklich ist.')), ['right']),
     ],
     figure: (p, v, view) => eGraph(p, view),
-    watch: (p) => oscWatch({ kind: p.sys === 'table' ? 'table' : 'spring', fn: RIGHT[p.sys], amp: { y: 1, v: W0, a: W0 * W0 }, t1: E_END, unit: 'T', panels: ['y'], marks: () => [], keyOf: peakKeys }),
+    watch: (p) => oscWatch({ kind: p.sys === 'table' ? 'table' : 'spring', fn: RIGHT[p.sys], amp: { y: 1, v: W0, a: W0 * W0 }, t1: E_END, unit: 'T', panels: ['y'], marks: () => [], keyOf: peakKeys,
+      // the student's sketch beside the real motion, whatever the answer
+      other: () => ({ key: 'sketch', f: sketchFn(p.sys, p.flaw), always: true, say: L('the student’s sketch', 'die Skizze der Schülerin') }) }),
   };
 
   // ================================================================ 6 the equation of motion
@@ -612,6 +617,7 @@
     figure: (p, v, view) => (view.show && view.show.has('graph') ? fig(regGraph(regRight(p))) : ''),
     watch: (p) => (['crit', 'over', 'fast'].includes(p.ask) ? oscWatch({ kind: 'spring', fn: regFn(regRight(p)), amp: { y: 1, v: PI2, a: PI2 * PI2 }, t1: R_END, unit: 'T', panels: ['y'],
       marks: (w, get) => { const k = get('reg'); return REG_D[k] != null && p.kinds.includes(k) ? curveMarks(w, 'reg', (t) => regFn(k)(t).y, [0.25, 0.6, 1.5], 0.06, yourGraph()) : []; },
+      other: (w, get) => { const k = get('reg'); return REG_D[k] != null && p.kinds.includes(k) ? { key: 'reg', f: (t) => regFn(k)(t).y, say: yourGraph() } : null; },
       keyOf: peakKeys }) : null),
   };
 

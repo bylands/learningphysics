@@ -103,7 +103,7 @@
   function open(exercise) {
     finish(); // the student moves on
     ex = exercise;
-    st = { tries: 0, hints: 0, solved: false, revealed: false, checked: false, open: [] };
+    st = { tries: 0, hints: 0, solved: false, revealed: false, checked: false, watched: false, open: [] };
     const hash = `#${ex.id}`;
     if (location.hash !== hash) history.replaceState(null, '', hash);
     render();
@@ -181,7 +181,7 @@
     const w = ex.watch ? ex.watch() : null;
     $('#figure').innerHTML = ex.figure({ task: true }) + (w ? '<div class="pw-host ifw-host"></div>' : '');
     $('#fields').innerHTML = ex.fields.map(fieldHtml).join('');
-    if (w) player = mountWatch($('#figure .pw-host'), w, { locked: () => !(st && (st.solved || st.revealed)), marks: () => w.marks(answerOf) });
+    if (w) player = mountWatch($('#figure .pw-host'), w, { locked: () => !(st && (st.solved || st.revealed || st.watched)), check: checkByPlay, marks: () => w.marks(answerOf) });
     $('#hint-list').innerHTML = '';
     $('#hints').hidden = true;
     $('#solution').hidden = true;
@@ -253,8 +253,9 @@
     if (r === null) { showStatus('fill'); return; }
     if (r === 'next') { showStatus('next'); const row = $('#fields').querySelector('.field:not([hidden]):last-child'); if (row) row.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); return; }
     st.tries++;
+    st.checkedAs = answers();
     if (r) {
-      if (!st.solved && !st.revealed) {
+      if (!st.solved && !st.revealed && !st.watched) {
         const s = stored('itf-score', { solved: 0, clean: 0 });
         s.solved++;
         if (st.tries === 1 && st.hints === 0) s.clean++;
@@ -269,6 +270,16 @@
     } else showStatus('bad');
     updateButtons();
     if (player) player.refresh(); // solved: the second source can be switched on
+  }
+  // the answers as entered, to tell whether they have been checked as they are
+  const answers = () => JSON.stringify(ex.fields.map(valueOf));
+  // ▶ or the switch pressed before the run is unlocked (play.js): a check like the button (the same
+  // answers checked again are no new try); once checked, right or wrong, the run can be watched,
+  // a wrong answer marked in it. Watched before it was solved, it no longer counts for the score.
+  function checkByPlay() {
+    if (!ex || !st || st.solved || st.revealed) return;
+    if (st.checkedAs !== answers() || !st.status) check({ preventDefault() {} });
+    if (st.status === 'ok' || st.status === 'bad') { st.watched = true; if (player) player.refresh(); }
   }
 
   function showHints() {
@@ -323,7 +334,8 @@
   // a number in words: 5·10⁸ (one digit)
   const about = (x) => IW.num(IW.sig(x, 1));
 
-  // The player of the run w in host. o: { locked(), marks() → the student's answers (w.marks) }.
+  // The player of the run w in host. o: { locked(), check() (▶ or the switch while locked: the app
+  // checks the answer, play.js), marks() → the student's answers (w.marks) }.
   function mountWatch(host, w, o = {}) {
     let shown = null, scene = window.Figures.watchScene(w);
     const L = IW.L, fieldOf = (key) => ex && ex.fields.find((f) => f.key === key);
@@ -348,6 +360,7 @@
     return window.Play.create(host, {
       t0: -0.2 * t1, t1, seconds: SECONDS,
       locked: o.locked,
+      check: o.check,
       render(el, s) {
         const lock = !!(o.locked && o.locked()), key = `${lock}|${IW.getLang()}`;
         if (key !== shown) {
@@ -360,7 +373,7 @@
         scene.paint(el.querySelector('.ifw-canvas'), t);
         el.querySelector('.ifw-dyn').innerHTML = scene.over(t);
         const side = el.querySelector('.ifw-side');
-        if (lock) { side.innerHTML = `<p class="note ifw-wait">${L('The pattern on the screen appears here once you have solved the exercise or looked at the solution.', 'Das Muster auf dem Schirm erscheint hier, sobald du die Aufgabe gelöst oder die Lösung angeschaut hast.')}</p>`; return; }
+        if (lock) { side.innerHTML = `<p class="note ifw-wait">${o.check ? L('The pattern on the screen appears here once your answer is checked: ▶ checks it too.', 'Das Muster auf dem Schirm erscheint hier, sobald deine Antwort geprüft ist: ▶ prüft sie auch.') : L('The pattern on the screen appears here once you have solved the exercise or looked at the solution.', 'Das Muster auf dem Schirm erscheint hier, sobald du die Aufgabe gelöst oder die Lösung angeschaut hast.')}</p>`; return; }
         const marks = (o.marks ? o.marks() : []).map((m) => ({ ...m, ok: okOf(m) })).filter((m) => s.after && t >= scene.full(m.y) - 1e-9);
         const keys = w.keys().filter((k) => s.after && t >= scene.full(k.y) - 1e-9);
         const rows = [...keys.map((k) => `<li class="keyrow"><span class="kmark" aria-hidden="true"></span>${k.say}</li>`), ...marks.map((m) => `<li class="pred ${m.ok ? 'ok' : 'bad'}">${m.ok ? '✓' : '✗'} ${m.say}</li>`)];
@@ -368,7 +381,8 @@
       },
       texts: () => ({
         switch: sound ? L('The loudspeaker S₂: switch it on', 'Der Lautsprecher S₂: einschalten') : w.kind === 'grating' ? L('The grating: light all its slits', 'Das Gitter: alle Spalte beleuchten') : L('The slit S₂: open it', 'Der Spalt S₂: öffnen'),
-        locked: L(`Check your answer first: you can switch on ${what} once you have solved the exercise or looked at the solution.`, `Prüfe zuerst deine Antwort: Du kannst ${what} einschalten, sobald du die Aufgabe gelöst oder die Lösung angeschaut hast.`),
+        locked: o.check ? L(`Give your answer first: ▶ or switching on ${what} checks it, and then you can watch.`, `Gib zuerst deine Antwort ein: ▶ oder das Einschalten von ${what} prüft sie, dann kannst du zuschauen.`)
+          : L(`Check your answer first: you can switch on ${what} once you have solved the exercise or looked at the solution.`, `Prüfe zuerst deine Antwort: Du kannst ${what} einschalten, sobald du die Aufgabe gelöst oder die Lösung angeschaut hast.`),
         ready: sound ? L('Click the loudspeaker S₂ to switch it on, and watch where the sound gets loud and where quiet.', 'Klicke auf den Lautsprecher S₂, um ihn einzuschalten, und schau zu, wo der Schall laut und wo er leise wird.')
           : w.kind === 'grating' ? L('Click the grating to widen the beam onto all its slits, and watch the maxima form.', 'Klicke auf das Gitter, um den Strahl auf alle Spalte aufzuweiten, und schau zu, wie die Maxima entstehen.')
             : L('Click the slit S₂ to open it, and watch the fringes form on the screen.', 'Klicke auf den Spalt S₂, um ihn zu öffnen, und schau zu, wie die Streifen auf dem Schirm entstehen.'),

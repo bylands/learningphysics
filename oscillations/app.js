@@ -118,7 +118,7 @@
   function open(exercise) {
     finish(); // the student moves on
     ex = exercise;
-    st = { tries: 0, hints: 0, solved: false, revealed: false, checked: false, open: [] };
+    st = { tries: 0, hints: 0, solved: false, revealed: false, checked: false, watched: false, open: [] };
     const hash = `#${ex.id}`;
     if (location.hash !== hash) history.replaceState(null, '', hash);
     render();
@@ -184,7 +184,7 @@
     stars.setAttribute('role', 'img');
     $('#title').append(' ', stars);
     $('#prompt').innerHTML = ex.text + (ex.fields.some((f) => f.sci) ? `<p class="note">${ui().sci}</p>` : '');
-    // the run to watch once solved, below the figure (the pointer: in its place)
+    // the run to watch once checked (▶ checks too), below the figure (the pointer: in its place)
     if (player) player.stop();
     player = null;
     const w = ex.watch ? ex.watch() : null;
@@ -192,8 +192,9 @@
     $('#fields').innerHTML = ex.fields.map(fieldHtml).join('');
     if (w) {
       player = mountWatch($('#figure .pw-host'), w, {
-        locked: () => !(st && (st.solved || st.revealed)),
+        locked: () => !(st && (st.solved || st.revealed || st.watched)), check: checkByPlay,
         marks: () => w.marks(answerOf),
+        other: () => w.other(answerOf),
       });
     }
     $('#hint-list').innerHTML = '';
@@ -264,8 +265,9 @@
     if (r === null) { showStatus('fill'); return; }
     if (r === 'next') { showStatus('next'); const row = $('#fields').querySelector('.field:not([hidden]):last-child'); if (row) row.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); return; }
     st.tries++;
+    st.checkedAs = answers();
     if (r) {
-      if (!st.solved && !st.revealed) {
+      if (!st.solved && !st.revealed && !st.watched) {
         const s = stored('osc-score', { solved: 0, clean: 0 });
         s.solved++;
         if (st.tries === 1 && st.hints === 0) s.clean++;
@@ -280,6 +282,16 @@
     } else showStatus('bad');
     updateButtons();
     if (player) player.refresh(); // solved: the body can be let go
+  }
+  // the answers as entered, to tell whether they have been checked as they are
+  const answers = () => JSON.stringify(ex.fields.map(valueOf));
+  // ▶ or the switch pressed before the run is unlocked (play.js): a check like the button (the same
+  // answers checked again are no new try); once checked, right or wrong, the run can be watched,
+  // a wrong answer marked in it. Watched before it was solved, it no longer counts for the score.
+  function checkByPlay() {
+    if (!ex || !st || st.solved || st.revealed) return;
+    if (st.checkedAs !== answers() || !st.status) check({ preventDefault() {} });
+    if (st.status === 'ok' || st.status === 'bad') { st.watched = true; if (player) player.refresh(); }
   }
 
   function showHints() {
@@ -316,8 +328,9 @@
   }
 
   // ---------------------------------------------------------------- predict, then watch
-  // Once an exercise with a run (oscWatch in scenarios.js) is solved or its solution shown (and in
-  // the last frame of three worked examples), the student lets the body go (or sets the pointer
+  // Once the answer of an exercise with a run (oscWatch in scenarios.js) is checked, right or wrong
+  // (▶ or the body checks it, checkByPlay), or its solution shown (and in the last frame of three
+  // worked examples), the student lets the body go (or sets the pointer
   // turning) and watches it move: the player is in watch.js (also used by the standalone pages
   // turning-pointer/ and fastest-strongest/).
   // the student's answer of field key: a number (NaN if none) or the option chosen (null)

@@ -146,7 +146,7 @@
   function open(exercise) {
     finish(); // the student moves on
     ex = exercise;
-    st = { tries: 0, hints: 0, solved: false, revealed: false, checked: false };
+    st = { tries: 0, hints: 0, solved: false, revealed: false, checked: false, watched: false };
     const hash = `#${ex.id}`;
     if (location.hash !== hash) history.replaceState(null, '', hash);
     render();
@@ -192,8 +192,9 @@
     $('#figure').innerHTML = !w ? ex.figure() : w.keep ? `${ex.figure()}<div class="pw-host capw-host"></div>` : '<div class="pw-host capw-host"></div>';
     if (w) {
       player = mountWatch($('#figure .pw-host'), w, {
-        locked: () => !(st && (st.solved || st.revealed)),
+        locked: () => !(st && (st.solved || st.revealed || st.watched)), check: checkByPlay,
         marks: () => w.marks(answerOf),
+        other: () => w.other(answerOf),
       });
     }
     $('#fields').innerHTML = ex.fields.map(fieldHtml).join('');
@@ -256,8 +257,9 @@
     st.checked = true;
     if (r === null) { showStatus('fill'); return; }
     st.tries++;
+    st.checkedAs = answers();
     if (r) {
-      if (!st.solved && !st.revealed) {
+      if (!st.solved && !st.revealed && !st.watched) {
         const s = stored('cap-score', { solved: 0, clean: 0 });
         s.solved++;
         if (st.tries === 1 && st.hints === 0) s.clean++;
@@ -272,6 +274,16 @@
     } else showStatus('bad');
     updateButtons();
     if (player) player.refresh(); // solved: the switch unlocks
+  }
+  // the answers as entered, to tell whether they have been checked as they are
+  const answers = () => JSON.stringify(ex.fields.map(valueOf));
+  // ▶ or the switch pressed before the run is unlocked (play.js): a check like the button (the same
+  // answers checked again are no new try); once checked, right or wrong, the run can be watched,
+  // a wrong answer marked in it. Watched before it was solved, it no longer counts for the score.
+  function checkByPlay() {
+    if (!ex || !st || st.solved || st.revealed) return;
+    if (st.checkedAs !== answers() || !st.status) check({ preventDefault() {} });
+    if (st.status === 'ok' || st.status === 'bad') { st.watched = true; if (player) player.refresh(); }
   }
 
   function showHints() {
@@ -306,14 +318,16 @@
   }
 
   // ---------------------------------------------------------------- predict, then watch
-  // Once an exercise on charging or discharging is solved or its solution shown (and in the last
+  // Once the answer of an exercise on charging or discharging is checked or its solution shown (and in the last
   // frame of the worked examples on it), the student closes the switch S in the circuit and
   // watches the run (play.js, the model is rcWatch in generator.js): the voltages U_C and U_R and
   // the current I drawn up to the time of the slider on a small graph, with a dot on each curve
   // and the values read off beside it. The moments that mean something in the exercise (the jump
   // right after closing, the time constant, the half-life, the moment asked for: keys in
   // rcWatch) are marked on the curves and named below the graph once the run has reached them;
-  // the student's answers are listed there too (✓ on the curve, ✗ off it).
+  // the student's answers are listed there too (✓ on the curve, ✗ off it), and a wrong graph chosen
+  // is drawn dotted in the same diagram. The answer is checked first: ▶ or the switch checks it
+  // (checkByPlay), and right or wrong the run can then be watched.
   let player = null, tutorPlayer = null;
   const SER = { UC: 's1', UR: 's2', I: 's0' }; // the colours of the curves
   const nf = (x, d) => (Math.abs(x) < 0.5 * Math.pow(10, -d) ? 0 : x).toFixed(d).replace('-', '−');
@@ -349,8 +363,9 @@
   }
 
   // The graph at time t: the voltages (and below, the current) up to t, the line of t with a dot
-  // on each curve, the first charging grey (R or C changed) and the key moments reached.
-  function graph(w, t, keys) {
+  // on each curve, the first charging grey (R or C changed), a wrong graph chosen (other: { q, f },
+  // dashed) and the key moments reached.
+  function graph(w, t, keys, other) {
     const W = 320, ml = 46, mr = 16, T = w.T, t0 = -0.15 * T, hasI = w.I0 != null;
     const panels = [{ id: 'V', qs: w.charge ? ['UC', 'UR'] : ['UC'], top: 28, h: hasI ? 96 : 116 }];
     if (hasI) panels.push({ id: 'I', qs: ['I'], top: 28 + 96 + 36, h: 66 });
@@ -379,6 +394,11 @@
         pn.qs.filter((q) => q !== 'UR').forEach((q) => {
           svg += `<path class="ghost" d="M${f1(X(t0))} ${f1(Y(w.ghostAt(-1)[q]))}L${f1(X(0))} ${f1(Y(w.ghostAt(-1)[q]))}${ts.map((x) => `L${f1(X(x))} ${f1(Y(w.ghostAt(x)[q]))}`).join('')}"/>`;
         });
+      }
+      // a wrong graph chosen, under the motion, from the switching to t
+      if (other && pn.qs.includes(other.q) && until >= 0) {
+        const at = (x) => `${f1(X(x))} ${f1(Y(other.f(x)))}`;
+        svg += `<path class="other" d="M${[...ts.filter((x) => x <= until), until].map(at).join('L')}"/><circle class="odot" cx="${f1(X(until))}" cy="${f1(Y(other.f(until)))}" r="3.5"/>`;
       }
       pn.qs.forEach((q) => {
         const v0 = w.at(-1)[q];
@@ -411,7 +431,8 @@
     return `${svg}</svg>`;
   }
 
-  // The player of the run w in host. o: { locked(), marks() → the student's answers (rcWatch) }.
+  // The player of the run w in host. o: { locked(), check() (▶ or the switch while locked: the app
+  // checks the answer, play.js), marks() → the student's answers, other() → a wrong graph (rcWatch) }.
   function mountWatch(host, w, o = {}) {
     let shown = null;
     const L = Lang.L, fieldOf = (key) => ex && ex.fields.find((f) => f.key === key);
@@ -420,6 +441,7 @@
     return window.Play.create(host, {
       t0: -0.15 * w.T, t1: w.T, seconds: 3,
       locked: o.locked,
+      check: o.check,
       render(scene, s) {
         const lock = !!(o.locked && o.locked()), key = `${s.after}|${lock}|${Lang.get()}`;
         if (key !== shown) {
@@ -431,17 +453,19 @@
           markScrollable();
         }
         const side = scene.querySelector('.capw-side');
-        if (lock) { side.innerHTML = `<p class="note capw-wait">${L('The graph of the voltages and the current appears here once you have solved the exercise or looked at the solution.', 'Der Graph der Spannungen und des Stroms erscheint hier, sobald du die Aufgabe gelöst oder die Lösung angeschaut hast.')}</p>`; return; }
+        if (lock) { side.innerHTML = `<p class="note capw-wait">${o.check ? L('The graph of the voltages and the current appears here once your answer is checked: ▶ or the switch checks it too.', 'Der Graph der Spannungen und des Stroms erscheint hier, sobald deine Antwort geprüft ist: ▶ oder der Schalter prüft sie auch.') : L('The graph of the voltages and the current appears here once you have solved the exercise or looked at the solution.', 'Der Graph der Spannungen und des Stroms erscheint hier, sobald du die Aufgabe gelöst oder die Lösung angeschaut hast.')}</p>`; return; }
         const at = w.at(Math.min(s.t, w.T));
         const marks = (o.marks ? o.marks() : []).map((m) => ({ ...m, ok: okOf(m) })).filter((m) => s.after && s.t >= m.t - 1e-9);
         const keys = w.keys().filter((k) => s.after && s.t >= k.t - 1e-9);
+        const other = s.after && o.other ? o.other() : null;
         const row = (q, label) => `<li><span class="key ${SER[q]}" aria-hidden="true"></span>${label} = ${valH(w, q, at[q])}</li>`;
         const rows = [w.charge ? row('UC', vH('C')) + row('UR', vH('R')) : row('UC', `${vH('C')} = ${vH('R')}`)];
         if (w.I0 != null) rows.push(row('I', '<i>I</i>'));
         if (w.ghostAt) rows.push(`<li class="ghost-note"><span class="key ghost" aria-hidden="true"></span>${L('the first charging', 'das erste Laden')}</li>`);
+        if (other) rows.push(`<li class="otherrow"><span class="key other" aria-hidden="true"></span>${L('dotted', 'punktiert')}: ${other.say}</li>`);
         keys.forEach((k) => rows.push(`<li class="keyrow"><span class="kmark" aria-hidden="true"></span>${k.say}</li>`));
         marks.forEach((m) => rows.push(`<li class="pred ${m.ok ? 'ok' : 'bad'}">${m.ok ? '✓' : '✗'} ${m.say}</li>`));
-        side.innerHTML = graph(w, s.t, keys) + `<ul class="capw-read">${rows.join('')}</ul>`;
+        side.innerHTML = graph(w, s.t, keys, other) + `<ul class="capw-read">${rows.join('')}</ul>`;
       },
       texts: () => ({
         switch: L('Switch S: close', 'Schalter S: schliessen'),

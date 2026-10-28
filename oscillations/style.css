@@ -110,6 +110,8 @@ svg.osw-plot { display: block; width: 100%; height: auto; }
 .osw-plot .wcurve { fill: none; stroke-width: 2; stroke-linejoin: round; }
 .osw-plot .dot { stroke: var(--card); stroke-width: 2; }
 .osw-plot .kpt { fill: var(--card); stroke-width: 2; }
+.osw-plot .wother { fill: none; stroke: var(--ink); stroke-width: 2.2; stroke-dasharray: 0.1 4; stroke-linecap: round; stroke-linejoin: round; }
+.osw-plot .odot { fill: var(--ink); stroke: var(--card); stroke-width: 1.5; }
 .osw-plot .kchain { fill: none; stroke: var(--muted); stroke-width: 1.2; stroke-dasharray: 4 3; }
 .osw-plot text.klab { font: 600 11px system-ui, sans-serif; stroke: var(--card); stroke-width: 3; paint-order: stroke; }
 .osw-plot .q-y { stroke: var(--q-y); } .osw-plot .q-v { stroke: var(--q-v); } .osw-plot .q-a { stroke: var(--q-a); }
@@ -122,6 +124,8 @@ svg.osw-plot { display: block; width: 100%; height: auto; }
 .osw-read .keyrow { font-size: 0.85rem; color: var(--muted); }
 .osw-read .kmark { display: inline-block; width: 7px; height: 7px; border: 2px solid var(--muted); border-radius: 50%; vertical-align: -1px; margin-right: 6px; }
 .osw-read .kdash { display: inline-block; width: 14px; height: 0; border-top: 2px dashed var(--muted); vertical-align: middle; margin-right: 6px; }
+.osw-read .kother { display: inline-block; width: 14px; height: 0; border-top: 3px dotted var(--ink); vertical-align: middle; margin-right: 6px; }
+.osw-read .otherrow { font-size: 0.85rem; }
 .osw-read .pred { font-size: 0.85rem; }
 .osw-read .pred.ok { color: var(--ok); } .osw-read .pred.bad { color: var(--bad); }
 .osw-scale { margin: 4px 0 0; font-size: 0.85rem; }

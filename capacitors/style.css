@@ -142,6 +142,10 @@ svg.capw-plot { display: block; width: 100%; height: auto; }
 .capw-plot .it { font-style: italic; }
 .capw-plot .sub { font-size: 9px; }
 .capw-plot .curve { fill: none; stroke-width: 2; stroke-linejoin: round; }
+.capw-plot .other { fill: none; stroke: var(--ink); stroke-width: 2.2; stroke-dasharray: 0.1 4; stroke-linecap: round; stroke-linejoin: round; }
+.capw-plot .odot { fill: var(--ink); stroke: var(--card); stroke-width: 1.5; }
+.capw-read .key.other { height: 0; border-top: 3px dotted var(--ink); border-radius: 0; background: none; }
+.capw-read .otherrow { font-size: 0.85rem; }
 .capw-plot .ghost { fill: none; stroke: var(--ghost); stroke-width: 1.6; stroke-dasharray: 5 4; }
 .capw-plot .dot { stroke: var(--card); stroke-width: 2; }
 .capw-plot .kpt { fill: var(--card); stroke-width: 2; }
