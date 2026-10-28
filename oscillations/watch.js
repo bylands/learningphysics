@@ -141,7 +141,10 @@
     if (o.hoverAt != null) {
       const x = X(o.hoverAt), lines = readLines(w, o.hoverAt), at = w.at(o.hoverAt);
       svg += `<g class="wread" aria-hidden="true"><line class="hover" x1="${f1(x)}" x2="${f1(x)}" y1="${panels[0].top - 4}" y2="${bottom + 4}"/>`;
-      panels.forEach((pn) => { if (at[pn.q] != null) svg += `<circle class="rdot q-${pn.q}" cx="${f1(x)}" cy="${f1(pn.Y(inGraph(w, pn.q, at[pn.q])))}" r="3.5"/>`; });
+      panels.forEach((pn) => {
+        const v = at[pn.q] == null ? null : inGraph(w, pn.q, at[pn.q]);
+        if (v != null && pn.shown(v)) svg += `<circle class="rdot q-${pn.q}" cx="${f1(x)}" cy="${f1(pn.Y(v))}" r="3.5"/>`;
+      });
       const lineH = 14, bw = 12 + 6.4 * Math.max(...lines.map((l) => (l.q ? `${l.name} = ${l.value}` : l.text).length)), bh = 8 + lineH * lines.length;
       const bx = x + 8 + bw <= W - 2 ? x + 8 : Math.max(2, x - 8 - bw), by = panels[0].top - 2;
       svg += `<rect class="rbox" x="${f1(bx)}" y="${by}" width="${f1(bw)}" height="${bh}" rx="4"/>`;
