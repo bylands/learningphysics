@@ -28,7 +28,8 @@
 //                     and no arrow yet, they place one); pressed again, the arrow lies in the plane
 //                     again. outInButtons: false leaves them out
 //     gap             arrows in the plane start this far (svg units) from their tail, so that they
-//                     clear what is drawn there (a charge, a wire seen end-on); default 0
+//                     clear what is drawn there (a charge, a wire seen end-on); default 0. Or
+//                     gap(a): for each arrow (by its kind and anchor), e.g. 0 for a net force
 //     aside           [dx, dy]: where ⊙ and ⊗ are drawn, from the tail (default [0, 0]: on it), e.g.
 //                     beside a charge rather than over it
 //     max             at most this many arrows of a kind on an anchor: placing one more there
@@ -260,10 +261,10 @@
     const dirsOf = (a) => kindOf(a.kind).dirs || o.dirs || dirs(8);
     const lenOf = (a) => (kindOf(a.kind).len != null ? kindOf(a.kind).len : o.len != null ? o.len : LEN);
     const head = { len: 11, notch: 8, barb: 4.2, ...(o.head || {}) };
-    const skip = o.gap || 0, aside = (a) => (typeof o.aside === 'function' ? o.aside(a) : o.aside) || [0, 0];
-    // where an arrow in direction d from the tail at starts: o.gap further on (⊙ ⊗: aside)
-    const startAt = (at, d) => { if (!planar(d)) return at; const u = vec(d); return [at[0] + skip * u[0], at[1] + skip * u[1]]; };
-    const baseOf = (a) => { if (planar(a.dir)) return startAt(a.at, a.dir); const s = aside(a); return [a.at[0] + s[0], a.at[1] + s[1]]; };
+    const skip = (a) => (typeof o.gap === 'function' ? o.gap(a) : o.gap) || 0, aside = (a) => (typeof o.aside === 'function' ? o.aside(a) : o.aside) || [0, 0];
+    // where arrow a in direction d from the tail at starts: its gap further on (⊙ ⊗: aside)
+    const startAt = (at, d, a) => { if (!planar(d)) return at; const u = vec(d), g = skip(a); return [at[0] + g * u[0], at[1] + g * u[1]]; };
+    const baseOf = (a) => { if (planar(a.dir)) return startAt(a.at, a.dir, a); const s = aside(a); return [a.at[0] + s[0], a.at[1] + s[1]]; };
     // with one kind and one anchor, the buttons ⊙ ⊗ place the arrow if there is none yet
     const lone = () => o.kinds.length === 1 && o.anchors.length === 1;
     const vb = svg.viewBox && svg.viewBox.baseVal && svg.viewBox.baseVal.width ? svg.viewBox.baseVal : null;
@@ -423,7 +424,7 @@
       const at = o.tail ? o.tail(kind, an, pt) : centre(an);
       const a = { id: `a${++seq}`, kind, anchor: an.id, at: [...at], dir: nearest(dirsOf({ kind }), o.start != null ? o.start : 45) };
       const L = lenOf(a);
-      a.len = fit(typeof L === 'number' ? L : L.init != null ? L.init : (L.lo + L.hi) / 2, startAt(a.at, a.dir), a.dir, L, box);
+      a.len = fit(typeof L === 'number' ? L : L.init != null ? L.init : (L.lo + L.hi) / 2, startAt(a.at, a.dir, a), a.dir, L, box);
       list.push(a);
       change(a);
       select(a.id, focus);
@@ -448,7 +449,7 @@
     function set(a, d, len) {
       const L = lenOf(a);
       a.dir = d;
-      if (planar(d)) { a.len = fit(len, startAt(a.at, d), d, L, box); delete a.keep; }
+      if (planar(d)) { a.len = fit(len, startAt(a.at, d, a), d, L, box); delete a.keep; }
       change(a);
     }
     // ⊙, ⊗ and the plane again (its last direction)
@@ -505,7 +506,7 @@
       }
       if (best) return best;
       for (const a of list) {
-        if (o.outIn && a.id === sel && d(a.at) <= Math.max(8, skip)) return { id: a.id, part: 'tail' };
+        if (o.outIn && a.id === sel && d(a.at) <= Math.max(8, skip(a))) return { id: a.id, part: 'tail' };
         if (!planar(a.dir)) continue;
         const s = toSegment(p, baseOf(a), tipOf(a)) - (a.id === sel ? 2 : 0); // where shafts cross: the selected one
         if (s <= 0.6 * r && s < score) { score = s; best = { id: a.id, part: 'shaft' }; }
@@ -543,9 +544,9 @@
       if (drag.part === 'tip' || (drag.part === 'tail' && !planar(a.dir))) {
         // the tip follows the pointer: the nearest direction allowed, the length snapped
         const dx = p[0] - a.at[0], dy = p[1] - a.at[1];
-        if (Math.hypot(dx, dy) < Math.max(6, skip / 2)) return;
-        const d = nearest(dirsOf(a), angleOf(dx, dy)), len = Math.hypot(dx, dy) - skip;
-        if (d !== a.dir || fit(len, startAt(a.at, d), d, lenOf(a), box) !== a.len) set(a, d, len);
+        if (Math.hypot(dx, dy) < Math.max(6, skip(a) / 2)) return;
+        const d = nearest(dirsOf(a), angleOf(dx, dy)), len = Math.hypot(dx, dy) - skip(a);
+        if (d !== a.dir || fit(len, startAt(a.at, d, a), d, lenOf(a), box) !== a.len) set(a, d, len);
         drag.part = 'tip';
         return;
       }
@@ -571,7 +572,7 @@
         if (an && an.id !== a.anchor) {
           a.anchor = an.id;
           a.at = [...(o.tail ? o.tail(a.kind, an, p) : centre(an))];
-          if (planar(a.dir)) a.len = fit(a.len, startAt(a.at, a.dir), a.dir, lenOf(a), box);
+          if (planar(a.dir)) a.len = fit(a.len, startAt(a.at, a.dir, a), a.dir, lenOf(a), box);
           change(a);
           return;
         }

@@ -13,12 +13,14 @@
 //   P.pivot(c), P.support(c), P.mass(a, len, label), P.com(c, label)
 //   P.charge(c, sign, label, cls, off)  a point charge: ⊕ (sign 1), ⊖ (−1) or ? (0), labelled; with
 //                                    cls 'hl' in a ring (the charge the question is about)
+//   Draw.OUT                         px from the middle of a charge in a ring to where the forces on it
+//                                    start, clear of the ring (but the net force, from the middle)
 //   P.svg()                          the picture, cropped, in a <div class="fig">
 (function (root) {
   'use strict';
 
   const f = (x) => (Math.round(x * 10) / 10).toString();
-  const HEAD = 11, NOTCH = 8, BARB = 4.2;
+  const HEAD = 11, NOTCH = 8, BARB = 4.2, OUT = 24; // the ring: radius 16
 
   class Pic {
     constructor(scale, label) {
@@ -194,6 +196,6 @@
     }
   }
 
-  root.Draw = { Pic };
+  root.Draw = { Pic, OUT };
   if (typeof module !== 'undefined') module.exports = root.Draw;
 })(typeof window !== 'undefined' ? window : globalThis);

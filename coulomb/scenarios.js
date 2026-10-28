@@ -13,7 +13,7 @@
 (function (root) {
   'use strict';
 
-  const CL = root.CL, { Pic } = root.Draw;
+  const CL = root.CL, { Pic, OUT } = root.Draw;
   const { L, K, force, add, len, unit, mul, sub, dirOf, dirName, ARROW, DIRS, DIRVEC, q, tq, qs, tnum, sig, inUnit, forceUnit, pick, sign, shuffle } = CL;
 
   // ---------------------------------------------------------------- helpers
@@ -45,7 +45,8 @@
 
   // A drawing of point charges: pts [{ c (m), q (sign), lab, cls }], scale px/m, dims [[a, b, label,
   // off]], forces { key: { at, F (N), lab, cls } } of which those in view.show are drawn, their
-  // lengths in proportion (the largest 85 px).
+  // lengths in proportion (the largest 85 px). The forces on a charge in a ring (but the net force)
+  // start outside the ring: those starting near its middle (or stacked below it) move OUT px on.
   // With view.draw (the figure the student draws the forces on, see draw below): no forces, room
   // around the points view.draw.room for the arrows drawn, and the scale (px per unit) noted in
   // view.draw.s.
@@ -56,7 +57,7 @@
     o.pts.forEach((pt) => P.charge(pt.c, pt.q, pt.lab, pt.cls || '', pt.off));
     if (view.draw) {
       view.draw.s = o.scale;
-      (view.draw.room || []).forEach((c) => { const [x, y] = P.px(c), R = view.draw.R || 125; P.see(x - R, y - R); P.see(x + R, y + R); });
+      (view.draw.room || []).forEach((c) => { const [x, y] = P.px(c), R = view.draw.R || 136; P.see(x - R, y - R); P.see(x + R, y + R); });
       if (o.after) o.after(P, {});
       return P.svg();
     }
@@ -64,13 +65,16 @@
     // arrow the same length in every frame
     const all = Object.entries(o.forces || {});
     const big = Math.max(...all.map(([, f]) => len(f.F)), 1e-300);
+    const rings = o.pts.filter((pt) => /\bhl\b/.test(pt.cls || '') && pt.q).map((pt) => P.px(pt.c));
+    const ringed = (f) => !/\bk-net\b/.test(f.cls || '') && rings.some((c) => { const p = P.px(f.at); return Math.hypot(p[0] - c[0], p[1] - c[1]) < 2 * OUT; });
     all.forEach(([k, f]) => {
       const hidden = !(view.show && view.show.has(k)) ? ' hidden' : '';
       const L0 = len(f.F);
       if (L0 < 1e-12 * big) return;
       const u = unit(f.F), l = Math.max(16, (o.arrow || 85) * (L0 / big));
       const off = [u[0] > 0.35 ? 8 : u[0] < -0.35 ? -8 : 9, u[1] > 0.35 ? -8 : u[1] < -0.35 ? 14 : 0];
-      P.arrow(f.at, u, l, `force ${f.cls || ''}${view.hl && view.hl.has(k) ? ' hl' : ''}${hidden}`, f.lab, f.off || off);
+      const at = ringed(f) ? add(f.at, mul(u, OUT / o.scale)) : f.at;
+      P.arrow(at, u, l, `force ${f.cls || ''}${view.hl && view.hl.has(k) ? ' hl' : ''}${hidden}`, f.lab, f.off || off);
     });
     if (o.after) o.after(P, view);
     return P.svg();
@@ -1049,7 +1053,7 @@
   // In practice and in the tutor, the student draws the forces on a charge instead of choosing
   // their directions (arrow.js; the check keeps its four options, see quiz in generator.js):
   //   draw(p, v) → { keys (the direction fields the drawing answers), ask, anchors [{ id, label,
-  //     c (where, as in the figure) }], kinds [{ id, name (in the palette), sub (of the arrow's
+  //     c (where, as in the figure), ring (the charge is in a ring) }], kinds [{ id, name (in the palette), sub (of the arrow's
   //     label F: '' none, '@' the anchor's name, null numbered as drawn), cls, max, dirs }], dirs
   //     (degrees; default the eight of the compass), tails { kind: [dx, dy] } (px from the anchor:
   //     forces along one line stacked beside it), target [{ kind, anchor, F (the force, y up), net,
@@ -1074,7 +1078,7 @@
   pairDir.draw = (p, v) => ({
     keys: ['dB', 'dA'],
     ask: L('Draw the force on B and the force on A.', 'Zeichne die Kraft auf B und die Kraft auf A.'),
-    anchors: [{ id: 'A', label: 'A', c: p.a }, { id: 'B', label: 'B', c: p.b }],
+    anchors: [{ id: 'A', label: 'A', c: p.a }, { id: 'B', label: 'B', c: p.b, ring: true }],
     kinds: [{ id: 'F', name: L('Force', 'Kraft'), sub: '@', cls: 'k-1', max: 1 }],
     target: [{ kind: 'F', anchor: 'B', F: v.fb, name: L('the force on B', 'die Kraft auf B') }, { kind: 'F', anchor: 'A', F: v.fa, name: L('the force on A', 'die Kraft auf A') }],
     say(pr) {
@@ -1098,7 +1102,7 @@
     return {
       keys: ['dA', 'dB', 'dir'],
       ask: L('Draw the force of A and the force of B on the charge in the ring, then the net force. Draw the larger force longer.', 'Zeichne die Kraft von A und die Kraft von B auf die Ladung im Ring, dann die resultierende Kraft. Zeichne die grössere Kraft länger.'),
-      anchors: [{ id: 't', label: ON_RING(), c: [0, 0] }],
+      anchors: [{ id: 't', label: ON_RING(), c: [0, 0], ring: true }],
       kinds: [of('A'), of('B'), { ...NET(), dirs: [0, 180] }],
       tails: { FA: [0, 15], FB: [0, 30] },
       target: [{ kind: 'FA', anchor: 't', F: [v.Fa, 0], name: L('the force of A', 'die Kraft von A') }, { kind: 'FB', anchor: 't', F: [v.Fb, 0], name: L('the force of B', 'die Kraft von B') },
@@ -1137,7 +1141,7 @@
     return {
       keys: ['d'],
       ask: L(`Draw the force of each of the other ${word(n)} charges on the charge in the ring, then the net force. Draw equal forces equally long, a smaller one shorter.`, `Zeichne die Kraft jeder der anderen ${word(n)} Ladungen auf die Ladung im Ring, dann die resultierende Kraft. Zeichne gleich grosse Kräfte gleich lang, eine kleinere kürzer.`),
-      anchors: [{ id: 't', label: ON_RING(), c: p.pts[0].c }],
+      anchors: [{ id: 't', label: ON_RING(), c: p.pts[0].c, ring: true }],
       kinds: [...v.Fs.map((F, i) => of(i)), NET()],
       dirs: p.shape === 'tri' ? DEG12 : DEG8,
       none: true, // the forces may cancel
@@ -1167,7 +1171,7 @@
     return {
       keys: ['dir'],
       ask: L('Draw the force of charge A and the force of charge B on the charge in the corner, then the net force. Draw the larger force longer.', 'Zeichne die Kraft von Ladung A und die Kraft von Ladung B auf die Ladung in der Ecke, dann die resultierende Kraft. Zeichne die grössere Kraft länger.'),
-      anchors: [{ id: 't', label: L('the charge in the corner', 'die Ladung in der Ecke'), c: [0, 0] }],
+      anchors: [{ id: 't', label: L('the charge in the corner', 'die Ladung in der Ecke'), c: [0, 0], ring: true }],
       kinds: [of('A'), of('B'), { ...NET(), dirs: DEG24 }],
       target: [{ kind: 'FA', anchor: 't', F: v.f1, name: L('the force of charge A', 'die Kraft von Ladung A') }, { kind: 'FB', anchor: 't', F: v.f2, name: L('the force of charge B', 'die Kraft von Ladung B') },
         { kind: 'F', anchor: 't', F: v.net, net: true, name: netName() }],
@@ -1206,7 +1210,7 @@
     return {
       keys: ['d'],
       ask: L('Draw the forces of the two outer charges on the moved charge, then the net force. Draw equal forces equally long, a larger one longer.', 'Zeichne die Kräfte der beiden äusseren Ladungen auf die verschobene Ladung, dann die resultierende Kraft. Zeichne gleich grosse Kräfte gleich lang, eine grössere länger.'),
-      anchors: [{ id: 't', label: L('the moved charge', 'die verschobene Ladung'), c: c(v.at) }],
+      anchors: [{ id: 't', label: L('the moved charge', 'die verschobene Ladung'), c: c(v.at), ring: true }],
       kinds: [of('A'), of('B'), NET()],
       dirs: p.across ? DEG24 : DEG8,
       tails: p.across ? {} : { FA: p.vert ? [15, 0] : [0, 15], FB: p.vert ? [15, 0] : [0, 15] },
