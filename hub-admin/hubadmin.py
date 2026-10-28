@@ -14,6 +14,10 @@ cards in its order, shows their tags, and lets visitors filter by tag. This serv
                          when last seen (a visit with a session) and when their sets last changed; totals
                          POST {"action": "create", "id", "user", "first", "last", "school"} |
                               {"action": "update", "id", ...} | {"action": "reset" | "delete", "id"}
+    /admin/api/server    GET  the server's statistics (the superuser only, the Server tab): the machine (load, CPU,
+                         memory, disk, uptime), this service (its uptime, memory, requests since start, the
+                         crossword generator reachable), hub-data's size and the usage (accounts, sets, sheets,
+                         lesson plans, exercises, games running) with the latest activity; see server_stats
     /admin/api/password  POST {"current", "new"}    a teacher's own new password
     /admin/api/account   POST {"user", "first", "last", "school"}  a teacher's own details
     /admin/api/me        GET  the teacher logged in (the crossword generator and the quiz ask it, with the cookie)
@@ -159,12 +163,15 @@ import hmac
 import json
 import math
 import os
+import platform
 import re
 import secrets
+import shutil
 import sys
 import tempfile
 import threading
 import time
+import urllib.error
 import urllib.request
 from html import escape
 from html.parser import HTMLParser
@@ -251,6 +258,8 @@ USER_NAME = re.compile(r"[a-z0-9](?:[a-z0-9._-]{0,38}[a-z0-9])?")
 MAX_TEACHERS = 100
 SEEN_EVERY = 3600  # s: a teacher's last visit (for the statistics) is written at most this often
 ACTIVE_DAYS = 30  # a teacher seen within these days counts as active (the statistics)
+MAX_WALK = 200000  # files: hub-data's size is counted up to this many (the server's statistics)
+RECENT = 10  # the latest events in the server's statistics
 # what an account says of its teacher, with the longest each may be
 PROFILE = {"first": 60, "last": 60, "school": 100}
 MIN_PASSWORD, MAX_PASSWORD = 8, 200
@@ -598,6 +607,132 @@ def write_config(path: Path, config: Dict[str, object], mode: int = 0o644) -> No
         raise
 
 
+# ---------------------------------------------------------------------- the server's statistics
+def _read(path: str) -> str:
+    try:
+        return Path(path).read_text()
+    except OSError:
+        return ""
+
+
+def _mtime(path: Path) -> Optional[float]:
+    try:
+        return path.stat().st_mtime
+    except OSError:
+        return None
+
+
+def _entries(folder: Path, dirs: bool = False):
+    """The entries of a folder (its folders only, with dirs), none if it is not there."""
+    try:
+        with os.scandir(folder) as it:
+            for e in it:
+                if not dirs or e.is_dir(follow_symlinks=False):
+                    yield e
+    except OSError:
+        return
+
+
+def cpu_times() -> Optional[Tuple[int, int]]:
+    """(busy, total) jiffies of all CPUs since boot, from /proc/stat; None elsewhere."""
+    line = _read("/proc/stat").partition("\n")[0].split()
+    if not line or line[0] != "cpu":
+        return None
+    values = [int(v) for v in line[1:9]]
+    idle = values[3] + (values[4] if len(values) > 4 else 0)  # idle and iowait
+    return sum(values) - idle, sum(values)
+
+
+def cpu_percent(sample: float = 0.2) -> Optional[float]:
+    """How busy the CPUs are, in %, over sample seconds."""
+    a = cpu_times()
+    if a is None:
+        return None
+    time.sleep(sample)
+    b = cpu_times()
+    if b is None or b[1] <= a[1]:
+        return None
+    return round(100 * (b[0] - a[0]) / (b[1] - a[1]), 1)
+
+
+def meminfo() -> Dict[str, int]:
+    """/proc/meminfo in bytes ({} elsewhere)."""
+    out = {}
+    for line in _read("/proc/meminfo").splitlines():
+        k, _, v = line.partition(":")
+        parts = v.split()
+        if parts and parts[0].isdigit():
+            out[k] = int(parts[0]) * (1024 if len(parts) > 1 and parts[1] == "kB" else 1)
+    return out
+
+
+def process_memory() -> Optional[int]:
+    """This process's resident memory in bytes (VmRSS), or None."""
+    for line in _read("/proc/self/status").splitlines():
+        if line.startswith("VmRSS:"):
+            parts = line.split()
+            return int(parts[1]) * 1024 if len(parts) > 1 and parts[1].isdigit() else None
+    return None
+
+
+def system_stats(data: Path) -> Dict[str, object]:
+    """The machine: {"os", "cpus", "load": [1, 5, 15 min], "cpu": %, "uptime": s, "memory": {"total",
+    "available", "swap_total", "swap_free"}, "disk": {"total", "used", "free"} of the file system data is on}."""
+    try:
+        load = [round(x, 2) for x in os.getloadavg()]
+    except (OSError, AttributeError):
+        load = None
+    up = _read("/proc/uptime").split()
+    mem = meminfo()
+    try:
+        d = shutil.disk_usage(data if data.exists() else data.parent)
+        disk = {"total": d.total, "used": d.used, "free": d.free}
+    except OSError:
+        disk = None
+    return {"os": f"{platform.system()} {platform.release()}", "cpus": os.cpu_count(), "load": load, "cpu": cpu_percent(),
+            "uptime": int(float(up[0])) if up else None,
+            "memory": {"total": mem["MemTotal"], "available": mem.get("MemAvailable", mem.get("MemFree", 0)),
+                       "swap_total": mem.get("SwapTotal", 0), "swap_free": mem.get("SwapFree", 0)} if "MemTotal" in mem else None,
+            "disk": disk}
+
+
+def folder_size(folder: Path, limit: int = MAX_WALK) -> Tuple[int, int, bool]:
+    """(bytes, files, complete) of a folder and its subfolders, counting at most limit files."""
+    size = files = 0
+    todo = [folder]
+    while todo:
+        for e in _entries(todo.pop()):
+            try:
+                if e.is_dir(follow_symlinks=False):
+                    todo.append(Path(e.path))
+                elif e.is_file(follow_symlinks=False):
+                    size += e.stat(follow_symlinks=False).st_size
+                    files += 1
+                    if files >= limit:
+                        return size, files, False
+            except OSError:
+                pass
+    return size, files, True
+
+
+def data_sizes(data: Path) -> Dict[str, object]:
+    """hub-data's size: in all and per folder (the largest first; the files at the top as "files")."""
+    total, files, complete = folder_size(data)
+    parts = []
+    top = 0
+    for e in _entries(data):
+        if e.is_dir(follow_symlinks=False):
+            size, n, _ = folder_size(Path(e.path))
+            parts.append({"name": e.name, "bytes": size, "files": n})
+        elif e.is_file(follow_symlinks=False):
+            try:
+                top += e.stat(follow_symlinks=False).st_size
+            except OSError:
+                pass
+    parts.sort(key=lambda x: -x["bytes"])
+    return {"bytes": total, "files": files, "complete": complete, "top": top, "folders": parts}
+
+
 # ---------------------------------------------------------------------- the service
 class Admin:
     def __init__(self, password_file: Path, hub: Path, config: Path, sets: Optional[Path] = None,
@@ -634,6 +769,9 @@ class Admin:
         self.allin = AllInRooms()  # the rooms of the game All In (/all-in/), in memory
         self.zero = ZeroRooms()  # the rooms of the quiz Absolute Zero (/absolute-zero/), in memory
         self.seen_at: Dict[str, float] = {}  # teacher -> when their last visit was written (statistics)
+        self.started = time.time()  # (the server's statistics: since when, and the answers given since)
+        self.served: Dict[str, int] = {"2xx": 0, "3xx": 0, "4xx": 0, "5xx": 0}
+        self.served_lock = threading.Lock()
         self.categoriser = Categoriser(self)  # the exercises uploaded since categories.json, categorised
 
     def stored_hash(self, teacher: Optional[str] = None) -> str:
@@ -808,6 +946,57 @@ class Admin:
         return {"teachers": rows, "active_days": ACTIVE_DAYS, "totals": {
             "teachers": len(rows), "active": sum(r["active"] for r in rows), "with_sets": sum(1 for r in rows if r["sets"]),
             "sets": sum(r["sets"] for r in rows), "sheets": sum(r["sheets"] for r in rows), "shared": sum(r["shared"] for r in rows)}}
+
+    def count(self, status: int) -> None:
+        """An answer given (the server's statistics: by its class, 2xx to 5xx)."""
+        key = f"{min(max(int(status) // 100, 2), 5)}xx"
+        with self.served_lock:
+            self.served[key] += 1
+
+    def server_stats(self) -> Dict[str, object]:
+        """The server's statistics (the superuser's): the machine ("system": load, CPU, memory, disk of
+        hub-data, uptime; what Linux's /proc does not give, elsewhere, is None), this service ("service":
+        since when, its memory and threads, the answers given since, the crossword generator reachable),
+        hub-data's size by folder ("data"), the usage ("usage") and the latest events ("recent"). Read
+        only: nothing here is written, and no secret (password hash, link token) goes into it."""
+        now = time.time()
+        teachers = self.stats()
+        sets, sheets, lessons = self.read_all_sets(), self.read_sheets(), self.read_lessons()
+        names = {t["id"]: " ".join(x for x in (t["first"], t["last"]) if x) or t["user"] for t in teachers["teachers"]}
+        events = [{"when": t["seen"], "what": "visit", "who": t["id"], "name": names[t["id"]]} for t in teachers["teachers"] if t["seen"]]
+        events += [{"when": t["sets_saved"], "what": "sets", "who": t["id"], "name": names[t["id"]]} for t in teachers["teachers"] if t["sets_saved"]]
+        events += [{"when": s["updated"], "what": "sheet", "who": self.super, "name": clean_text(s.get("title"), 80)}
+                   for s in sheets.values() if isinstance(s.get("updated"), int) and s["updated"]]
+        events += [{"when": p["updated"], "what": "lesson", "who": self.super, "name": clean_text(p.get("title"), 80)}
+                   for p in lessons.values() if isinstance(p.get("updated"), int) and p["updated"]]
+        with self.served_lock:
+            served = dict(self.served)
+        exercises = sum(1 for _ in _entries(self.texercises, dirs=True))
+        return {"time": int(now), "system": system_stats(self.config.parent),
+                "service": {"started": int(self.started), "uptime": int(now - self.started), "pid": os.getpid(),
+                            "python": platform.python_version(), "memory": process_memory(), "threads": threading.active_count(),
+                            "deployed": int(_mtime(Path(__file__)) or 0), "served": served, "requests": sum(served.values()),
+                            "crosswords": self.probe(self.crosswords_url) if self.crosswords_url else None},
+                "data": data_sizes(self.config.parent),
+                "usage": {**teachers["totals"], "active_days": ACTIVE_DAYS,
+                          "courses": sum(len(c) for c in self.read_all_courses().values()),
+                          "lessons": len(lessons), "lessons_shared": sum(1 for p in lessons.values() if p.get("token")),
+                          "exercises": exercises, "games": self.allin.counts(), "quizzes": self.zero.counts()},
+                "recent": sorted(events, key=lambda e: -e["when"])[:RECENT]}
+
+    @staticmethod
+    def probe(url: str, timeout: float = 1.5) -> Dict[str, object]:
+        """Whether a service answers at url: {"up", "ms"} (any HTTP answer counts, an error too)."""
+        start = time.time()
+        try:
+            with urllib.request.urlopen(urllib.request.Request(url, method="HEAD"), timeout=timeout):
+                pass
+            up = True
+        except urllib.error.HTTPError:
+            up = True
+        except (OSError, ValueError):
+            up = False
+        return {"up": up, "ms": int((time.time() - start) * 1000)}
 
     def change_teachers(self, change, own: bool = False) -> object:
         """Read, change and write the accounts under the lock: change(teachers) returns the answer
@@ -2702,6 +2891,13 @@ class AllInRooms:
     def _new_room(self, teacher: str) -> Dict[str, object]:
         return {"owner": teacher, "touched": self.clock(), "state": None, "deadline": None, "players": {}, "bets": {}, "n": 0}
 
+    def counts(self) -> Dict[str, int]:
+        """The games running (previews left out) and their players (the server's statistics)."""
+        with self.lock:
+            self._sweep()
+            live = [r for r in self.rooms.values() if not r.get("preview")]
+            return {"rooms": len(live), "players": sum(len(r["players"]) for r in live)}
+
     def close(self, teacher: str, code: str) -> None:
         with self.lock:
             self._room(code, teacher)
@@ -2920,6 +3116,7 @@ def make_handler(admin: Admin):
 
         def send(self, status: int, body: str | bytes, ctype: str = "text/html; charset=utf-8", headers: Optional[Dict[str, str]] = None) -> None:
             data = body.encode("utf-8") if isinstance(body, str) else body
+            admin.count(status)  # (the server's statistics)
             headers = {"Cache-Control": "no-store", "X-Frame-Options": "DENY", "X-Content-Type-Options": "nosniff",
                        "Referrer-Policy": "same-origin",
                        "Content-Security-Policy": "default-src 'none'; script-src 'self'; style-src 'self'; connect-src 'self'; "
@@ -3355,6 +3552,8 @@ def make_handler(admin: Admin):
                 self.send(200, DRAG_JS, "text/javascript; charset=utf-8")
             elif path == "/static/sets.js":
                 self.send(200, SETS_JS, "text/javascript; charset=utf-8")
+            elif path == "/static/server.js":
+                self.send(200, SERVER_JS, "text/javascript; charset=utf-8")
             elif path == "/static/accounts.js":
                 self.send(200, ACCOUNTS_JS, "text/javascript; charset=utf-8")
             elif path == "/static/games.js":
@@ -3394,6 +3593,11 @@ def make_handler(admin: Admin):
                     self.json(403, {"error": "login"})
                 else:
                     self.json(200, admin.teachers_state() if path == "/api/teachers" else admin.stats())
+            elif path == "/api/server":
+                if not self.is_super():
+                    self.json(403, {"error": "login"})
+                else:
+                    self.json(200, admin.server_stats())
             elif path in ("/api/exercise-audit", "/api/exercise-audit/feedback", "/api/exercise-audit/export", "/api/exercise-audit/tikz/draft"):
                 if not self.is_super():
                     self.json(403, {"error": "the superuser only"})
@@ -3587,7 +3791,7 @@ def page(title: str, body: str, script: bool = False, refresh: int = 0) -> str:
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
   <link rel="stylesheet" href="/admin/static/admin.css">
-  {'<link rel="stylesheet" href="/katex/katex.min.css"><script defer src="/katex/katex.min.js"></script><script defer src="/admin/static/drag.js"></script><script defer src="/admin/static/admin.js"></script><script defer src="/admin/static/sets.js"></script><script defer src="/admin/static/sheets.js"></script><script defer src="/admin/static/lessons.js"></script><script defer src="/admin/static/accounts.js"></script><script defer src="/admin/static/games.js"></script>' if script else ''}
+  {'<link rel="stylesheet" href="/katex/katex.min.css"><script defer src="/katex/katex.min.js"></script><script defer src="/admin/static/drag.js"></script><script defer src="/admin/static/admin.js"></script><script defer src="/admin/static/sets.js"></script><script defer src="/admin/static/sheets.js"></script><script defer src="/admin/static/lessons.js"></script><script defer src="/admin/static/accounts.js"></script><script defer src="/admin/static/server.js"></script><script defer src="/admin/static/games.js"></script>' if script else ''}
 </head>
 <body>
   <header class="wrap">
@@ -3765,7 +3969,7 @@ def panel_page(teacher: str = SUPER, superuser: bool = True, user: str = "") -> 
     tabs = ('<a href="#quizzes" data-view="quizzes">Quizzes</a><a href="#games" data-view="games">Games</a>'
             '<a href="#sets" data-view="sets">Sets</a>'
             + ('<a href="#sheets" data-view="sheets">Sheets</a><a href="#lessons" data-view="lessons">Lesson plans</a><a href="#apps" data-view="apps">Apps &amp; tags</a>'
-               '<a href="#teachers" data-view="teachers">Teachers</a>' if superuser else '')
+               '<a href="#teachers" data-view="teachers">Teachers</a><a href="#server" data-view="server">Server</a>' if superuser else '')
             + '<a href="#account" data-view="account">Account</a>')
     return page("Admin", f"""
     <div class="bar top">
@@ -3796,6 +4000,28 @@ TEACHERS_SECTION = """
       </form>
       <p id="teachers-status" class="status" aria-live="polite"></p>
       <div id="teacher-list"></div>
+    </section>"""
+
+SERVER_SECTION = """
+    <section id="view-server" hidden>
+      <p class="lead">How the server is doing: the machine, this admin service, what is stored, and how the site is used. Refreshed every 15 seconds while this tab is open.</p>
+      <div class="bar">
+        <button type="button" id="server-refresh">Refresh</button>
+        <span id="server-status" class="status" aria-live="polite"></span>
+      </div>
+      <h2 class="section">Machine</h2>
+      <div id="server-system" class="stattiles"></div>
+      <div id="server-meters" class="meters"></div>
+      <h2 class="section">Admin service</h2>
+      <div id="server-service" class="stattiles"></div>
+      <p id="server-about" class="note"></p>
+      <h2 class="section">Usage</h2>
+      <div id="server-usage" class="stattiles"></div>
+      <h2 class="section">Latest activity</h2>
+      <div class="stattable"><table id="server-recent"><thead><tr><th scope="col">When</th><th scope="col">Who</th><th scope="col">What</th></tr></thead><tbody></tbody></table></div>
+      <h2 class="section">Stored data</h2>
+      <p id="server-data-note" class="note"></p>
+      <div class="stattable"><table id="server-data"><thead><tr><th scope="col">Folder of hub-data</th><th scope="col" class="n">Files</th><th scope="col" class="n">Size</th></tr></thead><tbody></tbody></table></div>
     </section>"""
 
 ACCOUNT_SECTION = """
@@ -3858,7 +4084,7 @@ SUPER_SECTIONS = """
       </div>
       <div id="lesson-list" class="setlist"></div>
       <div id="lesson-edit"><p class="note">Loading…</p></div>
-    </section>""" + TEACHERS_SECTION
+    </section>""" + TEACHERS_SECTION + SERVER_SECTION
 
 COMMON_SECTIONS = """
     <section id="view-sets" hidden>
@@ -4112,6 +4338,15 @@ h2.section { font-size: 1.15rem; margin: 28px 0 4px; }
 .stattable .tid { font-family: ui-monospace, monospace; }
 .stattable .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; background: var(--line); }
 .stattable tr.active .dot { background: var(--ok); }
+.stattable .dot.bad { background: var(--bad); }
+.stattiles .card.bad strong { color: var(--bad); }
+#server-usage { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
+.meters { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; margin: 0 0 12px; }
+.meters .card { padding: 12px 14px; }
+.meters .head { display: flex; justify-content: space-between; gap: 8px; font-size: 0.9rem; }
+.meters .head span { color: var(--muted); }
+.meters .head strong { font-variant-numeric: tabular-nums; }
+.meters meter { display: block; width: 100%; height: 12px; margin-top: 6px; }
 .tagtable input.same { border-color: var(--bad); }
 .tagtable tr.new input { outline: 2px solid var(--accent); }
 .bar.top { position: static; padding-top: 0; }
@@ -7090,6 +7325,128 @@ ACCOUNTS_JS = r"""
       } catch (err) { status(`Not changed: ${err.message}`, 'bad'); }
     });
   }
+})();
+"""
+
+
+SERVER_JS = r"""
+// The server's statistics (the superuser's Server tab): /admin/api/server, loaded when the tab is
+// opened and again every 15 seconds while it stays open (not while the page is hidden).
+(function () {
+  'use strict';
+  const $ = (s) => document.querySelector(s);
+  if (!$('#view-server')) return;
+  const EVERY = 15000;
+  let timer = null, busy = false;
+  function el(tag, attrs, ...kids) {
+    const e = document.createElement(tag);
+    Object.entries(attrs || {}).forEach(([k, v]) => {
+      if (v === false || v == null) return;
+      if (k === 'class') e.className = v; else e.setAttribute(k, v === true ? '' : v);
+    });
+    kids.forEach((k) => { if (k !== '' && k != null) e.append(k); });
+    return e;
+  }
+  const status = (text, cls) => { const e = $('#server-status'); e.textContent = text; e.className = `status ${cls || ''}`; };
+  function bytes(n) {
+    if (n == null) return '—';
+    const units = ['B', 'KB', 'MB', 'GB', 'TB'];
+    let i = 0;
+    while (n >= 1024 && i < units.length - 1) { n /= 1024; i++; }
+    return `${n >= 100 || i === 0 ? Math.round(n) : n.toFixed(1)} ${units[i]}`;
+  }
+  function span(s) {
+    if (s == null) return '—';
+    const d = Math.floor(s / 86400), h = Math.floor((s % 86400) / 3600), m = Math.floor((s % 3600) / 60);
+    return d ? `${d} d ${h} h` : h ? `${h} h ${m} min` : `${m} min`;
+  }
+  const when = (t) => new Date(t * 1000).toLocaleString(undefined, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+  function ago(t) {
+    const s = Date.now() / 1000 - t;
+    return s < 60 ? 'just now' : s < 3600 ? `${Math.floor(s / 60)} min ago` : s < 86400 ? `${Math.floor(s / 3600)} h ago` : when(t);
+  }
+  const tile = (v, label, bad) => el('div', { class: bad ? 'card bad' : 'card' }, el('strong', {}, String(v)), el('span', {}, label));
+  const plural = (n, one, many) => `${n} ${n === 1 ? one : many || `${one}s`}`;
+  // a meter: used of total (high: from this share on it shows as a warning)
+  function meter(label, used, total, text, high) {
+    return el('div', { class: 'card' },
+      el('div', { class: 'head' }, el('span', {}, label), el('strong', {}, text)),
+      el('meter', { min: '0', max: String(total), low: String(total * (high || 0.8) * 0.85), high: String(total * (high || 0.8)), optimum: '0', value: String(used), 'aria-label': `${label}: ${text}` }));
+  }
+  const WHAT = { visit: 'was in the panel', sets: 'changed their sets', sheet: 'saved the sheet', lesson: 'saved the lesson plan' };
+
+  function render(d) {
+    const sys = d.system, svc = d.service, u = d.usage;
+    const load = sys.load ? sys.load[0] : null;
+    $('#server-system').replaceChildren(
+      tile(load == null ? '—' : load.toFixed(2), `load (1 min) · ${sys.cpus || '?'} CPU${sys.cpus === 1 ? '' : 's'}`, load != null && sys.cpus && load > sys.cpus),
+      tile(sys.load ? `${sys.load[1].toFixed(2)} / ${sys.load[2].toFixed(2)}` : '—', 'load (5 / 15 min)'),
+      tile(sys.cpu == null ? '—' : `${Math.round(sys.cpu)} %`, 'CPU busy now', sys.cpu != null && sys.cpu > 90),
+      tile(span(sys.uptime), 'since the server started'));
+    const meters = [];
+    if (sys.memory) {
+      const m = sys.memory, used = m.total - m.available;
+      meters.push(meter('Memory', used, m.total, `${bytes(used)} of ${bytes(m.total)}`));
+      if (m.swap_total) meters.push(meter('Swap', m.swap_total - m.swap_free, m.swap_total, `${bytes(m.swap_total - m.swap_free)} of ${bytes(m.swap_total)}`, 0.5));
+    }
+    if (sys.disk) meters.push(meter('Disk (hub-data)', sys.disk.used, sys.disk.total, `${bytes(sys.disk.free)} free of ${bytes(sys.disk.total)}`, 0.9));
+    $('#server-meters').replaceChildren(...meters);
+
+    const errors = svc.served['5xx'], cw = svc.crosswords;
+    $('#server-service').replaceChildren(
+      tile(span(svc.uptime), 'since the service started'),
+      tile(bytes(svc.memory), `memory · ${plural(svc.threads, 'thread')}`),
+      tile(svc.requests, 'requests since start'),
+      tile(errors, `server error${errors === 1 ? '' : 's'} (5xx)`, errors > 0),
+      ...(cw ? [tile(cw.up ? `${cw.ms} ms` : 'down', 'crossword generator', !cw.up)] : []));
+    $('#server-about').textContent = `${sys.os} · Python ${svc.python} · process ${svc.pid} · started ${when(svc.started)}` +
+      (svc.deployed ? ` · hubadmin.py of ${when(svc.deployed)}` : '') +
+      ` · answers: ${svc.served['2xx']} ok, ${svc.served['3xx']} redirects, ${svc.served['4xx']} refused or not found`;
+
+    $('#server-usage').replaceChildren(
+      tile(u.teachers, `${u.teachers === 1 ? 'teacher' : 'teachers'} (${u.active} active, ${u.active_days} days)`),
+      tile(u.sets, `${u.sets === 1 ? 'set' : 'sets'} · ${plural(u.courses, 'course')}`),
+      tile(u.sheets, `sheets (${u.shared} shared)`),
+      tile(u.lessons, `lesson plans (${u.lessons_shared} shared)`),
+      tile(u.exercises, 'TeXercises exercises uploaded'),
+      tile(u.games.rooms + u.quizzes.rooms, `games running · ${plural(u.games.players + u.quizzes.players, 'phone')}`));
+
+    $('#server-recent tbody').replaceChildren(...(d.recent.length ? d.recent.map((e) => el('tr', {},
+      el('td', { class: 'when', title: when(e.when) }, ago(e.when)),
+      el('td', {}, el('span', { class: 'tid' }, e.who)),
+      el('td', {}, e.what === 'visit' || e.what === 'sets' ? `${e.name} ${WHAT[e.what]}` : `${WHAT[e.what]} “${e.name || 'untitled'}”`))) :
+      [el('tr', {}, el('td', { colspan: '3', class: 'note' }, 'Nothing yet.'))]));
+
+    const data = d.data;
+    $('#server-data-note').textContent = `${bytes(data.bytes)} in ${plural(data.files, 'file')}${data.complete ? '' : ' (at least: counting stopped)'}, of which ${bytes(data.top)} in the files at the top (accounts, sets, sheets…).`;
+    $('#server-data tbody').replaceChildren(...(data.folders.length ? data.folders.map((f) => el('tr', {},
+      el('td', {}, el('span', { class: 'tid' }, `${f.name}/`)), el('td', { class: 'n' }, String(f.files)), el('td', { class: 'n' }, bytes(f.bytes)))) :
+      [el('tr', {}, el('td', { colspan: '3', class: 'note' }, 'No folders yet.'))]));
+    status(`Updated ${new Date(d.time * 1000).toLocaleTimeString()}`, '');
+  }
+
+  async function load() {
+    if (busy) return;
+    busy = true;
+    try {
+      const r = await fetch('/admin/api/server', { credentials: 'same-origin' });
+      if (r.status === 403) { location.reload(); return; }
+      if (!r.ok) throw new Error(r.statusText);
+      render(await r.json());
+    } catch (e) {
+      status('Could not load the statistics.', 'bad');
+    } finally { busy = false; }
+  }
+  const open = () => location.hash.slice(1) === 'server';
+  function schedule() {
+    clearInterval(timer);
+    timer = null;
+    if (open() && !document.hidden) { load(); timer = setInterval(load, EVERY); }
+  }
+  $('#server-refresh').addEventListener('click', load);
+  window.addEventListener('admin-view', schedule);
+  document.addEventListener('visibilitychange', schedule);
+  schedule();
 })();
 """
 
