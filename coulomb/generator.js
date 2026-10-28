@@ -29,7 +29,7 @@
   // In practice and in the tutor, the forces of a situation with draw (scenarios.js) are drawn with
   // arrow.js instead of their directions chosen; the check keeps its four options (quiz, below).
   // drawOf gives { keys, ask, fig (the task's figure, with room for the arrows), anchors (in svg
-  // units), kinds, tail(kind, anchor), len, gap, start, target [{ kind, anchor, dir (degrees),
+  // units), kinds, tail(kind, anchor), len, gap(arrow) (where it starts, from its tail), start, target [{ kind, anchor, dir (degrees),
   // mag, net, zero, name }], none (a button "No net force"), zero (the net force is zero: no arrow
   // for it, but that button), label(a, arrows) (an arrow's label), judge(arrows, done, none) → { ok,
   // marks: { arrow id: 'ok' | 'bad' }, notes: [{ flag, text }] } (none: that button pressed),
@@ -57,6 +57,9 @@
     const target = s.target.map((t) => ({ ...t, dir: degOf(t.F), mag: CL.len(t.F), zero: !!t.net && CL.len(t.F) < 1e-9 * big }));
     const judged = target.filter((t) => !t.zero), netT = target.find((t) => t.net), zero = !!(netT && netT.zero);
     const tail = (kind, an) => { const o = (s.tails || {})[kind] || [0, 0]; return [an.x + o[0], an.y + o[1]]; };
+    // a force starts clear of its charge, outside the ring if it is in one; the net force from the middle
+    const rings = new Set(s.anchors.filter((a) => a.ring).map((a) => String(a.id))), nets = new Set(s.target.filter((t) => t.net).map((t) => t.kind));
+    const gapOf = (a) => (nets.has(a.kind) ? 0 : rings.has(String(a.anchor)) ? root.Draw.OUT : 13);
     // a new arrow points where no force of its kind to draw does (where a kind has a choice)
     const free = (d) => kinds.every((k) => k.dirs.length < 8 || judged.every((t) => t.kind !== k.id || gap(t.dir, arrowLib().nearest(k.dirs, d)) > TOL));
     const start = [45, 135, 225, 315, 90, 270, 0, 180, 15, 75, 105, 165, 195, 255, 285, 345].find(free) ?? 45;
@@ -117,7 +120,7 @@
       }
       return arrows;
     }
-    return { keys: s.keys, ask: s.ask, fig, anchors, kinds, tail, len: LEN, gap: 13, start, target, none: !!s.none, zero, label, judge, right, tol: TOL };
+    return { keys: s.keys, ask: s.ask, fig, anchors, kinds, tail, len: LEN, gap: gapOf, start, target, none: !!s.none, zero, label, judge, right, tol: TOL };
   }
 
   function exercise(scn, p) {

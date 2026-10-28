@@ -151,7 +151,7 @@ for (const lang of ['en', 'de']) {
         const kd = d.kinds.find((x) => x.id === t.kind), an = d.anchors.find((x) => x.id === t.anchor);
         if (!kd || !an) { fail(`${id}: kind or anchor of ${t.kind}`); return; }
         if (gap(A.nearest(kd.dirs, t.dir), t.dir) > TOL) fail(`${id}: ${t.kind} at ${t.dir}° not drawable`);
-        const at = d.tail(t.kind, an), reach = d.gap + d.len.hi + 4;
+        const at = d.tail(t.kind, an), reach = d.gap({ kind: t.kind, anchor: t.anchor }) + d.len.hi + 4;
         if (!(at[0] > x0 && at[0] < x0 + w0 && at[1] > y0 && at[1] < y0 + h0)) fail(`${id}: ${t.kind} starts outside the figure`);
         kd.dirs.forEach((dir) => { const u = A.vec(dir), tip = [at[0] + reach * u[0], at[1] + reach * u[1]]; if (!(tip[0] >= x0 && tip[0] <= x0 + w0 && tip[1] >= y0 && tip[1] <= y0 + h0)) fail(`${id}: no room for ${t.kind} at ${dir}°`); });
         if (kd.dirs.length >= 8 && d.target.some((u) => u.kind === t.kind && gap(A.nearest(kd.dirs, d.start), u.dir) <= TOL)) fail(`${id}: a new ${t.kind} starts in a right direction`);
