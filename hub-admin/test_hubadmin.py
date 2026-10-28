@@ -2685,6 +2685,50 @@ class Service(unittest.TestCase):
         self.assertNotIn(b'data-view="stats"', body)
         self.assertNotIn(b'id="stats-table"', self.req("/", cookie=anna)[2])
 
+    def test_server_stats(self):
+        boss = self.cookie_of("samuel.byland", "teacher pw")
+        pw = self.teachers({"action": "create", "id": "abc", "user": "anna", "first": "Anna"}, boss)[1]["password"]
+        anna = self.cookie_of("anna", pw)
+        self.assertEqual(self.req("/api/server")[0], 403)
+        self.assertEqual(self.req("/api/server", cookie=anna)[0], 403)  # the superuser's only
+        H.write_config(self.admin.sheets_file, {"sheets": {"0123456789ab": {"title": "Forces", "updated": 1700000000, "token": "t" * 32}}})
+        H.write_config(self.admin.lessons_file, {"plans": {"0123456789ac": {"title": "Unit 1", "updated": 1700000100, "token": "s" * 32}}})
+        (self.admin.texercises / "ex1").mkdir(parents=True)
+        (self.admin.texercises / "ex1" / "meta.json").write_text("{}")
+        self.admin.crosswords_url = ""  # (no crossword generator in the test)
+        self.admin.allin.open("bys")
+        self.admin.allin.open("abc", preview=True)  # a preview is not a game running
+        st, _, body = self.req("/api/server", cookie=boss)
+        self.assertEqual(st, 200)
+        d = json.loads(body)
+        self.assertEqual(set(d), {"time", "system", "service", "data", "usage", "recent"})
+        self.assertGreaterEqual(d["system"]["cpus"], 1)
+        if Path("/proc/meminfo").exists():
+            self.assertGreater(d["system"]["memory"]["total"], 0)
+            self.assertGreater(d["service"]["memory"], 0)
+        self.assertGreater(d["system"]["disk"]["total"], 0)
+        self.assertGreater(d["service"]["requests"], 0)
+        self.assertGreater(d["service"]["served"]["4xx"], 0)  # the two refused above
+        self.assertIsNone(d["service"]["crosswords"])
+        u = d["usage"]
+        self.assertEqual((u["teachers"], u["sheets"], u["shared"], u["lessons"], u["lessons_shared"], u["exercises"]), (2, 1, 1, 1, 1, 1))
+        self.assertEqual(u["games"], {"rooms": 1, "players": 0})
+        self.assertEqual(u["quizzes"], {"rooms": 0, "players": 0})
+        self.assertIn("texercises", [f["name"] for f in d["data"]["folders"]])
+        self.assertGreater(d["data"]["bytes"], 0)
+        whats = [e["what"] for e in d["recent"]]
+        self.assertIn("visit", whats)
+        self.assertEqual([e["name"] for e in d["recent"] if e["what"] in ("sheet", "lesson")], ["Unit 1", "Forces"])  # the latest first
+        for secret in ("hash", "t" * 32, "s" * 32):
+            self.assertNotIn(secret, body.decode())
+        page = self.req("/", cookie=boss)[2]
+        self.assertIn(b'data-view="server"', page)
+        self.assertIn(b'/admin/static/server.js', page)
+        self.assertNotIn(b'data-view="server"', self.req("/", cookie=anna)[2])
+        st, headers, _ = self.req("/static/server.js")
+        self.assertEqual(st, 200)
+        self.assertTrue(headers["Content-Type"].startswith("text/javascript"))
+
     def test_me_and_crosswords(self):
         st, headers, _ = self.req("/login", b"user=samuel.byland&password=teacher pw", "application/x-www-form-urlencoded")
         self.assertIn("Path=/;", headers["Set-Cookie"])  # the whole site: the crossword generator asks /api/me
