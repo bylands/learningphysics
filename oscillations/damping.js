@@ -159,7 +159,7 @@
     hints: (p) => dHints(p.y),
     steps: (p) => [
       step(L('The amplitude and the period', 'Die Amplitude und die Periode'), p$(KIND_TEXT()[p.given] || FORMULA_DOES()[p.given])),
-      step(L('The graph', 'Der Graph'), p$(L('So the graph is <span class="result">this one</span>:', 'Der Graph ist also <span class="result">dieser</span>:')), ['graph']),
+      step(L('The graph', 'Der Graph'), p$(L('So the graph is <span class="result">the one shown above</span>.', 'Der Graph ist also <span class="result">der oben gezeigte</span>.')), ['graph']),
     ],
     figure: (p, v, view) => box(DK[p.given].tex(p.y)) + (view.show && view.show.has('graph') ? fig(dGraph(p.given, p.y)) : ''),
     watch: (p) => dWatch(p, 'graph'),
@@ -612,7 +612,7 @@
         ];
       }
       if (p.ask === 'use') return [step(L('The best damping', 'Die beste Dämpfung'), p$(L('Weak damping would let it swing; strong damping would bring it back only slowly. The best is <span class="result">critical damping</span> (in practice slightly less): it returns fastest without overshooting.', 'Schwache Dämpfung liesse es schwingen; starke Dämpfung brächte es nur langsam zurück. Am besten ist der <span class="result">aperiodische Grenzfall</span> (in der Praxis etwas weniger): Er kehrt am schnellsten zurück, ohne überzuschwingen.')))];
-      return [step(L('The four kinds of damping', 'Die vier Fälle'), `<ul class="eqlist">${REG_ORDER.map((k) => `<li>${k === right ? `<span class="result">${cap(REG_NAME()[k])}</span>` : cap(REG_NAME()[k])}</li>`).join('')}</ul>`), step(L('The graph', 'Der Graph'), p$(L('So the graph is <span class="result">this one</span>:', 'Der Graph ist also <span class="result">dieser</span>:')), ['graph'])];
+      return [step(L('The four kinds of damping', 'Die vier Fälle'), `<ul class="eqlist">${REG_ORDER.map((k) => `<li>${k === right ? `<span class="result">${cap(REG_NAME()[k])}</span>` : cap(REG_NAME()[k])}</li>`).join('')}</ul>`), step(L('The graph', 'Der Graph'), p$(L('So the graph is <span class="result">the one shown above</span>.', 'Der Graph ist also <span class="result">der oben gezeigte</span>.')), ['graph'])];
     },
     figure: (p, v, view) => (view.show && view.show.has('graph') ? fig(regGraph(regRight(p))) : ''),
     watch: (p) => (['crit', 'over', 'fast'].includes(p.ask) ? oscWatch({ kind: 'spring', fn: regFn(regRight(p)), amp: { y: 1, v: PI2, a: PI2 * PI2 }, t1: R_END, unit: 'T', panels: ['y'],
