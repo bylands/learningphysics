@@ -67,7 +67,7 @@ jobs:
           cp .github/known_hosts ~/.ssh/known_hosts
       - name: Deploy
         env:
-          DEPLOY_TARGET: 'tpdeploy@179.237.97.105:'
+          DEPLOY_TARGET: 'tpdeploy@84.234.30.161:'
           # deploy.sh runs one rsync per folder: the first one opens the SSH connection and the others
           # reuse it (ControlMaster) instead of each logging in again
           RSYNC_RSH: 'ssh -i ~/.ssh/deploy -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -o ControlMaster=auto -o ControlPath=~/.ssh/cm-%C -o ControlPersist=120'
