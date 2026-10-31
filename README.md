@@ -66,3 +66,5 @@ sudo nginx -t && sudo systemctl reload nginx
 ```
 
 The certificates come from Let's Encrypt (certbot) and renew by themselves: one for learningphysics.ch and www.learningphysics.ch, one for teachingphysics.ch, which only redirects.
+
+The access logs are deleted after 14 days, as the privacy page (`privacy/`) says: nginx's own `/etc/logrotate.d/nginx` (daily, `rotate 14`) does it, but only with the package `logrotate` installed, which a minimal Debian image lacks (`sudo apt install logrotate`; check with `systemctl status logrotate.timer`).
