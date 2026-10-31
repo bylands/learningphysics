@@ -15,7 +15,12 @@
        localStorage keys tp-lang, tp-recent (lang.js), tp-hub-order (hub) and <app>-* in the apps;
        teacher accounts in hub-data/teachers.json (user name, identifier, names, school, password
        hash, created, last visit "seen" at most hourly, "sets_saved"), shown in the superuser's
-       statistics under Teachers (hub-admin/hubadmin.py), session cookie 30 days. Update it when any of these change. -->
+       statistics under Teachers (hub-admin/hubadmin.py), session cookie 30 days; the classroom games
+       (All In, Absolute Zero here; Who Wants to Be a Physicist? = millionaire repo at /wwtbap/;
+       Electric Circuits quiz = quizzes repo at /electric-circuits/): the phones send a name (and team,
+       bets, answers), kept in memory only, rooms gone after 4 h (All In, Absolute Zero) or 6 h
+       (the other two) without activity; the services log no IP addresses. Server: Infomaniak
+       Public Cloud, Switzerland (since 31 October 2026). Update it when any of these change. -->
   <style>
     :root {
       --bg: #f6f5f1;
@@ -107,7 +112,7 @@
   <main class="wrap">
     <article data-lang="de" lang="de">
       <h1>Datenschutz</h1>
-      <p class="date">Stand: 15. Oktober 2026</p>
+      <p class="date">Stand: 31. Oktober 2026</p>
 
       <h2>Verantwortlich</h2>
       <p>Samuel Byland, MNG Rämibühl, Zürich<br>Kontakt: <a href="mailto:samuel.byland@mng.ch">samuel.byland@mng.ch</a></p>
@@ -116,7 +121,7 @@
       <p>Die Übungen auf learningphysics.ch funktionieren ohne Anmeldung. Es gibt keine Cookies, kein Tracking, keine Werbung und keine Analysedienste. (Einzig die Anmeldung der Lehrperson in ihren Verwaltungsseiten setzt ein Sitzungscookie; Schülerinnen und Schüler betrifft das nicht.) Alle Dateien, auch Schriften und Formelsatz (KaTeX), kommen von diesem Server; die Seiten laden nichts von anderen Servern.</p>
 
       <h2>Hosting und Server-Logdateien</h2>
-      <p>Die Website liegt auf einem virtuellen Server der Infomaniak Network SA in der Schweiz. Bei jedem Aufruf speichert der Webserver automatisch:</p>
+      <p>Die Website liegt auf einem Cloud-Server (Infomaniak Public Cloud) der Infomaniak Network SA in der Schweiz. Bei jedem Aufruf speichert der Webserver automatisch:</p>
       <ul>
         <li>die IP-Adresse,</li>
         <li>Datum und Uhrzeit,</li>
@@ -127,7 +132,10 @@
       <p>Diese Angaben dienen nur dem Betrieb und der Sicherheit des Servers, etwa um Fehler und Angriffe zu erkennen. Sie werden nicht ausgewertet, um Personen zu erkennen, nicht mit anderen Daten zusammengeführt und nach 14 Tagen automatisch gelöscht.</p>
 
       <h2>Daten in deinem Browser</h2>
-      <p>Damit du beim nächsten Besuch weitermachen kannst, speichern die Apps einige Angaben im lokalen Speicher deines Browsers (localStorage): die gewählte Sprache, den Modus, das gewählte Thema und wie weit du in jedem Thema gekommen bist, die Zahl der gelösten Aufgaben, das Resultat deines letzten Checks (welche Lernziele du beherrschst; die Startseite zeigt es auf den Karten), welche Aufgabentypen dir schwerfielen (damit diese im Übungsmodus häufiger drankommen), wann du welche App zuletzt geöffnet hast (für die Reihenfolge «Zuletzt verwendet» auf der Startseite) und bei «Kraftkonzepte», hinter welchen deiner falschen Antworten welche Fehlvorstellung steckte und welche Aufgabentypen zuletzt kamen. Diese Angaben bleiben auf deinem Gerät und werden nicht an den Server übertragen. Du kannst sie jederzeit löschen, indem du in den Einstellungen deines Browsers die Websitedaten von learningphysics.ch löschst.</p>
+      <p>Damit du beim nächsten Besuch weitermachen kannst, speichern die Apps einige Angaben im lokalen Speicher deines Browsers (localStorage): die gewählte Sprache, den Modus, das gewählte Thema und wie weit du in jedem Thema gekommen bist, die Zahl der gelösten Aufgaben, das Resultat deines letzten Checks (welche Lernziele du beherrschst; die Startseite zeigt es auf den Karten), welche Aufgabentypen dir schwerfielen (damit diese im Übungsmodus häufiger drankommen), wann du welche App zuletzt geöffnet hast (für die Reihenfolge «Zuletzt verwendet» auf der Startseite), die gewählte Reihenfolge der Startseite, in den Klassenspielen je nach Spiel deinen Namen, dein Team und den Spielcode (damit du nach einem Neuladen wieder im Spiel bist) und bei «Kraftkonzepte», hinter welchen deiner falschen Antworten welche Fehlvorstellung steckte und welche Aufgabentypen zuletzt kamen. Diese Angaben bleiben auf deinem Gerät und werden nicht an den Server übertragen. Du kannst sie jederzeit löschen, indem du in den Einstellungen deines Browsers die Websitedaten von learningphysics.ch löschst.</p>
+
+      <h2>Klassenspiele</h2>
+      <p>In den Spielen für die ganze Klasse («All In», «Absolute Zero», «Who Wants to Be a Physicist?» und das Quiz «Electric Circuits») trittst du mit dem Handy einem Spiel bei, das die Lehrperson eröffnet hat. Dafür schickt dein Handy dem Server den Namen, den du eingibst (ein Spitzname genügt), gegebenenfalls dein Team und deine Antworten oder Einsätze. Die Lehrperson und die Klasse sehen die Namen auf dem grossen Bildschirm; im Quiz «Electric Circuits» kann die Lehrperson die Resultate als Tabelle herunterladen. Der Server hält diese Angaben nur im Arbeitsspeicher, schreibt sie nicht auf die Festplatte und löscht das Spiel mitsamt den Namen automatisch, wenn darin einige Stunden lang (höchstens sechs) nichts mehr geschieht. Diese Dienste schreiben keine IP-Adressen in ihre Protokolle.</p>
 
       <h2>Für Lehrpersonen mit Konto</h2>
       <p>Lehrpersonen, die mit einem Konto Sets oder andere Inhalte verwalten, melden sich auf den Verwaltungsseiten an. Dafür werden auf dem Server gespeichert:</p>
@@ -144,12 +152,12 @@
       <p>Für Websites, auf die verlinkt wird (zum Beispiel mng.ch), gelten deren eigene Datenschutzbestimmungen.</p>
 
       <h2>Deine Rechte</h2>
-      <p>Nach dem Schweizer Datenschutzgesetz (DSG) kannst du Auskunft darüber verlangen, welche Personendaten über dich bearbeitet werden, und ihre Berichtigung oder Löschung verlangen. Da die Website ausser den Server-Logdateien und den Konten der Lehrpersonen keine Personendaten speichert, kann eine Auskunft nur diese betreffen. Wende dich dafür an die oben genannte Kontaktadresse.</p>
+      <p>Nach dem Schweizer Datenschutzgesetz (DSG) kannst du Auskunft darüber verlangen, welche Personendaten über dich bearbeitet werden, und ihre Berichtigung oder Löschung verlangen. Da die Website ausser den Server-Logdateien, den Konten der Lehrpersonen und, nur für die Dauer eines Spiels, den Namen in den Klassenspielen keine Personendaten speichert, kann eine Auskunft nur diese betreffen. Wende dich dafür an die oben genannte Kontaktadresse.</p>
     </article>
 
     <article data-lang="en" lang="en" hidden>
       <h1>Privacy</h1>
-      <p class="date">Last updated: 15 October 2026</p>
+      <p class="date">Last updated: 31 October 2026</p>
 
       <h2>Responsible</h2>
       <p>Samuel Byland, MNG Rämibühl, Zurich<br>Contact: <a href="mailto:samuel.byland@mng.ch">samuel.byland@mng.ch</a></p>
@@ -158,7 +166,7 @@
       <p>The exercises on learningphysics.ch work without an account. There are no cookies, no tracking, no ads and no analytics. (Only the teacher's login to their admin pages sets a session cookie; it never concerns students.) All files, including fonts and the formula typesetting (KaTeX), come from this server; the pages load nothing from other servers.</p>
 
       <h2>Hosting and server logs</h2>
-      <p>The website runs on a virtual server of Infomaniak Network SA in Switzerland. For every request, the web server automatically records:</p>
+      <p>The website runs on a cloud server (Infomaniak Public Cloud) of Infomaniak Network SA in Switzerland. For every request, the web server automatically records:</p>
       <ul>
         <li>the IP address,</li>
         <li>date and time,</li>
@@ -169,7 +177,10 @@
       <p>These records serve only to run and secure the server, for example to find errors and attacks. They are not analysed to identify anyone, not combined with other data, and deleted automatically after 14 days.</p>
 
       <h2>Data in your browser</h2>
-      <p>So that you can carry on where you left off, the apps keep a few settings in your browser's local storage (localStorage): the language, mode and topic you chose, how far you have got in each topic, how many exercises you solved, the result of your last check (which learning objectives you master; the start page shows it on the cards), which exercise types you found hard (so that those come up more often in practice), when you last opened each app (for the order “Recently used” on the start page) and, in Force Concepts, which misconception was behind which of your wrong answers and which exercise types came up last. This stays on your device and is never sent to the server. You can delete it at any time by clearing the site data of learningphysics.ch in your browser's settings.</p>
+      <p>So that you can carry on where you left off, the apps keep a few settings in your browser's local storage (localStorage): the language, mode and topic you chose, how far you have got in each topic, how many exercises you solved, the result of your last check (which learning objectives you master; the start page shows it on the cards), which exercise types you found hard (so that those come up more often in practice), when you last opened each app (for the order “Recently used” on the start page), the order you chose for the start page, in the classroom games, depending on the game, your name, your team and the game code (so that you are back in the game after reloading) and, in Force Concepts, which misconception was behind which of your wrong answers and which exercise types came up last. This stays on your device and is never sent to the server. You can delete it at any time by clearing the site data of learningphysics.ch in your browser's settings.</p>
+
+      <h2>Classroom games</h2>
+      <p>In the games for the whole class (All In, Absolute Zero, Who Wants to Be a Physicist? and the Electric Circuits quiz), you join a game the teacher has opened on your phone. For this, your phone sends the server the name you enter (a nickname will do), your team if there is one, and your answers or bets. The teacher and the class see the names on the big screen; in the Electric Circuits quiz the teacher can download the results as a table. The server keeps this data in memory only, never writes it to disk, and deletes the game together with the names automatically once nothing has happened in it for a few hours (six at most). These services do not write IP addresses to their logs.</p>
 
       <h2>For teachers with an account</h2>
       <p>Teachers who manage sets or other content with an account log in to the admin pages. For this, the server stores:</p>
@@ -186,7 +197,7 @@
       <p>Websites linked from here (for example mng.ch) have their own privacy policies.</p>
 
       <h2>Your rights</h2>
-      <p>Under the Swiss Federal Act on Data Protection (FADP), you can ask which personal data about you is processed, and ask for it to be corrected or deleted. As the website stores no personal data apart from the server logs and the teachers' accounts, such a request can only concern those. Please use the contact address above.</p>
+      <p>Under the Swiss Federal Act on Data Protection (FADP), you can ask which personal data about you is processed, and ask for it to be corrected or deleted. As the website stores no personal data apart from the server logs, the teachers' accounts and, only while a game lasts, the names in the classroom games, such a request can only concern those. Please use the contact address above.</p>
     </article>
   </main>
 
