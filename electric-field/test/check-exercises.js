@@ -130,6 +130,11 @@ for (const lang of ['en', 'de']) {
         const mags = pts.map(([x, y]) => Math.hypot(...C.field(c, x, y))), best = 'PQRS'[mags.indexOf(Math.max(...mags))];
         if (!rightOf(e, 'P').includes(`<b>${best}</b>`)) fail(`${tag}: the strongest point is ${best}`);
         if (rightOf(e, 'sg') !== `A ${e.p.qa > 0 ? '+' : '−'}, B ${e.p.qb > 0 ? '+' : '−'}`) fail(`${tag}: the signs`);
+        // plate and charge of the same sign: no drawn line runs between them
+        if (e.p.c && e.p.qa * e.p.qb > 0) {
+          const B = c.charges[0], A = c.plates[0], atB = (q) => Math.hypot(q[0] - B.x, q[1] - B.y) < 0.2, atA = (q) => Math.abs(q[1] - A.y) < 0.1 && q[0] >= A.a && q[0] <= A.b;
+          if (C.lines(c, X.BOX, { per: 6 }).some((ln) => { const a = ln[0], b = ln[ln.length - 1]; return (atB(a) && atA(b)) || (atA(a) && atB(b)); })) fail(`${tag}: a line runs between the plate and the charge of the same sign`);
+        }
       }
       if (type === 'dipole-uniform') {
         const Ed = e.p.E.split(',').map(Number), a0 = Math.atan2(Ed[1], Ed[0]) + rad(e.p.ang), tz = Math.cos(a0) * Ed[1] - Math.sin(a0) * Ed[0];
