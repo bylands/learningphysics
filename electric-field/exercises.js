@@ -236,6 +236,13 @@
 
   // A diagram with hidden signs: the signs, the field at a point, where the field is strongest.
   // mix: a large plate A and a point charge B instead of two charges
+  // the weakest field leaving the face of plate A that looks at charge B (m: B above A, or below), in the picture
+  function faceMin(c, m) {
+    const p = c.plates[0], sg = Math.sign(p.s);
+    let mn = Infinity;
+    for (let x = BOX[0]; x <= BOX[1]; x += 0.02) mn = Math.min(mn, sg * m * C.field(c, x, p.y + m * 0.04)[1]);
+    return mn;
+  }
   const SPOTS = [[0, 0], [0, 1.6], [-2.4, 0.4], [2.4, -0.4], [-1, 1], [1, -1], [0, -1.3], [-1.6, -1.2], [1.6, 1.2], [2.2, 1.6], [-2.2, -0.2], [1.2, 0.2]];
   function linesRead(seed, mix) {
     const r = rng(seed * 43 + (mix ? 29 : 17));
@@ -246,6 +253,10 @@
         qa = r.pick([1, -1]); qb = r.pick([1, 2]) * r.pick([1, -1]);
         c = { kind: 'mixed', charges: [{ q: qb, x, y: m * y, name: 'B' }], plates: [{ y: m * -1.2, a: -4.5, b: 4.5, s: qa * SIGMA, name: 'A' }] };
         spots = SPOTS.filter(([px, py]) => Math.abs(py - m * -1.2) > 0.35 && Math.hypot(px - x, py - m * y) > 0.5);
+        // A and B of the same sign: no line may run from B to A. The plate is finite (its charge crowds
+        // at its ends), so a strong charge close to it can make the face below it negative, and then
+        // lines from B end on the "positive" plate: keep the field clearly leaving that face
+        if (qa * qb > 0 && faceMin(c, m) < 0.15) continue;
       }
       const cand = r.shuffle(spots.slice()).slice(0, 4);
       const mags = cand.map(([x, y]) => Math.hypot(...C.field(c, x, y)));
