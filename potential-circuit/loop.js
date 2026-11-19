@@ -341,7 +341,7 @@
     c.points.forEach((a) => c.points.forEach((b) => { if (a !== b && a.phi !== b.phi) all.push([a, b]); }));
     for (let k = 0; k < 100; k++) {
       const pick = r.shuffle(all).slice(0, count);
-      if (pick.some(([a, b]) => a.phi < b.phi) && (count < 2 || pick[0][0] !== pick[1][1] || pick[0][1] !== pick[1][0])) return pick;
+      if (pick.some(([a, b]) => b.phi < a.phi) && (count < 2 || pick[0][0] !== pick[1][1] || pick[0][1] !== pick[1][0])) return pick;
     }
     return all.slice(0, count);
   }
@@ -349,19 +349,19 @@
   const needed = (pp) => [...new Set(pp.flat())].sort((a, b) => a.node - b.node).map((x) => x.name).join(', ').replace(/, ([^,]*)$/, L(' and $1', ' und $1'));
   function volt(r, given) {
     const c = r.next() < 0.5 ? oneBattery(r, 3) : twoBatteries(r, r.next() < 0.5), pp = pairs(r, c, 2);
-    const U = ([a, b]) => `$${uxy(a.name, b.name)} = ${phi(a.name)} - ${phi(b.name)} = ${tv(a.phi)} - ${b.phi < 0 ? `(${tv(b.phi)})` : tv(b.phi)} = ${tv(a.phi - b.phi)}$`;
+    const U = ([a, b]) => `$${uxy(a.name, b.name)} = ${phi(b.name)} - ${phi(a.name)} = ${tv(b.phi)} - ${a.phi < 0 ? `(${tv(a.phi)})` : tv(a.phi)} = ${tv(b.phi - a.phi)}$`;
     const names = pp.map(([a, b]) => `$${uxy(a.name, b.name)}$`);
     return {
       kind: 'volt', c, difficulty: given ? 1 : 2,
       text: `<p>${given ? L('The potentials at the points are given.', 'Die Potentiale in den Punkten sind gegeben.') : ZERO(c)} ${L(`Find the voltages ${names.join(' and ')}.`, `Bestimme die Spannungen ${names.join(' und ')}.`)}</p>`,
-      fields: pp.map(([a, b]) => numField(`U${a.name}${b.name}`, uxy(a.name, b.name), 'V', a.phi - b.phi)),
+      fields: pp.map(([a, b]) => numField(`U${a.name}${b.name}`, uxy(a.name, b.name), 'V', b.phi - a.phi)),
       hints: [
         ...(given ? [] : [L(`First the potentials at the points you need, ${needed(pp)}, with A at 0 V. ${RULES()}`, `Zuerst die Potentiale in den Punkten, die du brauchst, ${needed(pp)}, mit A bei 0 V. ${RULES()}`)]),
-        L(`The voltage between two points is the difference of their potentials, the first minus the second: ${pp.map(([a, b]) => `$${uxy(a.name, b.name)} = ${phi(a.name)} - ${phi(b.name)}$`).join(' and ')}.`, `Die Spannung zwischen zwei Punkten ist die Differenz ihrer Potentiale, das erste minus das zweite: ${pp.map(([a, b]) => `$${uxy(a.name, b.name)} = ${phi(a.name)} - ${phi(b.name)}$`).join(' und ')}.`),
-        L(`Mind the order: in ${pp.map(([a, b]) => `$${uxy(a.name, b.name)}$`).join(' and ')} the first point comes first. Where the first point lies lower than the second, the voltage is negative.`, `Achte auf die Reihenfolge: In ${pp.map(([a, b]) => `$${uxy(a.name, b.name)}$`).join(' und ')} kommt der erste Punkt zuerst. Wo der erste Punkt tiefer liegt als der zweite, ist die Spannung negativ.`),
+        L(`The voltage between two points is the difference of their potentials, the second minus the first: ${pp.map(([a, b]) => `$${uxy(a.name, b.name)} = ${phi(b.name)} - ${phi(a.name)}$`).join(' and ')}.`, `Die Spannung zwischen zwei Punkten ist die Differenz ihrer Potentiale, das zweite minus das erste: ${pp.map(([a, b]) => `$${uxy(a.name, b.name)} = ${phi(b.name)} - ${phi(a.name)}$`).join(' und ')}.`),
+        L(`Mind the order: in ${pp.map(([a, b]) => `$${uxy(a.name, b.name)}$`).join(' and ')} the voltage goes from the first point to the second. Where the second point lies lower than the first, the voltage is negative.`, `Achte auf die Reihenfolge: In ${pp.map(([a, b]) => `$${uxy(a.name, b.name)}$`).join(' und ')} geht die Spannung vom ersten Punkt zum zweiten. Wo der zweite Punkt tiefer liegt als der erste, ist die Spannung negativ.`),
       ],
       solution: [...(given ? [] : walk(c).map((x) => `${x}.`)), ...pp.map(U)],
-      results: pp.map(([a, b]) => `$${uxy(a.name, b.name)} = ${tv(a.phi - b.phi)}$`).join(', '),
+      results: pp.map(([a, b]) => `$${uxy(a.name, b.name)} = ${tv(b.phi - a.phi)}$`).join(', '),
       figure: (sol) => draw(c, { known: given || sol, cur: true }) + (sol ? plot(c) : ''),
       p: { slots: c.slots, pp: pp.map(([a, b]) => a.name + b.name), given },
       pairs: pp,
@@ -631,7 +631,7 @@
     whole: L('one lamp getting the whole battery voltage or the whole current', 'eine Lampe bekommt die ganze Batteriespannung oder den ganzen Strom'),
     parallel: L('lamps in parallel sharing the voltage', 'parallele Lampen teilen sich die Spannung'),
     junction: L('currents at a junction subtracted where they add up', 'Ströme an einem Knoten subtrahiert, wo sie sich addieren'),
-    sign: L('the voltage taken the wrong way round (second minus first)', 'die Spannung verkehrt herum (zweites minus erstes)'),
+    sign: L('the voltage taken the wrong way round (first minus second)', 'die Spannung verkehrt herum (erstes minus zweites)'),
   });
 
   // four options: the right value first, then the wrong ones with their flags, then fillers;
@@ -717,16 +717,16 @@
       };
     }
     if (kind === 'volt1' || kind === 'volt2') {
-      const e = generate(kind === 'volt1' ? 'volt-1' : 'volt-2', seed), c = e.c, [a, b] = e.pairs[r.int(0, 1)], U = a.phi - b.phi;
+      const e = generate(kind === 'volt1' ? 'volt-1' : 'volt-2', seed), c = e.c, [a, b] = e.pairs[r.int(0, 1)], U = b.phi - a.phi;
       return {
         title: L('The voltage between two points', 'Die Spannung zwischen zwei Punkten'),
         text: `<p>${kind === 'volt1' ? L('The potentials at the points are given.', 'Die Potentiale in den Punkten sind gegeben.') : ZERO(c)}</p>`,
         figure: draw(c, { known: kind === 'volt1', cur: true }),
         ask: L(`Find the voltage $${uxy(a.name, b.name)}$.`, `Wie gross ist die Spannung $${uxy(a.name, b.name)}$?`),
         options: options(U, [
-          { value: -U, flag: 'sign', why: L(`$${uxy(a.name, b.name)} = ${phi(a.name)} - ${phi(b.name)}$: the first point's potential minus the second's.`, `$${uxy(a.name, b.name)} = ${phi(a.name)} - ${phi(b.name)}$: das Potential des ersten Punkts minus das des zweiten.`) },
+          { value: -U, flag: 'sign', why: L(`$${uxy(a.name, b.name)} = ${phi(b.name)} - ${phi(a.name)}$: the second point's potential minus the first's.`, `$${uxy(a.name, b.name)} = ${phi(b.name)} - ${phi(a.name)}$: das Potential des zweiten Punkts minus das des ersten.`) },
           { value: a.phi + b.phi, flag: null, why: L('A voltage is the difference of two potentials, not their sum.', 'Eine Spannung ist die Differenz zweier Potentiale, nicht ihre Summe.') },
-          { value: a.phi, flag: null, why: L(`That is only the potential at ${a.name}, the voltage between ${a.name} and A.`, `Das ist nur das Potential in ${a.name}, die Spannung zwischen ${a.name} und A.`) },
+          { value: b.phi, flag: null, why: L(`That is only the potential at ${b.name}, the voltage $${uxy('A', b.name)}$ from A to ${b.name}.`, `Das ist nur das Potential in ${b.name}, die Spannung $${uxy('A', b.name)}$ von A nach ${b.name}.`) },
         ], [U + 1, U - 1, U + 2, U - 2], 'V'),
         explain: solved(e), key: `${e.p}|${a.name}${b.name}`,
       };
@@ -845,17 +845,17 @@
     },
     {
       topic: 2, name: () => L('Voltage between two points', 'Spannung zwischen zwei Punkten'),
-      idea: () => L('The voltage between X and Y is the difference of the potentials, the first minus the second: ΔV_XY = V_X − V_Y.', 'Die Spannung zwischen X und Y ist die Differenz der Potentiale, das erste minus das zweite: U_XY = φ_X − φ_Y.'),
+      idea: () => L('The voltage between X and Y is the difference of the potentials, the second minus the first: ΔV_XY = V_Y − V_X.', 'Die Spannung zwischen X und Y ist die Differenz der Potentiale, das zweite minus das erste: U_XY = φ_Y − φ_X.'),
       frames: () => {
         const c = AGAINST(), fig = draw(c, { known: true, cur: true }) + plot(c);
         return [
           frame(L('The potentials', 'Die Potentiale'), P(L('From example 2: A 0 V, B 12 V, C 9 V, D 9 V, E 5 V, F 5 V. A voltmeter between two points shows the difference of their potentials.', 'Aus Beispiel 2: A 0 V, B 12 V, C 9 V, D 9 V, E 5 V, F 5 V. Ein Voltmeter zwischen zwei Punkten zeigt die Differenz ihrer Potentiale.')), fig),
-          frame(`$${uxy('B', 'E')}$`, P(`$${uxy('B', 'E')} = ${phi('B')} - ${phi('E')} = 12\\,\\mathrm{V} - 5\\,\\mathrm{V} = 7\\,\\mathrm{V}$.`, L('The two points need not be the ends of one element: from B to E lie $L_1$, a wire and the 4 V battery, 3 V + 0 V + 4 V = 7 V.', 'Die zwei Punkte müssen nicht die Enden eines Elements sein: Von B nach E liegen $L_1$, ein Draht und die 4-V-Batterie, 3 V + 0 V + 4 V = 7 V.')), fig),
-          frame(`$${uxy('E', 'B')}$`, P(`$${uxy('E', 'B')} = ${phi('E')} - ${phi('B')} = 5\\,\\mathrm{V} - 12\\,\\mathrm{V} = -7\\,\\mathrm{V}$.`, L('The order matters: the voltage is negative when the first point lies lower. A voltmeter with its leads swapped shows −7 V.', 'Die Reihenfolge zählt: Die Spannung ist negativ, wenn der erste Punkt tiefer liegt. Ein Voltmeter mit vertauschten Anschlüssen zeigt −7 V.')), fig),
+          frame(`$${uxy('E', 'B')}$`, P(`$${uxy('E', 'B')} = ${phi('B')} - ${phi('E')} = 12\\,\\mathrm{V} - 5\\,\\mathrm{V} = 7\\,\\mathrm{V}$.`, L('The two points need not be the ends of one element: between E and B lie $L_1$, a wire and the 4 V battery, 3 V + 0 V + 4 V = 7 V.', 'Die zwei Punkte müssen nicht die Enden eines Elements sein: Zwischen E und B liegen $L_1$, ein Draht und die 4-V-Batterie, 3 V + 0 V + 4 V = 7 V.')), fig),
+          frame(`$${uxy('B', 'E')}$`, P(`$${uxy('B', 'E')} = ${phi('E')} - ${phi('B')} = 5\\,\\mathrm{V} - 12\\,\\mathrm{V} = -7\\,\\mathrm{V}$.`, L('The order matters: the voltage is negative when the second point lies lower. A voltmeter with its leads swapped shows −7 V.', 'Die Reihenfolge zählt: Die Spannung ist negativ, wenn der zweite Punkt tiefer liegt. Ein Voltmeter mit vertauschten Anschlüssen zeigt −7 V.')), fig),
           frame(`$${uxy('C', 'D')}$`, P(`$${uxy('C', 'D')} = 9\\,\\mathrm{V} - 9\\,\\mathrm{V} = 0\\,\\mathrm{V}$.`, L('C and D lie on the same wire: no voltage between them.', 'C und D liegen am selben Draht: keine Spannung zwischen ihnen.')), fig),
           frame(L('Typical mistakes', 'Typische Fehler'), P(
-            L('“The voltage at B is 12 V.” A voltage is always between two points; 12 V is the potential at B, which is the voltage between B and A, where we set 0 V.', '«Die Spannung in B ist 12 V.» Eine Spannung liegt immer zwischen zwei Punkten; 12 V ist das Potential in B, also die Spannung zwischen B und A, wo wir 0 V gesetzt haben.'),
-            L('The second potential minus the first gives the wrong sign.', 'Das zweite Potential minus das erste gibt das falsche Vorzeichen.')), fig),
+            L('“The voltage at B is 12 V.” A voltage is always between two points; 12 V is the potential at B, which is the voltage from A, where we set 0 V, to B.', '«Die Spannung in B ist 12 V.» Eine Spannung liegt immer zwischen zwei Punkten; 12 V ist das Potential in B, also die Spannung von A, wo wir 0 V gesetzt haben, nach B.'),
+            L('The first potential minus the second gives the wrong sign.', 'Das erste Potential minus das zweite gibt das falsche Vorzeichen.')), fig),
         ];
       },
     },

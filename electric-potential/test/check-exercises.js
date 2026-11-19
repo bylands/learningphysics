@@ -2,7 +2,7 @@
 // - the physics, independently: in a uniform field ΔV = −E·Δx (only the distance along the field
 //   counts); the field and potential at the centre of each arrangement (fields add as vectors,
 //   potentials as numbers); a test charge changes the potential energy, not the potential or the
-//   voltage; ΔE_pot = q·ΔV; a particle released at rest moves the way its sign says,
+//   voltage; V_AB = V_B − V_A (from A to B); ΔE_pot = q·ΔV; a particle released at rest moves the way its sign says,
 // - for every type, in both languages and many seeds: each question has a right option (exactly one
 //   unless several may fit), a reason for each wrong one, distinct options; statements are mixed,
 //   and no text or drawing contains undefined, NaN and the like,
@@ -82,7 +82,12 @@ for (const lang of ['en', 'de']) {
       if (lang === 'de') continue;
       if (type === 'uniform-d') {
         const { Ef, ax, bx } = e.p, want = -Ef * (bx - ax) / 100;
-        if (!rel(num(right(e, 'U').label), want, 1e-3)) fail(`${tag}: V_BA is not −E·Δx`);
+        if (!rel(num(right(e, 'U').label), want, 1e-3)) fail(`${tag}: V_AB is not −E·Δx`);
+      }
+      if (type === 'points-v') {
+        // independently: V_AC = V_C − V_A, the potentials read off the labelled lines
+        const { step, V0, pick } = e.p, V = (i) => V0 + (5 - Number(pick[i])) * step;
+        if (num(right(e, 'U').label) !== V(2) - V(0)) fail(`${tag}: V_AC ${right(e, 'U').label}, not V_C − V_A = ${V(2) - V(0)} V`);
       }
       if (type === 'scalar') {
         const S = X.SC.find((s) => s.id === e.p.S), ch = S.c.map(([q, x, y]) => ({ q, x: e.p.flip ? y : x, y: e.p.flip ? -x : y })), c = { kind: 'points', charges: ch };
@@ -92,9 +97,9 @@ for (const lang of ['en', 'de']) {
         if (zeroE !== right(e, 'E').html.includes('nowhere')) fail(`${tag}: the field at the centre`);
       }
       if (type === 'which-qty') {
-        // independently: V and U belong to the points, E_pot = q′·V_P
+        // independently: V and U belong to the points, V_PQ = V_Q − V_P, E_pot = q′·V_P
         const { VP, VQ, q, k } = e.p, val = (key) => num(right(e, key).label);
-        if (val('V') !== VP || val('U') !== VP - VQ || val('Ep') !== k * q * VP) fail(`${tag}: potential, energy or voltage`);
+        if (val('V') !== VP || val('U') !== VQ - VP || val('Ep') !== k * q * VP) fail(`${tag}: potential, energy or voltage`);
       }
       if (type === 'gain-lose') {
         const { step, V0, ia, ib, pt } = e.p, V = (i) => V0 + (5 - i) * step, z = { p: 1, 'e+': 1, a: 2, na: 1, e: -1, cl: -1 }[pt], dE = z * (V(ib) - V(ia));
@@ -108,6 +113,9 @@ for (const lang of ['en', 'de']) {
         const [n, d] = (/^[+-]$/.test(lab) ? lab + '1' : lab).split('/').map(Number), got = d ? n / d : n;
         if (!rel(got, VP, 1e-9)) fail(`${tag}: the potential at P ${right(e, 'P').label}, not ${VP}`);
         if (right(e, 'V').label !== X.frac(1 / k)) fail(`${tag}: the factor for B`);
+        // V_AB = V_B − V_A, with A at r and B at k·r from Q
+        const ab = right(e, 'U').label.replace('−', '-').replace('·', '').replace('V₀', ''), [n2, d2] = (/^[+-]$/.test(ab) ? ab + '1' : ab).split('/').map(Number);
+        if (!rel(d2 ? n2 / d2 : n2, sQ / k - sQ, 1e-9)) fail(`${tag}: V_AB ${right(e, 'U').label}, not V_B − V_A = ${sQ / k - sQ}`);
       }
       if (type === 'which-way') {
         const { q, Vl, Vr } = e.p, toRight = q > 0 ? Vl > Vr : q < 0 ? Vr > Vl : null, html = right(e, 'm').html;
