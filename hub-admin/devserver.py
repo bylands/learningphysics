@@ -57,7 +57,7 @@ def main() -> int:
             path = path.split("?", 1)[0].split("#", 1)[0]
             if path in ("/", "/index.html"):
                 return str(REPO / "hub" / "index.html")
-            if path in ("/lang.js", "/objectives.json", "/favicon.ico", "/favicon.svg", "/apple-touch-icon.png"):
+            if path in ("/lang.js", "/objectives.json", "/sims.json", "/favicon.ico", "/favicon.svg", "/apple-touch-icon.png"):
                 return str(REPO / "hub" / path[1:])
             if path in ("/apps.json", "/sets.json"):
                 return str(data / path[1:])
