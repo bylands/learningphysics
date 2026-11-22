@@ -167,7 +167,10 @@
     const l = $('#sim-layer');
     if (l) l.innerHTML = layer(tShown);
     $('#sim-out').innerHTML = readout(tShown);
-    $('#sim-play').textContent = playing ? ui().pause : tShown >= T && T > 0 ? ui().again : ui().play;
+    // the label only when it changes: draw() runs on every frame, and rewriting the button's text
+    // each time swaps its text node under the pointer, so that Safari drops the click (the pause)
+    const b = $('#sim-play'), label = playing ? ui().pause : tShown >= T && T > 0 ? ui().again : ui().play;
+    if (b.textContent !== label) b.textContent = label;
   }
   function prepare() {
     stop();
@@ -266,6 +269,7 @@
   }
   document.addEventListener('pointermove', (evt) => { if (!drag) return; const svg = $('#sim-fig svg'); if (svg) { per().start = clampStart(toModel(evt, svg)); prepare(); } });
   document.addEventListener('pointerup', () => { drag = false; });
+  document.addEventListener('pointercancel', () => { drag = false; });
 
   function init() {
     Lang.init();
