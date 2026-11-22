@@ -1193,6 +1193,25 @@ class Admin:
                 a["objectives"] = ids
         return apps
 
+    def sims(self) -> List[Dict[str, str]]:
+        """The standalone simulations of the apps, from sims.json next to the hub page (written by
+        hub/build-sims.js from the pages' <meta name="standalone-sim">), each with its app's name
+        (and German name) from the hub page; entries that are not as written there are left out."""
+        listed = read_config(self.hub.parent / "sims.json")
+        if not isinstance(listed, list):
+            return []
+        names = {a["id"]: a for a in self.apps()}
+        out = []
+        for e in listed:
+            if not isinstance(e, dict) or not all(isinstance(e.get(k), str) for k in ("app", "path", "title", "description")):
+                continue
+            if not re.fullmatch(r"/[a-z0-9-]+/[a-z0-9-]+/", e["path"]) or not e["title"].strip():
+                continue
+            app = names.get(e["app"], {})
+            out.append({"app": e["app"], "path": e["path"], "title": e["title"].strip(), "description": e["description"].strip(),
+                        "appName": str(app.get("name") or e["app"]), **({"appDe": str(app["de"])} if app.get("de") else {})})
+        return out
+
     def current(self) -> Dict[str, object]:
         apps = self.apps()
         cfg = normalize(read_config(self.config), [a["id"] for a in apps], {a["id"]: a["tags"] for a in apps if a.get("tags")})
@@ -3620,7 +3639,7 @@ def make_handler(admin: Admin):
                 if teacher and back:  # (already logged in: straight back to the page that sent them)
                     self.redirect(to=back)
                     return
-                self.send(200, panel_page(teacher, teacher == admin.super, admin.user_of(teacher)) if teacher
+                self.send(200, panel_page(teacher, teacher == admin.super, admin.user_of(teacher), admin.sims()) if teacher
                           else login_page(bool(admin.stored_hash()), next_page=back))
             elif path == "/static/admin.js":
                 self.send(200, ADMIN_JS, "text/javascript; charset=utf-8")
@@ -4038,11 +4057,13 @@ def login_page(ready: bool, error: str = "", next_page: str = "") -> str:
     </form>""")
 
 
-def panel_page(teacher: str = SUPER, superuser: bool = True, user: str = "") -> str:
-    """The panel of a teacher: the sets for everyone; the order and tags of the apps, the exercise
-    sheets and the teachers' accounts for the superuser only; everyone's own details and password (Account)."""
+def panel_page(teacher: str = SUPER, superuser: bool = True, user: str = "", sims: Optional[List[Dict[str, str]]] = None) -> str:
+    """The panel of a teacher: the sets, quizzes, games and standalone simulations (sims: Admin.sims())
+    for everyone; the order and tags of the apps, the exercise sheets and the teachers' accounts for
+    the superuser only; everyone's own details and password (Account)."""
     who = escape(f"{user} ({teacher})" if user and user != teacher else teacher)
     tabs = ('<a href="#quizzes" data-view="quizzes">Quizzes</a><a href="#games" data-view="games">Games</a>'
+            '<a href="#sims" data-view="sims">Simulations</a>'
             '<a href="#sets" data-view="sets">Sets</a>'
             + ('<a href="#sheets" data-view="sheets">Sheets</a><a href="#lessons" data-view="lessons">Lesson plans</a><a href="#apps" data-view="apps">Apps &amp; tags</a>'
                '<a href="#teachers" data-view="teachers">Teachers</a><a href="#server" data-view="server">Server</a>' if superuser else '')
@@ -4053,7 +4074,44 @@ def panel_page(teacher: str = SUPER, superuser: bool = True, user: str = "") -> 
       <a class="view" href="/" target="_blank" rel="noopener">View the hub page ↗</a>
       <span class="who" data-teacher="{escape(teacher)}">{who}</span>
       <form method="post" action="/admin/logout" class="logout"><button type="submit">Log out</button></form>
-    </div>""" + (SUPER_SECTIONS if superuser else "") + ACCOUNT_SECTION + COMMON_SECTIONS, script=True)
+    </div>""" + (SUPER_SECTIONS if superuser else "") + ACCOUNT_SECTION + COMMON_SECTIONS + sims_section(sims or []), script=True)
+
+
+def sims_section(sims: List[Dict[str, str]]) -> str:
+    """The Simulations tab: a card per standalone simulation (Admin.sims()), with its app, a link, its
+    address and a QR code of it (drawn in the browser, games.js). A new one appears by itself: see
+    hub/build-sims.js."""
+    cards = "".join(f"""
+        <article class="card game sim" data-id="{escape(s['path'].strip('/'))}">
+          <div class="text">
+            <p class="kicker"><a href="/{escape(s['app'])}/" target="_blank" rel="noopener">{escape(s['appName'])}</a>{f' <span class="de" lang="de">· {escape(s["appDe"])}</span>' if s.get('appDe') and s['appDe'] != s['appName'] else ''}</p>
+            <h2><a href="{escape(s['path'])}" target="_blank" rel="noopener">{escape(s['title'])} ↗</a></h2>
+            <p>{escape(s['description'])}</p>
+            <p class="links"><a href="{escape(s['path'])}" target="_blank" rel="noopener">Open ↗</a> <button type="button" class="linkish qr-open" data-path="{escape(s['path'])}" data-title="{escape(s['title'])}">QR code</button></p>
+            <p class="note">learningphysics.ch{escape(s['path'])} · open to everyone, no login; not part of the sets</p>
+          </div>
+        </article>""" for s in sims)
+    return f"""
+    <section id="view-sims" hidden>
+      <p class="lead">Standalone simulations: pages of the apps beside tutor, practice and check, to show on the projector or open on the students' phones (QR code). They are open to everyone and are not part of the sets.</p>
+      <div class="gametools">
+        <input type="search" class="gamefind" aria-label="Search the simulations" placeholder="Search the simulations" autocomplete="off">
+        <div class="order" role="radiogroup" aria-label="Order of the simulations">
+          <label><input type="radio" name="order-sims" value="standard" checked><span>Standard</span></label>
+          <label><input type="radio" name="order-sims" value="recent"><span>Recently used</span></label>
+        </div>
+      </div>
+      <p class="gamenone note" hidden>No simulations match.</p>
+      <div class="gamegrid">{cards}
+      </div>{'' if cards else '''
+      <p class="note">No standalone simulations yet.</p>'''}
+      <dialog id="sim-qr" class="qrbox" aria-labelledby="sim-qr-title">
+        <h2 id="sim-qr-title"></h2>
+        <div class="code" role="img"></div>
+        <p class="url"></p>
+        <div class="row"><button type="button" class="copy">Copy link</button><button type="button" class="close primary">Close</button></div>
+      </dialog>
+    </section>"""
 
 
 TEACHERS_SECTION = """
@@ -4314,6 +4372,20 @@ h1 { margin: 4px 0 16px; font-size: 1.6rem; }
 .game .links { display: flex; flex-wrap: wrap; gap: 6px 18px; font-weight: 600; }
 .game .links a { color: var(--accent); }
 .game .when { color: var(--muted); font-size: 0.8rem; font-weight: 400; margin-left: 6px; }
+/* the standalone simulations (#sims): cards without a picture, their app above the name; the QR code
+   in a dialog, always dark on white for the cameras */
+.sim .text { padding-top: 16px; }
+.sim .kicker { margin: 0 0 2px; font-size: 0.85rem; color: var(--muted); }
+.sim .kicker a { color: inherit; text-decoration: none; }
+.sim .kicker a:hover { text-decoration: underline; }
+.game .links button.linkish { font: inherit; font-weight: 600; color: var(--accent); background: none; border: 0; padding: 0; cursor: pointer; text-decoration: underline; }
+.qrbox { width: min(360px, calc(100vw - 32px)); padding: 20px; color: var(--ink); background: var(--card); border: 1px solid var(--line); border-radius: 12px; text-align: center; }
+.qrbox::backdrop { background: rgba(0, 0, 0, 0.45); }
+.qrbox h2 { margin: 0 0 12px; font-size: 1.1rem; }
+.qrbox .code { width: 100%; aspect-ratio: 1; padding: 12px; background: #fff; border-radius: 8px; color: #111; }
+.qrbox .code svg { display: block; width: 100%; height: 100%; }
+.qrbox .url { margin: 10px 0; font-size: 0.9rem; color: var(--muted); overflow-wrap: anywhere; }
+.qrbox .row { display: flex; justify-content: center; gap: 10px; }
 /* the pictures, in the colours of the hub page's */
 .game svg { --glow: #ffc21a; --red: #d9483b; --blue: #2b78d0; --amber: #e0a21b; --green: #2f9a55; }
 @media (prefers-color-scheme: dark) { .game svg { --glow: #ffd23f; } }
@@ -7183,7 +7255,7 @@ SETS_JS = r"""
 
 
 GAMES_JS = r"""
-// The quizzes and games (#quizzes, #games): a search, and the order of the cards, the standard one
+// The quizzes, games and standalone simulations (#quizzes, #games, #sims): a search, and the order of the cards, the standard one
 // or the most recently used first. When a game was used: the latest of tp-recent (lang.js notes it
 // in the games of this site, by folder) and tp-admin-games (noted here when a link of the card is
 // opened); the choice of the order is remembered (tp-admin-games-order).
@@ -7196,7 +7268,7 @@ GAMES_JS = r"""
     const days = Math.floor((Date.now() - t) / 86400000);
     return days < 1 ? 'used today' : days < 2 ? 'used yesterday' : `used ${days} days ago`;
   };
-  const sections = [...document.querySelectorAll('#view-quizzes, #view-games')];
+  const sections = [...document.querySelectorAll('#view-quizzes, #view-games, #view-sims')];
   sections.forEach((sec) => {
     const grid = sec.querySelector('.gamegrid'), find = sec.querySelector('.gamefind'), none = sec.querySelector('.gamenone');
     const standard = [...grid.children];
@@ -7231,6 +7303,53 @@ GAMES_JS = r"""
     });
     window.addEventListener('focus', render); // back from a game's tab: its time may have changed
     render();
+  });
+})();
+
+// The QR code of a standalone simulation's address (#sims), to open it on the students' phones from
+// the projector: drawn in this browser by qrcode-generator (MIT), the copy in all-in/vendor/, loaded
+// the first time it is needed (as on the hub page); the address goes to no other service.
+(function () {
+  'use strict';
+  const dialog = document.getElementById('sim-qr');
+  if (!dialog) return;
+  const code = dialog.querySelector('.code'), copy = dialog.querySelector('.copy');
+  let lib = null, current = '';
+  const load = () => lib || (lib = new Promise((resolve, reject) => {
+    if (window.qrcode) return resolve(window.qrcode);
+    const s = document.createElement('script');
+    s.src = '/all-in/vendor/qrcode.min.js';
+    s.onload = () => (window.qrcode ? resolve(window.qrcode) : reject(new Error('no qrcode')));
+    s.onerror = () => { lib = null; reject(new Error('qrcode not loaded')); };
+    document.head.append(s);
+  }));
+  document.getElementById('view-sims').addEventListener('click', (e) => {
+    const b = e.target.closest('.qr-open');
+    if (!b) return;
+    const url = new URL(b.dataset.path, location.origin).href;
+    current = url;
+    dialog.querySelector('h2').textContent = b.dataset.title;
+    dialog.querySelector('.url').textContent = url;
+    code.setAttribute('aria-label', `QR code of the address ${url}`);
+    code.replaceChildren();
+    copy.hidden = !(navigator.clipboard && window.isSecureContext);
+    copy.textContent = 'Copy link';
+    dialog.showModal();
+    load().then((qrcode) => {
+      if (current !== url) return;
+      const q = qrcode(0, 'M');
+      q.addData(url);
+      q.make();
+      code.innerHTML = q.createSvgTag({ cellSize: 4, margin: 0, scalable: true });
+    }).catch(() => { code.textContent = 'The QR code could not be drawn.'; });
+  });
+  dialog.querySelector('.close').addEventListener('click', () => dialog.close());
+  dialog.addEventListener('click', (e) => { if (e.target === dialog) dialog.close(); }); // a click beside it
+  dialog.addEventListener('close', () => { current = ''; });
+  copy.addEventListener('click', () => {
+    navigator.clipboard.writeText(dialog.querySelector('.url').textContent)
+      .then(() => { copy.textContent = 'Copied'; setTimeout(() => { copy.textContent = 'Copy link'; }, 1500); })
+      .catch(() => { /* not allowed: the address is shown to copy by hand */ });
   });
 })();
 """

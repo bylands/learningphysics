@@ -1751,6 +1751,24 @@ class Service(unittest.TestCase):
         self.assertIn("frame-src 'self'", headers["Content-Security-Policy"])
         self.assertEqual(self.req("/static/sets.js")[0], 200)
 
+    def test_sims(self):
+        # the Simulations tab: one card per entry of sims.json next to the hub page, with its app's name
+        cookie = self.login()[1]["Set-Cookie"].split(";")[0]
+        page = self.req("/", cookie=cookie)[2].decode()
+        self.assertIn('data-view="sims"', page)
+        self.assertIn("No standalone simulations yet.", page)
+        sims = json.loads((ROOT / "hub" / "sims.json").read_text())
+        self.assertTrue(any(e["path"] == "/acceleration-voltage/sim/" for e in sims))
+        broken = [{"app": "x", "path": "/../etc/", "title": "Bad", "description": ""}, {"app": "coe"}, "nope"]
+        (Path(self.dir.name) / "sims.json").write_text(json.dumps(sims + broken))
+        page = self.req("/", cookie=cookie)[2].decode()
+        self.assertEqual(page.count('class="card game sim"'), len(sims))  # the broken entries left out
+        self.assertIn('href="/acceleration-voltage/sim/"', page)
+        self.assertIn("Charges in Electric Fields", page)
+        self.assertIn('<a href="/acceleration-voltage/" target="_blank" rel="noopener">Acceleration Voltage</a>', page)
+        self.assertNotIn("/../etc/", page)
+        self.assertEqual(self.admin.sims()[0]["appName"], next(a["name"] for a in self.admin.apps() if a["id"] == sims[0]["app"]))
+
     def test_sets_with_objectives(self):
         st, headers, _ = self.login()
         cookie = headers["Set-Cookie"].split(";")[0]

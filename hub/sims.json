@@ -1,0 +1,20 @@
+[
+  {
+    "app": "oscillations",
+    "path": "/oscillations/fastest-strongest/",
+    "title": "Fastest and strongest",
+    "description": "The run of the worked example on fastest and strongest: a body on a spring with y, v and a against time, lines at their maxima and minima, slow motion on and off, values read off the graphs."
+  },
+  {
+    "app": "oscillations",
+    "path": "/oscillations/turning-pointer/",
+    "title": "The turning pointer",
+    "description": "The run of the worked example on the turning pointer, y = A·cos(ωt − φ₀): the initial phase φ₀ set in steps of 15°, slow motion on and off, values read off the graph."
+  },
+  {
+    "app": "acceleration-voltage",
+    "path": "/acceleration-voltage/sim/",
+    "title": "Charges in Electric Fields",
+    "description": "A charge in a uniform field, near a nucleus, in the bent field, or a race of a proton, a neutron, an alpha particle and an electron: particle, start, initial energy and direction, with velocity and force arrows, trace and equipotentials, integrated in real units and played in slow motion."
+  }
+]

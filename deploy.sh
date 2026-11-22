@@ -1,6 +1,6 @@
 #!/bin/bash
 # Deploys learningphysics.ch: every app, the privacy page, KaTeX, the hub page (index.html,
-# lang.js, objectives.json and the site's icons at the web root) and the admin panel's program (hub-admin/hubadmin.py, which nginx does
+# lang.js, objectives.json, sims.json and the site's icons at the web root) and the admin panel's program (hub-admin/hubadmin.py, which nginx does
 # not serve; the service restarts by itself when it changes), with rsync. Only changed files are sent (by checksum) and nothing on
 # the server is deleted; the admin panel's data (hub-data/) is never touched.
 #   ./deploy.sh            deploy
@@ -22,6 +22,7 @@ APPS="bulb-brightness circuit-trainer potential-circuit capacitors force-concept
 
 shared/sync.sh --check >/dev/null || { echo "Shared files differ: run shared/sync.sh first." >&2; exit 1; }
 node hub/build-objectives.js --check >/dev/null || { echo "The hub's learning objectives differ from the apps: run node hub/build-objectives.js first." >&2; exit 1; }
+node hub/build-sims.js --check >/dev/null 2>&1 || { echo "The standalone simulations differ from hub/sims.json: run node hub/build-sims.js first." >&2; exit 1; }
 
 # -c: compare by checksum; no times, owners or groups are set (the folders' setgid bit gives new
 # files the group tpweb). Files are 664 and folders 2775, so that the deploy user and the admin can
@@ -49,7 +50,7 @@ for a in $APPS; do
   src=${a%%:*} dst=${a##*:}
   send "$src/" "$TARGET$dst/" | sed "s|^|$dst/|"
 done
-send hub/index.html hub/lang.js hub/objectives.json hub/favicon.ico hub/favicon.svg hub/apple-touch-icon.png "$TARGET"
+send hub/index.html hub/lang.js hub/objectives.json hub/sims.json hub/favicon.ico hub/favicon.svg hub/apple-touch-icon.png "$TARGET"
 send --include=hubadmin.py --exclude='*' hub-admin/ "${TARGET}hub-admin/" | sed "s|^|hub-admin/|"
 # the exercise sheets of the admin panel (hub-admin/sheets/README.md): the engine, the pool, the topic categories, the catalogue and the
 # drafts of this repository as exercises (the teacher's TeXercises exercises are uploaded in the panel)

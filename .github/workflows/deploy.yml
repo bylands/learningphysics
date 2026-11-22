@@ -29,6 +29,8 @@ jobs:
         run: shared/sync.sh --check
       - name: Learning objectives of the hub page up to date
         run: node hub/build-objectives.js --check
+      - name: Standalone simulations of the admin panel up to date
+        run: node hub/build-sims.js --check
       # in parallel, one per core; each test's output is printed whole when it ends. The slowest tests
       # start first (electric-field's exercise check alone takes over a minute), so that they do not
       # start last and hold up the job alone; a name in SLOW that no longer exists is just skipped.
