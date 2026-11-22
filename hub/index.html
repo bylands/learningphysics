@@ -312,6 +312,59 @@
     .goals li.mastered .mark { color: var(--ok); }
     .goals li.notyet .mark, .goals li.misconception .mark { color: var(--bad); }
 
+    /* the QR code of an app's address: a button in the corner of each card opens it in a dialog
+       (drawn in this browser, see below); the code itself is always dark on white, for the cameras */
+    .app { position: relative; }
+    .app .qr-open {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 36px;
+      height: 36px;
+      padding: 0;
+      color: var(--muted);
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    .app .qr-open { -webkit-tap-highlight-color: transparent; } /* not the card's highlight on a phone */
+    .app .qr-open:hover, .app .qr-open:focus-visible { color: var(--accent); border-color: var(--accent); }
+    .app .qr-open:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+    .app .qr-open svg { width: 20px; height: 20px; padding: 0; border: 0; fill: currentColor; }
+    .qr {
+      width: min(360px, calc(100vw - 32px));
+      max-width: none;
+      padding: 20px;
+      color: var(--ink);
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
+      text-align: center;
+    }
+    .qr::backdrop { background: rgba(0, 0, 0, 0.45); }
+    .qr h2 { margin: 0 0 14px; font-size: 1.15rem; color: var(--accent); }
+    .qr .code { display: block; width: 100%; aspect-ratio: 1; padding: 14px; background: #fff; border-radius: 8px; }
+    .qr .code svg { display: block; width: 100%; height: 100%; }
+    .qr .url { margin: 12px 0 0; font-size: 0.85rem; color: var(--muted); overflow-wrap: anywhere; user-select: all; }
+    .qr .buttons { display: flex; justify-content: center; gap: 8px; margin-top: 14px; }
+    .qr .buttons button {
+      font: inherit;
+      font-size: 0.95rem;
+      color: var(--ink);
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 6px 14px;
+      cursor: pointer;
+    }
+    .qr .buttons button:hover { border-color: var(--accent); }
+    .qr .buttons .close { background: var(--accent); border-color: var(--accent); color: var(--card); font-weight: 600; }
+
     .app .tags {
       display: flex;
       flex-wrap: wrap;
@@ -870,6 +923,16 @@
     </a>
   </main>
 
+  <dialog id="qr" class="qr" aria-labelledby="qr-title">
+    <h2 id="qr-title"></h2>
+    <div class="code" role="img"></div>
+    <p class="url"></p>
+    <div class="buttons">
+      <button type="button" class="copy"></button>
+      <button type="button" class="close"></button>
+    </div>
+  </dialog>
+
   <footer class="wrap">
     © Samuel Byland · <a href="https://mng.ch" target="_blank" rel="noopener">MNG Rämibühl</a> · 2026 · <a href="/privacy/" data-i18n-common="privacy">Privacy</a>
   </footer>
@@ -1018,6 +1081,67 @@
         .then((d) => { if (d && typeof d === 'object') { objectives = d; goals(); } })
         .catch(() => { /* no objectives: the cards without them */ });
 
+      // the QR code of each app's address, to open it on a phone (e.g. from the projector): a button
+      // on every card, made here for any card of the page, so a new app has it too. The code is
+      // drawn in this browser by qrcode-generator (MIT), the copy in all-in/vendor/, loaded the first
+      // time it is needed; the address goes to no other service. On a set's page it is the address
+      // the card links to, with ?set=.
+      const qrDialog = document.getElementById('qr'), qrCode = qrDialog.querySelector('.code');
+      const qrCopy = qrDialog.querySelector('.copy'), qrClose = qrDialog.querySelector('.close');
+      const QR_ICON = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3h8v8H3zm2 2v4h4V5zm8-2h8v8h-8zm2 2v4h4V5zM3 13h8v8H3zm2 2v4h4v-4zm1-9h2v2H6zm10 0h2v2h-2zM6 16h2v2H6zm7-3h2v2h-2zm2 2h2v2h-2zm2-2h4v2h-4zm-4 4h2v4h-2zm4 0h2v2h-2zm2 2h2v2h-2zm-4 2h2v-2h-2z"/></svg>';
+      let qrLib = null, qrCard = null;
+      const loadQr = () => qrLib || (qrLib = new Promise((resolve, reject) => {
+        if (window.qrcode) return resolve(window.qrcode);
+        const s = document.createElement('script');
+        s.src = '/all-in/vendor/qrcode.min.js';
+        s.onload = () => (window.qrcode ? resolve(window.qrcode) : reject(new Error('no qrcode')));
+        s.onerror = () => { qrLib = null; reject(new Error('qrcode not loaded')); };
+        document.head.append(s);
+      }));
+      const qrTexts = () => {
+        qrCopy.textContent = L('Copy link', 'Link kopieren');
+        qrClose.textContent = L('Close', 'Schliessen');
+        cards.forEach((c) => {
+          const b = c.querySelector('.qr-open'), t = L(`QR code of ${c.querySelector('h2').textContent}`, `QR-Code von ${c.querySelector('h2').textContent}`);
+          b.title = t;
+          b.setAttribute('aria-label', t);
+        });
+        if (qrDialog.open && qrCard) showQr(qrCard);
+      };
+      function showQr(c) {
+        qrCard = c;
+        const url = c.href, name = c.querySelector('h2').textContent;
+        qrDialog.querySelector('h2').textContent = name;
+        qrDialog.querySelector('.url').textContent = url;
+        qrCode.setAttribute('aria-label', L(`QR code of the address ${url}`, `QR-Code der Adresse ${url}`));
+        qrCopy.hidden = !(navigator.clipboard && window.isSecureContext);
+        if (!qrDialog.open) qrDialog.showModal();
+        loadQr().then((qrcode) => {
+          if (qrCard !== c) return;
+          const q = qrcode(0, 'M');
+          q.addData(url);
+          q.make();
+          qrCode.innerHTML = q.createSvgTag({ cellSize: 4, margin: 0, scalable: true });
+        }).catch(() => { qrCode.textContent = L('The QR code could not be drawn.', 'Der QR-Code konnte nicht gezeichnet werden.'); });
+      }
+      cards.forEach((c) => {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'qr-open';
+        b.innerHTML = QR_ICON;
+        // the card is a link: the button must not open the app
+        b.addEventListener('click', (evt) => { evt.preventDefault(); evt.stopPropagation(); qrCode.replaceChildren(); showQr(c); });
+        c.append(b);
+      });
+      qrClose.addEventListener('click', () => qrDialog.close());
+      qrDialog.addEventListener('click', (evt) => { if (evt.target === qrDialog) qrDialog.close(); }); // a click beside it
+      qrDialog.addEventListener('close', () => { qrCard = null; });
+      qrCopy.addEventListener('click', () => {
+        navigator.clipboard.writeText(qrDialog.querySelector('.url').textContent)
+          .then(() => { qrCopy.textContent = L('Copied', 'Kopiert'); setTimeout(() => { qrCopy.textContent = L('Copy link', 'Link kopieren'); }, 1500); })
+          .catch(() => { /* not allowed: the address is shown to copy by hand */ });
+      });
+
       // the buttons of a filter: '' is All (no filter), the others toggle a key in the set on
       function chips(keys, label, kind, on) {
         return keys.map((k) => {
@@ -1065,6 +1189,7 @@
         });
         modes();
         goals();
+        qrTexts();
         show();
       }
 
