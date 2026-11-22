@@ -574,6 +574,31 @@
    }
   ]
  },
+ "acceleration-voltage": {
+  "check": "av",
+  "objectives": [
+   {
+    "id": "ab",
+    "en": "Find how the kinetic energy and the speed of a charge change between two points A and B of a field, from W = q·(V_A − V_B), and show it with energy bars.",
+    "de": "Bestimmen, wie sich die kinetische Energie und die Geschwindigkeit einer Ladung zwischen zwei Punkten A und B eines Feldes ändern, aus W = q·(Φ_A − Φ_B), und es mit Energiebalken darstellen."
+   },
+   {
+    "id": "accel",
+    "en": "Find the energy in eV and the speed of a charge accelerated from rest through a voltage, also in several steps.",
+    "de": "Die Energie in eV und die Geschwindigkeit einer Ladung bestimmen, die aus der Ruhe durch eine Spannung beschleunigt wird, auch in mehreren Stufen."
+   },
+   {
+    "id": "rutherford",
+    "en": "Use energy conservation for a charge slowed down by a field, as in Rutherford's experiment: the distance of closest approach.",
+    "de": "Die Energieerhaltung auf eine Ladung anwenden, die von einem Feld gebremst wird, wie in Rutherfords Streuversuch: der kleinste Abstand."
+   },
+   {
+    "id": "compare",
+    "en": "Compare the energies and speeds of two particles with different charges and masses accelerated through the same voltage.",
+    "de": "Die Energien und Geschwindigkeiten zweier Teilchen mit verschiedenen Ladungen und Massen vergleichen, die mit derselben Spannung beschleunigt werden."
+   }
+  ]
+ },
  "magnetic-forces": {
   "check": "mf",
   "objectives": [
