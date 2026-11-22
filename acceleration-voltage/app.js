@@ -22,18 +22,6 @@
       fill: 'Answer every question, then check.', okWell: 'All correct, well done!',
       notYet: (n) => `Not quite yet (attempt ${n}).`, tryAgain: ' Try again, or take a hint.', canReveal: ' You can take a hint or look at the solution.',
       correct: 'Correct', notThis: 'Not this one: check your reasoning, or take a hint.', shown: 'The right answers are marked.',
-      // explore
-      exTitle: 'Explore: potential and energy at any point', exIdea: 'A particle starts at A with the kinetic energy you set. Click or tap any point P of the field: the gauge shows the potential at A and P, the bars the particle’s energies at A and at P.',
-      exHow: 'Drag the particle to move A. Keyboard: Tab to the figure, then ← ↑ → ↓ move P, with Shift they move A.',
-      field: 'Field', fPlates: 'Two plates', fBent: 'Bent field', fNucleus: 'Nucleus', particle: 'Particle', qPos: 'positive (+e)', qNeg: 'negative (−e)', qNeu: 'neutral',
-      e0: 'Kinetic energy at A', atRest: 'at rest', values: 'Show the values',
-      potential: 'Potential at P', epot: 'Potential energy at P', ekin: 'Kinetic energy at P',
-      higher: 'higher than at A', lower: 'lower than at A', same: 'the same as at A', zeroPot: 'zero, as everywhere: the particle has no charge',
-      higherFaster: 'higher than at A: the particle is faster at P', lowerSlower: 'lower than at A: the particle is slower at P', sameSpeed: 'the same as at A: the particle is as fast',
-      cannot: 'the particle cannot get there: its kinetic energy would have to be negative. It turns back before, where its kinetic energy is zero',
-      ruleNote: 'E_pot = q·V, and E_kin,P = E_kin,A + q·(V_A − V_P): the total energy stays the same, whatever the path from A to P.',
-      neutralNote: 'A neutral particle feels no force in the field: its kinetic energy does not change.',
-      simLink: 'Watch the charges move: the simulation, with velocity and force arrows →',
     },
     de: {
       title: 'Beschleunigungsspannung', mode: 'Modus', difficulty: 'Schwierigkeit', example: 'Beispiel',
@@ -46,17 +34,6 @@
       fill: 'Beantworte jede Frage und prüfe dann.', okWell: 'Alles richtig, gut gemacht!',
       notYet: (n) => `Noch nicht ganz (Versuch ${n}).`, tryAgain: ' Versuche es nochmals, oder nimm einen Tipp.', canReveal: ' Du kannst einen Tipp nehmen oder die Lösung anschauen.',
       correct: 'Richtig', notThis: 'Das stimmt nicht: Überprüfe deine Überlegung, oder nimm einen Tipp.', shown: 'Die richtigen Antworten sind markiert.',
-      exTitle: 'Erkunden: Potential und Energie in jedem Punkt', exIdea: 'Ein Teilchen startet in A mit der kinetischen Energie, die du einstellst. Klicke oder tippe auf einen beliebigen Punkt P des Feldes: Die Skala zeigt das Potential in A und P, die Balken die Energien des Teilchens in A und in P.',
-      exHow: 'Zieh das Teilchen, um A zu verschieben. Tastatur: Tab zur Abbildung, dann verschieben ← ↑ → ↓ den Punkt P, mit Shift den Punkt A.',
-      field: 'Feld', fPlates: 'Zwei Platten', fBent: 'Gebogenes Feld', fNucleus: 'Atomkern', particle: 'Teilchen', qPos: 'positiv (+e)', qNeg: 'negativ (−e)', qNeu: 'neutral',
-      e0: 'Kinetische Energie in A', atRest: 'in Ruhe', values: 'Werte anzeigen',
-      potential: 'Potential in P', epot: 'Potentielle Energie in P', ekin: 'Kinetische Energie in P',
-      higher: 'höher als in A', lower: 'tiefer als in A', same: 'gleich wie in A', zeroPot: 'null, wie überall: Das Teilchen hat keine Ladung',
-      higherFaster: 'höher als in A: Das Teilchen ist in P schneller', lowerSlower: 'tiefer als in A: Das Teilchen ist in P langsamer', sameSpeed: 'gleich wie in A: Das Teilchen ist gleich schnell',
-      cannot: 'Das Teilchen kommt nicht dorthin: Seine kinetische Energie müsste negativ sein. Es kehrt vorher um, wo seine kinetische Energie null ist',
-      ruleNote: 'E_pot = q·Φ, und E_kin,P = E_kin,A + q·(Φ_A − Φ_P): Die Gesamtenergie bleibt gleich, auf jedem Weg von A nach P.',
-      neutralNote: 'Ein neutrales Teilchen spürt im Feld keine Kraft: Seine kinetische Energie ändert sich nicht.',
-      simLink: 'Die Ladungen in Bewegung: die Simulation, mit Geschwindigkeits- und Kraftpfeilen →',
     },
   };
   const ui = () => {
@@ -409,7 +386,7 @@
       tutor: (i) => { setMode('tutor'); tutor.open(i); },
       practise: practiseTopic,
     });
-    Explore.mount($('#explore'), ui);
+    Explore.mount($('#explore'));
     $('#modes').addEventListener('change', () => {
       if (mode() === 'tutor') { setMode('tutor'); tutor.open(tutor.current()); } else if (mode() === 'check') checkMode(); else if (mode() === 'explore') exploreMode(); else practise();
     });

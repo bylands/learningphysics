@@ -254,3 +254,11 @@ svg.av .sim-dir { stroke: var(--av-vel); stroke-width: 2; stroke-dasharray: 5 4;
 .ex-row .ex-check { margin-right: 10px; }
 .ex-row .levels small { font-size: 0.75em; opacity: 0.85; }
 .sim-link { margin: 14px 0 0; text-align: center; font-weight: 600; }
+
+/* the explorer on its own page (explore/): on a wide screen the gauge, the bars and the readout beside the field */
+@media (min-width: 1000px) {
+  body.explore-page .ex-main { display: grid; grid-template-columns: minmax(0, 1fr) minmax(320px, 480px); gap: 12px 28px; align-items: start; margin-top: 8px; }
+  body.explore-page .ex-main .ex-how { margin-top: 2px; }
+  body.explore-page .ex-read { gap: 8px 16px; }
+}
+.sim-link + .sim-link { margin-top: 6px; }
