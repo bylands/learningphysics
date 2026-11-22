@@ -5,8 +5,12 @@
 // and at P: E_pot = q·V, E_kin = E_kin,A + q·(V_A − V_P), the total the same. Where E_kin would be
 // negative, the particle cannot get to P. The values (in V and eV) are hidden unless asked for, so
 // that the student reads the bars qualitatively: higher, lower, the same.
-//   Explore.mount(el, ui)  builds the explorer in el; ui() gives the texts of the current language
-//   Explore.relabel()      redraws it in the current language
+//   Explore.mount(el, opts)  builds the explorer in el; opts.standalone: on its own page (explore/,
+//                            beside the module): no heading (the page's title says it), links to
+//                            ../sim/ and back to the module; else in the module's Explore mode, with
+//                            links to sim/ and to the page explore/
+//   Explore.relabel()        redraws it in the current language
+//   Explore.TEXTS            the texts, { en, de }
 // Keyboard: the figure takes the focus; the arrow keys move P, with Shift they move A.
 (function (root) {
   'use strict';
@@ -20,8 +24,44 @@
     bent: { cfg: { kind: 'bent' }, equi: [800, 650, 500, 350, 200], A: [-2.5, 0.2], P: [1.6, -0.9], E0: 100, Emax: 1000, unit: 1 },
     nucleus: { cfg: { kind: 'nucleus', Z: 79 }, equi: [3e6, 5e6, 10e6, 20e6], A: [-3, 0.15], P: [0.6, 0.1], E0: 5e6, Emax: 20e6, unit: 1e6, rmin: 0.5 },
   };
+  // the texts, also used by the standalone page (explore/)
+  const TEXTS = {
+    en: {
+      exTitle: 'Explore: potential and energy at any point', exIdea: 'A particle starts at A with the kinetic energy you set. Click or tap any point P of the field: the gauge shows the potential at A and P, the bars the particle’s energies at A and at P.',
+      exHow: 'Drag the particle to move A. Keyboard: Tab to the figure, then ← ↑ → ↓ move P, with Shift they move A.',
+      field: 'Field', fPlates: 'Two plates', fBent: 'Bent field', fNucleus: 'Nucleus', particle: 'Particle', qPos: 'positive (+e)', qNeg: 'negative (−e)', qNeu: 'neutral',
+      e0: 'Kinetic energy at A', atRest: 'at rest', values: 'Show the values',
+      potential: 'Potential at P', epot: 'Potential energy at P', ekin: 'Kinetic energy at P',
+      higher: 'higher than at A', lower: 'lower than at A', same: 'the same as at A', zeroPot: 'zero, as everywhere: the particle has no charge',
+      higherFaster: 'higher than at A: the particle is faster at P', lowerSlower: 'lower than at A: the particle is slower at P', sameSpeed: 'the same as at A: the particle is as fast',
+      cannot: 'the particle cannot get there: its kinetic energy would have to be negative. It turns back before, where its kinetic energy is zero',
+      ruleNote: 'E_pot = q·V, and E_kin,P = E_kin,A + q·(V_A − V_P): the total energy stays the same, whatever the path from A to P.',
+      neutralNote: 'A neutral particle feels no force in the field: its kinetic energy does not change.',
+      simLink: 'Watch the charges move: the simulation, with velocity and force arrows →',
+      pageLink: 'Open the explorer on its own page →',
+      moduleLink: 'Tutor, exercises and the check on acceleration voltage: the module →',
+      pageTitle: 'Potential and Energy Explorer',
+    },
+    de: {
+      exTitle: 'Erkunden: Potential und Energie in jedem Punkt', exIdea: 'Ein Teilchen startet in A mit der kinetischen Energie, die du einstellst. Klicke oder tippe auf einen beliebigen Punkt P des Feldes: Die Skala zeigt das Potential in A und P, die Balken die Energien des Teilchens in A und in P.',
+      exHow: 'Zieh das Teilchen, um A zu verschieben. Tastatur: Tab zur Abbildung, dann verschieben ← ↑ → ↓ den Punkt P, mit Shift den Punkt A.',
+      field: 'Feld', fPlates: 'Zwei Platten', fBent: 'Gebogenes Feld', fNucleus: 'Atomkern', particle: 'Teilchen', qPos: 'positiv (+e)', qNeg: 'negativ (−e)', qNeu: 'neutral',
+      e0: 'Kinetische Energie in A', atRest: 'in Ruhe', values: 'Werte anzeigen',
+      potential: 'Potential in P', epot: 'Potentielle Energie in P', ekin: 'Kinetische Energie in P',
+      higher: 'höher als in A', lower: 'tiefer als in A', same: 'gleich wie in A', zeroPot: 'null, wie überall: Das Teilchen hat keine Ladung',
+      higherFaster: 'höher als in A: Das Teilchen ist in P schneller', lowerSlower: 'tiefer als in A: Das Teilchen ist in P langsamer', sameSpeed: 'gleich wie in A: Das Teilchen ist gleich schnell',
+      cannot: 'Das Teilchen kommt nicht dorthin: Seine kinetische Energie müsste negativ sein. Es kehrt vorher um, wo seine kinetische Energie null ist',
+      ruleNote: 'E_pot = q·Φ, und E_kin,P = E_kin,A + q·(Φ_A − Φ_P): Die Gesamtenergie bleibt gleich, auf jedem Weg von A nach P.',
+      neutralNote: 'Ein neutrales Teilchen spürt im Feld keine Kraft: Seine kinetische Energie ändert sich nicht.',
+      simLink: 'Die Ladungen in Bewegung: die Simulation, mit Geschwindigkeits- und Kraftpfeilen →',
+      pageLink: 'Den Erkunder auf einer eigenen Seite öffnen →',
+      moduleLink: 'Tutor, Aufgaben und Check zur Beschleunigungsspannung: das Modul →',
+      pageTitle: 'Potential und Energie erkunden',
+    },
+  };
+  const texts = () => { const t = TEXTS[Lang.get()]; return { ...t, ruleNote: X.subs(t.ruleNote) }; };
   const QS = { pos: 1, neg: -1, neu: 0 };
-  let el = null, ui = null, st = { field: 'plates', q: 'pos', vals: false, pos: {} };
+  let el = null, ui = texts, opts = {}, st = { field: 'plates', q: 'pos', vals: false, pos: {} };
   const cur = () => FIELDS[st.field];
   const pts = () => st.pos[st.field] || (st.pos[st.field] = { A: [...cur().A], P: [...cur().P], E0: cur().E0 });
   const box = () => A.BOX[cur().cfg.kind];
@@ -80,19 +120,21 @@
   }
   const radios = (name, list, on) => `<div class="levels small" role="radiogroup">${list.map(([v, label]) => `<label><input type="radio" name="${name}" value="${v}"${v === on ? ' checked' : ''}><span>${label}</span></label>`).join('')}</div>`;
   function render() {
-    const t = ui(), p = pts(), u = cur().unit;
-    el.innerHTML = `<h2>${t.exTitle}</h2><p class="note">${t.exIdea}</p>
+    const t = ui(), p = pts();
+    const links = opts.standalone
+      ? `<p class="sim-link"><a href="../sim/">${t.simLink}</a></p><p class="sim-link"><a href="../">${t.moduleLink}</a></p>`
+      : `<p class="sim-link"><a href="sim/">${t.simLink}</a></p><p class="sim-link"><a href="explore/">${t.pageLink}</a></p>`;
+    el.innerHTML = `${opts.standalone ? '' : `<h2>${t.exTitle}</h2>`}<p class="note">${t.exIdea}</p>
       <div class="ex-controls">
         <div class="ex-row"><span class="what">${t.field}</span>${radios('ex-field', [['plates', t.fPlates], ['bent', t.fBent], ['nucleus', t.fNucleus]], st.field)}</div>
         <div class="ex-row"><span class="what">${t.particle}</span>${radios('ex-q', [['pos', t.qPos], ['neg', t.qNeg], ['neu', t.qNeu]], st.q)}</div>
         <div class="ex-row"><label class="what" for="ex-e0">${t.e0}</label><input id="ex-e0" type="range" min="0" max="${cur().Emax}" step="${cur().Emax / 40}" value="${p.E0}"><span id="ex-e0v" class="note">${st.vals ? fmtE(p.E0) : p.E0 === 0 ? t.atRest : ''}</span></div>
         <label class="ex-row ex-check"><input type="checkbox" id="ex-vals"${st.vals ? ' checked' : ''}> ${t.values}</label>
       </div>
-      <div class="figs"><div class="fig" id="ex-fig">${figure()}</div></div>
-      <p class="note ex-how">${t.exHow}</p>
-      <div id="ex-read">${readout()}</div>
-      <p class="sim-link"><a href="sim/">${t.simLink}</a></p>`;
-    void u;
+      <div class="ex-main"><div class="ex-left"><div class="figs"><div class="fig" id="ex-fig">${figure()}</div></div>
+      <p class="note ex-how">${t.exHow}</p></div>
+      <div id="ex-read">${readout()}</div></div>
+      ${links}`;
     wire();
   }
   function update() {
@@ -152,7 +194,8 @@
     document.addEventListener('pointercancel', () => { drag = null; });
   }
   root.Explore = {
-    mount(node, texts) { el = node; ui = texts; render(); },
+    TEXTS,
+    mount(node, o) { el = node; opts = o || {}; render(); },
     relabel() { if (el) render(); },
   };
 })(typeof window !== 'undefined' ? window : globalThis);

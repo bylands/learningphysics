@@ -13,6 +13,12 @@
   },
   {
     "app": "acceleration-voltage",
+    "path": "/acceleration-voltage/explore/",
+    "title": "Potential and Energy Explorer",
+    "description": "A positive, negative or neutral particle in a field (two plates, the bent field or a gold nucleus): drag its start A, set its kinetic energy there and click any point P; a gauge shows the potential at A and P, bars the potential and kinetic energy at A and P, read qualitatively or with the values, and whether the particle can get to P at all."
+  },
+  {
+    "app": "acceleration-voltage",
     "path": "/acceleration-voltage/sim/",
     "title": "Charges in Electric Fields",
     "description": "A charge in a uniform field (plates side by side or one above the other), near a point charge of any whole multiple of e, in the bent field, or a race of a proton, a neutron, an alpha particle and an electron: particle, start, initial energy and direction, with velocity and force arrows, trace and equipotentials, integrated in real units and played in slow motion."
