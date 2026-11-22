@@ -1,0 +1,796 @@
+/* Shared look of the learningphysics.ch apps: colours, header, toolbar, levels, cards, buttons,
+   answer fields, tutor and check. The canonical copy lives in shared/; sync.sh copies it into
+   every app as ui.css, so do not edit an app's copy. App-specific styles go in the app's style.css,
+   loaded after this file. */
+
+:root {
+  --bg: #f6f5f1;
+  --card: #ffffff;
+  --ink: #1f2328;
+  --muted: #646b73;
+  --line: #d9d6ce;
+  --accent: #2b59c3;
+  --accent-ink: #ffffff;
+  --new: #0f766e;
+  --new-ink: #ffffff;
+  --ok: #1d7a3e;
+  --ok-bg: #e6f4ea;
+  --warn: #8a5a00;
+  --warn-bg: #fdf3dc;
+  --bad: #b3261e;
+  --bad-bg: #fbe9e7;
+  --star: #d4a017;
+  --mark: #ffe066;
+  --serif: "STIX Two Text", Cambria, "Times New Roman", serif;
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #15171a;
+    --card: #1e2125;
+    --ink: #e6e3dc;
+    --muted: #9aa0a6;
+    --line: #3a3e44;
+    --accent: #7aa2ff;
+    --accent-ink: #0d1320;
+    --new: #2dd4bf;
+    --new-ink: #08201d;
+    --ok: #7fd49a;
+    --ok-bg: #1d3325;
+    --warn: #f2c46b;
+    --warn-bg: #3a3020;
+    --bad: #ff8a80;
+    --bad-bg: #3d2322;
+    --star: #f2c94c;
+    --mark: #6b5600;
+    color-scheme: dark;
+  }
+}
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+
+/* System fonts draw ∝ tiny; take it (only it) from KaTeX's main font, which all apps can reach. */
+@font-face { font-family: "LP Symbols"; src: url("/katex/fonts/KaTeX_Main-Regular.woff2") format("woff2"); unicode-range: U+221D; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font: 16px/1.55 "LP Symbols", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+.wrap { max-width: 920px; margin: 0 auto; padding-inline: 16px; }
+
+/* header: title, score, language */
+/* the title, after a link back to the landing page: Learning Physics / Force Systems */
+.brand { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 8px; }
+.brand .home { color: var(--muted); text-decoration: none; font-size: 0.95rem; }
+.brand .home:hover { color: var(--accent); text-decoration: underline; text-underline-offset: 2px; }
+.brand .sep { color: var(--line); }
+.top { border-bottom: 1px solid var(--line); background: var(--card); }
+.top .wrap { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 4px 16px; padding-block: 14px; }
+h1 { font-size: 1.25rem; margin: 0; }
+.top-right { display: flex; align-items: center; gap: 12px; }
+.score { margin: 0; color: var(--muted); font-size: 0.9rem; }
+
+/* toolbar: modes, levels, switches, New exercise */
+.toolbar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin: 20px 0 14px; }
+input, button, select { font: inherit; color: inherit; }
+.levels { display: inline-flex; flex-wrap: wrap; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: var(--card); }
+.levels label { position: relative; }
+.levels input { position: absolute; opacity: 0; inset: 0; margin: 0; cursor: pointer; }
+.levels > label > span { display: block; padding: 7px 16px; border-left: 1px solid var(--line); white-space: nowrap; }
+.levels label:first-child > span { border-left: 0; }
+.levels input:checked + span { background: var(--accent); color: var(--accent-ink); font-weight: 600; }
+.levels input:focus-visible + span { outline: 2px solid var(--accent); outline-offset: -3px; }
+.levels.small > label > span { padding: 3px 10px; font-size: 0.85rem; }
+/* the EN/DE switch keeps its two buttons side by side; a long score wraps instead */
+.levels.small { flex-wrap: nowrap; flex-shrink: 0; }
+.top-right .score { min-width: 0; }
+
+/* on/off switch */
+.switch { display: inline-flex; align-items: center; gap: 8px; cursor: pointer; user-select: none; }
+.switch input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.switch .track { position: relative; width: 38px; height: 22px; border-radius: 11px; background: var(--line); transition: background 0.2s; }
+.switch .track::after { content: ""; position: absolute; left: 3px; top: 3px; width: 16px; height: 16px; border-radius: 50%; background: var(--card); box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3); transition: transform 0.2s; }
+.switch input:checked + .track { background: var(--accent); }
+.switch input:checked + .track::after { transform: translateX(16px); }
+.switch input:focus-visible + .track { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* cards */
+.card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 18px 20px;
+  margin-bottom: 16px;
+}
+.card h2 { margin: 0 0 6px; font-size: 1.1rem; }
+.card h3 { margin: 0 0 8px; font-size: 1rem; }
+/* the difficulty of an exercise, after its title: ★★★☆☆ */
+.stars { margin-left: 6px; color: var(--star); font-size: 0.95rem; letter-spacing: 1px; font-weight: 400; white-space: nowrap; }
+
+.figs { display: flex; flex-wrap: wrap; gap: 16px 28px; align-items: center; justify-content: center; margin: 12px 0 18px; }
+.fig { max-width: 100%; margin: 0; overflow-x: auto; } /* no default <figure> margin: the gap of .figs spaces them */
+.fig svg { display: block; max-width: 100%; height: auto; }
+.fig.scrolls::after { content: "↔"; position: sticky; left: 0; display: block; margin-top: 4px; font-size: 0.8rem; color: var(--muted); }
+
+/* numeric answer fields: one grid for all fields of a form, so that the inputs line up */
+.fields { display: grid; grid-template-columns: max-content minmax(0, 8em) 3.2em 1fr; align-items: center; gap: 10px 8px; margin-bottom: 14px; }
+.field { display: contents; }
+.field .sym { text-align: right; }
+.field .what { color: var(--muted); font-size: 0.9rem; margin-right: 4px; }
+.field input {
+  width: 100%;
+  padding: 7px 9px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--bg);
+  font-variant-numeric: tabular-nums;
+}
+.field input:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+/* the ± button next to a number field (sign.js), on touch screens only */
+.num { display: flex; gap: 6px; min-width: 0; }
+.num input { flex: 1 1 auto; min-width: 0; }
+.num .sign { display: none; flex: none; min-width: 2.6em; padding: 4px 10px; font-size: 1.05rem; font-weight: 600; }
+@media (pointer: coarse) { .num .sign { display: inline-block; } }
+.field .unit { color: var(--muted); }
+.field .fb { font-size: 0.9rem; }
+.field.ok input { border-color: var(--ok); background: var(--ok-bg); }
+.field.ok .fb { color: var(--ok); }
+.field.ok .fb::before { content: "✓ "; }
+.field.warn input { border-color: var(--warn); background: var(--warn-bg); }
+.field.warn .fb { color: var(--warn); }
+.field.bad input { border-color: var(--bad); background: var(--bad-bg); }
+.field.bad .fb { color: var(--bad); }
+.field.bad .fb::before { content: "✗ "; }
+
+/* footer: author, school, privacy */
+.foot { margin-top: 28px; padding-block: 16px 32px; border-top: 1px solid var(--line); color: var(--muted); font-size: 0.85rem; }
+.foot a { color: inherit; text-underline-offset: 2px; }
+.foot a:hover { color: var(--accent); }
+
+/* buttons: primary (Check, Next) blue, New exercise teal */
+.actions { display: flex; flex-wrap: wrap; gap: 8px; }
+button {
+  padding: 7px 14px;
+  border-radius: 6px;
+  border: 1px solid var(--line);
+  background: var(--card);
+  cursor: pointer;
+}
+button:hover:not(:disabled) { border-color: var(--accent); }
+button.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); font-weight: 600; }
+button.new-btn { background: var(--new); border-color: var(--new); color: var(--new-ink); font-weight: 600; }
+button.new-btn:hover:not(:disabled) { border-color: var(--ink); }
+button:disabled { opacity: 0.45; cursor: not-allowed; }
+
+.note { color: var(--muted); font-size: 0.9rem; margin: 10px 0 0; }
+.status { margin: 10px 0 0; min-height: 1.4em; }
+.status.ok { color: var(--ok); font-weight: 600; }
+.status.bad { color: var(--bad); }
+
+#hint-list { margin: 0; padding-left: 1.4em; }
+#hint-list li { margin: 6px 0; }
+
+/* worked solutions */
+.steps p { margin: 10px 0; }
+.steps ul { margin: 6px 0; padding-left: 1.3em; }
+.steps li { margin: 4px 0; }
+.steps .step-rule { color: var(--muted); font-size: 0.9rem; font-weight: 600; margin: 18px 0 4px; }
+.steps .katex-display { margin: 8px 0; overflow-x: auto; overflow-y: hidden; padding: 2px 0; }
+.short { font-weight: 600; border-top: 1px solid var(--line); padding-top: 12px; margin-bottom: 0; }
+.katex .result { background: var(--ok-bg); border-radius: 3px; padding: 0.1em 0.25em; }
+
+/* tutor mode */
+.examples { margin-bottom: 14px; }
+.tutor-text { min-height: 8.5em; }
+.tutor-text .step-rule:first-child { margin-top: 0; }
+.tutor-nav { align-items: center; justify-content: space-between; margin-top: 12px; }
+.tutor-nav .note { margin: 0; }
+.progress { height: 4px; background: var(--line); border-radius: 2px; overflow: hidden; margin-bottom: 6px; }
+#t-bar { height: 100%; background: var(--accent); transition: width 0.2s; }
+
+@media (max-width: 640px) {
+  .card { padding: 14px; }
+  .fields { grid-template-columns: minmax(0, 1fr) 3.2em; gap: 4px 8px; }
+  .field .sym { grid-column: 1 / -1; text-align: left; margin-top: 8px; }
+  .field .fb { grid-column: 1 / -1; }
+  .levels > label > span { padding: 7px 10px; }
+}
+
+/* practice by topic (topics.js): the topic menu, its steps and the link to the worked example */
+.topics { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; flex-basis: 100%; }
+.topic-pick { display: inline-flex; align-items: center; gap: 8px; }
+.topic-pick span { color: var(--muted); font-size: 0.9rem; }
+.topic-pick select { padding: 6px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--card); max-width: 100%; min-width: 0; }
+.topic-pick { max-width: 100%; } /* a long title in the menu (e.g. of a problem) shortens the menu on a narrow screen */
+.topics .stages { max-width: 100%; flex-wrap: wrap; flex-shrink: 1; } /* .levels.small would keep the steps in one row, wider than a narrow screen */
+.topics .stages > label { flex: 1 1 auto; min-width: 7.5em; } /* a step too narrow for one per row wraps as a whole */
+.topics .stages > label > span { padding: 5px 12px; font-size: 0.88rem; white-space: normal; }
+/* the links to the worked examples: a line of their own, under the steps */
+.topics .worked-links { flex-basis: 100%; display: flex; flex-wrap: wrap; gap: 4px 20px; }
+.linklike { border: 0; background: none; padding: 2px 0; color: var(--accent); cursor: pointer; text-decoration: underline; text-underline-offset: 2px; font-size: 0.9rem; }
+.linklike:hover { color: var(--ink); }
+.topic-note { flex-basis: 100%; margin: 0; padding: 8px 12px; border-radius: 8px; background: var(--warn-bg); color: var(--warn); font-size: 0.92rem; }
+.topic-note.tip { background: color-mix(in srgb, var(--accent) 12%, transparent); color: var(--ink); }
+.topic-note.tip .worked { margin-left: 4px; font-weight: 600; }
+.tutor-nav #t-practise { margin-left: auto; margin-right: 8px; }
+.note.also { margin-top: -2px; }
+
+/* identifying a quantity before calculating (identify.js): the options, then its value */
+.ident { margin: 10px 0 14px; }
+.ident-what { margin: 0 0 6px; }
+.ident-opts > label > span { padding: 6px 14px; }
+.ident-opts input:disabled + span { cursor: default; }
+.ident.done .ident-opts input:checked + span { background: var(--ok); }
+.ident-fb { margin: 6px 0 0; font-size: 0.95rem; }
+.ident-fb.ok { color: var(--ok); }
+.ident-fb.bad { color: var(--bad); }
+
+/* pictures of everyday situations (artkit.js, Force Systems' realpictures.js): their colours */
+:root {
+  --rp-sky1: #cfe4f6; --rp-sky2: #f4f8fb; --rp-metal1: #d9dee3; --rp-metal2: #f3f5f7; --rp-snow1: #ffffff; --rp-snow2: #dfe9f3;
+  --rp-outline: #2b3138; --rp-asphalt: #5d6267; --rp-concrete: #c9c4bb; --rp-gravel: #a49d92; --rp-water: #5b93c7;
+  --rp-red: #d64541; --rp-blue: #3f78c8; --rp-orange: #ea8a2e; --rp-green: #3c9a5f; --rp-yellow: #f2b632;
+  --rp-skin: #f1c9a5; --rp-hair: #5a3b26; --rp-legs: #2f3a4a; --rp-steel: #e0a526; --rp-wood: #c48a4f;
+}
+@media (prefers-color-scheme: dark) {
+  :root { --rp-sky1: #22364b; --rp-sky2: #2c3540; --rp-metal1: #3a4048; --rp-metal2: #4a5159; --rp-snow1: #e6edf4; --rp-snow2: #b9c7d6; --rp-outline: #9aa3ab; --rp-legs: #56677f; }
+}
+svg .rp-bg { stroke: none; }
+svg .rp-ground { stroke: none; }
+svg .rp-ground.asphalt { fill: var(--rp-asphalt); }
+svg .rp-ground.concrete { fill: var(--rp-concrete); }
+svg .rp-ground.gravel { fill: var(--rp-gravel); }
+svg .rp-ground.snow { fill: url(#rp-snow); }
+svg .rp-lane { stroke: #f4f4f4; stroke-width: 2; stroke-dasharray: 14 12; }
+svg .rp-edge { stroke: var(--rp-outline); stroke-width: 1.5; }
+svg .rp-water { fill: var(--rp-water); stroke: none; }
+svg .rp-shadow { fill: #000; opacity: 0.18; }
+svg .rp-tyre { fill: #24282d; }
+svg .rp-rim { fill: #c8cdd2; stroke: #8f979f; stroke-width: 1; }
+svg .rp-hub { fill: #5b636b; }
+svg :is(.rp-car, .rp-truck, .rp-loco, .rp-wagon, .rp-container, .rp-crate, .rp-rocket, .rp-fin, .rp-canopy, .rp-cabin, .rp-weight, .rp-scale, .rp-glassbox, .rp-nozzle) { stroke: var(--rp-outline); stroke-width: 1.2; stroke-linejoin: round; }
+svg .rp-car.red, svg .rp-fin, svg .rp-stripe.red { fill: var(--rp-red); }
+svg .rp-car.blue { fill: var(--rp-blue); }
+svg .rp-shine { fill: url(#rp-body); stroke: none; }
+svg .rp-glass { fill: #bfdcf0; stroke: var(--rp-outline); stroke-width: 1; }
+svg .rp-glassbox { fill: #bfdcf0; }
+svg .rp-line { stroke: rgba(0, 0, 0, 0.35); stroke-width: 1.2; fill: none; }
+svg .rp-light { fill: #ffe9a6; stroke: none; }
+svg .rp-tail { fill: #ff6b5e; stroke: none; }
+svg .rp-truck { fill: var(--rp-yellow); }
+svg .rp-chassis { fill: #4a5058; stroke: none; }
+svg .rp-crate { fill: var(--rp-wood); }
+svg .rp-planks { stroke: rgba(0, 0, 0, 0.3); stroke-width: 1.2; fill: none; }
+svg .rp-container { fill: var(--rp-blue); }
+svg .rp-ribs { stroke: rgba(255, 255, 255, 0.4); stroke-width: 2; fill: none; }
+svg .rp-steel { fill: none; stroke: var(--rp-steel); stroke-width: 2.4; stroke-linejoin: round; stroke-linecap: round; }
+svg .rp-weight { fill: #5d6670; }
+svg .rp-rope { fill: none; stroke: #3b3f45; stroke-width: 1.8; }
+svg .rp-hook { fill: none; stroke: #3b3f45; stroke-width: 2.5; }
+svg .rp-shaft { fill: none; stroke: #8b939b; stroke-width: 1.5; stroke-dasharray: 6 4; }
+svg .rp-cabin { fill: #c3cad1; }
+svg .rp-cabin-in { fill: #eef1f4; stroke: #9aa3ab; stroke-width: 1; }
+svg .rp-rail { stroke: #7d868f; stroke-width: 3; }
+svg .rp-floor { fill: #7d868f; stroke: none; }
+svg .rp-scale { fill: #f4f6f8; }
+svg .rp-display { fill: #5fd38d; stroke: none; }
+svg .rp-wagon { fill: #7d8a96; }
+svg .rp-loco { fill: var(--rp-red); }
+svg .rp-stripe { stroke: #f4d06f; stroke-width: 4; }
+svg .rp-coupling { stroke: var(--rp-outline); stroke-width: 3; }
+svg .rp-sleeper { stroke: #6b5a48; stroke-width: 4; }
+svg .rp-railtop { stroke: #8f979f; stroke-width: 3; }
+svg .rp-canopy { fill: var(--rp-orange); }
+svg .rp-cells { fill: none; stroke: rgba(0, 0, 0, 0.25); stroke-width: 1.2; }
+svg .rp-lines { fill: none; stroke: #6f777f; stroke-width: 0.9; }
+svg .rp-cloud { fill: #ffffff; opacity: 0.85; }
+svg .rp-smoke { fill: #e9ecef; opacity: 0.9; stroke: #c9ced4; stroke-width: 1; }
+svg .rp-rocket { fill: #f6f8fa; }
+svg .rp-nozzle { fill: #5d6670; }
+svg .rp-slope { stroke: var(--rp-outline); stroke-width: 1.2; }
+svg .rp-slope.concrete { fill: var(--rp-concrete); }
+svg .rp-slope.snow { fill: url(#rp-snow); }
+svg .rp-tree { fill: #2f7a4f; stroke: #24603d; stroke-width: 1; }
+svg .rp-trunk { stroke: #6b4a2e; stroke-width: 4; }
+svg .rp-ski { stroke: var(--rp-blue); stroke-width: 4; stroke-linecap: round; }
+svg .rp-pole { stroke: #3b3f45; stroke-width: 1.6; fill: none; }
+svg .rp-runner { fill: none; stroke: #3b3f45; stroke-width: 3; stroke-linecap: round; }
+svg .rp-hat { fill: var(--rp-red); }
+svg .rp-flag { fill: var(--rp-red); }
+svg .rp-speed { stroke: #9aa3ab; stroke-width: 2.5; stroke-linecap: round; }
+svg .rp-skin { fill: var(--rp-skin); stroke: #b98d6a; stroke-width: 0.8; }
+svg .rp-hair { fill: var(--rp-hair); }
+svg .rp-legs { fill: none; stroke: var(--rp-legs); stroke-linecap: round; stroke-linejoin: round; }
+svg .rp-shoe { fill: #1e2329; }
+svg .rp-torso { stroke: none; fill: var(--rp-blue); }
+svg .rp-arm { fill: none; stroke: var(--rp-blue); stroke-linecap: round; }
+svg :is(.rp-torso, .rp-arm).red { fill: var(--rp-red); stroke: var(--rp-red); }
+svg .rp-arm.red { fill: none; }
+svg .rp-torso.orange { fill: var(--rp-orange); }
+svg .rp-arm.orange { stroke: var(--rp-orange); }
+svg .rp-torso.green { fill: var(--rp-green); }
+svg .rp-arm.green { stroke: var(--rp-green); }
+svg .rp-torso.blue { fill: var(--rp-blue); }
+svg .rp-arm.blue { stroke: var(--rp-blue); }
+svg .rp-ground.grass { fill: #7cb35b; }
+svg .rp-ground.wood { fill: #c48a4f; }
+svg .rp-ground.water { fill: var(--rp-water); }
+svg .rp-wall { fill: #8b939b; stroke: none; }
+svg .rp-swing { fill: none; stroke: var(--muted); stroke-width: 1; stroke-dasharray: 5 4; }
+svg .rp-door { stroke: var(--rp-wood); stroke-width: 9; stroke-linecap: round; }
+svg .rp-hinge { fill: #5d6670; stroke: var(--rp-outline); stroke-width: 1; }
+svg .rp-handle { fill: #c8cdd2; stroke: var(--rp-outline); stroke-width: 1; }
+svg .rp-wrench { fill: #9aa3ab; stroke: var(--rp-outline); stroke-width: 1.2; }
+svg .rp-pipe { fill: #c7cdd3; stroke: var(--rp-outline); stroke-width: 1.2; opacity: 0.95; }
+svg .rp-bucket { fill: var(--rp-blue); stroke: var(--rp-outline); stroke-width: 1.2; }
+svg .rp-board { fill: #e9edf1; stroke: var(--rp-outline); stroke-width: 1.2; }
+svg .rp-pool { fill: var(--rp-water); stroke: none; }
+svg .rp-concrete { fill: var(--rp-concrete); stroke: var(--rp-outline); stroke-width: 1; }
+svg .rp-bag { fill: #e9d7b8; stroke: var(--rp-outline); stroke-width: 1.2; }
+svg .rp-wheel { fill: none; stroke: #24282d; stroke-width: 4; }
+svg .rp-frame { fill: none; stroke: var(--rp-red); stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; }
+svg .rp-chainring { fill: #e9edf1; stroke: #5d6670; stroke-width: 2; }
+svg .rp-chain { fill: none; stroke: #5d6670; stroke-width: 1.6; stroke-dasharray: 3 2; }
+svg .rp-crank { stroke: #3b3f45; stroke-width: 5; stroke-linecap: round; }
+svg .rp-head { fill: #6f7882; stroke: var(--rp-outline); stroke-width: 1.2; }
+svg .rp-finger { fill: var(--rp-skin); stroke: #b98d6a; stroke-width: 1; }
+svg .rp-bus { fill: var(--rp-yellow); stroke: var(--rp-outline); stroke-width: 1.2; }
+svg .rp-com { fill: var(--card); stroke: var(--ink); stroke-width: 2; }
+
+/* pictures for circuits (Resistor Circuits's problems) */
+svg .rp-cable { fill: none; stroke: #2f343a; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+svg .rp-cable.red { stroke: var(--rp-red); }
+svg .rp-cable.white { stroke: #f4f5f6; }
+svg .rp-cable.thin { stroke-width: 2; }
+svg .rp-cable.dashed { stroke-dasharray: 6 5; }
+svg .rp-battery { fill: #2b2f35; stroke: var(--rp-outline); stroke-width: 1.2; }
+svg .rp-terminal { fill: #b9bec4; stroke: var(--rp-outline); stroke-width: 1; }
+svg .rp-batlbl { fill: #ffffff; font-size: 15px; font-weight: 600; text-anchor: middle; }
+svg .rp-leg { stroke: #8f979f; stroke-width: 2; }
+svg .rp-resistor { fill: #e3cfa0; stroke: var(--rp-outline); stroke-width: 1; }
+svg .rp-band { stroke: none; }
+svg .rp-band.a { fill: #8a4b22; }
+svg .rp-band.b { fill: #2b2f35; }
+svg .rp-band.c { fill: var(--rp-red); }
+svg .rp-band.d { fill: #c9a227; }
+svg .rp-led { stroke: var(--rp-outline); stroke-width: 1; }
+svg .rp-led.red { fill: #ef5350; }
+svg .rp-led.green { fill: #4caf50; }
+svg .rp-led.blue { fill: #42a5f5; }
+svg .rp-led.yellow { fill: #ffd54f; }
+svg .rp-glow { stroke: none; opacity: 0.35; }
+svg .rp-glow.red { fill: #ff6b5e; }
+svg .rp-glow.green { fill: #7ee08a; }
+svg .rp-glow.blue { fill: #7cc4ff; }
+svg .rp-glow.yellow { fill: #ffe066; }
+svg .rp-bulbglass { fill: #fff6c2; stroke: var(--rp-outline); stroke-width: 1; }
+svg .rp-device { fill: #f2f4f6; stroke: var(--rp-outline); stroke-width: 1.2; stroke-linejoin: round; }
+svg .rp-device.red { fill: var(--rp-red); }
+svg .rp-dark { fill: #3b4148; stroke: var(--rp-outline); stroke-width: 1; }
+svg .rp-socket { fill: #fafafa; stroke: #8f979f; stroke-width: 1; }
+svg .rp-hole { fill: #3b3f45; }
+svg .rp-spark { fill: #ffd23f; stroke: #e8542c; stroke-width: 1.2; stroke-linejoin: round; }
+svg .rp-coil { fill: none; stroke: #e8542c; stroke-width: 2.2; stroke-linejoin: round; }
+svg .rp-heat { fill: none; stroke: #e8542c; stroke-width: 1.6; opacity: 0.7; stroke-linecap: round; }
+svg .rp-heatline { stroke: #e8742c; stroke-width: 1.4; }
+svg .rp-hedge { fill: #3f8f4f; stroke: #2c6b3a; stroke-width: 1; }
+svg .rp-blade { stroke: #9aa3ab; stroke-width: 5; stroke-linecap: round; }
+svg .rp-drum { fill: var(--rp-red); stroke: var(--rp-outline); stroke-width: 1.2; }
+svg .rp-star { fill: #ffd23f; stroke: #c99a1a; stroke-width: 0.8; }
+svg .rp-moon { fill: #f4f1d0; }
+svg .rp-beam { fill: #fff3b0; opacity: 0.45; stroke: none; }
+svg .rp-switch { fill: #e9edf1; stroke: var(--rp-outline); stroke-width: 1; }
+svg .rp-switch-plate { fill: #3b4148; stroke: none; }
+svg .rp-switch-lbl { fill: #ffffff; font-size: 11px; font-weight: 600; text-anchor: middle; }
+svg .rp-handle-line { fill: none; stroke: var(--rp-outline); stroke-width: 4; stroke-linecap: round; }
+svg .rp-fanblade { fill: none; stroke: #9aa3ab; stroke-width: 3; stroke-linecap: round; }
+svg .rp-pcb { fill: #2f8a57; stroke: #1f5f3c; stroke-width: 1.2; }
+svg .rp-chip { fill: #2b2f35; stroke: none; }
+svg .rp-pin { fill: #d9b44a; stroke: none; }
+svg .rp-cup { fill: #f4f5f6; stroke: var(--rp-outline); stroke-width: 1.2; }
+svg .rp-tea { fill: #b5652b; stroke: none; }
+svg .rp-thermistor { fill: #3b4148; stroke: var(--rp-outline); stroke-width: 1; }
+svg .rp-lcd { fill: #c9dcb8; stroke: var(--rp-outline); stroke-width: 1; }
+svg .rp-lcdtext { fill: #22301a; font-family: ui-monospace, Menlo, monospace; font-size: 16px; text-anchor: middle; }
+svg .rp-dial { fill: #fbfaf3; stroke: var(--rp-outline); stroke-width: 1.2; }
+svg .rp-tick { stroke: #3b3f45; stroke-width: 1.2; }
+svg .rp-needle { stroke: var(--rp-red); stroke-width: 2.2; stroke-linecap: round; }
+
+/* pictures for energy (Energy Conservation's problems) */
+svg .rp-hline { fill: none; stroke: var(--rp-outline); stroke-width: 1.2; stroke-dasharray: 5 3; }
+svg .rp-hline-dot { fill: none; stroke: #6f777f; stroke-width: 1; stroke-dasharray: 2 4; }
+svg .rp-spring { fill: none; stroke: #5d6670; stroke-width: 2; stroke-linejoin: round; }
+svg .rp-building { fill: #b8a48c; stroke: var(--rp-outline); stroke-width: 1.2; }
+svg .rp-window { fill: #cfe4f6; stroke: #6f777f; stroke-width: 0.8; }
+svg .rp-concrete-block { fill: var(--rp-concrete); stroke: var(--rp-outline); stroke-width: 1.2; }
+svg .rp-drop { fill: #7fb4e6; stroke: none; }
+svg .rp-basin { fill: #c9c4bb; stroke: var(--rp-outline); stroke-width: 1.2; }
+svg .rp-waterline { fill: none; stroke: #5b93c7; stroke-width: 3; }
+svg .rp-jet { fill: #9cc6ee; stroke: #5b93c7; stroke-width: 1; }
+svg .rp-spray { fill: none; stroke: #9cc6ee; stroke-width: 2; stroke-dasharray: 3 5; stroke-linecap: round; }
+svg .rp-track { fill: none; stroke: #c43c3c; stroke-width: 5; stroke-linecap: round; }
+svg .rp-track-ties { fill: none; stroke: #ffffff; stroke-width: 2; stroke-dasharray: 2 8; }
+svg .rp-post { stroke: #6f777f; stroke-width: 3; }
+svg .rp-mat { fill: var(--rp-blue); stroke: var(--rp-outline); stroke-width: 1; }
+svg .rp-bar { stroke: #f2b632; stroke-width: 4; stroke-linecap: round; }
+svg .rp-vaultpole { stroke: #3b3f45; stroke-width: 3; stroke-linecap: round; }
+svg .rp-hill { fill: #8cbf72; stroke: #5f8f4a; stroke-width: 1.2; }
+svg .rp-inrun { fill: #9aa3ab; stroke: var(--rp-outline); stroke-width: 1; }
+svg .rp-flight { fill: none; stroke: #6f777f; stroke-width: 1.2; stroke-dasharray: 4 4; }
+svg .rp-branch { fill: #6b4a2e; stroke: none; }
+svg .rp-trunkwide { fill: #6b4a2e; stroke: none; }
+svg .rp-rope.ghost { stroke: #9aa3ab; stroke-dasharray: 4 4; }
+svg .rp-slingframe { fill: none; stroke: #8a5a32; stroke-width: 9; stroke-linecap: round; stroke-linejoin: round; }
+svg .rp-band-rubber { fill: none; stroke: #d64541; stroke-width: 3; }
+svg .rp-stone { fill: #8f979f; stroke: var(--rp-outline); stroke-width: 1; }
+svg .rp-pintable { fill: #2d3e66; stroke: var(--rp-outline); stroke-width: 1.2; }
+svg .rp-plunger { stroke: #c8cdd2; stroke-width: 5; stroke-linecap: round; }
+svg .rp-ball { fill: #e3e7eb; stroke: var(--rp-outline); stroke-width: 1; }
+svg .rp-bumper { fill: #f2b632; stroke: #c43c3c; stroke-width: 3; }
+svg .rp-tlegs { stroke: #3b4148; stroke-width: 4; stroke-linecap: round; }
+svg .rp-tmat { fill: none; stroke: #23272c; stroke-width: 5; stroke-linecap: round; }
+svg .rp-tframe { fill: #3f78c8; stroke: var(--rp-outline); stroke-width: 1; }
+
+/* the pictures in dark mode: what is drawn dark (ropes, cables, tyres, poles, legs) would vanish
+   against the night sky, so it is drawn lighter; outlines are light (--rp-outline, above) */
+@media (prefers-color-scheme: dark) {
+  svg :is(.rp-rope, .rp-hook, .rp-pole, .rp-runner, .rp-crank, .rp-cable, .rp-vaultpole, .rp-tmat) { stroke: #b4bcc4; }
+  svg .rp-cable.red { stroke: #ff7a70; }
+  svg .rp-cable.white { stroke: #f4f5f6; }
+  svg :is(.rp-tlegs, .rp-tick, .rp-hline-dot) { stroke: #8f979f; }
+  svg .rp-lines { stroke: #a9b1b9; }
+  svg .rp-tyre { stroke: #8f979f; stroke-width: 1; }
+  svg .rp-wheel { stroke: #8f979f; }
+  svg .rp-shoe { fill: #6f777f; }
+  svg :is(.rp-dark, .rp-switch-plate, .rp-thermistor, .rp-hole) { fill: #5d6670; }
+  svg .rp-battery { fill: #3b4148; }
+  svg .rp-tick { stroke: #3b3f45; } /* on the light dial */
+  svg :is(.rp-dial, .rp-device, .rp-cup, .rp-socket) { stroke: #6f777f; }
+}
+/* text on light objects (a meter's dial): dark in both modes */
+svg .rp-ink { fill: #2b3138; font-size: 12px; }
+
+/* pictures of atoms, ions and nuclei (Coulomb Force's problems) */
+svg .rp-part { stroke: rgba(0, 0, 0, 0.35); stroke-width: 1; }
+svg .rp-part.proton, svg .rp-part.cation, svg .rp-part.alpha { fill: #e2574c; }
+svg .rp-part.neutron { fill: #b9c0c7; }
+svg .rp-part.electron, svg .rp-part.anion { fill: #4f9be8; }
+svg .rp-part.up { fill: #f2b632; }
+svg .rp-part.down { fill: #4f9be8; }
+svg .rp-glow.proton, svg .rp-glow.cation, svg .rp-glow.alpha { fill: #ff8a7a; opacity: 0.25; }
+svg .rp-glow.neutron { fill: #c8cdd2; opacity: 0.15; }
+svg .rp-glow.electron, svg .rp-glow.anion, svg .rp-glow.down { fill: #7cc4ff; opacity: 0.3; }
+svg .rp-glow.up { fill: #ffd76a; opacity: 0.3; }
+svg .rp-partlbl { fill: #ffffff; font-size: 15px; font-weight: 700; text-anchor: middle; }
+svg .rp-caption { fill: #dfe7ef; font-size: 13px; text-anchor: middle; }
+svg .rp-caption-dark { fill: #3b4148; font-size: 12px; text-anchor: middle; }
+svg .rp-orbit { fill: none; stroke: #9fb4cc; stroke-width: 1.2; stroke-dasharray: 4 5; opacity: 0.7; }
+svg .rp-alphapath { fill: none; stroke: #ff8a7a; stroke-width: 1.6; stroke-dasharray: 5 4; }
+svg .rp-cloud-e { fill: #4f9be8; opacity: 0.18; }
+svg .rp-speedline { fill: none; stroke: #9fb4cc; stroke-width: 2.5; stroke-linecap: round; }
+svg .rp-protonblob { fill: #f2b632; opacity: 0.12; stroke: #f2b632; stroke-opacity: 0.4; }
+svg .rp-glasscyl { fill: #e6f0f8; fill-opacity: 0.55; stroke: #8f979f; stroke-width: 1.2; }
+svg .rp-fibre { stroke: #3b3f45; stroke-width: 1; }
+svg .rp-rodline { stroke: #5d6670; stroke-width: 3; stroke-linecap: round; }
+svg .rp-ball-metal { fill: #c8cdd2; stroke: #5d6670; stroke-width: 1.2; }
+svg .rp-scaleline { fill: none; stroke: #5d6670; stroke-width: 1; stroke-dasharray: 2 6; }
+@media (prefers-color-scheme: dark) {
+  svg .rp-fibre { stroke: #b4bcc4; }
+  svg .rp-caption-dark { fill: #dfe7ef; }
+}
+
+/* The textbook style of all pictures (overriding the colours above): a plain background, thin ink
+   outlines, a few muted tints, the ground hatched, no shadows, glows or shine. */
+:root {
+  --rp-outline: var(--ink);
+  --rp-red: #eaa79b; --rp-blue: #a9c4e4; --rp-orange: #f3c89c; --rp-green: #b2d6b8; --rp-yellow: #f3dc98;
+  --rp-wood: #dfc6a2; --rp-concrete: #e7e3db; --rp-water: #d3e5f3; --rp-skin: #f4dfcc; --rp-hair: #8d7a68; --rp-legs: #7b889a;
+  --rp-steel: #9aa3ab; --rp-metal1: #c3c9cf; --rp-metal2: #eef1f4; --rp-dark: #6b737c;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --rp-red: #8e5249; --rp-blue: #3f5b7c; --rp-orange: #8c6440; --rp-green: #456c4f; --rp-yellow: #8a7a45;
+    --rp-wood: #7a6448; --rp-concrete: #3d4147; --rp-water: #24394d; --rp-skin: #b99a83; --rp-hair: #5e5045; --rp-legs: #56677f;
+    --rp-steel: #8f979f; --rp-metal1: #4a5159; --rp-metal2: #7b848d; --rp-dark: #8f979f;
+  }
+}
+svg .rp-bg { fill: var(--card); }
+svg :is(.rp-shadow, .rp-shine, .rp-glow, .rp-cloud, .rp-lane, .rp-beam) { display: none; }
+svg .rp-ground:is(*, .asphalt, .concrete, .gravel, .snow, .grass, .wood), svg .rp-slope:is(*, .concrete, .snow), svg .rp-hill, svg .rp-inrun, svg .rp-concrete, svg .rp-concrete-block, svg .rp-basin { fill: url(#rp-hatch); stroke: none; }
+svg :is(.rp-slope, .rp-hill, .rp-inrun, .rp-concrete-block, .rp-basin):is(*, .concrete, .snow) { stroke: var(--ink); stroke-width: 1.3; }
+svg .rp-ground.water.water, svg .rp-pool, svg .rp-water { fill: var(--rp-water); stroke: none; }
+svg .rp-edge { stroke: var(--ink); stroke-width: 1.4; }
+/* solid things: a tint and an ink outline */
+svg :is(.rp-car, .rp-truck, .rp-loco, .rp-wagon, .rp-container, .rp-crate, .rp-rocket, .rp-fin, .rp-canopy, .rp-cabin, .rp-weight, .rp-scale,
+  .rp-glassbox, .rp-nozzle, .rp-torso, .rp-skin, .rp-hair, .rp-shoe, .rp-wall, .rp-hinge, .rp-handle, .rp-wrench, .rp-pipe, .rp-bucket, .rp-board,
+  .rp-bag, .rp-chainring, .rp-head, .rp-finger, .rp-bus, .rp-battery, .rp-terminal, .rp-resistor, .rp-led, .rp-bulbglass, .rp-device, .rp-dark,
+  .rp-socket, .rp-drum, .rp-switch, .rp-pcb, .rp-cup, .rp-thermistor, .rp-lcd, .rp-dial, .rp-building, .rp-window, .rp-mat, .rp-stone,
+  .rp-pintable, .rp-ball, .rp-tframe, .rp-tree, .rp-hedge, .rp-part, .rp-ball-metal, .rp-glasscyl, .rp-jet, .rp-glass, .rp-cabin-in, .rp-flag,
+  .rp-hat, .rp-tyre, .rp-rim, .rp-hub, .rp-light, .rp-tail, .rp-chip, .rp-floor, .rp-branch, .rp-trunkwide, .rp-spark, .rp-star, .rp-moon) {
+  stroke: var(--ink); stroke-width: 1.2; stroke-linejoin: round;
+}
+svg :is(.rp-car, .rp-loco, .rp-device.red, .rp-drum, .rp-hat, .rp-flag, .rp-fin) { fill: var(--rp-red); }
+svg .rp-car.blue { fill: var(--rp-blue); }
+svg :is(.rp-truck, .rp-bus, .rp-tframe, .rp-pin) { fill: var(--rp-yellow); }
+svg :is(.rp-container, .rp-mat, .rp-bucket, .rp-pintable) { fill: var(--rp-blue); }
+svg :is(.rp-crate, .rp-door) { fill: var(--rp-wood); }
+svg .rp-door { stroke: var(--rp-wood); }
+svg :is(.rp-weight, .rp-wall, .rp-hinge, .rp-head, .rp-chip, .rp-floor, .rp-thermistor, .rp-dark, .rp-switch-plate, .rp-hub) { fill: var(--rp-dark); }
+svg :is(.rp-wagon, .rp-cabin, .rp-handle, .rp-wrench, .rp-pipe, .rp-terminal, .rp-ball-metal, .rp-stone, .rp-rim) { fill: var(--rp-metal1); }
+svg :is(.rp-board, .rp-rocket, .rp-scale, .rp-cabin-in, .rp-device, .rp-switch, .rp-cup, .rp-socket, .rp-ball) { fill: var(--rp-metal2); }
+svg :is(.rp-glass, .rp-glassbox, .rp-window, .rp-glasscyl, .rp-jet) { fill: var(--rp-water); }
+svg :is(.rp-tree, .rp-hedge, .rp-pcb) { fill: var(--rp-green); }
+svg :is(.rp-trunk, .rp-trunkwide, .rp-branch) { fill: var(--rp-wood); stroke: var(--rp-wood); }
+svg :is(.rp-building, .rp-bag, .rp-resistor, .rp-lcd, .rp-dial, .rp-bulbglass) { fill: var(--rp-concrete); }
+svg .rp-tyre { fill: var(--rp-dark); }
+svg .rp-battery { fill: var(--rp-dark); }
+svg :is(.rp-light, .rp-tail) { fill: var(--card); }
+svg .rp-shoe { fill: var(--rp-dark); }
+svg .rp-canopy { fill: var(--rp-orange); }
+svg .rp-torso, svg .rp-torso.blue { fill: var(--rp-blue); }
+svg .rp-torso.red { fill: var(--rp-red); }
+svg .rp-torso.orange { fill: var(--rp-orange); }
+svg .rp-torso.green { fill: var(--rp-green); }
+svg .rp-arm, svg .rp-arm.blue { stroke: var(--rp-blue); }
+svg .rp-arm.red { stroke: var(--rp-red); }
+svg .rp-arm.orange { stroke: var(--rp-orange); }
+svg .rp-arm.green { stroke: var(--rp-green); }
+svg .rp-part.proton, svg .rp-part.cation, svg .rp-part.alpha { fill: var(--rp-red); }
+svg .rp-part.electron, svg .rp-part.anion, svg .rp-part.down { fill: var(--rp-blue); }
+svg .rp-part.neutron { fill: var(--rp-metal1); }
+svg .rp-part.up { fill: var(--rp-yellow); }
+svg .rp-partlbl { fill: var(--ink); }
+svg .rp-protonblob { fill: none; stroke: var(--muted); stroke-opacity: 1; stroke-dasharray: 4 4; }
+svg .rp-cloud-e { fill: var(--rp-blue); opacity: 0.35; }
+/* lines: in ink or muted, thin */
+svg :is(.rp-rope, .rp-hook, .rp-pole, .rp-runner, .rp-cable, .rp-vaultpole, .rp-tmat, .rp-tlegs, .rp-crank, .rp-rodline, .rp-fibre, .rp-post, .rp-leg, .rp-tick) { stroke: var(--ink); }
+svg :is(.rp-cable.white) { stroke: var(--rp-metal1); }
+svg :is(.rp-steel, .rp-frame, .rp-track, .rp-slingframe, .rp-blade, .rp-fanblade, .rp-rail, .rp-railtop, .rp-wheel) { stroke: var(--ink); }
+svg .rp-track-ties { display: none; }
+svg :is(.rp-stripe, .rp-bar, .rp-band-rubber, .rp-coil, .rp-heat, .rp-heatline, .rp-needle, .rp-sleeper, .rp-plunger) { stroke: var(--muted); }
+svg .rp-bumper { fill: var(--rp-yellow); stroke: var(--ink); stroke-width: 1.2; }
+svg .rp-spring { stroke: var(--ink); stroke-width: 1.4; }
+svg :is(.rp-orbit, .rp-alphapath, .rp-speedline, .rp-spray, .rp-hline-dot, .rp-scaleline) { stroke: var(--muted); }
+svg .rp-drop { fill: var(--rp-blue); }
+svg .rp-waterline { stroke: var(--muted); stroke-width: 1.4; }
+svg .rp-tea { fill: var(--rp-wood); }
+svg .rp-display { fill: var(--rp-green); }
+svg :is(.rp-caption, .rp-caption-dark) { fill: var(--muted); font: 12px system-ui, sans-serif; }
+
+/* figures in the manner of a textbook (figkit.js and the apps' figures): ink outlines, muted tints */
+:root { --motion: #1f5fd6; --tb-trousers: #7b889a; --tb-hair: #8d7a68; --tb-shirt: #a9c4e4; --tb-wall: #efe6d6; --tb-roof: #c97b63; --tb-metal1: #b9c0c7; --tb-metal2: #eef1f4; --tb-body: #dbe6f1; --tb-hull: #c9d6e3; --tb-sail: #fbfaf6; --tb-glass: #eef5fb; --tb-water: #d6e7f4; --tb-water-line: #4f86b8; --tb-tyre: #3b4148; }
+@media (prefers-color-scheme: dark) {
+  :root { --motion: #74a7ff; --tb-trousers: #56677f; --tb-hair: #5e5045; --tb-wall: #4a4338; --tb-roof: #8f5444; --tb-metal1: #5a636c; --tb-metal2: #a3acb5; --tb-body: #33465a; --tb-hull: #3f5265; --tb-sail: #c9ced4; --tb-glass: #26323e; --tb-water: #1f3346; --tb-water-line: #7fb0dc; --tb-tyre: #15181b; }
+}
+svg.tb { background: var(--card); border-radius: 8px; }
+svg.tb :is(.tb-line, .tb-metal, .tb-body, .tb-hull, .tb-sail, .tb-glass, .tb-tyre, .tb-ground) { stroke: var(--ink); stroke-width: 1.3; stroke-linejoin: round; }
+svg.tb .tb-line { fill: none; }
+svg.tb .tb-line-fill { fill: var(--ink); }
+svg.tb .tb-metal { fill: url(#tb-metal); }
+svg.tb .tb-body { fill: var(--tb-body); }
+svg.tb .tb-hull { fill: var(--tb-hull); }
+svg.tb .tb-sail { fill: var(--tb-sail); }
+svg.tb .tb-glass { fill: var(--tb-glass); }
+svg.tb .tb-tyre { fill: var(--tb-tyre); }
+svg.tb .tb-trim { fill: none; stroke: var(--ink); stroke-width: 0.8; opacity: 0.6; }
+svg.tb .tb-shine { fill: none; stroke: #fff; stroke-width: 1.6; stroke-linecap: round; opacity: 0.55; }
+svg.tb .tb-ghost { fill: none; stroke: var(--muted); stroke-width: 1.1; stroke-dasharray: 4 3; stroke-linejoin: round; }
+svg.tb .tb-eq { stroke: var(--muted); stroke-width: 0.9; stroke-dasharray: 7 5; }
+svg.tb .tb-water { fill: var(--tb-water); }
+svg.tb .tb-surface { fill: none; stroke: var(--tb-water-line); stroke-width: 1.4; }
+svg.tb .tb-ground { fill: none; }
+svg.tb .tb-hatch { fill: none; stroke: var(--muted); stroke-width: 0.9; }
+svg.tb .tb-spring { fill: none; stroke: var(--ink); stroke-width: 1.4; stroke-linejoin: round; }
+svg.tb .tb-sound { fill: none; stroke: var(--muted); stroke-width: 1.1; stroke-linecap: round; }
+svg.tb .tb-motion { color: var(--motion); }
+svg.tb .tb-motion line { stroke: currentColor; stroke-width: 1.6; }
+svg.tb .tb-motion polygon { fill: currentColor; }
+svg.tb .tb-cap { fill: var(--muted); font: 12px system-ui, sans-serif; }
+svg.tb .tb-axis { fill: var(--ink); font: 15px var(--serif); }
+svg.tb .tb-curve { fill: none; stroke: var(--q-y); stroke-width: 2.2; }
+svg.tb .tb-epot { fill: var(--tb-hull); stroke: var(--ink); stroke-width: 1; }
+svg.tb .tb-ekin { fill: #f3c89c; stroke: var(--ink); stroke-width: 1; }
+svg.tb :is(.tb-frame, .tb-cone, .tb-magnet, .tb-coil, .tb-bird, .tb-wing, .tb-feather, .tb-wall, .tb-roof, .tb-door, .tb-atom, .tb-skin, .tb-seat, .tb-fabric, .tb-button, .tb-needle) { stroke: var(--ink); stroke-width: 1.3; stroke-linejoin: round; }
+svg.tb .tb-frame { fill: none; }
+svg.tb .tb-cone { fill: var(--tb-body); }
+svg.tb .tb-magnet { fill: var(--tb-tyre); }
+svg.tb .tb-coil { fill: #c98a4b; }
+svg.tb .tb-bird { fill: #6fae8c; }
+svg.tb .tb-wing { fill: #a9cdb9; }
+svg.tb .tb-feather { fill: #4f8b6c; }
+svg.tb .tb-eye { fill: var(--ink); }
+svg.tb .tb-flower { fill: #e99ab5; stroke: var(--ink); stroke-width: 1.1; }
+svg.tb .tb-wall { fill: var(--tb-wall); }
+svg.tb .tb-roof { fill: var(--tb-roof); }
+svg.tb .tb-door { fill: #9b7356; }
+svg.tb .tb-atom { fill: var(--tb-hull); }
+svg.tb .tb-atom.hl { fill: #e7b65a; }
+svg.tb .tb-skin { fill: #f2d2b6; }
+svg.tb .tb-seat { fill: #e7b65a; }
+svg.tb .tb-limb { fill: none; stroke: #e2b892; stroke-width: 6; stroke-linecap: round; }
+svg.tb .tb-fabric { fill: #d9b38c; }
+svg.tb .tb-cloth { fill: none; }
+svg.tb .tb-button { fill: var(--tb-metal1); }
+svg.tb .tb-needle { fill: var(--tb-metal1); stroke-width: 1.6; }
+svg.tb .tb-eye-hole { fill: var(--card); }
+svg.tb .tb-bristle { fill: none; stroke: #6ea3d1; stroke-width: 2.2; stroke-linecap: round; }
+svg.tb .tb-force { color: #c0392b; }
+svg.tb .tb-force line { stroke: currentColor; stroke-width: 1.9; }
+svg.tb .tb-force :is(polygon, circle) { fill: currentColor; }
+svg.tb .tb-force text { fill: currentColor; font: 15px var(--serif); paint-order: stroke; stroke: var(--card); stroke-width: 3px; }
+svg.tb .tb-force.w { color: #a8650a; }
+svg.tb .tb-force.n { color: #1d7a3e; }
+svg.tb .tb-dim { color: var(--muted); }
+svg.tb .tb-dim path { fill: none; stroke: currentColor; stroke-width: 0.9; }
+svg.tb .tb-dim polygon { fill: currentColor; }
+svg.tb .tb-dim text { fill: var(--ink); font: 14px var(--serif); paint-order: stroke; stroke: var(--card); stroke-width: 3px; }
+svg.tb .tb-label { fill: var(--ink); font: 14px var(--serif); paint-order: stroke; stroke: var(--card); stroke-width: 3px; }
+svg.tb .tb-limb-out { fill: none; stroke: var(--ink); stroke-linecap: round; stroke-linejoin: round; }
+svg.tb .tb-limb { fill: none; stroke-linecap: round; stroke-linejoin: round; }
+svg.tb .tb-limb.tb-trousers { stroke: var(--tb-trousers); }
+svg.tb .tb-shirt { fill: var(--tb-shirt); stroke: var(--ink); stroke-width: 1.2; stroke-linejoin: round; }
+svg.tb .tb-limb.tb-shirt { stroke: var(--tb-shirt); fill: none; }
+svg.tb .tb-shirt.red { --tb-shirt: #eaa79b; } svg.tb .tb-shirt.orange { --tb-shirt: #f3c89c; } svg.tb .tb-shirt.green { --tb-shirt: #b2d6b8; } svg.tb .tb-shirt.blue { --tb-shirt: #a9c4e4; }
+svg.tb .tb-shirt.navy { --tb-shirt: #6f7f99; } svg.tb .tb-shirt.purple { --tb-shirt: #c7b3dc; } svg.tb .tb-shirt.yellow { --tb-shirt: #f3dc98; }
+svg.tb .tb-helmet { fill: #eaa79b; stroke: var(--ink); stroke-width: 1.2; } svg.tb .tb-helmetrim { fill: none; stroke: var(--ink); stroke-width: 1.8; stroke-linecap: round; }
+svg.tb .tb-beanie { fill: var(--card); stroke: var(--ink); stroke-width: 1; }
+svg.tb .tb-shoe { fill: #4a5058; stroke: var(--ink); stroke-width: 1; stroke-linejoin: round; }
+svg.tb .tb-hair { fill: var(--tb-hair); stroke: var(--ink); stroke-width: 1; }
+svg.tb .tb-tree { fill: #b2d6b8; stroke: var(--ink); stroke-width: 1.2; stroke-linejoin: round; }
+svg.tb .tb-trunk { fill: none; stroke: var(--ink); stroke-width: 2.5; }
+svg.tb .tb-wood { fill: #dfc6a2; stroke: var(--ink); stroke-width: 1.3; stroke-linejoin: round; }
+svg.tb .tb-concrete { fill: #e7e3db; stroke: var(--ink); stroke-width: 1.3; }
+svg.tb .tb-dark { fill: #6b737c; stroke: var(--ink); stroke-width: 1.2; }
+svg.tb .tb-red { fill: #eaa79b; stroke: var(--ink); stroke-width: 1.3; stroke-linejoin: round; }
+svg.tb .tb-yellow { fill: #f3dc98; stroke: var(--ink); stroke-width: 1.3; stroke-linejoin: round; }
+svg.tb .tb-blue { fill: #a9c4e4; stroke: var(--ink); stroke-width: 1.3; stroke-linejoin: round; }
+svg.tb .tb-green { fill: #b2d6b8; stroke: var(--ink); stroke-width: 1.3; stroke-linejoin: round; }
+svg.tb .tb-handle { fill: none; stroke: var(--ink); stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; }
+svg.tb .tb-rope { fill: none; stroke: var(--ink); stroke-width: 1.4; }
+svg.tb .tb-com { fill: var(--card); stroke: var(--ink); stroke-width: 1.6; }
+@media (prefers-color-scheme: dark) {
+  svg.tb .tb-force { color: #ff8a80; } svg.tb .tb-force.w { color: #f2b45c; } svg.tb .tb-force.n { color: #7fd49a; }
+  svg.tb .tb-shirt.red { --tb-shirt: #8e5249; } svg.tb .tb-shirt.orange { --tb-shirt: #8c6440; } svg.tb .tb-shirt.green { --tb-shirt: #456c4f; } svg.tb .tb-shirt.blue { --tb-shirt: #3f5b7c; }
+  svg.tb .tb-tree, svg.tb .tb-green { fill: #456c4f; } svg.tb .tb-wood { fill: #7a6448; } svg.tb .tb-concrete { fill: #3d4147; } svg.tb .tb-dark { fill: #8f979f; }
+  svg.tb .tb-shirt.navy { --tb-shirt: #3a465a; } svg.tb .tb-shirt.purple { --tb-shirt: #5e4d73; } svg.tb .tb-shirt.yellow { --tb-shirt: #8a7a45; } svg.tb .tb-helmet { fill: #8e5249; }
+  svg.tb .tb-red { fill: #8e5249; } svg.tb .tb-yellow { fill: #8a7a45; } svg.tb .tb-blue { fill: #3f5b7c; }
+}
+svg.tb .tb-chain { fill: none; stroke: var(--ink); stroke-width: 2.4; stroke-dasharray: 3 2; }
+svg.tb .tb-thin { fill: none; stroke: var(--ink); stroke-width: 0.9; }
+svg.tb .tb-limb.tb-skinlimb { stroke: var(--tb-skin, #f2d2b6); }
+svg.tb .tb-muscle { fill: none; stroke: #e2a39a; stroke-width: 9; stroke-linecap: round; opacity: 0.9; }
+@media (prefers-color-scheme: dark) { svg.tb .tb-muscle { stroke: #8e5249; } svg.tb .tb-limb.tb-skinlimb { stroke: #b99a83; } }
+svg.tb .tb-force.v { color: #1f5fd6; }
+svg.tb .tb-jet { fill: #bcd8ef; stroke: #4f86b8; stroke-width: 1; }
+svg.tb .tb-drop { fill: #4f86b8; }
+svg.tb .tb-track { fill: none; stroke: var(--ink); stroke-width: 3; stroke-linecap: round; }
+svg.tb .tb-pole { stroke: var(--ink); stroke-width: 2.6; stroke-linecap: round; }
+svg.tb .tb-bar { stroke: #c0392b; stroke-width: 3; stroke-linecap: round; }
+svg.tb .tb-hill { fill: #e4eedc; stroke: var(--ink); stroke-width: 1.3; stroke-linejoin: round; }
+svg.tb .tb-snow { fill: #eef4fa; stroke: var(--ink); stroke-width: 1.3; stroke-linejoin: round; }
+svg.tb .tb-wheel { fill: none; stroke: var(--ink); stroke-width: 2; }
+svg.tb .tb-frame { fill: none; stroke: #c0392b; stroke-width: 2.2; stroke-linejoin: round; stroke-linecap: round; }
+svg.tb .tb-limbline { fill: none; stroke: var(--ink); stroke-width: 3; stroke-linecap: round; }
+svg.tb .tb-sling { fill: none; stroke: #8a5a32; stroke-width: 8; stroke-linecap: round; stroke-linejoin: round; }
+svg.tb .tb-band { fill: none; stroke: #c0392b; stroke-width: 2.2; }
+svg.tb .tb-stone { fill: #b9c0c7; stroke: var(--ink); stroke-width: 1.2; }
+svg.tb .tb-ball { fill: url(#tb-metal); stroke: var(--ink); stroke-width: 1.2; }
+svg.tb .tb-mat { fill: none; stroke: var(--ink); stroke-width: 3.5; stroke-linecap: round; }
+svg.tb .tb-faint { opacity: 0.35; }
+@media (prefers-color-scheme: dark) {
+  svg.tb .tb-force.v { color: #74a7ff; } svg.tb .tb-hill { fill: #2f3d2c; } svg.tb .tb-snow { fill: #2c3540; } svg.tb .tb-jet { fill: #2c4a66; }
+  svg.tb .tb-frame, svg.tb .tb-band, svg.tb .tb-bar { stroke: #ff8a80; } svg.tb .tb-sling { stroke: #b07a4e; }
+}
+svg.tb .tb-force.a { color: #7b2fbf; }
+svg.tb .tb-cabin { fill: #e6eaee; stroke: var(--ink); stroke-width: 1.3; }
+svg.tb .tb-cabin-in { fill: var(--card); stroke: var(--muted); stroke-width: 0.9; }
+svg.tb .tb-canopy { fill: #f3c89c; stroke: var(--ink); stroke-width: 1.3; stroke-linejoin: round; }
+svg.tb .tb-rocket { fill: url(#tb-metal); stroke: var(--ink); stroke-width: 1.3; stroke-linejoin: round; }
+svg.tb .tb-flame { fill: #f3c89c; stroke: #c0392b; stroke-width: 1.2; }
+svg.tb .tb-snowfill { fill: #eef4fa; stroke: var(--ink); stroke-width: 1.3; }
+svg.tb .tb-ski { stroke: var(--ink); stroke-width: 3; stroke-linecap: round; }
+svg.tb .tb-runner { fill: none; stroke: var(--ink); stroke-width: 2.4; stroke-linecap: round; }
+svg.tb .tb-body.tb-faintfill { fill: #efe6d6; }
+@media (prefers-color-scheme: dark) {
+  svg.tb .tb-force.a { color: #d29bff; } svg.tb .tb-cabin { fill: #3a4048; } svg.tb .tb-canopy { fill: #8c6440; } svg.tb .tb-snowfill { fill: #2c3540; } svg.tb .tb-body.tb-faintfill { fill: #4a4338; } svg.tb .tb-flame { fill: #8c6440; }
+}
+svg.tb .tb-wire { fill: none; stroke: var(--ink); stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+svg.tb .tb-wire.dashed { stroke-dasharray: 6 5; stroke: var(--muted); }
+svg.tb .tb-onDark { fill: #ffffff; font: 600 15px system-ui, sans-serif; text-anchor: middle; }
+svg.tb .tb-resistor { fill: #e3cfa0; stroke: var(--ink); stroke-width: 1.2; }
+svg.tb .tb-band1 { fill: #8a4b22; } svg.tb .tb-band2 { fill: #2b2f35; } svg.tb .tb-band3 { fill: #c0392b; } svg.tb .tb-band4 { fill: #c9a227; }
+svg.tb .tb-socket { fill: #f3f5f7; stroke: var(--ink); stroke-width: 1.3; }
+svg.tb .tb-bulb { fill: #fff6c2; stroke: var(--ink); stroke-width: 1.2; }
+svg.tb .tb-led { stroke: var(--ink); stroke-width: 1.3; }
+svg.tb .tb-led.red { fill: #eaa79b; } svg.tb .tb-led.green { fill: #b2d6b8; } svg.tb .tb-led.blue { fill: #a9c4e4; }
+svg.tb .tb-spark { fill: none; stroke: #c0392b; stroke-width: 2; stroke-linecap: round; }
+svg.tb .tb-current { fill: none; stroke: #c0392b; stroke-width: 1.6; stroke-dasharray: 5 4; }
+svg.tb .tb-heater { fill: #f3f5f7; stroke: var(--ink); stroke-width: 1.3; }
+svg.tb .tb-beam { fill: none; stroke: #e7b65a; stroke-width: 1.6; stroke-linecap: round; }
+svg.tb .tb-beam.red { stroke: #c0392b; }
+svg.tb .tb-heat { fill: none; stroke: #c0392b; stroke-width: 1.2; }
+svg.tb .tb-coil { fill: none; stroke: #c0392b; stroke-width: 1.6; stroke-linejoin: round; }
+svg.tb .tb-pcb { fill: #b2d6b8; stroke: var(--ink); stroke-width: 1.3; }
+svg.tb .tb-cup { fill: #f3f5f7; stroke: var(--ink); stroke-width: 1.3; }
+svg.tb .tb-tea { fill: none; stroke: #b5652b; stroke-width: 3; }
+svg.tb .tb-lcd { fill: #d9e8cf; stroke: var(--ink); stroke-width: 1; }
+svg.tb .tb-needle { stroke: #c0392b; stroke-width: 2.2; stroke-linecap: round; }
+@media (prefers-color-scheme: dark) {
+  svg.tb :is(.tb-socket, .tb-heater, .tb-cup) { fill: #3a4048; } svg.tb .tb-pcb { fill: #456c4f; } svg.tb .tb-lcd { fill: #3d4a36; } svg.tb .tb-resistor { fill: #7a6448; } svg.tb .tb-bulb { fill: #8a7a45; }
+  svg.tb .tb-led.red { fill: #8e5249; } svg.tb .tb-led.green { fill: #456c4f; } svg.tb .tb-led.blue { fill: #3f5b7c; }
+  svg.tb :is(.tb-spark, .tb-heat, .tb-coil, .tb-needle, .tb-beam.red) { stroke: #ff8a80; } svg.tb .tb-current { stroke: #ff8a80; }
+}
+svg.tb .tb-skin { stroke: var(--ink); stroke-width: 1.1; }
+svg.tb .tb-membrane { fill: none; stroke: var(--ink); stroke-width: 2.2; }
+svg.tb .tb-grain { fill: var(--card); stroke: var(--ink); stroke-width: 1; }
+svg.tb .tb-ballred { fill: #eaa79b; stroke: var(--ink); stroke-width: 1.3; }
+@media (prefers-color-scheme: dark) { svg.tb .tb-ballred { fill: #8e5249; } }
+
+/* check mode (check.js): a short diagnostic test, its result per learning objective */
+.ck-objectives { margin: 4px 0 10px; padding-left: 1.3em; }
+.ck-objectives li { margin: 4px 0; }
+.ck-objectives li.mastered .mark { color: var(--ok); font-weight: 700; }
+.ck-objectives li:is(.notyet, .misconception) .mark { color: var(--bad); font-weight: 700; }
+.ck-count { margin: 0 0 4px; }
+#ck-bar { height: 100%; background: var(--accent); transition: width 0.2s; }
+#ck-stage { margin-top: 14px; }
+.ck-ask { font-weight: 600; margin: 6px 0 12px; }
+.ck-options { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-bottom: 14px; }
+.ck-opt { position: relative; display: flex; justify-content: center; align-items: center; min-height: 3.2em; padding: 10px 14px; font-size: 1.1rem; border: 1px solid var(--line); border-radius: 8px; }
+.ck-opt:hover { background: var(--bg); }
+.ck-opt .key { position: absolute; left: 8px; top: 4px; font-size: 0.75rem; color: var(--muted); }
+.ck-opt .val { max-width: 100%; }
+.ck-opt .val svg { display: block; max-width: 100%; height: auto; }
+.ck-opt .val .katex svg { max-width: none; height: inherit; }
+.ck-actions { justify-content: flex-end; }
+.ck-actions button { font-size: 0.9rem; color: var(--muted); }
+.ck-result { list-style: none; margin: 10px 0 14px; padding: 0; display: grid; gap: 10px; }
+.ck-result li { border: 1px solid var(--line); border-left-width: 4px; border-radius: 8px; padding: 10px 14px; }
+.ck-result li.mastered { border-left-color: var(--ok); }
+.ck-result li.notyet { border-left-color: var(--warn); }
+.ck-result li.misconception { border-left-color: var(--bad); }
+.ck-result .head { display: flex; gap: 8px; align-items: baseline; }
+.ck-result .mark { font-weight: 700; }
+.ck-result .mastered .mark { color: var(--ok); }
+.ck-result .notyet .mark { color: var(--warn); }
+.ck-result .misconception .mark { color: var(--bad); }
+.ck-result .verdict { color: var(--muted); font-size: 0.9rem; margin-top: 2px; }
+.ck-result .ideas { color: var(--bad); font-size: 0.95rem; margin-top: 2px; }
+.ck-result .actions { margin-top: 8px; }
+#ck-sum-qtitle { margin-top: 20px; }
+.ck-list { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; margin: 6px 0 18px; }
+.ck-item { border: 1px solid var(--line); border-radius: 8px; padding: 8px 14px; }
+.ck-item summary { cursor: pointer; }
+.ck-item .mark { font-weight: 700; }
+.ck-item.ok .mark { color: var(--ok); }
+.ck-item.bad .mark { color: var(--bad); }
+.ck-item .meta { display: block; color: var(--muted); font-size: 0.85rem; margin-left: 1.4em; }
+.ck-explain h4 { margin: 16px 0 0; }
+.ck-explain > p.note { display: none; }
+.ck-answers { border-collapse: collapse; margin: 8px 0; }
+.ck-answers th, .ck-answers td { border-bottom: 1px solid var(--line); padding: 5px 12px; text-align: left; vertical-align: top; font-weight: 400; }
+.ck-answers th { color: var(--muted); }
+.ck-answers tr.ok td { color: var(--ok); }
+.ck-answers tr.bad td { color: var(--bad); }
+.ck-answers .why { font-size: 0.9rem; color: var(--muted); margin-top: 2px; }
+@media (max-width: 640px) { .ck-options { grid-template-columns: minmax(0, 1fr); } }
+
+/* "Your typical slips" (slips.js) */
+#slips-btn { display: inline-flex; align-items: center; gap: 6px; }
+.slips-badge { display: inline-grid; place-items: center; min-width: 1.5em; height: 1.5em; padding: 0 5px; border-radius: 999px; background: var(--bad); color: var(--card); font-size: 0.78rem; font-weight: 700; }
+#slips { width: min(560px, calc(100vw - 32px)); max-height: calc(100vh - 64px); overflow-y: auto; margin: auto; color: var(--ink); box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25); }
+#slips::backdrop { background: rgba(15, 17, 20, 0.45); }
+.slips-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.slips-head h3 { margin-top: 4px; }
+#slips button.close { padding: 0 9px; font-size: 1.3rem; line-height: 1.4; color: var(--muted); }
+#slips button.close:hover:not(:disabled) { color: var(--ink); }
+#slips-list { margin: 10px 0 12px; padding-left: 1.2em; }
+#slips-list li { margin: 10px 0; }
+#slips-list .count { display: inline-block; min-width: 2.2em; font-variant-numeric: tabular-nums; color: var(--muted); }
+#slips-list .fix { display: block; margin: 2px 0 0 2.2em; }
+#slips-list .fix b { color: var(--ok); }

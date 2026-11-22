@@ -808,7 +808,7 @@ AREAS = [
     ("Mechanics", "Mechanik", ["motion-data", "motion-graphs", "motion-areas", "force-concepts", "interaction", "force-systems",
                                "torque", "centre-of-mass", "coe"]),
     ("Thermodynamics", "Wärmelehre", ["cyclic-processes"]),
-    ("Electricity and Magnetism", "Elektrizität und Magnetismus", ["coulomb", "electric-field", "electric-potential", "bulb-brightness",
+    ("Electricity and Magnetism", "Elektrizität und Magnetismus", ["coulomb", "electric-field", "electric-potential", "acceleration-voltage", "bulb-brightness",
                                                                   "circuit-trainer", "potential-circuit", "capacitors", "magnetic-forces",
                                                                   "charged-particles", "induction-match", "rl-switch", "impedance"]),
     ("Oscillations and Waves", "Schwingungen und Wellen", ["oscillations", "wave-propagation", "interference", "em-waves"]),

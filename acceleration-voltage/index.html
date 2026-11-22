@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Acceleration Voltage</title>
+  <link rel="icon" href="/favicon.ico" sizes="48x48">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <!-- KaTeX's fonts: the serif text is set in KaTeX_Main -->
+  <link rel="stylesheet" href="/katex/katex.min.css">
+  <link rel="stylesheet" href="ui.css">
+  <link rel="stylesheet" href="style.css">
+  <script defer src="lang.js"></script>
+  <script defer src="sets.js"></script>
+  <script defer src="fit.js"></script>
+  <script defer src="sign.js"></script>
+  <script defer src="elec.js"></script>
+  <script defer src="accel.js"></script>
+  <script defer src="exercises.js"></script>
+  <script defer src="explore.js"></script>
+  <script defer src="tutor.js"></script>
+  <script defer src="check.js"></script>
+  <script defer src="practice.js"></script>
+  <script defer src="topics.js"></script>
+  <script defer src="app.js"></script>
+</head>
+<body>
+  <header class="top">
+    <div class="wrap">
+      <div class="brand">
+        <a class="home" href="/">Learning Physics</a><span class="sep" aria-hidden="true">/</span>
+        <h1 data-i18n="title">Acceleration Voltage</h1>
+      </div>
+      <div class="top-right">
+        <p id="score" class="score"></p>
+        <div id="langs" class="levels small" role="radiogroup" aria-label="Language">
+          <label><input type="radio" name="lang" value="en" checked><span title="English">EN</span></label>
+          <label><input type="radio" name="lang" value="de"><span title="Deutsch">DE</span></label>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <div class="toolbar">
+      <div id="modes" class="levels" role="radiogroup" data-i18n-label="mode" aria-label="Mode">
+        <label><input type="radio" name="mode" value="tutor" checked><span data-i18n="tutor">Tutor</span></label>
+        <label><input type="radio" name="mode" value="practice"><span data-i18n="practice">Practice</span></label>
+        <label><input type="radio" name="mode" value="explore"><span data-i18n="explore">Explore</span></label>
+        <label><input type="radio" name="mode" value="check"><span data-i18n="checkMode">Check</span></label>
+      </div>
+      <div id="levels" class="levels practice" role="radiogroup" data-i18n-label="difficulty" aria-label="Difficulty" hidden></div>
+      <button id="new" type="button" class="new-btn practice" data-i18n="new" hidden>New exercise</button>
+    </div>
+
+    <section id="tutor" class="card">
+      <div id="examples" class="levels examples" role="radiogroup" data-i18n-label="example" aria-label="Example"></div>
+      <h2 id="t-title"></h2>
+      <p id="t-idea" class="note"></p>
+      <div id="t-figure"></div>
+      <div class="progress" aria-hidden="true"><div id="t-bar"></div></div>
+      <div id="t-text" class="steps tutor-text" aria-live="polite"></div>
+      <div class="actions tutor-nav">
+        <button type="button" id="t-prev">← Back</button>
+        <span id="t-count" class="note"></span>
+        <button type="button" id="t-next" class="primary">Next →</button>
+      </div>
+      <p class="note" data-i18n="tutorNote"></p>
+    </section>
+
+    <section id="explore" class="card" hidden></section>
+
+    <section id="task" class="card practice" hidden>
+      <h2 id="title"></h2>
+      <div id="prompt"></div>
+      <div id="figure" class="figs"></div>
+      <form id="answers" novalidate>
+        <div id="fields"></div>
+        <div class="actions">
+          <button type="submit" id="check" class="primary">Check</button>
+          <button type="button" id="hint">Hint</button>
+          <button type="button" id="reveal" data-i18n="reveal">Show solution</button>
+        </div>
+        <p id="reveal-note" class="note"></p>
+        <p id="status" class="status" aria-live="polite"></p>
+      </form>
+    </section>
+
+    <section id="hints" class="card" hidden>
+      <h3 data-i18n="hints">Hints</h3>
+      <ol id="hint-list"></ol>
+    </section>
+
+    <section id="solution" class="card" hidden>
+      <h3 data-i18n="solution">Solution</h3>
+      <div id="sol-figure" class="figs"></div>
+      <div id="sol-steps" class="steps"></div>
+    </section>
+  </main>
+
+  <footer class="wrap foot">
+    © Samuel Byland · <a href="https://mng.ch" target="_blank" rel="noopener">MNG Rämibühl</a> · 2026 · <a href="/privacy/" data-i18n-common="privacy">Privacy</a>
+  </footer>
+</body>
+</html>
