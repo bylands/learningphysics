@@ -7,8 +7,10 @@
 //                           left to 80 V on the right (one drawing unit is 1 cm)
 //     { kind: 'plates', VL, VR }  two plates at x = ±PX, the potentials VL (left) and VR (right) in V,
 //                           a uniform field between them, no field outside
+//     { kind: 'plates', vert: true, VT, VB }  two plates one above the other, at y = ±PY (from
+//                           x = −PW to PW), the potentials VT (top) and VB (bottom) in V
 //     { kind: 'nucleus', Z }      a nucleus of charge Z·e at (NX, 0); one drawing unit is 10 fm,
-//                           V = k·Z·e/r = Z·1.44 MV·fm / r
+//                           V = k·Z·e/r = Z·1.44 MV·fm / r (Z = 0: no field, a neutral dot)
 //   V(cfg, x, y) the potential in V, E(cfg, x, y) the field [Ex, Ey] (V per drawing unit)
 //   fieldFig(cfg, o)  an SVG of the field: field lines (gold, E), equipotentials (dashed), points,
 //                     a dashed path, velocity arrows (blue), a particle (red), labels; o.data adds
@@ -44,7 +46,7 @@
   const part = (id) => ({ id, ...PARTS[id], name: () => L(...PARTS[id].names[0]), short: () => L(...PARTS[id].names[1]) });
 
   // ---------------------------------------------------------------- the fields
-  const D = 1.2, WB = 2.4, PX = 2.4, NX = 2.2;
+  const D = 1.2, WB = 2.4, PX = 2.4, NX = 2.2, PY = 1.5, PW = 2.8;
   // f(z) = z + i·D·σ(z), σ = (1 + tanh(z/w))/2: [Re f, Im f]
   function bentF(x, y) {
     const a = (2 * x) / WB, b = (2 * y) / WB, den = Math.cosh(a) + Math.cos(b);
@@ -53,12 +55,14 @@
   }
   function V(c, x, y) {
     if (c.kind === 'bent') return 500 - 140 * bentF(x, y)[0];
+    if (c.kind === 'plates' && c.vert) { const t = Math.max(-PY, Math.min(PY, y)); return c.VB + ((c.VT - c.VB) * (t + PY)) / (2 * PY); }
     if (c.kind === 'plates') { const t = Math.max(-PX, Math.min(PX, x)); return c.VL + ((c.VR - c.VL) * (t + PX)) / (2 * PX); }
     if (c.kind === 'nucleus') return (c.Z * KE * 1e6) / ((c.scale || 10) * (Math.hypot(x - NX, y) || 1e-9));
     return 0;
   }
   function E(c, x, y) {
     const h = 1e-4;
+    if (c.kind === 'plates' && c.vert) return Math.abs(y) <= PY ? [0, -(c.VT - c.VB) / (2 * PY)] : [0, 0];
     if (c.kind === 'plates') return Math.abs(x) <= PX ? [-(c.VR - c.VL) / (2 * PX), 0] : [0, 0];
     return [-(V(c, x + h, y) - V(c, x - h, y)) / (2 * h), -(V(c, x, y + h) - V(c, x, y - h)) / (2 * h)];
   }
@@ -81,11 +85,17 @@
       }
       return out;
     }
+    if (c.kind === 'plates' && c.vert) {
+      const up = c.VB >= c.VT;
+      for (let x = -2.1; x <= 2.11; x += 0.7) { const a = [x, -PY], b = [x, PY]; out.push(up ? [a, b] : [b, a]); }
+      return out;
+    }
     if (c.kind === 'plates') {
       const dir = c.VL >= c.VR ? 1 : -1;
       for (let y = -1.2; y <= 1.21; y += 0.6) { const a = [-PX, y], b = [PX, y]; out.push(dir > 0 ? [a, b] : [b, a]); }
       return out;
     }
+    if (!c.Z) return out;
     // a nucleus (a point charge): radial lines, outwards from a positive one, inwards to a negative one
     for (let k = 0; k < 16; k++) {
       const a = (2 * Math.PI * (k + 0.5)) / 16, pts = [];
@@ -152,7 +162,8 @@
     const pathOf = (ln) => `M${ln.map((p) => `${f1(X(p[0]))},${f1(Y(p[1]))}`).join(' L')}`;
     let s = `<rect class="bg" x="0" y="0" width="${W}" height="${H}"/><clipPath id="${id}"><rect x="0" y="0" width="${W}" height="${H}"/></clipPath><g clip-path="url(#${id})">`;
     if (o.equi) {
-      if (c.kind === 'plates') for (const v of o.equi) { const x = -PX + ((v - c.VL) / (c.VR - c.VL)) * 2 * PX; s += `<line class="equi" x1="${f1(X(x))}" y1="${f1(Y(1.5))}" x2="${f1(X(x))}" y2="${f1(Y(-1.5))}"/>`; }
+      if (c.kind === 'plates' && c.vert) for (const v of o.equi) { const y = -PY + ((v - c.VB) / (c.VT - c.VB)) * 2 * PY; s += `<line class="equi" x1="${f1(X(-PW))}" y1="${f1(Y(y))}" x2="${f1(X(PW))}" y2="${f1(Y(y))}"/>`; }
+      else if (c.kind === 'plates') for (const v of o.equi) { const x = -PX + ((v - c.VL) / (c.VR - c.VL)) * 2 * PX; s += `<line class="equi" x1="${f1(X(x))}" y1="${f1(Y(1.5))}" x2="${f1(X(x))}" y2="${f1(Y(-1.5))}"/>`; }
       else if (c.kind === 'nucleus') for (const v of o.equi) s += `<circle class="equi" cx="${f1(X(NX))}" cy="${f1(Y(0))}" r="${f1(Math.abs((c.Z * KE * 1e6) / ((c.scale || 10) * v)) * S)}"/>`;
       else for (const [a, b] of contours(c, box, o.equi)) s += `<line class="equi" x1="${f1(X(a[0]))}" y1="${f1(Y(a[1]))}" x2="${f1(X(b[0]))}" y2="${f1(Y(b[1]))}"/>`;
     }
@@ -168,10 +179,12 @@
       }
     }
     s += '</g>';
-    if (c.kind === 'plates' && !o.noPlates) {
+    if (c.kind === 'plates' && c.vert && !o.noPlates) {
+      for (const y of [PY, -PY]) s += `<rect class="plate" x="${f1(X(-PW))}" y="${f1(Y(y) - 3)}" width="${f1(X(PW) - X(-PW))}" height="6"/>`;
+    } else if (c.kind === 'plates' && !o.noPlates) {
       for (const [x, v] of [[-PX, c.VL], [PX, c.VR]]) s += `<rect class="plate" x="${f1(X(x) - 3)}" y="${f1(Y(1.5))}" width="6" height="${f1((Y(-1.5) - Y(1.5)))}"/>`;
     }
-    if (c.kind === 'nucleus') s += `<circle class="charge ${c.Z < 0 ? 'neg' : 'pos'}" cx="${f1(X(NX))}" cy="${f1(Y(0))}" r="11"/>` + `<text class="sign" x="${f1(X(NX))}" y="${f1(Y(0) + 4.5)}" text-anchor="middle">${c.Z < 0 ? '−' : '+'}</text>`;
+    if (c.kind === 'nucleus') s += `<circle class="charge ${c.Z < 0 ? 'neg' : c.Z > 0 ? 'pos' : 'neu'}" cx="${f1(X(NX))}" cy="${f1(Y(0))}" r="11"/>` + (c.Z ? `<text class="sign" x="${f1(X(NX))}" y="${f1(Y(0) + 4.5)}" text-anchor="middle">${c.Z < 0 ? '−' : '+'}</text>` : '');
     if (o.labelE) { const [ex, ey] = o.labelE; s += txt(X(ex), Y(ey), '<tspan class="it">E</tspan>', 'lbl fl-lbl'); }
     if (o.path) s += `<path class="avpath" d="${pathOf(o.path)}"/>`;
     for (const v of o.vels || []) s += arrow(X(v.x), Y(v.y), X(v.x) + v.dx, Y(v.y) - v.dy, 'v-vel', 2.4) + (v.name ? txt(X(v.x) + v.dx * 0.5 + (v.nx || 0), Y(v.y) - v.dy * 0.5 - 10 + (v.ny || 0), v.name, 'lbl vel-lbl') : '');
@@ -192,12 +205,13 @@
   // Energy bars: groups [{ name, pot, kin }] (in any one unit), side by side; per group E_pot,
   // E_kin and the total E, bars up from the zero line (down for negative values). o: { max (the
   // largest size to show), values (fmt(x) above each bar), W, H, label, hl (a group's index to
-  // mark), unknown (groups whose bars are hidden behind "?") }
+  // mark), unknown (groups whose bars are hidden behind "?"), min (the lowest value to make room
+  // for, so that a run's bars keep their size) }
   function bars(groups, o = {}) {
     const n = groups.length, gw = 112, gap = 26, L0 = 18, W = o.W || L0 + n * gw + (n - 1) * gap + 14;
     const vals = groups.flatMap((g) => [g.pot, g.kin, g.pot + g.kin]);
-    const max = o.max || Math.max(1e-9, ...vals.map(Math.abs)), hasNeg = vals.some((v) => v < -1e-9 * max);
-    const top = o.values ? 30 : 16, Hp = o.H || 120, Hn = hasNeg ? Math.round(Hp * Math.min(1, Math.max(0.35, -Math.min(...vals) / max))) + (o.values ? 16 : 0) : 0, foot = 40, H = top + Hp + Hn + foot;
+    const max = o.max || Math.max(1e-9, ...vals.map(Math.abs)), lo = Math.min(o.min || 0, ...vals), hasNeg = lo < -1e-9 * max;
+    const top = o.values ? 30 : 16, Hp = o.H || 120, Hn = hasNeg ? Math.round(Hp * Math.min(1, Math.max(0.35, -lo / max))) + (o.values ? 16 : 0) : 0, foot = 40, H = top + Hp + Hn + foot;
     const y0 = top + Hp, sc = Hp / max, cw = 26;
     let s = `<rect class="bg" x="0" y="0" width="${W}" height="${H}"/>`;
     groups.forEach((g, i) => {
@@ -216,7 +230,7 @@
     return svg(W, H, s, o.label || L('Energy bars', 'Energiebalken'), 'bars');
   }
 
-  const api = { e, u, me, mp, KE, PARTS, part, D, PX, NX, BOX, bentF, V, E, lines, contours, onLine, lineThrough, fieldFig, bars, svg, txt, arrow, head, sub, nice, Vname };
+  const api = { e, u, me, mp, KE, PARTS, part, D, PX, NX, PY, PW, BOX, bentF, V, E, lines, contours, onLine, lineThrough, fieldFig, bars, svg, txt, arrow, head, sub, nice, Vname };
   root.Accel = api;
   if (typeof module !== 'undefined') module.exports = api;
 })(typeof window !== 'undefined' ? window : globalThis);
