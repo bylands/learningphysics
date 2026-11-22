@@ -235,8 +235,20 @@ svg.av .sim-trace.tn { stroke: #3d6fd8; }
 svg.av .sim-trace.tz { stroke: #8b9096; }
 svg.av .sim-dir { stroke: var(--av-vel); stroke-width: 2; stroke-dasharray: 5 4; }
 .sim-actions { justify-content: center; margin: 12px 0 0; }
-.sim-out { display: flex; flex-direction: column; align-items: center; gap: 8px; }
-.sim-out .fig svg.bars { width: 100%; height: auto; }
+.sim-stage { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px 24px; align-items: center; margin: 12px 0 10px; }
+.sim-stage .fig { overflow: visible; }
+.sim-bars { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 12px; }
+.sim-bars svg.bars { width: 150px; max-width: 100%; height: auto; }
+.sim-tbl { display: flex; justify-content: center; overflow-x: auto; transition: opacity 0.2s; }
+.sim-tbl.running { opacity: 0.5; } /* the table holds still while the motion plays */
+.ex-row input.sim-num { width: 4.6em; padding: 3px 6px; font: inherit; color: var(--ink); background: var(--card, transparent); border: 1px solid var(--line, #c8cdd2); border-radius: 6px; }
+/* a wide screen: the page wider, the energy bars beside the field */
+@media (min-width: 1000px) {
+  body.sim-page .wrap { max-width: 1160px; }
+  .sim-stage { grid-template-columns: minmax(0, 1fr) minmax(200px, 300px); }
+  .sim-bars svg.bars { width: min(100%, 220px); }
+  .sim-bars.many svg.bars { width: calc(50% - 6px); }
+}
 .sim-table td, .sim-table th { padding: 0.25em 0.6em; }
 .sim-table tbody th { font-weight: 700; color: var(--ink); }
 .ex-row .ex-check { margin-right: 10px; }

@@ -1,14 +1,16 @@
 // Charges in Electric Fields: a standalone simulation beside Acceleration Voltage. The student picks
-// a setup (a uniform field between two plates, the field around a point charge, a bent field as in
+// a setup (a uniform field between two plates, side by side or one above the other, the field around a point charge of any whole multiple of e, a bent field as in
 // the textbook figure, or the race of a proton, a neutron, an alpha particle and an electron), the
 // particle, where it starts (drag it, or click) and its initial kinetic energy and direction, and
 // plays the motion. The motion is a numerical simulation in real units (RK4, a step that keeps each
 // move under 0.004 drawing units), worked out in full when the student presses play, then shown in
 // slow motion so that the run lasts about four seconds (the note says how much slower than real).
 // Velocity (blue) and force (red) arrows, the trace and the equipotentials can be switched on and
-// off; live energy bars show E_pot = q·V, E_kin and their sum for each particle.
+// off; live energy bars show E_pot = q·V, E_kin and their sum for each particle (beside the field on a
+// wide screen). The table of time, speed and kinetic energy holds still while the motion plays and
+// shows the values where it pauses or ends.
 //   units: plates and the bent field 1 drawing unit = 1 cm, potentials in V (accel.js); the point
-//   charge Q = ±79e (a gold nucleus), 1 drawing unit = 20 fm.
+//   charge Q = Z·e, Z = −100 … 100 (79: a gold nucleus), 1 drawing unit = 20 fm.
 (function () {
   'use strict';
 
@@ -21,7 +23,7 @@
       app: 'Acceleration Voltage', title: 'Charges in Electric Fields',
       intro: 'Choose a setup and a particle, drag the particle to where it starts, set its kinetic energy and direction, and press play. The motion is simulated step by step and shown in slow motion.',
       setup: 'Setup', sUniform: 'Two plates', sPoint: 'Point charge', sBent: 'Bent field', sRace: 'The race',
-      particle: 'Particle', voltage: 'Voltage', polarity: 'Higher potential', left: 'left plate', right: 'right plate', source: 'Charge Q', qpos: 'positive', qneg: 'negative',
+      particle: 'Particle', voltage: 'Voltage', orient: 'Plates', oH: 'left and right', oV: 'top and bottom', polarity: 'Higher potential', left: 'left plate', right: 'right plate', top: 'top plate', bottom: 'bottom plate', source: 'Charge Q',
       e0: 'Kinetic energy at the start', dir: 'Direction', show: 'Show', vel: 'velocity', force: 'force', trace: 'trace', equi: 'equipotentials', speed: 'Speed', slow: 'slow', normal: 'normal', fast: 'fast',
       play: '▶ Play', pause: '❚❚ Pause', reset: '↺ Reset', again: '▶ Again',
       slowmo: (x) => `Slow motion: 1 s on the screen is ${x} of real time.`, still: 'Nothing moves: a particle at rest feels no force here, or none is charged.',
@@ -29,14 +31,14 @@
       th: ['', 'time', 'speed', 'kinetic energy', ''], at: 'at rest',
       hit: { plate: 'reaches the plate', nucleus: 'hits the charge', out: 'leaves the field', finish: 'finish', turn: '' },
       raceNote: 'The proton, the neutron and the alpha particle start at rest on the equipotential line V_A = 800 V, the electron on V_B = 200 V. The time each needs to the other line is shown when it arrives.',
-      nucleusNote: 'The point charge is a gold nucleus, Q = +79e (or −79e); the field shown is 140 fm wide.', platesNote: 'The plates are 4.8 cm apart.', bentNote: 'The field is about 6 cm wide; the potentials range from about 900 V on the left to 100 V on the right.',
+      nucleusNote: 'The charge Q is a whole multiple of the elementary charge e; Q = +79e is a gold nucleus. The field shown is 140 fm wide.', platesNote: 'The plates are 4.8 cm apart.', platesNoteV: 'The plates are 3 cm apart and 5.6 cm long.', bentNote: 'The field is about 6 cm wide; the potentials range from about 900 V on the left to 100 V on the right.',
       dragNote: 'Drag the particle or click in the field to choose its start; the dashed arrow shows its initial direction.',
     },
     de: {
       app: 'Beschleunigungsspannung', title: 'Ladungen in elektrischen Feldern',
       intro: 'Wähle einen Aufbau und ein Teilchen, zieh das Teilchen an seinen Startpunkt, stelle seine kinetische Energie und Richtung ein und drück Start. Die Bewegung wird Schritt für Schritt simuliert und in Zeitlupe gezeigt.',
       setup: 'Aufbau', sUniform: 'Zwei Platten', sPoint: 'Punktladung', sBent: 'Gebogenes Feld', sRace: 'Das Rennen',
-      particle: 'Teilchen', voltage: 'Spannung', polarity: 'Höheres Potential', left: 'linke Platte', right: 'rechte Platte', source: 'Ladung Q', qpos: 'positiv', qneg: 'negativ',
+      particle: 'Teilchen', voltage: 'Spannung', orient: 'Platten', oH: 'links und rechts', oV: 'oben und unten', polarity: 'Höheres Potential', left: 'linke Platte', right: 'rechte Platte', top: 'obere Platte', bottom: 'untere Platte', source: 'Ladung Q',
       e0: 'Kinetische Energie beim Start', dir: 'Richtung', show: 'Anzeigen', vel: 'Geschwindigkeit', force: 'Kraft', trace: 'Spur', equi: 'Äquipotentiallinien', speed: 'Tempo', slow: 'langsam', normal: 'normal', fast: 'schnell',
       play: '▶ Start', pause: '❚❚ Pause', reset: '↺ Zurück', again: '▶ Nochmals',
       slowmo: (x) => `Zeitlupe: 1 s auf dem Bildschirm sind ${x} in Wirklichkeit.`, still: 'Nichts bewegt sich: Ein ruhendes Teilchen spürt hier keine Kraft, oder keines ist geladen.',
@@ -44,7 +46,7 @@
       th: ['', 'Zeit', 'Geschwindigkeit', 'kinetische Energie', ''], at: 'in Ruhe',
       hit: { plate: 'erreicht die Platte', nucleus: 'trifft die Ladung', out: 'verlässt das Feld', finish: 'im Ziel', turn: '' },
       raceNote: 'Das Proton, das Neutron und das Alphateilchen starten in Ruhe auf der Äquipotentiallinie Φ_A = 800 V, das Elektron auf Φ_B = 200 V. Die Zeit, die jedes bis zur anderen Linie braucht, erscheint bei seiner Ankunft.',
-      nucleusNote: 'Die Punktladung ist ein Goldkern, Q = +79e (oder −79e); das gezeigte Feld ist 140 fm breit.', platesNote: 'Die Platten sind 4.8 cm voneinander entfernt.', bentNote: 'Das Feld ist etwa 6 cm breit; die Potentiale reichen von etwa 900 V links bis 100 V rechts.',
+      nucleusNote: 'Die Ladung Q ist ein ganzzahliges Vielfaches der Elementarladung e; Q = +79e ist ein Goldkern. Das gezeigte Feld ist 140 fm breit.', platesNote: 'Die Platten sind 4.8 cm voneinander entfernt.', platesNoteV: 'Die Platten sind 3 cm voneinander entfernt und 5.6 cm lang.', bentNote: 'Das Feld ist etwa 6 cm breit; die Potentiale reichen von etwa 900 V links bis 100 V rechts.',
       dragNote: 'Zieh das Teilchen oder klicke ins Feld, um seinen Start zu wählen; der gestrichelte Pfeil zeigt seine Anfangsrichtung.',
     },
   };
@@ -55,19 +57,23 @@
   const IDS = ['p', 'd', 'a', 'e', 'ep', 'n'];
   const SETUPS = {
     uniform: { box: A.BOX.plates, L: 0.01, start: [-2.25, 0], E0: 0, Emax: 5000, angle: 0, part: 'p' },
+    uniformV: { box: A.BOX.plates, L: 0.01, start: [-2.7, 0], E0: 2000, Emax: 5000, angle: 0, part: 'p' },
     point: { box: A.BOX.nucleus, L: 20e-15, start: [-3.2, 0.5], E0: 5e6, Emax: 20e6, angle: 0, part: 'a' },
     bent: { box: A.BOX.bent, L: 0.01, start: [-2.6, 0.2], E0: 100, Emax: 2000, angle: 0, part: 'p' },
     race: { box: A.BOX.bent, L: 0.01, race: true },
   };
-  let st = { setup: 'uniform', U: 1000, hiLeft: true, Qsign: 1, vel: true, force: true, trace: true, equi: true, speed: 1, per: {} };
-  const S0 = () => SETUPS[st.setup];
-  const per = () => st.per[st.setup] || (st.per[st.setup] = { start: [...(S0().start || [0, 0])], E0: S0().E0 || 0, angle: S0().angle || 0, part: S0().part || 'p' });
+  // hiFirst: the left plate (side by side) or the top plate (vert) at the higher potential; Z: Q = Z·e
+  let st = { setup: 'uniform', U: 1000, vert: false, hiFirst: true, Z: 79, vel: true, force: true, trace: true, equi: true, speed: 1, per: {} };
+  const key = () => (st.setup === 'uniform' && st.vert ? 'uniformV' : st.setup);
+  const S0 = () => SETUPS[key()];
+  const per = () => st.per[key()] || (st.per[key()] = { start: [...(S0().start || [0, 0])], E0: S0().E0 || 0, angle: S0().angle || 0, part: S0().part || 'p' });
   function cfg() {
-    if (st.setup === 'uniform') return { kind: 'plates', VL: st.hiLeft ? st.U : 0, VR: st.hiLeft ? 0 : st.U };
-    if (st.setup === 'point') return { kind: 'nucleus', Z: 79 * st.Qsign, scale: 20 };
+    const hi = st.hiFirst ? st.U : 0, lo = st.U - hi;
+    if (st.setup === 'uniform') return st.vert ? { kind: 'plates', vert: true, VT: hi, VB: lo } : { kind: 'plates', VL: hi, VR: lo };
+    if (st.setup === 'point') return { kind: 'nucleus', Z: st.Z, scale: 20 };
     return { kind: 'bent' };
   }
-  const levels = () => (st.setup === 'uniform' ? [0.2, 0.4, 0.6, 0.8].map((k) => k * st.U) : st.setup === 'point' ? [1.5e6, 2.5e6, 4e6, 8e6].map((v) => v * st.Qsign) : st.setup === 'race' ? [800, 200] : [800, 650, 500, 350, 200]);
+  const levels = () => (st.setup === 'uniform' ? [0.2, 0.4, 0.6, 0.8].map((k) => k * st.U) : st.setup === 'point' ? (st.Z ? [1.5e6, 2.5e6, 4e6, 8e6].map((v) => (v * st.Z) / 79) : null) : st.setup === 'race' ? [800, 200] : [800, 650, 500, 350, 200]);
   const box = () => S0().box, Sc = () => W / (box()[1] - box()[0]);
   const PX = (x) => (x - box()[0]) * Sc(), PY = (y) => (box()[3] - y) * Sc();
   // the particles of a run: [{ id, x, y, E0 (eV), angle (deg), target (race: the potential where it arrives) }]
@@ -100,7 +106,7 @@
       [x, y, vx, vy] = s0.map((q, j) => q + (dt / 6) * (k1[j] + 2 * k2[j] + 2 * k3[j] + k4[j]));
       t += dt;
       pts.push([t, x, y, vx, vy]);
-      if (c.kind === 'plates' && Math.abs(x) >= A.PX - 0.06) { why = 'plate'; break; }
+      if (c.kind === 'plates' && (c.vert ? Math.abs(y) >= A.PY - 0.06 && Math.abs(x) <= A.PW : Math.abs(x) >= A.PX - 0.06)) { why = 'plate'; break; }
       if (c.kind === 'nucleus' && Math.hypot(x - A.NX, y) < 0.18) { why = 'nucleus'; break; }
       if (pt.target != null && Math.sign(A.V(c, x, y) - pt.target) !== sgnT) { why = 'finish'; break; }
       if (x < x0 - 0.05 || x > x1 + 0.05 || y < y0 - 0.05 || y > y1 + 0.05) { why = 'out'; break; }
@@ -121,10 +127,11 @@
   const fmtT = (t) => { if (!t) return '0 s'; const u = [[1, 's'], [1e-3, 'ms'], [1e-6, 'µs'], [1e-9, 'ns'], [1e-12, 'ps'], [1e-15, 'fs'], [1e-18, 'as'], [1e-21, 'zs']].find(([k]) => t >= k * 0.999) || [1e-21, 'zs']; return `${A.nice(t / u[0])} ${u[1]}`; };
   function staticFig() {
     const c = cfg();
-    let svg = A.fieldFig(c, { W, box: box(), equi: st.equi ? levels() : null, labelE: st.setup === 'point' ? null : [box()[0] + 0.45, box()[3] - 0.3], label: LR('The field and the moving particles', 'Das Feld und die bewegten Teilchen'), data: ' tabindex="0"', cls: 'sim-fig' });
+    let svg = A.fieldFig(c, { W, box: box(), equi: st.equi ? levels() : null, labelE: st.setup === 'point' ? null : st.setup === 'uniform' && st.vert ? [-2.55, 0.35] : [box()[0] + 0.45, box()[3] - 0.3], label: LR('The field and the moving particles', 'Das Feld und die bewegten Teilchen'), data: ' tabindex="0"', cls: 'sim-fig' });
     let extra = '';
     if (st.setup === 'race') for (const [v, n] of [[800, LR('V_A = 800 V', 'Φ_A = 800 V')], [200, LR('V_B = 200 V', 'Φ_B = 200 V')]]) { const p = A.onLine(c, 0, -1.25, v); extra += A.txt(PX(p[0]) + 8, PY(p[1]) + 4, n, 'lbl small v-lbl', 'start'); }
-    if (st.setup === 'uniform') extra += A.txt(PX(-A.PX), 14, X.kv(c.VL), 'lbl small', 'middle') + A.txt(PX(A.PX), 14, X.kv(c.VR), 'lbl small', 'middle');
+    if (st.setup === 'uniform' && st.vert) extra += A.txt(PX(0), PY(A.PY) - 8, X.kv(c.VT), 'lbl small', 'middle') + A.txt(PX(0), PY(-A.PY) + 17, X.kv(c.VB), 'lbl small', 'middle');
+    else if (st.setup === 'uniform') extra += A.txt(PX(-A.PX), 14, X.kv(c.VL), 'lbl small', 'middle') + A.txt(PX(A.PX), 14, X.kv(c.VR), 'lbl small', 'middle');
     return svg.replace('</svg>', `${extra}<g id="sim-layer"></g></svg>`);
   }
   function layer(t) {
@@ -152,21 +159,35 @@
     }
     return s;
   }
-  function readout(t) {
-    const c = cfg(), unit = st.setup === 'point' ? 1e6 : 1;
+  // the values of each particle at the time t: speed (m/s), E_pot and E_kin (eV, MeV near the point charge)
+  const unit = () => (st.setup === 'point' ? 1e6 : 1);
+  const values = (r, q) => { const v = Math.hypot(q[3], q[4]) * S0().L; return { v, pot: (r.P.q * A.V(cfg(), q[1], q[2])) / unit(), kin: (0.5 * r.P.m * v * v) / A.e / unit() }; };
+  function table(t) {
     const rows = runs.map((r) => {
-      const p = state(r, t), P = r.P, L = S0().L, v = Math.hypot(p[3], p[4]) * L, Ek = 0.5 * P.m * v * v / A.e, done = t >= r.end && r.end > 0;
-      return `<tr><th>${P.sym}</th><td>${fmtT(Math.min(t, r.end))}</td><td>${v ? X.speed(v) : ui().at}</td><td>${X.eV(Ek)}</td><td class="note">${done ? ui().hit[r.why] || '' : ''}</td></tr>`;
+      const { v, kin } = values(r, state(r, t)), done = t >= r.end && r.end > 0;
+      return `<tr><th>${r.P.sym}</th><td>${fmtT(Math.min(t, r.end))}</td><td>${v ? X.speed(v) : ui().at}</td><td>${X.eV(kin * unit())}</td><td class="note">${done ? ui().hit[r.why] || '' : ''}</td></tr>`;
     });
-    const groups = runs.map((r) => { const p = state(r, t), P = r.P, L = S0().L, v = Math.hypot(p[3], p[4]) * L; return { name: P.sym, pot: (P.q * A.V(c, p[1], p[2])) / unit, kin: (0.5 * P.m * v * v) / A.e / unit }; });
-    if (!runs.bmax) runs.bmax = 1.05 * Math.max(1e-9, ...runs.flatMap((r) => r.pts.filter((q, i) => i % 10 === 0 || i === r.pts.length - 1).flatMap((q) => { const v = Math.hypot(q[3], q[4]) * S0().L, pot = (r.P.q * A.V(c, q[1], q[2])) / unit, kin = (0.5 * r.P.m * v * v) / A.e / unit; return [Math.abs(pot), kin, Math.abs(pot + kin)]; })));
-    const th = ui().th;
-    return `<div class="sim-out"><div class="fig" style="width:100%;max-width:${groups.length * 150 + 20}px">${A.bars(groups, { max: runs.bmax, H: 90 })}</div><table class="cmp sim-table"><thead><tr>${th.map((h) => `<th>${h}</th>`).join('')}</tr></thead><tbody>${rows.join('')}</tbody></table></div>`;
+    return `<table class="cmp sim-table"><thead><tr>${ui().th.map((h) => `<th>${h}</th>`).join('')}</tr></thead><tbody>${rows.join('')}</tbody></table>`;
+  }
+  // the bars: one figure per particle (so that they can wrap, two by two beside the field), all on
+  // the scale of the whole run, which also fixes the room below the zero line
+  function bars(t) {
+    if (runs.bmax == null) {
+      const all = runs.flatMap((r) => r.pts.filter((q, i) => i % 10 === 0 || i === r.pts.length - 1).flatMap((q) => { const { pot, kin } = values(r, q); return [pot, kin, pot + kin]; }));
+      runs.bmax = 1.05 * Math.max(1e-9, ...all.map(Math.abs));
+      runs.bmin = 1.05 * Math.min(0, ...all);
+    }
+    return runs.map((r) => { const { pot, kin } = values(r, state(r, t)); return A.bars([{ name: r.P.sym, pot, kin }], { max: runs.bmax, min: runs.bmin, H: 90 }); }).join('');
   }
   function draw() {
     const l = $('#sim-layer');
     if (l) l.innerHTML = layer(tShown);
-    $('#sim-out').innerHTML = readout(tShown);
+    $('#sim-bars').innerHTML = bars(tShown);
+    // the table only when the motion stands still (before, paused, at the end): numbers that change
+    // on every frame cannot be read
+    const tb = $('#sim-table'), cls = playing ? 'sim-tbl running' : 'sim-tbl';
+    if (!playing) tb.innerHTML = table(tShown);
+    if (tb.className !== cls) tb.className = cls;
     // the label only when it changes: draw() runs on every frame, and rewriting the button's text
     // each time swaps its text node under the pointer, so that Safari drops the click (the pause)
     const b = $('#sim-play'), label = playing ? ui().pause : tShown >= T && T > 0 ? ui().again : ui().play;
@@ -205,6 +226,7 @@
   // ---------------------------------------------------------------- controls
   const radios = (name, list, on) => `<div class="levels" role="radiogroup">${list.map(([v, label]) => `<label><input type="radio" name="${name}" value="${v}"${String(v) === String(on) ? ' checked' : ''}><span>${label}</span></label>`).join('')}</div>`;
   const row = (what, html, id) => `<div class="ex-row"${id ? ` id="${id}"` : ''}><span class="what">${what}</span>${html}</div>`;
+  const qText = (z) => `Q = ${z > 0 ? '+' : z < 0 ? '−' : ''}${z ? Math.abs(z) : 0}e`;
   function render() {
     const t = ui(), p = per(), race = st.setup === 'race';
     const pname = (id) => `${A.PARTS[id].sym} <small>(${X.zq(A.PARTS[id].q).replace(/^e$/, '+e').replace(/^0e$/, '0')})</small>`;
@@ -212,8 +234,8 @@
     $('#sim').innerHTML = `<p class="note">${t.intro}</p>
       <div class="ex-controls">
         ${row(t.setup, radios('s-setup', [['uniform', t.sUniform], ['point', t.sPoint], ['bent', t.sBent], ['race', t.sRace]], st.setup))}
-        ${st.setup === 'uniform' ? row(t.voltage, `<input id="s-U" type="range" min="100" max="5000" step="100" value="${st.U}"><span id="s-Uv" class="note">${X.kv(st.U)}</span>`) + row(t.polarity, radios('s-pol', [['1', t.left], ['0', t.right]], st.hiLeft ? '1' : '0')) : ''}
-        ${st.setup === 'point' ? row(t.source, radios('s-Q', [['1', t.qpos], ['-1', t.qneg]], st.Qsign)) : ''}
+        ${st.setup === 'uniform' ? row(t.orient, radios('s-or', [['h', t.oH], ['v', t.oV]], st.vert ? 'v' : 'h')) + row(t.voltage, `<input id="s-U" type="range" min="100" max="5000" step="100" value="${st.U}"><span id="s-Uv" class="note">${X.kv(st.U)}</span>`) + row(t.polarity, radios('s-pol', st.vert ? [['1', t.top], ['0', t.bottom]] : [['1', t.left], ['0', t.right]], st.hiFirst ? '1' : '0')) : ''}
+        ${st.setup === 'point' ? row(t.source, `<input id="s-Z" type="range" min="-100" max="100" step="1" value="${st.Z}" aria-label="Q / e"><input id="s-Zn" class="sim-num" type="number" min="-100" max="100" step="1" value="${st.Z}" aria-label="Q / e"><span id="s-Zv" class="note">${qText(st.Z)}</span>`) : ''}
         ${race ? '' : row(t.particle, radios('s-part', IDS.map((id) => [id, pname(id)]), p.part))}
         ${race ? '' : row(t.e0, `<input id="s-E0" type="range" min="0" max="${S0().Emax}" step="${S0().Emax / 50}" value="${p.E0}"><span id="s-E0v" class="note">${eFmt(p.E0)}</span>`)}
         ${race ? '' : row(t.dir, `<input id="s-ang" type="range" min="-180" max="180" step="5" value="${p.angle}"><span id="s-angv" class="note">${p.angle}°</span>`)}
@@ -221,18 +243,29 @@
         ${row(t.speed, radios('s-speed', [['0.5', t.slow], ['1', t.normal], ['2', t.fast]], st.speed))}
       </div>
       <div class="actions sim-actions"><button type="button" id="sim-play" class="primary">${t.play}</button><button type="button" id="sim-reset">${t.reset}</button></div>
-      <div class="figs"><div class="fig" id="sim-fig"></div></div>
-      <p class="note sim-note">${sub(race ? t.raceNote : st.setup === 'point' ? t.nucleusNote : st.setup === 'uniform' ? t.platesNote : t.bentNote)} ${race ? '' : t.dragNote} ${t.arrows}</p>
+      <div class="sim-stage"><div class="fig" id="sim-fig"></div><div id="sim-bars" class="sim-bars${race ? ' many' : ''}"></div></div>
+      <p class="note sim-note">${sub(race ? t.raceNote : st.setup === 'point' ? t.nucleusNote : st.setup === 'uniform' ? (st.vert ? t.platesNoteV : t.platesNote) : t.bentNote)} ${race ? '' : t.dragNote} ${t.arrows}</p>
       <p class="note" id="sim-scale" aria-live="polite"></p>
-      <div id="sim-out"></div>`;
+      <div id="sim-table" class="sim-tbl"></div>`;
     wire();
     prepare();
   }
   function wire() {
     const on = (sel, ev, fn) => document.querySelectorAll(sel).forEach((x) => x.addEventListener(ev, fn));
     on('input[name="s-setup"]', 'change', (e) => { st.setup = e.target.value; render(); });
-    on('input[name="s-pol"]', 'change', (e) => { st.hiLeft = e.target.value === '1'; prepare(); });
-    on('input[name="s-Q"]', 'change', (e) => { st.Qsign = Number(e.target.value); prepare(); });
+    on('input[name="s-or"]', 'change', (e) => { st.vert = e.target.value === 'v'; render(); });
+    on('input[name="s-pol"]', 'change', (e) => { st.hiFirst = e.target.value === '1'; prepare(); });
+    const setZ = (v, from) => {
+      if (!Number.isFinite(v)) return;
+      st.Z = Math.max(-100, Math.min(100, Math.round(v)));
+      if (from !== 'range') $('#s-Z').value = st.Z;
+      if (from !== 'num') $('#s-Zn').value = st.Z;
+      $('#s-Zv').textContent = qText(st.Z);
+      prepare();
+    };
+    on('#s-Z', 'input', (e) => setZ(Number(e.target.value), 'range'));
+    on('#s-Zn', 'change', (e) => setZ(Number(e.target.value), 'both'));
+    on('#s-Zn', 'input', (e) => { if (e.target.value !== '' && e.target.value !== '-') setZ(Number(e.target.value), 'num'); });
     on('input[name="s-part"]', 'change', (e) => { per().part = e.target.value; prepare(); });
     on('input[name="s-speed"]', 'change', (e) => { st.speed = Number(e.target.value); const was = tShown; prepare(); tShown = Math.min(was, T); draw(); });
     on('#s-U', 'input', (e) => { st.U = Number(e.target.value); $('#s-Uv').textContent = X.kv(st.U); prepare(); });
@@ -251,7 +284,8 @@
   function clampStart(p) {
     const b = box();
     let x = Math.max(b[0] + 0.1, Math.min(b[1] - 0.1, p[0])), y = Math.max(b[2] + 0.1, Math.min(b[3] - 0.1, p[1]));
-    if (st.setup === 'uniform') { x = Math.max(-A.PX + 0.1, Math.min(A.PX - 0.1, x)); y = Math.max(-1.45, Math.min(1.45, y)); }
+    if (st.setup === 'uniform' && st.vert) y = Math.max(-A.PY + 0.1, Math.min(A.PY - 0.1, y));
+    else if (st.setup === 'uniform') { x = Math.max(-A.PX + 0.1, Math.min(A.PX - 0.1, x)); y = Math.max(-1.45, Math.min(1.45, y)); }
     if (st.setup === 'point' && Math.hypot(x - A.NX, y) < 0.4) { const d = Math.hypot(x - A.NX, y) || 1e-9; x = A.NX + ((x - A.NX) * 0.4) / d; y = (y * 0.4) / d; }
     return [x, y];
   }
