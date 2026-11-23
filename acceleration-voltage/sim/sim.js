@@ -1,7 +1,8 @@
 // Charges in Electric Fields: a standalone simulation beside Acceleration Voltage. The student picks
 // a setup (a uniform field between two plates, side by side or one above the other, the field around a point charge of any whole multiple of e, a bent field as in
 // the textbook figure, or the race of a proton, a neutron, an alpha particle and an electron), the
-// particle, where it starts (drag it, or click) and its initial kinetic energy and direction, and
+// particle, where it starts (drag it, or click) and its initial kinetic energy and direction (the
+// sliders, or drag the tip of the initial velocity arrow), and
 // plays the motion. The motion is a numerical simulation in real units (RK4, a step that keeps each
 // move under 0.004 drawing units), worked out in full when the student presses play, then shown in
 // slow motion so that the run lasts about four seconds (the note says how much slower than real).
@@ -9,7 +10,8 @@
 // off; live energy bars show E_pot = q·V, E_kin and their sum for each particle (beside the field on a
 // wide screen). The table of time, speed and kinetic energy holds still while the motion plays and
 // shows the values where it pauses or ends.
-//   units: plates and the bent field 1 drawing unit = 1 cm, potentials in V (accel.js); the point
+//   units: plates and the bent field 1 drawing unit = 1 cm, potentials in V (accel.js; here the bent
+//   field is shifted by −200 V, so that its rightmost equipotential is 0 V); the point
 //   charge Q = Z·e, Z = −100 … 100 (79: a gold nucleus), 1 drawing unit = 20 fm.
 (function () {
   'use strict';
@@ -31,8 +33,8 @@
       th: ['', 'time', 'speed', 'kinetic energy', ''], at: 'at rest',
       hit: { plate: 'reaches the plate', nucleus: 'hits the charge', out: 'leaves the field', finish: 'finish', turn: '' },
       raceNote: 'The proton, the neutron and the alpha particle start at rest on the equipotential line V_A = 800 V, the electron on V_B = 200 V. The time each needs to the other line is shown when it arrives.',
-      nucleusNote: 'The charge Q is a whole multiple of the elementary charge e; Q = +79e is a gold nucleus. The field shown is 140 fm wide.', platesNote: 'The plates are 4.8 cm apart.', platesNoteV: 'The plates are 3 cm apart and 5.6 cm long.', bentNote: 'The field is about 6 cm wide; the potentials range from about 900 V on the left to 100 V on the right.',
-      dragNote: 'Drag the particle or click in the field to choose its start; the dashed arrow shows its initial direction.',
+      nucleusNote: 'The charge Q is a whole multiple of the elementary charge e; Q = +79e is a gold nucleus. The field shown is 140 fm wide.', platesNote: 'The plates are 4.8 cm apart.', platesNoteV: 'The plates are 3 cm apart and 5.6 cm long.', bentNote: 'The field is about 6 cm wide; the potentials range from about 700 V on the left to −100 V on the right (0 V on the rightmost equipotential).',
+      dragNote: 'Drag the particle or click in the field to choose its start; drag the tip of the arrow to set its initial speed and direction.',
     },
     de: {
       app: 'Beschleunigungsspannung', title: 'Ladungen in elektrischen Feldern',
@@ -46,8 +48,8 @@
       th: ['', 'Zeit', 'Geschwindigkeit', 'kinetische Energie', ''], at: 'in Ruhe',
       hit: { plate: 'erreicht die Platte', nucleus: 'trifft die Ladung', out: 'verlässt das Feld', finish: 'im Ziel', turn: '' },
       raceNote: 'Das Proton, das Neutron und das Alphateilchen starten in Ruhe auf der Äquipotentiallinie Φ_A = 800 V, das Elektron auf Φ_B = 200 V. Die Zeit, die jedes bis zur anderen Linie braucht, erscheint bei seiner Ankunft.',
-      nucleusNote: 'Die Ladung Q ist ein ganzzahliges Vielfaches der Elementarladung e; Q = +79e ist ein Goldkern. Das gezeigte Feld ist 140 fm breit.', platesNote: 'Die Platten sind 4.8 cm voneinander entfernt.', platesNoteV: 'Die Platten sind 3 cm voneinander entfernt und 5.6 cm lang.', bentNote: 'Das Feld ist etwa 6 cm breit; die Potentiale reichen von etwa 900 V links bis 100 V rechts.',
-      dragNote: 'Zieh das Teilchen oder klicke ins Feld, um seinen Start zu wählen; der gestrichelte Pfeil zeigt seine Anfangsrichtung.',
+      nucleusNote: 'Die Ladung Q ist ein ganzzahliges Vielfaches der Elementarladung e; Q = +79e ist ein Goldkern. Das gezeigte Feld ist 140 fm breit.', platesNote: 'Die Platten sind 4.8 cm voneinander entfernt.', platesNoteV: 'Die Platten sind 3 cm voneinander entfernt und 5.6 cm lang.', bentNote: 'Das Feld ist etwa 6 cm breit; die Potentiale reichen von etwa 700 V links bis −100 V rechts (0 V auf der Äquipotentiallinie ganz rechts).',
+      dragNote: 'Zieh das Teilchen oder klicke ins Feld, um seinen Start zu wählen; zieh die Spitze des Pfeils, um Betrag und Richtung seiner Anfangsgeschwindigkeit einzustellen.',
     },
   };
   const ui = () => UI[Lang.get()];
@@ -71,9 +73,10 @@
     const hi = st.hiFirst ? st.U : 0, lo = st.U - hi;
     if (st.setup === 'uniform') return st.vert ? { kind: 'plates', vert: true, VT: hi, VB: lo } : { kind: 'plates', VL: hi, VR: lo };
     if (st.setup === 'point') return { kind: 'nucleus', Z: st.Z, scale: 20 };
-    return { kind: 'bent' };
+    // the bent field (not the race) shifted by −200 V, so that its rightmost equipotential is 0 V
+    return st.setup === 'bent' ? { kind: 'bent', off: -200 } : { kind: 'bent' };
   }
-  const levels = () => (st.setup === 'uniform' ? [0.2, 0.4, 0.6, 0.8].map((k) => k * st.U) : st.setup === 'point' ? (st.Z ? [1.5e6, 2.5e6, 4e6, 8e6].map((v) => (v * st.Z) / 79) : null) : st.setup === 'race' ? [800, 200] : [800, 650, 500, 350, 200]);
+  const levels = () => (st.setup === 'uniform' ? [0.2, 0.4, 0.6, 0.8].map((k) => k * st.U) : st.setup === 'point' ? (st.Z ? [1.5e6, 2.5e6, 4e6, 8e6].map((v) => (v * st.Z) / 79) : null) : st.setup === 'race' ? [800, 200] : [600, 450, 300, 150, 0]);
   const box = () => S0().box, Sc = () => W / (box()[1] - box()[0]);
   const PX = (x) => (x - box()[0]) * Sc(), PY = (y) => (box()[3] - y) * Sc();
   // the particles of a run: [{ id, x, y, E0 (eV), angle (deg), target (race: the potential where it arrives) }]
@@ -130,6 +133,16 @@
     let svg = A.fieldFig(c, { W, box: box(), equi: st.equi ? levels() : null, labelE: st.setup === 'point' ? null : st.setup === 'uniform' && st.vert ? [-2.55, 0.35] : [box()[0] + 0.45, box()[3] - 0.3], label: LR('The field and the moving particles', 'Das Feld und die bewegten Teilchen'), data: ' tabindex="0"', cls: 'sim-fig' });
     let extra = '';
     if (st.setup === 'race') for (const [v, n] of [[800, LR('V_A = 800 V', 'Φ_A = 800 V')], [200, LR('V_B = 200 V', 'Φ_B = 200 V')]]) { const p = A.onLine(c, 0, -1.25, v); extra += A.txt(PX(p[0]) + 8, PY(p[1]) + 4, n, 'lbl small v-lbl', 'start'); }
+    // the bent field: each equipotential labelled with its potential, just below the top edge (V
+    // falls from left to right there: the crossing by bisection in x)
+    if (st.setup === 'bent' && st.equi) {
+      const yl = box()[3] - 0.2;
+      for (const v of levels()) {
+        let lo = box()[0], hi = box()[1];
+        for (let i = 0; i < 40; i++) { const m = (lo + hi) / 2; if (A.V(c, m, yl) > v) lo = m; else hi = m; }
+        extra += A.txt(PX(lo) + 5, PY(yl) + 4, X.kv(v), 'lbl small v-lbl', 'start');
+      }
+    }
     if (st.setup === 'uniform' && st.vert) extra += A.txt(PX(0), PY(A.PY) - 8, X.kv(c.VT), 'lbl small', 'middle') + A.txt(PX(0), PY(-A.PY) + 17, X.kv(c.VB), 'lbl small', 'middle');
     else if (st.setup === 'uniform') extra += A.txt(PX(-A.PX), 14, X.kv(c.VL), 'lbl small', 'middle') + A.txt(PX(A.PX), 14, X.kv(c.VR), 'lbl small', 'middle');
     return svg.replace('</svg>', `${extra}<g id="sim-layer"></g></svg>`);
@@ -146,10 +159,16 @@
         pts.push(`${X0.toFixed(1)},${Y0.toFixed(1)}`);
         if (pts.length > 1) s += `<polyline class="sim-trace ${P.q > 0 ? 'tp' : P.q < 0 ? 'tn' : 'tz'}" points="${pts.join(' ')}"/>`;
       }
-      // the initial direction, before the start
-      if (t === 0 && !st.race && r.pt.E0 > 0 && st.setup !== 'race') { const a = (r.pt.angle * Math.PI) / 180; s += `<line class="sim-dir" x1="${X0}" y1="${Y0}" x2="${X0 + 46 * Math.cos(a)}" y2="${Y0 - 46 * Math.sin(a)}"/>`; }
+      // before the start: the initial velocity, its tip a handle to drag (length ~ speed, see tipLen)
+      const before = t === 0 && st.setup !== 'race';
+      if (before) {
+        const a = (r.pt.angle * Math.PI) / 180, l = tipLen(r.pt.E0), tx = X0 + l * Math.cos(a), ty = Y0 - l * Math.sin(a);
+        if (r.pt.E0 > 0) s += A.arrow(X0, Y0, tx, ty, 'v-vel', 2.4);
+        else s += `<line class="sim-dir" x1="${f1(X0)}" y1="${f1(Y0)}" x2="${f1(tx)}" y2="${f1(ty)}"/>`;
+        s += `<circle class="sim-tip" cx="${f1(tx)}" cy="${f1(ty)}" r="7"/>`;
+      }
       const v = Math.hypot(p[3], p[4]);
-      if (st.vel && v > 1e-9 * scaleV(r)) { const l = 14 + 56 * (v / scaleV(r)); s += A.arrow(X0, Y0, X0 + (l * p[3]) / v, Y0 - (l * p[4]) / v, 'v-vel', 2.4); }
+      if (st.vel && !before && v > 1e-9 * scaleV(r)) { const l = 14 + 56 * (v / scaleV(r)); s += A.arrow(X0, Y0, X0 + (l * p[3]) / v, Y0 - (l * p[4]) / v, 'v-vel', 2.4); }
       if (st.force && P.q) {
         const E = A.E(c, p[1], p[2]), F = Math.hypot(E[0], E[1]);
         r.fmax = r.fmax || Math.max(1e-30, ...r.pts.filter((q, i) => i % 20 === 0).map((q) => Math.hypot(...A.E(c, q[1], q[2]))));
@@ -158,6 +177,19 @@
       s += `<circle class="charge part ${P.q > 0 ? 'pos' : P.q < 0 ? 'neg' : 'neu'}" cx="${X0.toFixed(1)}" cy="${Y0.toFixed(1)}" r="${P.q === 2 ? 9 : 7}"/>` + A.txt(X0 + 11, Y0 - 9, P.sym, 'lbl small q-lbl', 'start');
     }
     return s;
+  }
+  // the length (px) of the initial velocity arrow: 18 px at rest (where the handle waits), up to
+  // 18 + TIP px at the largest initial energy, in proportion to the speed (√E)
+  const TIP = 84, tipLen = (E0) => 18 + TIP * Math.sqrt(Math.max(0, E0) / S0().Emax);
+  const f1 = (x) => x.toFixed(1);
+  // the potential energies |q|·V that the field holds anywhere in its box (eV), for the scale of
+  // the bars: without them, a start at rest gives E = E_pot alone, which always fills the scale, so
+  // that the bars do not change when the start moves (not for the point charge: V grows without end)
+  function fieldRange(P) {
+    if (st.setup === 'point' || !P.q) return [0, 0];
+    const c = cfg(), b = box(), vs = [];
+    for (let i = 0; i <= 16; i++) for (let j = 0; j <= 10; j++) vs.push(P.q * A.V(c, b[0] + ((b[1] - b[0]) * i) / 16, b[2] + ((b[3] - b[2]) * j) / 10));
+    return [Math.min(...vs), Math.max(...vs)];
   }
   // the values of each particle at the time t: speed (m/s), E_pot and E_kin (eV, MeV near the point charge)
   const unit = () => (st.setup === 'point' ? 1e6 : 1);
@@ -174,8 +206,9 @@
   function bars(t) {
     if (runs.bmax == null) {
       const all = runs.flatMap((r) => r.pts.filter((q, i) => i % 10 === 0 || i === r.pts.length - 1).flatMap((q) => { const { pot, kin } = values(r, q); return [pot, kin, pot + kin]; }));
-      runs.bmax = 1.05 * Math.max(1e-9, ...all.map(Math.abs));
-      runs.bmin = 1.05 * Math.min(0, ...all);
+      const fr = runs.map((r) => fieldRange(r.P)).flat();
+      runs.bmax = 1.05 * Math.max(1e-9, ...all.map(Math.abs), ...fr.map(Math.abs));
+      runs.bmin = 1.05 * Math.min(0, ...all, ...fr);
     }
     return runs.map((r) => { const { pot, kin } = values(r, state(r, t)); return A.bars([{ name: r.P.sym, pot, kin }], { max: runs.bmax, min: runs.bmin, H: 90 }); }).join('');
   }
@@ -292,7 +325,14 @@
   function wireFig() {
     const svg = $('#sim-fig svg');
     if (!svg || st.setup === 'race') return;
-    svg.addEventListener('pointerdown', (evt) => { per().start = clampStart(toModel(evt, svg)); drag = true; evt.preventDefault(); prepare(); });
+    svg.addEventListener('pointerdown', (evt) => {
+      // on the handle at the tip of the initial velocity: its speed and direction; elsewhere: the start
+      const m = toModel(evt, svg), p = per(), a = (p.angle * Math.PI) / 180, l = tipLen(p.E0) / Sc();
+      const k = svg.viewBox.baseVal.width / svg.getBoundingClientRect().width, near = (Math.max(12, 16 * k)) / Sc();
+      drag = tShown === 0 && Math.hypot(m[0] - p.start[0] - l * Math.cos(a), m[1] - p.start[1] - l * Math.sin(a)) < near ? 'tip' : 'start';
+      if (drag === 'start') { p.start = clampStart(m); prepare(); }
+      evt.preventDefault();
+    });
     svg.addEventListener('keydown', (evt) => {
       const d = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, 1], ArrowDown: [0, -1] }[evt.key];
       if (evt.key === ' ' || evt.key === 'Enter') { play(); evt.preventDefault(); return; }
@@ -301,7 +341,21 @@
       evt.preventDefault(); prepare(); $('#sim-fig svg').focus();
     });
   }
-  document.addEventListener('pointermove', (evt) => { if (!drag) return; const svg = $('#sim-fig svg'); if (svg) { per().start = clampStart(toModel(evt, svg)); prepare(); } });
+  // the tip at (dx, dy) px from the start: the direction in steps of 5°, the energy from the length
+  // (tipLen backwards), on the steps of the slider; within the handle's 18 px at rest
+  function setTip(m) {
+    const p = per(), dx = (m[0] - p.start[0]) * Sc(), dy = (m[1] - p.start[1]) * Sc(), d = Math.hypot(dx, dy), Emax = S0().Emax, step = Emax / 50;
+    if (d > 4) { let ang = Math.round((Math.atan2(dy, dx) * 180) / Math.PI / 5) * 5; if (ang <= -180) ang += 360; p.angle = ang; }
+    const u = Math.max(0, Math.min(1, (d - 18) / TIP));
+    p.E0 = Math.round((Emax * u * u) / step) * step;
+    const e = $('#s-E0'), ev = $('#s-E0v'), g = $('#s-ang'), gv = $('#s-angv');
+    if (e) e.value = p.E0;
+    if (ev) ev.textContent = p.E0 ? X.eV(p.E0) : ui().at;
+    if (g) g.value = p.angle;
+    if (gv) gv.textContent = `${p.angle}°`;
+    prepare();
+  }
+  document.addEventListener('pointermove', (evt) => { if (!drag) return; const svg = $('#sim-fig svg'); if (!svg) return; const m = toModel(evt, svg); if (drag === 'tip') setTip(m); else { per().start = clampStart(m); prepare(); } });
   document.addEventListener('pointerup', () => { drag = false; });
   document.addEventListener('pointercancel', () => { drag = false; });
 
