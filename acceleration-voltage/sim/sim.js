@@ -6,8 +6,8 @@
 // plays the motion. The motion is a numerical simulation in real units (RK4, a step that keeps each
 // move under 0.004 drawing units), worked out in full when the student presses play, then shown in
 // slow motion so that the run lasts about four seconds (the note says how much slower than real).
-// Velocity (blue) and force (red) arrows, the trace and the equipotentials can be switched on and
-// off; live energy bars show E_pot = q·V, E_kin and their sum for each particle (beside the field on a
+// Velocity (blue) and force (red) arrows, the trace, the equipotentials and the energy bars can be
+// switched on and off; the live energy bars show E_pot = q·V, E_kin and their sum for each particle (beside the field on a
 // wide screen). The table of time, speed and kinetic energy holds still while the motion plays and
 // shows the values where it pauses or ends.
 //   units: plates and the bent field 1 drawing unit = 1 cm, potentials in V (accel.js; here the bent
@@ -26,7 +26,7 @@
       intro: 'Choose a setup and a particle, drag the particle to where it starts, set its kinetic energy and direction, and press play. The motion is simulated step by step and shown in slow motion.',
       setup: 'Setup', sUniform: 'Two plates', sPoint: 'Point charge', sBent: 'Bent field', sRace: 'The race',
       particle: 'Particle', voltage: 'Voltage', orient: 'Plates', oH: 'left and right', oV: 'top and bottom', polarity: 'Higher potential', left: 'left plate', right: 'right plate', top: 'top plate', bottom: 'bottom plate', source: 'Charge Q',
-      e0: 'Kinetic energy at the start', dir: 'Direction', show: 'Show', vel: 'velocity', force: 'force', trace: 'trace', equi: 'equipotentials', speed: 'Speed', slow: 'slow', normal: 'normal', fast: 'fast',
+      e0: 'Kinetic energy at the start', dir: 'Direction', show: 'Show', vel: 'velocity', force: 'force', trace: 'trace', equi: 'equipotentials', bars: 'energy bars', speed: 'Speed', slow: 'slow', normal: 'normal', fast: 'fast',
       play: '▶ Play', pause: '❚❚ Pause', reset: '↺ Reset', again: '▶ Again',
       slowmo: (x) => `Slow motion: 1 s on the screen is ${x} of real time.`, still: 'Nothing moves: a particle at rest feels no force here, or none is charged.',
       arrows: 'Arrows: velocity blue, force red, each particle’s arrows on its own scale.',
@@ -41,7 +41,7 @@
       intro: 'Wähle einen Aufbau und ein Teilchen, zieh das Teilchen an seinen Startpunkt, stelle seine kinetische Energie und Richtung ein und drück Start. Die Bewegung wird Schritt für Schritt simuliert und in Zeitlupe gezeigt.',
       setup: 'Aufbau', sUniform: 'Zwei Platten', sPoint: 'Punktladung', sBent: 'Gebogenes Feld', sRace: 'Das Rennen',
       particle: 'Teilchen', voltage: 'Spannung', orient: 'Platten', oH: 'links und rechts', oV: 'oben und unten', polarity: 'Höheres Potential', left: 'linke Platte', right: 'rechte Platte', top: 'obere Platte', bottom: 'untere Platte', source: 'Ladung Q',
-      e0: 'Kinetische Energie beim Start', dir: 'Richtung', show: 'Anzeigen', vel: 'Geschwindigkeit', force: 'Kraft', trace: 'Spur', equi: 'Äquipotentiallinien', speed: 'Tempo', slow: 'langsam', normal: 'normal', fast: 'schnell',
+      e0: 'Kinetische Energie beim Start', dir: 'Richtung', show: 'Anzeigen', vel: 'Geschwindigkeit', force: 'Kraft', trace: 'Spur', equi: 'Äquipotentiallinien', bars: 'Energiebalken', speed: 'Tempo', slow: 'langsam', normal: 'normal', fast: 'schnell',
       play: '▶ Start', pause: '❚❚ Pause', reset: '↺ Zurück', again: '▶ Nochmals',
       slowmo: (x) => `Zeitlupe: 1 s auf dem Bildschirm sind ${x} in Wirklichkeit.`, still: 'Nichts bewegt sich: Ein ruhendes Teilchen spürt hier keine Kraft, oder keines ist geladen.',
       arrows: 'Pfeile: Geschwindigkeit blau, Kraft rot, die Pfeile jedes Teilchens in seinem eigenen Massstab.',
@@ -65,7 +65,7 @@
     race: { box: A.BOX.bent, L: 0.01, race: true },
   };
   // hiFirst: the left plate (side by side) or the top plate (vert) at the higher potential; Z: Q = Z·e
-  let st = { setup: 'uniform', U: 1000, vert: false, hiFirst: true, Z: 79, vel: true, force: true, trace: true, equi: true, speed: 1, per: {} };
+  let st = { setup: 'uniform', U: 1000, vert: false, hiFirst: true, Z: 79, vel: true, force: true, trace: true, equi: true, bars: true, speed: 1, per: {} };
   const key = () => (st.setup === 'uniform' && st.vert ? 'uniformV' : st.setup);
   const S0 = () => SETUPS[key()];
   const per = () => st.per[key()] || (st.per[key()] = { start: [...(S0().start || [0, 0])], E0: S0().E0 || 0, angle: S0().angle || 0, part: S0().part || 'p' });
@@ -215,7 +215,8 @@
   function draw() {
     const l = $('#sim-layer');
     if (l) l.innerHTML = layer(tShown);
-    $('#sim-bars').innerHTML = bars(tShown);
+    // the bars hidden: the field takes the whole width (stage.no-bars)
+    $('#sim-bars').innerHTML = st.bars ? bars(tShown) : '';
     // the table only when the motion stands still (before, paused, at the end): numbers that change
     // on every frame cannot be read
     const tb = $('#sim-table'), cls = playing ? 'sim-tbl running' : 'sim-tbl';
@@ -272,11 +273,11 @@
         ${race ? '' : row(t.particle, radios('s-part', IDS.map((id) => [id, pname(id)]), p.part))}
         ${race ? '' : row(t.e0, `<input id="s-E0" type="range" min="0" max="${S0().Emax}" step="${S0().Emax / 50}" value="${p.E0}"><span id="s-E0v" class="note">${eFmt(p.E0)}</span>`)}
         ${race ? '' : row(t.dir, `<input id="s-ang" type="range" min="-180" max="180" step="5" value="${p.angle}"><span id="s-angv" class="note">${p.angle}°</span>`)}
-        ${row(t.show, ['vel', 'force', 'trace', 'equi'].map((k) => `<label class="ex-check"><input type="checkbox" data-k="${k}"${st[k] ? ' checked' : ''}> ${t[k]}</label>`).join(''))}
+        ${row(t.show, ['vel', 'force', 'trace', 'equi', 'bars'].map((k) => `<label class="ex-check"><input type="checkbox" data-k="${k}"${st[k] ? ' checked' : ''}> ${t[k]}</label>`).join(''))}
         ${row(t.speed, radios('s-speed', [['0.5', t.slow], ['1', t.normal], ['2', t.fast]], st.speed))}
       </div>
       <div class="actions sim-actions"><button type="button" id="sim-play" class="primary">${t.play}</button><button type="button" id="sim-reset">${t.reset}</button></div>
-      <div class="sim-stage"><div class="fig" id="sim-fig"></div><div id="sim-bars" class="sim-bars${race ? ' many' : ''}"></div></div>
+      <div class="sim-stage${st.bars ? '' : ' no-bars'}"><div class="fig" id="sim-fig"></div><div id="sim-bars" class="sim-bars${race ? ' many' : ''}"></div></div>
       <p class="note sim-note">${sub(race ? t.raceNote : st.setup === 'point' ? t.nucleusNote : st.setup === 'uniform' ? (st.vert ? t.platesNoteV : t.platesNote) : t.bentNote)} ${race ? '' : t.dragNote} ${t.arrows}</p>
       <p class="note" id="sim-scale" aria-live="polite"></p>
       <div id="sim-table" class="sim-tbl"></div>`;
@@ -304,7 +305,7 @@
     on('#s-U', 'input', (e) => { st.U = Number(e.target.value); $('#s-Uv').textContent = X.kv(st.U); prepare(); });
     on('#s-E0', 'input', (e) => { per().E0 = Number(e.target.value); $('#s-E0v').textContent = per().E0 ? X.eV(per().E0) : ui().at; prepare(); });
     on('#s-ang', 'input', (e) => { per().angle = Number(e.target.value); $('#s-angv').textContent = `${per().angle}°`; prepare(); });
-    on('input[data-k]', 'change', (e) => { st[e.target.dataset.k] = e.target.checked; if (e.target.dataset.k === 'equi') { const was = tShown; $('#sim-fig').innerHTML = staticFig(); wireFig(); tShown = was; } draw(); });
+    on('input[data-k]', 'change', (e) => { st[e.target.dataset.k] = e.target.checked; if (e.target.dataset.k === 'equi') { const was = tShown; $('#sim-fig').innerHTML = staticFig(); wireFig(); tShown = was; } if (e.target.dataset.k === 'bars') $('.sim-stage').classList.toggle('no-bars', !st.bars); draw(); });
     $('#sim-play').addEventListener('click', play);
     $('#sim-reset').addEventListener('click', () => { stop(); tShown = 0; draw(); });
   }
