@@ -61,7 +61,7 @@
     uniform: { box: A.BOX.plates, L: 0.01, start: [-2.25, 0], E0: 0, Emax: 5000, angle: 0, part: 'p' },
     uniformV: { box: A.BOX.plates, L: 0.01, start: [-2.7, 0], E0: 2000, Emax: 5000, angle: 0, part: 'p' },
     point: { box: A.BOX.nucleus, L: 20e-15, start: [-3.2, 0.5], E0: 5e6, Emax: 20e6, angle: 0, part: 'a' },
-    bent: { box: A.BOX.bent, L: 0.01, start: [-2.6, 0.2], E0: 100, Emax: 2000, angle: 0, part: 'p' },
+    bent: { box: A.BOX.bent, L: 0.01, start: [-2.6, 0.2], E0: 100, Emax: 500, angle: 0, part: 'p' },
     race: { box: A.BOX.bent, L: 0.01, race: true },
   };
   // hiFirst: the left plate (side by side) or the top plate (vert) at the higher potential; Z: Q = Z·e
