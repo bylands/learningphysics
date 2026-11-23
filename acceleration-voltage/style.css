@@ -234,6 +234,7 @@ svg.av .sim-trace.tp { stroke: #e53935; }
 svg.av .sim-trace.tn { stroke: #3d6fd8; }
 svg.av .sim-trace.tz { stroke: #8b9096; }
 svg.av .sim-dir { stroke: var(--av-vel); stroke-width: 2; stroke-dasharray: 5 4; }
+svg.av .sim-tip { fill: var(--av-vel); fill-opacity: 0.18; stroke: var(--av-vel); stroke-width: 1.5; cursor: grab; } /* the handle at the tip of the initial velocity */
 .sim-actions { justify-content: center; margin: 12px 0 0; }
 .sim-stage { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px 24px; align-items: center; margin: 12px 0 10px; }
 .sim-stage .fig { overflow: visible; }

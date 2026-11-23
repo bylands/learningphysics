@@ -4,7 +4,8 @@
 //     { kind: 'bent' }      a field that runs to the right and bends downwards (as in the textbook
 //                           figure): the real part of the analytic f(z) = z + i·D·(1 + tanh(z/w))/2,
 //                           so it is free of charges; V = 500 V − 140 V·Re f, about 920 V on the
-//                           left to 80 V on the right (one drawing unit is 1 cm)
+//                           left to 80 V on the right (one drawing unit is 1 cm); off (optional)
+//                           shifts all its potentials by off V
 //     { kind: 'plates', VL, VR }  two plates at x = ±PX, the potentials VL (left) and VR (right) in V,
 //                           a uniform field between them, no field outside
 //     { kind: 'plates', vert: true, VT, VB }  two plates one above the other, at y = ±PY (from
@@ -54,7 +55,7 @@
     return [x - (D * ti) / 2, y + (D * (1 + tr)) / 2];
   }
   function V(c, x, y) {
-    if (c.kind === 'bent') return 500 - 140 * bentF(x, y)[0];
+    if (c.kind === 'bent') return 500 - 140 * bentF(x, y)[0] + (c.off || 0);
     if (c.kind === 'plates' && c.vert) { const t = Math.max(-PY, Math.min(PY, y)); return c.VB + ((c.VT - c.VB) * (t + PY)) / (2 * PY); }
     if (c.kind === 'plates') { const t = Math.max(-PX, Math.min(PX, x)); return c.VL + ((c.VR - c.VL) * (t + PX)) / (2 * PX); }
     if (c.kind === 'nucleus') return (c.Z * KE * 1e6) / ((c.scale || 10) * (Math.hypot(x - NX, y) || 1e-9));
