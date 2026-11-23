@@ -265,3 +265,9 @@ svg.av .sim-tip { fill: var(--av-vel); fill-opacity: 0.18; stroke: var(--av-vel)
   body.explore-page .ex-read { gap: 8px 16px; }
 }
 .sim-link + .sim-link { margin-top: 6px; }
+/* the time slider of the simulation: under the buttons, centred, the time it stands at beside it */
+.sim-scrub { justify-content: center; margin: 10px 0 0; }
+.sim-scrub .what { min-width: 0; }
+.sim-scrub input[type="range"] { flex: 1 1 220px; max-width: 420px; }
+.sim-scrub #sim-tv { min-width: 5.5em; font-variant-numeric: tabular-nums; }
+@media (max-width: 560px) { .ex-row.sim-scrub { flex-wrap: nowrap; } .ex-row.sim-scrub .what { width: auto; } .sim-scrub input[type="range"] { flex: 1 1 0; min-width: 0; } .sim-scrub #sim-tv { min-width: 4.5em; } }
