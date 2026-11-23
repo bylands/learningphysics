@@ -9,7 +9,8 @@
 // Velocity (blue) and force (red) arrows, the trace, the equipotentials and the energy bars can be
 // switched on and off; the live energy bars show E_pot = q·V, E_kin and their sum for each particle (beside the field on a
 // wide screen). The table of time, speed and kinetic energy holds still while the motion plays and
-// shows the values where it pauses or ends.
+// shows the values where it pauses or ends. The time slider below the buttons runs through the
+// motion by hand, forwards and back (dragging it pauses the play; ▶ goes on from where it stands).
 //   units: plates and the bent field 1 drawing unit = 1 cm, potentials in V (accel.js; here the bent
 //   field is shifted by −200 V, so that its rightmost equipotential is 0 V); the point
 //   charge Q = Z·e, Z = −100 … 100 (79: a gold nucleus), 1 drawing unit = 20 fm.
@@ -27,7 +28,7 @@
       setup: 'Setup', sUniform: 'Two plates', sPoint: 'Point charge', sBent: 'Bent field', sRace: 'The race',
       particle: 'Particle', voltage: 'Voltage', orient: 'Plates', oH: 'left and right', oV: 'top and bottom', polarity: 'Higher potential', left: 'left plate', right: 'right plate', top: 'top plate', bottom: 'bottom plate', source: 'Charge Q',
       e0: 'Kinetic energy at the start', dir: 'Direction', show: 'Show', vel: 'velocity', force: 'force', trace: 'trace', equi: 'equipotentials', bars: 'energy bars', speed: 'Speed', slow: 'slow', normal: 'normal', fast: 'fast',
-      play: '▶ Play', pause: '❚❚ Pause', reset: '↺ Reset', again: '▶ Again',
+      play: '▶ Play', pause: '❚❚ Pause', reset: '↺ Reset', again: '▶ Again', time: 'Time',
       slowmo: (x) => `Slow motion: 1 s on the screen is ${x} of real time.`, still: 'Nothing moves: a particle at rest feels no force here, or none is charged.',
       arrows: 'Arrows: velocity blue, force red, each particle’s arrows on its own scale.',
       th: ['', 'time', 'speed', 'kinetic energy', ''], at: 'at rest',
@@ -42,7 +43,7 @@
       setup: 'Aufbau', sUniform: 'Zwei Platten', sPoint: 'Punktladung', sBent: 'Gebogenes Feld', sRace: 'Das Rennen',
       particle: 'Teilchen', voltage: 'Spannung', orient: 'Platten', oH: 'links und rechts', oV: 'oben und unten', polarity: 'Höheres Potential', left: 'linke Platte', right: 'rechte Platte', top: 'obere Platte', bottom: 'untere Platte', source: 'Ladung Q',
       e0: 'Kinetische Energie beim Start', dir: 'Richtung', show: 'Anzeigen', vel: 'Geschwindigkeit', force: 'Kraft', trace: 'Spur', equi: 'Äquipotentiallinien', bars: 'Energiebalken', speed: 'Tempo', slow: 'langsam', normal: 'normal', fast: 'schnell',
-      play: '▶ Start', pause: '❚❚ Pause', reset: '↺ Zurück', again: '▶ Nochmals',
+      play: '▶ Start', pause: '❚❚ Pause', reset: '↺ Zurück', again: '▶ Nochmals', time: 'Zeit',
       slowmo: (x) => `Zeitlupe: 1 s auf dem Bildschirm sind ${x} in Wirklichkeit.`, still: 'Nichts bewegt sich: Ein ruhendes Teilchen spürt hier keine Kraft, oder keines ist geladen.',
       arrows: 'Pfeile: Geschwindigkeit blau, Kraft rot, die Pfeile jedes Teilchens in seinem eigenen Massstab.',
       th: ['', 'Zeit', 'Geschwindigkeit', 'kinetische Energie', ''], at: 'in Ruhe',
@@ -226,6 +227,24 @@
     // each time swaps its text node under the pointer, so that Safari drops the click (the pause)
     const b = $('#sim-play'), label = playing ? ui().pause : tShown >= T && T > 0 ? ui().again : ui().play;
     if (b.textContent !== label) b.textContent = label;
+    // the time slider follows the motion (its value only, not while it is dragged: that is where the
+    // time comes from); the time it stands at beside it
+    const sl = $('#sim-t'), slv = $('#sim-tv');
+    if (sl) {
+      const v = String(T > 0 ? Math.round((tShown / T) * NT) : 0);
+      if (!scrubbing && sl.value !== v) sl.value = v;
+      if (sl.disabled !== !(T > 0)) sl.disabled = !(T > 0);
+    }
+    if (slv) { const txt = fmtT(tShown); if (slv.textContent !== txt) slv.textContent = txt; }
+  }
+  // the time slider: NT steps over the whole run; moving it pauses the play and shows that moment
+  const NT = 1000;
+  let scrubbing = false;
+  function scrub(v) {
+    if (!T) return;
+    if (playing) stop();
+    tShown = Math.max(0, Math.min(T, (v / NT) * T));
+    draw();
   }
   function prepare() {
     stop();
@@ -277,6 +296,7 @@
         ${row(t.speed, radios('s-speed', [['0.5', t.slow], ['1', t.normal], ['2', t.fast]], st.speed))}
       </div>
       <div class="actions sim-actions"><button type="button" id="sim-play" class="primary">${t.play}</button><button type="button" id="sim-reset">${t.reset}</button></div>
+      <div class="ex-row sim-scrub"><label class="what" for="sim-t">${t.time}</label><input id="sim-t" type="range" min="0" max="${NT}" step="1" value="0"><span id="sim-tv" class="note" aria-live="off"></span></div>
       <div class="sim-stage${st.bars ? '' : ' no-bars'}"><div class="fig" id="sim-fig"></div><div id="sim-bars" class="sim-bars${race ? ' many' : ''}"></div></div>
       <p class="note sim-note">${sub(race ? t.raceNote : st.setup === 'point' ? t.nucleusNote : st.setup === 'uniform' ? (st.vert ? t.platesNoteV : t.platesNote) : t.bentNote)} ${race ? '' : t.dragNote} ${t.arrows}</p>
       <p class="note" id="sim-scale" aria-live="polite"></p>
@@ -308,6 +328,9 @@
     on('input[data-k]', 'change', (e) => { st[e.target.dataset.k] = e.target.checked; if (e.target.dataset.k === 'equi') { const was = tShown; $('#sim-fig').innerHTML = staticFig(); wireFig(); tShown = was; } if (e.target.dataset.k === 'bars') $('.sim-stage').classList.toggle('no-bars', !st.bars); draw(); });
     $('#sim-play').addEventListener('click', play);
     $('#sim-reset').addEventListener('click', () => { stop(); tShown = 0; draw(); });
+    const sl = $('#sim-t');
+    sl.addEventListener('input', (e) => { scrubbing = true; scrub(Number(e.target.value)); scrubbing = false; });
+    sl.addEventListener('pointerdown', () => { if (playing) { stop(); draw(); } });
   }
   // the start: dragged or clicked in the field (not in the race)
   let drag = false;

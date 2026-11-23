@@ -6,6 +6,8 @@
 //   frame swaps the text node under the pointer, and Safari then drops the click on ❚❚,
 // - that the energy bars move while it plays but the table (time, speed, kinetic energy) holds
 //   still, and shows the new values once paused and at the end;
+// - that the time slider follows the play, pauses it when dragged and shows that moment, forwards
+//   and back, and that ▶ goes on from where it stands;
 // and, in accel.js, that the plates one above the other and a point charge of any Z are fields
 // with E = −grad V (Z = 0: none).
 'use strict';
@@ -83,6 +85,33 @@ const tablePaused = tbl.innerHTML;
 run(8000);
 if (tbl.innerHTML === tablePaused || /running/.test(tbl.className)) fail('the table does not show the values at the end');
 
+// the time slider: it follows the play, dragging it pauses and shows that moment (back and forth),
+// and ▶ goes on from where it stands
+const sl = els['#sim-t'], tv = els['#sim-tv'];
+if (!sl || !sl.listeners.input) fail('the time slider is not wired');
+else {
+  if (sl.value !== '1000') fail(`at the end the slider stands at ${sl.value}, not 1000`);
+  btn.fire('click'); run(300);
+  const mid = Number(sl.value);
+  if (!(mid > 0 && mid < 1000)) fail(`while playing the slider does not follow (${sl.value})`);
+  sl.value = '500'; sl.fire('input');
+  if (!/Play/.test(label())) fail('dragging the slider does not pause the play');
+  if (queue.length) fail('a frame is still scheduled after dragging the slider');
+  const at500 = out.innerHTML, tbl500 = tbl.innerHTML, t500 = tv.textContent;
+  run(300);
+  if (out.innerHTML !== at500) fail('the time goes on after dragging the slider');
+  sl.value = '200'; sl.fire('input');
+  if (out.innerHTML === at500 || tbl.innerHTML === tbl500 || tv.textContent === t500) fail('dragging the slider back does not show the earlier moment');
+  sl.value = '500'; sl.fire('input');
+  if (out.innerHTML !== at500 || tbl.innerHTML !== tbl500) fail('the same slider position does not show the same moment');
+  btn.fire('click'); run(50);
+  const after = Number(sl.value);
+  if (!(after >= 500 && after < 700)) fail(`▶ after dragging does not go on from there (slider at ${sl.value})`);
+  btn.fire('click');
+  sl.value = '1000'; sl.fire('input');
+  if (!/Again/.test(label())) fail(`the slider at the end: the button reads "${label()}", not Again`);
+}
+
 // the fields (accel.js)
 const A = ctx.window.Accel || ctx.Accel;
 const grad = (c, x, y) => { const h = 1e-4; return [-(A.V(c, x + h, y) - A.V(c, x - h, y)) / (2 * h), -(A.V(c, x, y + h) - A.V(c, x, y - h)) / (2 * h)]; };
@@ -98,4 +127,4 @@ if (!/class="charge neu"/.test(A.fieldFig(z0, { W: 640 }))) fail('a point charge
 if (!/class="plate"[^>]*height="6"/.test(A.fieldFig(vert, { W: 640, equi: [500] }))) fail('plates one above the other are not drawn lying');
 
 if (failures) { console.error(`${failures} failure(s)`); process.exit(1); }
-console.log('Acceleration Voltage simulation: play, pause, the held table and the fields OK');
+console.log('Acceleration Voltage simulation: play, pause, the time slider, the held table and the fields OK');
